@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NativeWind на web: тёмная схема через CSS-класс html.dark
+   (без этого react-native-web бросает ошибку «dark mode is type media») */
+:root {
+  --css-interop-darkMode: class dark;
+}
