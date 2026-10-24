@@ -1,5 +1,5 @@
-// Живой режим «Сканер» и «Галерея»: фото блюда → сервер распознаёт
-// (vision-модель веб-версии) → результат открывается в SelectedFood.
+// Живой режим «Сканер» и «Галерея»: фото блюда → нейросеть напрямую
+// (ключ и адрес — в src/lib/ai-config.js) → результат в SelectedFood.
 // source: 'camera' — камера, 'library' — галерея телефона.
 
 import { useState } from 'react'
@@ -116,8 +116,8 @@ export function PhotoMode({ source, onPick }) {
       </View>
 
       <Text className="mt-3 text-[11px] leading-[16px] text-bear-sub">
-        Распознавание работает, когда на компьютере запущена веб-версия NutriBear
-        (npm run dev) и телефон в той же Wi-Fi сети.
+        Фото отправляется нейросети прямо с телефона — нужен интернет.
+        Ключ и адрес сервера настраиваются в файле src/lib/ai-config.js.
       </Text>
     </ScrollView>
   )

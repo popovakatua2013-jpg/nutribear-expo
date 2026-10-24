@@ -16,9 +16,9 @@ export function GramsPicker({ grams, onChange }) {
           maxLength={4}
           value={String(grams)}
           onChangeText={onChange}
-          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-center font-semibold text-sm text-bear-text"
+          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center font-bold text-xl text-bear-text"
         />
-        <Text className="font-sans text-sm text-bear-sub">г</Text>
+        <Text className="font-sans text-lg text-bear-sub">г</Text>
       </View>
       <View className="mt-2 flex-row flex-wrap gap-1.5">
         {QUICK_GRAMS.map((g) => (

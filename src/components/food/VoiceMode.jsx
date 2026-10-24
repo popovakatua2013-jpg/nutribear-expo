@@ -1,5 +1,5 @@
-// Живой режим «Голос»: запись фразы про еду → сервер веб-версии
-// (ASR + LLM) возвращает текст, блюдо и граммы → выбор из вариантов.
+// Живой режим «Голос»: запись фразы про еду → нейросеть напрямую
+// (речь через voiceModel из ai-config.js, блюдо и граммы — через модель) → выбор из вариантов.
 
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -176,8 +176,8 @@ export function VoiceMode({ onPick }) {
       )}
 
       <Text className="mt-3 text-[11px] leading-[16px] text-bear-sub">
-        Запись распознаётся на компьютере (веб-версия NutriBear, npm run dev,
-        тот же Wi-Fi). Ниже можно ввести фразу текстом.
+        Голос распознаёт нейросеть (нужна voiceModel в src/lib/ai-config.js).
+        Без неё используйте ввод фразы текстом ниже.
       </Text>
       <TextInput
         value={phrase}

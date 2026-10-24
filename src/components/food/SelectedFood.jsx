@@ -1,8 +1,10 @@
-// Экран подтверждения: граммовка выбранной еды и добавление в приём
+// Экран подтверждения: граммовка выбранной еды и добавление в приём.
+// Для распознанного ИИ (фото/голос/открытая база) — кнопка ✏️ «Исправить»:
+// окно правки названия/ккал/БЖУ на 100 г, если распознавание ошиблось.
 
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft, Pencil } from 'lucide-react-native'
 import { kcalForPortion } from '@/lib/data/foods'
 import { buildFood } from '@/lib/data/pick'
 import { bjuForPortion, bjuLine } from '@/lib/data/bju'
@@ -11,6 +13,11 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '../ui/Toast'
 import { GramsPicker } from '../home/GramsPicker'
 import { toBuildItem } from '@/lib/data/to-item'
+import { EditAiFoodModal } from './EditAiFoodModal'
+
+// Что можно править кнопкой ✏️: ИИ и открытая база ошибаются, а встроенная
+// база блюд — усреднённые значения, их тоже разрешено поправить под себя
+const EDITABLE_SOURCES = ['ai', 'off', 'base']
 
 export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -18,13 +25,37 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
   const [grams, setGrams] = useState(String(item.defaultGrams || 100))
 
   // Рецепты и внешние источники уже в формате kcal100, база — в формате kcal
-  const food = buildFood(item.kcal100 != null ? item : toBuildItem(item))
+  const baseItem = item.kcal100 != null ? item : toBuildItem(item)
+  const canEdit = EDITABLE_SOURCES.includes(baseItem.source)
+
+  // Черновик правок распознанного (null = показываем как распозналось)
+  const [draft, setDraft] = useState(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const eff = draft ? { ...baseItem, ...draft } : baseItem
+
+  const food = buildFood(eff)
   const gramsNum = Math.max(1, Math.min(2000, Math.round(Number(grams) || 0)))
   const previewKcal = kcalForPortion(food, gramsNum)
   const previewBju = bjuForPortion(food, gramsNum)
 
+  // Применяем правки из окна «Исправить блюдо» — предпросмотр пересчитается сам
+  function applyEdit(next) {
+    setDraft({
+      name: next.name,
+      kcal100: next.kcal100,
+      p: next.p,
+      f: next.f,
+      c: next.c,
+      desc: next.desc,
+    })
+    toast({
+      title: '✏️ Исправлено',
+      description: `${next.name}: ${next.kcal100} ккал / 100 г`,
+    })
+  }
+
   function handleAdd() {
-    addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal })
+    addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc })
     toast({
       title: `${food.emoji} ${food.name} — в «${meal.name}»`,
       description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(previewBju)}`,
@@ -53,7 +84,30 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
               {`${food.kcal} ккал / 100 г · Б ${food.p} · Ж ${food.f} · У ${food.c}`}
             </Text>
           </View>
+          {canEdit && (
+            <Pressable
+              onPress={() => setEditOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Исправить распознанное блюдо"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+            >
+              <Pencil size={16} color="#AEB9D9" />
+            </Pressable>
+          )}
         </View>
+
+        {canEdit && (
+          <Text className="mt-2 text-[11px] leading-[16px] text-bear-sub">
+            Распознал(и) неверно? Нажмите ✏️ — исправьте название, калории и БЖУ
+            перед добавлением.
+          </Text>
+        )}
+
+        {eff.desc ? (
+          <Text className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] leading-[17px] text-bear-sub">
+            📝 {eff.desc}
+          </Text>
+        ) : null}
 
         <View className="mt-4">
           <GramsPicker grams={grams} onChange={setGrams} />
@@ -83,6 +137,18 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
           </Text>
         </Pressable>
       </View>
+
+      {/* Окно правки распознанного (монтируется только при открытии —
+          поля всегда показывают актуальные значения) */}
+      {editOpen && (
+        <EditAiFoodModal
+          open
+          onClose={() => setEditOpen(false)}
+          item={eff}
+          grams={gramsNum}
+          onApply={applyEdit}
+        />
+      )}
     </View>
   )
 }

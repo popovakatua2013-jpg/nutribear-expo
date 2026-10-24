@@ -23,17 +23,18 @@ export const useFoodStore = create(
       goal: DEFAULT_GOAL,
       entries: EMPTY_ENTRIES,
       customMeals: [], // дополнительные перекусы: [{id, name}]
-      history: [], // журнал приёмов: [{id, day, time, mealId, name, emoji, grams, kcal, p, f, c}]
+      history: [], // журнал приёмов: [{id, day, time, mealId, name, emoji, grams, kcal, p, f, c, desc}]
 
       setGoal: (goal) => set({ goal }),
 
-      // Добавить блюдо в приём пищи (+ время + БЖУ + запись в историю)
-      addEntry: (mealId, { food, grams, kcal }) => {
+      // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю)
+      addEntry: (mealId, { food, grams, kcal, desc }) => {
         const time = nowTime()
         const bju = bjuForPortion(food, grams)
         const entry = {
           id: makeId(), foodId: food.id, name: food.name, emoji: food.emoji,
           grams, kcal, ...bju, time,
+          desc: String(desc || '').trim(),
         }
         set((state) => ({
           entries: {
@@ -58,6 +59,20 @@ export const useFoodStore = create(
           },
           history: state.history.map((h) => rescaleEntry(h, entryId, newGrams)),
         })),
+
+      // Полная правка уже добавленной записи (название, вес, ккал, БЖУ) —
+      // значения абсолютные «за порцию», меняются и в дневнике, и в истории
+      updateEntry: (mealId, entryId, patch) =>
+        set((state) => {
+          const apply = (e) => (e.id === entryId ? { ...e, ...patch } : e)
+          return {
+            entries: {
+              ...state.entries,
+              [mealId]: (state.entries[mealId] || []).map(apply),
+            },
+            history: state.history.map(apply),
+          }
+        }),
 
       removeEntry: (mealId, entryId) =>
         set((state) => ({

@@ -1,6 +1,6 @@
 // Карточка «План питания на сегодня»: шапка с серыми значками
-// (копировать вчера, история, гид по порциям), приёмы пищи —
-// каждая на всю ширину, чтобы подписи никогда не сжимались
+// (копировать вчера, история, гид по порциям), 4 приёма пищи сеткой 2×2 + «Все».
+// Карточка еды сама растягивается (flex-1) — подписи помещаются в узкой колонке.
 
 import { useState } from 'react'
 import { Text, View } from 'react-native'
@@ -27,17 +27,32 @@ export function MealPlanCard({ onAdd, onRemove, onViewAll }) {
       <PlanHeader onViewAll={onViewAll} onHistory={() => setHistoryOpen(true)} />
 
       <View className="gap-3">
-        {MEALS.slice(0, 4).map((meal) => (
-          <MealCard
-            key={meal.id}
-            meal={meal}
-            target={targets[meal.id]}
-            consumed={mealConsumed(entries, meal.id)}
-            entries={entries[meal.id] || []}
-            onAdd={() => onAdd(meal.id)}
-            onRemove={(entryId) => onRemove(meal.id, entryId)}
-          />
-        ))}
+        <View className="flex-row gap-3">
+          {MEALS.slice(0, 2).map((meal) => (
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              target={targets[meal.id]}
+              consumed={mealConsumed(entries, meal.id)}
+              entries={entries[meal.id] || []}
+              onAdd={() => onAdd(meal.id)}
+              onRemove={(entryId) => onRemove(meal.id, entryId)}
+            />
+          ))}
+        </View>
+        <View className="flex-row gap-3">
+          {MEALS.slice(2, 4).map((meal) => (
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              target={targets[meal.id]}
+              consumed={mealConsumed(entries, meal.id)}
+              entries={entries[meal.id] || []}
+              onAdd={() => onAdd(meal.id)}
+              onRemove={(entryId) => onRemove(meal.id, entryId)}
+            />
+          ))}
+        </View>
       </View>
 
       <Text className="mt-3 px-1 font-sans text-[11px] text-bear-dim">
