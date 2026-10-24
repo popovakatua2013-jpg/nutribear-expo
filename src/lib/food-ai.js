@@ -12,6 +12,7 @@
 // recognizeVoiceText(text) — фраза → { text, grams, items: [...] }
 // recognizeVoiceAudio(b64) — запись → speech-to-text → recognizeVoiceText
 // estimateByName(name)     — название → { kcal100, p, f, c, source }
+// estimateFromDescription(text) — состав с граммовками → { kcal100, p, f, c }
 
 import { File, Paths } from 'expo-file-system'
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
@@ -203,6 +204,187 @@ function localParsePhrase(raw) {
   }
   if (dish.dg) item.defaultGrams = dish.dg
   return { text: text0, grams, items: [item] }
+}
+
+// ── Подсчёт КБЖУ ПО СОСТАВУ («свинина 300 грамм, картошка 500 грамм») ──
+// Отдельный словарь ингредиентов: усреднённые значения варёных/тушёных
+// продуктов — то, что попадает в готовое блюдо. Работает БЕСПЛАТНО, без ИИ.
+const INGREDIENTS = [
+  { n: 'Свинина', w: ['свинина', 'свининки', 'свинки'], kcal100: 250, p: 20.0, f: 18.5, c: 0 },
+  { n: 'Говядина', w: ['говядина', 'говяжье'], kcal100: 220, p: 27.0, f: 12.0, c: 0 },
+  { n: 'Курица', w: ['курица', 'курицу', 'курицей'], kcal100: 150, p: 25.0, f: 5.0, c: 0 },
+  { n: 'Куриное филе', w: ['филе', 'грудка'], kcal100: 137, p: 29.6, f: 1.8, c: 0.4 },
+  { n: 'Индейка', w: ['индейка'], kcal100: 160, p: 25.0, f: 6.0, c: 0 },
+  { n: 'Фарш', w: ['фарш', 'фарша'], kcal100: 250, p: 17.0, f: 20.0, c: 0 },
+  { n: 'Картошка', w: ['картошка', 'картофель', 'картошку'], kcal100: 80, p: 2.0, f: 0.4, c: 16.5 },
+  { n: 'Морковь', w: ['морковь', 'морковка', 'морковью'], kcal100: 32, p: 1.3, f: 0.1, c: 6.9 },
+  { n: 'Свёкла', w: ['свекла', 'бурак'], kcal100: 44, p: 1.7, f: 0, c: 10.0 },
+  { n: 'Капуста', w: ['капуста', 'капусту'], kcal100: 28, p: 1.8, f: 0.1, c: 4.7 },
+  { n: 'Лук', w: ['лук', 'луковица'], kcal100: 41, p: 1.1, f: 0.1, c: 8.4 },
+  { n: 'Помидор', w: ['помидор', 'томат'], kcal100: 20, p: 1.1, f: 0.2, c: 3.7 },
+  { n: 'Огурец', w: ['огурец'], kcal100: 15, p: 0.8, f: 0.1, c: 2.8 },
+  { n: 'Перец', w: ['перец'], kcal100: 27, p: 1.3, f: 0.1, c: 5.3 },
+  { n: 'Чеснок', w: ['чеснок'], kcal100: 143, p: 6.4, f: 0.5, c: 33.0 },
+  { n: 'Зелень', w: ['зелень', 'укроп', 'петрушка'], kcal100: 36, p: 3.0, f: 0.4, c: 6.0 },
+  { n: 'Грибы', w: ['грибы', 'грибов', 'шампиньоны'], kcal100: 30, p: 3.1, f: 0.3, c: 3.3 },
+  { n: 'Фасоль', w: ['фасоль'], kcal100: 123, p: 7.8, f: 0.5, c: 21.0 },
+  { n: 'Зелёный горошек', w: ['горошек'], kcal100: 70, p: 5.0, f: 0.5, c: 10.0 },
+  { n: 'Рис', w: ['рис', 'риса'], kcal100: 120, p: 2.4, f: 0.5, c: 25.0 },
+  { n: 'Гречка', w: ['гречка', 'гречи'], kcal100: 110, p: 4.2, f: 1.1, c: 21.3 },
+  { n: 'Макароны', w: ['макароны', 'макарон', 'паста', 'спагетти'], kcal100: 140, p: 4.5, f: 1.0, c: 27.5 },
+  { n: 'Масло сливочное', w2: ['сливочное масло', 'масло сливочное'], kcal100: 750, p: 0.5, f: 82.5, c: 0.8 },
+  { n: 'Масло растительное', w2: ['растительное масло', 'масло растительное', 'подсолнечное масло', 'оливковое масло'], w: ['масло'], kcal100: 900, p: 0, f: 99.9, c: 0 },
+  { n: 'Сметана', w: ['сметана', 'сметаны'], kcal100: 200, p: 2.6, f: 20.0, c: 3.4 },
+  { n: 'Молоко', w: ['молоко', 'молока'], kcal100: 52, p: 2.8, f: 2.5, c: 4.7 },
+  { n: 'Яйцо', w: ['яйцо', 'яйца'], kcal100: 157, p: 12.7, f: 11.5, c: 0.7 },
+  { n: 'Сыр', w: ['сыр', 'сыра'], kcal100: 360, p: 25.0, f: 30.0, c: 0 },
+  { n: 'Творог', w: ['творог', 'творога'], kcal100: 121, p: 17.0, f: 5.0, c: 1.8 },
+  { n: 'Мука', w: ['мука', 'муки'], kcal100: 334, p: 10.3, f: 1.1, c: 68.9 },
+  { n: 'Колбаса', w: ['колбаса', 'колбасы'], kcal100: 300, p: 13.0, f: 27.0, c: 2.0 },
+  { n: 'Колбаса копчёная', w2: ['колбаса копченая', 'копченая колбаса', 'колбаса сырокопченая', 'сырокопченая колбаса'], kcal100: 425, p: 16.0, f: 40.0, c: 0 },
+  { n: 'Сосиски', w: ['сосиски', 'сосиска'], kcal100: 260, p: 12.0, f: 23.0, c: 2.0 },
+  { n: 'Тыква', w: ['тыква'], kcal100: 26, p: 1.0, f: 0.1, c: 6.0 },
+  { n: 'Кабачок', w: ['кабачок'], kcal100: 24, p: 0.6, f: 0.3, c: 4.6 },
+  { n: 'Бульон', w: ['бульон', 'бульона'], kcal100: 15, p: 2.0, f: 0.5, c: 0 },
+  { n: 'Вода', w: ['вода', 'воды'], kcal100: 0, p: 0, f: 0, c: 0 },
+  { n: 'Сахар', w: ['сахар'], kcal100: 387, p: 0, f: 0, c: 99.8 },
+  { n: 'Соль', w: ['соль'], kcal100: 0, p: 0, f: 0, c: 0 },
+]
+
+const ING_INDEX_1 = new Map() // основа одного слова → ингредиент
+const ING_INDEX_2 = new Map() // «два слова подряд» → ингредиент
+for (const ing of INGREDIENTS) {
+  for (const w of ing.w || []) ING_INDEX_1.set(dishStem(normName(w)), ing)
+  for (const w2 of ing.w2 || []) ING_INDEX_2.set(normName(w2), ing)
+}
+
+// Расстояние Левенштейна — чтобы понимать опечатки («кариошка» → картошка)
+function lev(a, b) {
+  const m = a.length
+  const n = b.length
+  if (Math.abs(m - n) > 2) return 3
+  let prev = Array.from({ length: n + 1 }, (_, i) => i)
+  for (let i = 1; i <= m; i++) {
+    const cur = [i]
+    for (let j = 1; j <= n; j++)
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+    prev = cur
+  }
+  return prev[n]
+}
+
+// Ищем ингредиент в списке слов: двухсловные фразы → точные основы →
+// основы с одной опечаткой. Возвращаем { ing, ... } или null.
+function lookupIngredient(words) {
+  for (let i = 0; i < words.length - 1; i++) {
+    const hit = ING_INDEX_2.get(words[i] + ' ' + words[i + 1])
+    if (hit) return hit
+  }
+  for (let i = 0; i < words.length; i++) {
+    const hit = ING_INDEX_1.get(dishStem(words[i]))
+    if (hit) return hit
+  }
+  for (let i = 0; i < words.length; i++) {
+    const st = dishStem(words[i])
+    if (st.length < 4) continue
+    for (const [key, ing] of ING_INDEX_1) if (lev(st, key) === 1) return ing
+  }
+  return null
+}
+
+// Состав → КБЖУ на 100 г готового блюда. Понимает оба порядка («свинина
+// 300 грамм» и «300 грамм свинины»), запятые необязательны, «литр» = вес воды.
+export function estimateFromDescription(raw) {
+  // Свой нормализатор: сохраняем точку, чтобы «1,5 литра» не разваливалось
+  const text = String(raw || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/(\d),(\d)/g, '$1.$2') // «1,5» → «1.5»
+    .replace(/[^а-я0-9\s.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!text) return null
+  const tokens = text.split(' ').filter(Boolean)
+  const UNIT_WORDS = new Set([
+    'граммов', 'грамма', 'грамм', 'миллилитров', 'миллилитра', 'миллилитр', 'гр', 'г', 'мл',
+  ])
+  const LITER_RE = /^(литров|литра|литр|л)$/
+  const NUM_RE = /^\d{1,4}(\.\d{1,2})?$/
+  const items = []
+  let liters = 0
+  let pending = [] // слова ДО граммовки («свинина 300 грамм»)
+  let afterBuf = [] // слова ПОСЛЕ граммовки («300 грамм свинины»)
+  let awaitGrams = 0 // граммовка, чьё название ещё не встретилось
+  let expectName = false // после граммовки слова копим в afterBuf
+
+  const takeItem = (ing, grams) => {
+    if (ing && items.length < 20)
+      items.push({ ...ing, grams: Math.max(1, Math.min(5000, grams)) })
+  }
+  // Название так и не пришло? Ищем его в накопленных словах
+  const resolveAwait = () => {
+    if (!awaitGrams) return
+    const ing = lookupIngredient(afterBuf) || findLocalDish(afterBuf.join(' '))
+    takeItem(ing, awaitGrams)
+    awaitGrams = 0
+    afterBuf = []
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]
+    if (!NUM_RE.test(t)) {
+      if (expectName) afterBuf.push(t)
+      else pending.push(t)
+      continue
+    }
+    const next = tokens[i + 1] || ''
+    if (UNIT_WORDS.has(next)) {
+      resolveAwait()
+      const grams = parseFloat(t)
+      const ing =
+        lookupIngredient(pending) || findLocalDish(pending.join(' '))
+      takeItem(ing, grams)
+      pending = []
+      // имя могло быть до граммовки — если нет, ждём его после
+      awaitGrams = ing ? 0 : grams
+      expectName = !ing
+      i++ // съели слово-единицу
+    } else if (LITER_RE.test(next)) {
+      resolveAwait()
+      liters += parseFloat(t)
+      pending = []
+      expectName = false
+      i++
+    }
+    // число без единицы — игнорируем
+  }
+  resolveAwait()
+
+  if (!items.length) return null
+  let kcal = 0
+  let p = 0
+  let f = 0
+  let c = 0
+  let weight = 0
+  for (const it of items) {
+    kcal += (it.kcal100 * it.grams) / 100
+    p += (it.p * it.grams) / 100
+    f += (it.f * it.grams) / 100
+    c += (it.c * it.grams) / 100
+    weight += it.grams
+  }
+  // «1 литр» в супе — это в основном вода: если воды по граммам не было,
+  // считаем вес готового блюда по литрам (1 л ≈ 1000 г)
+  if (liters > 0) weight = Math.max(weight, Math.round(liters * 1000))
+  if (weight < 10 || kcal <= 0) return null
+  return {
+    kcal100: Math.round((kcal / weight) * 100),
+    p: Math.round((p / weight) * 1000) / 10,
+    f: Math.round((f / weight) * 1000) / 10,
+    c: Math.round((c / weight) * 1000) / 10,
+    weight: Math.round(weight),
+    items: items.map((it) => ({ name: it.n, grams: it.grams })),
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -16,7 +16,7 @@ import {
 import { Pencil, Wand2, X } from 'lucide-react-native'
 import { estimateBju, bjuForPortion, bjuLine } from '@/lib/data/bju'
 import { formatNum } from '@/lib/format'
-import { estimateByName } from '@/lib/food-ai'
+import { estimateByName, estimateFromDescription } from '@/lib/food-ai'
 import { useFoodStore } from '@/store/useFoodStore'
 
 // Подсказка под заголовком — откуда пришли значения
@@ -75,38 +75,45 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
     return { kcal100: per100(hit.kcal), p: per100(hit.p), f: per100(hit.f), c: per100(hit.c) }
   }
 
-  // Кнопка «Подставить КБЖУ по названию»: сначала история, потом ИИ
+  // Кнопка «Посчитать КБЖУ»: 1) по составу из описания (бесплатно и точно),
+  // 2) по истории дневника, 3) по названию (база → память → ИИ).
+  // Технических подсказок пользователю не показываем — только ошибки ввода.
   async function autofill() {
     const q = name.trim()
-    if (!q) {
-      setFillHint('Сначала впишите название блюда')
-      return
-    }
+    const d = desc.trim()
     setLooking(true)
     setFillHint('')
     try {
+      // 1) Состав с граммовками («свинина 300 грамм, картошка 500 грамм»)
+      const recipe = d ? estimateFromDescription(d) : null
+      if (recipe && recipe.kcal100 > 0) {
+        setKcal(String(recipe.kcal100))
+        setP(String(recipe.p))
+        setF(String(recipe.f))
+        setC(String(recipe.c))
+        return
+      }
+      // 2) Название: сначала история дневника
+      if (!q) {
+        setFillHint(
+          'Впишите название или состав с граммовками — например: свинина 300 грамм, картошка 500 грамм'
+        )
+        return
+      }
       const local = findInHistory(q)
       if (local && local.kcal100 > 0) {
         setKcal(String(local.kcal100))
         setP(String(local.p))
         setF(String(local.f))
         setC(String(local.c))
-        setFillHint('Взято из вашей истории — проверьте значения')
         return
       }
+      // 3) Название: встроенная база → память телефона → ИИ
       const est = await estimateByName(q)
-      setKcal(String(est.kcal100))
+      setKcal(String(Math.round(est.kcal100)))
       setP(String(est.p))
       setF(String(est.f))
       setC(String(est.c))
-      // Честная подсказка: откуда взялись значения и платно ли это
-      setFillHint(
-        est.source === 'base'
-          ? 'Найдено во встроенной базе блюд — бесплатно, проверьте значения'
-          : est.source === 'cache'
-            ? 'Уже оценивали раньше — взято из памяти телефона, бесплатно'
-            : 'ИИ оценил по классическому рецепту — поправьте при желании'
-      )
     } catch (e) {
       setFillHint(String(e?.message || e))
     } finally {
@@ -169,17 +176,17 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
             />
 
-            {/* Автоподстановка КБЖУ по названию: история дневника → ИИ */}
+            {/* Автоподстановка КБЖУ: состав из описания → история → название → ИИ */}
             <Pressable
               onPress={autofill}
               disabled={looking}
               accessibilityRole="button"
-              accessibilityLabel="Подставить КБЖУ по названию"
+              accessibilityLabel="Посчитать КБЖУ по составу или названию"
               className="mt-2 flex-row items-center gap-1.5 self-start"
             >
               <Wand2 size={14} color="#7DD3FC" />
               <Text className="text-[12px] font-semibold text-[#7DD3FC]">
-                {looking ? 'Подбираем КБЖУ…' : 'Подставить КБЖУ по названию'}
+                {looking ? 'Считаем КБЖУ…' : 'Посчитать КБЖУ по составу или названию'}
               </Text>
             </Pressable>
             {fillHint ? (
@@ -196,7 +203,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               maxLength={200}
               multiline
               accessibilityLabel="Описание блюда"
-              placeholder="Например: борщ на свином бульоне, со сметаной"
+              placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
               placeholderTextColor="#5C668A"
               className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] leading-[19px] text-bear-text"
             />
