@@ -37,6 +37,7 @@ export function MealPlanCard({ onAdd, onRemove, onViewAll }) {
               entries={entries[meal.id] || []}
               onAdd={() => onAdd(meal.id)}
               onRemove={(entryId) => onRemove(meal.id, entryId)}
+              onShowAll={onViewAll}
             />
           ))}
         </View>
@@ -50,6 +51,7 @@ export function MealPlanCard({ onAdd, onRemove, onViewAll }) {
               entries={entries[meal.id] || []}
               onAdd={() => onAdd(meal.id)}
               onRemove={(entryId) => onRemove(meal.id, entryId)}
+              onShowAll={onViewAll}
             />
           ))}
         </View>

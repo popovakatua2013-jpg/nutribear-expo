@@ -579,7 +579,7 @@ async function photoToJpegBase64(uri) {
 
 export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
   const base64 = await photoToJpegBase64(imageUri)
-  const key = 'vis:' + strHash(base64)
+  const key = 'vis2:' + strHash(base64)
 
   // То же самое фото уже распознаывали? Берем ответ из кэша — бесплатно
   const cached = cacheGet(key)
@@ -605,10 +605,14 @@ export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
                   'Определи основное блюдо на фотографии. Пищевую ценность укажи НА 100 ГРАММ готового продукта. ' +
                   'Ответь строго JSON-массивом из одного объекта:\n' +
                   '[{"name":"название по-русски","emoji":"один эмодзи","kcal100":число,"p":число,"f":число,"c":число,"defaultGrams":число}]\n' +
-                  'defaultGrams — примерный вес порции на фото в граммах (100–600). ' +
+                  'defaultGrams — реальный вес СЪЕДОБНОЙ ЧАСТИ на фото в граммах (50–800).\n' +
+                  'Оценивай вес как человек: посчитай количество штук на фото и умножь на средний вес одной ' +
+                  '(банан без кожуры ≈ 130 г, яблоко ≈ 180 г, яйцо ≈ 55 г, котлета ≈ 90 г, картофелина ≈ 130 г, ' +
+                  'блин ≈ 70 г, бутерброд ≈ 120 г, пирожок ≈ 85 г). Сверяй размер с тарелкой и предметами рядом. ' +
+                  'Вес НЕ занижай: например, два крупных банана ≈ 300 г, большая тарелка супа ≈ 400 г. ' +
                   'Если на фото нет еды — верни [].',
               },
-              { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
+              { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
             ],
           },
         ],

@@ -1,6 +1,6 @@
 // Карточка приёма пищи — КОМПАКТНАЯ, для сетки 2×2: фото и кнопка «+»
 // в верхней строке, название и калории на всю ширину карточки,
-// мини-прогресс и список добавленных блюд.
+// мини-прогресс и список добавленных блюд (максимум 2, дальше «Ещё N»).
 // Текстам задан maxFontSizeMultiplier — крупный системный шрифт
 // телефона не ломает узкую вёрстку.
 
@@ -13,7 +13,7 @@ import { EntryList } from './EntryList'
 
 const MAX = 1.25
 
-export function MealCard({ meal, target, consumed, entries, onAdd, onRemove }) {
+export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onShowAll }) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   const over = consumed > target
 
@@ -22,9 +22,9 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove }) {
       accessibilityLabel={`Приём пищи «${meal.name}»`}
       className="flex-1 flex-col rounded-2xl border border-white/5 bg-bear-card p-3"
     >
-      {/* фото + кнопка «+» */}
+      {/* фото + кнопка «+» — shrink-0, чтобы ничего не сжималось */}
       <View className="flex-row items-center justify-between">
-        <View className="h-11 w-11 overflow-hidden rounded-xl border border-white/5 bg-white/5">
+        <View className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-white/5 bg-white/5">
           {meal.image ? (
             <Image source={meal.image} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
           ) : (
@@ -36,7 +36,7 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove }) {
           onPress={onAdd}
           accessibilityRole="button"
           accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-          className="h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#1C2A4E] active:opacity-70"
+          className="h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1C2A4E] active:opacity-70"
         >
           <Plus size={14} color="#C7D2F0" strokeWidth={2.5} />
         </Pressable>
@@ -74,7 +74,13 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove }) {
         </Text>
       )}
 
-      <EntryList entries={entries} onRemove={onRemove} mealId={meal.id} mealName={meal.name} />
+      <EntryList
+        entries={entries}
+        onRemove={onRemove}
+        onShowAll={onShowAll}
+        mealId={meal.id}
+        mealName={meal.name}
+      />
     </View>
   )
 }
