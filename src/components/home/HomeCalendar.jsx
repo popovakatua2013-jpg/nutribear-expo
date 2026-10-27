@@ -20,7 +20,7 @@ const MONTHS = [
 export function HomeCalendar() {
   const today = new Date()
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   const shift = (delta) =>
     setView(({ y, m }) => {
