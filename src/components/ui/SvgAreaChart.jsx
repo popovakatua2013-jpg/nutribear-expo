@@ -46,7 +46,8 @@ export function SvgAreaChart({
   const values = data.map((d) => d.value)
   const max = Math.max(...values)
   const min = Math.min(...values)
-  const lo = min === max ? min - 1 : min - (max - min) * 0.1
+  const rawLo = min === max ? min - 1 : min - (max - min) * 0.1
+  const lo = min >= 0 ? Math.max(0, rawLo) : rawLo
   const hi = max === min ? max + 1 : max + (max - min) * 0.08
 
   const iw = w - PAD_L - PAD_R

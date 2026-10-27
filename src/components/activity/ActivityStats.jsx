@@ -9,7 +9,7 @@ import { formatNum } from '@/lib/format'
 
 function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel }) {
   return (
-    <View className={`rounded-2xl border p-3.5 ${colors.border} ${colors.bg}`}>
+    <View className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg}`}>
       <View className="flex-row items-center gap-2.5">
         <LinearGradient
           start={{ x: 0, y: 0 }}
