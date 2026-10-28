@@ -10,6 +10,7 @@ import { DailySummary } from '@/components/home/DailySummary'
 import { HomeStats } from '@/components/home/HomeStats'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
+import { HomeInsights } from '@/components/home/HomeInsights'
 import { ProgressCard } from '@/components/home/ProgressCard'
 import { FastingCard } from '@/components/home/FastingCard'
 import { GoalsCard } from '@/components/home/GoalsCard'
@@ -89,6 +90,9 @@ export default function HomeScreen() {
       >
         {/* Календарь: месяц и дни недели (блок с медведем удалён по запросу) */}
         <HomeCalendar />
+
+        {/* Закономерности: мишка подмечает связи в данных */}
+        <HomeInsights />
 
         <DailySummary consumed={consumed} target={goals.kcal} />
 
