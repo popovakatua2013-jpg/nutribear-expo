@@ -1,11 +1,13 @@
-// Карточка «Рейтинг питания»: оценка рациона по клетчатке, сахару и
-// балансу нутриентов (БЖУ в % калорий) — за день и за месяц (переключатель).
+// Карточка «Рейтинг питания»: оценка рациона по клетчатке, сахару,
+// балансу нутриентов и витаминам/минералам — за день и за месяц.
+// По умолчанию видны три главные метрики (клетчатка, сахар, белки),
+// остальное — жиры, углеводы, витамины/минералы — под «Подробнее».
 // Расчёты — src/lib/data/nutrition.js; данные дня — дневник (entries),
 // месяца — журнал приёмов (history) со средними за день с записями.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Leaf } from 'lucide-react-native'
+import { ChevronDown, ChevronUp, Leaf } from 'lucide-react-native'
 import { ProgressBar } from '../ui/ProgressBar'
 import { formatNum } from '@/lib/format'
 import { round1 } from '@/lib/data/bju'
@@ -60,6 +62,7 @@ export function NutritionRating() {
   const entries = useFoodStore((s) => s.entries)
   const history = useFoodStore((s) => s.history)
   const [mode, setMode] = useState('day') // 'day' | 'month'
+  const [expanded, setExpanded] = useState(false)
 
   const now = new Date()
   const monthName = MONTHS[now.getMonth()]
@@ -69,13 +72,23 @@ export function NutritionRating() {
   const mRows = monthRows(history)
   const n = mode === 'day' ? sumNutrition(dayRows) : monthNutrition(mRows)
   const hasData = mode === 'day' ? dayRows.length > 0 : n.days > 0
-  const r = nutritionRating(hasData ? n : { kcal: 0, p: 0, f: 0, c: 0, fib: 0, sug: 0 })
+  const r = nutritionRating(hasData ? n : { ...n, rows: 0, mk: 0, kcal: 0, fib: 0 })
   const { label, emoji } = ratingLabel(r.overall)
 
+  const noFiber = hasData && n.kcal > 0 && n.fib <= 0
   const caption =
     mode === 'day'
       ? 'по записям дневника за сегодня'
       : `в среднем за день с записями · ${monthName} · ${n.days} дн.`
+
+  // Полнота данных о витаминах (для развёрнутого вида)
+  const share = r.microShare ?? 0
+  const microNote =
+    share >= 0.999
+      ? null
+      : share <= 0.001
+        ? 'У блюд этого периода нет данных о витаминах — микро-часть в балле не учтена. Добавляйте блюда из базы или впишите клетчатку и сахар через ✏️'
+        : `Витамины и минералы учтены по продуктам базы — покрытие записей ≈ ${Math.round(share * 100)}%`
 
   const rows = [
     { key: 'fiber', label: 'Клетчатка', value: `${round1(r.fiber.value)} г`, norm: `норма ${FIBER_NORM} г/день`, score: r.fiber.score },
@@ -83,7 +96,14 @@ export function NutritionRating() {
     { key: 'protein', label: 'Белки', value: `${r.protein.value}%`, norm: 'норма 15–30% ккал', score: r.protein.score },
     { key: 'fat', label: 'Жиры', value: `${r.fat.value}%`, norm: 'норма 20–35% ккал', score: r.fat.score },
     { key: 'carbs', label: 'Углеводы', value: `${r.carbs.value}%`, norm: 'норма 45–65% ккал', score: r.carbs.score },
+    { key: 'fe', label: 'Железо', value: `${round1(r.micro.fe.value)} мг`, norm: 'норма 14 мг/день', score: r.micro.fe.score },
+    { key: 'ca', label: 'Кальций', value: `${Math.round(r.micro.ca.value)} мг`, norm: 'норма 1000 мг/день', score: r.micro.ca.score },
+    { key: 'k', label: 'Калий', value: `${Math.round(r.micro.k.value)} мг`, norm: 'норма 3500 мг/день', score: r.micro.k.score },
+    { key: 'mg', label: 'Магний', value: `${round1(r.micro.mg.value)} мг`, norm: 'норма 400 мг/день', score: r.micro.mg.score },
+    { key: 'vitc', label: 'Витамин C', value: `${round1(r.micro.vitc.value)} мг`, norm: 'норма 90 мг/день', score: r.micro.vitc.score },
+    { key: 'vita', label: 'Витамин A', value: `${Math.round(r.micro.vita.value)} мкг`, norm: 'норма 900 мкг/день', score: r.micro.vita.score },
   ]
+  const visibleRows = expanded ? rows : rows.slice(0, 3)
 
   return (
     <View
@@ -142,16 +162,39 @@ export function NutritionRating() {
               </Text>
               <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[11px] leading-snug text-bear-dim">
                 {caption}
+                {noFiber ? ' · без клетчатки балл не выше «Средне»' : ''}
               </Text>
             </View>
           </View>
 
-          {/* пять показателей: клетчатка, сахар, белки, жиры, углеводы */}
+          {/* показатели: по умолчанию 3 главные, остальные под «Подробнее» */}
           <View className="mt-4 gap-3">
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <MetricRow key={row.key} {...row} />
             ))}
           </View>
+
+          <Pressable
+            onPress={() => setExpanded((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? 'Свернуть подробности' : 'Показать подробности'}
+            className="mt-3 flex-row items-center justify-center gap-1 rounded-xl bg-white/5 py-2 active:bg-white/10"
+          >
+            {expanded ? (
+              <ChevronUp size={14} color="#AEB9D9" />
+            ) : (
+              <ChevronDown size={14} color="#AEB9D9" />
+            )}
+            <Text className="font-semibold text-[12px] text-bear-sub">
+              {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}
+            </Text>
+          </Pressable>
+
+          {expanded && microNote ? (
+            <Text className="mt-2 font-sans text-[10.5px] leading-[14px] text-bear-dim">
+              {microNote}
+            </Text>
+          ) : null}
         </>
       ) : (
         <Text className="mt-3 font-sans text-[12px] leading-relaxed text-bear-dim">

@@ -40,6 +40,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   const [p, setP] = useState(item?.p != null ? String(item.p) : '')
   const [f, setF] = useState(item?.f != null ? String(item.f) : '')
   const [c, setC] = useState(item?.c != null ? String(item.c) : '')
+  const [fib, setFib] = useState(item?.fib != null && item.fib > 0 ? String(item.fib) : '')
+  const [sug, setSug] = useState(item?.sug != null && item.sug > 0 ? String(item.sug) : '')
   const [looking, setLooking] = useState(false)
   const [fillHint, setFillHint] = useState('')
   const [desc, setDesc] = useState(item?.desc ?? '')
@@ -53,6 +55,9 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
     f: parseNum(f, item.f ?? 0, 0, 100),
     c: parseNum(c, item.c ?? 0, 0, 100),
   }
+  // клетчатка/сахар на 100 г — учитываются в рейтинге питания
+  const fibN = parseNum(fib, item.fib ?? 0, 0, 50)
+  const sugN = parseNum(sug, item.sug ?? 0, 0, 100)
   const gramsN = Math.max(1, Math.min(2000, Math.round(Number(grams) || 100)))
   const previewKcal = Math.max(1, Math.round((kcalN * gramsN) / 100))
   const previewBju = bjuForPortion(bjuN, gramsN)
@@ -72,7 +77,14 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
     if (!hit) return null
     const g = Math.max(1, Number(hit.grams) || 100)
     const per100 = (v) => Math.round(((Number(v) || 0) * 100) / g * 10) / 10
-    return { kcal100: per100(hit.kcal), p: per100(hit.p), f: per100(hit.f), c: per100(hit.c) }
+    return {
+      kcal100: per100(hit.kcal),
+      p: per100(hit.p),
+      f: per100(hit.f),
+      c: per100(hit.c),
+      fib: per100(hit.fib),
+      sug: per100(hit.sug),
+    }
   }
 
   // Кнопка «Посчитать КБЖУ»: 1) по составу из описания (бесплатно и точно),
@@ -91,6 +103,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
         setP(String(recipe.p))
         setF(String(recipe.f))
         setC(String(recipe.c))
+        setFib(String(recipe.fib ?? 0))
+        setSug(String(recipe.sug ?? 0))
         return
       }
       // 2) Название: сначала история дневника
@@ -106,6 +120,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
         setP(String(local.p))
         setF(String(local.f))
         setC(String(local.c))
+        setFib(String(local.fib ?? 0))
+        setSug(String(local.sug ?? 0))
         return
       }
       // 3) Название: встроенная база → память телефона → ИИ
@@ -114,6 +130,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
       setP(String(est.p))
       setF(String(est.f))
       setC(String(est.c))
+      setFib(String(est.fib ?? 0))
+      setSug(String(est.sug ?? 0))
     } catch (e) {
       setFillHint(String(e?.message || e))
     } finally {
@@ -128,6 +146,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
       p: bjuN.p,
       f: bjuN.f,
       c: bjuN.c,
+      fib: fibN,
+      sug: sugN,
       desc: desc.trim(),
     })
     onClose()
@@ -259,6 +279,36 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 Не знаете БЖУ? Подставить примерные по калориям
               </Text>
             </Pressable>
+
+            {/* Клетчатка и сахар на 100 г — для рейтинга питания */}
+            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+              Клетчатка · сахар на 100 г (для рейтинга)
+            </Text>
+            <View className="mt-1.5 flex-row gap-2">
+              {[
+                { label: 'клетчатка, г', value: fib, set: setFib },
+                { label: 'сахар, г', value: sug, set: setSug },
+              ].map((fld) => (
+                <View key={fld.label} className="min-w-0 flex-1">
+                  <TextInput
+                    value={fld.value}
+                    onChangeText={fld.set}
+                    keyboardType="number-pad"
+                    maxLength={5}
+                    accessibilityLabel={`${fld.label} на 100 грамм`}
+                    placeholder="0"
+                    placeholderTextColor="#5C668A"
+                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+                  />
+                  <Text className="mt-1 text-center font-sans text-[10px] text-bear-sub">
+                    {fld.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <Text className="mt-1.5 font-sans text-[10.5px] leading-[14px] text-bear-dim">
+              Необязательно, но с ними рейтинг питания станет точнее
+            </Text>
 
             {/* Живой предпросмотр за порцию */}
             <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">

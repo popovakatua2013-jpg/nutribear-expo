@@ -38,6 +38,15 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
   const [c, setC] = useState(String(entry?.c ?? 0))
   const [fib, setFib] = useState(entry?.fib ?? 0) // клетчатка/сахар — только пересчёт от граммовки
   const [sug, setSug] = useState(entry?.sug ?? 0)
+  // витамины/минералы — тоже только пересчёт от граммовки
+  const [micro, setMicro] = useState({
+    fe: entry?.fe ?? 0,
+    ca: entry?.ca ?? 0,
+    k: entry?.k ?? 0,
+    mg: entry?.mg ?? 0,
+    vitc: entry?.vitc ?? 0,
+    vita: entry?.vita ?? 0,
+  })
   const [desc, setDesc] = useState(entry?.desc ?? '')
   // Поля, которые пользователь вписал руками (при смене веса не трогаем)
   const [manual, setManual] = useState({ kcal: false, p: false, f: false, c: false })
@@ -56,10 +65,18 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
     setP((prev) => (manual.p ? prev : String(round1((entry.p || 0) * k))))
     setF((prev) => (manual.f ? prev : String(round1((entry.f || 0) * k))))
     setC((prev) => (manual.c ? prev : String(round1((entry.c || 0) * k))))
-    // клетчатка/сахар пересчитываем всегда (полей ручного ввода нет) —
-    // иначе в рейтинге питания останутся значения от старой граммовки
+    // клетчатка/сахар и витамины/минералы пересчитываем всегда (полей
+    // ручного ввода нет) — иначе в рейтинге останутся значения от старой граммовки
     setFib(round1((entry.fib || 0) * k))
     setSug(round1((entry.sug || 0) * k))
+    setMicro({
+      fe: round1((entry.fe || 0) * k),
+      ca: round1((entry.ca || 0) * k),
+      k: round1((entry.k || 0) * k),
+      mg: round1((entry.mg || 0) * k),
+      vitc: round1((entry.vitc || 0) * k),
+      vita: round1((entry.vita || 0) * k),
+    })
   }
 
   function save() {
@@ -72,6 +89,12 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
       c: parseNum(c, entry.c || 0, 0, 999),
       fib: Math.max(0, round1(fib || 0)),
       sug: Math.max(0, round1(sug || 0)),
+      fe: Math.max(0, round1(micro.fe || 0)),
+      ca: Math.max(0, round1(micro.ca || 0)),
+      k: Math.max(0, round1(micro.k || 0)),
+      mg: Math.max(0, round1(micro.mg || 0)),
+      vitc: Math.max(0, round1(micro.vitc || 0)),
+      vita: Math.max(0, round1(micro.vita || 0)),
       desc: desc.trim(),
     }
     updateEntry(mealId, entry.id, next)

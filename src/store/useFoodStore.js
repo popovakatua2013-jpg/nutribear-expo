@@ -29,13 +29,14 @@ export const useFoodStore = create(
 
       setGoal: (goal) => set({ goal }),
 
-      // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю)
+      // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю).
+      // mk — маркер «по продукту известны витамины/минералы» (продукты базы)
       addEntry: (mealId, { food, grams, kcal, desc }) => {
         const time = nowTime()
         const bju = bjuForPortion(food, grams)
         const entry = {
           id: makeId(), foodId: food.id, name: food.name, emoji: food.emoji,
-          grams, kcal, ...bju, time,
+          grams, kcal, ...bju, mk: food.mk, time,
           desc: String(desc || '').trim(),
         }
         set((state) => ({

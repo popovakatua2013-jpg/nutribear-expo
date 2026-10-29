@@ -10,6 +10,13 @@ export function toBuildItem(f) {
     c: f.c,
     fib: f.fib, // клетчатка/сахар на 100 г — нужны рейтингу питания
     sug: f.sug,
+    // витамины/минералы на 100 г (только у продуктов базы)
+    fe: f.fe,
+    ca: f.ca,
+    k: f.k,
+    mg: f.mg,
+    vitc: f.vitc,
+    vita: f.vita,
     defaultGrams: f.defaultGrams,
     source: 'local',
   }

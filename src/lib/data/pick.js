@@ -24,10 +24,22 @@ export function buildFood(item) {
     emoji: item.emoji || SOURCE_EMOJI[item.source] || '🍽️',
     kcal: item.kcal100 || 100,
     ...bju,
-    // клетчатка/сахар на 100 г — для рейтинга питания (у внешних
-    // источников и рецептов их нет — считаем нулями)
+    // клетчатка/сахар на 100 г — для рейтинга питания
     fib: item.fib || 0,
     sug: item.sug || 0,
+    // витамины/минералы на 100 г — есть только у продуктов базы;
+    // mk — маркер «данные о витаминах известны» (для честного веса
+    // микро-части в общем балле)
+    fe: item.fe || 0,
+    ca: item.ca || 0,
+    k: item.k || 0,
+    mg: item.mg || 0,
+    vitc: item.vitc || 0,
+    vita: item.vita || 0,
+    mk:
+      item.fe != null || item.ca != null || item.k != null || item.mg != null
+        ? 1
+        : undefined,
     defaultGrams: item.defaultGrams || 100,
     tags: [],
     source: item.source || 'ext',

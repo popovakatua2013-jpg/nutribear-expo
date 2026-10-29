@@ -46,6 +46,8 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
       p: next.p,
       f: next.f,
       c: next.c,
+      fib: next.fib, // клетчатка/сахар — для рейтинга питания
+      sug: next.sug,
       desc: next.desc,
     })
     toast({

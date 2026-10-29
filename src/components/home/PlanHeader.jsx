@@ -40,7 +40,8 @@ export function PlanHeader({ onViewAll, onHistory }) {
     rows.forEach((r) =>
       addEntry(r.mealId, {
         // в истории БЖУ хранится на порцию — пересобираем «на 100 г»
-        // (клетчатка/сахар тоже — иначе рейтинг дня по копии обнулится)
+        // (клетчатка/сахар и витамины/минералы тоже — иначе рейтинг
+        // дня по копии обнулится)
         food: {
           id: r.foodId,
           name: r.name,
@@ -50,6 +51,13 @@ export function PlanHeader({ onViewAll, onHistory }) {
           c: ((r.c || 0) * 100) / (r.grams || 1),
           fib: ((r.fib || 0) * 100) / (r.grams || 1),
           sug: ((r.sug || 0) * 100) / (r.grams || 1),
+          fe: ((r.fe || 0) * 100) / (r.grams || 1),
+          ca: ((r.ca || 0) * 100) / (r.grams || 1),
+          k: ((r.k || 0) * 100) / (r.grams || 1),
+          mg: ((r.mg || 0) * 100) / (r.grams || 1),
+          vitc: ((r.vitc || 0) * 100) / (r.grams || 1),
+          vita: ((r.vita || 0) * 100) / (r.grams || 1),
+          mk: r.mk,
         },
         grams: r.grams,
         kcal: r.kcal,

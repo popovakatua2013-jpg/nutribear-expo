@@ -2,6 +2,7 @@
 // p/f/c — белки, жиры, углеводы в граммах. tags — подходящие приёмы пищи.
 
 import { EXTRA_FOODS } from './foods-extra'
+import { MICROS } from './micros'
 
 const BASE_FOODS = [
   // ---------- Завтрак ----------
@@ -53,8 +54,12 @@ const BASE_FOODS = [
   { id: 'hummus-carrot', emoji: '🥕', name: 'Хумус с морковью', kcal: 166, p: 6, f: 9.5, c: 15, fib: 4.6, sug: 2.6, defaultGrams: 120, tags: ['snack'] },
 ]
 
-// Полная база: основные продукты + расширенный набор
-export const FOODS = [...BASE_FOODS, ...EXTRA_FOODS]
+// Полная база: основные продукты + расширенный набор.
+// Витамины/минералы (fe/ca/k/mg/vitc/vita) подмешиваются из micros.js —
+// их использует рейтинг питания.
+export const FOODS = [...BASE_FOODS, ...EXTRA_FOODS].map((f) =>
+  MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f
+)
 
 // Быстрый выбор граммовки в модалке добавления
 export const QUICK_GRAMS = [50, 100, 150, 200, 250]
