@@ -19,8 +19,9 @@ export function dayBju(entries) {
   return bjuSum(Object.values(entries).flat())
 }
 
-// Новая граммовка записи: ккал и БЖУ пересчитываются пропорционально.
-// Возвращает исходный объект без изменений, если это другая запись
+// Новая граммовка записи: ккал, БЖУ и клетчатка/сахар пересчитываются
+// пропорционально. Возвращает исходный объект без изменений, если это
+// другая запись (или запись без граммовки)
 export function rescaleEntry(entry, entryId, newGrams) {
   if (entry.id !== entryId || !entry.grams) return entry
   const k = newGrams / entry.grams
@@ -31,5 +32,7 @@ export function rescaleEntry(entry, entryId, newGrams) {
     p: round1((entry.p || 0) * k),
     f: round1((entry.f || 0) * k),
     c: round1((entry.c || 0) * k),
+    fib: round1((entry.fib || 0) * k),
+    sug: round1((entry.sug || 0) * k),
   }
 }

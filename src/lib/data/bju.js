@@ -14,13 +14,16 @@ export function estimateBju(kcal100) {
   }
 }
 
-// БЖУ порции: bju100 = {p, f, c} на 100 г → на заданный вес
+// БЖУ порции: bju100 = {p, f, c} на 100 г → на заданный вес.
+// Если в продукте есть клетчатка/сахар (fib/sug на 100 г) — они тоже пересчитываются
 export function bjuForPortion(bju100, grams) {
   const k = grams / 100
   return {
     p: round1((bju100?.p || 0) * k),
     f: round1((bju100?.f || 0) * k),
     c: round1((bju100?.c || 0) * k),
+    fib: round1((bju100?.fib || 0) * k),
+    sug: round1((bju100?.sug || 0) * k),
   }
 }
 

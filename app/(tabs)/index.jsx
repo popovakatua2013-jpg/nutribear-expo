@@ -1,8 +1,8 @@
 // Главный экран: 4 карточки показателей дня (шаги, калории, активность,
-// вода), сводка «Съедено за сегодня» над планом питания, приёмы пищи,
-// голодание, цели, цитата. Календарь и «Закономерности» — на вкладке
-// «Активность». Модалки: еда (хаб), все приёмы. Показатели дня пишутся
-// в историю — для отчётов.
+// вода), сводка «Съедено за сегодня», приёмы пищи и рейтинг питания
+// (клетчатка, сахар, нутриенты — за день и месяц). Блоки «Голодание»
+// и «Ваши цели» удалены по запросу. Модалки: еда (хаб), все приёмы.
+// Показатели дня пишутся в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
@@ -11,8 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { DailySummary } from '@/components/home/DailySummary'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
-import { FastingCard } from '@/components/home/FastingCard'
-import { GoalsCard } from '@/components/home/GoalsCard'
+import { NutritionRating } from '@/components/home/NutritionRating'
 import { QuoteCard } from '@/components/home/QuoteCard'
 import { AllMealsModal } from '@/components/home/AllMealsModal'
 import { AddFoodModal } from '@/components/food/AddFoodModal'
@@ -23,7 +22,6 @@ import { useExerciseStore, dayBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
-import { buildDashboard } from '@/lib/data/dashboard'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS } from '@/lib/data/activity'
 import { useToast } from '@/components/ui/Toast'
@@ -45,7 +43,6 @@ export default function HomeScreen() {
   const recordToday = useHistoryStore((s) => s.record)
   const goals = useGoalsStore((s) => s.goals)
 
-  const d = buildDashboard({ hydrated: true, entries, waterMl, extraSteps, goals })
   const consumed = totalConsumed(entries)
   const day = dayBju(entries)
   const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
@@ -149,11 +146,10 @@ export default function HomeScreen() {
           onViewAll={() => setAllOpen(true)}
         />
 
-        {/* Голодание и Ваши цели — по порядку на всю ширину */}
-        <FastingCard />
-        <GoalsCard d={d} />
+        {/* Рейтинг питания: клетчатка, сахар, нутриенты — день/месяц */}
+        <NutritionRating />
 
-        {/* Баннер-мотивация под «Вашими целями» */}
+        {/* Баннер-мотивация в конце экрана */}
         <QuoteCard />
       </ScrollView>
 
