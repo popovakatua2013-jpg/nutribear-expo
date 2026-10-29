@@ -24,7 +24,7 @@ function IconBtn({ onPress, label, children }) {
   )
 }
 
-export function PlanHeader({ onViewAll, onHistory }) {
+export function PlanHeader({ onViewAll, onHistory, rightInset = 0 }) {
   const addEntry = useFoodStore((s) => s.addEntry)
   const foodHistory = useFoodStore((s) => s.history)
   const { toast } = useToast()
@@ -67,7 +67,10 @@ export function PlanHeader({ onViewAll, onHistory }) {
         </Text>
       </View>
 
-      <View className="shrink-0 flex-row items-center gap-1.5">
+      <View
+        className="shrink-0 flex-row items-center gap-1.5"
+        style={{ marginRight: rightInset }}
+      >
         <IconBtn onPress={copyYesterday} label="Копировать вчерашний день">
           <Copy size={15} color="#AEB9D9" />
         </IconBtn>

@@ -4,7 +4,7 @@
 // друг друга: у каждого приёма своя высота.
 
 import { useState } from 'react'
-import { Text, View } from 'react-native'
+import { Image, Text, View } from 'react-native'
 import { MealCard } from './MealCard'
 import { PlanHeader } from './PlanHeader'
 import { HistoryModal } from './HistoryModal'
@@ -25,7 +25,21 @@ export function MealPlanCard({ onAdd, onRemove, onViewAll }) {
 
   return (
     <View accessibilityLabel="План питания на сегодня" className="rounded-3xl border border-bear-line bg-bear-card p-5">
-      <PlanHeader onViewAll={onViewAll} onHistory={() => setHistoryOpen(true)} />
+      {/* Круглая чаша в правом верхнем углу — как в макете */}
+      <Image
+        source={require('../../../assets/images/plan-bowl.png')}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 16,
+          width: 64,
+          height: 64,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.12)',
+        }}
+      />
+      <PlanHeader onViewAll={onViewAll} onHistory={() => setHistoryOpen(true)} rightInset={68} />
 
       <View className="gap-3">
         {MEALS.map((meal) => (

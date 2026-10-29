@@ -1,10 +1,9 @@
-// Карточка «Прогресс»: кольцо по 4 показателям, остаток до цели
-// по шагам и фиолетовый тренд шагов за неделю. «Все» → раздел Активность.
+// Карточка «Прогресс» по макету: кольцо процента шагов, остаток до цели,
+// неоновая иллюстрация кроссовок с сердцем и листьями. «Все» → раздел Активность.
 
-import { Pressable, Text, View } from 'react-native'
+import { Image, Pressable, Text, View } from 'react-native'
 import { Footprints, Maximize2 } from 'lucide-react-native'
 import { ProgressRing } from './ProgressRing'
-import { ProgressChart } from './ProgressChart'
 import { formatNum } from '@/lib/format'
 
 // Порядок дуг кольца — с верхней точки по часовой
@@ -56,7 +55,12 @@ export function ProgressCard({ d, onGoAll }) {
           </View>
         </View>
 
-        <ProgressChart steps={d.steps || 0} />
+        {/* Неоновые кроссовки — как в макете (сердце + листья зашиты в картинку) */}
+        <Image
+          source={require('../../../assets/images/sneakers.png')}
+          resizeMode="contain"
+          style={{ flex: 1, height: 116, marginLeft: 4 }}
+        />
       </View>
     </View>
   )
