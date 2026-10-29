@@ -5,8 +5,9 @@
 import { Pressable, Text, View } from 'react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
-import { fmtH, fmtClock } from '@/lib/data/fasting'
+import { fmtH, fmtClock, two } from '@/lib/data/fasting'
 
+const START_HOURS = [8, 10, 12] // час начала окна питания
 const PLANS = [14, 16] // часов голодания
 
 function Pill({ on, onPress, children }) {
@@ -26,10 +27,12 @@ function Pill({ on, onPress, children }) {
 }
 
 export function FastingControls({ running, planLabel }) {
+  const windowStart = useFastingStore((s) => s.windowStart)
   const windowHours = useFastingStore((s) => s.windowHours)
   const startedAt = useFastingStore((s) => s.startedAt)
   const start = useFastingStore((s) => s.start)
   const stop = useFastingStore((s) => s.stop)
+  const setWindowStart = useFastingStore((s) => s.setWindowStart)
   const setWindowHours = useFastingStore((s) => s.setWindowHours)
   const { toast } = useToast()
 
@@ -54,6 +57,12 @@ export function FastingControls({ running, planLabel }) {
     <View className="mt-4 gap-2">
       {!running && (
         <View className="flex-row flex-wrap items-center gap-2">
+          <Text className="font-semibold text-[11px] text-bear-sub2">Окно:</Text>
+          {START_HOURS.map((h) => (
+            <Pill key={h} on={windowStart === h} onPress={() => setWindowStart(h)}>
+              {`${two(h)}:00`}
+            </Pill>
+          ))}
           <Text className="font-semibold text-[11px] text-bear-sub2">План:</Text>
           {PLANS.map((h) => (
             <Pill

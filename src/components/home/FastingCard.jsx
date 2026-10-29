@@ -9,13 +9,14 @@ import { Timer } from 'lucide-react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { FastingControls } from './FastingControls'
 import { FastingRing } from './FastingRing'
-import { fmtH, fmtClock } from '@/lib/data/fasting'
+import { fmtH, fmtClock, two } from '@/lib/data/fasting'
 
 // Запас после конца голодания, прежде чем зависший сеанс
 // (начали вчера и забыли завершить) будет сброшен автоматически
 const STALE_MS = 12 * 3600000
 
 export function FastingCard() {
+  const windowStart = useFastingStore((s) => s.windowStart)
   const windowHours = useFastingStore((s) => s.windowHours)
   const startedAt = useFastingStore((s) => s.startedAt)
   const fastHours = useFastingStore((s) => s.fastHours)
@@ -61,6 +62,9 @@ export function FastingCard() {
   const eatClose = eatOpen + (24 - planFastH) * 3600000
   const winLabel = `${fmtClock(eatOpen)} – ${fmtClock(eatClose)}`
 
+  // Настроенное ежедневное окно (плашки «Окно: 08:00 / 10:00 / 12:00»)
+  const planWinLabel = `${two(windowStart)}:00 – ${two((windowStart + windowHours) % 24)}:00`
+
   return (
     <View
       accessibilityLabel="Интервальное голодание"
@@ -75,7 +79,7 @@ export function FastingCard() {
         </View>
         <View className="rounded-full bg-white/5 px-2.5 py-1">
           <Text className="font-semibold text-[10.5px] text-bear-soft">
-            {running ? `Окно ${winLabel}` : `Сейчас ${fmtClock(now)}`}
+            {running ? `Окно ${winLabel}` : `Окно ${planWinLabel}`}
           </Text>
         </View>
       </View>
@@ -101,9 +105,9 @@ export function FastingCard() {
         <View className="mt-4 flex-row items-center gap-4">
           <FastingRing pct={0} />
           <Text className="min-w-0 flex-1 font-sans text-[12px] leading-relaxed text-bear-sub2">
-            Начнёте сейчас ({fmtClock(now)}) — таймер пойдёт от текущего
-            времени: окно питания откроется в {fmtClock(eatOpen)} и закроется
-            в {fmtClock(eatClose)}. Вне окна — вода, чай и кофе без сахара.
+            Ешьте в окне {planWinLabel}, вне окна — вода, чай и кофе без
+            сахара. Сейчас {fmtClock(now)}: нажмите «Начать сейчас» — таймер
+            пойдёт от текущего времени, окно откроется в {fmtClock(eatOpen)}.
           </Text>
         </View>
       )}
