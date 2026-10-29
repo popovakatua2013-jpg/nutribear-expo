@@ -1,35 +1,65 @@
-// Карточка интервального голодания: таймер текущего сеанса
-// (16/8 и другие планы). Контролы — в FastingControls.
+// Карточка интервального голодания: круговой прогресс слева (как в
+// «Прогрессе»), фактические времена — справа. Все времена привязаны к
+// реальному моменту старта: начали в 01:00 при 16/8 → голодание
+// 01:00–17:00, окно питания 17:00–01:00. Контролы — в FastingControls.
 
 import { useEffect, useState } from 'react'
-import { Text, View } from 'react-native'
+import { AppState, Text, View } from 'react-native'
 import { Timer } from 'lucide-react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { FastingControls } from './FastingControls'
 import { FastingRing } from './FastingRing'
-import { two, fmtH } from '@/lib/data/fasting'
+import { fmtH, fmtClock } from '@/lib/data/fasting'
+
+// Запас после конца голодания, прежде чем зависший сеанс
+// (начали вчера и забыли завершить) будет сброшен автоматически
+const STALE_MS = 12 * 3600000
 
 export function FastingCard() {
-  const windowStart = useFastingStore((s) => s.windowStart)
   const windowHours = useFastingStore((s) => s.windowHours)
   const startedAt = useFastingStore((s) => s.startedAt)
+  const fastHours = useFastingStore((s) => s.fastHours)
 
   const [now, setNow] = useState(() => Date.now())
 
+  // Живой тик каждую секунду + мгновенное обновление после
+  // возврата приложения из фона (раньше показ замирал до 30 с)
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30000)
-    return () => clearInterval(id)
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') setNow(Date.now())
+    })
+    return () => {
+      clearInterval(id)
+      sub.remove()
+    }
   }, [])
 
-  const winLabel = `${two(windowStart)}:00 – ${two((windowStart + windowHours) % 24)}:00`
-  const planLabel = `${24 - windowHours}/${windowHours}`
   const running = !!startedAt
 
+  // План сеанса заморожен в момент старта — смена плашек на ходу
+  // больше не искажает процент и «осталось»
+  const planFastH = running && fastHours ? fastHours : 24 - windowHours
+  const planLabel = `${planFastH}/${24 - planFastH}`
+  const fastMs = planFastH * 3600000
+
   const elapsed = running ? now - startedAt : 0
-  const fastMs = (24 - windowHours) * 3600000
   const left = running ? Math.max(0, fastMs - elapsed) : 0
   const pct = running ? Math.min(100, Math.round((elapsed / fastMs) * 100)) : 0
   const fastDone = running && left === 0
+
+  // Зависший сеанс: если после конца голодания прошло больше STALE_MS,
+  // завершаем автоматически, чтобы блок не висел «выполненным» сутками
+  useEffect(() => {
+    if (running && elapsed > fastMs + STALE_MS) {
+      useFastingStore.getState().stop()
+    }
+  }, [running, elapsed, fastMs])
+
+  // Фактическое окно питания — от реального времени старта
+  const eatOpen = running ? startedAt + fastMs : now + planFastH * 3600000
+  const eatClose = eatOpen + (24 - planFastH) * 3600000
+  const winLabel = `${fmtClock(eatOpen)} – ${fmtClock(eatClose)}`
 
   return (
     <View
@@ -45,7 +75,7 @@ export function FastingCard() {
         </View>
         <View className="rounded-full bg-white/5 px-2.5 py-1">
           <Text className="font-semibold text-[10.5px] text-bear-soft">
-            Окно {winLabel}
+            {running ? `Окно ${winLabel}` : `Сейчас ${fmtClock(now)}`}
           </Text>
         </View>
       </View>
@@ -60,24 +90,25 @@ export function FastingCard() {
             <Text className="mt-0.5 font-bold text-[16px] text-[#A78BFA]">
               {fastDone ? `${planLabel} выполнено` : `осталось ${fmtH(left)}`}
             </Text>
-            {elapsed > 0 && (
-              <Text className="mt-2 px-1 font-sans text-[10px] text-bear-dim">
-                Прошло {fmtH(elapsed)} из {Math.round(fastMs / 3600000)} ч
-              </Text>
-            )}
+            <Text className="mt-2 font-sans text-[10px] text-bear-dim">
+              {fastDone
+                ? `Окно питания открыто до ${fmtClock(eatClose)}`
+                : `Прошло ${fmtH(elapsed)} из ${planFastH} ч · окно в ${fmtClock(eatOpen)}`}
+            </Text>
           </View>
         </View>
       ) : (
         <View className="mt-4 flex-row items-center gap-4">
           <FastingRing pct={0} />
           <Text className="min-w-0 flex-1 font-sans text-[12px] leading-relaxed text-bear-sub2">
-            Ешьте в окне {winLabel}, остальное время — вода, чай и кофе без
-            сахара. Нажмите «Начать», когда окно закроется.
+            Начнёте сейчас ({fmtClock(now)}) — таймер пойдёт от текущего
+            времени: окно питания откроется в {fmtClock(eatOpen)} и закроется
+            в {fmtClock(eatClose)}. Вне окна — вода, чай и кофе без сахара.
           </Text>
         </View>
       )}
 
-      <FastingControls running={running} winLabel={winLabel} planLabel={planLabel} />
+      <FastingControls running={running} planLabel={planLabel} />
     </View>
   )
 }

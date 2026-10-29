@@ -40,7 +40,7 @@ export function DataActions() {
     useGoalsStore.getState().reset()
     useShopStore.getState().resetAll()
     useExerciseStore.setState({ logs: {} })
-    useFastingStore.setState({ windowStart: 10, windowHours: 8, startedAt: null, laps: [] })
+    useFastingStore.setState({ windowStart: 10, windowHours: 8, fastHours: null, startedAt: null, laps: [] })
     useRecipesStore.setState({ items: [] })
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })

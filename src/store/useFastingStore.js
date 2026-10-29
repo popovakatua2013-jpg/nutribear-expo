@@ -11,13 +11,17 @@ export const useFastingStore = create(
     (set) => ({
       windowStart: 10, // час начала окна питания (0–23)
       windowHours: 8, // длительность окна питания (план 16/8)
+      fastHours: null, // длительность голодания сеанса — фиксируется в момент старта
       startedAt: null, // timestamp старта текущего голодания
       laps: [], // история: [{ from, to }]
 
       setWindowStart: (h) => set({ windowStart: h }),
       setWindowHours: (h) => set({ windowHours: h }),
 
-      start: () => set({ startedAt: Date.now() }),
+      // План сеанса замораживается при старте: смена плашек на ходу
+      // больше не искажает % и «осталось» идущего таймера
+      start: () =>
+        set((s) => ({ startedAt: Date.now(), fastHours: 24 - s.windowHours })),
 
       stop: () =>
         set((s) => ({
@@ -25,6 +29,7 @@ export const useFastingStore = create(
             ? [{ from: s.startedAt, to: Date.now() }, ...s.laps].slice(0, 30)
             : s.laps,
           startedAt: null,
+          fastHours: null,
         })),
     }),
     {
@@ -33,6 +38,7 @@ export const useFastingStore = create(
       partialize: (s) => ({
         windowStart: s.windowStart,
         windowHours: s.windowHours,
+        fastHours: s.fastHours,
         startedAt: s.startedAt,
         laps: s.laps,
       }),

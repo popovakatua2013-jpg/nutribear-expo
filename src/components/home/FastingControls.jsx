@@ -1,12 +1,12 @@
-// Контролы голодания: выбор старта окна и плана (14/10, 16/8),
-// кнопка «Начать / Завершить» с тостами.
+// Контролы голодания: выбор плана (14/10, 16/8) и кнопка
+// «Начать сейчас / Завершить» с тостами. Голодание всегда стартует
+// от текущего времени — окно питания вычисляется из фактического старта.
 
 import { Pressable, Text, View } from 'react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
-import { two, fmtH } from '@/lib/data/fasting'
+import { fmtH, fmtClock } from '@/lib/data/fasting'
 
-const START_HOURS = [8, 10, 12]
 const PLANS = [14, 16] // часов голодания
 
 function Pill({ on, onPress, children }) {
@@ -25,13 +25,11 @@ function Pill({ on, onPress, children }) {
   )
 }
 
-export function FastingControls({ running, winLabel, planLabel }) {
-  const windowStart = useFastingStore((s) => s.windowStart)
+export function FastingControls({ running, planLabel }) {
   const windowHours = useFastingStore((s) => s.windowHours)
   const startedAt = useFastingStore((s) => s.startedAt)
   const start = useFastingStore((s) => s.start)
   const stop = useFastingStore((s) => s.stop)
-  const setWindowStart = useFastingStore((s) => s.setWindowStart)
   const setWindowHours = useFastingStore((s) => s.setWindowHours)
   const { toast } = useToast()
 
@@ -41,10 +39,13 @@ export function FastingControls({ running, winLabel, planLabel }) {
       stop()
       toast({ title: '🍽 Голодание завершено', description: `Длилось ${dur}` })
     } else {
+      // Окно питания считаем от фактического момента старта:
+      // начали в 01:00 при 16/8 → окно откроется в 17:00
+      const openAt = Date.now() + windowHours * 3600000
       start()
       toast({
         title: '⏱ Голодание начато',
-        description: `Цель — ${planLabel}. Окно питания: ${winLabel}`,
+        description: `План ${planLabel}. Окно питания откроется в ${fmtClock(openAt)}`,
       })
     }
   }
@@ -53,12 +54,7 @@ export function FastingControls({ running, winLabel, planLabel }) {
     <View className="mt-4 gap-2">
       {!running && (
         <View className="flex-row flex-wrap items-center gap-2">
-          <Text className="font-semibold text-[11px] text-bear-sub2">Старт окна:</Text>
-          {START_HOURS.map((h) => (
-            <Pill key={h} on={windowStart === h} onPress={() => setWindowStart(h)}>
-              {`${two(h)}:00`}
-            </Pill>
-          ))}
+          <Text className="font-semibold text-[11px] text-bear-sub2">План:</Text>
           {PLANS.map((h) => (
             <Pill
               key={h}
@@ -79,7 +75,7 @@ export function FastingControls({ running, winLabel, planLabel }) {
         <Text
           className={`font-bold text-[13px] ${running ? 'text-bear-soft' : 'text-white'}`}
         >
-          {running ? 'Завершить' : 'Начать голодание'}
+          {running ? 'Завершить' : 'Начать сейчас'}
         </Text>
       </Pressable>
     </View>
