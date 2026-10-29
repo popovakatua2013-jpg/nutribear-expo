@@ -1,7 +1,7 @@
 // Главный экран: 4 карточки показателей дня (шаги, калории, активность,
-// вода — перенесены с вкладки «Активность»), закономерности, план питания,
-// голодание, цели, цитата. Календарь перенесён на вкладку «Активность».
-// Модалки: еда (хаб), все приёмы. Показатели дня (еда, вода, шаги) пишутся
+// вода), сводка «Съедено за сегодня» над планом питания, приёмы пищи,
+// голодание, цели, цитата. Календарь и «Закономерности» — на вкладке
+// «Активность». Модалки: еда (хаб), все приёмы. Показатели дня пишутся
 // в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
@@ -9,8 +9,8 @@ import { ScrollView, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
+import { DailySummary } from '@/components/home/DailySummary'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
-import { HomeInsights } from '@/components/home/HomeInsights'
 import { FastingCard } from '@/components/home/FastingCard'
 import { GoalsCard } from '@/components/home/GoalsCard'
 import { QuoteCard } from '@/components/home/QuoteCard'
@@ -24,7 +24,7 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { buildDashboard } from '@/lib/data/dashboard'
-import { totalConsumed } from '@/lib/data/diary'
+import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS } from '@/lib/data/activity'
 import { useToast } from '@/components/ui/Toast'
 
@@ -47,6 +47,7 @@ export default function HomeScreen() {
 
   const d = buildDashboard({ hydrated: true, entries, waterMl, extraSteps, goals })
   const consumed = totalConsumed(entries)
+  const day = dayBju(entries)
   const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
   const glasses = Math.round(waterMl / WATER_GLASS)
   const mealCount = Object.values(entries).flat().length
@@ -138,10 +139,10 @@ export default function HomeScreen() {
           onAddWater={handleAddWater}
         />
 
-        {/* Закономерности: мишка подмечает связи в данных */}
-        <HomeInsights />
+        {/* Съедено за сегодня — сводка над планом питания */}
+        <DailySummary consumed={consumed} target={goals.kcal} bju={day} />
 
-        {/* План питания: 4 приёма пищи + единая сводка дня внизу */}
+        {/* План питания: 4 приёма пищи */}
         <MealPlanCard
           onAdd={openAdd}
           onRemove={removeEntry}

@@ -1,13 +1,14 @@
 // Экран «Активность»: календарь (перенесён с главной), баннер с мишкой,
-// общая сводка, тренировки и отчёты. Карточки показателей (шаги, калории,
-// вода, активность) перенесены на главную. Все показатели дня автоматически
-// пишутся в историю (useHistoryStore) — поэтому графики и отчёты видят
-// реальные данные за прошедшие дни.
+// закономерности (перенесены с главной), общая сводка, тренировки и отчёты.
+// Карточки показателей (шаги, калории, вода, активность) перенесены на главную.
+// Все показатели дня автоматически пишутся в историю (useHistoryStore) —
+// поэтому графики и отчёты видят реальные данные за прошедшие дни.
 
 import { useEffect } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
+import { HomeInsights } from '@/components/home/HomeInsights'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
 import { SummarySection } from '@/components/activity/SummarySection'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
@@ -65,6 +66,9 @@ export default function ActivityScreen() {
         <HomeCalendar />
 
         <MotivationBanner />
+
+        {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
+        <HomeInsights />
 
         <SummarySection today={today} />
 
