@@ -1,7 +1,7 @@
-// Карточка «Календарь»: сетка-статистика (цвет = норма калорий, точки =
-// привычки), серия «дней подряд» в шапке, тап по дню — сводка дня.
-// По умолчанию календарь свёрнут в компактную строку текущей недели —
-// только числа; кнопка ⌄ разворачивает весь месяц.
+// Блок «Календарь» в стиле «тетради в линейку»: свёрнутый вид — тонкая
+// строка недели (день + число + точки) и одна горизонтальная линия под
+// ней, без карточки и рамки; тап по строке разворачивает полный месяц
+// в карточке. Тап по дню — сводка дня.
 // За новый личный рекорд серии начисляются монетки (один раз за рекорд).
 
 import { useEffect, useState } from 'react'
@@ -111,44 +111,69 @@ export function HomeCalendar() {
   return (
     <View
       accessibilityLabel="Календарь"
-      className="rounded-3xl border border-bear-line bg-bear-card px-4 py-3.5"
+      className={
+        open
+          ? 'rounded-3xl border border-bear-line bg-bear-card px-4 py-3.5'
+          : ''
+      }
     >
-      {/* Заголовок + серия дней (в свёрнутом виде — месяц в этой же строке) */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2">
-          <CalendarDays size={18} color="#A78BFA" />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-            Календарь
-          </Text>
-          {!open && (
-            <Text className="font-medium text-[12px] text-bear-dim">
+      {/* Шапка: в свёрнутом виде — тонкая строка-тетрадь, вся строка нажимается */}
+      {open ? (
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <CalendarDays size={18} color="#A78BFA" />
+            <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+              Календарь
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-1">
+            {streak > 1 && (
+              <View className="flex-row items-center gap-1 rounded-full bg-amber-400/10 px-2.5 py-1">
+                <Flame size={13} color="#FBBF24" />
+                <Text className="font-bold text-[11px] text-amber-300">
+                  {streak} дн. подряд{record > streak ? ` · рекорд ${record}` : ''}
+                </Text>
+              </View>
+            )}
+            <Pressable
+              onPress={toggleOpen}
+              accessibilityLabel="Свернуть календарь"
+              accessibilityRole="button"
+              className={chevronBtn}
+            >
+              <ChevronUp size={16} color="#8A94B3" />
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable
+          onPress={toggleOpen}
+          accessibilityLabel="Развернуть календарь"
+          accessibilityRole="button"
+          className="flex-row items-center justify-between active:opacity-70"
+        >
+          <View className="flex-row items-center gap-1.5">
+            <CalendarDays size={13} color="#A78BFA" />
+            <Text className="font-bold text-[13px] tracking-tight text-bear-text">
+              Календарь
+            </Text>
+            <Text className="font-medium text-[11px] text-bear-dim">
               · {MONTHS[view.m]} {view.y}
             </Text>
-          )}
-        </View>
-        <View className="flex-row items-center gap-1">
-          {streak > 1 && (
-            <View className="flex-row items-center gap-1 rounded-full bg-amber-400/10 px-2.5 py-1">
-              <Flame size={13} color="#FBBF24" />
-              <Text className="font-bold text-[11px] text-amber-300">
-                {streak} дн. подряд{record > streak ? ` · рекорд ${record}` : ''}
-              </Text>
-            </View>
-          )}
-          <Pressable
-            onPress={toggleOpen}
-            accessibilityLabel={open ? 'Свернуть календарь' : 'Развернуть календарь'}
-            accessibilityRole="button"
-            className={chevronBtn}
-          >
-            {open ? (
-              <ChevronUp size={16} color="#8A94B3" />
-            ) : (
-              <ChevronDown size={16} color="#8A94B3" />
+          </View>
+          <View className="flex-row items-center gap-1.5">
+            {streak > 1 && (
+              <View className="flex-row items-center gap-1 rounded-full bg-amber-400/10 px-2 py-0.5">
+                <Flame size={11} color="#FBBF24" />
+                <Text className="font-bold text-[10px] text-amber-300">
+                  {streak} дн.{record > streak ? ` · рек. ${record}` : ''}
+                </Text>
+              </View>
             )}
-          </Pressable>
-        </View>
-      </View>
+            <ChevronDown size={14} color="#8A94B3" />
+          </View>
+        </Pressable>
+      )}
 
       {/* Навигация по месяцу — только в развёрнутом виде */}
       {open && (
@@ -177,8 +202,8 @@ export function HomeCalendar() {
         </View>
       )}
 
-      {/* Месячная сводка: цветные цифры по отображаемому месяцу */}
-      {month.ok + month.over + month.workouts + month.weighings > 0 && (
+      {/* Месячная сводка — только в развёрнутом виде */}
+      {open && month.ok + month.over + month.workouts + month.weighings > 0 && (
         <Text
           className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-dim"
           numberOfLines={1}
@@ -201,11 +226,12 @@ export function HomeCalendar() {
         </Text>
       )}
 
-      {/* Сетка-статистика: свёрнуто — строка текущей недели, развёрнуто — месяц */}
-      <View className="mt-1.5">
-        <WeekdayRow />
-        <View className="pt-1.5">
-          {open ? (
+      {/* Сетка-статистика: развёрнуто — месяц с шапкой дней, свёрнуто —
+          тетрадная строка недели и линейка под ней */}
+      {open ? (
+        <View className="mt-1.5">
+          <WeekdayRow />
+          <View className="pt-1.5">
             <DaysGrid
               view={view}
               today={today}
@@ -217,20 +243,30 @@ export function HomeCalendar() {
               firstKey={firstKey}
               onSelectDay={setDayKey}
             />
-          ) : (
-            <WeekStrip
-              today={today}
-              history={days}
-              goals={goals}
-              weights={weights}
-              exLogs={exLogs}
-              foodHistory={foodHistory}
-              firstKey={firstKey}
-              onSelectDay={setDayKey}
-            />
-          )}
+          </View>
         </View>
-      </View>
+      ) : (
+        <View className="mt-1">
+          <WeekStrip
+            today={today}
+            history={days}
+            goals={goals}
+            weights={weights}
+            exLogs={exLogs}
+            foodHistory={foodHistory}
+            firstKey={firstKey}
+            onSelectDay={setDayKey}
+          />
+          {/* линия-«линейка» под строкой, как на странице тетради */}
+          <View
+            style={{
+              height: 1,
+              backgroundColor: 'rgba(255,255,255,0.12)',
+              marginTop: 5,
+            }}
+          />
+        </View>
+      )}
 
       {/* Легенда */}
       {open && (
