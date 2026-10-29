@@ -18,7 +18,7 @@
 $ErrorActionPreference = 'Stop'
 $RepoUrl = 'https://github.com/popovakatua2013-jpg/nutribear-expo.git'
 
-function Pause-Exit([int]$code) {
+function Wait-Exit([int]$code) {
     Read-Host 'Нажмите Enter для выхода'
     exit $code
 }
@@ -33,7 +33,7 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host '    Установите его командой:'
     Write-Host '    winget install --id Git.Git -e --source winget'
     Write-Host '    Затем закройте и заново откройте это окно.'
-    Pause-Exit 1
+    Wait-Exit 1
 }
 
 # --- 2. Находим папку проекта (там, где package.json и папка src) ---
@@ -56,7 +56,7 @@ if (-not (Test-Project $proj)) {
     Write-Host ''
     Write-Host '[!] Не нашёл папку проекта (нужны package.json и папка src).' -ForegroundColor Yellow
     Write-Host '    Откройте терминал в папке проекта и запустите скрипт оттуда.'
-    Pause-Exit 1
+    Wait-Exit 1
 }
 Set-Location $proj
 Write-Host ''
@@ -85,13 +85,13 @@ Write-Host 'Проверяю обновления на GitHub...' -ForegroundCol
 git fetch origin
 if ($LASTEXITCODE -ne 0) {
     Write-Host '[!] Не удалось связаться с GitHub. Проверьте интернет и запустите ещё раз.' -ForegroundColor Yellow
-    Pause-Exit 1
+    Wait-Exit 1
 }
 
 $remote = git rev-parse origin/main
 if (-not $remote) {
     Write-Host '[!] На GitHub не найдена ветка main. Напишите мне об этом.' -ForegroundColor Yellow
-    Pause-Exit 1
+    Wait-Exit 1
 }
 $local = ''
 git rev-parse -q --verify HEAD | Out-Null
