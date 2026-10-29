@@ -1,5 +1,5 @@
 // Экран «Активность»: баннер с мишкой, карточки показателей за сегодня
-// (шаги, калории, опыт, вода), общая сводка, тренировки и отчёты.
+// (шаги, калории, вода, активность), общая сводка, тренировки и отчёты.
 // Все показатели дня автоматически пишутся в историю (useHistoryStore) —
 // поэтому графики и отчёты видят реальные данные за прошедшие дни.
 
@@ -46,6 +46,12 @@ export default function ActivityScreen() {
   const waterPct = Math.min(
     100,
     Math.round((waterMl / Math.max(1, goals.waterMl)) * 100)
+  )
+  // Активность (минуты): ~100 шагов ≈ 1 минута ходьбы (как в dashboard.js)
+  const minutes = Math.round(steps / 100)
+  const minutesPct = Math.min(
+    100,
+    Math.round((minutes / Math.max(1, goals.minutes)) * 100)
   )
 
   // Пишем день в историю — графики и отчёты строятся по этим данным
@@ -95,7 +101,9 @@ export default function ActivityScreen() {
           steps={steps}
           kcal={kcal}
           burned={burned}
-          xp={xp}
+          minutes={minutes}
+          minutesGoal={goals.minutes}
+          minutesPct={minutesPct}
           waterPct={waterPct}
           waterMl={waterMl}
           stepsGoal={goals.steps}

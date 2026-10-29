@@ -1,10 +1,10 @@
-// Четыре карточки показателей за сегодня: шаги, калории, опыт, вода.
+// Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
 // У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
 // с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Footprints, Flame, Star, Droplets, Plus } from 'lucide-react-native'
+import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 
 function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel }) {
@@ -52,7 +52,8 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel }) {
 }
 
 export function ActivityStats({
-  steps, kcal, burned, xp, waterPct, waterMl, stepsGoal, waterGoalMl,
+  steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
+  stepsGoal, waterGoalMl,
   onAddSteps, onAddWater,
 }) {
   const cards = [
@@ -88,10 +89,10 @@ export function ActivityStats({
         bg: 'bg-violet-400/[0.06]',
         icon: ['#A78BFA', '#9333EA'],
       },
-      Icon: Star,
-      label: 'Опыт',
-      value: `+${formatNum(xp)}`,
-      sub: 'за сегодня!',
+      Icon: Dumbbell,
+      label: 'Активность',
+      value: `${minutes} мин`,
+      sub: `из ${formatNum(minutesGoal)} мин · ${minutesPct}%`,
     },
     {
       colors: {

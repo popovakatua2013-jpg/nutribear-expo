@@ -1,22 +1,20 @@
-// Главный экран: мишка-герой, календарь, сводка, показатели, план питания,
-// прогресс, голодание, цели, цитата. Модалки: еда (хаб), все приёмы, вода.
-// Показатели дня (еда, вода, шаги) пишутся в историю — для отчётов.
+// Главный экран: мишка-герой, календарь, сводка, план питания,
+// голодание, цели, цитата. Метрики (шаги, вода, активность) — на вкладке
+// «Активность» (4 карточки), чтобы не дублировать числа. Модалки: еда (хаб),
+// все приёмы. Показатели дня (еда, вода, шаги) пишутся в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { useFocusEffect, useRouter } from 'expo-router'
+import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DailySummary } from '@/components/home/DailySummary'
-import { HomeStats } from '@/components/home/HomeStats'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
-import { ProgressCard } from '@/components/home/ProgressCard'
 import { FastingCard } from '@/components/home/FastingCard'
 import { GoalsCard } from '@/components/home/GoalsCard'
 import { QuoteCard } from '@/components/home/QuoteCard'
 import { AllMealsModal } from '@/components/home/AllMealsModal'
-import { WaterModal } from '@/components/home/WaterModal'
 import { AddFoodModal } from '@/components/food/AddFoodModal'
 import { AiChat } from '@/components/home/AiChat'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -25,18 +23,14 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { buildDashboard } from '@/lib/data/dashboard'
-import { targetsFromKcal } from '@/lib/data/goals'
 import { totalConsumed } from '@/lib/data/diary'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
-  const router = useRouter()
   const [addOpen, setAddOpen] = useState(false)
-  const [waterOpen, setWaterOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
 
-  const goal = useFoodStore((s) => s.goal)
   const entries = useFoodStore((s) => s.entries)
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const waterMl = useActivityStore((s) => s.waterMl)
@@ -45,7 +39,6 @@ export default function HomeScreen() {
   const goals = useGoalsStore((s) => s.goals)
 
   const d = buildDashboard({ hydrated: true, entries, waterMl, extraSteps, goals })
-  const targets = targetsFromKcal(goals.kcal)
   const consumed = totalConsumed(entries)
 
   // Съеденное, вода и шаги за сегодня — в дневную историю (для отчётов)
@@ -70,7 +63,6 @@ export default function HomeScreen() {
     useCallback(
       () => () => {
         setAddOpen(false)
-        setWaterOpen(false)
         setAllOpen(false)
       },
       []
@@ -96,20 +88,11 @@ export default function HomeScreen() {
 
         <DailySummary consumed={consumed} target={goals.kcal} />
 
-        <HomeStats
-          d={d}
-          onGoWater={() => setWaterOpen(true)}
-          onGoMeals={() => openAdd('breakfast')}
-          onGoActivity={() => router.navigate('/activity')}
-        />
-
         <MealPlanCard
           onAdd={openAdd}
           onRemove={removeEntry}
           onViewAll={() => setAllOpen(true)}
         />
-
-        <ProgressCard d={d} onGoAll={() => router.navigate('/activity')} />
 
         {/* Голодание и Ваши цели — по порядку на всю ширину */}
         <FastingCard />
@@ -137,13 +120,6 @@ export default function HomeScreen() {
           setAllOpen(false)
           openAdd(id)
         }}
-      />
-
-      <WaterModal
-        open={waterOpen}
-        onClose={() => setWaterOpen(false)}
-        goalMl={d.waterGoalMl}
-        ml={d.ml}
       />
     </View>
   )
