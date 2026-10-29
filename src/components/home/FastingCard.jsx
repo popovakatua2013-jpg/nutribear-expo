@@ -6,6 +6,7 @@ import { Text, View } from 'react-native'
 import { Timer } from 'lucide-react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { FastingControls } from './FastingControls'
+import { FastingRing } from './FastingRing'
 import { two, fmtH } from '@/lib/data/fasting'
 
 export function FastingCard() {
@@ -50,35 +51,30 @@ export function FastingCard() {
       </View>
 
       {running ? (
-        <View className="mt-3">
-          <View className="flex-row items-baseline justify-between">
+        <View className="mt-4 flex-row items-center gap-4">
+          <FastingRing pct={pct} />
+          <View className="min-w-0 flex-1">
             <Text className="font-semibold text-[13px] text-[#AAB4D4]">
               {fastDone ? '🎉 Окно голодания пройдено!' : 'Голодание идёт'}
             </Text>
-            <Text className="font-bold text-[13px] text-[#A78BFA]">
+            <Text className="mt-0.5 font-bold text-[16px] text-[#A78BFA]">
               {fastDone ? `${planLabel} выполнено` : `осталось ${fmtH(left)}`}
             </Text>
+            {elapsed > 0 && (
+              <Text className="mt-2 px-1 font-sans text-[10px] text-bear-dim">
+                Прошло {fmtH(elapsed)} из {Math.round(fastMs / 3600000)} ч
+              </Text>
+            )}
           </View>
-          <View className="mt-2 h-2 overflow-hidden rounded-full bg-white/5">
-            <View
-              className="h-full rounded-full"
-              style={{
-                width: `${pct}%`,
-                backgroundColor: '#7B6CF6',
-              }}
-            />
-          </View>
-          {elapsed > 0 && (
-            <Text className="mt-2 px-1 font-sans text-[10px] text-bear-dim">
-              Прошло {fmtH(elapsed)} из {Math.round(fastMs / 3600000)} ч
-            </Text>
-          )}
         </View>
       ) : (
-        <Text className="mt-3 font-sans text-[12px] leading-relaxed text-bear-sub2">
-          Ешьте в окне {winLabel}, остальное время — вода, чай и кофе без
-          сахара. Нажмите «Начать», когда окно закроется.
-        </Text>
+        <View className="mt-4 flex-row items-center gap-4">
+          <FastingRing pct={0} />
+          <Text className="min-w-0 flex-1 font-sans text-[12px] leading-relaxed text-bear-sub2">
+            Ешьте в окне {winLabel}, остальное время — вода, чай и кофе без
+            сахара. Нажмите «Начать», когда окно закроется.
+          </Text>
+        </View>
       )}
 
       <FastingControls running={running} winLabel={winLabel} planLabel={planLabel} />
