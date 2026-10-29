@@ -1,14 +1,15 @@
-// Главный экран: мишка-герой, календарь, сводка, план питания,
-// голодание, цели, цитата. Метрики (шаги, вода, активность) — на вкладке
-// «Активность» (4 карточки), чтобы не дублировать числа. Модалки: еда (хаб),
-// все приёмы. Показатели дня (еда, вода, шаги) пишутся в историю — для отчётов.
+// Главный экран: 4 карточки показателей дня (шаги, калории, активность,
+// вода — перенесены с вкладки «Активность»), закономерности, план питания,
+// голодание, цели, цитата. Календарь перенесён на вкладку «Активность».
+// Модалки: еда (хаб), все приёмы. Показатели дня (еда, вода, шаги) пишутся
+// в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ActivityStats } from '@/components/activity/ActivityStats'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
-import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
 import { FastingCard } from '@/components/home/FastingCard'
 import { GoalsCard } from '@/components/home/GoalsCard'
@@ -18,14 +19,18 @@ import { AddFoodModal } from '@/components/food/AddFoodModal'
 import { AiChat } from '@/components/home/AiChat'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore } from '@/store/useActivityStore'
+import { useExerciseStore, dayBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { buildDashboard } from '@/lib/data/dashboard'
 import { totalConsumed } from '@/lib/data/diary'
+import { WATER_GLASS } from '@/lib/data/activity'
+import { useToast } from '@/components/ui/Toast'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
+  const { toast } = useToast()
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
@@ -34,16 +39,54 @@ export default function HomeScreen() {
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const waterMl = useActivityStore((s) => s.waterMl)
   const extraSteps = useActivityStore((s) => s.extraSteps)
+  const addWater = useActivityStore((s) => s.addWater)
+  const addSteps = useActivityStore((s) => s.addSteps)
+  const exLogs = useExerciseStore((s) => s.logs)
   const recordToday = useHistoryStore((s) => s.record)
   const goals = useGoalsStore((s) => s.goals)
 
   const d = buildDashboard({ hydrated: true, entries, waterMl, extraSteps, goals })
   const consumed = totalConsumed(entries)
+  const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
+  const glasses = Math.round(waterMl / WATER_GLASS)
+  const mealCount = Object.values(entries).flat().length
+  // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (1 ккал ≈ 0.1 опыта)
+  const xp =
+    Math.round(extraSteps / 500) * 2 + glasses * 5 + mealCount * 10 + Math.round(burned / 10)
+  const waterPct = Math.min(
+    100,
+    Math.round((waterMl / Math.max(1, goals.waterMl)) * 100)
+  )
+  // Активность (минуты): ~100 шагов ≈ 1 минута ходьбы (как в dashboard.js)
+  const minutes = Math.round(extraSteps / 100)
+  const minutesPct = Math.min(
+    100,
+    Math.round((minutes / Math.max(1, goals.minutes)) * 100)
+  )
 
   // Съеденное, вода и шаги за сегодня — в дневную историю (для отчётов)
   useEffect(() => {
-    recordToday(dayKeyOf(), { kcal: consumed, waterMl, steps: extraSteps })
-  }, [consumed, waterMl, extraSteps, recordToday])
+    recordToday(dayKeyOf(), { kcal: consumed, waterMl, steps: extraSteps, burned, xp })
+  }, [consumed, waterMl, extraSteps, burned, xp, recordToday])
+
+  function handleAddWater() {
+    addWater(WATER_GLASS)
+    toast({
+      title: '💧 Стакан воды выпит!',
+      description: `+${WATER_GLASS} мл · ${Math.min(
+        100,
+        Math.round(((waterMl + WATER_GLASS) / Math.max(1, goals.waterMl)) * 100)
+      )}% нормы`,
+    })
+  }
+
+  function handleAddSteps() {
+    addSteps(1000)
+    toast({
+      title: '🚶 +1 000 шагов!',
+      description: 'Маленькие шаги приводят к большим результатам',
+    })
+  }
 
   // Активация онбординга: «Добавить свой завтрак» — окно открытия блюда
   const openBreakfast = useOnboardingStore((s) => s.openBreakfast)
@@ -79,8 +122,21 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Календарь: месяц и дни недели (блок с медведем удалён по запросу) */}
-        <HomeCalendar />
+        {/* 4 карточки показателей дня: шаги, калории, активность, вода */}
+        <ActivityStats
+          steps={extraSteps}
+          kcal={consumed}
+          burned={burned}
+          minutes={minutes}
+          minutesGoal={goals.minutes}
+          minutesPct={minutesPct}
+          waterPct={waterPct}
+          waterMl={waterMl}
+          stepsGoal={goals.steps}
+          waterGoalMl={goals.waterMl}
+          onAddSteps={handleAddSteps}
+          onAddWater={handleAddWater}
+        />
 
         {/* Закономерности: мишка подмечает связи в данных */}
         <HomeInsights />
