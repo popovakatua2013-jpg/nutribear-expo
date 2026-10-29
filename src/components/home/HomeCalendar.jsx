@@ -2,9 +2,8 @@
 // строка недели (день + число + точки) и одна горизонтальная линия под
 // ней, без карточки и рамки; тап по строке разворачивает полный месяц
 // в карточке. Тап по дню — сводка дня.
-// За новый личный рекорд серии начисляются монетки (один раз за рекорд).
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import {
   CalendarDays,
@@ -23,9 +22,6 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useShopStore } from '@/store/useShopStore'
-import { useStreakStore } from '@/store/useStreakStore'
-import { useToast } from '../ui/Toast'
 
 const MONTHS = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -43,7 +39,6 @@ function plural(n, one, few, many) {
 
 export function HomeCalendar() {
   const today = new Date()
-  const { toast } = useToast()
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() })
   // По умолчанию свёрнут: компактная неделя, чтобы календарь не съедал экран
   const [open, setOpen] = useState(false)
@@ -54,8 +49,6 @@ export function HomeCalendar() {
   const weights = useProfileStore((s) => s.weights)
   const exLogs = useExerciseStore((s) => s.logs)
   const goals = useGoalsStore((s) => s.goals)
-  const earn = useShopStore((s) => s.earn)
-  const bump = useStreakStore((s) => s.bump)
 
   const streak = calcStreak(days, foodHistory, null)
   const record = bestStreak(days, foodHistory)
@@ -72,20 +65,6 @@ export function HomeCalendar() {
     setOpen((v) => !v)
     if (open) setView({ y: today.getFullYear(), m: today.getMonth() })
   }
-
-  // Бонус за новый личный рекорд серии — начисляется один раз за рекорд
-  useEffect(() => {
-    const gain = bump(streak)
-    if (gain > 0) {
-      earn(gain)
-      toast({
-        title: `🔥 Серия ${streak} дней — новый рекорд!`,
-        description: `Начислено ${gain} монеток 🪙`,
-      })
-    }
-    // bump/earn стабильны (zustand), отслеживаем только длину серии
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streak])
 
   const shift = (delta) =>
     setView(({ y, m }) => {

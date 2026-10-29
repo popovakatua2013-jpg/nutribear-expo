@@ -50,7 +50,7 @@ export function DataPortability() {
             Экспорт всех данных (JSON)
           </Text>
           <Text className="font-sans text-[11px] text-bear-sub2">
-            профиль, дневник, активность, монетки
+            профиль, дневник, активность
           </Text>
         </View>
       </Pressable>

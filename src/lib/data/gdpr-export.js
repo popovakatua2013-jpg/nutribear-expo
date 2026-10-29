@@ -6,7 +6,6 @@ import { Share } from 'react-native'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useProfileStore } from '@/store/useProfileStore'
-import { useShopStore } from '@/store/useShopStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
@@ -27,7 +26,6 @@ export function collectAll() {
     exercise: useExerciseStore.getState(),
     fasting: useFastingStore.getState(),
     recipes: useRecipesStore.getState(),
-    shop: useShopStore.getState(),
   }
 }
 

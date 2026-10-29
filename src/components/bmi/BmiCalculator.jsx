@@ -12,7 +12,6 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useToast } from '../ui/Toast'
-import { EARN } from '@/lib/data/shop'
 import {
   calcBmi,
   bmiCategory,
@@ -114,7 +113,7 @@ export function BmiCalculator() {
       weightChanged
         ? {
             title: '✅ Данные сохранены',
-            description: `${fmtDecimal(wNum)} кг · ИМТ обновлён · +${EARN.weight} монеток`,
+            description: `${fmtDecimal(wNum)} кг · ИМТ обновлён`,
           }
         : { title: '✅ Данные сохранены', description: 'Профиль обновлён — ИМТ пересчитан' }
     )

@@ -7,7 +7,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { DailySummary } from '@/components/home/DailySummary'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
@@ -86,8 +85,7 @@ export default function HomeScreen() {
         {/* Закономерности: мишка подмечает связи в данных */}
         <HomeInsights />
 
-        <DailySummary consumed={consumed} target={goals.kcal} />
-
+        {/* План питания: 4 приёма пищи + единая сводка дня внизу */}
         <MealPlanCard
           onAdd={openAdd}
           onRemove={removeEntry}

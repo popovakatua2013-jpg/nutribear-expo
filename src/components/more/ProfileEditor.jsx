@@ -6,7 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { UserRound } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
-import { EARN } from '@/lib/data/shop'
 import { fmtDecimal } from '@/lib/data/bmi'
 
 const FIELD =
@@ -46,7 +45,7 @@ export function ProfileEditor() {
       title: '✅ Профиль сохранён',
       description:
         weightChanged
-          ? `Вес ${fmtDecimal(w)} кг · +${EARN.weight} монеток`
+          ? `Вес ${fmtDecimal(w)} кг`
           : `${current.name.trim() || 'Без имени'} · ${h} см · ${fmtDecimal(weightKg)} кг`,
     })
   }

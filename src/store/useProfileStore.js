@@ -7,8 +7,6 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
-import { useShopStore } from './useShopStore'
-import { EARN } from '@/lib/data/shop'
 
 export const useProfileStore = create(
   persist(
@@ -37,8 +35,6 @@ export const useProfileStore = create(
             ...s.weights,
           ],
         }))
-        // +10 монеток за запись веса
-        useShopStore.getState().earn(EARN.weight)
       },
 
       // Изменить измерение веса (например, опечатались в цифре).

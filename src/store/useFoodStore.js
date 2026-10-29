@@ -8,8 +8,6 @@ import { DEFAULT_GOAL } from '@/lib/data/goals'
 import { makeId } from '@/lib/format'
 import { bjuForPortion } from '@/lib/data/bju'
 import { rescaleEntry } from '@/lib/data/diary'
-import { useShopStore } from './useShopStore'
-import { EARN } from '@/lib/data/shop'
 import { dayKeyOf } from './useHistoryStore'
 
 const EMPTY_ENTRIES = { breakfast: [], lunch: [], dinner: [], snack: [] }
@@ -50,8 +48,6 @@ export const useFoodStore = create(
             ...state.history,
           ].slice(0, 300),
         }))
-        // +3 монетки за запись в дневнике
-        useShopStore.getState().earn(EARN.meal)
       },
 
       // Изменить граммовку записи: ккал и БЖУ пересчитываются пропорционально

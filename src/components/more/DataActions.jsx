@@ -6,7 +6,6 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { useActivityStore, DEFAULT_VESSELS } from '@/store/useActivityStore'
 import { useProfileStore } from '@/store/useProfileStore'
-import { useShopStore } from '@/store/useShopStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
@@ -29,7 +28,7 @@ export function DataActions() {
     resetToday()
     toast({
       title: '🌅 Новый день начат!',
-      description: 'Дневник питания, вода и шаги обнулены. Монетки остались!',
+      description: 'Дневник питания, вода и шаги обнулены.',
     })
   }
 
@@ -38,7 +37,6 @@ export function DataActions() {
     useActivityStore.setState({ waterMl: 0, extraSteps: 0, lastWaterAt: 0, waterLog: [], vessels: DEFAULT_VESSELS, dayKey: dayKeyOf() })
     useProfileStore.setState({ name: '', heightCm: 175, weightKg: 75, weights: [] })
     useGoalsStore.getState().reset()
-    useShopStore.getState().resetAll()
     useExerciseStore.setState({ logs: {} })
     useFastingStore.setState({ windowStart: 10, windowHours: 8, fastHours: null, startedAt: null, laps: [] })
     useRecipesStore.setState({ items: [] })
@@ -55,7 +53,7 @@ export function DataActions() {
   function confirmWipe() {
     Alert.alert(
       'Стереть все данные?',
-      'Полное удаление по GDPR: дневник, история, профиль, монетки, награды, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
+      'Полное удаление по GDPR: дневник, история, профиль, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },
@@ -91,7 +89,7 @@ export function DataActions() {
           <View className="min-w-0 flex-1">
             <Text className="font-bold text-[13px] text-rose-300">Стереть все данные</Text>
             <Text className="font-sans text-[11px] text-bear-sub2">
-              Полное удаление по GDPR: профиль, дневник, монетки, онбординг
+              Полное удаление по GDPR: профиль, дневник, онбординг
             </Text>
           </View>
         </Pressable>

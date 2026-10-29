@@ -5,7 +5,6 @@ import { Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useToast } from '../ui/Toast'
-import { EARN } from '@/lib/data/shop'
 import { fmtDecimal } from '@/lib/data/bmi'
 
 export function WeightModal({ open, onClose, height, weight, onSave }) {
@@ -49,7 +48,7 @@ function WeightBody({ height, weight, onSave, onClose }) {
       weightChanged
         ? {
             title: '⚖️ Вес записан!',
-            description: `${fmtDecimal(w)} кг · ИМТ обновлён · +${EARN.weight} монеток`,
+            description: `${fmtDecimal(w)} кг · ИМТ обновлён`,
           }
         : { title: '📏 Рост сохранён', description: `${h} см` }
     )
