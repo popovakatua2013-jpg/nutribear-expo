@@ -4,6 +4,8 @@
 // и круглая кнопка-шеврон (открывает редактор целей).
 // v7: все размеры ужаты до пропорций эталона (ряд ~59px вместо ~73px):
 // иконка 34, шеврон 26, шрифты 13.5/10.5, бар 5px — как в макете
+// v7.1: трек полоски подкрашен цветом цели + стартовый сегмент 10%,
+// чтобы полоска читалась яркой даже при нуле прогресса (как в макете)
 
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -110,13 +112,24 @@ export function GoalRow({
         </View>
 
         {/* Прогресс-бар — живой: заполнен на процент выполнения цели за сегодня.
-            От начала текста до правого края карточки (как в макете) */}
+            От начала текста до правого края карточки (как в макете).
+            Подложка трека подсвечена цветом цели — бар цветной даже на нуле */}
         <View className="ml-[56px] mt-1.5 h-[5px] overflow-hidden rounded-full bg-[rgba(15,21,52,0.85)]">
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              backgroundColor: `${glow}30`,
+            }}
+          />
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             colors={barColors}
-            style={{ width: `${w}%`, height: '100%', borderRadius: 999 }}
+            style={{
+              width: `${Math.max(w, 10)}%`,
+              height: '100%',
+              borderRadius: 999,
+            }}
           />
         </View>
       </Pressable>
