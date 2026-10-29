@@ -24,6 +24,10 @@ export function buildFood(item) {
     emoji: item.emoji || SOURCE_EMOJI[item.source] || '🍽️',
     kcal: item.kcal100 || 100,
     ...bju,
+    // клетчатка/сахар на 100 г — для рейтинга питания (у внешних
+    // источников и рецептов их нет — считаем нулями)
+    fib: item.fib || 0,
+    sug: item.sug || 0,
     defaultGrams: item.defaultGrams || 100,
     tags: [],
     source: item.source || 'ext',

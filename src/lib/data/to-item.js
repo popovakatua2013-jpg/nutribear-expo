@@ -8,6 +8,8 @@ export function toBuildItem(f) {
     p: f.p,
     f: f.f,
     c: f.c,
+    fib: f.fib, // клетчатка/сахар на 100 г — нужны рейтингу питания
+    sug: f.sug,
     defaultGrams: f.defaultGrams,
     source: 'local',
   }

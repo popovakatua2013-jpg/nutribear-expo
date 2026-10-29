@@ -46,7 +46,7 @@ export const useFoodStore = create(
           history: [
             { ...entry, day: todayKey(), mealId },
             ...state.history,
-          ].slice(0, 300),
+          ].slice(0, 900), // ~2 месяца при 15 записях/день — месяц рейтинга помещается целиком
         }))
       },
 
@@ -80,6 +80,9 @@ export const useFoodStore = create(
             ...state.entries,
             [mealId]: state.entries[mealId].filter((e) => e.id !== entryId),
           },
+          // ошибочная запись уходит и из журнала — иначе она продолжает
+          // учитываться в месячном рейтинге и копировании вчерашнего дня
+          history: state.history.filter((h) => h.id !== entryId),
         })),
 
       // Ещё один перекус пользователя («Перекус 2», «Перекус 3»…)

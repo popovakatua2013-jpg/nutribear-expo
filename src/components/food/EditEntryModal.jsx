@@ -36,6 +36,8 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
   const [p, setP] = useState(String(entry?.p ?? 0))
   const [f, setF] = useState(String(entry?.f ?? 0))
   const [c, setC] = useState(String(entry?.c ?? 0))
+  const [fib, setFib] = useState(entry?.fib ?? 0) // клетчатка/сахар — только пересчёт от граммовки
+  const [sug, setSug] = useState(entry?.sug ?? 0)
   const [desc, setDesc] = useState(entry?.desc ?? '')
   // Поля, которые пользователь вписал руками (при смене веса не трогаем)
   const [manual, setManual] = useState({ kcal: false, p: false, f: false, c: false })
@@ -54,6 +56,10 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
     setP((prev) => (manual.p ? prev : String(round1((entry.p || 0) * k))))
     setF((prev) => (manual.f ? prev : String(round1((entry.f || 0) * k))))
     setC((prev) => (manual.c ? prev : String(round1((entry.c || 0) * k))))
+    // клетчатка/сахар пересчитываем всегда (полей ручного ввода нет) —
+    // иначе в рейтинге питания останутся значения от старой граммовки
+    setFib(round1((entry.fib || 0) * k))
+    setSug(round1((entry.sug || 0) * k))
   }
 
   function save() {
@@ -64,6 +70,8 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
       p: parseNum(p, entry.p || 0, 0, 999),
       f: parseNum(f, entry.f || 0, 0, 999),
       c: parseNum(c, entry.c || 0, 0, 999),
+      fib: Math.max(0, round1(fib || 0)),
+      sug: Math.max(0, round1(sug || 0)),
       desc: desc.trim(),
     }
     updateEntry(mealId, entry.id, next)

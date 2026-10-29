@@ -40,6 +40,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
     rows.forEach((r) =>
       addEntry(r.mealId, {
         // в истории БЖУ хранится на порцию — пересобираем «на 100 г»
+        // (клетчатка/сахар тоже — иначе рейтинг дня по копии обнулится)
         food: {
           id: r.foodId,
           name: r.name,
@@ -47,6 +48,8 @@ export function PlanHeader({ onViewAll, onHistory }) {
           p: ((r.p || 0) * 100) / (r.grams || 1),
           f: ((r.f || 0) * 100) / (r.grams || 1),
           c: ((r.c || 0) * 100) / (r.grams || 1),
+          fib: ((r.fib || 0) * 100) / (r.grams || 1),
+          sug: ((r.sug || 0) * 100) / (r.grams || 1),
         },
         grams: r.grams,
         kcal: r.kcal,
