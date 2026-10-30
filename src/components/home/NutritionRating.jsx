@@ -169,8 +169,8 @@ export function NutritionRating() {
 
           {/* показатели: по умолчанию 3 главные, остальные под «Подробнее» */}
           <View className="mt-4 gap-3">
-            {visibleRows.map((row) => (
-              <MetricRow key={row.key} {...row} />
+            {visibleRows.map(({ key, ...rest }) => (
+              <MetricRow key={key} {...rest} />
             ))}
           </View>
 
