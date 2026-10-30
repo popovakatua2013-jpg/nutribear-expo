@@ -21,6 +21,7 @@ import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
+import { startPedometerAgent } from '@/lib/pedometer'
 
 // Гидратация persist-стора онбординга из AsyncStorage
 function useOnboardingHydrated() {
@@ -66,6 +67,9 @@ export default function RootLayout() {
 
   // Агент напоминаний: планирует уведомления о воде и приёмах пищи
   useEffect(() => startReminderAgent(), [])
+
+  // Агент шагомера: раз в минуту читает системный счётчик шагов
+  useEffect(() => startPedometerAgent(), [])
 
   if (!loaded || !hydrated) return <SplashBear />
 

@@ -20,7 +20,7 @@ import { AllMealsModal } from '@/components/home/AllMealsModal'
 import { AddFoodModal } from '@/components/food/AddFoodModal'
 import { AiChat } from '@/components/home/AiChat'
 import { useFoodStore } from '@/store/useFoodStore'
-import { useActivityStore } from '@/store/useActivityStore'
+import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, dayBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
@@ -67,7 +67,7 @@ export default function HomeScreen() {
   const entries = useFoodStore((s) => s.entries)
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const waterMl = useActivityStore((s) => s.waterMl)
-  const extraSteps = useActivityStore((s) => s.extraSteps)
+  const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
   const addWater = useActivityStore((s) => s.addWater)
   const addSteps = useActivityStore((s) => s.addSteps)
   const exLogs = useExerciseStore((s) => s.logs)

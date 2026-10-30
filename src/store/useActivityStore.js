@@ -21,6 +21,11 @@ const nowTime = () =>
 // Старый набор по умолчанию (до добавления кувшина) — для миграции
 const OLD_DEFAULT = DEFAULT_VESSELS.slice(0, 3)
 
+// Всего шагов за сегодня: датчик телефона (если шагомер включён) + ручные
+// добавления. Используйте этот селектор везде, где показываем шаги
+export const selectTotalSteps = (s) =>
+  Math.max(0, Math.round((s.pedometerSteps || 0) + (s.extraSteps || 0)))
+
 export const useActivityStore = create(
   persist(
     (set) => ({
@@ -42,11 +47,17 @@ export const useActivityStore = create(
         meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' },
         weigh: { enabled: false, weekday: 5, time: '09:00' },
       },
+      // Встроенный шагомер: тумблер хранится, шаги датчика — живые
+      // (не в persist): агент src/lib/pedometer.js опрашивает систему
+      // раз в минуту, после перезапуска восстанавливает значение первым же опросом
+      pedometerEnabled: false,
+      pedometerSteps: 0,
       // Локальный день, к которому относятся вода и шаги
       dayKey: dayKeyOf(),
 
       setVessels: (vessels) => set({ vessels }),
       setReminder: (patch) => set((s) => ({ reminder: { ...s.reminder, ...patch } })),
+      setPedometerEnabled: (v) => set({ pedometerEnabled: Boolean(v) }),
 
       // Выпить воду: time можно передать вручную («ЧЧ:ММ»), иначе — сейчас
       addWater: (ml, time) => {
@@ -144,6 +155,7 @@ export const useActivityStore = create(
         lastWaterAt: state.lastWaterAt,
         vessels: state.vessels,
         reminder: state.reminder,
+        pedometerEnabled: state.pedometerEnabled, // сами шаги — живые, не храним
         dayKey: state.dayKey,
       }),
     }

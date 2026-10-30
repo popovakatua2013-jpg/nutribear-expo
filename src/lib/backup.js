@@ -83,6 +83,8 @@ export function applyBackup(data) {
       prof.goalWeightKg == null
         ? null
         : Math.min(300, Math.max(25, Math.round(num(prof.goalWeightKg) * 10) / 10)),
+    goalReachedAt:
+      typeof prof.goalReachedAt === 'string' && prof.goalReachedAt ? prof.goalReachedAt : null,
     weights: arr(prof.weights),
   })
 

@@ -1,9 +1,15 @@
 // Синхронизация: Google Fit, Apple Health и встроенный шагомер.
-// Переключатели внешних сервисов сохраняются локально.
+// Шагомер настоящий: expo-sensors Pedometer читает системный счётчик
+// шагов (агент src/lib/pedometer.js опрашивает его раз в минуту).
+// Тумблеры внешних сервисов пока сохраняются локально.
 
+import { useState } from 'react'
 import { Platform, Switch, Text, View } from 'react-native'
 import { Watch, Footprints } from 'lucide-react-native'
+import { Pedometer } from 'expo-sensors'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useActivityStore } from '@/store/useActivityStore'
+import { useToast } from '../ui/Toast'
 
 const ROWS = [
   { key: 'gfit', label: 'Google Fit', hint: 'шаги и тренировки (Android)' },
@@ -18,6 +24,51 @@ const SWITCH_COLORS = {
 export function SyncCard() {
   const sync = useOnboardingStore((s) => s.sync)
   const toggleSync = useOnboardingStore((s) => s.toggleSync)
+  const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
+  const pedometerSteps = useActivityStore((s) => s.pedometerSteps)
+  const setPedometerEnabled = useActivityStore((s) => s.setPedometerEnabled)
+  const { toast } = useToast()
+  const [busy, setBusy] = useState(false)
+
+  // Включение шагомера: проверяем датчик и разрешение на активность
+  // (Android 10+ требует ACTIVITY_RECOGNITION), только потом включаем
+  async function togglePedometer(v) {
+    if (busy) return
+    if (v) {
+      setBusy(true)
+      try {
+        const available = await Pedometer.isAvailableAsync()
+        if (!available) {
+          toast({
+            title: '👟 Шагомер недоступен',
+            description: 'На этом устройстве нет системного счётчика шагов',
+          })
+          return
+        }
+        const perm = await Pedometer.requestPermissionsAsync()
+        if (!perm?.granted) {
+          toast({
+            title: '👟 Нужно разрешение',
+            description: 'Разрешите доступ к физической активности в настройках телефона',
+          })
+          return
+        }
+      } catch {
+        toast({
+          title: '👟 Шагомер недоступен',
+          description: 'Не удалось получить данные с датчика',
+        })
+        return
+      } finally {
+        setBusy(false)
+      }
+    }
+    setPedometerEnabled(v)
+    toast({
+      title: v ? '👟 Шагомер включён' : 'Шагомер выключен',
+      description: v ? 'Шаги с датчика телефона прибавляются к дневной цели' : undefined,
+    })
+  }
 
   return (
     <View accessibilityLabel="Синхронизация" className="rounded-3xl border border-white/5 bg-bear-card p-5">
@@ -55,12 +106,14 @@ export function SyncCard() {
               <Text className="font-bold text-[13px] text-bear-text">Встроенный шагомер</Text>
             </View>
             <Text className="font-sans text-[11px] text-bear-sub2">
-              ручные добавления на странице «Активность»
+              {pedometerEnabled
+                ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
+                : 'считает шаги сам, плюс ручные добавления'}
             </Text>
           </View>
           <Switch
-            value={sync.pedometer}
-            onValueChange={() => toggleSync('pedometer')}
+            value={pedometerEnabled}
+            onValueChange={togglePedometer}
             trackColor={SWITCH_COLORS}
             thumbColor="#FFFFFF"
             accessibilityLabel="Встроенный шагомер"
@@ -70,8 +123,8 @@ export function SyncCard() {
 
       <Text className="mt-3 px-1 font-sans text-[10px] leading-relaxed text-bear-dim">
         {Platform.OS === 'web'
-          ? 'Веб-версия работает офлайн: данные не покидают устройство.'
-          : 'Приложение работает офлайн: данные не покидают устройство.'}{' '}
+          ? 'Веб-версия работает офлайн: данные не покидают устройство. Шагомер доступен в приложении на телефоне.'
+          : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона.'}{' '}
         Подключение к внешним сервисам включит синхронизацию шагов, когда
         она станет доступна.
       </Text>

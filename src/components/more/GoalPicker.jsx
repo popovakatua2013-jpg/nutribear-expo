@@ -6,8 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Target } from 'lucide-react-native'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { GOALS, getDailyTarget } from '@/lib/data/goals'
+import { healthyRange } from '@/lib/data/bmi'
 import { formatNum } from '@/lib/format'
 
 export function GoalPicker() {
@@ -21,9 +23,18 @@ export function GoalPicker() {
     setGoal(id)
     applyPreset(id)
     const g = GOALS.find((x) => x.id === id)
+    let description = `Дневная норма — ${formatNum(getDailyTarget(id))} ккал`
+    // Мягкая подсказка: при похудении с лишним весом стоит поставить
+    // и цель по весу (во вкладке ИМТ) — без навязчивости
+    if (id === 'lose') {
+      const { weightKg, heightCm, goalWeightKg } = useProfileStore.getState()
+      if (goalWeightKg == null && weightKg > healthyRange(heightCm).max) {
+        description += ' · поставьте и цель по весу во вкладке ИМТ'
+      }
+    }
     toast({
       title: `${g.emoji} Цель: ${g.label}`,
-      description: `Дневная норма — ${formatNum(getDailyTarget(id))} ккал`,
+      description,
     })
   }
 

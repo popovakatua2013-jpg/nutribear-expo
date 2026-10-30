@@ -3,10 +3,17 @@
 // тап по записи (карандашик) — изменить, корзина — удалить.
 
 import { useState } from 'react'
-import { Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { TrendingDown, TrendingUp, Plus, Pencil, Trash2, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
-import { weekWeights, monthWeights, allWeights, healthyRange, fmtDecimal } from '@/lib/data/bmi'
+import {
+  weekWeights,
+  monthWeights,
+  allWeights,
+  healthyRange,
+  fmtDecimal,
+  shortDate,
+} from '@/lib/data/bmi'
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
@@ -28,6 +35,7 @@ export function WeightCard() {
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
+  const goalReachedAt = useProfileStore((s) => s.goalReachedAt)
   const weights = useProfileStore((s) => s.weights)
   const addWeight = useProfileStore((s) => s.addWeight)
   const updateWeight = useProfileStore((s) => s.updateWeight)
@@ -63,9 +71,24 @@ export function WeightCard() {
   const goalReached = goalWeightKg != null && Math.abs(goalDiff) < 0.05
 
   function handleSave({ heightCm: h, weightKg: w, weightChanged, goalKg }) {
+    const wasReached =
+      goalWeightKg != null && Math.abs(weightKg - goalWeightKg) < 0.05
     if (h !== heightCm) setProfile({ heightCm: h })
     if (weightChanged) addWeight(w)
     if (goalKg !== undefined) setProfile({ goalWeightKg: goalKg })
+
+    // Награда за достижение цели: один раз — при переходе «не достиг → достиг»
+    // (цель после сохранения — либо новая, либо прежняя, если поле не трогали)
+    const goal = goalKg === undefined ? goalWeightKg : goalKg
+    const nowReached =
+      goal != null && weightChanged && Math.abs(w - goal) < 0.05
+    if (!wasReached && nowReached) {
+      setProfile({ goalReachedAt: new Date().toISOString() })
+      Alert.alert(
+        '🎉 Цель достигнута!',
+        `Вес ${fmtDecimal(w)} кг — ты у цели! Дальше — удержание: взвешивайся раз в неделю и держи норму калорий.`
+      )
+    }
   }
 
   // Русская запятая — тоже десятичный разделитель
@@ -167,7 +190,11 @@ export function WeightCard() {
             🎯 Цель {fmtDecimal(goalWeightKg)} кг
           </Text>
           {goalReached ? (
-            <Text className="font-bold text-[12px] text-emerald-400">🎉 Цель достигнута!</Text>
+            <Text className="font-bold text-[12px] text-emerald-400">
+              {goalReachedAt
+                ? `🎉 Достигнута ${shortDate(new Date(goalReachedAt))}`
+                : '🎉 Цель достигнута!'}
+            </Text>
           ) : (
             <Text className="font-bold text-[12px] text-[#8DABFF]">
               до цели {goalDiff > 0 ? '−' : '+'}

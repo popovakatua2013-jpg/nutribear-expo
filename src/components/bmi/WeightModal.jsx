@@ -1,13 +1,23 @@
 // Модалка записи веса и роста: Сохранить → история веса + пересчёт ИМТ.
 // Третье поле — цель по весу (необязательно): пустое поле и существующая
 // цель = цель убирается. Цель видна в «Динамике веса» прогрессом.
+// Под цель предлагаем норму веса для роста одним тапом и после сохранения
+// цели предлагаем пересчитать дневную норму калорий (дефицит/профицит).
 
 import { useState } from 'react'
-import { Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useToast } from '../ui/Toast'
-import { fmtDecimal } from '@/lib/data/bmi'
+import {
+  fmtDecimal,
+  healthyRange,
+  bmrMifflin,
+  tdeeKcal,
+  tdeeMult,
+} from '@/lib/data/bmi'
+import { useProfileStore } from '@/store/useProfileStore'
+import { useGoalsStore } from '@/store/useGoalsStore'
 
 export function WeightModal({ open, onClose, height, weight, goalWeight, onSave }) {
   return (
@@ -53,6 +63,35 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
   const goalKg = hasGoalText ? Math.round(goalRaw * 10) / 10 : null
   const goalChanged = hasGoalText ? goalKg !== goalWeight : goalWeight != null
 
+  // Подсказка цели: середина здорового диапазона веса для этого роста
+  const suggestRange =
+    Number.isFinite(hRaw) && hRaw >= 80 && hRaw <= 250 ? healthyRange(hRaw) : null
+  const suggestKg = suggestRange ? Math.round((suggestRange.min + suggestRange.max) / 2) : 0
+
+  // Пересчёт дневной нормы под цель: дефицит ≈ 500 ккал (≈ −0,5 кг/нед),
+  // профицит ≈ +300; ниже безопасного пола не опускаемся.
+  // Спрашиваем только когда считаем заметно иначе, чем в целях сейчас
+  function maybeRecalcKcal(goal, weight, height) {
+    const prof = useProfileStore.getState()
+    const tdee = tdeeKcal(bmrMifflin(prof.sex, prof.age, height, weight), tdeeMult(prof.activityId))
+    const floor = prof.sex === 'male' ? 1500 : 1200
+    const raw = goal < weight ? tdee - 500 : goal > weight ? tdee + 300 : tdee
+    const target = Math.round(Math.max(floor, Math.min(4000, raw)) / 10) * 10
+    const current = useGoalsStore.getState().goals.kcal
+    if (Math.abs(current - target) < 10) return
+    Alert.alert(
+      'Пересчитать норму калорий?',
+      `Для цели ${fmtDecimal(goal)} кг рекомендуем около ${target} ккал в день. Сейчас в целях ${current} ккал.`,
+      [
+        { text: 'Не менять', style: 'cancel' },
+        {
+          text: 'Пересчитать',
+          onPress: () => useGoalsStore.getState().setGoals({ kcal: target }),
+        },
+      ]
+    )
+  }
+
   function handleSave() {
     if (!valid || !goalValid) return
     const weightChanged = w !== weight
@@ -66,6 +105,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
       description,
     })
     onClose()
+    if (goalChanged && goalKg != null) maybeRecalcKcal(goalKg, w, h)
   }
 
   return (
@@ -118,6 +158,23 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         accessibilityLabel="Целевой вес в килограммах"
         className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[14px] text-white"
       />
+
+      {/* Подсказка: здоровый диапазон для роста и цель в один тап */}
+      {suggestRange && goal.trim() === '' && (
+        <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2">
+          <Text className="min-w-0 flex-1 font-sans text-[10.5px] leading-snug text-bear-sub2">
+            Норма при росте {Math.round(hRaw)} см: {suggestRange.min}–{suggestRange.max} кг
+          </Text>
+          <Pressable
+            onPress={() => setGoal(String(suggestKg))}
+            accessibilityRole="button"
+            accessibilityLabel={`Подставить цель около ${suggestKg} килограммов`}
+            className="ml-2 rounded-full bg-white/10 px-2.5 py-1 active:opacity-70"
+          >
+            <Text className="font-semibold text-[11px] text-[#8DABFF]">≈ {suggestKg} кг</Text>
+          </Pressable>
+        </View>
+      )}
 
       <Pressable
         onPress={handleSave}

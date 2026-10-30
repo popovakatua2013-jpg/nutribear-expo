@@ -20,7 +20,7 @@ import { Mail, Send, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { askNutritionist, offlineReply } from '@/lib/chat'
 import { useFoodStore } from '@/store/useFoodStore'
-import { useActivityStore } from '@/store/useActivityStore'
+import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { totalConsumed } from '@/lib/data/diary'
@@ -42,7 +42,7 @@ export function AiChat() {
   // Данные для офлайн-ответов
   const entries = useFoodStore((s) => s.entries)
   const waterMl = useActivityStore((s) => s.waterMl)
-  const extraSteps = useActivityStore((s) => s.extraSteps)
+  const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
   const goals = useGoalsStore((s) => s.goals)
   const weightKg = useProfileStore((s) => s.weightKg)
   const heightCm = useProfileStore((s) => s.heightCm)

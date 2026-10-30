@@ -13,7 +13,7 @@ import { MotivationBanner } from '@/components/activity/MotivationBanner'
 import { SummarySection } from '@/components/activity/SummarySection'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
-import { useActivityStore } from '@/store/useActivityStore'
+import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -25,12 +25,12 @@ export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
 
   const waterMl = useActivityStore((s) => s.waterMl)
-  const extraSteps = useActivityStore((s) => s.extraSteps)
+  const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
   const exLogs = useExerciseStore((s) => s.logs)
   const recordToday = useHistoryStore((s) => s.record)
   const entries = useFoodStore((s) => s.entries)
 
-  // Шаги за сегодня — только реально добавленные пользователем
+  // Шаги за сегодня: датчик телефона (если включён) + ручные добавления
   const steps = extraSteps
   const kcal = totalConsumed(entries)
   const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня

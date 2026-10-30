@@ -3,8 +3,11 @@
 
 import { Switch, Text, View } from 'react-native'
 import { Bell, Watch, Camera, Footprints } from 'lucide-react-native'
+import { Pedometer } from 'expo-sensors'
 import { ObShell } from './ObShell'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useActivityStore } from '@/store/useActivityStore'
+import { useToast } from '../../ui/Toast'
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
 const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
@@ -14,10 +17,36 @@ export function PermissionsStep({ onNext, onBack }) {
   const sync = useOnboardingStore((s) => s.sync)
   const setPermission = useOnboardingStore((s) => s.setPermission)
   const toggleSync = useOnboardingStore((s) => s.toggleSync)
+  const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
+  const setPedometerEnabled = useActivityStore((s) => s.setPedometerEnabled)
+  const { toast } = useToast()
 
   function askPush() {
     if (permissions.push === 'granted') return
     setPermission('push', 'granted')
+  }
+
+  // Тумблер шагомера настоящий: включаем только с разрешением
+  // на физическую активность (Android 10+)
+  async function togglePedometer(v) {
+    if (v) {
+      try {
+        const available = await Pedometer.isAvailableAsync()
+        const perm = available ? await Pedometer.requestPermissionsAsync() : null
+        if (!available || !perm?.granted) {
+          toast({
+            title: '👟 Шагомер недоступен',
+            description: 'На этом устройстве нет счётчика шагов или нет разрешения',
+          })
+          return
+        }
+      } catch {
+        toast({ title: '👟 Шагомер недоступен', description: 'Не удалось получить данные с датчика' })
+        return
+      }
+    }
+    setPedometerEnabled(v)
+    if (sync.pedometer !== v) toggleSync('pedometer') // зеркало в онбординге
   }
 
   return (
@@ -72,8 +101,8 @@ export function PermissionsStep({ onNext, onBack }) {
               <Text className="font-sans text-[13px] text-[#aab4d4]">Встроенный шагомер</Text>
             </View>
             <Switch
-              value={sync.pedometer}
-              onValueChange={() => toggleSync('pedometer')}
+              value={pedometerEnabled}
+              onValueChange={togglePedometer}
               trackColor={SWITCH_COLORS}
               thumbColor="#FFFFFF"
               accessibilityLabel="Встроенный шагомер"

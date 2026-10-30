@@ -46,6 +46,7 @@ export function DataActions() {
       activityId: 'light',
       hasBio: false,
       goalWeightKg: null,
+      goalReachedAt: null,
       weights: [],
     })
     useGoalsStore.getState().reset()

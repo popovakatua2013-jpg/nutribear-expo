@@ -19,6 +19,7 @@ export const useProfileStore = create(
       activityId: 'light', // id из ACTIVITY_LEVELS (онбординг / калькулятор ИМТ)
       hasBio: false, // true — биоданные уже заполнены (онбординг или калькулятор)
       goalWeightKg: null, // цель по весу (кг) или null — показывает прогресс в «Динамике веса»
+      goalReachedAt: null, // ISO-дата, когда цель по весу впервые достигнута (награда)
       weights: [], // [{ id, date (ISO), kg }] — новые сверху
 
       setProfile: (patch) =>
@@ -74,6 +75,7 @@ export const useProfileStore = create(
         activityId: s.activityId,
         hasBio: s.hasBio,
         goalWeightKg: s.goalWeightKg,
+        goalReachedAt: s.goalReachedAt,
         weights: s.weights,
       }),
     }
