@@ -24,6 +24,15 @@ export function pluralDays(n) {
   return 'дней'
 }
 
+// Русское склонение блюд: 1 блюдо / 2 блюда / 5 блюд
+export function dishesWord(n) {
+  const m10 = Math.abs(Math.round(n)) % 10
+  const m100 = Math.abs(Math.round(n)) % 100
+  if (m10 === 1 && m100 !== 11) return 'блюдо'
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'блюда'
+  return 'блюд'
+}
+
 // Генерация простого id записи
 export function makeId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`

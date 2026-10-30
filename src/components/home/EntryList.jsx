@@ -6,18 +6,9 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Pencil, Trash2 } from 'lucide-react-native'
-import { formatNum } from '@/lib/format'
+import { dishesWord, formatNum } from '@/lib/format'
 import { bjuLine } from '@/lib/data/bju'
 import { EditEntryModal } from '@/components/food/EditEntryModal'
-
-// 1 блюдо / 2 блюда / 5 блюд
-function dishesWord(n) {
-  const m10 = n % 10
-  const m100 = n % 100
-  if (m10 === 1 && m100 !== 11) return 'блюдо'
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'блюда'
-  return 'блюд'
-}
 
 const MAX_VISIBLE = 2
 

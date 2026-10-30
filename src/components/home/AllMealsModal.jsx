@@ -3,16 +3,20 @@
 // Все перекусы (Перекус 2, 3…) живут внутри одной карточки
 // «Перекус/Полдник» — отдельными блоками больше не показываются:
 // в карточке кнопка «Добавить блюдо» и ниже — «Добавить перекус».
+// Автосворачивание: при открытии все приёмы свёрнуты и показывают
+// только количество внесённого в дневник («2 блюда · 420 ккал»);
+// тап по заголовку разворачивает/сворачивает секцию обратно.
 
-import { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { Pencil, Plus, Trash2, X } from 'lucide-react-native'
+import { useEffect, useState } from 'react'
+import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react-native'
 import { MEALS } from '@/lib/data/meals'
-import { formatNum } from '@/lib/format'
+import { dishesWord, formatNum } from '@/lib/format'
 import { dayBju, totalConsumed } from '@/lib/data/diary'
 import { bjuLine } from '@/lib/data/bju'
 import { useFoodStore } from '@/store/useFoodStore'
 import { targetsFromKcal } from '@/lib/data/goals'
+import { useToast } from '@/components/ui/Toast'
 import { EditEntryModal } from '../food/EditEntryModal'
 
 function EntryRow({ mealId, mealName, entry, onEdit }) {
@@ -54,11 +58,42 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
+  const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
+  const { toast } = useToast()
   const [edit, setEdit] = useState(null) // {mealId, entry, mealName}
+  // Автосворачивание: id развёрнутых секций, остальные свёрнуты.
+  // При каждом открытии модалки — свежий свёрнутый вид
+  const [expanded, setExpanded] = useState({})
+
+  useEffect(() => {
+    if (open) setExpanded({})
+  }, [open])
+
+  const toggle = (id) => setExpanded((s) => ({ ...s, [id]: !s[id] }))
 
   function close() {
     setEdit(null)
     onClose()
+  }
+
+  // Корзина у своего перекуса: подтверждение — записи этого перекуса
+  // уходят из дневника, журнал приёмов остаётся
+  function handleRemoveCustom(meal) {
+    Alert.alert(
+      `Удалить «${meal.name}»?`,
+      'Записи этого перекуса уйдут из дневника за сегодня — журнал приёмов сохранится.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: () => {
+            removeCustomMeal(meal.id)
+            toast({ title: '🗑 Перекус удалён', description: `«${meal.name}» больше не в списке приёмов` })
+          },
+        },
+      ]
+    )
   }
 
   const targets = targetsFromKcal(kcal)
@@ -110,6 +145,8 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                   0
                 )
               const target = targets[meal.id] ?? targets.snack
+              const openNow = Boolean(expanded[meal.id])
+              const totalDishes = mealEntries.length + extraCount
 
               return (
                 <View
@@ -117,80 +154,119 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                   accessibilityLabel={`Приём пищи ${meal.name}`}
                   className="rounded-2xl border border-white/5 bg-white/[0.03] p-3"
                 >
+                  {/* Заголовок: тап сворачивает/разворачивает секцию */}
                   <View className="flex-row items-center justify-between gap-2">
-                    <Text className="min-w-0 flex-1 font-bold text-[13px] text-bear-text">
-                      {meal.emoji ? `${meal.emoji} ` : ''}
-                      {meal.name}
-                    </Text>
-                    <View className="flex-row shrink-0 items-center gap-1">
-                      <Text className="font-sans text-[11px] text-bear-sub">
-                        {`${formatNum(consumed)} / ${formatNum(target)} ккал`}
+                    <Pressable
+                      onPress={() => toggle(meal.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        openNow
+                          ? `Свернуть приём «${meal.name}»`
+                          : `Развернуть приём «${meal.name}», внесено ${totalDishes} ${dishesWord(totalDishes)}`
+                      }
+                      className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
+                    >
+                      <Text className="min-w-0 flex-1 font-bold text-[13px] text-bear-text">
+                        {meal.emoji ? `${meal.emoji} ` : ''}
+                        {meal.name}
                       </Text>
-                      {meal.id.startsWith('custom-') && (
-                        <Pressable
-                          onPress={() => handleRemoveCustom(meal)}
-                          accessibilityLabel={`Удалить «${meal.name}»`}
-                          accessibilityRole="button"
-                          className="rounded p-1 active:opacity-60"
-                        >
-                          <Trash2 size={14} color="#f87171" />
-                        </Pressable>
+                      {openNow ? (
+                        <ChevronUp size={14} color="#98A2C2" />
+                      ) : (
+                        <ChevronDown size={14} color="#98A2C2" />
                       )}
-                    </View>
-                  </View>
+                    </Pressable>
 
-                  <View className="mt-2 gap-1">
-                    {mealEntries.map((entry) => (
-                      <EntryRow
-                        key={entry.id}
-                        mealId={meal.id}
-                        mealName={meal.name}
-                        entry={entry}
-                        onEdit={(e) => setEdit({ mealId: meal.id, entry: e, mealName: meal.name })}
-                      />
-                    ))}
-                    {extraGroups.flatMap((g) =>
-                      g.list.map((entry) => (
-                        <EntryRow
-                          key={entry.id}
-                          mealId={g.id}
-                          mealName={meal.name}
-                          entry={entry}
-                          onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
-                        />
-                      ))
+                    {/* Свёрнуто — только количество внесённого в дневник;
+                        развёрнуто — привычная строка с ориентиром по цели */}
+                    <Text className="shrink-0 font-sans text-[11px] text-bear-sub">
+                      {openNow
+                        ? `${formatNum(consumed)} / ${formatNum(target)} ккал`
+                        : totalDishes > 0
+                          ? `${totalDishes} ${dishesWord(totalDishes)} · ${formatNum(consumed)} ккал`
+                          : 'Пока пусто'}
+                    </Text>
+
+                    {meal.id.startsWith('custom-') && (
+                      <Pressable
+                        onPress={() => handleRemoveCustom(meal)}
+                        accessibilityLabel={`Удалить «${meal.name}»`}
+                        accessibilityRole="button"
+                        className="rounded p-1 active:opacity-60"
+                      >
+                        <Trash2 size={14} color="#f87171" />
+                      </Pressable>
+                    )}
+                    {/* Быстрое добавление прямо из свёрнутой секции */}
+                    {!openNow && (
+                      <Pressable
+                        onPress={() => onAddToMeal(meal.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
+                        className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+                      >
+                        <Plus size={14} color="#8DABFF" />
+                      </Pressable>
                     )}
                   </View>
 
-                  {!mealEntries.length && !extraCount && (
-                    <Text className="mt-2 font-sans text-[11px] text-bear-dim">
-                      Пока ничего не добавлено
-                    </Text>
-                  )}
+                  {/* Содержимое — только у развёрнутой секции */}
+                  {openNow && (
+                    <>
+                      <View className="mt-2 gap-1">
+                        {mealEntries.map((entry) => (
+                          <EntryRow
+                            key={entry.id}
+                            mealId={meal.id}
+                            mealName={meal.name}
+                            entry={entry}
+                            onEdit={(e) => setEdit({ mealId: meal.id, entry: e, mealName: meal.name })}
+                          />
+                        ))}
+                        {extraGroups.flatMap((g) =>
+                          g.list.map((entry) => (
+                            <EntryRow
+                              key={entry.id}
+                              mealId={g.id}
+                              mealName={meal.name}
+                              entry={entry}
+                              onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
+                            />
+                          ))
+                        )}
+                      </View>
 
-                  <Pressable
-                    onPress={() => onAddToMeal(meal.id)}
-                    accessibilityRole="button"
-                    className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
-                  >
-                    <Plus size={14} color="#8DABFF" />
-                    <Text className="font-semibold text-xs text-[#8DABFF]">
-                      Добавить блюдо
-                    </Text>
-                  </Pressable>
+                      {!mealEntries.length && !extraCount && (
+                        <Text className="mt-2 font-sans text-[11px] text-bear-dim">
+                          Пока ничего не добавлено
+                        </Text>
+                      )}
 
-                  {isSnack && (
-                    <Pressable
-                      onPress={() => onAddToMeal(meal.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Добавить перекус"
-                      className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
-                    >
-                      <Plus size={13} color="#A5AECB" />
-                      <Text className="font-semibold text-[11px] text-bear-sub">
-                        Добавить перекус
-                      </Text>
-                    </Pressable>
+                      <Pressable
+                        onPress={() => onAddToMeal(meal.id)}
+                        accessibilityRole="button"
+                        className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
+                      >
+                        <Plus size={14} color="#8DABFF" />
+                        <Text className="font-semibold text-xs text-[#8DABFF]">
+                          Добавить блюдо
+                        </Text>
+                      </Pressable>
+
+                      {isSnack && (
+                        <Pressable
+                          onPress={() => onAddToMeal(meal.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel="Добавить перекус"
+                          className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
+                        >
+                          <Plus size={13} color="#A5AECB" />
+                          <Text className="font-semibold text-[11px] text-bear-sub">
+                            Добавить перекус
+                          </Text>
+                        </Pressable>
+                      )}
+                    </>
                   )}
                 </View>
               )
