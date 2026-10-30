@@ -4,6 +4,7 @@
 // (на практике — совпадает с точностью одного знака после запятой).
 
 import { bmrMifflin, tdeeKcal, tdeeMult } from '@/lib/data/bmi'
+import { getDailyTarget } from '@/lib/data/goals'
 
 export const AT_GOAL_EPS = 0.05
 
@@ -74,4 +75,19 @@ export function recommendedKcal({ sex, age, heightCm, weightKg, activityId, goal
   const raw =
     goalId === 'lose' ? tdee - 500 : goalId === 'gain' ? tdee + 300 : tdee
   return Math.round(Math.max(floor, Math.min(4000, raw)) / 10) * 10
+}
+
+// План перехода «на поддержку» после достижения цели по весу: норма
+// калорий без дефицита/профицита. С заполненными биоданными — личный
+// TDEE по Миффлину, без них — средний пресет поддержки. Уже на
+// поддержке возвращаем null — кнопка перехода не нужна.
+export function supportSwitchPlan({ goalId, hasBio, sex, age, heightCm, weightKg, activityId }) {
+  if (goalId === 'maintain') return null
+  if (hasBio) {
+    return {
+      kcal: recommendedKcal({ sex, age, heightCm, weightKg, activityId, goalId: 'maintain' }),
+      personal: true,
+    }
+  }
+  return { kcal: getDailyTarget('maintain'), personal: false }
 }

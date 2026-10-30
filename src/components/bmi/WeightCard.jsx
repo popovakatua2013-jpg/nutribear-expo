@@ -2,11 +2,12 @@
 // кнопка «+» открывает модалку записи веса. Ниже — журнал измерений:
 // тап по записи (карандашик) — изменить, корзина — удалить.
 
-import { useState } from 'react'
-import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Alert, DeviceEventEmitter, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { TrendingDown, TrendingUp, Plus, Pencil, Trash2, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { goalRewardAfterSave } from '@/lib/goal'
+import { consumeOpenWeightModal } from '@/lib/navEvents'
 import {
   weekWeights,
   monthWeights,
@@ -49,6 +50,15 @@ export function WeightCard() {
   const [period, setPeriod] = useState('week')
   const [editing, setEditing] = useState(null) // измерение на изменении
   const [kgText, setKgText] = useState('')
+
+  // Сквозное открытие окна веса: из тапа «запишите вес» в золотой
+  // карточке и из уведомления о взвешивании (живое событие + флаг,
+  // оставленный на случай, когда вкладка ещё не была смонтирована)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('nutribear/open-weight', () => setOpen(true))
+    if (consumeOpenWeightModal()) setOpen(true)
+    return () => sub.remove()
+  }, [])
 
   // «Всё» без минимум двух точек смысла не имеет — показываем неделю
   const allPts = allWeights(weights)

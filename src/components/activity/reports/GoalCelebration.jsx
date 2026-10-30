@@ -4,14 +4,21 @@
 // если после достижения вес снова ушёл — карточка «Возвращаемся
 // к результату». Без цели карточка не показывается вовсе.
 // Живой переход «не достиг → достиг» — поп-анимация и бurst эмодзи.
+// После достижения цель питания можно одним тапом перевести
+// на поддержку — норма без дефицита по Миффлину (supportSwitchPlan).
 
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Text, View } from 'react-native'
-import { PartyPopper, Target } from 'lucide-react-native'
+import { Animated, Easing, Pressable, Text, View } from 'react-native'
+import { PartyPopper, Scale, Target } from 'lucide-react-native'
+import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useFoodStore } from '@/store/useFoodStore'
+import { useGoalsStore } from '@/store/useGoalsStore'
 import { fmtDecimal, shortDate } from '@/lib/data/bmi'
-import { daysSince, isAtGoal, WEIGH_NUDGE_DAYS } from '@/lib/goal'
-import { pluralDays } from '@/lib/format'
+import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/goal'
+import { formatNum, pluralDays } from '@/lib/format'
+import { useToast } from '@/components/ui/Toast'
+import { requestOpenWeightModal } from '@/lib/navEvents'
 
 // Карточка достижения — style-объект, чтобы анимировать Animated.View
 // (rounded-2xl, золотая рамка и подложка, p-4)
@@ -40,8 +47,42 @@ export function GoalCelebration() {
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const goalReachedAt = useProfileStore((s) => s.goalReachedAt)
   const weights = useProfileStore((s) => s.weights)
+  const hasBio = useProfileStore((s) => s.hasBio)
+  const sex = useProfileStore((s) => s.sex)
+  const age = useProfileStore((s) => s.age)
+  const heightCm = useProfileStore((s) => s.heightCm)
+  const activityId = useProfileStore((s) => s.activityId)
+  const goalId = useFoodStore((s) => s.goal)
+  const setGoal = useFoodStore((s) => s.setGoal)
+  const setGoals = useGoalsStore((s) => s.setGoals)
+  const { toast } = useToast()
 
   const reached = goalWeightKg != null && isAtGoal(weightKg, goalWeightKg)
+
+  // Кнопка перехода «на поддержку»: только когда вес у цели, а питание
+  // ещё на дефиците/профиците; null — цели питания уже поддержка
+  const plan = reached
+    ? supportSwitchPlan({ goalId, hasBio, sex, age, heightCm, weightKg, activityId })
+    : null
+
+  // Открыть вкладку ИМТ сразу с окном записи веса
+  function openWeightModal() {
+    router.navigate('/bmi')
+    requestOpenWeightModal()
+  }
+
+  // Один тап: цель питания «Поддержка» + норма без дефицита
+  function switchToMaintain() {
+    if (!plan) return
+    setGoal('maintain')
+    setGoals({ kcal: plan.kcal })
+    toast({
+      title: '🎯 Цель питания — поддержка',
+      description: plan.personal
+        ? `Норма по вашим данным: ${formatNum(plan.kcal)} ккал в день — вес теперь держим без дефицита`
+        : `Средняя норма поддержки: ${formatNum(plan.kcal)} ккал в день. Заполните биоданные — пересчитаем под вас`,
+    })
+  }
 
   // Анимация — только при живом переходе «не достиг → достиг»;
   // карточка, сразу открытая достигнутой, появляется без эффектов
@@ -145,24 +186,50 @@ export function GoalCelebration() {
             : '🏅 Результат взят — с этого дня держим его. '}
           Дальше — удержание: взвешивайся раз в неделю и держи норму калорий.
         </Text>
+
+        {/* Цель питания ещё на дефиците — один тап переводит её на поддержку */}
+        {plan && (
+          <Pressable
+            onPress={switchToMaintain}
+            accessibilityRole="button"
+            accessibilityLabel={`Перейти на поддержку, норма ${formatNum(plan.kcal)} килокалорий в день`}
+            className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#fbbf24]/15 py-2.5 active:opacity-80"
+          >
+            <Scale size={15} color="#fbbf24" />
+            <Text className="font-semibold text-[12.5px] text-[#fbbf24]">
+              {`Перейти на поддержку · ${formatNum(plan.kcal)} ккал`}
+            </Text>
+          </Pressable>
+        )}
+
         {overdue && (
-          <Text className="mt-1.5 font-sans text-[11px] leading-snug text-[#d9b96a]">
-            {Number.isFinite(lastWeighDays)
-              ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным.`
-              : '📅 Запишите вес во вкладке ИМТ — взвешивание раз в неделю держит стрик честным.'}
-          </Text>
+          <Pressable
+            onPress={openWeightModal}
+            accessibilityRole="button"
+            accessibilityLabel="Записать вес во вкладке ИМТ"
+            className="mt-1.5 active:opacity-70"
+          >
+            <Text className="font-sans text-[11px] leading-snug text-[#d9b96a]">
+              {Number.isFinite(lastWeighDays)
+                ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
+                : '📅 Записать вес во вкладке ИМТ — взвешивание раз в неделю держит стрик честным →'}
+            </Text>
+          </Pressable>
         )}
       </Animated.View>
     )
   }
 
-  // Цель когда-то была достигнута, но вес снова ушёл — зовём вернуться
+  // Цель когда-то была достигнута, но вес снова ушёл — зовём вернуться:
+  // тап открывает вкладку ИМТ сразу с окном записи веса
   if (goalReachedAt) {
     const diff = Math.round((weightKg - goalWeightKg) * 10) / 10
     return (
-      <View
-        accessibilityLabel="Цель по весу была достигнута"
-        className="flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-bear-card p-4"
+      <Pressable
+        onPress={openWeightModal}
+        accessibilityRole="button"
+        accessibilityLabel="Возвращаемся к результату — записать вес"
+        className="flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-bear-card p-4 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8DABFF]/15">
           <Target size={20} color="#8DABFF" />
@@ -177,7 +244,7 @@ export function GoalCelebration() {
             {fmtDecimal(Math.abs(diff))} кг
           </Text>
         </View>
-      </View>
+      </Pressable>
     )
   }
 

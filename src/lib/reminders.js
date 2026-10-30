@@ -18,6 +18,7 @@ import * as Notifications from 'expo-notifications'
 import { router } from 'expo-router'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { requestOpenWeightModal } from '@/lib/navEvents'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
 const QUIET_FROM = 8
@@ -209,6 +210,9 @@ function handleNotificationTap(data) {
       }
     } else if (kind === 'weigh') {
       router.navigate('/bmi')
+      // И сразу окно записи веса — тапом по уведомлению пользователь
+      // собрался взвешиваться, не заставляем искать кнопку «+»
+      requestOpenWeightModal()
     }
   } catch (e) {
     console.warn('Не удалось открыть экран по тапу:', e)
