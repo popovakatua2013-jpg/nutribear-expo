@@ -11,15 +11,15 @@ import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
-import { useFoodStore } from '@/store/useFoodStore'
 import { MEALS } from '@/lib/data/meals'
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
-  const customMeals = useFoodStore((s) => s.customMeals)
+  // Дополнительные слоты «Перекус 2, 3…» больше не показываем —
+  // все перекусы живут в одной карточке «Перекус/Полдник»
+  const meals = MEALS
   const [mode, setMode] = useState('hub')
   const [picked, setPicked] = useState(null)
 
-  const meals = [...MEALS, ...customMeals]
   const meal = meals.find((m) => m.id === mealId) || meals[0]
 
   function close() {

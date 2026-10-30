@@ -1,8 +1,11 @@
 // Модалка «Все приёмы пищи»: общий обзор дневника за сегодня,
-// редактирование граммовки, удаление и добавление блюд / перекусов
+// редактирование граммовки, удаление и добавление блюд.
+// Все перекусы (Перекус 2, 3…) живут внутри одной карточки
+// «Перекус/Полдник» — отдельными блоками больше не показываются:
+// в карточке кнопка «Добавить блюдо» и ниже — «Добавить перекус».
 
 import { useState } from 'react'
-import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Pencil, Plus, Trash2, X } from 'lucide-react-native'
 import { MEALS } from '@/lib/data/meals'
 import { formatNum } from '@/lib/format'
@@ -51,28 +54,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
-  const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
-  const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
   const [edit, setEdit] = useState(null) // {mealId, entry, mealName}
-
-  // Дополнительный перекус можно удалить: пустая карточка — сразу,
-  // с блюдами — после подтверждения (они уберутся из дневника)
-  function handleRemoveCustom(meal) {
-    const mealEntries = entries[meal.id] || []
-    if (!mealEntries.length) {
-      removeCustomMeal(meal.id)
-      return
-    }
-    const consumed = mealEntries.reduce((s, e) => s + e.kcal, 0)
-    Alert.alert(
-      `Удалить «${meal.name}»?`,
-      `В карточке ${mealEntries.length} блюд(а) на ${formatNum(consumed)} ккал — они будут убраны из дневника.`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Удалить', style: 'destructive', onPress: () => removeCustomMeal(meal.id) },
-      ]
-    )
-  }
 
   function close() {
     setEdit(null)
@@ -83,7 +65,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const dailyTarget = kcal
   const dayTotal = totalConsumed(entries)
   const day = dayBju(entries)
-  const meals = [...MEALS, ...customMeals.map((m) => ({ ...m, emoji: '🥨' }))]
+  const meals = MEALS // доп. перекусы сливаются в карточку «Перекус/Полдник»
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
@@ -112,8 +94,21 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
             showsVerticalScrollIndicator={false}
           >
             {meals.map((meal) => {
+              const isSnack = meal.id === 'snack'
               const mealEntries = entries[meal.id] || []
-              const consumed = mealEntries.reduce((s, e) => s + e.kcal, 0)
+              // Доп. перекусы («Перекус 2», «Перекус 3»…) — внутри этой же
+              // карточки; у записей сохраняем их настоящий mealId,
+              // чтобы правка и удаление работали как раньше
+              const extraGroups = isSnack
+                ? customMeals.map((m) => ({ id: m.id, list: entries[m.id] || [] }))
+                : []
+              const extraCount = extraGroups.reduce((s, g) => s + g.list.length, 0)
+              const consumed =
+                mealEntries.reduce((s, e) => s + e.kcal, 0) +
+                extraGroups.reduce(
+                  (s, g) => s + g.list.reduce((x, e) => x + e.kcal, 0),
+                  0
+                )
               const target = targets[meal.id] ?? targets.snack
 
               return (
@@ -154,9 +149,20 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         onEdit={(e) => setEdit({ mealId: meal.id, entry: e, mealName: meal.name })}
                       />
                     ))}
+                    {extraGroups.flatMap((g) =>
+                      g.list.map((entry) => (
+                        <EntryRow
+                          key={entry.id}
+                          mealId={g.id}
+                          mealName={meal.name}
+                          entry={entry}
+                          onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
+                        />
+                      ))
+                    )}
                   </View>
 
-                  {!mealEntries.length && (
+                  {!mealEntries.length && !extraCount && (
                     <Text className="mt-2 font-sans text-[11px] text-bear-dim">
                       Пока ничего не добавлено
                     </Text>
@@ -172,21 +178,23 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       Добавить блюдо
                     </Text>
                   </Pressable>
+
+                  {isSnack && (
+                    <Pressable
+                      onPress={() => onAddToMeal(meal.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Добавить перекус"
+                      className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
+                    >
+                      <Plus size={13} color="#8A94B3" />
+                      <Text className="font-semibold text-[11px] text-bear-sub">
+                        Добавить перекус
+                      </Text>
+                    </Pressable>
+                  )}
                 </View>
               )
             })}
-
-            {/* Ещё один перекус пользователя */}
-            <Pressable
-              onPress={addCustomMeal}
-              accessibilityRole="button"
-              className="flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
-            >
-              <Plus size={14} color="#8A94B3" />
-              <Text className="font-semibold text-[11px] text-bear-sub">
-                Добавить перекус
-              </Text>
-            </Pressable>
           </ScrollView>
         </View>
       </View>

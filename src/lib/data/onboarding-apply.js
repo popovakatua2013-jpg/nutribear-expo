@@ -37,8 +37,6 @@ export function applyOnboarding(answers, plan) {
   // Цель питания: id совпадают с пресетами (lose / maintain / gain)
   if (a.goalId) useFoodStore.getState().setGoal(a.goalId)
 
-  // «3 + 2 перекуса» — добавить один дополнительный перекус, если его нет
-  if (a.mealsDay === '3+2' && useFoodStore.getState().customMeals.length === 0) {
-    useFoodStore.getState().addCustomMeal()
-  }
+  // Доп. слоты перекусов («Перекус 2, 3…») больше не создаются: все
+  // перекусы живут в одной карточке «Перекус/Полдник» (4 приёма пищи)
 }
