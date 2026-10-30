@@ -1,15 +1,22 @@
 // Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
 // У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
 // с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
+// Тап по карточке «Вода» открывает окно воды (добавить/изменить/удалить)
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 
-function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel }) {
+function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress }) {
+  const Root = onPress ? Pressable : View
   return (
-    <View className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg}`}>
+    <Root
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? `Открыть: ${label}` : undefined}
+      className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg} ${onPress ? 'active:opacity-80' : ''}`}
+    >
       <View className="flex-row items-center gap-2.5">
         <LinearGradient
           start={{ x: 0, y: 0 }}
@@ -47,14 +54,14 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel }) {
           </Pressable>
         )}
       </View>
-    </View>
+    </Root>
   )
 }
 
 export function ActivityStats({
   steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl,
-  onAddSteps, onAddWater,
+  onAddSteps, onAddWater, onOpenWater,
 }) {
   const cards = [
     {
@@ -108,6 +115,7 @@ export function ActivityStats({
       sub: `из ${formatNum(waterGoalMl / 1000)} л · ${formatNum(waterMl)} мл`,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
+      onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
     },
   ]
 

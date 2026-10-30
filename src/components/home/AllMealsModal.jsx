@@ -26,7 +26,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
           {entry.name}
         </Text>
         <Text className="font-sans text-[10px] text-bear-sub2">
-          {`${entry.grams} г · ${formatNum(entry.kcal)} · ${bjuLine(entry)}${
+          {`${entry.grams > 0 ? `${entry.grams} г · ` : ''}${formatNum(entry.kcal)} · ${bjuLine(entry)}${
             entry.time ? ` · ${entry.time}` : ''
           }`}
         </Text>

@@ -9,6 +9,7 @@ import { ScrollView, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
+import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { NutritionRating } from '@/components/home/NutritionRating'
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const { toast } = useToast()
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
+  const [waterOpen, setWaterOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
 
   const entries = useFoodStore((s) => s.entries)
@@ -104,6 +106,7 @@ export default function HomeScreen() {
       () => () => {
         setAddOpen(false)
         setAllOpen(false)
+        setWaterOpen(false)
       },
       []
     )
@@ -134,6 +137,7 @@ export default function HomeScreen() {
           waterGoalMl={goals.waterMl}
           onAddSteps={handleAddSteps}
           onAddWater={handleAddWater}
+          onOpenWater={() => setWaterOpen(true)}
         />
 
         {/* Съедено за сегодня — сводка над планом питания */}
@@ -171,6 +175,14 @@ export default function HomeScreen() {
           setAllOpen(false)
           openAdd(id)
         }}
+      />
+
+      {/* Вода: тап по карточке на главной — добавить/изменить/удалить */}
+      <WaterModal
+        open={waterOpen}
+        onClose={() => setWaterOpen(false)}
+        goalMl={goals.waterMl}
+        ml={waterMl}
       />
     </View>
   )
