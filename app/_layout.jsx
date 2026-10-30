@@ -20,6 +20,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { startRolloverWatcher } from '@/lib/rollover'
+import { startReminderAgent } from '@/lib/reminders'
 
 // Гидратация persist-стора онбординга из AsyncStorage
 function useOnboardingHydrated() {
@@ -62,6 +63,9 @@ export default function RootLayout() {
 
   // Авто-переход на новый день: при запуске, возврате из фона и через полночь
   useEffect(() => startRolloverWatcher(), [])
+
+  // Агент напоминаний: планирует уведомления о воде и приёмах пищи
+  useEffect(() => startReminderAgent(), [])
 
   if (!loaded || !hydrated) return <SplashBear />
 

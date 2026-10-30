@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
+import { EveningNudge } from '@/components/home/EveningNudge'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { NutritionRating } from '@/components/home/NutritionRating'
 import { QuoteCard } from '@/components/home/QuoteCard'
@@ -172,6 +173,17 @@ export default function HomeScreen() {
           onEditWaterGoal={() =>
             openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
           }
+        />
+
+        {/* Вечерняя подсказка: с 19:00 догоняем воду/калории, если отстаём */}
+        <EveningNudge
+          waterPct={waterPct}
+          waterMl={waterMl}
+          waterGoalMl={goals.waterMl}
+          kcal={consumed}
+          kcalGoal={goals.kcal}
+          onAddWater={handleAddWater}
+          onAddFood={() => openAdd('dinner')}
         />
 
         {/* Съедено за сегодня — сводка над планом питания */}

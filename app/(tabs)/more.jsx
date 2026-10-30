@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { GoalPicker } from '@/components/more/GoalPicker'
+import { MealRemindersCard } from '@/components/more/MealRemindersCard'
 import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
@@ -29,6 +30,7 @@ export default function MoreScreen() {
 
         <ProfileEditor />
         <GoalPicker />
+        <MealRemindersCard />
         <SyncCard />
         <DataPortability />
         <DataActions />

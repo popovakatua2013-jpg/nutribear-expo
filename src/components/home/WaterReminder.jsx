@@ -5,13 +5,36 @@ import { useState } from 'react'
 import { Pressable, Switch, Text, TextInput, View } from 'react-native'
 import { Bell } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
+import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
 
-// Тумблер без текста — ставится в шапку окна «Вода»
+// Тумблер без текста — ставится в шапку окна «Вода».
+// При включении запрашивает разрешение на уведомления: без него
+// напоминания приходить не могут.
 export function ReminderToggle() {
   const reminder = useActivityStore((s) => s.reminder)
   const setReminder = useActivityStore((s) => s.setReminder)
   const { toast } = useToast()
+
+  async function handleToggle(v) {
+    if (v) {
+      const ok = await requestNotifPermission()
+      if (!ok) {
+        toast({
+          title: '🔔 Нужно разрешение',
+          description: 'Разрешите уведомления NutriBear в настройках телефона',
+        })
+        return
+      }
+    }
+    setReminder({ enabled: v })
+    toast({
+      title: v ? '🔔 Напоминания включены' : 'Напоминания выключены',
+      description: v
+        ? `Будем напоминать каждые ${reminder.everyMin} мин, если норма не выпита`
+        : undefined,
+    })
+  }
 
   return (
     <View className="flex-row items-center">
@@ -19,13 +42,7 @@ export function ReminderToggle() {
       <Switch
         accessibilityLabel="Напоминания о воде"
         value={reminder.enabled}
-        onValueChange={(v) => {
-          setReminder({ enabled: v })
-          toast({
-            title: v ? '🔔 Напоминания включены' : 'Напоминания выключены',
-            description: v ? 'Будем напоминать пить воду' : undefined,
-          })
-        }}
+        onValueChange={handleToggle}
         trackColor={{ true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }}
         thumbColor="#fff"
         style={{ transform: [{ scale: 0.75 }] }}
@@ -50,7 +67,8 @@ export function ReminderIntervals() {
   return (
     <View>
       <Text className="font-sans text-[11px] leading-snug text-bear-sub">
-        Напомним, если норма не выпита. С 8:00 до 23:00.
+        Уведомления придут, даже если приложение закрыто, но не побеспокоят,
+        если норма уже выпита. Тихие часы: 23:00–8:00.
       </Text>
       <View className="mt-2 flex-row flex-wrap gap-1.5">
         {PILLS.map((m) => (

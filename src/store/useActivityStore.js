@@ -31,8 +31,15 @@ export const useActivityStore = create(
       waterLog: [],
       // Ёмкости для окна добавления воды (редактируются пользователем)
       vessels: DEFAULT_VESSELS,
-      // Напоминания о воде: интервал и время последнего срабатывания
-      reminder: { enabled: false, everyMin: 60, lastAt: 0 },
+      // Напоминания о воде: интервал и время последнего срабатывания.
+      // meals — напоминания о приёмах пищи: общий тумблер и время
+      // завтрака/обеда/ужина («ЧЧ:ММ»).
+      reminder: {
+        enabled: false,
+        everyMin: 60,
+        lastAt: 0,
+        meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' },
+      },
       // Локальный день, к которому относятся вода и шаги
       dayKey: dayKeyOf(),
 
@@ -101,9 +108,10 @@ export const useActivityStore = create(
     }),
     {
       name: 'nutribear-activity-v1',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
-      // У кого остался старый набор из 3 ёмкостей — добавляем «Кувшин 700»
+      // version 0→1: старый набор из 3 ёмкостей — добавляем «Кувшин 700».
+      // version 1→2: напоминаниям о воде добавляем блок «meals» (приёмы пищи).
       migrate: (state, version) => {
         if (version < 1 && state && Array.isArray(state.vessels)) {
           const isOld =
@@ -112,6 +120,14 @@ export const useActivityStore = create(
               (v, i) => v && v.id === OLD_DEFAULT[i].id && v.ml === OLD_DEFAULT[i].ml
             )
           if (isOld) state.vessels = DEFAULT_VESSELS
+        }
+        if (version < 2 && state && state.reminder && !state.reminder.meals) {
+          state.reminder.meals = {
+            enabled: false,
+            breakfast: '08:30',
+            lunch: '13:00',
+            dinner: '19:00',
+          }
         }
         return state
       },
