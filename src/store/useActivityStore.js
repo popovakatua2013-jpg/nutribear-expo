@@ -34,11 +34,13 @@ export const useActivityStore = create(
       // Напоминания о воде: интервал и время последнего срабатывания.
       // meals — напоминания о приёмах пищи: общий тумблер и время
       // завтрака/обеда/ужина («ЧЧ:ММ»).
+      // weigh — еженедельное взвешивание: weekday 0=Пн…6=Вс, time «ЧЧ:ММ».
       reminder: {
         enabled: false,
         everyMin: 60,
         lastAt: 0,
         meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' },
+        weigh: { enabled: false, weekday: 5, time: '09:00' },
       },
       // Локальный день, к которому относятся вода и шаги
       dayKey: dayKeyOf(),
@@ -108,10 +110,11 @@ export const useActivityStore = create(
     }),
     {
       name: 'nutribear-activity-v1',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       // version 0→1: старый набор из 3 ёмкостей — добавляем «Кувшин 700».
       // version 1→2: напоминаниям о воде добавляем блок «meals» (приёмы пищи).
+      // version 2→3: добавляем блок «weigh» (еженедельное взвешивание).
       migrate: (state, version) => {
         if (version < 1 && state && Array.isArray(state.vessels)) {
           const isOld =
@@ -128,6 +131,9 @@ export const useActivityStore = create(
             lunch: '13:00',
             dinner: '19:00',
           }
+        }
+        if (version < 3 && state && state.reminder && !state.reminder.weigh) {
+          state.reminder.weigh = { enabled: false, weekday: 5, time: '09:00' }
         }
         return state
       },

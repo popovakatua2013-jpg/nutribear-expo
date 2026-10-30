@@ -1,16 +1,21 @@
 // Реальные напоминания через локальные уведомления (expo-notifications):
 // 1) вода — повторяющийся интервал, 2) приёмы пищи — ежедневно в
-// выбранное время. Уведомления приходят, даже если приложение закрыто
-// (пока Expo Go жив). Уведомление о воде показывается только если
-// норма ещё не выпита и сейчас между 8:00 и 23:00 — это решается
-// в обработчике в момент срабатывания, а не при планировании.
+// выбранное время, 3) взвешивание — раз в неделю. Уведомления приходят,
+// даже если приложение закрыто (пока Expo Go жив). Уведомление о воде
+// показывается только если норма ещё не выпита и сейчас между 8:00 и
+// 23:00 — это решается в обработчике в момент срабатывания, а не при
+// планировании.
+//
+// Тап по уведомлению открывает нужное место приложения: вода — окно
+// воды на главной, приём — окно добавления еды, вес — вкладку BMI.
 //
 // Планировщик (startReminderAgent) запускается один раз из корневого
 // макета и следит за настройками стора: любое изменение reminder
 // (тумблер, интервал, время приёмов) перепланирует уведомления.
 
-import { Platform } from 'react-native'
+import { DeviceEventEmitter, Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
+import { router } from 'expo-router'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 
@@ -76,6 +81,10 @@ async function ensureChannels() {
       name: 'Напоминания о приёмах пищи',
       importance: Notifications.AndroidImportance.HIGH,
     })
+    await Notifications.setNotificationChannelAsync('weigh', {
+      name: 'Напоминания о взвешивании',
+      importance: Notifications.AndroidImportance.HIGH,
+    })
   } catch {}
 }
 
@@ -133,7 +142,12 @@ export async function rescheduleReminders() {
       try {
         await Notifications.scheduleNotificationAsync({
           identifier: `meal-${key}`,
-          content: { title, body, sound: 'default', data: { kind: 'meal' } },
+          content: {
+            title,
+            body,
+            sound: 'default',
+            data: { kind: 'meal', mealId: key },
+          },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DAILY,
             hour: t.hour,
@@ -145,6 +159,59 @@ export async function rescheduleReminders() {
         console.warn(`Напоминание «${key}» не запланировано:`, e)
       }
     }
+  }
+
+  // Взвешивание: раз в неделю в выбранное время
+  const weigh = reminder?.weigh
+  if (weigh?.enabled) {
+    const t = parseTime(weigh.time)
+    // weekday хранится как 0=Пн…6=Вс, у expo-notifications 1=Вс…7=Сб
+    const EXPO_WD = [2, 3, 4, 5, 6, 7, 1]
+    const wd = EXPO_WD[Math.min(6, Math.max(0, Math.round(weigh.weekday ?? 5)))]
+    if (t) {
+      try {
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'weigh-weekly',
+          content: {
+            title: '⚖️ Время взвешивания',
+            body: 'Утро, натощак — самое точное время. Запишите вес в дневник 🐻',
+            sound: 'default',
+            data: { kind: 'weigh' },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            weekday: wd,
+            hour: t.hour,
+            minute: t.minute,
+            channelId: 'weigh',
+          },
+        })
+      } catch (e) {
+        console.warn('Напоминание о взвешивании не запланировано:', e)
+      }
+    }
+  }
+}
+
+// Тап по уведомлению: открываем соответствующее место приложения
+function handleNotificationTap(data) {
+  const kind = data?.kind
+  try {
+    if (kind === 'water' || kind === 'meal') {
+      // Окна живут на главной — сначала показываем её
+      router.navigate('/')
+      if (kind === 'water') {
+        DeviceEventEmitter.emit('nutribear/open-water')
+      } else {
+        DeviceEventEmitter.emit('nutribear/open-food', {
+          mealId: data.mealId || 'breakfast',
+        })
+      }
+    } else if (kind === 'weigh') {
+      router.navigate('/bmi')
+    }
+  } catch (e) {
+    console.warn('Не удалось открыть экран по тапу:', e)
   }
 }
 
@@ -158,12 +225,21 @@ export function startReminderAgent() {
 
   rescheduleReminders()
 
+  // Тап по уведомлению, когда приложение уже запущено
+  let respSub = null
+  try {
+    respSub = Notifications.addNotificationResponseReceivedListener((resp) => {
+      handleNotificationTap(resp?.notification?.request?.content?.data)
+    })
+  } catch {}
+
   // Любое изменение настроек напоминаний — перепланировать
   const unsub = useActivityStore.subscribe((s, prev) => {
     if (s.reminder !== prev.reminder) rescheduleReminders()
   })
 
   return () => {
+    if (respSub) respSub.remove()
     unsub()
     started = false
   }

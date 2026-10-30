@@ -17,7 +17,8 @@ const ROWS = [
 
 // Поле времени «ЧЧ:ММ»: цифры вводятся подряд, двоеточие ставится само.
 // Время уходит в стор только когда введены все 4 цифры и оно корректно.
-function TimeField({ value, onChange }) {
+// Экспортируется для карточки взвешивания (WeighReminderCard).
+export function TimeField({ value, onChange }) {
   const [text, setText] = useState(value)
   const [focused, setFocused] = useState(false)
 

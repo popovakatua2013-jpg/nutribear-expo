@@ -5,8 +5,9 @@
 // Показатели дня пишутся в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
+import * as Notifications from 'expo-notifications'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { WaterModal } from '@/components/home/WaterModal'
@@ -140,6 +141,32 @@ export default function HomeScreen() {
       []
     )
   )
+
+  // Тап по уведомлению открывает нужное окно (напоминания о воде/еде).
+  // Плюс холодный старт: приложение запустили тапом по уведомлению.
+  useEffect(() => {
+    const subWater = DeviceEventEmitter.addListener('nutribear/open-water', () =>
+      setWaterOpen(true)
+    )
+    const subFood = DeviceEventEmitter.addListener('nutribear/open-food', (e) => {
+      setMealId(e?.mealId || 'breakfast')
+      setAddOpen(true)
+    })
+    Notifications.getLastNotificationResponseAsync()
+      .then((resp) => {
+        const data = resp?.notification?.request?.content?.data
+        if (data?.kind === 'water') setWaterOpen(true)
+        else if (data?.kind === 'meal') {
+          setMealId(data.mealId || 'breakfast')
+          setAddOpen(true)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      subWater.remove()
+      subFood.remove()
+    }
+  }, [])
 
   function openAdd(id) {
     setMealId(id)

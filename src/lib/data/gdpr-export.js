@@ -11,6 +11,9 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useRecipesStore } from '@/store/useRecipesStore'
+import { useUserFoodsStore } from '@/store/useUserFoodsStore'
+import { useCombosStore } from '@/store/useCombosStore'
+import { useHistoryStore } from '@/store/useHistoryStore'
 
 // Снимок всех данных приложения (персональные данные здоровья —
 // особая категория; экспорт выполняется локально, без сети)
@@ -26,6 +29,10 @@ export function collectAll() {
     exercise: useExerciseStore.getState(),
     fasting: useFastingStore.getState(),
     recipes: useRecipesStore.getState(),
+    userFoods: useUserFoodsStore.getState(),
+    combos: useCombosStore.getState(),
+    // Дневная история (шаги/ккал/вода/тренировки по датам) — для отчётов
+    history: useHistoryStore.getState(),
   }
 }
 
