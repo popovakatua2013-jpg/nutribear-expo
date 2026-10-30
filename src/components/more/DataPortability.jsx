@@ -102,6 +102,8 @@ export function DataPortability() {
 
       <Pressable
         onPress={exportAll}
+        accessibilityRole="button"
+        accessibilityLabel="Сохранить копию данных в JSON-файл"
         className="mt-3 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
         <FileDown size={18} color="#38bdf8" />

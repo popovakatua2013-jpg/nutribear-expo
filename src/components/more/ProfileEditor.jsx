@@ -33,8 +33,16 @@ export function ProfileEditor() {
     const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
     const hRaw = parseNum(current.heightCm)
     const wRaw = parseNum(current.weightKg)
-    if (!Number.isFinite(hRaw) || hRaw < 80 || hRaw > 250) return
-    if (!Number.isFinite(wRaw) || wRaw < 25 || wRaw > 300) return
+    if (
+      !Number.isFinite(hRaw) || hRaw < 80 || hRaw > 250 ||
+      !Number.isFinite(wRaw) || wRaw < 25 || wRaw > 300
+    ) {
+      toast({
+        title: '⚠️ Проверьте данные',
+        description: 'Рост 80–250 см, вес 25–300 кг — например 72,5',
+      })
+      return
+    }
     const h = Math.round(hRaw)
     const w = Math.round(wRaw * 10) / 10
     const weightChanged = w !== weightKg

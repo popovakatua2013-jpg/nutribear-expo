@@ -4,8 +4,12 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronRight, FileText } from 'lucide-react-native'
+import Constants from 'expo-constants'
 import { DISCLAIMER } from '@/lib/data/disclaimer'
 import { LegalModal } from '@/components/more/LegalModal'
+
+// Версия из app.json (expo), а не захардкоженная
+const VERSION = Constants?.expoConfig?.version || '1.0'
 
 export function AboutCard() {
   const [legalOpen, setLegalOpen] = useState(false)
@@ -16,7 +20,7 @@ export function AboutCard() {
       <Text className="mt-2 font-extrabold text-[15px] tracking-tight text-bear-text">
         NutriBear
       </Text>
-      <Text className="mt-1 font-semibold text-[11px] text-bear-dim">Версия 1.0</Text>
+      <Text className="mt-1 font-semibold text-[11px] text-bear-dim">Версия {VERSION}</Text>
       <Text className="mx-auto mt-2 max-w-[300px] text-center font-sans text-[12px] leading-relaxed text-bear-sub2">
         Дневник питания и активности с мишкой-наставником. Веди дневник,
         пей воду, ходи пешком и получай награды — все данные хранятся

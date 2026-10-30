@@ -3,7 +3,7 @@
 // Уведомления планирует src/lib/reminders.js (триггер WEEKLY),
 // тап по уведомлению открывает вкладку с динамикой веса.
 
-import { Switch, Text, View } from 'react-native'
+import { Pressable, Switch, Text, View } from 'react-native'
 import { Scale } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
@@ -11,6 +11,16 @@ import { useToast } from '../ui/Toast'
 import { TimeField } from './MealRemindersCard'
 
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+// «Каждую понедельник» нельзя: винительный падеж у всех дней разный
+const DAY_ACC = [
+  'в понедельник',
+  'во вторник',
+  'в среду',
+  'в четверг',
+  'в пятницу',
+  'в субботу',
+  'в воскресенье',
+]
 
 export function WeighReminderCard() {
   const weigh = useActivityStore((s) => s.reminder.weigh)
@@ -32,7 +42,7 @@ export function WeighReminderCard() {
     toast({
       title: v ? '⚖️ Напоминание о взвешивании включено' : 'Напоминание о взвешивании выключено',
       description: v
-        ? `Каждую ${DAYS[weigh.weekday]?.toLowerCase() || 'субботу'} в ${weigh.time}`
+        ? `Напомним ${DAY_ACC[weigh.weekday] || 'в субботу'} в ${weigh.time}`
         : undefined,
     })
   }
@@ -69,18 +79,18 @@ export function WeighReminderCard() {
             {DAYS.map((d, i) => {
               const active = weigh.weekday === i
               return (
-                <Text
+                <Pressable
                   key={d}
                   onPress={() => setReminder({ weigh: { ...weigh, weekday: i } })}
                   accessibilityRole="button"
                   accessibilityLabel={`День недели ${d}`}
-                  className={`rounded-full px-3 py-1.5 font-semibold text-xs ${
-                    active ? 'text-white' : 'bg-white/5 text-bear-sub'
-                  }`}
+                  className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? '' : 'bg-white/5'}`}
                   style={active ? { backgroundColor: '#7B6CF6' } : null}
                 >
-                  {d}
-                </Text>
+                  <Text className={`font-semibold text-xs ${active ? 'text-white' : 'text-bear-sub'}`}>
+                    {d}
+                  </Text>
+                </Pressable>
               )
             })}
           </View>

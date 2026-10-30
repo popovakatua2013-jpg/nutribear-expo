@@ -30,9 +30,10 @@ export function healthyRange(heightCm) {
   return { min: Math.round(18.5 * h), max: Math.round(24.9 * h) }
 }
 
-// Заполнение кольца датчика: доля до верхней границы нормы (как на макете)
+// Заполнение кольца датчика: шкала 0–40 — иначе при ИМТ ≥ 25 кольцо
+// застывает на 100 % и «26» не отличить от «45»
 export function gaugeFill(bmi) {
-  return Math.min(100, Math.max(8, Math.round((bmi / 25) * 100)))
+  return Math.min(100, Math.max(8, Math.round((bmi / 40) * 100)))
 }
 
 // Рекомендации: текст на карточке и советы внутри (по клику на «>»)
@@ -162,4 +163,54 @@ export function weekWeights(weightKg, records) {
 function shortWeekday(date) {
   const s = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(date)
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+// Числовой ключ дня (20251024) — надёжное сравнение дат без строк
+const dayNum = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+
+// «24.10» — короткая дата для месяцев и всего журнала
+export function shortDate(date) {
+  return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(date)
+}
+
+// Вес за месяц (последние 30 дней, точка каждые 3 дня). На каждый
+// сэмпльный день берём последнее измерение «на тот день или раньше»;
+// до самой первой записи — вес первой записи (не сегодняшний),
+// иначе график рисует ложный обрыв в последних килограммах
+export function monthWeights(weightKg, records) {
+  const asc = (records || [])
+    .map((r) => ({ t: dayNum(new Date(r.date)), kg: r.kg }))
+    .sort((a, b) => a.t - b.t)
+  const out = []
+  const today = new Date()
+  for (let i = 27; i >= 0; i -= 3) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const t = dayNum(d)
+    let kg = null
+    for (const r of asc) {
+      if (r.t <= t) kg = r.kg
+      else break
+    }
+    out.push({
+      label: shortDate(d),
+      kg: Math.round(((kg ?? asc[0]?.kg ?? weightKg) || 0) * 10) / 10,
+    })
+  }
+  return out
+}
+
+// Весь журнал веса: одна точка на день (последняя за день), последние
+// 24 дня с измерениями, старые → новые. Пустой массив, если записей нет —
+// карточка тогда показывает неделю/месяц
+export function allWeights(records) {
+  const byDay = new Map()
+  for (const r of records || []) {
+    const d = new Date(r.date)
+    byDay.set(dayNum(d), { d, kg: r.kg })
+  }
+  return [...byDay.values()]
+    .sort((a, b) => a.d - b.d)
+    .slice(-24)
+    .map(({ d, kg }) => ({ label: shortDate(d), kg: Math.round(kg * 10) / 10 }))
 }

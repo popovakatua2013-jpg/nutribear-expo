@@ -271,6 +271,7 @@ function NumField({ label, value, onChange, decimal }) {
         textAlign="center"
         placeholder="—"
         placeholderTextColor="#8B96B8"
+        accessibilityLabel={label}
         className="mt-1.5 rounded-xl border border-white/10 bg-white/5 px-1 py-2.5 font-semibold text-[14px] text-white"
       />
     </View>

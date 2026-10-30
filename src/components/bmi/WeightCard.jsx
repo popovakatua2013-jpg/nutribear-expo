@@ -6,12 +6,19 @@ import { useState } from 'react'
 import { Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { TrendingDown, TrendingUp, Plus, Pencil, Trash2, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
-import { weekWeights, healthyRange, fmtDecimal } from '@/lib/data/bmi'
+import { weekWeights, monthWeights, allWeights, healthyRange, fmtDecimal } from '@/lib/data/bmi'
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
 
 const HIST_VISIBLE = 8
+
+const PERIODS = [
+  { id: 'week', label: 'Неделя' },
+  { id: 'month', label: 'Месяц' },
+  { id: 'all', label: 'Всё' },
+]
+const DELTA_CAPTION = { week: 'за неделю', month: 'за месяц', all: 'за всё время' }
 
 // «24.10» из ISO-даты измерения
 const shortDay = (iso) =>
@@ -20,6 +27,7 @@ const shortDay = (iso) =>
 export function WeightCard() {
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
+  const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const weights = useProfileStore((s) => s.weights)
   const addWeight = useProfileStore((s) => s.addWeight)
   const updateWeight = useProfileStore((s) => s.updateWeight)
@@ -28,21 +36,36 @@ export function WeightCard() {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const [period, setPeriod] = useState('week')
   const [editing, setEditing] = useState(null) // измерение на изменении
   const [kgText, setKgText] = useState('')
 
-  const data = weekWeights(weightKg, weights)
-  const weekDelta =
-    data.length === 7 ? Math.round((data[6].kg - data[0].kg) * 10) / 10 : 0
+  // «Всё» без минимум двух точек смысла не имеет — показываем неделю
+  const allPts = allWeights(weights)
+  const data =
+    period === 'month'
+      ? monthWeights(weightKg, weights)
+      : period === 'all' && allPts.length >= 2
+        ? allPts
+        : weekWeights(weightKg, weights)
+  const last = data[data.length - 1]
+  const weekDelta = Math.round((last.kg - data[0].kg) * 10) / 10
 
   // Зелёный — вес движется к норме, красный — в сторону
   const { min, max } = healthyRange(heightCm)
   const towardNorm =
-    (weekDelta < 0 && data[6]?.kg >= min) || (weekDelta > 0 && data[6]?.kg <= max)
+    (weekDelta < 0 && last?.kg >= min) || (weekDelta > 0 && last?.kg <= max)
 
-  function handleSave({ heightCm: h, weightKg: w, weightChanged }) {
+  // Прогресс к цели: «до цели −3,5 кг» или «Цель достигнута!»
+  const goalDiff =
+    goalWeightKg != null ? Math.round((weightKg - goalWeightKg) * 10) / 10 : 0
+  const goalReached = goalWeightKg != null && Math.abs(goalDiff) < 0.05
+
+  function handleSave({ heightCm: h, weightKg: w, weightChanged, goalKg }) {
     if (h !== heightCm) setProfile({ heightCm: h })
     if (weightChanged) addWeight(w)
+    if (goalKg !== undefined) setProfile({ goalWeightKg: goalKg })
   }
 
   // Русская запятая — тоже десятичный разделитель
@@ -78,6 +101,28 @@ export function WeightCard() {
         </Pressable>
       </View>
 
+      {/* Период графика: неделя / месяц / весь журнал */}
+      <View className="mt-2 flex-row gap-1.5">
+        {PERIODS.map((p) => {
+          const active = period === p.id
+          return (
+            <Pressable
+              key={p.id}
+              onPress={() => setPeriod(p.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Период графика: ${p.label}`}
+              className={`rounded-full px-3 py-1 active:opacity-70 ${active ? 'bg-white/15' : 'bg-white/5'}`}
+            >
+              <Text
+                className={`font-semibold text-[11px] ${active ? 'text-white' : 'text-bear-sub'}`}
+              >
+                {p.label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+
       <View className="mt-2 flex-row items-stretch gap-3">
         <View className="min-w-0 flex-1">
           <WeightChart data={data} />
@@ -102,10 +147,35 @@ export function WeightCard() {
             </Text>
           </View>
           <Text className="mt-0.5 text-right font-sans text-[10px] text-bear-dim">
-            за неделю
+            {DELTA_CAPTION[period]}
           </Text>
         </View>
       </View>
+
+      {/* Прогресс к цели по весу (тап — изменить или убрать в модалке) */}
+      {goalWeightKg != null && (
+        <Pressable
+          onPress={() => setOpen(true)}
+          accessibilityLabel={
+            goalReached
+              ? 'Цель по весу достигнута — нажмите, чтобы изменить'
+              : 'Цель по весу — нажмите, чтобы изменить'
+          }
+          className="mt-2 flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2 active:opacity-70"
+        >
+          <Text className="font-medium text-[12px] text-bear-soft">
+            🎯 Цель {fmtDecimal(goalWeightKg)} кг
+          </Text>
+          {goalReached ? (
+            <Text className="font-bold text-[12px] text-emerald-400">🎉 Цель достигнута!</Text>
+          ) : (
+            <Text className="font-bold text-[12px] text-[#8DABFF]">
+              до цели {goalDiff > 0 ? '−' : '+'}
+              {fmtDecimal(Math.abs(goalDiff))} кг
+            </Text>
+          )}
+        </Pressable>
+      )}
 
       {/* Журнал измерений: изменить / удалить */}
       {weights.length > 0 && (
@@ -126,7 +196,7 @@ export function WeightCard() {
 
           {histOpen && (
             <View className="mt-1 gap-1">
-              {weights.slice(0, HIST_VISIBLE).map((w) => (
+              {(showAll ? weights : weights.slice(0, HIST_VISIBLE)).map((w) => (
                 <View
                   key={w.id}
                   className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2"
@@ -159,9 +229,16 @@ export function WeightCard() {
                 </View>
               ))}
               {weights.length > HIST_VISIBLE && (
-                <Text className="px-1 font-sans text-[10px] text-bear-dim">
-                  Показаны последние {HIST_VISIBLE} из {weights.length}
-                </Text>
+                <Pressable
+                  onPress={() => setShowAll((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showAll ? 'Скрыть старые измерения' : 'Показать все измерения'}
+                  className="px-1 py-1.5 active:opacity-70"
+                >
+                  <Text className="font-sans text-[11px] font-semibold text-[#8DABFF]">
+                    {showAll ? 'Скрыть' : `Показать все (${weights.length})`}
+                  </Text>
+                </Pressable>
               )}
             </View>
           )}
@@ -173,6 +250,7 @@ export function WeightCard() {
         onClose={() => setOpen(false)}
         height={heightCm}
         weight={weightKg}
+        goalWeight={goalWeightKg}
         onSave={handleSave}
       />
 
