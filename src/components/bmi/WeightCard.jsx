@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { TrendingDown, TrendingUp, Plus, Pencil, Trash2, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
+import { goalRewardAfterSave } from '@/lib/goal'
 import {
   weekWeights,
   monthWeights,
@@ -71,19 +72,24 @@ export function WeightCard() {
   const goalReached = goalWeightKg != null && Math.abs(goalDiff) < 0.05
 
   function handleSave({ heightCm: h, weightKg: w, weightChanged, goalKg }) {
-    const wasReached =
-      goalWeightKg != null && Math.abs(weightKg - goalWeightKg) < 0.05
+    // Награда за достижение цели: чистые правила в lib/goal.js — при смене
+    // цели старая дата не остаётся висеть про новую цель, при повторном
+    // достижении после отката дата ставится заново (стрик удержания)
+    const reward = goalRewardAfterSave({
+      prevGoal: goalWeightKg,
+      prevReachedAt: goalReachedAt,
+      prevWeight: weightKg,
+      weight: w,
+      weightChanged,
+      goalKg,
+    })
+
     if (h !== heightCm) setProfile({ heightCm: h })
     if (weightChanged) addWeight(w)
     if (goalKg !== undefined) setProfile({ goalWeightKg: goalKg })
+    if (reward.reachedAt !== undefined) setProfile({ goalReachedAt: reward.reachedAt })
 
-    // Награда за достижение цели: один раз — при переходе «не достиг → достиг»
-    // (цель после сохранения — либо новая, либо прежняя, если поле не трогали)
-    const goal = goalKg === undefined ? goalWeightKg : goalKg
-    const nowReached =
-      goal != null && weightChanged && Math.abs(w - goal) < 0.05
-    if (!wasReached && nowReached) {
-      setProfile({ goalReachedAt: new Date().toISOString() })
+    if (reward.celebrate) {
       Alert.alert(
         '🎉 Цель достигнута!',
         `Вес ${fmtDecimal(w)} кг — ты у цели! Дальше — удержание: взвешивайся раз в неделю и держи норму калорий.`

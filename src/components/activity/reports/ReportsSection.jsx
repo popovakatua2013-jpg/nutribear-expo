@@ -1,9 +1,11 @@
 // Секция «Отчёты»: заголовок с фильтром периода (7/30/90 дней),
-// карточки итогов, недельное сравнение и мотивационный баннер
+// празднование цели по весу, карточки итогов, недельное сравнение
+// и мотивационный баннер
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
 import { WeeksChart } from './WeeksChart'
 import { ReportsBanner } from './ReportsBanner'
@@ -42,6 +44,7 @@ export function ReportsSection({ today }) {
         </View>
       </View>
 
+      <GoalCelebration />
       <ReportCards today={today} days={days} />
       <WeeksChart today={today} />
       <ReportsBanner />
