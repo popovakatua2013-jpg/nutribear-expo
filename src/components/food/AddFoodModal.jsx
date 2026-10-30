@@ -1,13 +1,12 @@
-// Модалка добавления блюда: выбор приёма пищи и способа добавления
-// (база, сканер, голос, галерея, рецепты). Тело монтируется с key = mealId
-// — состояние поиска сбрасывается само.
+// Модалка добавления блюда: выбор приёма пищи и способа добавления.
+// В хабе — строка поиска над плитками и отдельное окно базы продуктов.
+// Тело монтируется с key = mealId — состояние поиска сбрасывается само.
 
 import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, X } from 'lucide-react-native'
 import { MealTabs } from './MealTabs'
 import { AddHub } from './AddHub'
-import { BaseMode } from './BaseMode'
 import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
@@ -57,7 +56,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                       Добавить приём пищи
                     </Text>
                     <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
-                      База продуктов, сканер, голос, галерея или свои рецепты
+                      Поиск, сканер, голос, галерея или свои рецепты
                     </Text>
                   </View>
                   <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
@@ -82,8 +81,9 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                   </Pressable>
                 )}
 
-                {mode === 'hub' && <AddHub onSelect={setMode} />}
-                {mode === 'base' && <BaseMode mealId={mealId} onPick={setPicked} />}
+                {mode === 'hub' && (
+                  <AddHub mealId={mealId} onPick={setPicked} onSelect={setMode} />
+                )}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}
                 {mode === 'voice' && <VoiceMode onPick={setPicked} />}
                 {mode === 'gallery' && <PhotoMode source="library" onPick={setPicked} />}
