@@ -47,9 +47,10 @@ export const useActivityStore = create(
         meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' },
         weigh: { enabled: false, weekday: 5, time: '09:00' },
       },
-      // Встроенный шагомер: тумблер хранится, шаги датчика — живые
-      // (не в persist): агент src/lib/pedometer.js опрашивает систему
-      // раз в минуту, после перезапуска восстанавливает значение первым же опросом
+      // Встроенный шагомер: тумблер и дневная сумма хранятся (сумма —
+      // вместе с dayKey, на новый день обнуляется в rollDay). Агент
+      // src/lib/pedometer.js держит значение актуальным: на iOS опрашивает
+      // систему раз в минуту, на Android ведёт живой счёт от подписки.
       pedometerEnabled: false,
       pedometerSteps: 0,
       // Локальный день, к которому относятся вода и шаги
@@ -101,10 +102,17 @@ export const useActivityStore = create(
       },
 
       resetToday: () =>
-        set({ waterMl: 0, extraSteps: 0, lastWaterAt: Date.now(), waterLog: [], dayKey: dayKeyOf() }),
+        set({
+          waterMl: 0,
+          extraSteps: 0,
+          lastWaterAt: Date.now(),
+          waterLog: [],
+          pedometerSteps: 0,
+          dayKey: dayKeyOf(),
+        }),
 
       // Авто-переход на новый день (вызывается из lib/rollover.js):
-      // вода и шаги обнуляются, журнал воды очищается.
+      // вода, шаги и журнал воды обнуляются.
       // У кого dayKey ещё не сохранялся — просто фиксируем день.
       rollDay: (key) =>
         set((s) => {
@@ -115,6 +123,7 @@ export const useActivityStore = create(
             extraSteps: 0,
             waterLog: [],
             lastWaterAt: 0,
+            pedometerSteps: 0,
             dayKey: key,
           }
         }),
@@ -155,7 +164,8 @@ export const useActivityStore = create(
         lastWaterAt: state.lastWaterAt,
         vessels: state.vessels,
         reminder: state.reminder,
-        pedometerEnabled: state.pedometerEnabled, // сами шаги — живые, не храним
+        pedometerEnabled: state.pedometerEnabled,
+        pedometerSteps: state.pedometerSteps, // шаги дня переживают перезапуск приложения
         dayKey: state.dayKey,
       }),
     }

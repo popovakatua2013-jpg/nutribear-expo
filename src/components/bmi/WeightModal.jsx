@@ -12,10 +12,8 @@ import { useToast } from '../ui/Toast'
 import {
   fmtDecimal,
   healthyRange,
-  bmrMifflin,
-  tdeeKcal,
-  tdeeMult,
 } from '@/lib/data/bmi'
+import { recommendedKcal } from '@/lib/goal'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 
@@ -69,14 +67,18 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
   const suggestKg = suggestRange ? Math.round((suggestRange.min + suggestRange.max) / 2) : 0
 
   // Пересчёт дневной нормы под цель: дефицит ≈ 500 ккал (≈ −0,5 кг/нед),
-  // профицит ≈ +300; ниже безопасного пола не опускаемся.
+  // профицит ≈ +300; ниже безопасного пола не опускаемся (lib/goal.js).
   // Спрашиваем только когда считаем заметно иначе, чем в целях сейчас
   function maybeRecalcKcal(goal, weight, height) {
     const prof = useProfileStore.getState()
-    const tdee = tdeeKcal(bmrMifflin(prof.sex, prof.age, height, weight), tdeeMult(prof.activityId))
-    const floor = prof.sex === 'male' ? 1500 : 1200
-    const raw = goal < weight ? tdee - 500 : goal > weight ? tdee + 300 : tdee
-    const target = Math.round(Math.max(floor, Math.min(4000, raw)) / 10) * 10
+    const target = recommendedKcal({
+      sex: prof.sex,
+      age: prof.age,
+      heightCm: height,
+      weightKg: weight,
+      activityId: prof.activityId,
+      goalId: goal < weight ? 'lose' : goal > weight ? 'gain' : 'keep',
+    })
     const current = useGoalsStore.getState().goals.kcal
     if (Math.abs(current - target) < 10) return
     Alert.alert(

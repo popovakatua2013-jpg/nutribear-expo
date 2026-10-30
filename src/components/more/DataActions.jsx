@@ -34,7 +34,7 @@ export function DataActions() {
 
   function wipeAll() {
     useFoodStore.setState({ goal: 'maintain', entries: { breakfast: [], lunch: [], dinner: [], snack: [] }, customMeals: [], history: [], dayKey: dayKeyOf() })
-    useActivityStore.setState({ waterMl: 0, extraSteps: 0, lastWaterAt: 0, waterLog: [], vessels: DEFAULT_VESSELS, dayKey: dayKeyOf() })
+    useActivityStore.setState({ waterMl: 0, extraSteps: 0, lastWaterAt: 0, waterLog: [], pedometerSteps: 0, vessels: DEFAULT_VESSELS, dayKey: dayKeyOf() })
     // GDPR: пол, возраст, активность и цель по весу — тоже персональные
     // данные, стираем вместе с остальным профилем
     useProfileStore.setState({

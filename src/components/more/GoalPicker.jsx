@@ -1,7 +1,7 @@
 // Выбор цели питания: Похудение / Поддержка / Набор веса.
 // Управляет дневной нормой калорий (общие данные с разделом «Питание»)
 
-import { Pressable, Text, View } from 'react-native'
+import { Alert, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Target } from 'lucide-react-native'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -10,6 +10,7 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { GOALS, getDailyTarget } from '@/lib/data/goals'
 import { healthyRange } from '@/lib/data/bmi'
+import { recommendedKcal } from '@/lib/goal'
 import { formatNum } from '@/lib/format'
 
 export function GoalPicker() {
@@ -36,6 +37,34 @@ export function GoalPicker() {
       title: `${g.emoji} Цель: ${g.label}`,
       description,
     })
+
+    // Личный расчёт: пресеты — средние цифры, по вашим данным точнее.
+    // Спрашиваем, только если расходятся заметно (≥ 10 ккал)
+    const prof = useProfileStore.getState()
+    if (prof.hasBio) {
+      const target = recommendedKcal({
+        sex: prof.sex,
+        age: prof.age,
+        heightCm: prof.heightCm,
+        weightKg: prof.weightKg,
+        activityId: prof.activityId,
+        goalId: id,
+      })
+      const current = useGoalsStore.getState().goals.kcal
+      if (Math.abs(current - target) >= 10) {
+        Alert.alert(
+          'Пересчитать под вас?',
+          `Пресет — средняя цифра. По вашим данным (рост, вес, возраст, активность) при цели «${g.label}» рекомендуем ≈ ${formatNum(target)} ккал в день. Сейчас в целях ${formatNum(current)} ккал.`,
+          [
+            { text: 'Оставить', style: 'cancel' },
+            {
+              text: 'Пересчитать',
+              onPress: () => useGoalsStore.getState().setGoals({ kcal: target }),
+            },
+          ]
+        )
+      }
+    }
   }
 
   return (
