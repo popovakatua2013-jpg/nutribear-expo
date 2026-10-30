@@ -7,6 +7,9 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, X } from 'lucide-react-native'
 import { MealTabs } from './MealTabs'
 import { AddHub } from './AddHub'
+import { BaseMode } from './BaseMode'
+import { BarcodeMode } from './BarcodeMode'
+import { LabelMode } from './LabelMode'
 import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
@@ -56,11 +59,11 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                       Добавить приём пищи
                     </Text>
                     <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
-                      Поиск, сканер, голос, галерея или свои рецепты
+                      Поиск, сканер штрих-кода, фото, голос, этикетка, рецепты
                     </Text>
                   </View>
                   <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-                    <X size={20} color="#8A94B3" />
+                    <X size={20} color="#A5AECB" />
                   </Pressable>
                 </View>
                 <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />
@@ -74,7 +77,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                     accessibilityRole="button"
                     className="mb-3 flex-row items-center gap-1 self-start"
                   >
-                    <ChevronLeft size={16} color="#8A94B3" />
+                    <ChevronLeft size={16} color="#A5AECB" />
                     <Text className="font-semibold text-[12px] text-bear-sub">
                       Все способы
                     </Text>
@@ -84,9 +87,11 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                 {mode === 'hub' && (
                   <AddHub mealId={mealId} onPick={setPicked} onSelect={setMode} />
                 )}
+                {mode === 'barcode' && <BarcodeMode onPick={setPicked} />}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}
                 {mode === 'voice' && <VoiceMode onPick={setPicked} />}
                 {mode === 'gallery' && <PhotoMode source="library" onPick={setPicked} />}
+                {mode === 'label' && <LabelMode onPick={setPicked} />}
                 {mode === 'recipes' && <RecipeMode onPick={setPicked} />}
               </View>
             </>

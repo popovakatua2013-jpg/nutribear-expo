@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import Svg, { Defs, LinearGradient, Stop, Path, Circle, Line, Text as SvgText } from 'react-native-svg'
 
-const AXIS = '#5C668A'
+const AXIS = '#8B96B8'
 const GRID = 'rgba(255,255,255,0.06)'
 
 // Сглаженная кривая (Catmull-Rom → кубические Безье)

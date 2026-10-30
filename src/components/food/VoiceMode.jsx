@@ -183,7 +183,7 @@ export function VoiceMode({ onPick }) {
         value={phrase}
         onChangeText={setPhrase}
         placeholder="Или введите фразу текстом…"
-        placeholderTextColor="#5C668A"
+        placeholderTextColor="#8B96B8"
         className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13px] text-bear-text"
       />
       <Pressable

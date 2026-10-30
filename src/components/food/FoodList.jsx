@@ -32,7 +32,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
             : 'калорийность уточните'}
         </Text>
       </View>
-      <Plus size={16} color="#5C668A" />
+      <Plus size={16} color="#8B96B8" />
     </Pressable>
   )
 

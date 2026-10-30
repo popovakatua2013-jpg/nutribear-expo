@@ -42,7 +42,7 @@ export function AdviceCard({ bmi }) {
                 </Text>
               </View>
               <Pressable onPress={() => setOpen(false)} accessibilityLabel="Закрыть" className="p-1">
-                <X size={20} color="#8A94B3" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
 

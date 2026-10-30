@@ -1,21 +1,30 @@
 // Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
 // У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
 // с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
-// Тап по карточке «Вода» открывает окно воды (добавить/изменить/удалить)
+// Тап по карточке «Вода» — окно воды; долгий тап по «Калории» и
+// «Вода» — изменить цель прямо с главной
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 
-function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress }) {
-  const Root = onPress ? Pressable : View
+function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress, onLongPress }) {
+  const Root = onPress || onLongPress ? Pressable : View
   return (
     <Root
       onPress={onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={onPress ? `Открыть: ${label}` : undefined}
-      className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg} ${onPress ? 'active:opacity-80' : ''}`}
+      onLongPress={onLongPress}
+      delayLongPress={450}
+      accessibilityRole={onPress || onLongPress ? 'button' : undefined}
+      accessibilityLabel={
+        onLongPress && !onPress
+          ? `${label}. Долгий тап — изменить цель`
+          : onPress
+            ? `Открыть: ${label}`
+            : undefined
+      }
+      className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
     >
       <View className="flex-row items-center gap-2.5">
         <LinearGradient
@@ -61,7 +70,7 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress 
 export function ActivityStats({
   steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl,
-  onAddSteps, onAddWater, onOpenWater,
+  onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
 }) {
   const cards = [
     {
@@ -89,6 +98,7 @@ export function ActivityStats({
       label: 'Калории',
       value: formatNum(kcal),
       sub: `сожжено +${formatNum(burned)}`,
+      onLongPress: onEditKcalGoal, // долгий тап — изменить цель калорий
     },
     {
       colors: {
@@ -116,6 +126,7 @@ export function ActivityStats({
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
       onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
+      onLongPress: onEditWaterGoal, // долгий тап — изменить цель воды
     },
   ]
 

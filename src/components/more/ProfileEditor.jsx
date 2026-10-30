@@ -62,7 +62,7 @@ export function ProfileEditor() {
         value={current.name}
         onChangeText={(v) => patch({ name: v })}
         placeholder="Как тебя зовут?"
-        placeholderTextColor="#5C668A"
+        placeholderTextColor="#8B96B8"
         className={FIELD}
       />
       <View className="mt-3 flex-row gap-3">

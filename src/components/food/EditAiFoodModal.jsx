@@ -174,7 +174,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               </View>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={20} color="#8A94B3" />
+              <X size={20} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -192,7 +192,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               maxLength={60}
               accessibilityLabel="Название блюда"
               placeholder="Название блюда"
-              placeholderTextColor="#5C668A"
+              placeholderTextColor="#8B96B8"
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
             />
 
@@ -224,7 +224,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               multiline
               accessibilityLabel="Описание блюда"
               placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
-              placeholderTextColor="#5C668A"
+              placeholderTextColor="#8B96B8"
               className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] leading-[19px] text-bear-text"
             />
 
@@ -297,7 +297,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     maxLength={5}
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     placeholder="0"
-                    placeholderTextColor="#5C668A"
+                    placeholderTextColor="#8B96B8"
                     className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[10px] text-bear-sub">

@@ -5,7 +5,7 @@
 // Показатели дня пишутся в историю — для отчётов.
 
 import { useCallback, useEffect, useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
@@ -25,6 +25,7 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS } from '@/lib/data/activity'
+import { formatNum } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 
 export default function HomeScreen() {
@@ -34,6 +35,32 @@ export default function HomeScreen() {
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
+  // Долгий тап по карточке «Калории»/«Вода» — быстрый редактор цели
+  const [goalEdit, setGoalEdit] = useState(null) // {field, title, unit, min, max}
+  const [goalVal, setGoalVal] = useState('')
+
+  function openGoalEdit(cfg) {
+    setGoalEdit(cfg)
+    setGoalVal('')
+  }
+
+  function saveGoal() {
+    if (!goalEdit) return
+    const n = Math.round(Number(String(goalVal).replace(',', '.')) || 0)
+    if (n < goalEdit.min || n > goalEdit.max) {
+      toast({
+        title: '❗ Неверное значение',
+        description: `От ${formatNum(goalEdit.min)} до ${formatNum(goalEdit.max)} ${goalEdit.unit}`,
+      })
+      return
+    }
+    setGoals({ [goalEdit.field]: n })
+    toast({
+      title: '🎯 Цель обновлена',
+      description: `${goalEdit.title}: ${formatNum(n)} ${goalEdit.unit} в день`,
+    })
+    setGoalEdit(null)
+  }
 
   const entries = useFoodStore((s) => s.entries)
   const removeEntry = useFoodStore((s) => s.removeEntry)
@@ -44,6 +71,7 @@ export default function HomeScreen() {
   const exLogs = useExerciseStore((s) => s.logs)
   const recordToday = useHistoryStore((s) => s.record)
   const goals = useGoalsStore((s) => s.goals)
+  const setGoals = useGoalsStore((s) => s.setGoals)
 
   const consumed = totalConsumed(entries)
   const day = dayBju(entries)
@@ -138,6 +166,12 @@ export default function HomeScreen() {
           onAddSteps={handleAddSteps}
           onAddWater={handleAddWater}
           onOpenWater={() => setWaterOpen(true)}
+          onEditKcalGoal={() =>
+            openGoalEdit({ field: 'kcal', title: 'Цель по калориям', unit: 'ккал', min: 800, max: 6000 })
+          }
+          onEditWaterGoal={() =>
+            openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
+          }
         />
 
         {/* Съедено за сегодня — сводка над планом питания */}
@@ -184,6 +218,58 @@ export default function HomeScreen() {
         goalMl={goals.waterMl}
         ml={waterMl}
       />
+
+      {/* Быстрая правка цели с главной (долгий тап по карточке) */}
+      <Modal
+        visible={Boolean(goalEdit)}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setGoalEdit(null)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-8">
+          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-bold text-[15px] text-bear-text">
+                {goalEdit?.title}
+              </Text>
+              <Pressable
+                onPress={() => setGoalEdit(null)}
+                accessibilityLabel="Закрыть"
+                className="p-1"
+              >
+                <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+              {`Сейчас: ${formatNum(goals[goalEdit?.field || 'kcal'])} ${goalEdit?.unit || ''} в день`}
+            </Text>
+            <View className="mt-3 flex-row items-center gap-2">
+              <TextInput
+                value={goalVal}
+                onChangeText={setGoalVal}
+                keyboardType="number-pad"
+                maxLength={5}
+                placeholder={String(goals[goalEdit?.field || 'kcal'] || '')}
+                placeholderTextColor="#8B96B8"
+                accessibilityLabel="Новое значение цели"
+                autoFocus
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+              />
+              <Text className="shrink-0 font-sans text-sm text-bear-sub">{goalEdit?.unit}</Text>
+            </View>
+            <Pressable
+              onPress={saveGoal}
+              accessibilityRole="button"
+              accessibilityLabel="Сохранить цель"
+              className="mt-4 rounded-2xl py-3 active:opacity-80"
+              style={{ backgroundColor: '#7B6CF6' }}
+            >
+              <Text className="text-center font-bold text-sm text-white">Сохранить</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }

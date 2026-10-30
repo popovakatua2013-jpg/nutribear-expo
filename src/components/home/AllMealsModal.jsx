@@ -37,7 +37,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Pencil size={13} color="#5C668A" />
+        <Pencil size={13} color="#8B96B8" />
       </Pressable>
       <Pressable
         onPress={() => removeEntry(mealId, entry.id)}
@@ -45,7 +45,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Trash2 size={13} color="#5C668A" />
+        <Trash2 size={13} color="#8B96B8" />
       </Pressable>
     </View>
   )
@@ -84,7 +84,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
               </Text>
             </View>
             <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-              <X size={20} color="#8A94B3" />
+              <X size={20} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -186,7 +186,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       accessibilityLabel="Добавить перекус"
                       className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
                     >
-                      <Plus size={13} color="#8A94B3" />
+                      <Plus size={13} color="#A5AECB" />
                       <Text className="font-semibold text-[11px] text-bear-sub">
                         Добавить перекус
                       </Text>

@@ -15,7 +15,7 @@ export function ReminderToggle() {
 
   return (
     <View className="flex-row items-center">
-      <Bell size={16} color={reminder.enabled ? '#7DD3FC' : '#5C668A'} />
+      <Bell size={16} color={reminder.enabled ? '#7DD3FC' : '#8B96B8'} />
       <Switch
         accessibilityLabel="Напоминания о воде"
         value={reminder.enabled}
@@ -87,7 +87,7 @@ export function ReminderIntervals() {
             keyboardType="number-pad"
             maxLength={3}
             placeholder="—"
-            placeholderTextColor="#5C668A"
+            placeholderTextColor="#8B96B8"
             className="w-7 font-semibold text-xs text-white"
           />
           <Text className={`font-semibold text-xs ${isCustom ? 'text-white' : 'text-bear-sub'}`}>

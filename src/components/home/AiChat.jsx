@@ -204,7 +204,7 @@ export function AiChat() {
               onSubmitEditing={send}
               editable={!busy}
               placeholder="Спросите о питании…"
-              placeholderTextColor="#5C668A"
+              placeholderTextColor="#8B96B8"
               accessibilityLabel="Сообщение ИИ-помощнику"
               multiline
               className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"

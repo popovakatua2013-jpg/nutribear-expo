@@ -15,9 +15,9 @@ import { GramsPicker } from '../home/GramsPicker'
 import { toBuildItem } from '@/lib/data/to-item'
 import { EditAiFoodModal } from './EditAiFoodModal'
 
-// Что можно править кнопкой ✏️: ИИ и открытая база ошибаются, а встроенная
-// база блюд — усреднённые значения, их тоже разрешено поправить под себя
-const EDITABLE_SOURCES = ['ai', 'off', 'base']
+// Что можно править кнопкой ✏️: ИИ, этикетка, Open Food Facts и свои
+// продукты ошибаются редко, но поправить под себя можно всегда
+const EDITABLE_SOURCES = ['ai', 'off', 'base', 'user', 'label']
 
 export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
   const addEntry = useFoodStore((s) => s.addEntry)

@@ -3,7 +3,7 @@
 // и журнал записей за сегодня (тап по записи — изменение, корзина — удаление).
 // Тумблер напоминаний — в шапке
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Droplets, Pencil, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -12,6 +12,7 @@ import { WaterRing } from './WaterRing'
 import { ReminderToggle, ReminderIntervals } from './WaterReminder'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useToast } from '../ui/Toast'
 import { WATER_GLASS } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
@@ -39,6 +40,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const waterLog = useActivityStore((s) => s.waterLog)
   const reminder = useActivityStore((s) => s.reminder)
   const goals = useGoalsStore((s) => s.goals)
+  const historyDays = useHistoryStore((s) => s.days)
   const { toast } = useToast()
 
   const [customMl, setCustomMl] = useState('')
@@ -48,6 +50,25 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const glasses = Math.round(ml / WATER_GLASS)
   const glassesGoal = Math.max(1, Math.round(goalMl / WATER_GLASS))
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
+
+  // Последние 7 дней (из дневной истории) — мини-график выпитого
+  const week = useMemo(() => {
+    const labels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+    const out = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000)
+      const key = dayKeyOf(d)
+      out.push({
+        key,
+        label: labels[d.getDay()],
+        ml: historyDays[key]?.waterMl || 0,
+        today: i === 0,
+      })
+    }
+    return out
+  }, [historyDays])
+  const weekMax = Math.max(500, ...week.map((d) => d.ml))
+  const weekAvg = Math.round(week.reduce((s, d) => s + d.ml, 0) / 7)
 
   function drink(v) {
     addWater(v.ml)
@@ -136,7 +157,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                 <View className="flex-row items-center gap-2">
                   <ReminderToggle />
                   <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-                    <X size={20} color="#8A94B3" />
+                    <X size={20} color="#A5AECB" />
                   </Pressable>
                 </View>
               </View>
@@ -162,6 +183,38 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   ))}
                 </View>
 
+                {/* Последние 7 дней — мини-график выпитого */}
+                <View className="mt-4">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
+                      Последние 7 дней
+                    </Text>
+                    <Text className="font-sans text-[10.5px] text-bear-sub">
+                      {`в среднем ${formatNum(weekAvg)} мл/день`}
+                    </Text>
+                  </View>
+                  <View className="mt-2 h-[74px] flex-row items-end gap-1.5">
+                    {week.map((d) => (
+                      <View key={d.key} className="min-w-0 flex-1 items-center gap-1">
+                        <View
+                          className="w-full rounded-t-md"
+                          style={{
+                            height: Math.max(3, Math.round((d.ml / weekMax) * 56)),
+                            backgroundColor: d.today ? '#38BDF8' : 'rgba(56,189,248,0.35)',
+                          }}
+                        />
+                        <Text
+                          className={`text-[10px] ${
+                            d.today ? 'font-bold text-bear-text' : 'font-sans text-bear-sub'
+                          }`}
+                        >
+                          {d.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
                 {/* Своя порция / изменение записи: объём + время */}
                 <View className="mt-4 flex-row items-center justify-between">
                   <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
@@ -180,7 +233,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     keyboardType="number-pad"
                     maxLength={4}
                     placeholder="250"
-                    placeholderTextColor="#5C668A"
+                    placeholderTextColor="#8B96B8"
                     accessibilityLabel="Объём порции в миллилитрах"
                     className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
                   />
@@ -191,7 +244,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     keyboardType="numbers-and-punctuation"
                     maxLength={5}
                     placeholder="14:30"
-                    placeholderTextColor="#5C668A"
+                    placeholderTextColor="#8B96B8"
                     accessibilityLabel="Время в формате часы:минуты"
                     className="w-[64px] shrink-0 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
                   />
@@ -248,7 +301,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           </Text>
                           <View className="shrink-0 flex-row items-center gap-0.5">
                             <View className="p-1">
-                              <Pencil size={13} color={isEditing ? '#38BDF8' : '#5C668A'} />
+                              <Pencil size={13} color={isEditing ? '#38BDF8' : '#8B96B8'} />
                             </View>
                             <Pressable
                               onPress={() => removeEntry(w)}
@@ -256,7 +309,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               accessibilityLabel={`Удалить запись ${w.ml} мл`}
                               className="p-1"
                             >
-                              <Trash2 size={14} color="#5C668A" />
+                              <Trash2 size={14} color="#8B96B8" />
                             </Pressable>
                           </View>
                         </Pressable>

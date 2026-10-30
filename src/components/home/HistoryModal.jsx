@@ -1,14 +1,16 @@
 // Модалка «История приёмов»: журнал добавленной еды по дням.
 // История не сбрасывается «Новый день» — видно прошлые дни.
+// Кнопка «+» у блюда — записать его снова в любой приём пищи.
 // Кнопка скачивания — экспорт дневника в CSV через «Поделиться».
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { Download, History, X } from 'lucide-react-native'
+import { Download, History, Plus, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '@/components/ui/Toast'
 import { MEALS } from '@/lib/data/meals'
+import { readdRow } from '@/lib/data/readd'
 import { formatNum } from '@/lib/format'
 import { buildCsv, shareCsv } from '@/lib/data/diary-export'
 
@@ -42,8 +44,20 @@ function resolveMealName(id, customMeals) {
 export function HistoryModal({ visible, onClose }) {
   const history = useFoodStore((s) => s.history)
   const customMeals = useFoodStore((s) => s.customMeals)
+  const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const insets = useSafeAreaInsets()
+  const [reAddId, setReAddId] = useState(null) // блюдо, для которого открыт выбор приёма
+
+  // Записать блюдо из журнала снова — в выбранный приём пищи
+  function reAdd(row, meal) {
+    readdRow(addEntry, meal.id, row)
+    toast({
+      title: `${row.emoji || '🍽️'} ${row.name} — в «${meal.name}»`,
+      description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал`,
+    })
+    setReAddId(null)
+  }
 
   // Группировка по дням, новые сверху
   const groups = useMemo(() => {
@@ -91,7 +105,7 @@ export function HistoryModal({ visible, onClose }) {
                 </Text>
               </View>
               <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
-                Что и когда вы ели — последние дни
+                Что и когда вы ели · «+» записывает блюдо снова
               </Text>
             </View>
             <Pressable
@@ -126,21 +140,47 @@ export function HistoryModal({ visible, onClose }) {
                       {dayTitle(day)}
                     </Text>
                     {rows.map((r) => (
-                      <View
-                        key={r.id}
-                        className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2"
-                      >
-                        <Text className="shrink-0 text-[13px]">{r.emoji}</Text>
-                        <View className="min-w-0 flex-1">
-                          <Text numberOfLines={1} className="font-medium text-[12px] text-bear-bright">
-                            {r.name}
-                          </Text>
-                          <Text numberOfLines={1} className="font-sans text-[10px] text-bear-sub2">
-                            {`${r.mealName} · ${r.grams} г · ${formatNum(r.kcal)} ккал${
-                              r.time ? ` · ${r.time}` : ''
-                            }`}
-                          </Text>
+                      <View key={r.id}>
+                        <View className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2">
+                          <Text className="shrink-0 text-[13px]">{r.emoji}</Text>
+                          <View className="min-w-0 flex-1">
+                            <Text numberOfLines={1} className="font-medium text-[12px] text-bear-bright">
+                              {r.name}
+                            </Text>
+                            <Text numberOfLines={1} className="font-sans text-[10px] text-bear-sub2">
+                              {`${r.mealName} · ${r.grams} г · ${formatNum(r.kcal)} ккал${
+                                r.time ? ` · ${r.time}` : ''
+                              }`}
+                            </Text>
+                          </View>
+                          <Pressable
+                            onPress={() => setReAddId((v) => (v === r.id ? null : r.id))}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Записать «${r.name}» снова`}
+                            className="shrink-0 rounded-full bg-[#5B7FFF]/15 p-1.5 active:bg-[#5B7FFF]/30"
+                          >
+                            <Plus size={14} color="#8DABFF" />
+                          </Pressable>
                         </View>
+
+                        {/* выбор приёма пищи для повторной записи */}
+                        {reAddId === r.id && (
+                          <View className="mt-1 flex-row gap-1 px-3">
+                            {MEALS.map((m) => (
+                              <Pressable
+                                key={m.id}
+                                onPress={() => reAdd(r, m)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Добавить «${r.name}» в «${m.name}»`}
+                                className="flex-1 items-center rounded-lg border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-1.5 active:bg-[#5B7FFF]/25"
+                              >
+                                <Text numberOfLines={1} className="font-semibold text-[10.5px] text-[#8DABFF]">
+                                  {m.id === 'snack' ? 'Перекус' : m.name}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        )}
                       </View>
                     ))}
                   </View>

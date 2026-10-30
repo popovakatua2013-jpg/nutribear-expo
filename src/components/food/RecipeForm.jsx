@@ -90,7 +90,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
         value={name}
         onChangeText={setName}
         placeholder="Название рецепта"
-        placeholderTextColor="#5C668A"
+        placeholderTextColor="#8B96B8"
         accessibilityLabel="Название рецепта"
         className={field}
       />
@@ -99,7 +99,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={grams}
           onChangeText={setGrams}
           placeholder="Вес, г"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Вес, граммы"
           className={`${field} flex-1`}
@@ -108,7 +108,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={kcal}
           onChangeText={setKcal}
           placeholder="Ккал всего"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Калорийность всего"
           className={`${field} flex-1`}
@@ -119,7 +119,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={p}
           onChangeText={setP}
           placeholder="Белки, г"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Белки, граммы"
           className={`${field} flex-1`}
@@ -128,7 +128,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={f}
           onChangeText={setF}
           placeholder="Жиры, г"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Жиры, граммы"
           className={`${field} flex-1`}
@@ -137,7 +137,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={c}
           onChangeText={setC}
           placeholder="Углеводы, г"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Углеводы, граммы"
           className={`${field} flex-1`}

@@ -62,7 +62,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
             </View>
             <View className="shrink-0 flex-row items-center">
               <View className="p-0.5">
-                <Pencil size={11} color="#5C668A" />
+                <Pencil size={11} color="#8B96B8" />
               </View>
               <Pressable
                 onPress={() => onRemove(entry.id)}
@@ -70,7 +70,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
                 accessibilityLabel={`Удалить «${entry.name}» из «${mealName}»`}
                 className="p-0.5"
               >
-                <Trash2 size={11} color="#5C668A" />
+                <Trash2 size={11} color="#8B96B8" />
               </Pressable>
             </View>
           </Pressable>

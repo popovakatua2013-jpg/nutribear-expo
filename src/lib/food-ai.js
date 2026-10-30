@@ -642,6 +642,73 @@ export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
   })
 }
 
+// ── Этикетка: фото таблицы «на 100 г» → КБЖУ ───────────────────
+const LABEL_SYSTEM =
+  'Ты — помощник дневника питания NutriBear. Читаешь фото этикетки/упаковки продукта. ' +
+  'Отвечай ТОЛЬКО валидным JSON, без пояснений и без markdown.'
+
+export async function scanNutritionLabel(imageUri, timeoutMs = TIMEOUT_MS) {
+  const base64 = await photoToJpegBase64(imageUri)
+  const key = 'label:' + strHash(base64)
+
+  // Та же этикетка уже распознавалась? Берем ответ из кэша — бесплатно
+  const cached = cacheGet(key)
+  if (cached) return cached
+
+  return once(key, async () => {
+    const dataUrl = `data:image/jpeg;base64,${base64}`
+
+    const data = await postJson(
+      '/chat/completions',
+      {
+        model: AI_CONFIG.model,
+        temperature: 0.1,
+        max_tokens: 200,
+        messages: [
+          { role: 'system', content: LABEL_SYSTEM },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text:
+                  'На фото этикетка или упаковка продукта. Найди таблицу пищевой ценности НА 100 ГРАММ ' +
+                  '(строки «на 100 г», «100 г продукта»; «на порцию» не бери). Ответь строго JSON-объектом:\n' +
+                  '{"name":"название продукта по-русски","emoji":"один эмодзи","kcal100":число,"p":число,"f":число,"c":число,"fib":число,"sug":число}\n' +
+                  'kcal100 — килокалории, p — белки (г), f — жиры (г), c — углеводы (г), fib — клетчатка (г), sug — сахара (г). ' +
+                  'Числа бери С ЭТИКЕТКИ, не оценивай и не выдумывай; если поле не указано — 0. ' +
+                  'Если на фото нет таблицы пищевой ценности — верни {"name":"","emoji":"🏷️","kcal100":0,"p":0,"f":0,"c":0,"fib":0,"sug":0}.',
+              },
+              { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+            ],
+          },
+        ],
+      },
+      timeoutMs
+    )
+
+    const parsed = parseAiJson(data?.choices?.[0]?.message?.content)
+    const name = String(parsed?.name || '').trim()
+    if (!name)
+      throw new Error(
+        'Не нашёл таблицу пищевой ценности — сфотографируйте этикетку ближе, ровно и при хорошем свете'
+      )
+    const out = {
+      name: name.slice(0, 60),
+      emoji: String(parsed?.emoji || '🏷️').slice(0, 4) || '🏷️',
+      kcal100: num(parsed?.kcal100, 950),
+      p: num(parsed?.p, 100),
+      f: num(parsed?.f, 100),
+      c: num(parsed?.c, 100),
+      fib: num(parsed?.fib, 50),
+      sug: num(parsed?.sug, 100),
+      source: 'label',
+    }
+    cachePut(key, out)
+    return out
+  })
+}
+
 // ── Голос/текст: фраза → блюдо и граммы ────────────────────────
 export async function recognizeVoiceText(text, timeoutMs = 20000) {
   const t = String(text || '').trim()

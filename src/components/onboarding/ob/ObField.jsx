@@ -12,7 +12,7 @@ export function ObField({ label, value, onChange, suffix, placeholder, keyboardT
           value={value === undefined || value === null ? '' : String(value)}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           keyboardType={keyboardType}
           className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 pl-4 pr-14 font-sans text-[15px] text-white"
         />

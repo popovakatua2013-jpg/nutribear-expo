@@ -1,18 +1,22 @@
-// Хаб способов добавления еды: строка поиска над плитками (сканер,
-// голос, галерея, рецепты), чипы «Недавние и частые» — блюдо за один
-// тап, кнопки «Прошлый раз» (повтор приёма) и «Только калории»
-// (быстрая запись без поиска). «База продуктов» — отдельное окно.
+// Хаб способов добавления еды: строка поиска над плитками (сканер
+// штрих-кода, фото, голос, галерея, этикетка, рецепты), чипы
+// «Недавние и частые» и «Мои комбо» — блюдо/набор в один тап,
+// кнопки «Прошлый раз» и «Только калории». «База продуктов» —
+// отдельное окно со своими продуктами.
 
 import { useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
+  Barcode,
   Camera,
   ChefHat,
   ChevronRight,
   Images,
   LayoutGrid,
   Mic,
+  Plus,
   RefreshCcw,
+  ScanSearch,
   Search,
   X,
   Zap,
@@ -22,61 +26,54 @@ import { BaseMode } from './BaseMode'
 import { FOODS } from '@/lib/data/foods'
 import { toBuildItem } from '@/lib/data/to-item'
 import { useRecipesStore } from '@/store/useRecipesStore'
+import { useUserFoodsStore } from '@/store/useUserFoodsStore'
+import { useCombosStore } from '@/store/useCombosStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { getMeal } from '@/lib/data/meals'
-import { round1 } from '@/lib/data/bju'
+import { readdRow } from '@/lib/data/readd'
 import { formatNum } from '@/lib/format'
 import { useToast } from '../ui/Toast'
 
+// 6 плиток — сетка 3×2
 const TILES = [
-  { id: 'scan', label: 'Сканер', Icon: Camera, color: '#4D7CFE' },
+  { id: 'barcode', label: 'Сканер', Icon: Barcode, color: '#4D7CFE' },
+  { id: 'scan', label: 'Фото', Icon: Camera, color: '#38BDF8' },
   { id: 'voice', label: 'Голос', Icon: Mic, color: '#A45BFF' },
   { id: 'gallery', label: 'Галерея', Icon: Images, color: '#0EA5E9' },
-  { id: 'recipes', label: 'Рецепты', Icon: ChefHat, color: '#F59E0B' },
+  { id: 'label', label: 'Этикетка', Icon: ScanSearch, color: '#F59E0B' },
+  { id: 'recipes', label: 'Рецепты', Icon: ChefHat, color: '#22C55E' },
 ]
-
-// Восстановить «продукт» из записи журнала, чтобы добавить её заново:
-// в журнале БЖУ хранятся на порцию — пересчитываем на 100 г
-function foodFromRow(row) {
-  const g = row.grams > 0 ? row.grams : 0
-  const k = g > 0 ? 100 / g : 0
-  const per = (v) => round1((v || 0) * k)
-  return {
-    id: row.foodId || `recent-${row.id}`,
-    name: row.name,
-    emoji: row.emoji,
-    kcal: Math.round((row.kcal || 0) * k),
-    p: per(row.p),
-    f: per(row.f),
-    c: per(row.c),
-    fib: per(row.fib),
-    sug: per(row.sug),
-    fe: per(row.fe),
-    ca: per(row.ca),
-    k: per(row.k),
-    mg: per(row.mg),
-    vitc: per(row.vitc),
-    vita: per(row.vita),
-    mk: row.mk,
-  }
-}
 
 export function AddHub({ mealId, onPick, onSelect }) {
   const recipes = useRecipesStore((s) => s.items)
+  const userFoods = useUserFoodsStore((s) => s.items)
+  const combos = useCombosStore((s) => s.items)
+  const addComboItem = useCombosStore((s) => s.add)
+  const removeCombo = useCombosStore((s) => s.remove)
   const history = useFoodStore((s) => s.history)
+  const mealEntries = useFoodStore((s) => s.entries[mealId]) || []
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
+
   const [query, setQuery] = useState('')
   const [baseOpen, setBaseOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [qName, setQName] = useState('')
   const [qKcal, setQKcal] = useState('')
+  const [comboOpen, setComboOpen] = useState(false)
+  const [comboName, setComboName] = useState('')
 
   const mealName = getMeal(mealId).name
   const q = query.trim().toLowerCase()
 
-  // Быстрый поиск: свои рецепты + вся база продуктов (без фильтра по приёму)
+  // Выбор блюда из поиска или базы — окно базы закрываем сами
+  function pick(item) {
+    setBaseOpen(false)
+    onPick(item)
+  }
+
+  // Быстрый поиск: свои рецепты + свои продукты + вся база (без фильтра по приёму)
   const results = useMemo(() => {
     if (!q) return null
     const rec = recipes
@@ -93,11 +90,27 @@ export function AddHub({ mealId, onPick, onSelect }) {
         defaultGrams: r.grams,
         sub: 'свой рецепт',
       }))
+    const mine = userFoods
+      .filter((f) => f.name.toLowerCase().includes(q))
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        kcal100: f.kcal,
+        emoji: f.emoji,
+        p: f.p,
+        f: f.f,
+        c: f.c,
+        fib: f.fib,
+        sug: f.sug,
+        defaultGrams: f.defaultGrams,
+        source: 'user',
+        sub: 'мой продукт',
+      }))
     const foods = FOODS.filter((f) => f.name.toLowerCase().includes(q)).map((f) =>
       toBuildItem(f)
     )
-    return [...rec, ...foods]
-  }, [q, recipes])
+    return [...rec, ...mine, ...foods]
+  }, [q, recipes, userFoods])
 
   // Недавние и частые: топ блюд из журнала — свои для этого приёма выше,
   // дальше по числу повторений, при равенстве — более свежие
@@ -129,20 +142,9 @@ export function AddHub({ mealId, onPick, onSelect }) {
     return { day: rows[0].day, list }
   }, [history, mealId])
 
-  // Выбор блюда из поиска или базы — окно базы закрываем сами
-  function pick(item) {
-    setBaseOpen(false)
-    onPick(item)
-  }
-
   // Добавить запись из журнала с той же граммовкой (1 тап по чипу)
   function addFromRow(row, silent) {
-    addEntry(mealId, {
-      food: foodFromRow(row),
-      grams: row.grams > 0 ? row.grams : 0,
-      kcal: Math.max(1, Math.round(row.kcal || 0)),
-      desc: row.desc,
-    })
+    readdRow(addEntry, mealId, row)
     if (!silent) {
       toast({
         title: `${row.emoji || '🍽️'} ${row.name} — в «${mealName}»`,
@@ -159,6 +161,42 @@ export function AddHub({ mealId, onPick, onSelect }) {
       title: `↻ Повторён прошлый «${mealName}»`,
       description: `${lastMeal.list.length} блюд(а) · ${d}.${m}`,
     })
+  }
+
+  // Комбо: весь набор одним тапом; долгий тап по чипу — удалить
+  function addCombo(combo) {
+    combo.items.forEach((row) => readdRow(addEntry, mealId, row))
+    toast({
+      title: `${combo.emoji} ${combo.name} — в «${mealName}»`,
+      description: `${combo.items.length} блюд(а) из комбо`,
+    })
+  }
+
+  function confirmDeleteCombo(combo) {
+    Alert.alert('Удалить комбо?', `${combo.emoji} ${combo.name}`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () => {
+          removeCombo(combo.id)
+          toast({ title: '🗑 Комбо удалено', description: combo.name })
+        },
+      },
+    ])
+  }
+
+  function saveCombo() {
+    if (!mealEntries.length) {
+      toast({ title: '💾 Сначала добавьте блюда', description: `В «${mealName}» пока пусто` })
+      setComboOpen(false)
+      return
+    }
+    const name = comboName.trim() || `Мой ${mealName.toLowerCase()}`
+    addComboItem({ name, emoji: mealEntries[0]?.emoji || '⭐', items: mealEntries })
+    toast({ title: '💾 Комбо сохранено', description: `${name} · ${mealEntries.length} блюд(а)` })
+    setComboName('')
+    setComboOpen(false)
   }
 
   function submitQuick() {
@@ -184,11 +222,11 @@ export function AddHub({ mealId, onPick, onSelect }) {
     <View style={{ flex: 1 }}>
       {/* строка поиска — сразу над плитками */}
       <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
-        <Search size={16} color="#5C668A" />
+        <Search size={16} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
-          placeholderTextColor="#5C668A"
+          placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
           className="min-w-0 flex-1 font-sans text-sm text-bear-text"
@@ -200,7 +238,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
             accessibilityLabel="Очистить поиск"
             className="p-0.5 active:opacity-60"
           >
-            <X size={15} color="#5C668A" />
+            <X size={15} color="#8B96B8" />
           </Pressable>
         )}
       </View>
@@ -229,6 +267,54 @@ export function AddHub({ mealId, onPick, onSelect }) {
         </>
       ) : (
         <>
+          {/* комбо: сохранённые наборы блюд + сохранение текущего приёма */}
+          {(combos.length > 0 || mealEntries.length > 0) && (
+            <View className="mt-3">
+              <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+                Мои комбо
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 6, paddingTop: 7, paddingBottom: 2 }}
+              >
+                {combos.map((c) => (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => addCombo(c)}
+                    onLongPress={() => confirmDeleteCombo(c)}
+                    delayLongPress={400}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
+                    className="flex-row items-center gap-1.5 rounded-full border border-[#7B6CF6]/40 bg-[#7B6CF6]/15 px-3 py-1.5 active:bg-[#7B6CF6]/25"
+                  >
+                    <Text className="text-[13px]">{c.emoji}</Text>
+                    <Text
+                      numberOfLines={1}
+                      className="max-w-[120px] font-semibold text-[11.5px] text-bear-text"
+                    >
+                      {c.name}
+                    </Text>
+                    <Text className="font-sans text-[10px] text-bear-sub">{c.items.length}</Text>
+                  </Pressable>
+                ))}
+                {mealEntries.length > 0 && (
+                  <Pressable
+                    onPress={() => setComboOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Сохранить текущий приём как комбо"
+                    className="flex-row items-center gap-1 rounded-full border border-dashed border-white/20 px-3 py-1.5 active:bg-white/10"
+                  >
+                    <Plus size={12} color="#AEB9D9" />
+                    <Text className="font-semibold text-[11px] text-bear-soft">
+                      Сохранить приём
+                    </Text>
+                  </Pressable>
+                )}
+              </ScrollView>
+            </View>
+          )}
+
           {/* недавние и частые — добавление в один тап */}
           {recent.length > 0 && (
             <View className="mt-3">
@@ -273,7 +359,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                 accessibilityRole="button"
                 accessibilityLabel={label}
                 className="h-[96px] rounded-2xl border border-white/10 bg-white/[0.04] p-3 active:bg-white/10"
-                style={{ width: '48.5%' }}
+                style={{ width: '31.5%' }}
               >
                 <View
                   className="h-9 w-9 items-center justify-center rounded-xl"
@@ -281,7 +367,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                 >
                   <Icon size={17} color="#FFFFFF" />
                 </View>
-                <Text className="absolute inset-x-3 bottom-2.5 font-bold text-[12.5px] text-bear-text">
+                <Text className="absolute inset-x-3 bottom-2.5 font-bold text-[12px] text-bear-text">
                   {label}
                 </Text>
               </Pressable>
@@ -332,10 +418,10 @@ export function AddHub({ mealId, onPick, onSelect }) {
             <View className="min-w-0 flex-1">
               <Text className="font-bold text-[13.5px] text-bear-text">База продуктов</Text>
               <Text className="font-sans text-[11px] text-bear-sub">
-                Ручной поиск по всему списку
+                Ручной поиск · свои продукты · весь список
               </Text>
             </View>
-            <ChevronRight size={16} color="#5C668A" />
+            <ChevronRight size={16} color="#8B96B8" />
           </Pressable>
         </>
       )}
@@ -365,7 +451,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                 accessibilityLabel="Закрыть базу продуктов"
                 className="p-1"
               >
-                <X size={20} color="#8A94B3" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
             <View className="min-h-0 flex-1 px-5 pb-4 pt-3">
@@ -400,7 +486,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                 accessibilityLabel="Закрыть быструю запись"
                 className="p-1"
               >
-                <X size={18} color="#8A94B3" />
+                <X size={18} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[11px] text-bear-sub">
@@ -417,7 +503,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="250"
-                placeholderTextColor="#5C668A"
+                placeholderTextColor="#8B96B8"
                 accessibilityLabel="Калории за порцию"
                 autoFocus
                 className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
@@ -433,7 +519,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
               onChangeText={setQName}
               maxLength={40}
               placeholder="Перекус в офисе"
-              placeholderTextColor="#5C668A"
+              placeholderTextColor="#8B96B8"
               accessibilityLabel="Название быстрой записи"
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
             />
@@ -448,6 +534,55 @@ export function AddHub({ mealId, onPick, onSelect }) {
               <Text className="text-center font-bold text-sm text-white">
                 Добавить в «{mealName}»
               </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* сохранение текущего приёма как комбо */}
+      <Modal
+        visible={comboOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setComboOpen(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-8">
+          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-bold text-[15px] text-bear-text">Сохранить как комбо</Text>
+              <Pressable
+                onPress={() => setComboOpen(false)}
+                accessibilityLabel="Закрыть"
+                className="p-1"
+              >
+                <X size={18} color="#A5AECB" />
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+              {`«${mealName}» · ${mealEntries.length} блюд(а) — набор можно будет добавить одним тапом`}
+            </Text>
+            <Text className="mt-3 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+              Название комбо
+            </Text>
+            <TextInput
+              value={comboName}
+              onChangeText={setComboName}
+              maxLength={40}
+              placeholder={`Мой ${mealName.toLowerCase()}`}
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Название комбо"
+              autoFocus
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
+            />
+            <Pressable
+              onPress={saveCombo}
+              accessibilityRole="button"
+              accessibilityLabel="Сохранить комбо"
+              className="mt-4 rounded-2xl py-3 active:opacity-80"
+              style={{ backgroundColor: '#7B6CF6' }}
+            >
+              <Text className="text-center font-bold text-sm text-white">Сохранить комбо</Text>
             </Pressable>
           </View>
         </View>

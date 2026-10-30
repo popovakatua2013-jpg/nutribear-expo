@@ -26,7 +26,7 @@ function StatCard({ tint, iconBg, Icon, label, value, target, sub, onClick }) {
         <View className={`h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
           <Icon size={20} color="#fff" />
         </View>
-        <ChevronRight size={16} color="#5C668A" />
+        <ChevronRight size={16} color="#8B96B8" />
       </View>
 
       {/* подпись — на всю ширину карточки */}

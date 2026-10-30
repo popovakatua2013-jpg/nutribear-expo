@@ -41,7 +41,7 @@ export function AboutCard() {
             Правовая информация
           </Text>
         </View>
-        <ChevronRight size={16} color="#8A94B3" />
+        <ChevronRight size={16} color="#A5AECB" />
       </Pressable>
 
       <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />

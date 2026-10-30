@@ -87,7 +87,7 @@ export function RecipeMode({ onPick }) {
                 <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[11px] text-bear-dim">
                   {`${r.name} · ${r.grams} г`}
                 </Text>
-                <Pencil size={12} color="#5C668A" />
+                <Pencil size={12} color="#8B96B8" />
               </Pressable>
               <Pressable
                 onPress={() => remove(r.id)}
@@ -95,7 +95,7 @@ export function RecipeMode({ onPick }) {
                 accessibilityRole="button"
                 className="rounded p-1"
               >
-                <Trash2 size={14} color="#7C87A8" />
+                <Trash2 size={14} color="#98A2C2" />
               </Pressable>
             </View>
           ))}

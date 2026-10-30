@@ -116,14 +116,14 @@ export function ExerciseSection() {
               </View>
               <View className="shrink-0 flex-row items-center gap-1">
                 <View className="h-8 w-8 items-center justify-center rounded-full bg-white/5">
-                  <Pencil size={13} color="#8A94B3" />
+                  <Pencil size={13} color="#A5AECB" />
                 </View>
                 <Pressable
                   onPress={() => remove(e)}
                   accessibilityLabel={`Удалить ${e.name}`}
                   className="h-8 w-8 items-center justify-center rounded-full bg-white/5"
                 >
-                  <Trash2 size={14} color="#7C87A8" />
+                  <Trash2 size={14} color="#98A2C2" />
                 </Pressable>
               </View>
             </Pressable>
@@ -152,7 +152,7 @@ export function ExerciseSection() {
                 </Text>
               </View>
               <Pressable onPress={closeModal} accessibilityLabel="Закрыть" className="p-1">
-                <X size={20} color="#8A94B3" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
 

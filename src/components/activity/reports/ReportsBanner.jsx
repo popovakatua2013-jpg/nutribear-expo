@@ -42,7 +42,7 @@ export function ReportsBanner() {
       </View>
 
       <View className="z-10 pr-2">
-        <ChevronRight size={20} color="#7C87A8" />
+        <ChevronRight size={20} color="#98A2C2" />
       </View>
     </View>
   )

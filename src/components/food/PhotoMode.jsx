@@ -77,7 +77,7 @@ export function PhotoMode({ source, onPick }) {
         </View>
       ) : (
         <View className="h-[200px] w-full items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.03]">
-          <ScanSearch size={34} color="#5C668A" />
+          <ScanSearch size={34} color="#8B96B8" />
           <Text className="mt-2 px-6 text-center text-[12px] text-bear-sub">
             Сфотографируйте блюдо — ИИ определит продукт и калорийность
           </Text>

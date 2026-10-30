@@ -122,7 +122,7 @@ export function BmiCalculator() {
   return (
     <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border border-white/5 bg-bear-card p-5">
       <View className="flex-row items-center gap-2">
-        <Calculator size={18} color="#8A94B3" />
+        <Calculator size={18} color="#A5AECB" />
         <Text className="font-bold text-[15px] tracking-tight text-bear-text">
           Калькулятор ИМТ
         </Text>
@@ -270,7 +270,7 @@ function NumField({ label, value, onChange, decimal }) {
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         textAlign="center"
         placeholder="—"
-        placeholderTextColor="#5C668A"
+        placeholderTextColor="#8B96B8"
         className="mt-1.5 rounded-xl border border-white/10 bg-white/5 px-1 py-2.5 font-semibold text-[14px] text-white"
       />
     </View>

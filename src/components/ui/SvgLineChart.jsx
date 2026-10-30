@@ -6,7 +6,7 @@ import { View } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg'
 import { smoothPath } from './SvgAreaChart'
 
-const AXIS = '#5C668A'
+const AXIS = '#8B96B8'
 const GRID = 'rgba(255,255,255,0.06)'
 
 export function SvgLineChart({

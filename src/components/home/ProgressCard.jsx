@@ -37,7 +37,7 @@ export function ProgressCard({ d, onGoAll }) {
           accessibilityRole="button"
           className="flex-row items-center gap-1"
         >
-          <Maximize2 size={12} color="#7C87A8" />
+          <Maximize2 size={12} color="#98A2C2" />
           <Text className="font-medium text-[12px] text-bear-sub2">Все</Text>
         </Pressable>
       </View>

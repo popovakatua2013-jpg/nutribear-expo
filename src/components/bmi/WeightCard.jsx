@@ -146,7 +146,7 @@ export function WeightCard() {
                     accessibilityLabel={`Изменить вес ${fmtDecimal(w.kg)} кг`}
                     className="shrink-0 rounded p-1 active:opacity-60"
                   >
-                    <Pencil size={13} color="#5C668A" />
+                    <Pencil size={13} color="#8B96B8" />
                   </Pressable>
                   <Pressable
                     onPress={() => removeMeasurement(w)}
@@ -154,7 +154,7 @@ export function WeightCard() {
                     accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
                     className="shrink-0 rounded p-1 active:opacity-60"
                   >
-                    <Trash2 size={14} color="#7C87A8" />
+                    <Trash2 size={14} color="#98A2C2" />
                   </Pressable>
                 </View>
               ))}
@@ -183,7 +183,7 @@ export function WeightCard() {
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[15px] text-bear-text">Изменить вес</Text>
               <Pressable onPress={() => setEditing(null)} accessibilityLabel="Закрыть" className="p-1">
-                <X size={20} color="#8A94B3" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[11px] text-bear-sub">

@@ -16,7 +16,7 @@ const NUM = {
 }
 
 const TODAY = '#7B6CF6'
-const DIM_DAY = '#5C668A' // до старта дневника
+const DIM_DAY = '#8B96B8' // до старта дневника
 const PLAIN_DAY = '#AAB4D4'
 
 const DOTS = [
@@ -69,7 +69,7 @@ export function WeekStrip({
           >
             {/* «Пн 27» в одну строку, как запись в тетради */}
             <View className="flex-row items-baseline">
-              <Text className="font-medium text-[9px]" style={{ color: '#5C668A' }}>
+              <Text className="font-medium text-[9px]" style={{ color: '#8B96B8' }}>
                 {WEEKDAYS[i]}
               </Text>
               <Text

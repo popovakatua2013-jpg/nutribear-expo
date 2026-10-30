@@ -120,7 +120,7 @@ export function HomeCalendar() {
               accessibilityRole="button"
               className={chevronBtn}
             >
-              <ChevronUp size={16} color="#8A94B3" />
+              <ChevronUp size={16} color="#A5AECB" />
             </Pressable>
           </View>
         </View>
@@ -149,7 +149,7 @@ export function HomeCalendar() {
                 </Text>
               </View>
             )}
-            <ChevronDown size={14} color="#8A94B3" />
+            <ChevronDown size={14} color="#A5AECB" />
           </View>
         </Pressable>
       )}
@@ -164,7 +164,7 @@ export function HomeCalendar() {
             accessibilityRole="button"
             className={chevronBtn}
           >
-            <ChevronLeft size={16} color={canPrev ? '#8A94B3' : '#3D4664'} />
+            <ChevronLeft size={16} color={canPrev ? '#A5AECB' : '#3D4664'} />
           </Pressable>
           <Text className="font-bold text-[14px] tracking-tight text-bear-text">
             {MONTHS[view.m]} {view.y}
@@ -176,7 +176,7 @@ export function HomeCalendar() {
             accessibilityRole="button"
             className={chevronBtn}
           >
-            <ChevronRight size={16} color={canNext ? '#8A94B3' : '#3D4664'} />
+            <ChevronRight size={16} color={canNext ? '#A5AECB' : '#3D4664'} />
           </Pressable>
         </View>
       )}

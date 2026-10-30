@@ -48,7 +48,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               accessibilityRole="button"
               className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={18} color="#8A94B3" />
+              <X size={18} color="#A5AECB" />
             </Pressable>
           </View>
 

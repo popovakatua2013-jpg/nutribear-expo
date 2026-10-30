@@ -124,7 +124,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               </View>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={20} color="#8A94B3" />
+              <X size={20} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -155,7 +155,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               multiline
               accessibilityLabel="Описание блюда"
               placeholder="Например: борщ на свином бульоне, со сметаной"
-              placeholderTextColor="#5C668A"
+              placeholderTextColor="#8B96B8"
               className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] leading-[19px] text-bear-text"
             />
 
