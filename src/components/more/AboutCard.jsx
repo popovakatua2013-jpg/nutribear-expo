@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native'
 import { ChevronRight, FileText } from 'lucide-react-native'
 import Constants from 'expo-constants'
 import { DISCLAIMER } from '@/lib/data/disclaimer'
+import { BUILD_HASH } from '@/lib/version'
 import { LegalModal } from '@/components/more/LegalModal'
 
 // Версия из app.json (expo), а не захардкоженная
@@ -20,7 +21,15 @@ export function AboutCard() {
       <Text className="mt-2 font-extrabold text-[15px] tracking-tight text-bear-text">
         NutriBear
       </Text>
-      <Text className="mt-1 font-semibold text-[11px] text-bear-dim">Версия {VERSION}</Text>
+      <View className="mt-2 flex-row items-center justify-center gap-2">
+        <Text className="font-semibold text-[11px] text-bear-dim">Версия {VERSION}</Text>
+        <View
+          accessibilityLabel="Хэш сборки запущенной копии"
+          className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-[3px]"
+        >
+          <Text className="font-bold text-[10px] text-bear-sub2">сборка {BUILD_HASH}</Text>
+        </View>
+      </View>
       <Text className="mx-auto mt-2 max-w-[300px] text-center font-sans text-[12px] leading-relaxed text-bear-sub2">
         Дневник питания и активности с мишкой-наставником. Веди дневник,
         пей воду, ходи пешком и получай награды — все данные хранятся
