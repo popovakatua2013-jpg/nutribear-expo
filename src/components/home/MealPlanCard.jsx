@@ -1,8 +1,9 @@
 // Карточка «План питания на сегодня»: шапка с серыми значками
 // (копировать вчера, история, гид по порциям) и 4 приёма пищи —
-// каждый на всю ширину, крупным блоком. Блоки не растягивают
-// друг друга: у каждого приёма своя высота. Сводка дня
-// («Съедено за сегодня») — отдельным блоком над карточкой.
+// каждый на всю ширину, компактным блоком (межблочный интервал
+// небольшой, чтобы план целиком занимал меньше экрана).
+// Блоки не растягивают друг друга: у каждого приёма своя высота.
+// Сводка дня («Съедено за сегодня») — отдельным блоком над карточкой.
 
 import { useState } from 'react'
 import { Text, View } from 'react-native'
@@ -23,10 +24,10 @@ export function MealPlanCard({ onAdd, onRemove, onViewAll }) {
   const targets = targetsFromKcal(goals.kcal)
 
   return (
-    <View accessibilityLabel="План питания на сегодня" className="rounded-3xl border border-bear-line bg-bear-card p-5">
+    <View accessibilityLabel="План питания на сегодня" className="rounded-3xl border border-bear-line bg-bear-card p-4">
       <PlanHeader onViewAll={onViewAll} onHistory={() => setHistoryOpen(true)} />
 
-      <View className="gap-3">
+      <View className="gap-2">
         {MEALS.map((meal) => (
           <MealCard
             key={meal.id}

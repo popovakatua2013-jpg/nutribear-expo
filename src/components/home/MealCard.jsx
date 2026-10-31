@@ -1,6 +1,8 @@
-// Карточка приёма пищи — по умолчанию свёрнута до «шапки»:
-// фото, название, калории, «+» и тонкий прогресс. Список блюд
-// и строка БЖУ скрыты — тап по шапке разворачивает их обратно
+// Карточка приёма пищи — по умолчанию свёрнута до «шапки».
+// Шапка компактная: небольшое фото, название, калории,
+// «+» и тонкая полоска прогресса — четыре приёма занимают
+// заметно меньше места на экране. Список блюд и строка БЖУ
+// скрыты — тап по шапке разворачивает их обратно
 // (первые 2 блюда + «Ещё N»), повторный тап сворачивает.
 // У свёрнутой карточки с блюдами в калориях видно количество:
 // «2 блюда · 420 / 520 ккал». Текстам задан
@@ -35,7 +37,7 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
   return (
     <View
       accessibilityLabel={`Приём пищи «${meal.name}»`}
-      className="rounded-2xl border border-white/5 bg-white/[0.03] p-4"
+      className="rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2.5"
     >
       {/* шапка: фото + название/калории + шеврон (тап — развернуть/свернуть)
           и кнопка «+» (добавить блюдо) */}
@@ -53,11 +55,11 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
           }
           className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-70"
         >
-          <View className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/5 bg-white/5">
+          <View className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/5">
             {meal.image ? (
               <Image source={meal.image} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
             ) : (
-              <Text className="flex-1 text-center text-2xl leading-[44px]">{meal.emoji || '🍽️'}</Text>
+              <Text className="flex-1 text-center text-lg leading-[34px]">{meal.emoji || '🍽️'}</Text>
             )}
           </View>
 
@@ -65,7 +67,7 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={MAX}
-              className="font-semibold text-[15px] leading-tight text-bear-text"
+              className="font-semibold text-[14px] leading-tight text-bear-text"
             >
               {meal.name}
             </Text>
@@ -82,9 +84,9 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
 
           {hasDishes &&
             (open ? (
-              <ChevronUp size={16} color="#98A2C2" />
+              <ChevronUp size={14} color="#98A2C2" />
             ) : (
-              <ChevronDown size={16} color="#98A2C2" />
+              <ChevronDown size={14} color="#98A2C2" />
             ))}
         </Pressable>
 
@@ -92,15 +94,15 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
           onPress={onAdd}
           accessibilityRole="button"
           accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1C2A4E] active:opacity-70"
+          className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1C2A4E] active:opacity-70"
         >
-          <Plus size={18} color="#C7D2F0" strokeWidth={2.5} />
+          <Plus size={16} color="#C7D2F0" strokeWidth={2.5} />
         </Pressable>
       </View>
 
-      {/* прогресс на всю ширину */}
-      <View className="mt-3">
-        <ProgressBar pct={pct} h={6} tone={over ? 'amber' : pct >= 100 ? 'emerald' : 'grad'} />
+      {/* прогресс на всю ширину — тонкий, чтобы карточка не распухала */}
+      <View className="mt-2">
+        <ProgressBar pct={pct} h={4} tone={over ? 'amber' : pct >= 100 ? 'emerald' : 'grad'} />
       </View>
 
       {/* БЖУ и список блюд — только у развёрнутой карточки */}
