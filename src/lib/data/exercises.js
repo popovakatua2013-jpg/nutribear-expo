@@ -16,6 +16,21 @@ export const EXERCISES = [
 
 export const QUICK_MINUTES = [15, 30, 45, 60, 90]
 
+// Для «своей тренировки»: набор иконок и уровни интенсивности (MET).
+// Интенсивность выбрана человеческими словами — MET считается внутри.
+export const CUSTOM_EMOJIS = ['🔥', '🥊', '🏸', '⛷️', '🚣', '🤸', '🧗', '🥋', '🏄', '⛹️']
+
+export const INTENSITY_LEVELS = [
+  { id: 'low', label: 'Лёгкая', met: 3.5 },
+  { id: 'mid', label: 'Средняя', met: 5.5 },
+  { id: 'high', label: 'Высокая', met: 8 },
+  { id: 'peak', label: 'Максимум', met: 10 },
+]
+
+export function intensityMet(levelId) {
+  return INTENSITY_LEVELS.find((l) => l.id === levelId)?.met || INTENSITY_LEVELS[1].met
+}
+
 export function kcalBurned(met, weightKg, minutes) {
   return Math.round(((met * 3.5 * weightKg) / 200) * minutes)
 }

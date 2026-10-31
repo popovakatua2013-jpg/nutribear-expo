@@ -1,12 +1,15 @@
-// Трекинг упражнений: лог тренировок по дням.
-// Сожжённые калории показываются в сводке и отчётах «Активности»;
-// на дневной баланс питания не влияют.
+// Трекинг упражнений: лог тренировок по дням + СВОИ тренировки
+// пользователя (создаются с названием, иконкой и интенсивностью,
+// запоминаются между сессиями — как каталог, только персональный).
+// Сожжённые калории показываются в сводке, на главной и в отчётах
+// «Активности»; на дневной баланс питания не влияют.
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
 import { dayKeyOf } from './useHistoryStore'
+import { KCAL_PER_STEP } from '@/lib/data/activity'
 
 // Ключ дня «ГГГГ-ММ-ДД» по локальным часам (единый с историей)
 export const todayKey = dayKeyOf
@@ -14,7 +17,11 @@ export const todayKey = dayKeyOf
 export const useExerciseStore = create(
   persist(
     (set) => ({
-      logs: {}, // { '2026-10-23': [{ id, exId, name, emoji, minutes, kcal }] }
+      // { '2026-10-23': [{ id, exId, name, emoji, minutes, kcal, manual? }] }
+      // manual: true — калории введены пользователем вручную, не по формуле
+      logs: {},
+      // Свои тренировки: [{ id, name, emoji, met }] — id с префиксом custom-
+      custom: [],
 
       addLog: (dayKey, entry) =>
         set((s) => ({
@@ -45,16 +52,33 @@ export const useExerciseStore = create(
             [dayKey]: (s.logs[dayKey] || []).filter((e) => e.id !== id),
           },
         })),
+
+      // Запомнить свою тренировку (обновление по id, без дубликатов)
+      addCustom: (ex) =>
+        set((s) => ({ custom: [...s.custom.filter((c) => c.id !== ex.id), ex] })),
+
+      // Забыть свою тренировку. Записи в дневнике хранят копию названия
+      // и иконки, поэтому старые дни продолжают показываться корректно.
+      removeCustom: (id) =>
+        set((s) => ({ custom: s.custom.filter((c) => c.id !== id) })),
     }),
     {
       name: 'nutribear-exercise-v1',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ logs: s.logs }),
+      partialize: (s) => ({ logs: s.logs, custom: s.custom }),
     }
   )
 )
 
-// Сумма сожжённых калорий за день
+// Сумма сожжённых калорий за день (только тренировки)
 export function dayBurned(logs, key) {
   return (logs[key] || []).reduce((sum, e) => sum + (e.kcal || 0), 0)
+}
+
+// Вся активность за день: тренировки + шаги (≈ 0.04 ккал на шаг —
+// KCAL_PER_STEP, стандартная оценка для шагомера). Одна формула для
+// главной и «Активности»: раньше в историю писались только тренировки,
+// и шаги в сожжённых калориях терялись.
+export function totalBurned(logs, key, steps) {
+  return dayBurned(logs, key) + Math.round((steps || 0) * KCAL_PER_STEP)
 }

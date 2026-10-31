@@ -18,11 +18,10 @@ import { SummarySection } from '@/components/activity/SummarySection'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
-import { useExerciseStore } from '@/store/useExerciseStore'
+import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
-import { dayBurned } from '@/store/useExerciseStore'
 import { RANGES, WATER_GLASS, xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
@@ -40,7 +39,8 @@ export default function ActivityScreen() {
   // Шаги за сегодня: датчик телефона (если включён) + ручные добавления
   const steps = extraSteps
   const kcal = totalConsumed(entries)
-  const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
+  // Вся активность за сегодня: тренировки + шаги (≈0.04 ккал/шаг)
+  const burned = totalBurned(exLogs, dayKeyOf(), steps)
   const mealCount = Object.values(entries).flat().length
   const xp = xpForDay({ steps, waterMl, mealCount, burned })
 

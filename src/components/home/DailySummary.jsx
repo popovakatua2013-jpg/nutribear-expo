@@ -1,9 +1,10 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
 // слева кольцо прогресса 80 px с процентом от дневной нормы,
 // справа — калории крупно и пилюля статуса («Осталось / Перебор /
-// Цель достигнута»); ниже — нутриенты сеткой 2×2 (белки, жиры,
-// углеводы, клетчатка): цветная точка + подпись + значение,
-// под ними тонкий бар. Нормы БЖУ — «классическая тарелка»
+// Цель достигнута»); ниже — строка «Сожжено за сегодня» (вся
+// активность: тренировки + шаги), далее нутриенты сеткой 2×2
+// (белки, жиры, углеводы, клетчатка): цветная точка + подпись +
+// значение, под ними тонкий бар. Нормы БЖУ — «классическая тарелка»
 // (20/30/50% калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
 
 import { Text, View } from 'react-native'
@@ -56,7 +57,12 @@ function NutrientCell({ label, value, target, color }) {
   )
 }
 
-export function DailySummary({ consumed = 0, target = 0, bju = { p: 0, f: 0, c: 0, fib: 0 } }) {
+export function DailySummary({
+  consumed = 0,
+  target = 0,
+  bju = { p: 0, f: 0, c: 0, fib: 0 },
+  burned = 0, // вся активность за день: тренировки + шаги
+}) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   const remaining = Math.max(0, target - consumed)
   const over = Math.max(0, consumed - target)
@@ -139,6 +145,22 @@ export function DailySummary({ consumed = 0, target = 0, bju = { p: 0, f: 0, c: 
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* сожжено за сегодня: вся активность — тренировки и шаги */}
+      <View
+        accessibilityLabel="Сожжено за сегодня"
+        className="mt-2.5 flex-row items-center gap-1.5 rounded-2xl px-3 py-2"
+        style={{ backgroundColor: burned > 0 ? 'rgba(248,113,113,0.07)' : 'rgba(255,255,255,0.03)' }}
+      >
+        <Flame size={13} color={burned > 0 ? '#f87171' : '#8B96B8'} />
+        <Text
+          maxFontSizeMultiplier={MAX}
+          className="font-semibold text-[11.5px]"
+          style={{ color: burned > 0 ? '#f87171' : '#8B96B8' }}
+        >
+          {`Сожжено за сегодня: ${formatNum(burned)} ккал`}
+        </Text>
       </View>
 
       {/* нутриенты сеткой 2×2: точка + подпись + значение, под ними бар */}

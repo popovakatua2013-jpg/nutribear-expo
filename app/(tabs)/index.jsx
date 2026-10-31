@@ -22,7 +22,7 @@ import { AddFoodModal } from '@/components/food/AddFoodModal'
 import { AiChat } from '@/components/home/AiChat'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
-import { useExerciseStore, dayBurned } from '@/store/useExerciseStore'
+import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
@@ -78,7 +78,8 @@ export default function HomeScreen() {
 
   const consumed = totalConsumed(entries)
   const day = dayBju(entries)
-  const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
+  // Вся активность за сегодня: тренировки + шаги (≈0.04 ккал/шаг)
+  const burned = totalBurned(exLogs, dayKeyOf(), extraSteps)
   const mealCount = Object.values(entries).flat().length
   // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (общая формула)
   const xp = xpForDay({ steps: extraSteps, waterMl, mealCount, burned })
@@ -217,8 +218,8 @@ export default function HomeScreen() {
           onAddFood={() => openAdd('dinner')}
         />
 
-        {/* Съедено за сегодня — сводка над планом питания */}
-        <DailySummary consumed={consumed} target={goals.kcal} bju={day} />
+        {/* Съедено за сегодня — сводка над планом питания (с сожжённым) */}
+        <DailySummary consumed={consumed} target={goals.kcal} bju={day} burned={burned} />
 
         {/* План питания: 4 приёма пищи */}
         <MealPlanCard
