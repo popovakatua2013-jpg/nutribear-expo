@@ -35,6 +35,7 @@ export function SvgAreaChart({
   yFmt = (v) => String(Math.round(v)),
   dot = true,
   goalLine = null, // горизонтальный пунктир цели (то же значение, что в data)
+  activeIndex = null, // подсветка выбранной точки: вертикальная линия + крупная точка
 }) {
   const [w, setW] = useState(0)
   const PAD_L = 34
@@ -132,6 +133,27 @@ export function SvgAreaChart({
           pts.map((p, i) => (
             <Circle key={`d${i}`} cx={p.x} cy={p.y} r={3} fill={color} />
           ))}
+        {activeIndex != null && activeIndex >= 0 && activeIndex < data.length && (
+          <>
+            <Line
+              x1={x(activeIndex)}
+              y1={PAD_T}
+              x2={x(activeIndex)}
+              y2={PAD_T + ih}
+              stroke="rgba(255,255,255,0.16)"
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+            <Circle
+              cx={x(activeIndex)}
+              cy={y(data[activeIndex].value)}
+              r={5.5}
+              fill={color}
+              stroke="#0C1327"
+              strokeWidth={2}
+            />
+          </>
+        )}
         {data.map((d, i) =>
           i % skip === 0 || i === data.length - 1 ? (
             <SvgText
