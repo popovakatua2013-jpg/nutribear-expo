@@ -14,7 +14,7 @@
 // (тумблер, интервал, время приёмов) перепланирует уведомления.
 
 import { DeviceEventEmitter, Platform } from 'react-native'
-import * as Notifications from 'expo-notifications'
+import Notifications from '@/lib/notifs'
 import { router } from 'expo-router'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -25,7 +25,8 @@ const QUIET_FROM = 8
 const QUIET_TO = 23
 
 // Обработчик на момент срабатывания: показывать уведомление или нет
-Notifications.setNotificationHandler({
+// (только если библиотека загрузилась — см. lib/notifs.js)
+Notifications?.setNotificationHandler({
   handleNotification: async (n) => {
     const kind = n?.request?.content?.data?.kind
     let show = true
@@ -50,7 +51,7 @@ Notifications.setNotificationHandler({
 // Спросить разрешение на уведомления (Android 13+ требует явно).
 // false — пользователь отказал или платформа не поддерживается.
 export async function requestNotifPermission() {
-  if (Platform.OS === 'web') return false
+  if (Platform.OS === 'web' || !Notifications) return false
   try {
     const cur = await Notifications.getPermissionsAsync()
     if (cur?.granted) return true
@@ -72,7 +73,7 @@ export function parseTime(t) {
 }
 
 async function ensureChannels() {
-  if (Platform.OS !== 'android') return
+  if (Platform.OS !== 'android' || !Notifications) return
   try {
     await Notifications.setNotificationChannelAsync('water', {
       name: 'Напоминания о воде',
@@ -93,6 +94,7 @@ async function ensureChannels() {
 // Сначала отменяем всё и планируем заново только включённое.
 let seq = 0
 export async function rescheduleReminders() {
+  if (!Notifications) return // уведомления недоступны — тихо пропускаем
   const my = ++seq
   const granted = await requestNotifPermission()
   if (my !== seq) return
@@ -224,7 +226,7 @@ let started = false
 // Фоновый агент напоминаний: как startRolloverWatcher, запускается один
 // раз из корневого макета. Возвращает функцию остановки.
 export function startReminderAgent() {
-  if (started || Platform.OS === 'web') return () => {}
+  if (started || Platform.OS === 'web' || !Notifications) return () => {}
   started = true
 
   rescheduleReminders()

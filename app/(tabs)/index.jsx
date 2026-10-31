@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
-import * as Notifications from 'expo-notifications'
+import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { WaterModal } from '@/components/home/WaterModal'
@@ -152,8 +152,10 @@ export default function HomeScreen() {
       setMealId(e?.mealId || 'breakfast')
       setAddOpen(true)
     })
-    Notifications.getLastNotificationResponseAsync()
-      .then((resp) => {
+    // Библиотека может быть недоступна (lib/notifs.js) — тогда просто
+    // слушаем события приложения, без тапов по уведомлениям
+    Notifications?.getLastNotificationResponseAsync()
+      ?.then((resp) => {
         const data = resp?.notification?.request?.content?.data
         if (data?.kind === 'water') setWaterOpen(true)
         else if (data?.kind === 'meal') {
@@ -161,7 +163,7 @@ export default function HomeScreen() {
           setAddOpen(true)
         }
       })
-      .catch(() => {})
+      ?.catch(() => {})
     return () => {
       subWater.remove()
       subFood.remove()
