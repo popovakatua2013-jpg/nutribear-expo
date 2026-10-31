@@ -2,7 +2,8 @@
 // Собирает главные числа дня в одном месте: съедено/норма ккал,
 // осталось или перебор (плашка с огоньком), прогресс-бар и БЖУ за день.
 
-import { Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Flame } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { bjuLine } from '@/lib/data/bju'
@@ -19,8 +20,15 @@ export function DailySummary({ consumed = 0, target = 0, bju = { p: 0, f: 0, c: 
   return (
     <View
       accessibilityLabel="Сводка за день"
-      className="rounded-3xl border border-bear-line bg-bear-card p-5"
+      className="overflow-hidden rounded-3xl border border-bear-line bg-bear-card p-5"
     >
+      {/* мягкая фиолетовая подсветка сверху — глубина без пестроты */}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        colors={['rgba(123,108,246,0.16)', 'rgba(123,108,246,0)']}
+        style={StyleSheet.absoluteFill}
+      />
       <View className="flex-row items-end justify-between gap-3">
         <View className="min-w-0 flex-1">
           <Text maxFontSizeMultiplier={MAX} className="font-medium text-xs text-bear-sub">

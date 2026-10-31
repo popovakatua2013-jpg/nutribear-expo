@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
+import { Greeting } from '@/components/home/Greeting'
 import { EveningNudge } from '@/components/home/EveningNudge'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { NutritionRating } from '@/components/home/NutritionRating'
@@ -181,6 +182,9 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Приветствие: мишка, время суток, статус дневника и дата */}
+        <Greeting consumed={consumed} target={goals.kcal} />
+
         {/* 4 карточки показателей дня: шаги, калории, активность, вода */}
         <ActivityStats
           steps={extraSteps}

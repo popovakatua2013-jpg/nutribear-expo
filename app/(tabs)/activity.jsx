@@ -7,6 +7,7 @@
 import { useEffect } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Footprints } from 'lucide-react-native'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
@@ -58,9 +59,20 @@ export default function ActivityScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
-          Активность
-        </Text>
+        {/* Шапка экрана: иконка-чип + заголовок + подзаголовок */}
+        <View className="flex-row items-center gap-3">
+          <View className="h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+            <Footprints size={19} color="#A78BFA" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+              Активность
+            </Text>
+            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[11.5px] text-bear-dim">
+              Шаги, вода и тренировки
+            </Text>
+          </View>
+        </View>
 
         {/* Календарь: строка недели / полный месяц (перенесён с главной) */}
         <HomeCalendar />

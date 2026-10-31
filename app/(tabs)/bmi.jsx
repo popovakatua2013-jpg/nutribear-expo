@@ -3,6 +3,7 @@
 
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Scale } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { calcBmi } from '@/lib/data/bmi'
 import { BmiGauge } from '@/components/bmi/BmiGauge'
@@ -29,9 +30,20 @@ export default function BmiScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
-          Индекс массы тела
-        </Text>
+        {/* Шапка экрана: иконка-чип + заголовок + подзаголовок */}
+        <View className="flex-row items-center gap-3">
+          <View className="h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+            <Scale size={19} color="#A78BFA" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+              Индекс массы тела
+            </Text>
+            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[11.5px] text-bear-dim">
+              Датчик, норма и динамика веса
+            </Text>
+          </View>
+        </View>
 
         {/* Датчик + категории */}
         <View accessibilityLabel="Индекс массы тела" className="rounded-3xl border border-white/5 bg-bear-card p-5">
