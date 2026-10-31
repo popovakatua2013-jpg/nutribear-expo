@@ -1,12 +1,12 @@
-// Секция «Отчёты»: празднование цели по весу, карточки итогов за период
-// (с Δ% к прошлому периоду) и недельное сравнение. Период выбирается
-// один раз — в шапке «Общей сводки» выше по экрану (раньше одинаковый
-// переключатель 7/30/90 дублировался здесь вторым рядом).
+// Секция «Отчёты»: празднование цели по весу и карточки итогов за
+// период (с Δ% к прошлому периоду). Период выбирается один раз —
+// в шапке «Сводки» выше по экрану. «Сравнение по неделям» переехало
+// в «Сводку» режимом «По неделям» — раньше два блока показывали
+// похожие графики с одинаковыми переключателями.
 
 import { Text, View } from 'react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
-import { WeeksChart } from './WeeksChart'
 
 export function ReportsSection({ today, days }) {
   return (
@@ -17,7 +17,6 @@ export function ReportsSection({ today, days }) {
 
       <GoalCelebration />
       <ReportCards today={today} days={days} />
-      <WeeksChart today={today} />
     </View>
   )
 }

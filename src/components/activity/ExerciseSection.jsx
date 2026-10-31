@@ -26,6 +26,28 @@ import { formatNum, makeId } from '@/lib/format'
 
 const KCAL_MAX = 10000
 
+// Режимы задания интенсивности своей тренировки: уровни (для большинства)
+// или калории за 30 минут (для тех, кому проще цифрой с тренажёра)
+const FORM_MODES = [
+  { id: 'level', label: 'По уровню' },
+  { id: 'kcal', label: 'Ккал за 30 мин' },
+]
+
+// MET из калорий за 30 минут: kcal = MET × 3.5 × вес / 200 × 30
+// → MET = kcal / (0.525 × вес). Ограничиваем реалистичным диапазоном 1–23
+function metFromKcal30(kcal, weightKg) {
+  if (!kcal || !weightKg) return null
+  return Math.min(23, Math.max(1, kcal / (0.525 * weightKg)))
+}
+
+// Ближайшее упражнение каталога — чтобы показать «как плавание»
+function closestExercise(met) {
+  return EXERCISES.reduce(
+    (best, e) => (Math.abs(e.met - met) < Math.abs(best.met - met) ? e : best),
+    EXERCISES[0]
+  )
+}
+
 export function ExerciseSection() {
   const logs = useExerciseStore((s) => s.logs)
   const addLog = useExerciseStore((s) => s.addLog)
@@ -50,10 +72,14 @@ export function ExerciseSection() {
   const [newName, setNewName] = useState('')
   const [newEmoji, setNewEmoji] = useState('🔥')
   const [newLevel, setNewLevel] = useState('mid')
+  const [newMode, setNewMode] = useState('level') // level | kcal
+  const [newKcal30, setNewKcal30] = useState('')
 
   const key = todayKey()
   const items = logs[key] || []
   const burned = dayBurned(logs, key)
+  // Вчерашние записи — для кнопки «Повторить» в один тап
+  const yesterday = logs[todayKey(new Date(Date.now() - 86400000))] || []
 
   // Каталог + запомненные свои тренировки (пересобирается при изменениях)
   const allExercises = useMemo(() => [...EXERCISES, ...custom], [custom])
@@ -85,6 +111,12 @@ export function ExerciseSection() {
   const ex = allExercises.find((e) => e.id === exId)
   const autoKcal = ex && minutes ? kcalBurned(ex.met, weightKg, minutes) : 0
   const kcalShow = kcalManual != null ? Math.round(kcalManual) : autoKcal
+
+  // Превью формы своей тренировки: MET из калорий за 30 минут (если режим
+  // «ккал» и введено число) или из выбранного уровня — для живого примера
+  const kcal30Num = Number(String(newKcal30).replace(',', '.')) || 0
+  const kcalMet = metFromKcal30(kcal30Num, weightKg)
+  const previewMet = newMode === 'kcal' ? kcalMet : intensityMet(newLevel)
 
   function startKcalEdit() {
     setKcalDraft(String(kcalShow || ''))
@@ -144,16 +176,45 @@ export function ExerciseSection() {
       toast({ title: '❗ Нужно название', description: 'Например: Бокс, скакалка, падел' })
       return
     }
-    const exObj = { id: `custom-${makeId()}`, name, emoji: newEmoji, met: intensityMet(newLevel) }
+    let met
+    if (newMode === 'kcal') {
+      // Интенсивность из калорий за 30 минут (цифрой с тренажёра)
+      const k = Math.round(Number(String(newKcal30).replace(',', '.')) || 0)
+      if (!k || k < 20 || k > 2000) {
+        toast({
+          title: '❗ Неверное значение',
+          description: 'Введите калории за 30 минут — от 20 до 2000',
+        })
+        return
+      }
+      met = metFromKcal30(k, weightKg)
+    } else {
+      met = intensityMet(newLevel)
+    }
+    const exObj = { id: `custom-${makeId()}`, name, emoji: newEmoji, met }
     addCustom(exObj)
     setExId(exObj.id)
     setCreating(false)
     setNewName('')
     setNewEmoji('🔥')
     setNewLevel('mid')
+    setNewMode('level')
+    setNewKcal30('')
     toast({
       title: `${exObj.emoji} «${name}» запомнена`,
       description: 'Теперь она всегда в списке тренировок',
+    })
+  }
+
+  // Повторить вчерашнюю активность: копируем все записи вчера в сегодня
+  function repeatYesterday() {
+    if (!yesterday.length) return
+    yesterday.forEach((e) =>
+      addLog(key, { exId: e.exId, name: e.name, emoji: e.emoji, minutes: e.minutes, kcal: e.kcal, manual: e.manual })
+    )
+    toast({
+      title: '🔁 Вчерашние тренировки повторены',
+      description: `${yesterday.length} ${yesterday.length === 1 ? 'запись добавлена' : 'записи добавлено'} в сегодня`,
     })
   }
 
@@ -182,6 +243,31 @@ export function ExerciseSection() {
           <Text className="font-bold text-[12px] text-bear-soft">Добавить</Text>
         </Pressable>
       </View>
+
+      {/* Повтор вчерашней активности в один тап */}
+      {yesterday.length > 0 && (
+        <View className="mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-3.5 py-2.5">
+          <View className="min-w-0 flex-1">
+            <Text className="font-sans text-[10.5px] text-bear-sub2">Вчера было</Text>
+            <Text numberOfLines={1} className="font-bold text-[12.5px] text-bear-text">
+              {yesterday
+                .slice(0, 2)
+                .map((e) => `${e.emoji} ${e.name}`)
+                .join(' · ')
+              }
+              {yesterday.length > 2 ? ` · ещё ${yesterday.length - 2}` : ''}
+            </Text>
+          </View>
+          <Pressable
+            onPress={repeatYesterday}
+            accessibilityRole="button"
+            accessibilityLabel="Повторить вчерашние тренировки"
+            className="shrink-0 rounded-full bg-[#7B6CF6]/15 px-3 py-1.5 active:opacity-70"
+          >
+            <Text className="font-bold text-[11.5px] text-[#A78BFA]">Повторить</Text>
+          </Pressable>
+        </View>
+      )}
 
       {items.length === 0 ? (
         <Text className="mt-3 font-sans text-[12px] leading-relaxed text-bear-sub2">
@@ -290,22 +376,61 @@ export function ExerciseSection() {
                     <Text className="mb-1.5 font-sans text-[11px] text-bear-sub2">
                       Интенсивность
                     </Text>
+                    {/* Способ: уровни (проще) или калории за 30 минут (точнее) */}
                     <Pills
-                      items={INTENSITY_LEVELS}
-                      value={newLevel}
-                      onChange={setNewLevel}
+                      items={FORM_MODES}
+                      value={newMode}
+                      onChange={setNewMode}
                       size="md"
-                      accessibilityLabel="Интенсивность"
+                      accessibilityLabel="Способ задания интенсивности"
                     />
+                    {newMode === 'level' ? (
+                      <View className="mt-2">
+                        <Pills
+                          items={INTENSITY_LEVELS}
+                          value={newLevel}
+                          onChange={setNewLevel}
+                          size="md"
+                          accessibilityLabel="Интенсивность"
+                        />
+                      </View>
+                    ) : (
+                      <View className="mt-2 gap-1.5">
+                        <View className="flex-row items-center gap-2">
+                          <TextInput
+                            value={newKcal30}
+                            onChangeText={setNewKcal30}
+                            keyboardType="number-pad"
+                            maxLength={4}
+                            placeholder="300"
+                            placeholderTextColor="#8B96B8"
+                            accessibilityLabel="Калории за 30 минут"
+                            className="w-24 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[14px] text-bear-text"
+                          />
+                          <Text className="min-w-0 flex-1 font-sans text-[11px] leading-relaxed text-bear-sub2">
+                            ккал за 30 минут этой активности — цифра с тренажёра или часов
+                          </Text>
+                        </View>
+                        {kcalMet && (
+                          <Text className="font-sans text-[10.5px] text-bear-dim">
+                            {`≈ MET ${Math.round(kcalMet * 10) / 10} · как ${
+                              closestExercise(kcalMet).emoji
+                            } ${closestExercise(kcalMet).name.toLowerCase()}`}
+                          </Text>
+                        )}
+                      </View>
+                    )}
                   </View>
 
-                  <Text className="font-sans text-[11.5px] leading-relaxed text-bear-sub2">
-                    Пример: 30 минут этой активности — ≈{' '}
-                    <Text className="font-bold text-[#f87171]">
-                      {formatNum(kcalBurned(intensityMet(newLevel), weightKg, 30))} ккал
-                    </Text>{' '}
-                    при весе {weightKg} кг
-                  </Text>
+                  {previewMet && (
+                    <Text className="font-sans text-[11.5px] leading-relaxed text-bear-sub2">
+                      Пример: 30 минут этой активности — ≈{' '}
+                      <Text className="font-bold text-[#f87171]">
+                        {formatNum(kcalBurned(previewMet, weightKg, 30))} ккал
+                      </Text>{' '}
+                      при весе {weightKg} кг
+                    </Text>
+                  )}
 
                   <View className="mt-1 flex-row gap-2">
                     <Pressable

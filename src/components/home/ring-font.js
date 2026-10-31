@@ -10,8 +10,8 @@
 
 export const fontFamilies = {
   regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
+  medium: 'Inter_400Regular', // 500 удалён из бандла (-600 КБ)
   semibold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
+  bold: 'Inter_600SemiBold', // 700 удалён из бандла (-600 КБ)
   extrabold: 'Inter_800ExtraBold',
 }

@@ -1,5 +1,6 @@
-// Редактируемые цели пользователя: калории, вода, шаги, активность.
-// По умолчанию — пресет «Поддержка»; меняются в блоке «Ваши цели».
+// Редактируемые цели пользователя: калории, вода, шаги, активность,
+// сожжённые калории. По умолчанию — пресет «Поддержка»; меняются
+// долгим тапом по карточкам на главной и в сводке «Съедено».
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -11,6 +12,7 @@ export const DEFAULT_GOALS = {
   waterMl: 2000, // вода в день, мл
   steps: 7000, // шаги в день
   minutes: 60, // активность в день, минут
+  burnKcal: 300, // сжечь за день, ккал (тренировки + шаги)
 }
 
 export const useGoalsStore = create(
@@ -35,6 +37,14 @@ export const useGoalsStore = create(
       name: 'nutribear-goals-v1',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ goals: state.goals }),
+      // Слияние по полям: новые цели (например, burnKcal) появляются
+      // и у тех, кто сохранял цели раньше — иначе у старых пользователей
+      // хранилище бы их затирало до undefined
+      merge: (persisted, current) => ({
+        ...current,
+        ...persisted,
+        goals: { ...current.goals, ...(persisted?.goals || {}) },
+      }),
     }
   )
 )

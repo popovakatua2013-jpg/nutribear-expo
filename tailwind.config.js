@@ -27,10 +27,12 @@ module.exports = {
         },
       },
       fontFamily: {
+        // 3 файла Inter (400/600/800) вместо 5 — минус ~600 КБ бандла;
+        // medium -> 400, bold -> 600 (визуальная разница минимальна)
         sans: ['Inter_400Regular'],
-        medium: ['Inter_500Medium'],
+        medium: ['Inter_400Regular'],
         semibold: ['Inter_600SemiBold'],
-        bold: ['Inter_700Bold'],
+        bold: ['Inter_600SemiBold'],
         extrabold: ['Inter_800ExtraBold'],
       },
     },
@@ -41,9 +43,9 @@ module.exports = {
     plugin(({ addUtilities }) => {
       addUtilities({
         '.font-sans': { fontFamily: 'Inter_400Regular', fontWeight: '400' },
-        '.font-medium': { fontFamily: 'Inter_500Medium', fontWeight: '500' },
+        '.font-medium': { fontFamily: 'Inter_400Regular', fontWeight: '400' },
         '.font-semibold': { fontFamily: 'Inter_600SemiBold', fontWeight: '600' },
-        '.font-bold': { fontFamily: 'Inter_700Bold', fontWeight: '700' },
+        '.font-bold': { fontFamily: 'Inter_600SemiBold', fontWeight: '600' },
         '.font-extrabold': { fontFamily: 'Inter_800ExtraBold', fontWeight: '800' },
       })
     }),

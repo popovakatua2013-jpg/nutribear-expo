@@ -16,8 +16,9 @@ import {
   View,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Mail, Send, X } from 'lucide-react-native'
+import { Mail, Send, WifiOff, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import NetInfo from '@react-native-community/netinfo'
 import { askNutritionist, offlineReply } from '@/lib/chat'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
@@ -36,6 +37,9 @@ export function AiChat() {
   const [messages, setMessages] = useState([GREETING])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  // Офлайн-детектор: серый чип в шапке чата. isInternetReachable
+  // бывает null (нет данных) — считаем это сетью, чтобы не пугать ложно
+  const [offline, setOffline] = useState(false)
   const insets = useSafeAreaInsets()
   const listRef = useRef(null)
 
@@ -74,6 +78,23 @@ export function AiChat() {
     listRef.current?.scrollToEnd({ animated: true })
   }, [messages, busy])
 
+  // Слежение за сетью: серый чип «Нет сети» вместо слепой попытки запроса
+  useEffect(() => {
+    let alive = true
+    NetInfo.fetch()
+      .then((s) => {
+        if (alive) setOffline(!s.isConnected || s.isInternetReachable === false)
+      })
+      .catch(() => {})
+    const unsub = NetInfo.addEventListener((s) =>
+      setOffline(!s.isConnected || s.isInternetReachable === false)
+    )
+    return () => {
+      alive = false
+      unsub()
+    }
+  }, [])
+
   async function send() {
     const content = text.trim()
     if (!content || busy) return
@@ -83,10 +104,15 @@ export function AiChat() {
     setBusy(true)
     try {
       let reply
-      try {
-        reply = await askNutritionist(next)
-      } catch {
+      if (offline) {
+        // Сети нет — сразу офлайн-помощник, без зависающей попытки запроса
         reply = offlineReply(content, buildContext())
+      } else {
+        try {
+          reply = await askNutritionist(next)
+        } catch {
+          reply = offlineReply(content, buildContext())
+        }
       }
       setMessages((m) => [...m, { role: 'assistant', content: reply }])
     } catch {
@@ -151,6 +177,19 @@ export function AiChat() {
               <X size={18} color="#AEB9D9" />
             </Pressable>
           </View>
+
+          {/* Офлайн-чип: серая полоска под шапкой вместо слепых попыток */}
+          {offline && (
+            <View
+              accessibilityLabel="Нет сети"
+              className="mx-4 mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.05] px-3.5 py-2"
+            >
+              <WifiOff size={14} color="#8B96B8" />
+              <Text className="flex-1 font-sans text-[11.5px] text-[#8a94b3]">
+                Нет сети — ИИ отключён. Отвечает офлайн-помощник по вашему дневнику
+              </Text>
+            </View>
+          )}
 
           {/* Диалог */}
           <FlatList

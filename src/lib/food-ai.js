@@ -461,8 +461,9 @@ function withTimeout(timeoutMs = TIMEOUT_MS) {
 }
 
 function assertConfigured() {
-  const { apiKey } = AI_CONFIG
-  if (!apiKey) {
+  // В прокси-режиме ключ не нужен — он на сервере (см. ai-config.js)
+  const { apiKey, proxyUrl } = AI_CONFIG
+  if (!apiKey && !proxyUrl) {
     throw new Error(
       'ИИ не настроен: создайте файл .env в корне проекта (рядом с package.json) со строкой EXPO_PUBLIC_AI_KEY=ваш-ключ и перезапустите Expo: npx expo start --clear'
     )
@@ -494,8 +495,21 @@ async function apiError(res) {
   return httpError(res.status, extra)
 }
 
+// Адрес запроса: прокси-режим (EXPO_PUBLIC_AI_PROXY_URL) имеет приоритет —
+// тогда ключ в приложение не зашивается вовсе
 function apiUrl(path) {
-  return `${String(AI_CONFIG.baseUrl).replace(/\/+$/, '')}${path}`
+  const base = AI_CONFIG.proxyUrl || AI_CONFIG.baseUrl
+  return `${String(base).replace(/\/+$/, '')}${path}`
+}
+
+// Заголовки: Authorization добавляем только в прямом режиме с ключом.
+// В прокси-режиме приложение шлёт запросы анонимно — ключ подставляет сервер.
+function authHeaders(extra = {}) {
+  const headers = { ...extra }
+  if (!AI_CONFIG.proxyUrl && AI_CONFIG.apiKey) {
+    headers.Authorization = `Bearer ${AI_CONFIG.apiKey}`
+  }
+  return headers
 }
 
 // POST JSON к OpenAI-совместимому API → распарсенный ответ
@@ -507,10 +521,7 @@ async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
     try {
       res = await fetch(apiUrl(path), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${AI_CONFIG.apiKey}`,
-        },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
         signal,
       })
@@ -868,7 +879,7 @@ export async function recognizeVoiceAudio(audioBase64, timeoutMs = 30000) {
     try {
       res = await fetch(apiUrl('/audio/transcriptions'), {
         method: 'POST',
-        headers: { Authorization: `Bearer ${AI_CONFIG.apiKey}` },
+        headers: authHeaders(),
         body: form,
         signal,
       })

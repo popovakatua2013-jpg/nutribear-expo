@@ -3,6 +3,9 @@
 // тап по неделе открывает панель со значениями всех показателей и
 // Δ% к прошлой неделе. Текущая неделя помечена «идёт».
 // Показатели — из общего реестра lib/data/metrics.js.
+// Режим embedded — рендер без своей карточки и заголовка: блок
+// живёт внутри «Сводки» как режим «По неделям» (раньше был отдельной
+// карточкой с дублирующим переключателем показателя).
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -26,7 +29,7 @@ function weekRange(i, now) {
   return `${d(start)} – ${d(end)}`
 }
 
-export function WeeksChart({ today }) {
+export function WeeksChart({ today, embedded = false }) {
   const rows = useMemo(() => weeksComparison(WEEKS, today), [today])
   const [metricId, setMetricId] = useState('steps')
   const [sel, setSel] = useState(WEEKS - 1) // по умолчанию — текущая неделя
@@ -37,14 +40,10 @@ export function WeeksChart({ today }) {
   const prev = sel > 0 ? rows[sel - 1] : null
   const isCurrent = sel === rows.length - 1
 
-  return (
-    <View className="rounded-2xl border border-white/5 bg-bear-card p-4" accessibilityLabel="Сравнение по неделям">
-      <Text className="font-bold text-[14px] tracking-tight text-bear-text">
-        Сравнение по неделям
-      </Text>
-
+  const content = (
+    <>
       {/* Переключатель показателя — у каждого своя шкала */}
-      <View className="mt-2.5">
+      <View className={embedded ? '' : 'mt-2.5'}>
         <Pills
           items={REPORT_METRICS.map((m) => ({ id: m.key, label: m.label, color: m.color }))}
           value={metricId}
@@ -123,6 +122,18 @@ export function WeeksChart({ today }) {
           </View>
         </>
       )}
+    </>
+  )
+
+  // Встроенный режим — без своей карточки (живёт внутри «Сводки»)
+  if (embedded) return content
+
+  return (
+    <View className="rounded-2xl border border-white/5 bg-bear-card p-4" accessibilityLabel="Сравнение по неделям">
+      <Text className="font-bold text-[14px] tracking-tight text-bear-text">
+        Сравнение по неделям
+      </Text>
+      {content}
     </View>
   )
 }

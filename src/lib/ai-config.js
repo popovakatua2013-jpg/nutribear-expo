@@ -14,6 +14,19 @@
 //       EXPO_PUBLIC_AI_VOICE_MODEL=whisper-1
 //  3. Сохраните и перезапустите Expo: npx expo start --clear
 //
+//  ── ПЕРЕД ВЫПУСКОМ В МАГАЗИН ────────────────────────────────────
+//  Всё, что начинается с EXPO_PUBLIC_, зашивается в бандл — включая
+//  ключ из .env: пользователь APK/IPA сможет его достать. Для релиза:
+//  1. Поднимите свой сервер-прокси (VPS / Cloudflare Worker), который
+//     принимает POST /v1/chat/completions, подставляет ключ на своей
+//     стороне и пересылает запрос к ProxyAPI/OpenAI.
+//  2. В .env впишите ТОЛЬКО адрес прокси (ключ в приложение не грузится):
+//       EXPO_PUBLIC_AI_PROXY_URL=https://ваш-сервер/v1
+//  3. Приложение само поймёт режим: запросы пойдут на прокси без
+//     Authorization — ключ навсегда останется на сервере.
+//  Пока EXPO_PUBLIC_AI_PROXY_URL не задан, работает прямой режим
+//  с ключом из .env (удобно для разработки на своём ПК).
+//
 //  Этот файл менять дальше не нужно.
 
 export const AI_CONFIG = {
@@ -23,4 +36,7 @@ export const AI_CONFIG = {
   apiKey: process.env.EXPO_PUBLIC_AI_KEY || '',
   model: process.env.EXPO_PUBLIC_AI_MODEL || 'gpt-4o-mini',
   voiceModel: process.env.EXPO_PUBLIC_AI_VOICE_MODEL || '',
+  // Сервер-прокси для релиза: если задан — запросы идут сюда без ключа,
+  // ключ хранится только на сервере. См. «ПЕРЕД ВЫПУСКОМ В МАГАЗИН» выше.
+  proxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL || '',
 }

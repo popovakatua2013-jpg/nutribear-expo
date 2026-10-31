@@ -218,8 +218,20 @@ export default function HomeScreen() {
           onAddFood={() => openAdd('dinner')}
         />
 
-        {/* Съедено за сегодня — сводка над планом питания (с сожжённым) */}
-        <DailySummary consumed={consumed} target={goals.kcal} bju={day} burned={burned} />
+        {/* Съедено за сегодня — сводка над планом питания (с сожжённым,
+            шагами, водой и итогом дня; долгий тап по сжиганию — цель) */}
+        <DailySummary
+          consumed={consumed}
+          target={goals.kcal}
+          bju={day}
+          burned={burned}
+          steps={extraSteps}
+          waterMl={waterMl}
+          burnGoal={goals.burnKcal}
+          onEditBurnGoal={() =>
+            openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
+          }
+        />
 
         {/* План питания: 4 приёма пищи */}
         <MealPlanCard

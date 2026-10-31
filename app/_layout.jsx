@@ -1,6 +1,9 @@
 // Корневой макет: шрифты Inter и тосты.
 // Пока онбординг не завершён — показываем флоу онбординга вместо
 // приложения (как в веб-версии: status !== 'done').
+// Шрифты: 3 начертания вместо 5 (400/600/800) — минус ~600 КБ из
+// бандла: классы .font-medium и .font-bold перенаправлены на 400/600
+// в tailwind.config.js, визуальная разница минимальна.
 
 import '../global.css'
 
@@ -10,9 +13,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import {
   Inter_400Regular,
-  Inter_500Medium,
   Inter_600SemiBold,
-  Inter_700Bold,
   Inter_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/inter'
@@ -153,9 +154,7 @@ export function ErrorBoundary({ error, retry }) {
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     Inter_400Regular,
-    Inter_500Medium,
     Inter_600SemiBold,
-    Inter_700Bold,
     Inter_800ExtraBold,
   })
   const hydrated = useOnboardingHydrated()
