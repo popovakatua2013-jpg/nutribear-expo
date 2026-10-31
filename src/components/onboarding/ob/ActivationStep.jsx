@@ -20,7 +20,7 @@ export function ActivationStep({ onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 12 из 12"
+      sub="Шаг 9 из 9"
       title="Всё готово!"
       onBack={onBack}
       footer={

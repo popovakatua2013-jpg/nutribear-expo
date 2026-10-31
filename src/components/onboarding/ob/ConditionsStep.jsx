@@ -22,7 +22,7 @@ export function ConditionsStep({ onNext, onBack }) {
   }
 
   return (
-    <ObShell sub="Шаг 7 из 12" title="Особые состояния" onBack={onBack} onNext={onNext}>
+    <ObShell sub="Шаг 5 из 9" title="Особые состояния" onBack={onBack} onNext={onNext}>
       <Text className="font-sans text-[13px] leading-relaxed text-bear-sub2">
         Отметьте, если что-то относится к вам — при беременности и ГВ мы
         не будем урезать калории. Можно пропустить.

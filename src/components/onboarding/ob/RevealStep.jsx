@@ -29,7 +29,7 @@ export function RevealStep({ onNext, onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 8 из 12"
+      sub="Шаг 6 из 9"
       title="Ваш план готов!"
       onBack={onBack}
       onNext={accept}

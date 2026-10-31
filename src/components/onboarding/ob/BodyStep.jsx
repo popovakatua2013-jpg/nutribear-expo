@@ -29,7 +29,7 @@ export function BodyStep({ onNext, onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 3 из 12"
+      sub="Шаг 3 из 9"
       title="Ваши данные"
       onBack={onBack}
       onNext={onNext}

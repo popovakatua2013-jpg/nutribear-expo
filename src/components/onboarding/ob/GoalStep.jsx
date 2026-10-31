@@ -27,7 +27,7 @@ export function GoalStep({ onNext, onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 2 из 12"
+      sub="Шаг 2 из 9"
       title="Какая у вас цель?"
       onBack={onBack}
       onNext={onNext}

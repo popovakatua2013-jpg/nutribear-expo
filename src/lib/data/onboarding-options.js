@@ -1,5 +1,8 @@
-// Константы анкеты онбординга: цели, темп, активность, привычки, состояния.
+// Константы анкеты онбординга: цели, темп, активность, состояния.
 // Используются шагами онбординга и расчётом плана (onboarding.js).
+// Блоки «Мотивация», «Пищевые привычки» и «Привычки» срезаны ради
+// быстрого опроса — их константы (WHY/DIET/BEHAVIOR и пр.) удалены
+// как мёртвый код, вернуть можно из истории git.
 
 export const GOAL_OPTIONS = [
   { id: 'lose', emoji: '🔥', label: 'Похудеть', hint: 'мягкий дефицит калорий' },
@@ -12,13 +15,6 @@ export const PACE_OPTIONS = [
   { value: 0.25, label: '0.25 кг/нед', hint: 'мягко' },
   { value: 0.5, label: '0.5 кг/нед', hint: 'рекомендуется' },
   { value: 1, label: '1 кг/нед', hint: 'быстро' },
-]
-
-export const WHY_OPTIONS = [
-  { id: 'health', emoji: '❤️', label: 'Здоровье' },
-  { id: 'confidence', emoji: '✨', label: 'Уверенность' },
-  { id: 'event', emoji: '🎉', label: 'Событие' },
-  { id: 'energy', emoji: '⚡', label: 'Энергия' },
 ]
 
 // 5 классических уровней активности (множители TDEE)
@@ -43,39 +39,6 @@ export const WORKOUT_OPTIONS = [
   { value: '1-2', label: '1–2 р/нед' },
   { value: '3-4', label: '3–4 р/нед' },
   { value: '4+', label: '5+ р/нед' },
-]
-
-export const DIET_TYPES = [
-  { id: 'classic', emoji: '🍽️', label: 'Обычное' },
-  { id: 'veg', emoji: '🥗', label: 'Вегетарианское' },
-  { id: 'vegan', emoji: '🌱', label: 'Веган' },
-  { id: 'keto', emoji: '🥑', label: 'Кето' },
-  { id: 'lowcarb', emoji: '🍞', label: 'Низкоуглеводное' },
-  { id: 'medit', emoji: '🫒', label: 'Средиземноморское' },
-]
-
-export const ALLERGENS = ['Глютен', 'Лактоза', 'Орехи', 'Свинина']
-
-export const MEALS_DAY_OPTIONS = [
-  { value: '3', label: '3 приёма' },
-  { value: '3+2', label: '3 + 2 перекуса' },
-  { value: '2', label: '2 приёма' },
-]
-
-export const COOKING_OPTIONS = [
-  { value: 'home', label: 'Готовлю дома' },
-  { value: 'mix', label: '50 / 50' },
-  { value: 'eatout', label: 'Чаще вне дома' },
-]
-
-// Поведенческие вопросы (Noom-style): для коучинговых подсказок
-export const BEHAVIOR = [
-  { key: 'night', q: 'Едите ли по ночам?', options: [['no', 'Нет'], ['sometimes', 'Иногда'], ['often', 'Часто']] },
-  { key: 'stress', q: 'Заедаете ли стресс?', options: [['no', 'Нет'], ['sometimes', 'Иногда'], ['often', 'Часто']] },
-  { key: 'waterDay', q: 'Сколько воды пьёте в день?', options: [['lt4', 'Меньше 4 ст.'], ['4-6', '4–6 ст.'], ['6-8', '6–8 ст.'], ['gt8', 'Больше 8']] },
-  { key: 'alcohol', q: 'Как часто употребляете алкоголь?', options: [['no', 'Не пью'], ['rare', 'Редко'], ['often', 'Регулярно']] },
-  { key: 'dietsTried', q: 'Пробовали ли диеты раньше?', options: [['no', 'Нет'], ['yes-no', 'Да, не сработало'], ['yes-ok', 'Да, с результатом']] },
-  { key: 'sleep', q: 'Как качество сна?', options: [['good', 'Хорошо'], ['mid', 'Средне'], ['bad', 'Плохо']] },
 ]
 
 export const WATER_BY_ANSWER = { lt4: 1500, '4-6': 1800, '6-8': 2000, gt8: 2500 }

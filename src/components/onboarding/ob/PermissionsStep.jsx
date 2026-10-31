@@ -50,7 +50,7 @@ export function PermissionsStep({ onNext, onBack }) {
   }
 
   return (
-    <ObShell sub="Шаг 11 из 12" title="Настроим уведомления" onBack={onBack} onNext={onNext} nextLabel="Продолжить">
+    <ObShell sub="Шаг 8 из 9" title="Настроим уведомления" onBack={onBack} onNext={onNext} nextLabel="Продолжить">
       <View className="gap-3">
         <View className={row}>
           <Bell size={20} color="#fbbf24" />

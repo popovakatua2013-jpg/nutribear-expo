@@ -151,8 +151,10 @@ if (($proj -match '\\nutribear-expo-main\\nutribear-app$') -and
         Write-Host '[!] Рядом нашлась вторая копия проекта (из ZIP):' -ForegroundColor Yellow
         Write-Host ('    ' + $dupFull)
         Write-Host '    Когда убедитесь, что приложение работает из этой папки,'
-        Write-Host '    удалите её командой:'
-        Write-Host ('    Remove-Item -Recurse -Force "' + $dupFull + '"')
+        Write-Host '    удалите её двумя командами (обычный Remove-Item падает'
+        Write-Host '    на длинных путях в node_modules — robocopy справляется):'
+        Write-Host ('    robocopy "' + $env:TEMP + '\empty_dir" "' + $dupFull + '" /MIR')
+        Write-Host ('    Remove-Item -Recurse -Force "' + $dupFull + '", "' + $env:TEMP + '\empty_dir"')
     }
 }
 

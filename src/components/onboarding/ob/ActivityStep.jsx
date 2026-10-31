@@ -13,7 +13,7 @@ export function ActivityStep({ onNext, onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 4 из 12"
+      sub="Шаг 4 из 9"
       title="Уровень активности"
       onBack={onBack}
       onNext={onNext}
