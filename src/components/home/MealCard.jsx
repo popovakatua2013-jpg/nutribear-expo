@@ -24,9 +24,18 @@ export function MealCard({ meal, consumed, onAdd }) {
       }
       className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] active:opacity-80"
     >
-      <View className="h-16 w-full">
+      <View className="h-16 w-full items-center justify-center bg-white/[0.04]">
         {meal.image ? (
-          <Image source={meal.image} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+          <>
+            {/* подложка — то же фото, обрезанное и притемнённое, чтобы края не были пустыми */}
+            <Image
+              source={meal.image}
+              resizeMode="cover"
+              style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0.3 }}
+            />
+            {/* тарелка целиком, без обрезки */}
+            <Image source={meal.image} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+          </>
         ) : (
           <View className="h-full w-full items-center justify-center bg-white/5">
             <Text className="text-2xl">{meal.emoji || '🍽️'}</Text>

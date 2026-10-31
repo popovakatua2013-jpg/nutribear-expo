@@ -103,11 +103,20 @@ export function PhotoMode({ source, onPick }) {
           disabled={!photo || busy}
           className={`flex-1 overflow-hidden rounded-2xl ${!photo || busy ? 'opacity-40' : ''}`}
         >
+          {/* раскладка — только через style: className на сторонних
+              компонентах (expo-linear-gradient) NativeWind не применяет */}
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             colors={['#4D7CFE', '#A45BFF']}
-            className="flex-row items-center justify-center gap-2 py-3.5"
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 14,
+            }}
           >
             {busy ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
