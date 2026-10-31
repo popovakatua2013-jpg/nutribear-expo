@@ -1,20 +1,21 @@
-// Сводка «Съедено за сегодня» — как в референсе: слева круговое кольцо
-// прогресса с процентом от дневной нормы, справа — съеденные калории
-// крупно и плашка «Осталось / перебор / Цель достигнута»; ниже — четыре
-// строки нутриентов (белки, жиры, углеводы, клетчатка) с мини-барами
-// и значениями «82 / 130 г». Нормы БЖУ — «классическая тарелка»
+// Сводка «Съедено за сегодня» — компактная версия референса:
+// слева кольцо прогресса 80 px с процентом от дневной нормы,
+// справа — калории крупно и пилюля статуса («Осталось / Перебор /
+// Цель достигнута»); ниже — нутриенты сеткой 2×2 (белки, жиры,
+// углеводы, клетчатка): цветная точка + подпись + значение,
+// под ними тонкий бар. Нормы БЖУ — «классическая тарелка»
 // (20/30/50% калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
 
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Flame, UtensilsCrossed } from 'lucide-react-native'
+import { Flame } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { ProgressBar } from '../ui/ProgressBar'
 
 const MAX = 1.25
-const RING = 112
-const SW = 11
+const RING = 80
+const SW = 9
 const R = (RING - SW) / 2
 const C = 2 * Math.PI * R
 
@@ -28,23 +29,29 @@ function macroTargets(kcal) {
   }
 }
 
-function NutrientRow({ label, value, target, unit = 'г', color }) {
+function NutrientCell({ label, value, target, color }) {
   const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0
   return (
-    <View className="flex-row items-center gap-2">
-      <View className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-      <Text maxFontSizeMultiplier={MAX} className="w-[62px] shrink-0 font-sans text-[11px] text-bear-sub">
-        {label}
-      </Text>
-      <View className="min-w-0 flex-1">
-        <ProgressBar pct={pct} h={4} color={color} />
+    <View className="min-w-0 flex-1">
+      <View className="flex-row items-center gap-1.5">
+        <View className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={MAX}
+          className="min-w-0 flex-1 font-sans text-[10.5px] text-bear-sub"
+        >
+          {label}
+        </Text>
+        <Text
+          maxFontSizeMultiplier={MAX}
+          className="shrink-0 font-sans text-[10.5px] text-bear-sub2"
+        >
+          {`${formatNum(Math.round(value))} / ${formatNum(target)} г`}
+        </Text>
       </View>
-      <Text
-        maxFontSizeMultiplier={MAX}
-        className="w-[74px] shrink-0 text-right font-sans text-[11px] text-bear-sub2"
-      >
-        {`${formatNum(Math.round(value))} / ${formatNum(target)} ${unit}`}
-      </Text>
+      <View className="mt-1">
+        <ProgressBar pct={pct} h={3} color={color} />
+      </View>
     </View>
   )
 }
@@ -66,20 +73,14 @@ export function DailySummary({ consumed = 0, target = 0, bju = { p: 0, f: 0, c: 
   return (
     <View
       accessibilityLabel="Сводка за день"
-      className="overflow-hidden rounded-3xl border border-bear-line bg-bear-card p-5"
+      className="rounded-3xl border border-bear-line bg-bear-card p-4"
     >
-      {/* шапка: фиолетовый чип-значок + заголовок */}
-      <View className="flex-row items-center gap-2.5">
-        <View className="h-9 w-9 items-center justify-center rounded-xl border border-[#7B6CF6]/25 bg-[#7B6CF6]/15">
-          <UtensilsCrossed size={17} color="#A78BFA" />
-        </View>
-        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[15px] tracking-tight text-bear-text">
-          Съедено за сегодня
-        </Text>
-      </View>
+      <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14.5px] tracking-tight text-bear-text">
+        Съедено за сегодня
+      </Text>
 
       {/* кольцо + калории + плашка остатка */}
-      <View className="mt-4 flex-row items-center gap-4">
+      <View className="mt-3 flex-row items-center gap-3.5">
         <View
           accessibilityRole="progressbar"
           accessibilityLabel={`Выполнено ${Math.round(pct)} процентов дневной нормы`}
@@ -106,46 +107,48 @@ export function DailySummary({ consumed = 0, target = 0, bju = { p: 0, f: 0, c: 
               transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
             />
           </Svg>
-          <View className="absolute inset-0 items-center justify-center" style={StyleSheet.absoluteFill}>
-            <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[24px] leading-tight text-bear-text">
+          <View className="absolute inset-0 items-center justify-center">
+            <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[17px] leading-tight text-bear-text">
               {Math.round(pct)}%
             </Text>
-            <Text maxFontSizeMultiplier={MAX} className="font-sans text-[9px] leading-tight text-bear-dim">
-              от дневной{'\n'}нормы
+            <Text maxFontSizeMultiplier={MAX} className="font-sans text-[8px] leading-tight text-bear-dim">
+              от нормы
             </Text>
           </View>
         </View>
 
         <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[26px] leading-tight tracking-tight text-bear-text">
+          <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text">
             {formatNum(consumed)}
-            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[14px] text-bear-sub">
+            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-bear-sub">
               {`  / ${formatNum(target)} ккал`}
             </Text>
           </Text>
 
           <View
-            className="mt-2.5 shrink-0 flex-row items-center self-start gap-1.5 rounded-full px-3 py-1.5"
+            className="mt-1.5 shrink-0 flex-row items-center self-start gap-1 rounded-full px-2.5 py-1"
             style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
           >
-            <Flame size={13} color={pillTone.text} />
-            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-xs" style={{ color: pillTone.text }}>
+            <Flame size={12} color={pillTone.text} />
+            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[11px]" style={{ color: pillTone.text }}>
               {over > 0
-                ? `Перебор +${formatNum(over)} ккал`
+                ? `Перебор +${formatNum(over)}`
                 : done
                   ? 'Цель достигнута 🎉'
-                  : `Осталось ${formatNum(remaining)} ккал`}
+                  : `Осталось ${formatNum(remaining)}`}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* нутриенты: белки / жиры / углеводы / клетчатка */}
-      <View className="mt-4 gap-2.5">
-        <NutrientRow label="Белки" value={bju.p} target={norms.p} color="#34D399" />
-        <NutrientRow label="Жиры" value={bju.f} target={norms.f} color="#FB923C" />
-        <NutrientRow label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" />
-        <NutrientRow label="Клетчатка" value={bju.fib || 0} target={norms.fib} color="#2DD4BF" />
+      {/* нутриенты сеткой 2×2: точка + подпись + значение, под ними бар */}
+      <View className="mt-3 flex-row gap-3">
+        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#34D399" />
+        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" />
+      </View>
+      <View className="mt-2.5 flex-row gap-3">
+        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" />
+        <NutrientCell label="Клетчатка" value={bju.fib || 0} target={norms.fib} color="#2DD4BF" />
       </View>
     </View>
   )
