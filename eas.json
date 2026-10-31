@@ -1,0 +1,26 @@
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "description": "Dev-клиент для нативных модулей (RevenueCat и др.) — ставится на телефон вместо Expo Go"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "description": "Быстрая проверка: APK для Android ставится на любой телефон, iOS — сборка для симулятора"
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "description": "Релиз: AAB для Google Play, IPA для App Store"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

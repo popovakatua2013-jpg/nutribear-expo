@@ -176,8 +176,7 @@ export function VoiceMode({ onPick }) {
       )}
 
       <Text className="mt-3 text-[11px] leading-[16px] text-bear-sub">
-        Голос распознаёт нейросеть (нужна строка EXPO_PUBLIC_AI_VOICE_MODEL в файле .env).
-        Без неё используйте ввод фразы текстом ниже.
+        Голос распознаёт нейросеть. Если кнопка не сработала — введите фразу текстом ниже.
       </Text>
       <TextInput
         value={phrase}

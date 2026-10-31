@@ -1,0 +1,155 @@
+// Карточка «Итоги недели» для шеринга: красивый слепок периода —
+// мишка, средние калории, шаги, вода, сжигание и стрик. Кнопка
+// «Поделиться» снимает карточку в PNG (react-native-view-shot) и
+// открывает системное меню («Сохранить в файл», WhatsApp, Telegram…).
+
+import { useRef, useState } from 'react'
+import { Image, Modal, Pressable, Text, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import { captureRef } from 'react-native-view-shot'
+import * as Sharing from 'expo-sharing'
+import { Droplets, Flame, Footprints, Share2, Timer, X } from 'lucide-react-native'
+import { formatNum } from '@/lib/format'
+import { formatLiters } from '@/lib/data/reports'
+import { daysLabel } from '@/lib/streak'
+
+const BEAR = require('../../../../assets/images/bear.webp')
+const MAX = 1.25
+
+function Stat({ Icon, color, value, label }) {
+  return (
+    <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.06] px-3 py-2.5">
+      <View className="flex-row items-center gap-1.5">
+        <Icon size={13} color={color} />
+        <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px] text-white/60">
+          {label}
+        </Text>
+      </View>
+      <Text
+        numberOfLines={1}
+        maxFontSizeMultiplier={MAX}
+        className="mt-1 font-extrabold text-[16px] leading-tight text-white"
+      >
+        {value}
+      </Text>
+    </View>
+  )
+}
+
+export function WeeklyShareCard({ open, onClose, totals, streak = 0, days = 7 }) {
+  const cardRef = useRef(null)
+  const [busy, setBusy] = useState(false)
+
+  const avgKcal = Math.round((totals?.kcal || 0) / Math.max(1, days))
+  const title = days === 7 ? 'Итоги недели' : `Итоги за ${days} ${daysLabel(days)}`
+
+  async function share() {
+    if (busy || !cardRef.current) return
+    setBusy(true)
+    try {
+      const uri = await captureRef(cardRef, { result: 'tmpfile', format: 'png', quality: 1 })
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          dialogTitle: 'Итоги NutriBear',
+        })
+      }
+    } catch {
+      // шаринг недоступен или отменён — молча закрывать не будем
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      <View className="flex-1 items-center justify-center bg-black/70 px-8">
+        {/* Карточка для снятия в PNG */}
+        <View
+          ref={cardRef}
+          collapsable={false}
+          accessibilityLabel="Карточка итогов для поделиться"
+          className="w-full overflow-hidden rounded-3xl border border-white/10"
+          style={{ backgroundColor: '#101831' }}
+        >
+          <LinearGradient colors={['rgba(77,124,254,0.16)', 'rgba(139,92,246,0.05)', 'rgba(16,24,49,0)']} style={{ padding: 20 }}>
+            {/* Шапка: мишка + бренд */}
+            <View className="flex-row items-center gap-2.5">
+              <View className="h-9 w-9 overflow-hidden rounded-full border border-white/15 bg-white/5">
+                <Image source={BEAR} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text className="font-extrabold text-[14px] leading-tight text-white">NutriBear</Text>
+                <Text className="font-sans text-[10px] text-white/50">дневник питания и активности</Text>
+              </View>
+              <View className="rounded-full bg-white/10 px-2.5 py-1">
+                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10px] text-white/70">
+                  {days} {daysLabel(days)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Заголовок периода */}
+            <Text maxFontSizeMultiplier={MAX} className="mt-4 font-extrabold text-[21px] leading-tight tracking-tight text-white">
+              {title} 🐻
+            </Text>
+
+            {/* Сетка показателей 2×2 */}
+            <View className="mt-3.5 flex-row gap-2.5">
+              <Stat Icon={Timer} color="#a78bfa" value={formatNum(avgKcal)} label="ккал в день, в среднем" />
+              <Stat Icon={Footprints} color="#4ade80" value={formatNum(totals?.steps || 0)} label="шагов за период" />
+            </View>
+            <View className="mt-2.5 flex-row gap-2.5">
+              <Stat Icon={Droplets} color="#38bdf8" value={formatLiters(totals?.waterMl || 0)} label="воды выпито" />
+              <Stat Icon={Flame} color="#f87171" value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
+            </View>
+
+            {/* Стрик */}
+            {streak > 0 ? (
+              <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
+                <Flame size={13} color="#fb923c" />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#fdba74]">
+                  {`${streak} ${daysLabel(streak)} подряд 🔥`}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Подвал карточки */}
+            <Text className="mt-4 font-sans text-[9.5px] text-white/40">
+              Данные хранятся только на устройстве · NutriBear
+            </Text>
+          </LinearGradient>
+        </View>
+
+        {/* Кнопки под карточкой (в PNG не попадают) */}
+        <Pressable
+          onPress={share}
+          accessibilityRole="button"
+          accessibilityLabel="Поделиться карточкой итогов"
+          disabled={busy}
+          className="mt-4 w-full overflow-hidden rounded-2xl active:opacity-80"
+        >
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+            <View className="flex-row items-center justify-center gap-2 py-3.5">
+              <Share2 size={17} color="#FFFFFF" />
+              <Text className="font-bold text-[15px] text-white">
+                {busy ? 'Готовим…' : 'Поделиться'}
+              </Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Закрыть карточку итогов"
+          className="mt-1 w-full items-center py-3"
+        >
+          <View className="flex-row items-center gap-1.5">
+            <X size={15} color="#8B96B8" />
+            <Text className="font-semibold text-[13px] text-bear-sub">Закрыть</Text>
+          </View>
+        </Pressable>
+      </View>
+    </Modal>
+  )
+}

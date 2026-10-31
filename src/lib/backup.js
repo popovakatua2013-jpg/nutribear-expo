@@ -15,6 +15,7 @@ import { useRecipesStore } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { restorePhotos } from '@/lib/photos'
 
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
 const MEALS_DEFAULT = { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' }
@@ -30,8 +31,9 @@ const arr = (v, fb = []) => (Array.isArray(v) ? v : fb)
 const num = (v, fb = 0) => (Number.isFinite(Number(v)) ? Number(v) : fb)
 
 // Залить данные из копии в сторы. Бросает ошибку, если это не копия
-// NutriBear. Возвращает true при успехе.
-export function applyBackup(data) {
+// NutriBear. Асинхронный: фото копии записываются в файловую систему.
+// Возвращает true при успехе.
+export async function applyBackup(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error('Это не файл копии')
   }
@@ -114,6 +116,9 @@ export function applyBackup(data) {
     }
     if (Object.keys(clean).length) store.setState(clean)
   }
+
+  // ── Фото прогресса: файлы снимков в папку приложения ─────────
+  await restorePhotos(data.photos)
 
   return true
 }

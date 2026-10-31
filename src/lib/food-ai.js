@@ -464,25 +464,32 @@ function assertConfigured() {
   // В прокси-режиме ключ не нужен — он на сервере (см. ai-config.js)
   const { apiKey, proxyUrl } = AI_CONFIG
   if (!apiKey && !proxyUrl) {
-    throw new Error(
-      'ИИ не настроен: создайте файл .env в корне проекта (рядом с package.json) со строкой EXPO_PUBLIC_AI_KEY=ваш-ключ и перезапустите Expo: npx expo start --clear'
-    )
+    // Техническая причина — в консоль (видна только разработчику),
+    // пользователь видит короткое человеческое сообщение
+    console.warn('[food-ai] ИИ не настроен: EXPO_PUBLIC_AI_KEY (.env) или EXPO_PUBLIC_AI_PROXY_URL')
+    throw new Error('ИИ ещё не подключён — добавьте блюдо вручную или попробуйте позже')
   }
 }
 
 function httpError(status, extra = '') {
+  // Детали (статусы, имена переменных) — только в консоль; в интерфейсе
+  // объясняем по-человечески, без упоминаний .env и кодов
+  if (status === 401 || status === 403)
+    console.warn(`[food-ai] Ключ ИИ отклонён (${status}) — проверьте EXPO_PUBLIC_AI_KEY`)
+  else if (status === 404)
+    console.warn('[food-ai] 404 — проверьте EXPO_PUBLIC_AI_BASE_URL и EXPO_PUBLIC_AI_MODEL')
   let msg
   if (status === 401 || status === 403)
-    msg = 'Ключ отклонён (ошибка 401) — проверьте EXPO_PUBLIC_AI_KEY в файле .env и перезапустите Expo с --clear'
+    msg = 'Сервис ИИ временно недоступен — попробуйте позже'
   else if (status === 404)
-    msg = 'Не найдено (404) — проверьте EXPO_PUBLIC_AI_BASE_URL и EXPO_PUBLIC_AI_MODEL в файле .env'
+    msg = 'Сервис ИИ недоступен — попробуйте позже'
   else if (status === 429)
-    msg = 'Превышен лимит запросов (429) — подождите минуту и повторите'
+    msg = 'Слишком много запросов подряд — подождите минуту и повторите'
   else if (status >= 500)
-    msg = 'Сервер ИИ временно недоступен — попробуйте позже'
+    msg = 'Сервис ИИ временно недоступен — попробуйте позже'
   else
-    msg = `Ошибка ИИ-сервера (${status})`
-  return new Error(extra ? `${msg}. Сервер объяснил: ${extra}` : msg)
+    msg = 'Сервис ИИ не отвечает — попробуйте позже'
+  return new Error(msg)
 }
 
 // Читаем тело ответа сервера — при ошибках 400 там точная причина
@@ -858,9 +865,8 @@ export async function estimateByName(name, timeoutMs = 25000) {
 // Говорите коротко, а разбор фразы после этого чаще всего бесплатный.
 export async function recognizeVoiceAudio(audioBase64, timeoutMs = 30000) {
   if (!AI_CONFIG.voiceModel) {
-    throw new Error(
-      'Голос не настроен: добавьте в файл .env строку EXPO_PUBLIC_AI_VOICE_MODEL=whisper-1 (или gpt-4o-mini-transcribe — вдвое дешевле) — или введите фразу текстом ниже'
-    )
+    console.warn('[food-ai] Голос не настроен: добавьте EXPO_PUBLIC_AI_VOICE_MODEL в .env')
+    throw new Error('Распознавание голоса ещё не включено — введите фразу текстом ниже')
   }
   assertConfigured()
 

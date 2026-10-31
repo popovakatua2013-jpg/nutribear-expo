@@ -7,7 +7,7 @@ import { Alert, Pressable, Text, View } from 'react-native'
 import { FileDown, FileUp, ShieldCheck } from 'lucide-react-native'
 import * as DocumentPicker from 'expo-document-picker'
 import { readAsStringAsync } from 'expo-file-system/legacy'
-import { collectAll, shareJson } from '@/lib/data/gdpr-export'
+import { collectAll, shareBackupFile } from '@/lib/data/gdpr-export'
 import { applyBackup } from '@/lib/backup'
 import { useToast } from '../ui/Toast'
 
@@ -16,12 +16,11 @@ export function DataPortability() {
 
   async function exportAll() {
     try {
-      const data = collectAll()
-      const stamp = new Date().toISOString().slice(0, 10)
-      await shareJson(`nutribear-export-${stamp}.json`, data)
+      const data = await collectAll()
+      await shareBackupFile(data)
       toast({
         title: '📦 Данные экспортированы',
-        description: 'Отправьте JSON в заметки или сохраните в файл',
+        description: 'Сохраните файл на диск — например, в Облако',
       })
     } catch {
       toast({ title: 'Не удалось поделиться данными' })
@@ -61,9 +60,9 @@ export function DataPortability() {
           {
             text: 'Восстановить',
             style: 'destructive',
-            onPress: () => {
+            onPress: async () => {
               try {
-                applyBackup(data)
+                await applyBackup(data)
                 toast({
                   title: '✅ Копия восстановлена',
                   description: 'Данные загружены из файла',
@@ -112,7 +111,7 @@ export function DataPortability() {
             Сохранить копию (JSON)
           </Text>
           <Text className="font-sans text-[11px] text-bear-sub2">
-            дневник, вода, вес, рецепты, свои продукты, комбо
+            дневник, вода, вес, рецепты, свои продукты, комбо, фото
           </Text>
         </View>
       </Pressable>

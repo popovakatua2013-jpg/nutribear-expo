@@ -10,7 +10,6 @@ import { WeighReminderCard } from '@/components/more/WeighReminderCard'
 import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
-import { ConsoleHelpCard } from '@/components/more/ConsoleHelpCard'
 import { AboutCard } from '@/components/more/AboutCard'
 
 export default function MoreScreen() {
@@ -49,7 +48,6 @@ export default function MoreScreen() {
         <SyncCard />
         <DataPortability />
         <DataActions />
-        <ConsoleHelpCard />
         <AboutCard />
       </ScrollView>
     </View>

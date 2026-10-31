@@ -53,7 +53,8 @@
           "microphonePermission": "Приложению нужен микрофон, чтобы распознавать еду по голосу"
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": false

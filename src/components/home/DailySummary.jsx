@@ -12,6 +12,7 @@ import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplets, Flame, Footprints, Timer } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
+import { daysLabel } from '@/lib/streak'
 import { ProgressBar } from '../ui/ProgressBar'
 import { BurnRing } from '../ui/BurnRing'
 
@@ -80,6 +81,7 @@ export function DailySummary({
   steps = 0,
   waterMl = 0,
   burnGoal = 0, // цель «сжечь за день», ккал
+  streak = 0, // дней подряд с дневником (чип с огоньком)
   onEditBurnGoal, // долгий тап по блоку сжигания — изменить цель
 }) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
@@ -105,9 +107,23 @@ export function DailySummary({
       accessibilityLabel="Сводка за день"
       className="rounded-3xl border border-bear-line bg-bear-card p-4"
     >
-      <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14.5px] tracking-tight text-bear-text">
-        Съедено за сегодня
-      </Text>
+      <View className="flex-row items-center justify-between gap-2">
+        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14.5px] tracking-tight text-bear-text">
+          Съедено за сегодня
+        </Text>
+        {streak > 0 ? (
+          <View
+            accessibilityLabel={`Стрик: ${streak} ${daysLabel(streak)} подряд`}
+            className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
+            style={{ backgroundColor: 'rgba(251,146,60,0.13)' }}
+          >
+            <Flame size={12} color="#fb923c" />
+            <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11px] text-[#fdba74]">
+              {`${streak} ${daysLabel(streak)}`}
+            </Text>
+          </View>
+        ) : null}
+      </View>
 
       {/* кольцо + калории + плашка остатка */}
       <View className="mt-3 flex-row items-center gap-3.5">

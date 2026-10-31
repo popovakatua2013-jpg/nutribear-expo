@@ -10,6 +10,7 @@ import { BmiGauge } from '@/components/bmi/BmiGauge'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
 import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
+import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceCard } from '@/components/bmi/AdviceCard'
 
 export default function BmiScreen() {
@@ -59,6 +60,7 @@ export default function BmiScreen() {
         <BmiCalculator />
 
         <WeightCard />
+        <ProgressPhotos />
         <AdviceCard bmi={bmi} />
       </ScrollView>
     </View>

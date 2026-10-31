@@ -4,7 +4,7 @@
 // и «Ваши цели» удалены по запросу. Модалки: еда (хаб), все приёмы.
 // Показатели дня пишутся в историю — для отчётов.
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
@@ -26,6 +26,7 @@ import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { streakOf } from '@/lib/streak'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS, xpForDay } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
@@ -73,6 +74,9 @@ export default function HomeScreen() {
   const addSteps = useActivityStore((s) => s.addSteps)
   const exLogs = useExerciseStore((s) => s.logs)
   const recordToday = useHistoryStore((s) => s.record)
+  const historyDays = useHistoryStore((s) => s.days)
+  // Стрик: сколько дней подряд ведётся дневник (чип с огоньком в сводке)
+  const streak = useMemo(() => streakOf(historyDays), [historyDays])
   const goals = useGoalsStore((s) => s.goals)
   const setGoals = useGoalsStore((s) => s.setGoals)
 
@@ -233,6 +237,7 @@ export default function HomeScreen() {
           steps={extraSteps}
           waterMl={waterMl}
           burnGoal={goals.burnKcal}
+          streak={streak}
           onEditBurnGoal={() =>
             openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
           }

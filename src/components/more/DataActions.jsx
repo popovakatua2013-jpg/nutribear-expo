@@ -11,6 +11,10 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useRecipesStore } from '@/store/useRecipesStore'
+import { useUserFoodsStore } from '@/store/useUserFoodsStore'
+import { useCombosStore } from '@/store/useCombosStore'
+import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
+import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
@@ -53,6 +57,11 @@ export function DataActions() {
     useExerciseStore.setState({ logs: {} })
     useFastingStore.setState({ windowStart: 10, windowHours: 8, fastHours: null, startedAt: null, laps: [] })
     useRecipesStore.setState({ items: [] })
+    // Свои продукты, комбо и фото прогресса — тоже персональные данные
+    useUserFoodsStore.setState({ items: [] })
+    useCombosStore.setState({ items: [] })
+    useProgressPhotosStore.getState().clearPhotos()
+    wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
     // GDPR-удаление: онбординг начнётся заново (корневой макет переключится сам)
