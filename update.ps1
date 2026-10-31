@@ -14,11 +14,14 @@
 #      («Похоже, у вас две папки проекта — оставьте одну»);
 #    - проверяет сам себя: если update.ps1 на GitHub новее,
 #      сразу обновляет сам себя и перезапускается;
-#    - по подтверждению удаляет мусорные файлы (git clean -fd),
-#      которые могут мешать обновлению;
+#    - убирает мусорные файлы (git clean -fd), которые могут
+#      мешать обновлению (в update.bat - автоматически, без вопросов);
 #    - забирает последнюю версию с GitHub
 #      (локальные правки файлов заменяются свежей версией);
-#    - обновляет библиотеки, только если они менялись;
+#    - переносит файл .env (ключи ИИ) из старой копии, если в этой
+#      его нет, и держит запасную копию в %USERPROFILE%\.nutribear;
+#    - переустанавливает библиотеки, если они изменились, ещё не
+#      стоят или устарели (старше файла зависимостей);
 #    - записывает хэш версии для бейджа «сборка» в разделе «Ещё»;
 #    - запускает приложение (npx expo start --clear).
 #
@@ -45,12 +48,22 @@ function Test-Project([string]$p) {
 function Invoke-Clean {
     $preview = @(git clean -nd)
     if (-not $preview) { return }
+    # Явный режим (update.bat передаёт -Clean Y): без вопросов.
+    if ($Clean -match '^(y|д)') {
+        Write-Host 'Убираю лишние файлы (git clean -fd)...' -ForegroundColor Cyan
+        git clean -fd
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host 'Лишние файлы удалены.' -ForegroundColor Green
+        }
+        return
+    }
+    if ($Clean -match '^(n)') { return }
+    # Интерактивный режим (прямой запуск .\update.ps1 в терминале).
     Write-Host 'Найдены лишние файлы, не входящие в проект:' -ForegroundColor DarkGray
     $preview | Select-Object -First 10 | ForEach-Object {
         Write-Host ('  ' + $_) -ForegroundColor DarkGray
     }
-    $ans = $Clean
-    if (-not $ans) { $ans = Read-Host 'Удалить их? (y - да / n - нет, Enter - нет)' }
+    $ans = Read-Host 'Удалить их? (y - да / n - нет, Enter - нет)'
     if ($ans -match '^(y|д)') {
         git clean -fd
         if ($LASTEXITCODE -eq 0) {
@@ -78,6 +91,7 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
 # Сначала файл-настройка, затем текущая папка, затем типовые места.
 $fromSettings = $false
 $proj = ''
+$desktop = [Environment]::GetFolderPath('Desktop')
 $cfgDir  = Join-Path $env:USERPROFILE '.nutribear'
 $cfgFile = Join-Path $cfgDir 'work-path.txt'
 if (Test-Path $cfgFile) {
@@ -92,7 +106,6 @@ if (-not $proj -and (Test-Project (Get-Location).Path)) {
     $proj = (Get-Location).Path
 }
 if (-not $proj) {
-    $desktop = [Environment]::GetFolderPath('Desktop')
     foreach ($c in @(
         (Join-Path $desktop 'nutribear-app'),
         (Join-Path $desktop 'nutribear-expo-main\nutribear-app'),
@@ -129,6 +142,20 @@ if ($proj -match 'nutribear-expo-main\\nutribear-expo-main') {
     }
 }
 
+# --- 3б. Вторая копия рядом с основной: подсказываем, как убрать ---
+if (($proj -match '\\nutribear-expo-main\\nutribear-app$') -and
+    (-not ($proj -match 'nutribear-expo-main\\nutribear-expo-main'))) {
+    $dup = Join-Path $proj '..\nutribear-expo-main'
+    if (Test-Path $dup) {
+        $dupFull = (Resolve-Path $dup).Path
+        Write-Host '[!] Рядом нашлась вторая копия проекта (из ZIP):' -ForegroundColor Yellow
+        Write-Host ('    ' + $dupFull)
+        Write-Host '    Когда убедитесь, что приложение работает из этой папки,'
+        Write-Host '    удалите её командой:'
+        Write-Host ('    Remove-Item -Recurse -Force "' + $dupFull + '"')
+    }
+}
+
 Set-Location $proj
 Write-Host ''
 Write-Host ('Папка проекта: ' + $proj) -ForegroundColor Cyan
@@ -144,14 +171,40 @@ if (git remote) {
     git remote add origin $RepoUrl
 }
 
-# --- 5. Запоминаем зависимости ДО обновления ---
+# --- 5. Файл .env: ключи ИИ. На GitHub их нет - берегём ----------
+# Делаем запасную копию, а если в этой копии .env нет - переносим
+# его из другой известной копии или из запасной.
+$envFile = Join-Path $proj '.env'
+if (Test-Path $envFile) {
+    New-Item -ItemType Directory -Path $cfgDir -Force | Out-Null
+    Copy-Item $envFile (Join-Path $cfgDir 'env-backup') -Force
+} else {
+    foreach ($c in @(
+        (Join-Path $cfgDir 'env-backup'),
+        (Join-Path $desktop 'nutribear-app\.env'),
+        (Join-Path $desktop 'nutribear-expo-main\nutribear-app\.env'),
+        (Join-Path $desktop 'nutribear-expo-main\nutribear-expo-main\nutribear-app\.env'),
+        (Join-Path $desktop 'nutribear-expo-main\.env')
+    )) {
+        if (Test-Path $c) {
+            Copy-Item $c $envFile -Force
+            Write-Host ('Файл .env перенесён из: ' + $c) -ForegroundColor Green
+            break
+        }
+    }
+    if (-not (Test-Path $envFile)) {
+        Write-Host '[i] Файл .env не найден - если пользовались ИИ-помощником, ключ нужно вписать заново.' -ForegroundColor DarkGray
+    }
+}
+
+# --- 6. Запоминаем зависимости ДО обновления ---
 $depFiles = @('package.json', 'package-lock.json')
 $before = ($depFiles | ForEach-Object {
     $f = Join-Path $proj $_
     if (Test-Path $f) { $_ + ':' + (Get-FileHash $f).Hash } else { $_ + ':none' }
 }) -join '|'
 
-# --- 6. Забираем последнюю версию с GitHub ---
+# --- 7. Забираем последнюю версию с GitHub ---
 Write-Host 'Проверяю обновления на GitHub...' -ForegroundColor Cyan
 $fetched = $false
 git fetch origin
@@ -172,7 +225,7 @@ if ($fetched) {
     git rev-parse -q --verify HEAD | Out-Null
     if ($LASTEXITCODE -eq 0) { $local = git rev-parse HEAD }
 
-    # --- 6а. Самопроверка: сначала обновляем сам скрипт ----------
+    # --- 7а. Самопроверка: сначала обновляем сам скрипт ----------
     # Если файл update.ps1 отличается от версии на GitHub - сразу
     # забираем свежий и перезапускаем себя, чтобы все остальные
     # шаги выполнились по актуальной версии скрипта.
@@ -209,14 +262,17 @@ if ($fetched) {
             git checkout -B main origin/main
         }
         if ($LASTEXITCODE -ne 0) {
-            Write-Host '[!] Не удалось записать новые файлы - обычно мешают лишние файлы.' -ForegroundColor Yellow
-            $ans = Read-Host 'Удалить лишние файлы и повторить? (y - да / n - нет)'
-            if ($ans -match '^(y|д)') {
+            if ($Clean -match '^(y|д)') {
+                Write-Host '[!] Не удалось записать файлы - убираю лишние и пробую ещё раз...' -ForegroundColor Yellow
                 git clean -fd
-                git reset --hard origin/main
-                if ($LASTEXITCODE -ne 0) {
-                    git checkout -B main origin/main
-                }
+            } else {
+                Write-Host '[!] Не удалось записать новые файлы - обычно мешают лишние файлы.' -ForegroundColor Yellow
+                $ans = Read-Host 'Удалить лишние файлы и повторить? (y - да / n - нет)'
+                if ($ans -match '^(y|д)') { git clean -fd }
+            }
+            git reset --hard origin/main
+            if ($LASTEXITCODE -ne 0) {
+                git checkout -B main origin/main
             }
         }
         if ($LASTEXITCODE -ne 0) {
@@ -231,32 +287,45 @@ if ($fetched) {
     $updateOk = $false
 }
 
-# --- 7. Библиотеки: ставим, если они менялись или ещё не стоят ---
+# --- 8. Библиотеки: ставим, если изменились, отсутствуют или устарели
 $after = ($depFiles | ForEach-Object {
     $f = Join-Path $proj $_
     if (Test-Path $f) { $_ + ':' + (Get-FileHash $f).Hash } else { $_ + ':none' }
 }) -join '|'
 
-# В свежей копии (например, из ZIP) node_modules нет вовсе — установка
-# обязательна, даже если package.json не менялся
 $nodeModules = Join-Path $proj 'node_modules'
-$needInstall = ($before -ne $after) -or (-not (Test-Path (Join-Path $nodeModules 'expo')))
-
-if ($needInstall) {
-    if (-not (Test-Path $nodeModules)) {
-        Write-Host 'Библиотеки ещё не установлены - устанавливаю (может занять несколько минут)...' -ForegroundColor Cyan
-    } else {
-        Write-Host 'Состав библиотек изменился - устанавливаю (может занять пару минут)...' -ForegroundColor Cyan
+$nmExpo = Join-Path $nodeModules 'expo'
+$installReason = ''
+if ($before -ne $after) {
+    $installReason = 'Состав библиотек изменился'
+} elseif (-not (Test-Path $nmExpo)) {
+    # В свежей копии (например, из ZIP) node_modules нет вовсе
+    $installReason = 'Библиотеки ещё не установлены'
+} else {
+    # Свежесть по дате: git переписывает package-lock.json только при
+    # реальных изменениях зависимостей, поэтому если он новее самой
+    # установки node_modules - библиотеки старее кода и могут ломать его.
+    $lockFile = Join-Path $proj 'package-lock.json'
+    if (Test-Path $lockFile) {
+        $lockTime = (Get-Item $lockFile).LastWriteTimeUtc
+        $nmTime = (Get-Item $nmExpo).LastWriteTimeUtc
+        if ($lockTime -gt $nmTime) {
+            $installReason = 'Библиотеки старше файла зависимостей'
+        }
     }
+}
+
+if ($installReason) {
+    Write-Host ($installReason + ' - устанавливаю (может занять несколько минут)...') -ForegroundColor Cyan
     npm install
     if ($LASTEXITCODE -ne 0) {
         Write-Host '[!] npm install завершился с ошибкой. Продолжаю, но если приложение не запустится - пришлите мне текст ошибки.' -ForegroundColor Yellow
     }
 } else {
-    Write-Host 'Библиотеки не менялись - установка не нужна.' -ForegroundColor DarkGray
+    Write-Host 'Библиотеки свежие - переустановка не нужна.' -ForegroundColor DarkGray
 }
 
-# --- 8. Бейдж версии: пишем хэш этой копии в src/lib/version.js ---
+# --- 9. Бейдж версии: пишем хэш этой копии в src/lib/version.js ---
 git rev-parse -q --verify HEAD | Out-Null
 if ($LASTEXITCODE -eq 0) {
     $short = (git rev-parse --short HEAD).Trim()
@@ -274,7 +343,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ('Бейдж версии: сборка ' + $short) -ForegroundColor DarkGray
 }
 
-# --- 9. Запоминаем рабочую копию в файле-настройке ---------------
+# --- 10. Запоминаем рабочую копию в файле-настройке ---------------
 # Сохраняем только после удачного обновления, чтобы не закрепить
 # случайную копию при сбое сети.
 if ($updateOk) {
@@ -283,7 +352,7 @@ if ($updateOk) {
     [System.IO.File]::WriteAllText($cfgFile, $proj, $utf8bom)
 }
 
-# --- 10. Запускаем приложение ---
+# --- 11. Запускаем приложение ---
 Write-Host ''
 Write-Host 'Запускаю NutriBear (остановка: Ctrl+C)...' -ForegroundColor Green
 Write-Host ''
