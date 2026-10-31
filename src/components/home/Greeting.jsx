@@ -6,7 +6,7 @@
 import { Image, Text, View } from 'react-native'
 import { formatNum } from '@/lib/format'
 
-const BEAR = require('../../../../assets/images/bear.png')
+const BEAR = require('../../../assets/images/bear.png')
 
 const WEEKDAYS = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
