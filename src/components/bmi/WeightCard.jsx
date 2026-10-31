@@ -164,7 +164,7 @@ export function WeightCard() {
 
       <View className="mt-2 flex-row items-stretch gap-3">
         <View className="min-w-0 flex-1">
-          <WeightChart data={data} />
+          <WeightChart data={data} goalKg={goalWeightKg} />
         </View>
 
         <View className="w-[86px] shrink-0 justify-center">

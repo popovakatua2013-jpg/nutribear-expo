@@ -5,11 +5,12 @@
 // к результату». Без цели карточка не показывается вовсе.
 // Живой переход «не достиг → достиг» — поп-анимация и бurst эмодзи.
 // После достижения цель питания можно одним тапом перевести
-// на поддержку — норма без дефицита по Миффлину (supportSwitchPlan).
+// на поддержку — норма без дефицита по Миффлину (supportSwitchPlan),
+// а кнопка «Поделиться» отправляет результат через системное меню.
 
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, Text, View } from 'react-native'
-import { PartyPopper, Scale, Target } from 'lucide-react-native'
+import { Animated, Easing, Pressable, Share, Text, View } from 'react-native'
+import { PartyPopper, Scale, Share2, Target } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -82,6 +83,18 @@ export function GoalCelebration() {
         ? `Норма по вашим данным: ${formatNum(plan.kcal)} ккал в день — вес теперь держим без дефицита`
         : `Средняя норма поддержки: ${formatNum(plan.kcal)} ккал в день. Заполните биоданные — пересчитаем под вас`,
     })
+  }
+
+  // Системный шеринг результата — стандартное меню телефона
+  async function shareResult() {
+    const heldDays = goalReachedAt ? daysSince(goalReachedAt) : 0
+    const text =
+      heldDays >= 1
+        ? `Мой вес ${fmtDecimal(weightKg)} кг — цель достигнута! 🐻🎉 Результат держится ${heldDays} ${pluralDays(heldDays)}.`
+        : `Цель по весу достигнута — ${fmtDecimal(weightKg)} кг! 🐻🎉`
+    try {
+      await Share.share({ message: text })
+    } catch {}
   }
 
   // Анимация — только при живом переходе «не достиг → достиг»;
@@ -201,6 +214,19 @@ export function GoalCelebration() {
             </Text>
           </Pressable>
         )}
+
+        {/* Похвастаться результатом — системное меню «Поделиться» */}
+        <Pressable
+          onPress={shareResult}
+          accessibilityRole="button"
+          accessibilityLabel="Поделиться результатом"
+          className={`flex-row items-center justify-center gap-1.5 rounded-xl border border-[#fbbf24]/30 py-2.5 active:opacity-80 ${
+            plan ? 'mt-1.5' : 'mt-3'
+          }`}
+        >
+          <Share2 size={14} color="#fbbf24" />
+          <Text className="font-semibold text-[12.5px] text-[#fbbf24]">Поделиться</Text>
+        </Pressable>
 
         {overdue && (
           <Pressable

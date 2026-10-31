@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react-native'
 import { dishesWord, formatNum } from '@/lib/format'
+import { animateExpandCollapse } from '@/lib/anim'
 import { bjuSum, bjuLine } from '@/lib/data/bju'
 import { ProgressBar } from '../ui/ProgressBar'
 import { EntryList } from './EntryList'
@@ -25,7 +26,10 @@ export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onS
   const hasDishes = entries.length > 0
 
   const toggle = () => {
-    if (hasDishes) setOpen((v) => !v)
+    if (hasDishes) {
+      animateExpandCollapse()
+      setOpen((v) => !v)
+    }
   }
 
   return (

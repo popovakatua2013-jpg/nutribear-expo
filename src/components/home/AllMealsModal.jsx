@@ -12,6 +12,7 @@ import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react-native'
 import { MEALS } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
+import { animateExpandCollapse } from '@/lib/anim'
 import { dayBju, totalConsumed } from '@/lib/data/diary'
 import { bjuLine } from '@/lib/data/bju'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -69,7 +70,10 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
     if (open) setExpanded({})
   }, [open])
 
-  const toggle = (id) => setExpanded((s) => ({ ...s, [id]: !s[id] }))
+  const toggle = (id) => {
+    animateExpandCollapse()
+    setExpanded((s) => ({ ...s, [id]: !s[id] }))
+  }
 
   function close() {
     setEdit(null)

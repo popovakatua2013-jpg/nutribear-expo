@@ -1,5 +1,7 @@
 // Заливка области под линией (замена recharts AreaChart).
 // Данные: [{ label, value }], ширина меряется через onLayout.
+// goalLine — необязательная горизонтальная пунктирная линия цели
+// (например, целевой вес): шкала растягивается, чтобы линию было видно.
 
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -32,6 +34,7 @@ export function SvgAreaChart({
   height = 190,
   yFmt = (v) => String(Math.round(v)),
   dot = true,
+  goalLine = null, // горизонтальный пунктир цели (то же значение, что в data)
 }) {
   const [w, setW] = useState(0)
   const PAD_L = 34
@@ -44,8 +47,11 @@ export function SvgAreaChart({
   }
 
   const values = data.map((d) => d.value)
-  const max = Math.max(...values)
-  const min = Math.min(...values)
+  // Цель участвует в шкале наравне с измерениями — линия не обрезается
+  const hasGoal = goalLine != null && Number.isFinite(goalLine)
+  const rangeValues = hasGoal ? [...values, goalLine] : values
+  const max = Math.max(...rangeValues)
+  const min = Math.min(...rangeValues)
   const rawLo = min === max ? min - 1 : min - (max - min) * 0.1
   const lo = min >= 0 ? Math.max(0, rawLo) : rawLo
   const hi = max === min ? max + 1 : max + (max - min) * 0.08
@@ -58,6 +64,11 @@ export function SvgAreaChart({
   const pts = data.map((d, i) => ({ x: x(i), y: y(d.value) }))
   const line = smoothPath(pts)
   const area = `${line} L ${pts[pts.length - 1].x} ${PAD_T + ih} L ${pts[0].x} ${PAD_T + ih} Z`
+
+  // Пунктир цели: подпись «цель» над линией, а если линия у верхней
+  // кромки — под ней, чтобы надпись не обрезалась
+  const goalY = hasGoal ? y(goalLine) : 0
+  const goalLabelY = hasGoal && goalY - 4 < PAD_T + 9 ? goalY + 12 : goalY - 4
 
   // Подписи сверху вниз: от максимума к минимуму (ось Y растёт вверх)
   const ticks = [0, 1, 2, 3].map((i) => hi - ((hi - lo) * i) / 3)
@@ -101,6 +112,22 @@ export function SvgAreaChart({
         ))}
         <Path d={area} fill="url(#fill)" />
         <Path d={line} stroke={color} strokeWidth={2.5} fill="none" />
+        {hasGoal && (
+          <>
+            <Line
+              x1={PAD_L}
+              y1={goalY}
+              x2={w - PAD_R}
+              y2={goalY}
+              stroke="#fbbf24"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+            />
+            <SvgText x={w - PAD_R} y={goalLabelY} fill="#fbbf24" fontSize={9} textAnchor="end">
+              цель
+            </SvgText>
+          </>
+        )}
         {dot &&
           pts.map((p, i) => (
             <Circle key={`d${i}`} cx={p.x} cy={p.y} r={3} fill={color} />
