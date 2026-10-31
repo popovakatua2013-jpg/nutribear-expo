@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { formatNum } from '@/lib/format'
 
-const BEAR = require('../../../assets/images/bear-hero.png')
+const BEAR = require('../../../assets/images/bear-hero.webp')
 
 // Текст меняется в зависимости от прогресса за день
 function heroText(consumed, target) {

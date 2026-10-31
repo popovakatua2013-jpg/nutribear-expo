@@ -1,24 +1,18 @@
 // Четыре карточки «Отчётов»: шаги, калории, вода, опыт —
 // итог за период и изменение в % к прошлому такому же периоду.
 // У калорий рост отмечается красным (переедание), у остальных — зелёным.
+// Показатели и форматы берутся из общего реестра lib/data/metrics.js.
 
+import { useMemo } from 'react'
 import { Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { ArrowDownRight, ArrowUpRight, Droplets, Flame, Footprints, Star } from 'lucide-react-native'
-import { formatNum } from '@/lib/format'
-import { changePct, formatLiters, periodTotals } from '@/lib/data/reports'
-
-const METRICS = [
-  { key: 'steps', label: 'Шаги', Icon: Footprints, color: '#4ade80', invert: false, fmt: (v) => formatNum(v) },
-  { key: 'kcal', label: 'Калории', Icon: Flame, color: '#f87171', invert: true, fmt: (v) => formatNum(v) },
-  { key: 'waterMl', label: 'Вода', Icon: Droplets, color: '#38bdf8', invert: false, fmt: (v) => formatLiters(v) },
-  { key: 'xp', label: 'Опыт', Icon: Star, color: '#a78bfa', invert: false, fmt: (v) => `+${formatNum(v)}` },
-]
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react-native'
+import { changePct, deltaTone, periodTotals } from '@/lib/data/reports'
+import { REPORT_METRICS } from '@/lib/data/metrics'
 
 function ReportCard({ m, cur, prev }) {
   const pct = changePct(cur[m.key], prev[m.key])
-  const good = m.invert ? pct < 0 : pct > 0
-  const tone = pct === 0 ? '#7c87a8' : good ? '#4ade80' : '#f87171'
+  const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
 
   return (
@@ -56,10 +50,12 @@ function ReportCard({ m, cur, prev }) {
 }
 
 export function ReportCards({ today, days }) {
-  const cur = periodTotals(days, 0, today)
-  const prev = periodTotals(days, days)
+  // periodTotals обходит до 180 дней истории — считаем только при
+  // смене периода/данных, а не на каждом рендере экрана
+  const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
+  const prev = useMemo(() => periodTotals(days, days), [days])
 
-  const rows = [METRICS.slice(0, 2), METRICS.slice(2, 4)]
+  const rows = [REPORT_METRICS.slice(0, 2), REPORT_METRICS.slice(2, 4)]
 
   return (
     <View className="gap-3" accessibilityLabel="Отчёты за период">

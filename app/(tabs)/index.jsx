@@ -27,7 +27,7 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
-import { WATER_GLASS } from '@/lib/data/activity'
+import { WATER_GLASS, xpForDay } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 
@@ -79,11 +79,9 @@ export default function HomeScreen() {
   const consumed = totalConsumed(entries)
   const day = dayBju(entries)
   const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
-  const glasses = Math.round(waterMl / WATER_GLASS)
   const mealCount = Object.values(entries).flat().length
-  // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (1 ккал ≈ 0.1 опыта)
-  const xp =
-    Math.round(extraSteps / 500) * 2 + glasses * 5 + mealCount * 10 + Math.round(burned / 10)
+  // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (общая формула)
+  const xp = xpForDay({ steps: extraSteps, waterMl, mealCount, burned })
   const waterPct = Math.min(
     100,
     Math.round((waterMl / Math.max(1, goals.waterMl)) * 100)

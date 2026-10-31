@@ -4,7 +4,7 @@ import { Image, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Heart } from 'lucide-react-native'
 
-const SCENE = require('../../../assets/images/banner-bear.png')
+const SCENE = require('../../../assets/images/banner-bear.webp')
 
 const QUOTE = 'Маленькие шаги приводят к большим результатам'
 

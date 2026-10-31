@@ -3,6 +3,7 @@
 // Наблюдения считаются в src/lib/data/insights.js из уже собираемых
 // данных (история, взвешивания, тренировки) — новые сторы не нужны.
 
+import { useMemo } from 'react'
 import { Text, View } from 'react-native'
 import { Sparkles } from 'lucide-react-native'
 import { buildInsights } from '@/lib/data/insights'
@@ -17,7 +18,12 @@ export function HomeInsights() {
   const weights = useProfileStore((s) => s.weights)
   const exLogs = useExerciseStore((s) => s.logs)
 
-  const insights = buildInsights({ days, goals, weights, exLogs })
+  // Наблюдения пересчитываются только при изменении данных —
+  // не на каждом рендере экрана
+  const insights = useMemo(
+    () => buildInsights({ days, goals, weights, exLogs }),
+    [days, goals, weights, exLogs]
+  )
 
   return (
     <View

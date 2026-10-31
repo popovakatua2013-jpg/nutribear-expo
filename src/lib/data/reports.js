@@ -2,8 +2,11 @@
 // периодом и недельное сравнение показателей.
 // Прошлые дни — из дневной истории (useHistoryStore), дни без
 // записей считаются нулями — только реальные данные пользователя.
+// Склейку «история + живое сегодня» берём из activity.js (dayRow) —
+// раньше одна и та же логика была написана здесь второй раз.
 
-import { useHistoryStore, dayKeyOf, EMPTY_DAY } from '@/store/useHistoryStore'
+import { useHistoryStore } from '@/store/useHistoryStore'
+import { dayRow } from './activity'
 
 const FIELDS = ['steps', 'kcal', 'waterMl', 'burned', 'xp']
 
@@ -14,16 +17,10 @@ function emptyTotals() {
 // Показатель дня `daysAgo` дней назад; для «сегодня» поверх истории
 // подмешиваются живые значения из сторов (today)
 function dayValue(daysAgo, today) {
-  if (daysAgo === 0 && today) {
-    const row = { ...EMPTY_DAY }
-    FIELDS.forEach((f) => {
-      if (today[f] != null) row[f] = today[f]
-    })
-    return row
-  }
+  if (daysAgo === 0 && today) return dayRow(new Date(), today)
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
-  return (useHistoryStore.getState().days || {})[dayKeyOf(d)] || EMPTY_DAY
+  return dayRow(d, null)
 }
 
 // Итоги за `days` дней со сдвигом `offset` (offset=0 — текущий период
@@ -43,6 +40,15 @@ export function periodTotals(days, offset, today) {
 export function changePct(cur, prev) {
   if (!prev) return 0
   return Math.round(((cur - prev) / prev) * 100)
+}
+
+// Цвет изменения: зелёный — «хорошо», красный — «плохо», серый — нет
+// изменений. invert — когда рост плох (калории). Единая логика для
+// карточек отчётов и панели недельного сравнения.
+export function deltaTone(pct, invert, muted = '#7c87a8') {
+  if (!pct) return muted
+  const good = invert ? pct < 0 : pct > 0
+  return good ? '#4ade80' : '#f87171'
 }
 
 // 12450 -> «12,5 л», 14000 -> «14 л»

@@ -17,7 +17,7 @@ import { useToast } from '../ui/Toast'
 import { WATER_GLASS } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
 
-const SCENE = require('../../../assets/images/water-bear.png')
+const SCENE = require('../../../assets/images/water-bear.webp')
 
 const nowTime = () =>
   new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })

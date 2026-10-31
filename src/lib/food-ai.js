@@ -519,6 +519,11 @@ async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
     } catch (e) {
       if (e?.name === 'AbortError')
         throw new Error(`ИИ не ответил за ${Math.round(timeoutMs / 1000)} секунд — попробуйте ещё раз`)
+      if (e?.message === 'Network request failed' || /network|internet|соединен/i.test(String(e?.message)))
+        throw new Error(
+          'Нет интернета — фото и голос распознать не получится. ' +
+            'Дневник, база из ~85 блюд и отчёты работают офлайн; попробуйте ввести название блюда текстом'
+        )
       throw e
     }
   } finally {

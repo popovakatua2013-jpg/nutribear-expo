@@ -4,7 +4,7 @@
 import { Image, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 
-const BEAR = require('../../../assets/images/banner-bear.png')
+const BEAR = require('../../../assets/images/banner-bear.webp')
 
 export function QuoteCard() {
   return (

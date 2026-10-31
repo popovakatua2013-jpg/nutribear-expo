@@ -33,8 +33,10 @@ function savedDays() {
   return useHistoryStore.getState().days || {}
 }
 
-// Строка дня: сохранённая история + живое «сегодня» поверх
-function dayRow(d, today) {
+// Строка дня: сохранённая история + живое «сегодня» поверх.
+// Единственное место склейки — её использует и reports.js
+// (раньше эта логика была продублирована во втором модуле).
+export function dayRow(d, today) {
   const k = dayKeyOf(d)
   const row = { ...(savedDays()[k] || EMPTY_DAY) }
   if (d && dayKeyOf(d) === dayKeyOf() && today) {
@@ -89,5 +91,15 @@ export function blendedTotals(days, today) {
       return acc
     },
     { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0 }
+  )
+}
+
+// Опыт за день: шаги + стаканы воды + приёмы пищи + тренировки
+// (1 ккал ≈ 0.1 опыта). Формула была продублирована на экранах
+// «Главная» и «Активность» — теперь одна на оба экрана.
+export function xpForDay({ steps, waterMl, mealCount, burned }) {
+  const glasses = Math.round(waterMl / WATER_GLASS)
+  return (
+    Math.round(steps / 500) * 2 + glasses * 5 + mealCount * 10 + Math.round(burned / 10)
   )
 }

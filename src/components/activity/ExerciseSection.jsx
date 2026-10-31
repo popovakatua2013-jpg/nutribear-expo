@@ -10,6 +10,7 @@ import { useExerciseStore, todayKey, dayBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { EXERCISES, QUICK_MINUTES, kcalBurned } from '@/lib/data/exercises'
 import { useToast } from '../ui/Toast'
+import { Pills } from '../ui/Pills'
 import { formatNum } from '@/lib/format'
 
 export function ExerciseSection() {
@@ -175,27 +176,13 @@ export function ExerciseSection() {
 
               {ex && (
                 <View className="mt-3 gap-2.5 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5">
-                  <View className="flex-row flex-wrap gap-2">
-                    {QUICK_MINUTES.map((m) => {
-                      const active = minutes === m
-                      const pill = (
-                        <Text className={`px-3 py-1.5 font-semibold text-[12px] ${active ? 'text-white' : 'text-bear-soft'}`}>
-                          {m} мин
-                        </Text>
-                      )
-                      return (
-                        <Pressable key={m} onPress={() => setMinutes(m)} className="overflow-hidden rounded-full">
-                          {active ? (
-                            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                              {pill}
-                            </LinearGradient>
-                          ) : (
-                            <View className="bg-white/5">{pill}</View>
-                          )}
-                        </Pressable>
-                      )
-                    })}
-                  </View>
+                  <Pills
+                    items={QUICK_MINUTES.map((m) => ({ id: m, label: `${m} мин` }))}
+                    value={minutes}
+                    onChange={setMinutes}
+                    size="md"
+                    accessibilityLabel="Минуты"
+                  />
                   <Text className="font-sans text-[12px] text-bear-sub2">
                     Сожжено: <Text className="font-bold text-[#f87171]">{kcal} ккал</Text>
                   </Text>

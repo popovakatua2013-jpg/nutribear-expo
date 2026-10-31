@@ -3,8 +3,11 @@
 // Карточки показателей (шаги, калории, вода, активность) перенесены на главную.
 // Все показатели дня автоматически пишутся в историю (useHistoryStore) —
 // поэтому графики и отчёты видят реальные данные за прошедшие дни.
+// Период 7/30/90 выбирается один раз в «Общей сводке» и управляет
+// и графиком, и «Отчётами» — раньше одинаковые переключатели
+// дублировались в двух блоках.
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Footprints } from 'lucide-react-native'
@@ -20,10 +23,13 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { dayBurned } from '@/store/useExerciseStore'
-import { WATER_GLASS } from '@/lib/data/activity'
+import { RANGES, WATER_GLASS, xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
+  // Один период для «Общей сводки» и «Отчётов»
+  const [rangeId, setRangeId] = useState('7d')
+  const days = RANGES.find((r) => r.id === rangeId)?.days || 7
 
   const waterMl = useActivityStore((s) => s.waterMl)
   const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
@@ -35,11 +41,8 @@ export default function ActivityScreen() {
   const steps = extraSteps
   const kcal = totalConsumed(entries)
   const burned = dayBurned(exLogs, dayKeyOf()) // тренировки за сегодня
-  const glasses = Math.round(waterMl / WATER_GLASS)
   const mealCount = Object.values(entries).flat().length
-  // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (1 ккал ≈ 0.1 опыта)
-  const xp =
-    Math.round(steps / 500) * 2 + glasses * 5 + mealCount * 10 + Math.round(burned / 10)
+  const xp = xpForDay({ steps, waterMl, mealCount, burned })
 
   // Пишем день в историю — графики и отчёты строятся по этим данным
   useEffect(() => {
@@ -82,11 +85,11 @@ export default function ActivityScreen() {
         {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
         <HomeInsights />
 
-        <SummarySection today={today} />
+        <SummarySection today={today} rangeId={rangeId} onRangeChange={setRangeId} />
 
         <ExerciseSection />
 
-        <ReportsSection today={today} />
+        <ReportsSection today={today} days={days} />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
           Шаги, вода и тренировки попадают в сводку и отчёты.

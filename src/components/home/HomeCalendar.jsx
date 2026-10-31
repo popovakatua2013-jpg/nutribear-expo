@@ -3,7 +3,7 @@
 // ней, без карточки и рамки; тап по строке разворачивает полный месяц
 // в карточке. Тап по дню — сводка дня.
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import {
   CalendarDays,
@@ -50,14 +50,22 @@ export function HomeCalendar() {
   const exLogs = useExerciseStore((s) => s.logs)
   const goals = useGoalsStore((s) => s.goals)
 
-  const streak = calcStreak(days, foodHistory, null)
-  const record = bestStreak(days, foodHistory)
+  // Тяжёлые обходы истории — только при изменении данных, а не на
+  // каждом рендере экрана (раньше считались по 4 раза за рендер)
+  const streak = useMemo(() => calcStreak(days, foodHistory, null), [days, foodHistory])
+  const record = useMemo(() => bestStreak(days, foodHistory), [days, foodHistory])
 
   // Первый день с данными: до него клетки бледные, листание назад — не глубже
-  const firstKey = firstActiveKey(days, foodHistory, weights, exLogs)
+  const firstKey = useMemo(
+    () => firstActiveKey(days, foodHistory, weights, exLogs),
+    [days, foodHistory, weights, exLogs]
+  )
 
   // Месячная сводка для отображаемого месяца (в свёрнутом виде он всегда текущий)
-  const month = monthSummary(days, view, goals, weights, exLogs)
+  const month = useMemo(
+    () => monthSummary(days, view, goals, weights, exLogs),
+    [days, view, goals, weights, exLogs]
+  )
 
   // При сворачивании возвращаемся к текущему месяцу: неделя всегда текущая,
   // поэтому подпись месяца и сводка не должны отставать
