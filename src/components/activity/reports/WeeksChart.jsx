@@ -35,7 +35,7 @@ export function WeeksChart({ today, embedded = false }) {
   const [sel, setSel] = useState(WEEKS - 1) // по умолчанию — текущая неделя
   const metric = REPORT_METRICS.find((m) => m.key === metricId) || REPORT_METRICS[0]
 
-  const hasData = rows.some((r) => r.steps || r.kcal || r.waterMl || r.xp)
+  const hasData = rows.some((r) => r.steps || r.kcal || r.waterMl || r.burned || r.xp)
   const row = rows[sel] || rows[rows.length - 1]
   const prev = sel > 0 ? rows[sel - 1] : null
   const isCurrent = sel === rows.length - 1

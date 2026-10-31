@@ -18,6 +18,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter'
 import { ToastProvider } from '@/components/ui/Toast'
+import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { startRolloverWatcher } from '@/lib/rollover'
@@ -192,6 +193,7 @@ export default function RootLayout() {
       <ToastProvider>
         <StatusBar style="light" />
         <OnboardingFlow />
+        <OfflineBar />
       </ToastProvider>
     )
   }
@@ -202,6 +204,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A1020' } }}>
         <Stack.Screen name="(tabs)" />
       </Stack>
+      {/* Полоска «Нет сети» поверх всех экранов: тонкая, некликабельная */}
+      <OfflineBar />
     </ToastProvider>
   )
 }

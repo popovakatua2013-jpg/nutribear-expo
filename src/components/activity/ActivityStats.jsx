@@ -1,15 +1,17 @@
 // Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
 // У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
 // с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
-// Тап по карточке «Вода» — окно воды; долгий тап по «Калории» и
-// «Вода» — изменить цель прямо с главной
+// Тап по карточке «Вода» — окно воды; долгий тап по «Калории», «Вода»
+// и «Активность» — изменить цель прямо с главной. У «Активности»
+// справа — кольцо прогресса цели сжигания (общий ui/BurnRing).
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { BurnRing } from '../ui/BurnRing'
 
-function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress, onLongPress }) {
+function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress, onLongPress, longHint, ring }) {
   const Root = onPress || onLongPress ? Pressable : View
   return (
     <Root
@@ -19,7 +21,7 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress,
       accessibilityRole={onPress || onLongPress ? 'button' : undefined}
       accessibilityLabel={
         onLongPress && !onPress
-          ? `${label}. Долгий тап — изменить цель`
+          ? `${label}. ${longHint || 'Долгий тап — изменить цель'}`
           : onPress
             ? `Открыть: ${label}`
             : undefined
@@ -51,16 +53,21 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress,
           </Text>
         </View>
 
-        {onPlus && (
-          <Pressable
-            onPress={onPlus}
-            accessibilityRole="button"
-            accessibilityLabel={plusLabel}
-            hitSlop={6}
-            className={`h-9 w-9 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
-          >
-            <Plus size={17} color={colors.tint} strokeWidth={2.5} />
-          </Pressable>
+        {ring ? (
+          // Кольцо прогресса цели сжигания (на карточке «Активность»)
+          <BurnRing pct={ring.pct} />
+        ) : (
+          onPlus && (
+            <Pressable
+              onPress={onPlus}
+              accessibilityRole="button"
+              accessibilityLabel={plusLabel}
+              hitSlop={6}
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
+            >
+              <Plus size={17} color={colors.tint} strokeWidth={2.5} />
+            </Pressable>
+          )
         )}
       </View>
     </Root>
@@ -69,7 +76,7 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress,
 
 export function ActivityStats({
   steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
-  stepsGoal, waterGoalMl,
+  stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
   onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
 }) {
   const cards = [
@@ -110,6 +117,10 @@ export function ActivityStats({
       label: 'Активность',
       value: `${minutes} мин`,
       sub: `из ${formatNum(minutesGoal)} мин · ${minutesPct}%`,
+      // Кольцо прогресса цели сжигания (как в сводке, но на главной)
+      ring: burnGoal > 0 ? { pct: Math.round((burned / burnGoal) * 100) } : null,
+      onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
+      longHint: 'Долгий тап — изменить цель сжигания',
     },
     {
       colors: {

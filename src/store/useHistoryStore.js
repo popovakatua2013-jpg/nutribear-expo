@@ -17,7 +17,8 @@ export function dayKeyOf(d = new Date()) {
 
 export const EMPTY_DAY = { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0 }
 
-const MAX_DAYS = 150 // хранить около 5 месяцев
+const MAX_DAYS = 210 // около 7 месяцев: отчёт «90 дней» сравнивает
+// текущий период с предыдущими 90 — итого до 180 дней истории
 
 export const useHistoryStore = create(
   persist(

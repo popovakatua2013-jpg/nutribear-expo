@@ -1,0 +1,12 @@
+# Конфиг для деплоя одной командой: npx wrangler deploy
+# Имя воркера = часть адреса: https://nutribear-ai.<ваш-аккаунт>.workers.dev
+name = "nutribear-ai"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Куда пересылать запросы (OpenAI-совместимый API). ProxyAPI по умолчанию;
+# можно заменить на OpenAI: https://api.openai.com/v1
+AI_UPSTREAM = "https://api.proxyapi.ru/v1"
+# Модель для чата (фото/голос используют модель из запроса приложения)
+AI_MODEL = "gpt-4o-mini"

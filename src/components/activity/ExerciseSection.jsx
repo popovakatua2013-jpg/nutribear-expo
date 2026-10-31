@@ -8,10 +8,11 @@
 
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
+import { ChevronLeft, ChevronRight, Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useExerciseStore, todayKey, dayBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
+import { shortWeekday } from '@/lib/data/activity'
 import {
   EXERCISES,
   QUICK_MINUTES,
@@ -78,8 +79,23 @@ export function ExerciseSection() {
   const key = todayKey()
   const items = logs[key] || []
   const burned = dayBurned(logs, key)
-  // Вчерашние записи — для кнопки «Повторить» в один тап
-  const yesterday = logs[todayKey(new Date(Date.now() - 86400000))] || []
+  // Последние 7 дней с тренировками (новые раньше) — для «Повторить»:
+  // не только вчера, а любой день недели. Пустые дни пропускаем.
+  const repeatDays = useMemo(() => {
+    const out = []
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(Date.now() - i * 86400000)
+      const list = logs[todayKey(d)]
+      if (list && list.length) {
+        out.push({ key: todayKey(d), list, day: i === 1 ? 'Вчера' : shortWeekday(d) })
+      }
+    }
+    return out
+  }, [logs])
+  const [repIdx, setRepIdx] = useState(0)
+  const repDay = repeatDays.length
+    ? repeatDays[Math.min(repIdx, repeatDays.length - 1)]
+    : null
 
   // Каталог + запомненные свои тренировки (пересобирается при изменениях)
   const allExercises = useMemo(() => [...EXERCISES, ...custom], [custom])
@@ -206,15 +222,17 @@ export function ExerciseSection() {
     })
   }
 
-  // Повторить вчерашнюю активность: копируем все записи вчера в сегодня
-  function repeatYesterday() {
-    if (!yesterday.length) return
-    yesterday.forEach((e) =>
+  // Повторить выбранный день: копируем все его записи в сегодня
+  function repeatDay() {
+    if (!repDay) return
+    repDay.list.forEach((e) =>
       addLog(key, { exId: e.exId, name: e.name, emoji: e.emoji, minutes: e.minutes, kcal: e.kcal, manual: e.manual })
     )
     toast({
-      title: '🔁 Вчерашние тренировки повторены',
-      description: `${yesterday.length} ${yesterday.length === 1 ? 'запись добавлена' : 'записи добавлено'} в сегодня`,
+      title: '🔁 Тренировки повторены',
+      description: `${repDay.list.length} ${
+        repDay.list.length === 1 ? 'запись добавлена' : 'записи добавлено'
+      } из «${repDay.day}» в сегодня`,
     })
   }
 
@@ -244,24 +262,49 @@ export function ExerciseSection() {
         </Pressable>
       </View>
 
-      {/* Повтор вчерашней активности в один тап */}
-      {yesterday.length > 0 && (
+      {/* Повтор активности за прошлый день: стрелками выбираем любой
+          из последних 7 дней с тренировками, кнопка копирует в сегодня */}
+      {repDay && (
         <View className="mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-3.5 py-2.5">
+          {repeatDays.length > 1 && (
+            <Pressable
+              onPress={() => setRepIdx((i) => Math.min(i + 1, repeatDays.length - 1))}
+              disabled={repIdx >= repeatDays.length - 1}
+              accessibilityRole="button"
+              accessibilityLabel="Более старый день"
+              hitSlop={6}
+              className={`h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx >= repeatDays.length - 1 ? 'opacity-30' : ''}`}
+            >
+              <ChevronLeft size={15} color="#AEB9D9" />
+            </Pressable>
+          )}
           <View className="min-w-0 flex-1">
-            <Text className="font-sans text-[10.5px] text-bear-sub2">Вчера было</Text>
+            <Text className="font-sans text-[10.5px] text-bear-sub2">{`${repDay.day} было`}</Text>
             <Text numberOfLines={1} className="font-bold text-[12.5px] text-bear-text">
-              {yesterday
+              {repDay.list
                 .slice(0, 2)
                 .map((e) => `${e.emoji} ${e.name}`)
                 .join(' · ')
               }
-              {yesterday.length > 2 ? ` · ещё ${yesterday.length - 2}` : ''}
+              {repDay.list.length > 2 ? ` · ещё ${repDay.list.length - 2}` : ''}
             </Text>
           </View>
+          {repeatDays.length > 1 && (
+            <Pressable
+              onPress={() => setRepIdx((i) => Math.max(i - 1, 0))}
+              disabled={repIdx <= 0}
+              accessibilityRole="button"
+              accessibilityLabel="Более свежий день"
+              hitSlop={6}
+              className={`h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx <= 0 ? 'opacity-30' : ''}`}
+            >
+              <ChevronRight size={15} color="#AEB9D9" />
+            </Pressable>
+          )}
           <Pressable
-            onPress={repeatYesterday}
+            onPress={repeatDay}
             accessibilityRole="button"
-            accessibilityLabel="Повторить вчерашние тренировки"
+            accessibilityLabel={`Повторить тренировки за ${repDay.day}`}
             className="shrink-0 rounded-full bg-[#7B6CF6]/15 px-3 py-1.5 active:opacity-70"
           >
             <Text className="font-bold text-[11.5px] text-[#A78BFA]">Повторить</Text>

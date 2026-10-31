@@ -184,7 +184,8 @@ export default function HomeScreen() {
         {/* Приветствие: мишка, время суток, статус дневника и дата */}
         <Greeting consumed={consumed} target={goals.kcal} />
 
-        {/* 4 карточки показателей дня: шаги, калории, активность, вода */}
+        {/* 4 карточки показателей дня: шаги, калории, активность, вода.
+            У «Активности» — кольцо цели сжигания (долгий тап — правка) */}
         <ActivityStats
           steps={extraSteps}
           kcal={consumed}
@@ -196,6 +197,10 @@ export default function HomeScreen() {
           waterMl={waterMl}
           stepsGoal={goals.steps}
           waterGoalMl={goals.waterMl}
+          burnGoal={goals.burnKcal}
+          onEditBurnGoal={() =>
+            openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
+          }
           onAddSteps={handleAddSteps}
           onAddWater={handleAddWater}
           onOpenWater={() => setWaterOpen(true)}

@@ -59,5 +59,7 @@ export function metricById(id) {
   return METRICS.find((m) => m.key === id) || METRICS[0]
 }
 
-// Показатели отчётов и недельного сравнения — без «Сожжено»
-export const REPORT_METRICS = METRICS.filter((m) => m.key !== 'burned')
+// Показатели отчётов и недельного сравнения — все пять, включая
+// «Сожжено»: это вся активность дня (тренировки + шаги), данные
+// в историю пишутся полностью, скрывать её в отчётах больше нет причин
+export const REPORT_METRICS = METRICS

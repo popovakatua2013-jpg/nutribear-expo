@@ -13,6 +13,7 @@ import { Droplets, Flame, Footprints, Timer } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { ProgressBar } from '../ui/ProgressBar'
+import { BurnRing } from '../ui/BurnRing'
 
 const MAX = 1.25
 const RING = 80
@@ -69,34 +70,7 @@ function DayChip({ Icon, color, value }) {
   )
 }
 
-// Малое кольцо прогресса цели сжигания (26 px, без текста внутри)
-function BurnRing({ pct }) {
-  const R = (26 - 3.5) / 2
-  const C = 2 * Math.PI * R
-  return (
-    <View
-      accessibilityRole="progressbar"
-      accessibilityLabel={`Выполнено ${Math.round(pct)} процентов цели сжигания`}
-      className="shrink-0"
-      style={{ width: 26, height: 26 }}
-    >
-      <Svg width={26} height={26}>
-        <Circle cx={13} cy={13} r={R} stroke="rgba(255,255,255,0.1)" strokeWidth={3.5} fill="none" />
-        <Circle
-          cx={13}
-          cy={13}
-          r={R}
-          stroke="#f87171"
-          strokeWidth={3.5}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${(C * Math.min(100, pct)) / 100} ${C}`}
-          transform={`rotate(-90 13 13)`}
-        />
-      </Svg>
-    </View>
-  )
-}
+// Малое кольцо прогресса цели сжигания — общий компонент ui/BurnRing
 
 export function DailySummary({
   consumed = 0,

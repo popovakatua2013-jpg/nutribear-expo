@@ -1,15 +1,26 @@
-// ИИ-помощник NutriBear: HTTP-запрос к веб-версии (/api/chat) + офлайн-режим.
+// ИИ-помощник NutriBear: HTTP-запрос к серверу + офлайн-режим.
 //
-// Веб-версия приложения — это Next.js сервер на ПК с роутом POST /api/chat
-// (z-ai-web-dev-sdk). В Expo Go адрес ПК доступен из Constants.expoConfig.hostUri
-// («192.168.x.x:8081») — меняем порт на 3000 и получаем адрес веб-версии.
-// Если сервер недоступен — отвечает встроенный офлайн-помощник по реальным
+// Два режима адреса (первый выигрывает, если задан):
+//  1. СЕРВЕР-ПРОКСИ (релиз): EXPO_PUBLIC_AI_PROXY_URL в .env — запросы
+//     идут на свой Cloudflare Worker, ключ ИИ хранится на сервере и не
+//     попадает в бандл. Готовый воркер одним файлом — server/
+//     cloudflare-worker.js, деплой одной командой — server/README.md.
+//  2. ВЕБ-ВЕРСИЯ НА ПК (разработка): Next.js сервер на ПК с роутом
+//     POST /api/chat. В Expo Go адрес ПК доступен из
+//     Constants.expoConfig.hostUri («192.168.x.x:8081») — меняем порт
+//     на 3000 и получаем адрес веб-версии.
+// Если сервера нет — отвечает встроенный офлайн-помощник по реальным
 // данным дневника (калории, вода, шаги, вес, ИМТ).
 
 import Constants from 'expo-constants'
+import { AI_CONFIG } from './ai-config'
 
-// Адрес веб-версии на том же ПК, где запущен Expo (тот же Wi-Fi)
 export function getChatApiUrl() {
+  // Режим прокси: { messages } → { reply } на /chat воркера
+  const proxy = (AI_CONFIG.proxyUrl || '').replace(/\/+$/, '')
+  if (proxy) return `${proxy}/chat`
+
+  // Режим разработки: веб-версия на том же ПК, где запущен Expo
   const hostUri = Constants.expoConfig?.hostUri
   if (!hostUri || typeof hostUri !== 'string') return null
   const host = hostUri.split(':')[0]
@@ -106,5 +117,5 @@ export function offlineReply(text, ctx) {
   }
 
   return 'Я офлайн-помощник и подскажу по дневнику: калории, вода, шаги, вес и ИМТ. ' +
-    'А полный ИИ-нутрициолог включается, когда на компьютере запущена веб-версия NutriBear (npm run dev). Спросите, например: «Сколько калорий я съел?»'
+    'А полный ИИ-нутрициолог включится, как только появится сеть. Спросите, например: «Сколько калорий я съел?»'
 }

@@ -18,7 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Mail, Send, WifiOff, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import NetInfo from '@react-native-community/netinfo'
+import { useOffline } from '@/lib/useOffline'
 import { askNutritionist, offlineReply } from '@/lib/chat'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
@@ -37,9 +37,10 @@ export function AiChat() {
   const [messages, setMessages] = useState([GREETING])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
-  // Офлайн-детектор: серый чип в шапке чата. isInternetReachable
-  // бывает null (нет данных) — считаем это сетью, чтобы не пугать ложно
-  const [offline, setOffline] = useState(false)
+  // Офлайн-детектор: общий хук (тот же, что у полоски «Нет сети» на весь
+  // экран). isInternetReachable бывает null (нет данных) — считаем это
+  // сетью, чтобы не пугать ложно
+  const offline = useOffline()
   const insets = useSafeAreaInsets()
   const listRef = useRef(null)
 
@@ -77,23 +78,6 @@ export function AiChat() {
   useEffect(() => {
     listRef.current?.scrollToEnd({ animated: true })
   }, [messages, busy])
-
-  // Слежение за сетью: серый чип «Нет сети» вместо слепой попытки запроса
-  useEffect(() => {
-    let alive = true
-    NetInfo.fetch()
-      .then((s) => {
-        if (alive) setOffline(!s.isConnected || s.isInternetReachable === false)
-      })
-      .catch(() => {})
-    const unsub = NetInfo.addEventListener((s) =>
-      setOffline(!s.isConnected || s.isInternetReachable === false)
-    )
-    return () => {
-      alive = false
-      unsub()
-    }
-  }, [])
 
   async function send() {
     const content = text.trim()

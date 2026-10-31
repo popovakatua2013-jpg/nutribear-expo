@@ -1,4 +1,4 @@
-// Четыре карточки «Отчётов»: шаги, калории, вода, опыт —
+// Четыре карточки «Отчётов»: шаги, калории, вода, сожжено (+ опыт) —
 // итог за период и изменение в % к прошлому такому же периоду.
 // У калорий рост отмечается красным (переедание), у остальных — зелёным.
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
@@ -10,7 +10,14 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react-native'
 import { changePct, deltaTone, periodTotals } from '@/lib/data/reports'
 import { REPORT_METRICS } from '@/lib/data/metrics'
 
-function ReportCard({ m, cur, prev }) {
+// Подпись сравнения: с каким прошлым периодом сравниваем
+function prevLabel(days) {
+  if (days <= 7) return 'к прошлой неделе'
+  if (days === 30) return 'к прошлому месяцу'
+  return `к предыдущим ${days} дням`
+}
+
+function ReportCard({ m, cur, prev, days }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
@@ -42,7 +49,7 @@ function ReportCard({ m, cur, prev }) {
       <View className="mt-2.5 flex-row items-center gap-1">
         <Arrow size={14} color={tone} />
         <Text className="font-medium text-[11px]" style={{ color: tone }}>
-          {Math.abs(pct)}% к прошлой неделе
+          {Math.abs(pct)}% {prevLabel(days)}
         </Text>
       </View>
     </LinearGradient>
@@ -55,14 +62,21 @@ export function ReportCards({ today, days }) {
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
   const prev = useMemo(() => periodTotals(days, days), [days])
 
-  const rows = [REPORT_METRICS.slice(0, 2), REPORT_METRICS.slice(2, 4)]
+  // Карточки идут рядами по две; последняя непарная тянется на всю ширину
+  const rows = useMemo(() => {
+    const out = []
+    for (let i = 0; i < REPORT_METRICS.length; i += 2) {
+      out.push(REPORT_METRICS.slice(i, i + 2))
+    }
+    return out
+  }, [])
 
   return (
     <View className="gap-3" accessibilityLabel="Отчёты за период">
       {rows.map((row, ri) => (
         <View key={ri} className="flex-row gap-3">
           {row.map((m) => (
-            <ReportCard key={m.key} m={m} cur={cur} prev={prev} />
+            <ReportCard key={m.key} m={m} cur={cur} prev={prev} days={days} />
           ))}
         </View>
       ))}

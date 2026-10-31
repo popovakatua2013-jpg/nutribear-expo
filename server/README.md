@@ -1,0 +1,94 @@
+# ИИ-прокси NutriBear на Cloudflare Worker — бесплатно
+
+Ключ от ИИ (**sk-…**) больше не зашивается в приложение: он хранится
+в секрете Cloudflare, а приложение знает только адрес вашего воркера.
+Это снимает блокер для выпуска в магазин: даже разобрав APK/IPA,
+ключ никто не достанет.
+
+Хватит бесплатного тарифа Cloudflare Workers: **100 000 запросов
+в день**, карта не нужна.
+
+---
+
+## Деплой одной командой (3 шага)
+
+Нужен только Node.js (уже установлен — Expo работает).
+
+**1. Вход в Cloudflare** (один раз; откроется браузер):
+
+```powershell
+cd C:\Users\Администратор\Desktop\nutribear-expo-main\nutribear-app\server
+npx wrangler login
+```
+
+Если аккаунта Cloudflare ещё нет — регистрация на
+<https://dash.cloudflare.com/sign-up> занимает минуту (только e-mail).
+
+**2. Сохранить ключ ИИ в секрете** (один раз; вставьте свой sk-… из
+ProxyAPI и нажмите Enter — в консоли ничего не отобразится, это норма):
+
+```powershell
+npx wrangler secret put AI_KEY
+```
+
+**3. Опубликовать:**
+
+```powershell
+npx wrangler deploy
+```
+
+В ответе будет адрес вида
+`https://nutribear-ai.ваш-аккаунт.workers.dev` — это и есть ваш сервер.
+
+---
+
+## Подключить приложение (одна строка в .env)
+
+В файле `.env` в корне проекта добавьте (адрес из шага 3):
+
+```env
+EXPO_PUBLIC_AI_PROXY_URL=https://nutribear-ai.ваш-аккаунт.workers.dev/v1
+```
+
+и перезапустите Expo (`npx expo start --clear`).
+
+Всё: чат, распознавание фото еды и голосовой ввод пойдут через ваш
+воркер, ключ из `.env` и из приложения больше не нужен
+(`EXPO_PUBLIC_AI_KEY` можно удалить из `.env`).
+
+> Пока `EXPO_PUBLIC_AI_PROXY_URL` не задан, чат работает по-старому —
+> с веб-версией на ПК разработчика. Ничего не сломается.
+
+---
+
+## Проверка
+
+Откройте в браузере `https://nutribear-ai.ваш-аккаунт.workers.dev` —
+должно быть `{"ok":true,"service":"nutribear-ai"}`.
+
+Проверка чата из консоли:
+
+```powershell
+curl.exe -X POST "https://nutribear-ai.ваш-аккаунт.workers.dev/v1/chat" -H "Content-Type: application/json" -d "{\"messages\":[{\"role\":\"user\",\"content\":\"сколько пить воды?\"}]}"
+```
+
+Логи вживую: `npx wrangler tail`.
+
+---
+
+## Как это работает
+
+```
+Приложение ──POST /v1/chat { messages }──▶ Worker ──ключ из секрета──▶ ProxyAPI
+        ◀────── { reply } ────────────────┘ ◀──────── ответ ──────────┘
+```
+
+| Путь воркера              | Кто пользуется                       |
+| ------------------------- | ------------------------------------ |
+| `POST /v1/chat`           | ИИ-чат в приложении                  |
+| `POST /v1/chat/completions` | Фото еды и фразы (OpenAI-протокол) |
+| `POST /v1/audio/transcriptions` | Голосовой ввод дневника        |
+| `GET /`                   | Проверка «жив ли» из браузера        |
+
+Смена модели чата — правка `AI_MODEL` в `wrangler.toml` + повторный
+`npx wrangler deploy`. Смена поставщика — `AI_UPSTREAM` там же.
