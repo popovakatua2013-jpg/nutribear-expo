@@ -23,6 +23,8 @@ export const MEALS = [
   {
     id: 'snack',
     name: 'Перекус/Полдник',
+    // короткое имя для узкой плитки на главной (MealCard)
+    short: 'Перекус',
     image: require('../../../assets/images/snack.jpg'),
     alt: 'Йогурт с ягодами и орехами',
   },

@@ -1,122 +1,69 @@
-// Приём пищи — «тетрадная строка»: одна тонкая строка на приём.
-// Маленькое фото, название слева, калории справа, шеврон и «+»;
-// под строкой — тонкая линия-«линовка», она же показывает прогресс
-// дня (жёлтая при переборе, зелёная при попадании в норму).
-// Тап по строке разворачивает список блюд (первые 2 + «Ещё N»),
-// повторный тап сворачивает. У строки с блюдами видно количество:
-// «2 блюда · 420 / 520 ккал». Текстам задан maxFontSizeMultiplier —
-// крупный системный шрифт телефона не ломает вёрстку.
+// Плитка приёма пищи — как в референсе: компактная карточка в ряд
+// по четыре штуки. Сверху фото блюда, на нём — галочки-бейджи
+// (фиолетовая — в приём уже что-то внесено), ниже — название и
+// калории приёма («628 ккал», у пустого — «0 ккал»).
+// Тап по плитке добавляет блюдо именно в этот приём.
 
-import { useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react-native'
-import { dishesWord, formatNum } from '@/lib/format'
-import { animateExpandCollapse } from '@/lib/anim'
-import { bjuSum, bjuLine } from '@/lib/data/bju'
-import { ProgressBar } from '../ui/ProgressBar'
-import { EntryList } from './EntryList'
+import { Check } from 'lucide-react-native'
+import { formatNum } from '@/lib/format'
 
-const MAX = 1.25
+const MAX = 1.2
 
-export function MealCard({ meal, target, consumed, entries, onAdd, onRemove, onShowAll }) {
-  const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
-  const over = consumed > target
-  // По умолчанию строка свёрнута
-  const [open, setOpen] = useState(false)
-  const hasDishes = entries.length > 0
-
-  const toggle = () => {
-    if (hasDishes) {
-      animateExpandCollapse()
-      setOpen((v) => !v)
-    }
-  }
+export function MealCard({ meal, consumed, onAdd }) {
+  const hasDishes = consumed > 0
 
   return (
-    <View accessibilityLabel={`Приём пищи «${meal.name}»`}>
-      {/* тетрадная строка: фото + название слева, калории справа,
-          шеврон (тап — развернуть/свернуть) и кнопка «+» (добавить блюдо) */}
-      <View className="flex-row items-center gap-2.5 py-1.5">
-        <Pressable
-          onPress={toggle}
-          disabled={!hasDishes}
-          accessibilityRole={hasDishes ? 'button' : undefined}
-          accessibilityLabel={
-            hasDishes
-              ? open
-                ? `Свернуть список блюд «${meal.name}»`
-                : `Развернуть «${meal.name}», внесено ${entries.length} ${dishesWord(entries.length)}`
-              : `Приём пищи «${meal.name}», пока пусто`
-          }
-          className="min-w-0 flex-1 flex-row items-center gap-2.5 active:opacity-70"
-        >
-          <View className="h-7 w-7 shrink-0 overflow-hidden rounded-md border border-white/5 bg-white/5">
-            {meal.image ? (
-              <Image source={meal.image} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
-            ) : (
-              <Text className="flex-1 text-center text-base leading-[26px]">{meal.emoji || '🍽️'}</Text>
-            )}
+    <Pressable
+      onPress={onAdd}
+      accessibilityRole="button"
+      accessibilityLabel={
+        hasDishes
+          ? `Добавить блюдо в «${meal.name}», внесено ${formatNum(consumed)} килокалорий`
+          : `Добавить блюдо в «${meal.name}», пока пусто`
+      }
+      className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] active:opacity-80"
+    >
+      <View className="h-16 w-full">
+        {meal.image ? (
+          <Image source={meal.image} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+        ) : (
+          <View className="h-full w-full items-center justify-center bg-white/5">
+            <Text className="text-2xl">{meal.emoji || '🍽️'}</Text>
           </View>
+        )}
 
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={MAX}
-            className="min-w-0 shrink font-semibold text-[14px] leading-tight text-bear-text"
-          >
-            {meal.name}
-          </Text>
-
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={MAX}
-            className="ml-auto shrink-0 pl-2 font-sans text-[12px] leading-snug text-bear-sub"
-          >
-            {open || !hasDishes
-              ? `${formatNum(consumed)}\u00A0/\u00A0${formatNum(target)} ккал`
-              : `${entries.length} ${dishesWord(entries.length)} · ${formatNum(consumed)}\u00A0/\u00A0${formatNum(target)} ккал`}
-          </Text>
-
-          {hasDishes &&
-            (open ? (
-              <ChevronUp size={14} color="#98A2C2" />
-            ) : (
-              <ChevronDown size={14} color="#98A2C2" />
-            ))}
-        </Pressable>
-
-        <Pressable
-          onPress={onAdd}
-          accessibilityRole="button"
-          accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-          className="h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1C2A4E] active:opacity-70"
-        >
-          <Plus size={14} color="#C7D2F0" strokeWidth={2.5} />
-        </Pressable>
+        {/* галочки-бейджи на фото: фиолетовая «внесено» + серая companion */}
+        {hasDishes && (
+          <View className="absolute bottom-1.5 right-1.5 flex-row items-center">
+            <View
+              className="h-5 w-5 items-center justify-center rounded-full bg-[#7B6CF6]"
+              style={{ borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' }}
+            >
+              <Check size={11} color="#FFFFFF" strokeWidth={3} />
+            </View>
+            <View
+              className="-ml-1.5 h-4 w-4 items-center justify-center rounded-full bg-[#0C1327]"
+              style={{ borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' }}
+            >
+              <Check size={9} color="#8B96B8" strokeWidth={3} />
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* линовка тетради — она же полоска прогресса */}
-      <ProgressBar pct={pct} h={2} tone={over ? 'amber' : pct >= 100 ? 'emerald' : 'grad'} />
-
-      {/* БЖУ и список блюд — только у развёрнутой строки */}
-      {open && hasDishes && (
-        <>
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={MAX}
-            className="mt-2 font-sans text-[11px] text-bear-dim"
-          >
-            {bjuLine(bjuSum(entries))}
-          </Text>
-
-          <EntryList
-            entries={entries}
-            onRemove={onRemove}
-            onShowAll={onShowAll}
-            mealId={meal.id}
-            mealName={meal.name}
-          />
-        </>
-      )}
-    </View>
+      <View className="items-center px-1 pb-2.5 pt-1.5">
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={MAX}
+          className="font-semibold text-[11.5px] leading-tight text-bear-text"
+        >
+          {meal.short || meal.name}
+        </Text>
+        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[10.5px] text-bear-dim">
+          {formatNum(consumed)} ккал
+        </Text>
+      </View>
+    </Pressable>
   )
 }
