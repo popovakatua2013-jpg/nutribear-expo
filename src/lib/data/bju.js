@@ -34,15 +34,18 @@ export function bjuForPortion(bju100, grams) {
   }
 }
 
-// Сумма БЖУ по списку записей дневника
+// Сумма БЖУ по списку записей дневника (клетчатка/сахар — для сводки дня;
+// лишние ключи существующим вызовам не мешают)
 export function bjuSum(entries) {
   return entries.reduce(
     (acc, e) => ({
       p: acc.p + (e.p || 0),
       f: acc.f + (e.f || 0),
       c: acc.c + (e.c || 0),
+      fib: acc.fib + (e.fib || 0),
+      sug: acc.sug + (e.sug || 0),
     }),
-    { p: 0, f: 0, c: 0 }
+    { p: 0, f: 0, c: 0, fib: 0, sug: 0 }
   )
 }
 
