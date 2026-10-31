@@ -106,14 +106,23 @@ if ($local -eq $remote) {
     Write-Host ('Готово. Версия: ' + $remote.Substring(0, 7)) -ForegroundColor Green
 }
 
-# --- 6. Библиотеки: ставим только если они менялись ---
+# --- 6. Библиотеки: ставим, если они менялись или ещё не стоят ---
 $after = ($depFiles | ForEach-Object {
     $f = Join-Path $proj $_
     if (Test-Path $f) { $_ + ':' + (Get-FileHash $f).Hash } else { $_ + ':none' }
 }) -join '|'
 
-if ($before -ne $after) {
-    Write-Host 'Состав библиотек изменился - устанавливаю (может занять пару минут)...' -ForegroundColor Cyan
+# В свежей копии (например, из ZIP) node_modules нет вовсе — установка
+# обязательна, даже если package.json не менялся
+$nodeModules = Join-Path $proj 'node_modules'
+$needInstall = ($before -ne $after) -or (-not (Test-Path (Join-Path $nodeModules 'expo')))
+
+if ($needInstall) {
+    if (-not (Test-Path $nodeModules)) {
+        Write-Host 'Библиотеки ещё не установлены - устанавливаю (может занять несколько минут)...' -ForegroundColor Cyan
+    } else {
+        Write-Host 'Состав библиотек изменился - устанавливаю (может занять пару минут)...' -ForegroundColor Cyan
+    }
     npm install
     if ($LASTEXITCODE -ne 0) {
         Write-Host '[!] npm install завершился с ошибкой. Продолжаю, но если приложение не запустится - пришлите мне текст ошибки.' -ForegroundColor Yellow
