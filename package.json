@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "jest",
     "apk": "eas build --profile preview --platform android",
     "devbuild": "eas build --profile development --platform android",
     "aab": "eas build --profile production --platform android"
@@ -53,6 +54,8 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2"
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.29.7",
+    "jest": "^30.5.2"
   }
 }

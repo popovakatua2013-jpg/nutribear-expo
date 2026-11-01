@@ -15,6 +15,9 @@ import { useRecipesStore } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { useShopStore } from '@/store/useShopStore'
+import { useOrganismGameStore } from '@/store/useOrganismGameStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { restorePhotos } from '@/lib/photos'
 
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
@@ -116,6 +119,52 @@ export async function applyBackup(data) {
     }
     if (Object.keys(clean).length) store.setState(clean)
   }
+
+  // ── Копилка: монетки и купленный декор (экспортировались и раньше,
+  //    но при восстановлении терялись) ─────────────────────────
+  const shop = obj(data.shop)
+  useShopStore.setState({
+    coins: Math.max(0, Math.round(num(shop.coins))),
+    owned: obj(shop.owned),
+  })
+
+  // ── Прогресс организма: гены, кристаллы, мутаген, капсулы,
+  //    эволюция, рейд стаи, комбо-стрик и коллекция. Сначала честный
+  //    сброс к стартовым значениям, затем поверх — значения из копии:
+  //    пропущенные поля остаются валидными ───────────────────
+  const og = obj(data.organismGame)
+  useOrganismGameStore.getState().resetAll()
+  useOrganismGameStore.setState({
+    genes: Math.max(0, Math.round(num(og.genes, 12))),
+    crystals: Math.max(0, Math.round(num(og.crystals))),
+    mutagen: Math.max(0, Math.round(num(og.mutagen))),
+    capsules: Math.max(0, Math.round(num(og.capsules, 1))),
+    evoStage: Math.min(4, Math.max(0, Math.round(num(og.evoStage)))),
+    evoBranch: typeof og.evoBranch === 'string' ? og.evoBranch : '',
+    createdAt: typeof og.createdAt === 'string' ? og.createdAt : null,
+    stableDays: Math.max(0, Math.round(num(og.stableDays))),
+    stableLastKey: typeof og.stableLastKey === 'string' ? og.stableLastKey : null,
+    mutationUnlocked: Boolean(og.mutationUnlocked),
+    raidWeekStart: typeof og.raidWeekStart === 'string' ? og.raidWeekStart : '',
+    raidDays: obj(og.raidDays),
+    raidKilled: Boolean(og.raidKilled),
+    raidRewarded: Boolean(og.raidRewarded),
+    comboDays: obj(og.comboDays),
+    goodDays: obj(og.goodDays),
+    streak: Math.max(0, Math.round(num(og.streak))),
+    streakLastKey: typeof og.streakLastKey === 'string' ? og.streakLastKey : null,
+    items: arr(og.items),
+    opened: Math.max(0, Math.round(num(og.opened))),
+    log: arr(og.log),
+  })
+
+  // ── Мелкие настройки: вибро-отклик, порог напоминания мишки ──
+  const ui = obj(data.uiPrefs)
+  useUiPrefsStore.setState({
+    expanded: obj(ui.expanded),
+    haptics: ui.haptics === undefined ? true : Boolean(ui.haptics),
+    weighNudgeDays: [5, 7, 10].includes(ui.weighNudgeDays) ? ui.weighNudgeDays : 7,
+  })
 
   // ── Фото прогресса: файлы снимков в папку приложения ─────────
   await restorePhotos(data.photos)

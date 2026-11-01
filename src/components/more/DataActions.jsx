@@ -17,6 +17,8 @@ import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useShopStore } from '@/store/useShopStore'
+import { useOrganismGameStore } from '@/store/useOrganismGameStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
@@ -68,6 +70,11 @@ export function DataActions() {
     useHistoryStore.setState({ days: {} })
     // Копилка организма и купленный декор — тоже данные пользователя
     useShopStore.getState().resetAll()
+    // Прогресс организма (гены, эволюция, рейд, капсулы, коллекция) —
+    // тоже персональные данные, стирается вместе с остальным
+    useOrganismGameStore.getState().resetAll()
+    // Мелкие настройки интерфейса — к стартовым значениям
+    useUiPrefsStore.setState({ expanded: {}, haptics: true, weighNudgeDays: 7 })
     // GDPR-удаление: онбординг начнётся заново (корневой макет переключится сам)
     useOnboardingStore.getState().reset()
     toast({
@@ -79,7 +86,7 @@ export function DataActions() {
   function confirmWipe() {
     Alert.alert(
       'Стереть все данные?',
-      'Полное удаление по GDPR: дневник, история, профиль, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
+      'Полное удаление по GDPR: дневник, история, профиль, план онбординга, прогресс организма. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },

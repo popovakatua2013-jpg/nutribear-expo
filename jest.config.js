@@ -1,0 +1,15 @@
+// Jest: юнит-тесты чистой логики (organism, organism-game, bmi) в Node.
+// react-native и AsyncStorage подменяются стабами — тестируется только
+// математика расчётов, без эмулятора и RN-рантайма.
+module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/__tests__/**/*.test.js'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@react-native-async-storage/async-storage$': '<rootDir>/__tests__/helpers/async-storage-stub.js',
+    '^react-native$': '<rootDir>/__tests__/helpers/react-native-stub.js',
+  },
+  transform: {
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: require.resolve('./babel.test.config.js') }],
+  },
+}

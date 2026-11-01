@@ -18,6 +18,8 @@ import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { useShopStore } from '@/store/useShopStore'
+import { useOrganismGameStore } from '@/store/useOrganismGameStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { collectPhotosForBackup } from '@/lib/photos'
 
 // Снимок всех данных приложения (персональные данные здоровья —
@@ -46,6 +48,12 @@ export async function collectAll() {
     history: useHistoryStore.getState(),
     // Копилка организма: монетки и купленный декор
     shop: useShopStore.getState(),
+    // Прогресс организма: гены, кристаллы, мутаген, капсулы, эволюция,
+    // рейд стаи, комбо-стрик и коллекция артефактов — без этого блок
+    // перенос на новый телефон терял бы весь игровой прогресс
+    organismGame: useOrganismGameStore.getState(),
+    // Мелкие настройки: вибро-отклик, порог напоминания о взвешивании
+    uiPrefs: useUiPrefsStore.getState(),
   }
 }
 
