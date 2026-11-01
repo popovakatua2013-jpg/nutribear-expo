@@ -31,12 +31,15 @@ function dayTitle(key) {
 
 export function RepeatDayModal({ visible, onClose }) {
   const history = useFoodStore((s) => s.history)
+  const entries = useFoodStore((s) => s.entries)
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const insets = useSafeAreaInsets()
   const [picked, setPicked] = useState(null)
 
-  // Дни с записями, новые сверху; сегодня не предлагаем повторять сам с собой
+  // Дни с записями, новые сверху; сегодня не предлагаем повторять сам с собой.
+  // Если журнал пуст (записи велись до появления истории), но в сегодняшнем
+  // дневнике есть блюда — предлагаем повторить сегодняшний набор
   const days = useMemo(() => {
     const map = new Map()
     for (const row of history) {
@@ -45,16 +48,31 @@ export function RepeatDayModal({ visible, onClose }) {
       agg.count += 1
       agg.kcal += row.kcal || 0
     }
+    if (map.size === 0) {
+      const todays = Object.values(entries || {}).flat()
+      if (todays.length) {
+        map.set(dayKey(Date.now()), {
+          count: todays.length,
+          kcal: todays.reduce((s, e) => s + (e.kcal || 0), 0),
+        })
+      }
+    }
     return [...map.entries()]
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .map(([key, agg]) => ({ key, ...agg }))
-  }, [history])
+  }, [history, entries])
 
   const todayKey = dayKey(Date.now())
 
-  // Скопировать все записи выбранного дня в сегодняшний дневник
+  // Скопировать все записи выбранного дня в сегодняшний дневник.
+  // Источник: журнал истории, а если он пуст — сегодняшние записи дневника
   function repeatPicked() {
-    const rows = history.filter((h) => h.day === picked)
+    let rows = history.filter((h) => h.day === picked)
+    if (!rows.length && picked === dayKey(Date.now())) {
+      rows = Object.values(entries || {})
+        .flat()
+        .map((e, i) => ({ ...e, id: `${e.id}-rp-${i}`, mealId: e.mealId || 'snack' }))
+    }
     if (!rows.length) return
     rows.forEach((r) => readdRow(addEntry, r.mealId, r))
     toast({
