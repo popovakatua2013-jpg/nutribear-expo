@@ -1,14 +1,15 @@
 // Экран «ИМТ» в стиле фото-макета: сверху переключатель-пилюли
 // («Динамика веса» → скролл к карточке веса, «ИМТ и состав тела» — активна,
-// «Подробнее» — советы), главный блок с неоновым силуэтом и градиентным
-// кольцом ИМТ, карточки «Вес / Рост», блок «Рекомендации» с полосой
-// идеального диапазона. Ниже — калькулятор, динамика веса и фото-прогресс.
+// «Подробнее» — советы), главный блок: крупный неоновый силуэт слева,
+// градиентное кольцо ИМТ с легендой справа, карточки «Вес / Рост» внутри;
+// блок «Рекомендации» с полосой идеального диапазона. Ниже — калькулятор,
+// динамика веса и фото-прогресс.
 
-import { useRef, useState } from 'react'
+import { useRef, useState, StyleSheet } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronRight, Scale } from 'lucide-react-native'
+import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { calcBmi } from '@/lib/data/bmi'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
@@ -77,6 +78,7 @@ export default function BmiScreen() {
         <View accessibilityLabel="Разделы: ИМТ и динамика веса" className="flex-row items-center gap-1">
           <NavPill
             label="Динамика веса"
+            icon={<ChartColumn size={12} color="#A5AECB" />}
             onPress={scrollToWeight}
             accessibilityLabel="Перейти к динамике веса"
           />
@@ -109,21 +111,50 @@ export default function BmiScreen() {
           />
         </View>
 
-        {/* Главный блок: неоновый силуэт + градиентное кольцо ИМТ */}
-        <View accessibilityLabel="ИМТ и состав тела" className="rounded-[26px]" style={CARD_STYLE}>
-          <View className="flex-row items-center justify-center gap-3 px-3 pt-4">
-            <View className="shrink-0 pb-1">
-              <BodySilhouette width={62} />
+        {/* Главный блок как на макете: неоновый силуэт слева через всю
+            высоту, справа — градиентное кольцо ИМТ с легендой, ниже —
+            карточки «Вес» и «Рост» */}
+        <View
+          accessibilityLabel="ИМТ и состав тела"
+          className="overflow-hidden rounded-[26px]"
+          style={CARD_STYLE}
+        >
+          {/* Фиолетовое свечение фона, как на макете */}
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            colors={['rgba(139,92,246,0.20)', 'rgba(139,92,246,0.04)', 'rgba(168,85,247,0.12)']}
+            style={StyleSheet.absoluteFill}
+          />
+          <View className="flex-row gap-2 p-3">
+            {/* Силуэт: крупный, слева, тянется через оба ряда */}
+            <View className="shrink-0" style={{ width: 86 }}>
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: -24,
+                  width: 130,
+                  height: 130,
+                  borderRadius: 65,
+                  backgroundColor: 'rgba(139,92,246,0.20)',
+                }}
+              />
+              <BodySilhouette width={84} />
             </View>
-            <BmiDonut bmi={bmi} />
-          </View>
-          <View className="px-4 pb-4 pt-3.5">
-            <BmiLegend bmi={bmi} />
+            {/* Правая колонка: кольцо + легенда, ниже — Вес и Рост */}
+            <View className="min-w-0 flex-1 gap-2.5">
+              <View className="flex-row flex-wrap items-center gap-1.5">
+                <BmiDonut bmi={bmi} />
+                <View className="min-w-0 flex-1 pb-1" style={{ minWidth: 76 }}>
+                  <BmiLegend bmi={bmi} />
+                </View>
+              </View>
+              <BmiStatCards />
+            </View>
           </View>
         </View>
-
-        {/* Карточки «Вес» и «Рост» */}
-        <BmiStatCards />
 
         {/* Рекомендации + идеальный диапазон ИМТ */}
         <BmiAdvice bmi={bmi} onDetails={() => setDetailsOpen(true)} />

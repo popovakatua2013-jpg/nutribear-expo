@@ -58,16 +58,21 @@ export function BmiAdvice({ bmi, onDetails }) {
         </Text>
       </View>
 
-      {/* Идеальный диапазон ИМТ: подпись + полоса с бегунком */}
-      <View className="mt-3 border-t pt-3" style={{ borderTopColor: 'rgba(255,255,255,0.06)' }}>
-        <View className="flex-row items-center justify-between">
-          <Text maxFontSizeMultiplier={1.2} className="font-medium text-[11.5px] text-bear-sub">
-            Идеальный диапазон ИМТ
-          </Text>
-          <Text className="font-bold text-[12.5px] text-white">18,5 – 24,9</Text>
-        </View>
-        <View className="mt-2.5">
-          <View className="h-[9px] overflow-hidden rounded-full">
+      {/* Идеальный диапазон ИМТ: подпись · полоса с бегунком · диапазон —
+          одной строкой, как на макете */}
+      <View
+        className="mt-3 flex-row items-center gap-2 rounded-[14px] px-2.5 py-2"
+        style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+      >
+        <Text
+          maxFontSizeMultiplier={1.1}
+          numberOfLines={1}
+          className="shrink-0 font-medium text-[10px] text-bear-sub"
+        >
+          Идеальный диапазон ИМТ
+        </Text>
+        <View className="min-w-0 flex-1">
+          <View className="h-[8px] overflow-hidden rounded-full">
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -84,7 +89,7 @@ export function BmiAdvice({ bmi, onDetails }) {
               left: `${pos * 100}%`,
               top: -4,
               width: 5,
-              height: 17,
+              height: 16,
               borderRadius: 3,
               backgroundColor: '#FFFFFF',
               transform: [{ translateX: -2.5 }],
@@ -94,6 +99,9 @@ export function BmiAdvice({ bmi, onDetails }) {
             }}
           />
         </View>
+        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[11px] text-white">
+          18,5 – 24,9
+        </Text>
       </View>
     </View>
   )

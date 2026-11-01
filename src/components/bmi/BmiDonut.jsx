@@ -9,10 +9,10 @@ import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle } from 'react-na
 import { Check } from 'lucide-react-native'
 import { bmiCategory, fmtDecimal } from '@/lib/data/bmi'
 
-const SIZE = 148
+const SIZE = 118
 const C = SIZE / 2
-const R = 62
-const STROKE = 13
+const R = 49
+const STROKE = 12
 
 // Шкала маркера: ИМТ 15 → 40; угол по часовой от 12 часов.
 // 225° — старт (низ-лево), 270° дуги: норма 18,5–25 ложится на верх-лево,
@@ -33,7 +33,7 @@ export function BmiDonut({ bmi }) {
   const my = C - R * Math.cos(rad)
 
   return (
-    <View className="h-[148px] w-[148px] shrink-0 items-center justify-center">
+    <View className="h-[118px] w-[118px] shrink-0 items-center justify-center">
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRing" x1="0" y1="0" x2="1" y2="1">
@@ -51,7 +51,7 @@ export function BmiDonut({ bmi }) {
           r={R}
           stroke="url(#nbsRing)"
           strokeOpacity={0.18}
-          strokeWidth={22}
+          strokeWidth={20}
           fill="none"
         />
         {/* Основное градиентное кольцо */}
@@ -64,15 +64,15 @@ export function BmiDonut({ bmi }) {
           fill="none"
         />
         {/* Белый светящийся маркер на позиции ИМТ */}
-        <Circle cx={mx} cy={my} r={9} fill="#FFFFFF" fillOpacity={0.22} />
-        <Circle cx={mx} cy={my} r={4.5} fill="#FFFFFF" />
+        <Circle cx={mx} cy={my} r={8} fill="#FFFFFF" fillOpacity={0.22} />
+        <Circle cx={mx} cy={my} r={4} fill="#FFFFFF" />
       </Svg>
 
-      <Text className="font-extrabold text-[32px] leading-none tracking-tight text-white">
+      <Text className="font-extrabold text-[26px] leading-none tracking-tight text-white">
         {fmtDecimal(bmi)}
       </Text>
       <View
-        className="mt-2 flex-row items-center gap-1 rounded-full px-2.5 py-[4px]"
+        className="mt-1.5 flex-row items-center gap-1 rounded-full px-2 py-[3px]"
         style={{
           backgroundColor: cat.color,
           shadowColor: cat.color,
@@ -80,10 +80,10 @@ export function BmiDonut({ bmi }) {
           shadowRadius: 9,
         }}
       >
-        <Text className="font-bold text-[11px] leading-none" style={{ color: '#0A1310' }}>
+        <Text maxFontSizeMultiplier={1.1} className="font-bold text-[10px] leading-none" style={{ color: '#0A1310' }}>
           {cat.label}
         </Text>
-        <Check size={11} color="#0A1310" strokeWidth={3.6} />
+        <Check size={10} color="#0A1310" strokeWidth={3.6} />
       </View>
     </View>
   )

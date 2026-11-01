@@ -1,7 +1,8 @@
-// Карточки «Вес» и «Рост» как на фото-макете: фиолетовая чип-иконка,
-// крупное значение и зелёная строка снизу. У веса — изменение за неделю
-// (стрелка ↑/↓, зелёное если движение к норме, красное — от неё), тап по
-// карточке открывает окно записи веса. У роста — «✓ Постоянный».
+// Компактные карточки «Вес» и «Рост» как на фото-макете — живут внутри
+// главного блока, под кольцом ИМТ (справа от силуэта). Фиолетовая
+// чип-иконка, крупное значение и строка снизу. У веса — изменение за
+// неделю (стрелка ↑/↓, зелёное если движение к норме, красное — от неё),
+// тап по карточке открывает окно записи веса. У роста — «✓ Постоянный».
 
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -9,17 +10,18 @@ import { Check, Ruler, TrendingDown, TrendingUp, Weight } from 'lucide-react-nat
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange, weekWeights } from '@/lib/data/bmi'
 
+// Чуть светлее фона главного блока — карточки «читаются» на нём
 const CARD = {
-  backgroundColor: '#181031',
-  borderColor: 'rgba(168,85,247,0.20)',
+  backgroundColor: 'rgba(124,58,237,0.10)',
+  borderColor: 'rgba(168,85,247,0.24)',
   borderWidth: 1,
 }
 
 function Chip({ children }) {
   return (
-    <View className="h-[34px] w-[34px] overflow-hidden rounded-[12px]">
+    <View className="h-[26px] w-[26px] overflow-hidden rounded-[9px]">
       <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#8B5CF6', '#6D28D9']}>
-        <View className="h-[34px] w-[34px] items-center justify-center">{children}</View>
+        <View className="h-[26px] w-[26px] items-center justify-center">{children}</View>
       </LinearGradient>
     </View>
   )
@@ -40,31 +42,33 @@ export function BmiStatCards() {
   const deltaColor = delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
 
   return (
-    <View className="flex-row items-stretch gap-3">
+    <View className="flex-row items-stretch gap-2">
       {/* Вес — тап открывает окно записи веса */}
       <Pressable
         onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
         accessibilityRole="button"
         accessibilityLabel={`Вес ${fmtDecimal(weightKg)} кг — нажмите, чтобы записать новый вес`}
-        className="min-w-0 flex-1 rounded-[22px] p-3.5 active:opacity-80"
+        className="min-w-0 flex-1 rounded-[16px] p-2 active:opacity-80"
         style={CARD}
       >
-        <View className="flex-row items-center gap-2.5">
+        <View className="flex-row items-center gap-1.5">
           <Chip>
-            <Weight size={17} color="#FFFFFF" />
+            <Weight size={13} color="#FFFFFF" />
           </Chip>
-          <Text className="font-semibold text-[12.5px] text-bear-sub">Вес</Text>
+          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
+            Вес
+          </Text>
         </View>
-        <View className="mt-2.5 flex-row items-baseline gap-1">
-          <Text className="font-extrabold text-[23px] leading-none tracking-tight text-white">
+        <View className="mt-1.5 flex-row items-baseline gap-1">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[19px] leading-none tracking-tight text-white">
             {fmtDecimal(weightKg)}
           </Text>
-          <Text className="font-semibold text-[13px] text-bear-sub2">кг</Text>
+          <Text className="font-semibold text-[11px] text-bear-sub2">кг</Text>
         </View>
-        <View className="mt-1.5 flex-row items-center gap-1">
-          {delta < 0 && <TrendingDown size={13} color={deltaColor} />}
-          {delta > 0 && <TrendingUp size={13} color={deltaColor} />}
-          <Text className="font-bold text-[12px]" style={{ color: deltaColor }}>
+        <View className="mt-1 flex-row items-center gap-1">
+          {delta < 0 && <TrendingDown size={11} color={deltaColor} />}
+          {delta > 0 && <TrendingUp size={11} color={deltaColor} />}
+          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-bold text-[10.5px]" style={{ color: deltaColor }}>
             {delta === 0
               ? 'без изм.'
               : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))}`}
@@ -73,22 +77,26 @@ export function BmiStatCards() {
       </Pressable>
 
       {/* Рост — справочный показатель */}
-      <View accessibilityLabel={`Рост ${heightCm} сантиметров`} className="min-w-0 flex-1 rounded-[22px] p-3.5" style={CARD}>
-        <View className="flex-row items-center gap-2.5">
+      <View accessibilityLabel={`Рост ${heightCm} сантиметров`} className="min-w-0 flex-1 rounded-[16px] p-2" style={CARD}>
+        <View className="flex-row items-center gap-1.5">
           <Chip>
-            <Ruler size={17} color="#FFFFFF" />
+            <Ruler size={13} color="#FFFFFF" />
           </Chip>
-          <Text className="font-semibold text-[12.5px] text-bear-sub">Рост</Text>
+          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
+            Рост
+          </Text>
         </View>
-        <View className="mt-2.5 flex-row items-baseline gap-1">
-          <Text className="font-extrabold text-[23px] leading-none tracking-tight text-white">
+        <View className="mt-1.5 flex-row items-baseline gap-1">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[19px] leading-none tracking-tight text-white">
             {heightCm}
           </Text>
-          <Text className="font-semibold text-[13px] text-bear-sub2">см</Text>
+          <Text className="font-semibold text-[11px] text-bear-sub2">см</Text>
         </View>
-        <View className="mt-1.5 flex-row items-center gap-1">
-          <Check size={13} color="#4ADE80" strokeWidth={3} />
-          <Text className="font-bold text-[12px] text-[#4ADE80]">Постоянный</Text>
+        <View className="mt-1 flex-row items-center gap-1">
+          <Check size={11} color="#4ADE80" strokeWidth={3} />
+          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} className="font-bold text-[10px] text-[#4ADE80]">
+            Постоянный
+          </Text>
         </View>
       </View>
     </View>
