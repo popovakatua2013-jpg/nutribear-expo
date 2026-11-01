@@ -1,14 +1,16 @@
 // Компактные карточки «Вес» и «Рост» как на фото-макете — живут внутри
-// главного блока, под кольцом ИМТ (справа от силуэта). Фиолетовая
-// чип-иконка, крупное значение и строка снизу. У веса — изменение за
-// неделю (стрелка ↑/↓, зелёное если движение к норме, красное — от неё),
-// тап по карточке открывает окно записи веса. У роста — «✓ Постоянный».
+// главного блока, под кольцом ИМТ. Фиолетовая чип-иконка, крупное значение
+// и строка снизу. У веса — изменение за неделю (стрелка ↑/↓, зелёное если
+// движение к норме, красное — от неё), тап по карточке открывает окно
+// записи веса. Прямо под карточкой «Вес» — мини-график веса за 30 дней
+// (спарклайн без осей). У роста — «✓ Постоянный».
 
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Check, Ruler, TrendingDown, TrendingUp, Weight } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
-import { fmtDecimal, healthyRange, weekWeights } from '@/lib/data/bmi'
+import { fmtDecimal, healthyRange, monthWeights, weekWeights } from '@/lib/data/bmi'
+import { WeightMiniChart } from './WeightMiniChart'
 
 // Тёмные полупрозрачные карточки на фоне страницы — как на макете
 // (герой больше не залит фиолетовым, карточки читаются сами)
@@ -49,46 +51,75 @@ export function BmiStatCards() {
         ? 'rgba(74,222,128,0.14)'
         : 'rgba(251,113,133,0.14)'
 
+  // Мини-график за 30 дней (точка каждые 3 дня) — под карточкой «Вес»
+  const month = monthWeights(weightKg, weights)
+
   return (
     <View className="flex-row items-stretch gap-2">
-      {/* Вес — тап открывает окно записи веса */}
-      <Pressable
-        onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
-        accessibilityRole="button"
-        accessibilityLabel={`Вес ${fmtDecimal(weightKg)} кг — нажмите, чтобы записать новый вес`}
-        className="min-w-0 flex-1 rounded-[16px] p-2 active:opacity-80"
+      {/* Левая колонка: карточка «Вес» + мини-график прямо под ней */}
+      <View className="min-w-0 flex-1 gap-2">
+        {/* Вес — тап открывает окно записи веса */}
+        <Pressable
+          onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
+          accessibilityRole="button"
+          accessibilityLabel={`Вес ${fmtDecimal(weightKg)} кг — нажмите, чтобы записать новый вес`}
+          className="rounded-[16px] p-2 active:opacity-80"
+          style={CARD}
+        >
+          <View className="flex-row items-center gap-1.5">
+            <Chip>
+              <Weight size={14} color="#FFFFFF" />
+            </Chip>
+            <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
+              Вес
+            </Text>
+          </View>
+          <View className="mt-1.5 flex-row items-baseline gap-1">
+            <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[22px] leading-none tracking-tight text-white">
+              {fmtDecimal(weightKg)}
+            </Text>
+            <Text className="font-semibold text-[11px] text-bear-sub2">кг</Text>
+          </View>
+          <View
+            className="mt-1.5 flex-row items-center gap-1 self-start rounded-full px-1.5 py-[2px]"
+            style={{ backgroundColor: deltaBg }}
+          >
+            {delta < 0 && <TrendingDown size={11} color={deltaColor} />}
+            {delta > 0 && <TrendingUp size={11} color={deltaColor} />}
+            <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-bold text-[10.5px]" style={{ color: deltaColor }}>
+              {delta === 0
+                ? 'без изм.'
+                : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))}`}
+            </Text>
+          </View>
+        </Pressable>
+
+        {/* Мини-график веса за 30 дней — прямо под карточкой «Вес»
+            (тап тоже открывает окно записи веса) */}
+        <Pressable
+          onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
+          accessibilityRole="button"
+          accessibilityLabel="График веса за 30 дней — нажмите, чтобы записать новый вес"
+          className="rounded-[16px] p-2 pt-1.5 active:opacity-80"
+          style={CARD}
+        >
+          <Text
+            maxFontSizeMultiplier={1.1}
+            numberOfLines={1}
+            className="font-sans text-[9.5px] text-bear-dim"
+          >
+            Вес за 30 дней
+          </Text>
+          <WeightMiniChart data={month} color="#A78BFA" height={30} />
+        </Pressable>
+      </View>
+
+      {/* Рост — справочный показатель; тянется по высоте левой колонки */}
+      <View
+        accessibilityLabel={`Рост ${heightCm} сантиметров`}
+        className="min-w-0 flex-1 justify-between rounded-[16px] p-2"
         style={CARD}
       >
-        <View className="flex-row items-center gap-1.5">
-          <Chip>
-            <Weight size={14} color="#FFFFFF" />
-          </Chip>
-          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
-            Вес
-          </Text>
-        </View>
-        <View className="mt-1.5 flex-row items-baseline gap-1">
-          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[22px] leading-none tracking-tight text-white">
-            {fmtDecimal(weightKg)}
-          </Text>
-          <Text className="font-semibold text-[11px] text-bear-sub2">кг</Text>
-        </View>
-        <View
-          className="mt-1.5 flex-row items-center gap-1 self-start rounded-full px-1.5 py-[2px]"
-          style={{ backgroundColor: deltaBg }}
-        >
-          {delta < 0 && <TrendingDown size={11} color={deltaColor} />}
-          {delta > 0 && <TrendingUp size={11} color={deltaColor} />}
-          <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-bold text-[10.5px]" style={{ color: deltaColor }}>
-            {delta === 0
-              ? 'без изм.'
-              : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))}`}
-          </Text>
-        </View>
-      </Pressable>
-
-      {/* Рост — справочный показатель */}
-      <View accessibilityLabel={`Рост ${heightCm} сантиметров`} className="min-w-0 flex-1 rounded-[16px] p-2" style={CARD}>
         <View className="flex-row items-center gap-1.5">
           <Chip>
             <Ruler size={14} color="#FFFFFF" />

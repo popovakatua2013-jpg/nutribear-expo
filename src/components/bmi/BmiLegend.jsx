@@ -1,9 +1,10 @@
 // Легенда категорий ИМТ: вертикальный столбик справа от кольца,
 // каждая позиция — строка «точка · название · диапазон» в капсуле.
 // Активная категория — фиолетовая капсула-подсветка, белым и жирным,
-// её точка светится.
+// её точка светится. Тап по строке открывает карточку с пояснением
+// по этой категории (onRowPress получает id категории строки).
 
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { bmiCategory } from '@/lib/data/bmi'
 
 const ROWS = [
@@ -12,7 +13,7 @@ const ROWS = [
   { ids: ['obese1', 'obese2'], label: 'Ожирение', range: '≥ 30', color: '#F97316' },
 ]
 
-export function BmiLegend({ bmi }) {
+export function BmiLegend({ bmi, onRowPress }) {
   const active = bmiCategory(bmi).id
 
   return (
@@ -22,10 +23,16 @@ export function BmiLegend({ bmi }) {
     >
       {ROWS.map((row) => {
         const isActive = row.ids.includes(active)
+        // «Ожирение» объединяет две категории: если пользователь в одной
+        // из них — пояснение показываем по его категории, иначе по первой
+        const catId = isActive ? active : row.ids[0]
         return (
-          <View
+          <Pressable
             key={row.label}
-            className="flex-row items-center gap-[7px] rounded-full px-2.5 py-[6px]"
+            onPress={() => onRowPress?.(catId)}
+            accessibilityRole="button"
+            accessibilityLabel={`Категория «${row.label}» (${row.range}) — открыть пояснение и рекомендации`}
+            className="flex-row items-center gap-[7px] rounded-full px-2.5 py-[6px] active:opacity-70"
             style={{
               // Активная строка — лёгкая фиолетовая капсула;
               // у остальных прозрачная рамка той же толщины, чтобы строки
@@ -62,7 +69,7 @@ export function BmiLegend({ bmi }) {
             >
               {row.range}
             </Text>
-          </View>
+          </Pressable>
         )
       })}
     </View>

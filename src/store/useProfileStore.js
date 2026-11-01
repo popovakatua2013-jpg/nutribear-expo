@@ -23,12 +23,16 @@ export const useProfileStore = create(
       goalWeightKg: null, // цель по весу (кг) или null — показывает прогресс в «Динамике веса»
       goalReachedAt: null, // ISO-дата, когда цель по весу впервые достигнута (награда)
       weights: [], // [{ id, date (ISO), kg }] — новые сверху
+      lastBmiCat: null, // последняя известная категория ИМТ (low|norm|over|obese1|obese2) — по ней ловим живой переход в «Норму» для поздравления
 
       setProfile: (patch) =>
         set((s) => ({
           ...s,
           ...patch,
         })),
+
+      // Запомнить категорию ИМТ (для поздравления при переходе в «Норму»)
+      setLastBmiCat: (cat) => set({ lastBmiCat: cat }),
 
       // Новое измерение веса: в историю + текущий вес
       addWeight: (kg) => {
@@ -81,6 +85,7 @@ export const useProfileStore = create(
         goalWeightKg: s.goalWeightKg,
         goalReachedAt: s.goalReachedAt,
         weights: s.weights,
+        lastBmiCat: s.lastBmiCat,
       }),
     }
   )

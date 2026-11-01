@@ -1,7 +1,10 @@
 // Модалка «Рекомендации»: текст и советы по категории ИМТ.
 // Открывается с вкладки «ИМТ» — кнопкой «Подробнее», стрелкой
-// на трофейном баннере и тапом по кольцу. В шапке — мини-копия
-// кольца с твоим ИМТ (та же шкала 15→40, статичный снимок).
+// на трофейном баннере, тапом по кольцу и тапом по строке легенды.
+// catId — необязательная категория: для строки легенды показываем
+// пояснение именно той категории (мини-кольцо всегда показывает
+// реальный ИМТ пользователя). В шапке — мини-копия кольца
+// (та же шкала 15→40, статичный снимок).
 // Кнопка «К рекомендациям» закрывает модалку и скроллит к блоку
 // советов на вкладке (если передан onRecommendations).
 
@@ -14,7 +17,7 @@ import Svg, {
   Path,
 } from 'react-native-svg'
 import { ArrowDown, X } from 'lucide-react-native'
-import { bmiCategory, fmtDecimal, RECOMMENDATIONS } from '@/lib/data/bmi'
+import { BMI_CATEGORIES, bmiCategory, fmtDecimal, RECOMMENDATIONS } from '@/lib/data/bmi'
 
 // Та же шкала, что у большого кольца на вкладке (BmiDonut)
 const MR_BMI_MIN = 15
@@ -101,9 +104,13 @@ function MiniRing({ bmi, catColor, shortLabel }) {
   )
 }
 
-export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
-  const cat = bmiCategory(bmi)
-  const rec = RECOMMENDATIONS[cat.id]
+export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = null }) {
+  // Своя категория — по реальному ИМТ; catId (тап по строке легенды)
+  // подменяет только текст пояснения, мини-кольцо остаётся «твоим»
+  const own = bmiCategory(bmi)
+  const cat = (catId && BMI_CATEGORIES.find((c) => c.id === catId)) || own
+  const rec = RECOMMENDATIONS[cat.id] || RECOMMENDATIONS[own.id]
+  const isOwn = cat.id === own.id
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -143,7 +150,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
             <Text className="mt-2 font-semibold text-xs" style={{ color: cat.color }}>
-              Ваша категория: {cat.label} ({cat.range})
+              {isOwn ? 'Ваша категория' : 'Категория'}: {cat.label} ({cat.range})
             </Text>
             <View className="mt-3 gap-2">
               {rec.tips.map((tip) => (

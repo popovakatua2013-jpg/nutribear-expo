@@ -5,7 +5,7 @@
 // карточки «Вес / Рост», блок «Рекомендации» с полосой идеального диапазона.
 // Ниже — калькулятор, динамика веса и фото-прогресс.
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
-import { calcBmi } from '@/lib/data/bmi'
+import { calcBmi, bmiCategory } from '@/lib/data/bmi'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
 import { BmiStatCards } from '@/components/bmi/BmiStatCards'
@@ -23,6 +23,7 @@ import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
+import { NormCongrats } from '@/components/bmi/NormCongrats'
 
 // Мягкое неоновое свечение (дымка как на макете): радиальный градиент
 // плавно уходит в прозрачность — без жёсткого края круглой заливки
@@ -65,8 +66,47 @@ export default function BmiScreen() {
   const weightKg = useProfileStore((s) => s.weightKg)
   const haptics = useUiPrefsStore((s) => s.haptics)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // Категория для карточки «Что означает твой ИМТ»: null — своя
+  // (тап по кольцу, «Подробнее»), id — категория из строки легенды
+  const [detailsCatId, setDetailsCatId] = useState(null)
 
   const bmi = calcBmi(weightKg, heightCm)
+
+  // Открыть карточку пояснения: с лёгкой вибрацией (как у кольца)
+  const openDetails = (catId = null) => {
+    if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+    setDetailsCatId(catId)
+    setDetailsOpen(true)
+  }
+
+  // ─── Поздравление при переходе ИМТ в «Норму» ─────────────────────
+  // Сравниваем категорию с последней известной (lastBmiCat в профиле):
+  // живой переход «не норма → норма» — один раз показываем окно.
+  // Ждём гидрацию AsyncStorage — иначе до загрузки профиля можно
+  // случайно перезаписать сохранённую категорию и поздравить зря.
+  const lastBmiCat = useProfileStore((s) => s.lastBmiCat)
+  const setLastBmiCat = useProfileStore((s) => s.setLastBmiCat)
+  const [congratsOpen, setCongratsOpen] = useState(false)
+  const [hydrated, setHydrated] = useState(useProfileStore.persist.hasHydrated())
+
+  useEffect(() => {
+    const unsub = useProfileStore.persist.onFinishHydration(() => setHydrated(true))
+    return unsub
+  }, [])
+
+  const curCatId = bmiCategory(bmi).id
+  useEffect(() => {
+    if (!hydrated || !bmi) return
+    if (lastBmiCat == null) {
+      // Первый запуск — просто запоминаем категорию, без поздравления
+      setLastBmiCat(curCatId)
+      return
+    }
+    if (lastBmiCat !== curCatId) {
+      if (curCatId === 'norm') setCongratsOpen(true)
+      setLastBmiCat(curCatId)
+    }
+  }, [hydrated, bmi, lastBmiCat, curCatId, setLastBmiCat])
 
   // Скролл к карточке «Динамика веса» и к блоку рекомендаций
   const scrollRef = useRef(null)
@@ -124,7 +164,7 @@ export default function BmiScreen() {
           <NavPill
             label="Подробнее"
             chevron={<ChevronRight size={12} color="#A5AECB" />}
-            onPress={() => setDetailsOpen(true)}
+            onPress={() => openDetails(null)}
             accessibilityLabel="Подробнее о категориях и рекомендациях"
           />
         </View>
@@ -137,14 +177,10 @@ export default function BmiScreen() {
           <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
-              {/* Кольцо ИМТ + легенда категорий. Тап по кольцу —
-                  карточка «Что означает твой ИМТ» */}
+              {/* Кольцо ИМТ + легенда категорий. Тап по кольцу — карточка
+                  со своей категорией, тап по строке легенды — по её категории */}
               <Pressable
-                onPress={() => {
-                  // Лёгкий вибро-отклик при тапе по кольцу (если включён в «Ещё»)
-                  if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
-                  setDetailsOpen(true)
-                }}
+                onPress={() => openDetails(null)}
                 accessibilityRole="button"
                 accessibilityLabel="Что означает твой ИМТ — открыть подробности"
                 className="shrink-0 active:opacity-80"
@@ -152,7 +188,7 @@ export default function BmiScreen() {
                 <BmiDonut bmi={bmi} />
               </Pressable>
               <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
-                <BmiLegend bmi={bmi} />
+                <BmiLegend bmi={bmi} onRowPress={openDetails} />
               </View>
             </View>
             <BmiStatCards />
@@ -166,7 +202,7 @@ export default function BmiScreen() {
             adviceY.current = e.nativeEvent.layout.y
           }}
         >
-          <BmiAdvice bmi={bmi} onDetails={() => setDetailsOpen(true)} />
+          <BmiAdvice bmi={bmi} onDetails={() => openDetails(null)} />
         </View>
 
         {/* Калькулятор: пол, возраст, рост, вес */}
@@ -185,6 +221,7 @@ export default function BmiScreen() {
 
       <AdviceModal
         bmi={bmi}
+        catId={detailsCatId}
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         onRecommendations={() => {
@@ -200,6 +237,9 @@ export default function BmiScreen() {
           )
         }}
       />
+
+      {/* Поздравление медвежонка: один раз, при живом переходе в «Норму» */}
+      <NormCongrats open={congratsOpen} onClose={() => setCongratsOpen(false)} bmi={bmi} />
     </View>
   )
 }
