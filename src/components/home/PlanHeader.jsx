@@ -1,8 +1,8 @@
 // Шапка карточки «Приёмы пищи»: фиолетовый значок, заголовок и
 // фиолетовая пилюля «+ Добавить» (как в референсе) — добавляет блюдо
-// в первый приём без записей. Ниже, мелкой служебной строкой —
-// кнопки: повторить день (выбор даты), история приёмов, гид по порциям,
-// и ссылка «Все» — управление блюдами.
+// в первый приём без записей. Ниже — подписанные мини-кнопки:
+// «Повторить день» (выбор дня и копирование его еды в сегодня),
+// «История», «Порции» и «Все» — управление блюдами.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -10,15 +10,24 @@ import { Copy, History, UtensilsCrossed, ChevronRight, Hand, Plus } from 'lucide
 import { PortionsModal } from './PortionsModal'
 import { RepeatDayModal } from './RepeatDayModal'
 
-function IconBtn({ onPress, label, children }) {
+// Подписанная мини-кнопка: раньше были только иконки без подписей —
+// «Повторить день» было не найти и не понять, куда жать
+function MiniPill({ onPress, label, Icon, tint = '#AEB9D9' }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+      className="flex-row items-center gap-1 rounded-full bg-white/5 px-2.5 py-[6px] active:bg-white/10"
     >
-      {children}
+      <Icon size={12.5} color={tint} />
+      <Text
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.2}
+        className="font-semibold text-[11px] text-bear-soft"
+      >
+        {label}
+      </Text>
     </Pressable>
   )
 }
@@ -54,17 +63,17 @@ export function PlanHeader({ onViewAll, onHistory, onAdd }) {
         )}
       </View>
 
-      {/* служебная строка: повторить день / история / порции / все блюда */}
-      <View className="mt-2 flex-row items-center justify-end gap-1.5">
-        <IconBtn onPress={() => setRepeatOpen(true)} label="Повторить день — скопировать еду выбранного дня">
-          <Copy size={15} color="#AEB9D9" />
-        </IconBtn>
-        <IconBtn onPress={onHistory} label="История приёмов">
-          <History size={15} color="#AEB9D9" />
-        </IconBtn>
-        <IconBtn onPress={() => setPortionsOpen(true)} label="Гид по порциям">
-          <Hand size={15} color="#AEB9D9" />
-        </IconBtn>
+      {/* служебная строка: повторить день / история / порции / все блюда.
+          flex-wrap — на узких экранах ряд аккуратно переносится */}
+      <View className="mt-2 flex-row flex-wrap items-center justify-end gap-1.5">
+        <MiniPill
+          onPress={() => setRepeatOpen(true)}
+          label="Повторить день"
+          Icon={Copy}
+          tint="#A78BFA"
+        />
+        <MiniPill onPress={onHistory} label="История" Icon={History} />
+        <MiniPill onPress={() => setPortionsOpen(true)} label="Порции" Icon={Hand} />
         {onViewAll && (
           <Pressable
             onPress={onViewAll}

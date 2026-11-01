@@ -2,6 +2,8 @@
 // балансу нутриентов и витаминам/минералам — за день и за месяц.
 // По умолчанию видны три главные метрики (клетчатка, сахар, белки),
 // остальное — жиры, углеводы, витамины/минералы — под «Подробнее».
+// Тап по крупному баллу слева (или «что это значит?») раскрывает
+// простое объяснение, из чего складывается оценка и как её поднять.
 // Расчёты — src/lib/data/nutrition.js; данные дня — дневник (entries),
 // месяца — журнал приёмов (history) со средними за день с записями.
 
@@ -63,6 +65,8 @@ export function NutritionRating() {
   const history = useFoodStore((s) => s.history)
   const [mode, setMode] = useState('day') // 'day' | 'month'
   const [expanded, setExpanded] = useState(false)
+  // Пояснение «что даёт балл»: тап по крупной цифре или по ссылке
+  const [explain, setExplain] = useState(false)
 
   const now = new Date()
   const monthName = MONTHS[now.getMonth()]
@@ -146,13 +150,19 @@ export function NutritionRating() {
 
       {hasData ? (
         <>
-          {/* общий балл */}
+          {/* общий балл: тап — простое объяснение, что даёт цифра */}
           <View className="mt-4 flex-row items-center gap-3">
-            <View className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-line bg-white/[0.04]">
+            <Pressable
+              onPress={() => setExplain((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel="Что означает балл питания — открыть пояснение"
+              accessibilityState={{ selected: explain }}
+              className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-line bg-white/[0.04] active:opacity-70"
+            >
               <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[22px] tracking-tight text-bear-text">
                 {r.overall}
               </Text>
-            </View>
+            </Pressable>
             <View className="min-w-0 flex-1">
               <Text maxFontSizeMultiplier={MAX} className="font-bold text-[15px] text-bear-text">
                 {emoji} {label}
@@ -164,8 +174,43 @@ export function NutritionRating() {
                 {caption}
                 {noFiber ? ' · без клетчатки балл не выше «Средне»' : ''}
               </Text>
+              {!explain && (
+                <Text
+                  onPress={() => setExplain(true)}
+                  className="mt-0.5 font-semibold text-[11px] text-[#8DABFF]"
+                >
+                  Что даёт этот балл?
+                </Text>
+              )}
             </View>
           </View>
+
+          {/* Пояснение: из чего складывается балл и как его поднять */}
+          {explain && (
+            <View className="mt-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5 py-3">
+              <Text className="font-semibold text-[12px] text-bear-text">
+                Балл 0–100 — насколько сбалансирован рацион за период
+              </Text>
+              <Text className="mt-1 font-sans text-[11px] leading-[15px] text-bear-sub">
+                Половина оценки — клетчатка (норма 25 г) и сахар (лучше до 50 г).
+                Ещё четверть — баланс белков, жиров и углеводов. Остальное —
+                витамины и минералы из базы продуктов. 80+ — «Отлично», 60–79 —
+                «Хорошо», 40–59 — «Средне», ниже — «Слабо».
+              </Text>
+              <Text className="mt-1.5 font-sans text-[11px] leading-[15px] text-bear-sub">
+                Поднимают балл: овощи, ягоды и цельнозерновые (клетчатка),
+                меньше сладкого, разнообразное меню и блюда из базы — они
+                несут данные о витаминах. Это ориентир, а не запрет: балл
+                подсказывает, чего в рационе не хватает.
+              </Text>
+              <Text
+                onPress={() => setExplain(false)}
+                className="mt-1.5 self-end font-semibold text-[11px] text-[#8DABFF]"
+              >
+                Понятно, скрыть
+              </Text>
+            </View>
+          )}
 
           {/* показатели: по умолчанию 3 главные, остальные под «Подробнее» */}
           <View className="mt-4 gap-3">

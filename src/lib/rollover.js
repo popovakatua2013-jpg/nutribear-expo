@@ -12,9 +12,35 @@
 // действительно загрузились с телефона).
 
 import { AppState } from 'react-native'
-import { dayKeyOf } from '@/store/useHistoryStore'
+import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore } from '@/store/useActivityStore'
+import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
+import { totalConsumed } from '@/lib/data/diary'
+import { xpForDay } from '@/lib/data/activity'
+
+// Финальные значения уходящего дня — в дневную историю (по ней строятся
+// графики и отчёты). Максимум с уже записанным — чтобы не затереть
+// большее значение меньшим (сторы могут быть ещё не полностью
+// гидратированы — тогда просто останется прежняя запись).
+function archiveOutgoingDay(key, food, act) {
+  try {
+    const hist = useHistoryStore.getState().days[key] || {}
+    const mealCount = Object.values(food.entries || {}).flat().length
+    const kcal = totalConsumed(food.entries || {})
+    const steps = act.extraSteps || 0
+    const waterMl = act.waterMl || 0
+    const burned = totalBurned(useExerciseStore.getState().logs, key, steps)
+    const xp = xpForDay({ steps, waterMl, mealCount, burned })
+    useHistoryStore.getState().record(key, {
+      kcal: Math.max(hist.kcal || 0, kcal),
+      waterMl: Math.max(hist.waterMl || 0, waterMl),
+      steps: Math.max(hist.steps || 0, steps),
+      burned: Math.max(hist.burned || 0, burned),
+      xp: Math.max(hist.xp || 0, xp),
+    })
+  } catch {}
+}
 
 // Вернуть true, если произошёл переход на новый день (что-то очистилось)
 export function checkDayRollover() {
@@ -26,6 +52,11 @@ export function checkDayRollover() {
   const food = useFoodStore.getState()
   const act = useActivityStore.getState()
   if (food.dayKey === key && act.dayKey === key) return false
+
+  // Прежде чем обнулять — архивируем уходящий день: даже если приложение
+  // закрыли сразу после записи, вчерашние ккал/вода/шаги/тренировки
+  // гарантированно попадут в статистику
+  archiveOutgoingDay(act.dayKey || food.dayKey, food, act)
 
   useFoodStore.getState().rollDay(key)
   useActivityStore.getState().rollDay(key)
