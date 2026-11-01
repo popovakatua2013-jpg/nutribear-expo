@@ -1,8 +1,8 @@
 // Модалка «История приёмов»: журнал добавленной еды по дням.
 // История не сбрасывается «Новый день» — видно прошлые дни.
-// Поиск по названию блюда: фильтрует журнал по всем дням.
-// Кнопка «+» у блюда — записать его снова в любой приём пищи.
-// Кнопка скачивания — экспорт дневника в CSV через «Поделиться».
+// Поиск по названию блюда + фильтр по приёму пищи — работают вместе,
+// фильтруют журнал по всем дням. Кнопка «+» у блюда — записать его
+// снова в любой приём пищи. Кнопка скачивания — экспорт в CSV.
 
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -16,6 +16,9 @@ import { formatNum } from '@/lib/format'
 import { buildCsv, shareCsv } from '@/lib/data/diary-export'
 
 const DAY_MS = 86400000
+
+// Фильтр по приёму пищи: «Все» + встроенные приёмы (названия — как в списке)
+const MEAL_FILTERS = [{ id: 'all', label: 'Все' }]
 
 // Ключ дня по ЛОКАЛЬНЫМ часам (как в useHistoryStore и дневнике) —
 // раньше был UTC, и записи после полуночи уходили «во вчера»
@@ -50,6 +53,7 @@ export function HistoryModal({ visible, onClose }) {
   const insets = useSafeAreaInsets()
   const [reAddId, setReAddId] = useState(null) // блюдо, для которого открыт выбор приёма
   const [query, setQuery] = useState('') // поиск по названию блюда
+  const [mealFilter, setMealFilter] = useState('all') // фильтр по приёму пищи
 
   // Записать блюдо из журнала снова — в выбранный приём пищи
   function reAdd(row, meal) {
@@ -61,20 +65,22 @@ export function HistoryModal({ visible, onClose }) {
     setReAddId(null)
   }
 
-  // Группировка по дням, новые сверху. Поиск фильтрует блюда по названию
-  // (без учёта регистра) — дни без совпадений прячутся целиком
+  // Группировка по дням, новые сверху. Поиск фильтрует по названию,
+  // фильтр-пилюли — по приёму пищи; работают вместе, дни без совпадений
+  // прячутся целиком
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
     const map = new Map()
     for (const row of history) {
       if (q && !String(row.name || '').toLowerCase().includes(q)) continue
+      if (mealFilter !== 'all' && row.mealId !== mealFilter) continue
       if (!map.has(row.day)) map.set(row.day, [])
       map
         .get(row.day)
         .push({ ...row, mealName: resolveMealName(row.mealId, customMeals) })
     }
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
-  }, [history, customMeals, query])
+  }, [history, customMeals, query, mealFilter])
 
   const foundCount = useMemo(() => groups.reduce((n, [, rows]) => n + rows.length, 0), [groups])
 
@@ -133,9 +139,32 @@ export function HistoryModal({ visible, onClose }) {
             </Pressable>
           </View>
 
-          {/* Поиск по названию блюда — по всем дням журнала */}
+          {/* Фильтр по приёму пищи + поиск — работают вместе */}
           <View className="px-4 pt-3">
-            <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+            <View className="flex-row flex-wrap gap-1.5">
+              {MEAL_FILTERS.concat(
+                MEALS.map((m) => ({ id: m.id, label: m.id === 'snack' ? 'Перекус' : m.name }))
+              ).map((f) => {
+                const active = mealFilter === f.id
+                return (
+                  <Pressable
+                    key={f.id}
+                    onPress={() => setMealFilter(f.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Фильтр: ${f.label}`}
+                    className={`rounded-full px-3 py-1 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-white/5'}`}
+                  >
+                    <Text
+                      className={`font-semibold text-[11px] ${active ? 'text-[#8DABFF]' : 'text-bear-sub'}`}
+                    >
+                      {f.label}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+
+            <View className="mt-2 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
               <Search size={15} color="#8B96B8" />
               <TextInput
                 value={query}
@@ -162,7 +191,7 @@ export function HistoryModal({ visible, onClose }) {
               <Text className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-sub">
                 {foundCount > 0
                   ? `Найдено блюд: ${foundCount}`
-                  : 'Ничего не нашлось — попробуйте другое название'}
+                  : 'Ничего не нашлось — попробуйте другое название или фильтр'}
               </Text>
             )}
           </View>

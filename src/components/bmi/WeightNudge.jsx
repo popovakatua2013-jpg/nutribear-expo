@@ -1,22 +1,26 @@
 // Мягкое напоминание мишки во вкладке ИМТ: если вес не записывался
-// дольше недели — тонкая полоска над «Динамикой веса» с медвежонком.
+// дольше порога из настроек («Ещё» → «Напоминание мишки», 5/7/10 дней) —
+// тонкая полоска над «Динамикой веса» с медвежонком.
 // Тап по полоске открывает окно записи веса. Пока вес свежий — полоски
 // нет вовсе, ничего не давит.
 
 import { DeviceEventEmitter, Image, Pressable, Text, View } from 'react-native'
 import { useProfileStore } from '@/store/useProfileStore'
-import { daysSince, WEIGH_NUDGE_DAYS } from '@/lib/goal'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { daysSince } from '@/lib/goal'
 import { pluralDays } from '@/lib/format'
 
 const BEAR = require('../../../assets/images/bear.webp')
 
 export function WeightNudge() {
   const weights = useProfileStore((s) => s.weights)
+  // Порог настраивается в «Ещё» (карточка «Напоминание мишки»): 5/7/10 дней
+  const nudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
 
   // Нет записей — напоминать не о чем (вес только что заведён в онбординге)
   if (!weights.length || !weights[0]?.date) return null
   const days = daysSince(weights[0].date)
-  if (!(days > WEIGH_NUDGE_DAYS)) return null
+  if (!(days > nudgeDays)) return null
 
   return (
     <Pressable

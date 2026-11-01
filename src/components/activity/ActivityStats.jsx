@@ -13,7 +13,7 @@ import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native
 import { formatNum } from '@/lib/format'
 import { BurnRing } from '../ui/BurnRing'
 
-function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress, onLongPress, longHint, ring }) {
+function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, onPress, onLongPress, longHint, ring }) {
   const Root = onPress || onLongPress ? Pressable : View
   return (
     <Root
@@ -53,6 +53,8 @@ function StatCard({ colors, Icon, label, value, sub, onPlus, plusLabel, onPress,
           <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="font-sans text-[10px] text-bear-sub2">
             {sub}
           </Text>
+          {/* Дополнительная строка (например, «осталось 520 ккал») */}
+          {foot}
         </View>
 
         {ring ? (
@@ -80,7 +82,7 @@ export function ActivityStats({
   steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
   onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
-  onOpenSteps, onOpenMeals, onGoActivity,
+  onOpenSteps, onOpenMeals, onGoActivity, kcalGoal,
 }) {
   const cards = [
     {
@@ -109,6 +111,19 @@ export function ActivityStats({
       label: 'Калории',
       value: formatNum(kcal),
       sub: `сожжено +${formatNum(burned)}`,
+      // Остаток до дневной цели — крупно, зелёным; перебор — красным
+      foot:
+        kcalGoal > 0 ? (
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.25}
+            className={`mt-0.5 font-bold text-[11.5px] ${kcal - kcalGoal >= 0 ? 'text-rose-300' : 'text-emerald-300'}`}
+          >
+            {kcal - kcalGoal >= 0
+              ? `перебор +${formatNum(kcal - kcalGoal)} ккал`
+              : `осталось ${formatNum(kcalGoal - kcal)} ккал`}
+          </Text>
+        ) : null,
       onPress: onOpenMeals, // тап — записать приём пищи
       onLongPress: onEditKcalGoal, // долгий тап — изменить цель калорий
     },

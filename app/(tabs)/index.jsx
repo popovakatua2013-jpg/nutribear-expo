@@ -216,6 +216,7 @@ export default function HomeScreen() {
         <ActivityStats
           steps={extraSteps}
           kcal={consumed}
+          kcalGoal={goals.kcal}
           burned={burned}
           minutes={minutes}
           minutesGoal={goals.minutes}

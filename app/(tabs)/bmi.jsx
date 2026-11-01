@@ -25,6 +25,7 @@ import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { NormCongrats } from '@/components/bmi/NormCongrats'
 import { WeightNudge } from '@/components/bmi/WeightNudge'
+import { StreakHistoryModal } from '@/components/bmi/StreakHistoryModal'
 
 // Мягкое неоновое свечение (дымка как на макете): радиальный градиент
 // плавно уходит в прозрачность — без жёсткого края круглой заливки
@@ -91,6 +92,8 @@ export default function BmiScreen() {
   const lastBmiCat = useProfileStore((s) => s.lastBmiCat)
   const setLastBmiCat = useProfileStore((s) => s.setLastBmiCat)
   const [congratsOpen, setCongratsOpen] = useState(false)
+  // Мини-история ИМТ по неделям — тап по бейджу стрика
+  const [streakOpen, setStreakOpen] = useState(false)
   const [hydrated, setHydrated] = useState(useProfileStore.persist.hasHydrated())
 
   useEffect(() => {
@@ -194,8 +197,14 @@ export default function BmiScreen() {
                   <BmiDonut bmi={bmi} />
                 </Pressable>
                 {normWeeks >= 1 && (
-                  <View
-                    className="flex-row items-center gap-1 rounded-full px-2 py-[3px]"
+                  <Pressable
+                    onPress={() => {
+                      if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+                      setStreakOpen(true)
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`В норме ${normWeeks} недель — открыть историю ИМТ по неделям`}
+                    className="flex-row items-center gap-1 rounded-full px-2 py-[3px] active:opacity-70"
                     style={{
                       backgroundColor: 'rgba(56,189,248,0.13)',
                       borderColor: 'rgba(56,189,248,0.30)',
@@ -210,7 +219,7 @@ export default function BmiScreen() {
                     >
                       {`В норме ${normWeeks} нед.`}
                     </Text>
-                  </View>
+                  </Pressable>
                 )}
               </View>
               <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
@@ -270,6 +279,15 @@ export default function BmiScreen() {
 
       {/* Поздравление медвежонка: один раз, при живом переходе в «Норму» */}
       <NormCongrats open={congratsOpen} onClose={() => setCongratsOpen(false)} bmi={bmi} />
+
+      {/* Мини-история ИМТ по неделям — тап по бейджу стрика */}
+      <StreakHistoryModal
+        open={streakOpen}
+        onClose={() => setStreakOpen(false)}
+        weightKg={weightKg}
+        weights={weights}
+        heightCm={heightCm}
+      />
     </View>
   )
 }

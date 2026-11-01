@@ -12,11 +12,15 @@ export const useUiPrefsStore = create(
     (set) => ({
       expanded: {}, // { [storageKey]: true|false }
       haptics: true, // вибро-отклик в приложении (тап по кольцу ИМТ и т.д.)
+      weighNudgeDays: 7, // порог напоминания мишки о взвешивании (5/7/10 дней)
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
 
       setHaptics: (value) => set({ haptics: !!value }),
+
+      setWeighNudgeDays: (n) =>
+        set({ weighNudgeDays: [5, 7, 10].includes(n) ? n : 7 }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',
