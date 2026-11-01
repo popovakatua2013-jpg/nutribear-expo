@@ -3,12 +3,13 @@
 
 import { ACTIVITY_LEVELS } from './onboarding-options'
 
-// Пять категорий: диапазон, название, цвет ромбика и цвет кольца
+// Пять категорий: диапазон, название, цвет ромбика и цвет кольца.
+// Диапазоны — с точками, как на фото-макете (18.5 – 24.9)
 export const BMI_CATEGORIES = [
-  { id: 'low', min: 0, max: 18.5, range: '< 18,5', label: 'Недостаток веса', color: '#facc15' },
-  { id: 'norm', min: 18.5, max: 25, range: '18,5 – 24,9', label: 'Норма', color: '#4ade80' },
-  { id: 'over', min: 25, max: 30, range: '25 – 29,9', label: 'Лишний вес', color: '#fb923c' },
-  { id: 'obese1', min: 30, max: 35, range: '30 – 34,9', label: 'Ожирение I ст.', color: '#f87171' },
+  { id: 'low', min: 0, max: 18.5, range: '< 18.5', label: 'Недостаток веса', color: '#facc15' },
+  { id: 'norm', min: 18.5, max: 25, range: '18.5 – 24.9', label: 'Норма', color: '#4ade80' },
+  { id: 'over', min: 25, max: 30, range: '25 – 29.9', label: 'Лишний вес', color: '#fb923c' },
+  { id: 'obese1', min: 30, max: 35, range: '30 – 34.9', label: 'Ожирение I ст.', color: '#f87171' },
   { id: 'obese2', min: 35, max: Infinity, range: '35+', label: 'Ожирение II–III ст.', color: '#ef4444' },
 ]
 
@@ -47,7 +48,7 @@ export const RECOMMENDATIONS = {
     ],
   },
   norm: {
-    main: 'Твой вес в норме! Продолжай в том же духе. Больше белка и воды — и результат будет ещё лучше.',
+    main: 'Твой ИМТ в пределах нормы! Продолжай поддерживать активный образ жизни и сбалансированное питание.',
     tips: [
       'Держи норму калорий каждый день — цели уже настроены',
       'Пей достаточно воды — около 2 литров в день',
@@ -129,12 +130,9 @@ export function bodyFatPercent(bmi, age, sex) {
   return Math.round(Math.min(60, Math.max(5, raw)) * 10) / 10
 }
 
-// «22,4» / «62,3» — русская запись с запятой
+// «22.4» / «62.3» — с точкой, как на фото-макете (не локаль ru-RU с запятой)
 export function fmtDecimal(n) {
-  return (n || 0).toLocaleString('ru-RU', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })
+  return (Math.round((n || 0) * 10) / 10).toFixed(1)
 }
 
 // Вес за неделю (Пн…Вс): реальные записи пользователя; дни без записей

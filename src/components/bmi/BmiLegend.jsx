@@ -7,8 +7,8 @@ import { Text, View } from 'react-native'
 import { bmiCategory } from '@/lib/data/bmi'
 
 const ROWS = [
-  { ids: ['norm'], label: 'Норма', range: '18,5 – 24,9', color: '#38BDF8' },
-  { ids: ['over'], label: 'Лишний вес', range: '25 – 29,9', color: '#A855F7' },
+  { ids: ['norm'], label: 'Норма', range: '18.5 – 24.9', color: '#38BDF8' },
+  { ids: ['over'], label: 'Лишний вес', range: '25 – 29.9', color: '#A855F7' },
   { ids: ['obese1', 'obese2'], label: 'Ожирение', range: '≥ 30', color: '#F97316' },
 ]
 
@@ -17,15 +17,15 @@ export function BmiLegend({ bmi }) {
 
   return (
     <View
-      className="gap-[7px]"
+      className="gap-[8px]"
       accessibilityLabel="Категории ИМТ: норма, лишний вес, ожирение"
     >
       {ROWS.map((row) => {
         const isActive = row.ids.includes(active)
         return (
-          <View key={row.label} className="flex-row items-center gap-[5px]">
+          <View key={row.label} className="flex-row items-center gap-[4px]">
             <View
-              className="h-[8px] w-[8px] shrink-0 rounded-full"
+              className="h-[9px] w-[9px] shrink-0 rounded-full"
               style={{
                 backgroundColor: row.color,
                 shadowColor: row.color,
@@ -36,7 +36,7 @@ export function BmiLegend({ bmi }) {
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.1}
-              className={`min-w-0 flex-1 text-[9.5px] leading-tight ${
+              className={`min-w-0 flex-1 text-[9px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-semibold text-[#E7E3F8]'
               }`}
             >
@@ -45,7 +45,7 @@ export function BmiLegend({ bmi }) {
             <Text
               maxFontSizeMultiplier={1.1}
               numberOfLines={1}
-              className={`shrink-0 text-[10px] leading-tight ${
+              className={`shrink-0 text-[9.5px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-sans text-[#CBC4E8]'
               }`}
             >

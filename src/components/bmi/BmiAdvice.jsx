@@ -104,7 +104,7 @@ export function BmiAdvice({ bmi, onDetails }) {
           />
         </View>
         <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[12px] text-white">
-          18,5 – 24,9
+          18.5 – 24.9
         </Text>
       </View>
     </View>

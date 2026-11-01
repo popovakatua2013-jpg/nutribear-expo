@@ -1,8 +1,8 @@
 // Кольцевой датчик ИМТ 1-в-1 с макетом: толстое градиентное кольцо
 // (голубой → синий → фиолетовый → маджента), белая светящаяся ДУГА на
-// позиции текущего ИМТ (как на макете — сверху для нормы), в центре —
-// крупное значение и бейдж категории: полупрозрачный фон цвета категории,
-// яркий текст и галочка в залитом кружке («Норма ✓» — зелёная пилюля).
+// позиции текущего ИМТ, в центре — крупное значение и компактный бейдж
+// категории (КОРОТКОЕ название — «Норма», «Ожирение» — чтобы бейдж
+// целиком помещался внутри отверстия кольца и не налезал на дугу).
 // Шкала кольца: ИМТ 15 → 40, старт с 9 часов — норма ложится на верх.
 
 import { Text, View } from 'react-native'
@@ -10,10 +10,20 @@ import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle, Path } from 're
 import { Check } from 'lucide-react-native'
 import { bmiCategory, fmtDecimal } from '@/lib/data/bmi'
 
-const SIZE = 100
+const SIZE = 116
 const C = SIZE / 2
-const R = 40
-const STROKE = 14
+const R = 45
+const STROKE = 15
+
+// Короткое название категории для бейджа внутри кольца — полное
+// («Ожирение II–III ст.») не помещается в отверстии
+const SHORT_LABEL = {
+  low: 'Дефицит',
+  norm: 'Норма',
+  over: 'Лишний вес',
+  obese1: 'Ожирение',
+  obese2: 'Ожирение',
+}
 
 // Шкала маркера: ИМТ 15 → 40; угол по часовой от 12 часов.
 // 262° — старт (9 часов), 270° дуги: норма 18,5–25 ложится на верх,
@@ -43,7 +53,7 @@ export function BmiDonut({ bmi }) {
   const arc = `M ${ax.toFixed(2)} ${ay.toFixed(2)} A ${R} ${R} 0 0 1 ${bx.toFixed(2)} ${by.toFixed(2)}`
 
   return (
-    <View className="h-[100px] w-[100px] shrink-0 items-center justify-center">
+    <View className="h-[116px] w-[116px] shrink-0 items-center justify-center">
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRing" x1="0" y1="0" x2="1" y2="1">
@@ -92,11 +102,11 @@ export function BmiDonut({ bmi }) {
         />
       </Svg>
 
-      <Text className="font-extrabold text-[29px] leading-none tracking-tight text-white">
+      <Text className="font-extrabold text-[30px] leading-none tracking-tight text-white">
         {fmtDecimal(bmi)}
       </Text>
       <View
-        className="mt-1 flex-row items-center gap-1 rounded-full px-1.5 py-[3px]"
+        className="mt-[3px] flex-row items-center gap-[3px] rounded-full px-1 py-[2.5px]"
         style={{
           backgroundColor: `${cat.color}26`,
           shadowColor: cat.color,
@@ -106,17 +116,18 @@ export function BmiDonut({ bmi }) {
       >
         <Text
           maxFontSizeMultiplier={1.1}
-          className="font-bold text-[10px] leading-none"
+          numberOfLines={1}
+          className="font-bold text-[8.5px] leading-none"
           style={{ color: cat.color }}
         >
-          {cat.label}
+          {SHORT_LABEL[cat.id] || cat.label}
         </Text>
         {/* Галочка в залитом кружке — как на макете */}
         <View
-          className="h-[14px] w-[14px] items-center justify-center rounded-full"
+          className="h-[13px] w-[13px] items-center justify-center rounded-full"
           style={{ backgroundColor: cat.color }}
         >
-          <Check size={9} color="#0B1B12" strokeWidth={3.6} />
+          <Check size={8.5} color="#0B1B12" strokeWidth={3.6} />
         </View>
       </View>
     </View>

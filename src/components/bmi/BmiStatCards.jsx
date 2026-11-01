@@ -10,18 +10,19 @@ import { Check, Ruler, TrendingDown, TrendingUp, Weight } from 'lucide-react-nat
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange, weekWeights } from '@/lib/data/bmi'
 
-// Заметно светлее фона блока — карточки «читаются» на нём, как на макете
+// Тёмные полупрозрачные карточки на фоне страницы — как на макете
+// (герой больше не залит фиолетовым, карточки читаются сами)
 const CARD = {
-  backgroundColor: 'rgba(139,92,246,0.16)',
-  borderColor: 'rgba(196,132,252,0.30)',
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
   borderWidth: 1,
 }
 
 function Chip({ children }) {
   return (
-    <View className="h-[26px] w-[26px] overflow-hidden rounded-[9px]">
+    <View className="h-[28px] w-[28px] overflow-hidden rounded-[10px]">
       <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#8B5CF6', '#6D28D9']}>
-        <View className="h-[26px] w-[26px] items-center justify-center">{children}</View>
+        <View className="h-[28px] w-[28px] items-center justify-center">{children}</View>
       </LinearGradient>
     </View>
   )
@@ -60,7 +61,7 @@ export function BmiStatCards() {
       >
         <View className="flex-row items-center gap-1.5">
           <Chip>
-            <Weight size={13} color="#FFFFFF" />
+            <Weight size={14} color="#FFFFFF" />
           </Chip>
           <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
             Вес
@@ -90,7 +91,7 @@ export function BmiStatCards() {
       <View accessibilityLabel={`Рост ${heightCm} сантиметров`} className="min-w-0 flex-1 rounded-[16px] p-2" style={CARD}>
         <View className="flex-row items-center gap-1.5">
           <Chip>
-            <Ruler size={13} color="#FFFFFF" />
+            <Ruler size={14} color="#FFFFFF" />
           </Chip>
           <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-semibold text-[11.5px] text-bear-sub">
             Рост

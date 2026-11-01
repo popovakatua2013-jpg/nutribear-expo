@@ -1,8 +1,9 @@
-// Неоновый силуэт человека 1-в-1 с макетом: составная яркая фигура
-// (голова, торс, руки, ноги) с плотным свечением, ДВУМЯ орбитальными
-// кольцами (талия + бёдра, как на макете), бликами мышц и светящейся
-// ореолом-платформой у ног. Части нарисованы с зазорами — стиль
-// неоновой фигурки, стыки не видны.
+// Неоновый силуэт 1-в-1 с фото-макетом: стройная изящная фигура
+// (узкие плечи, выраженная талия, длинные ноги), насыщенный фиолетовый
+// градиент с ярким неоновым контуром и плотным свечением. Вокруг торса —
+// ОДНА спиральная лента: задняя дуга уходит ЗА тело, передняя ложится
+// поверх живота по диагонали (слева снизу — направо вверх), как на макете.
+// У ног — светящаяся ореол-платформа.
 
 import Svg, {
   Defs,
@@ -15,39 +16,42 @@ import Svg, {
   Circle,
 } from 'react-native-svg'
 
-const HEAD = 'M 60 6.5 C 67 6.5 72.5 12.5 72.5 21 C 72.5 29.5 67 35.5 60 35.5 C 53 35.5 47.5 29.5 47.5 21 C 47.5 12.5 53 6.5 60 6.5 Z'
+const HEAD = 'M 60 8 C 66.3 8 71 14 71 21.5 C 71 29.5 66.3 35.5 60 35.5 C 53.7 35.5 49 29.5 49 21.5 C 49 14 53.7 8 60 8 Z'
 
 const TORSO =
-  'M 53 37 C 52 45 44 49 37 52 C 31 56 29 64 29 73 C 29 85 34 95 38 103 C 32 111 28 123 30 137 C 31 149 35 159 37 166 L 83 166 C 85 159 89 149 90 137 C 92 123 88 111 82 103 C 86 95 91 85 91 73 C 91 64 89 56 83 52 C 76 49 68 45 67 37 C 63 39 57 39 53 37 Z'
+  'M 55.5 34 C 55 42 52.5 47.5 46.5 51 C 40.5 54.5 38 60.5 38.5 68 C 39 78 42.5 88 46 95.5 C 43.8 105 42.8 117 44 129 C 45.2 141.5 48.5 152.5 51.5 161 L 68.5 161 C 71.5 152.5 74.8 141.5 76 129 C 77.2 117 76.2 105 74 95.5 C 77.5 88 81 78 81.5 68 C 82 60.5 79.5 54.5 73.5 51 C 67.5 47.5 65 42 64.5 34 C 63 35.8 57 35.8 55.5 34 Z'
 
 const ARM_R =
-  'M 85 56 C 93 60 97 68 97 79 C 97 93 93 107 90 118 C 89 123 84 124 83 119 C 86 107 90 95 90 83 C 90 73 88 63 82 58 Z'
+  'M 74.5 53.5 C 81.5 57.5 85.5 65 86.5 75.5 C 87.6 88 85.5 102 83 113.5 C 82.4 118 77.8 118.3 77.6 113.8 C 79.8 103 81.4 91 80.8 80 C 80.3 70.5 78 61.5 72.5 57 Z'
 
 const ARM_L =
-  'M 35 56 C 27 60 23 68 23 79 C 23 93 27 107 30 118 C 31 123 36 124 37 119 C 34 107 30 95 30 83 C 30 73 32 63 38 58 Z'
+  'M 45.5 53.5 C 38.5 57.5 34.5 65 33.5 75.5 C 32.4 88 34.5 102 37 113.5 C 37.6 118 42.2 118.3 42.4 113.8 C 40.2 103 38.6 91 39.2 80 C 39.7 70.5 42 61.5 47.5 57 Z'
 
 const LEG_R =
-  'M 67 168 C 74 170 79 174 80 181 C 81 196 79 212 76 226 C 75 238 75 248 75 256 L 62 256 C 62 244 63 230 63 216 C 63 200 63 184 62 172 C 62 170 64 168 67 168 Z'
+  'M 66.5 162 C 72.5 165 76 171 76.5 179 C 77.3 193.5 75 209 72.8 222 C 71.8 234 71.6 246 71.8 256 L 62 256 C 62 244 62.6 230 63 215.5 C 63.4 199.5 63.4 183 62.8 168.5 C 64 164.5 65.2 161.6 66.5 162 Z'
 
 const LEG_L =
-  'M 53 168 C 46 170 41 174 40 181 C 39 196 41 212 44 226 C 45 238 45 248 45 256 L 58 256 C 58 244 57 230 57 216 C 57 200 57 184 58 172 C 58 170 56 168 53 168 Z'
+  'M 53.5 162 C 47.5 165 44 171 43.5 179 C 42.7 193.5 45 209 47.2 222 C 48.2 234 48.4 246 48.2 256 L 58 256 C 58 244 57.4 230 57 215.5 C 56.6 199.5 56.6 183 57.2 168.5 C 56 164.5 54.8 161.6 53.5 162 Z'
 
 const PARTS = [HEAD, TORSO, ARM_R, ARM_L, LEG_R, LEG_L]
 
-// Тонкие «мышечные» блики внутри тела — как анатомические линии на макете
+// Тонкие «мышечные» блики: ключицы, грудь, центральная линия, пресс, бёдра
 const DETAILS = [
-  // ключицы
-  'M 50 46 Q 60 51 70 46',
-  // грудь
-  'M 60 58 Q 51 66 45 63',
-  'M 60 58 Q 69 66 75 63',
-  // центральная линия и пресс
-  'M 60 74 L 60 120',
-  'M 51 90 Q 60 94 69 90',
-  'M 52 105 Q 60 109 68 105',
-  // бёдра
-  'M 52 150 Q 60 154 68 150',
+  'M 51.5 47 Q 60 51 68.5 47',
+  'M 60 60 Q 53.5 66.5 48 64',
+  'M 60 60 Q 66.5 66.5 72 64',
+  'M 60 75 L 60 118',
+  'M 52.5 88 Q 60 92 67.5 88',
+  'M 53 102 Q 60 106 67 102',
+  'M 53.5 143 Q 60 147 66.5 143',
 ]
+
+// Спиральная лента вокруг торса: эллипс 45×12.5 с наклоном −20°,
+// центр (60, 103) — на талии, как на макете. Задняя (верхняя) дуга
+// рисуется ДО тела, передняя (нижняя) — ПОСЛЕ — лента «обвивает» фигуру
+const RING_TRANSFORM = 'translate(60 103) rotate(-20)'
+const RING_BACK = 'M -45 0 A 45 12.5 0 0 1 45 0'
+const RING_FRONT = 'M -45 0 A 45 12.5 0 0 0 45 0'
 
 export function BodySilhouette({ width = 104, height }) {
   // height задан — тянем фигуру на неё (как на макете: от кольца
@@ -62,11 +66,11 @@ export function BodySilhouette({ width = 104, height }) {
       preserveAspectRatio={height ? 'none' : 'xMidYMid meet'}
     >
       <Defs>
-        {/* Тело: насыщенный фиолетовый неон — светлее и ярче, как на макете */}
+        {/* Тело: насыщенный фиолетовый неон — светлый верх, глубокий низ */}
         <LinearGradient id="nbsBody" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#E9D5FF" stopOpacity="0.95" />
-          <Stop offset="0.45" stopColor="#A855F7" stopOpacity="0.82" />
-          <Stop offset="1" stopColor="#6D28D9" stopOpacity="0.62" />
+          <Stop offset="0" stopColor="#D8B4FE" stopOpacity="0.95" />
+          <Stop offset="0.5" stopColor="#A855F7" stopOpacity="0.9" />
+          <Stop offset="1" stopColor="#6D28D9" stopOpacity="0.78" />
         </LinearGradient>
         {/* Ореол-платформа у ног — радиальное свечение */}
         <RadialGradient id="nbsAura" cx="0.5" cy="0.5" rx="0.5" ry="0.5">
@@ -77,107 +81,67 @@ export function BodySilhouette({ width = 104, height }) {
       </Defs>
 
       {/* Ореол под ногами: широкое свечение + светящееся кольцо платформы */}
-      <Ellipse cx={60} cy={249} rx={58} ry={17} fill="url(#nbsAura)" />
+      <Ellipse cx={60} cy={249} rx={55} ry={16} fill="url(#nbsAura)" />
       <Ellipse
         cx={60}
         cy={249}
-        rx={48}
+        rx={46}
         ry={10}
         fill="none"
         stroke="#8B5CF6"
         strokeOpacity={0.4}
-        strokeWidth={5}
+        strokeWidth={4.5}
       />
       <Ellipse
         cx={60}
         cy={249}
-        rx={44}
+        rx={42}
         ry={8.5}
         fill="none"
         stroke="#D8B4FE"
         strokeOpacity={0.85}
-        strokeWidth={2}
+        strokeWidth={1.8}
       />
 
+      {/* Задняя (верхняя) дуга ленты — уходит ЗА тело */}
+      <G transform={RING_TRANSFORM}>
+        <Path d={RING_BACK} fill="none" stroke="#8B5CF6" strokeOpacity={0.45} strokeWidth={5.5} strokeLinecap="round" />
+        <Path d={RING_BACK} fill="none" stroke="#C4B5FD" strokeOpacity={0.85} strokeWidth={1.6} strokeLinecap="round" />
+      </G>
+
       {/* Плотное свечение: те же контуры широким насыщенным штрихом */}
-      <G opacity={0.55} fill="none" stroke="#A855F7" strokeWidth={9} strokeLinejoin="round">
+      <G opacity={0.6} fill="none" stroke="#A855F7" strokeWidth={8} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`h${i}`} d={d} />
         ))}
       </G>
 
       {/* Тело: яркая градиентная заливка + светлый неоновый контур */}
-      <G fill="url(#nbsBody)" stroke="#F3E8FF" strokeWidth={1.7} strokeOpacity={1} strokeLinejoin="round">
+      <G fill="url(#nbsBody)" stroke="#F3E8FF" strokeWidth={1.6} strokeOpacity={0.95} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`p${i}`} d={d} />
         ))}
       </G>
 
       {/* Тонкие блики мышц поверх заливки */}
-      <G fill="none" stroke="#F5F3FF" strokeWidth={1} strokeOpacity={0.42} strokeLinecap="round">
+      <G fill="none" stroke="#F5F3FF" strokeWidth={1} strokeOpacity={0.45} strokeLinecap="round">
         {DETAILS.map((d, i) => (
           <Path key={`d${i}`} d={d} />
         ))}
       </G>
 
-      {/* Орбитальное кольцо на талии: широкое свечение + яркая сердцевина */}
-      <Ellipse
-        cx={60}
-        cy={113}
-        rx={41}
-        ry={10.5}
-        fill="none"
-        stroke="#8B5CF6"
-        strokeOpacity={0.45}
-        strokeWidth={6}
-        rotation={-14}
-        origin="60,113"
-      />
-      <Ellipse
-        cx={60}
-        cy={113}
-        rx={41}
-        ry={10.5}
-        fill="none"
-        stroke="#DDD6FE"
-        strokeWidth={1.9}
-        strokeOpacity={1}
-        rotation={-14}
-        origin="60,113"
-      />
-
-      {/* Второе кольцо на бёдрах — ниже и с наклоном в другую сторону */}
-      <Ellipse
-        cx={60}
-        cy={152}
-        rx={37}
-        ry={9}
-        fill="none"
-        stroke="#8B5CF6"
-        strokeOpacity={0.4}
-        strokeWidth={5.5}
-        rotation={12}
-        origin="60,152"
-      />
-      <Ellipse
-        cx={60}
-        cy={152}
-        rx={37}
-        ry={9}
-        fill="none"
-        stroke="#C4B5FD"
-        strokeWidth={1.7}
-        strokeOpacity={0.95}
-        rotation={12}
-        origin="60,152"
-      />
+      {/* Передняя (нижняя) дуга ленты — ложится поверх живота по диагонали */}
+      <G transform={RING_TRANSFORM}>
+        <Path d={RING_FRONT} fill="none" stroke="#8B5CF6" strokeOpacity={0.5} strokeWidth={5.5} strokeLinecap="round" />
+        <Path d={RING_FRONT} fill="none" stroke="#EDE9FE" strokeOpacity={1} strokeWidth={2} strokeLinecap="round" />
+      </G>
 
       {/* Искры вокруг фигуры */}
-      <Circle cx={15} cy={40} r={1.8} fill="#E9D5FF" opacity={0.75} />
-      <Circle cx={106} cy={148} r={2.4} fill="#DDD6FE" opacity={0.65} />
-      <Circle cx={10} cy={182} r={1.4} fill="#DDD6FE" opacity={0.6} />
-      <Circle cx={110} cy={30} r={1.5} fill="#E9D5FF" opacity={0.65} />
-      <Circle cx={14} cy={116} r={1.2} fill="#C4B5FD" opacity={0.55} />
+      <Circle cx={16} cy={42} r={1.8} fill="#E9D5FF" opacity={0.75} />
+      <Circle cx={104} cy={150} r={2.4} fill="#DDD6FE" opacity={0.65} />
+      <Circle cx={11} cy={184} r={1.4} fill="#DDD6FE" opacity={0.6} />
+      <Circle cx={108} cy={32} r={1.5} fill="#E9D5FF" opacity={0.65} />
+      <Circle cx={14} cy={118} r={1.2} fill="#C4B5FD" opacity={0.55} />
     </Svg>
   )
 }
