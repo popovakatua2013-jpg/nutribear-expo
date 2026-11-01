@@ -50,6 +50,7 @@ export function WeighReminderCard() {
 
   return (
     <CollapsibleCard
+      storageKey="weigh-reminder"
       accessibilityLabel="Напоминание о взвешивании"
       icon={<Scale size={18} color="#7DD3FC" />}
       title="Взвешивание"

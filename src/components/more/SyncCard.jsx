@@ -73,6 +73,7 @@ export function SyncCard() {
 
   return (
     <CollapsibleCard
+      storageKey="sync"
       accessibilityLabel="Синхронизация"
       icon={<Watch size={18} color="#38bdf8" />}
       title="Синхронизация"

@@ -86,6 +86,7 @@ export function DataActions() {
 
   return (
     <CollapsibleCard
+      storageKey="data-actions"
       accessibilityLabel="Данные"
       icon={<Database size={18} color="#8DABFF" />}
       title="Данные"

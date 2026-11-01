@@ -17,6 +17,7 @@ export function AboutCard() {
 
   return (
     <CollapsibleCard
+      storageKey="about"
       accessibilityLabel="О приложении"
       icon={<Text className="text-[20px]">🐻</Text>}
       title="NutriBear"

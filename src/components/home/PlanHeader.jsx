@@ -1,17 +1,14 @@
 // Шапка карточки «Приёмы пищи»: фиолетовый значок, заголовок и
 // фиолетовая пилюля «+ Добавить» (как в референсе) — добавляет блюдо
 // в первый приём без записей. Ниже, мелкой служебной строкой —
-// кнопки: копировать вчерашний день, история приёмов, гид по порциям,
+// кнопки: повторить день (выбор даты), история приёмов, гид по порциям,
 // и ссылка «Все» — управление блюдами.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Copy, History, UtensilsCrossed, ChevronRight, Hand, Plus } from 'lucide-react-native'
-import { useFoodStore } from '@/store/useFoodStore'
-import { useToast } from '@/components/ui/Toast'
 import { PortionsModal } from './PortionsModal'
-
-const yesterdayKey = () => new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+import { RepeatDayModal } from './RepeatDayModal'
 
 function IconBtn({ onPress, label, children }) {
   return (
@@ -27,49 +24,11 @@ function IconBtn({ onPress, label, children }) {
 }
 
 export function PlanHeader({ onViewAll, onHistory, onAdd }) {
-  const addEntry = useFoodStore((s) => s.addEntry)
-  const foodHistory = useFoodStore((s) => s.history)
-  const { toast } = useToast()
   const [portionsOpen, setPortionsOpen] = useState(false)
+  const [repeatOpen, setRepeatOpen] = useState(false)
 
-  // Скопировать все вчерашние записи в сегодняшний дневник
-  function copyYesterday() {
-    const rows = foodHistory.filter((h) => h.day === yesterdayKey())
-    if (!rows.length) {
-      toast({ title: 'Вчера записей не было', description: 'Копировать нечего 🤷' })
-      return
-    }
-    rows.forEach((r) =>
-      addEntry(r.mealId, {
-        // в истории БЖУ хранится на порцию — пересобираем «на 100 г»
-        // (клетчатка/сахар и витамины/минералы тоже — иначе рейтинг
-        // дня по копии обнулится)
-        food: {
-          id: r.foodId,
-          name: r.name,
-          emoji: r.emoji,
-          p: ((r.p || 0) * 100) / (r.grams || 1),
-          f: ((r.f || 0) * 100) / (r.grams || 1),
-          c: ((r.c || 0) * 100) / (r.grams || 1),
-          fib: ((r.fib || 0) * 100) / (r.grams || 1),
-          sug: ((r.sug || 0) * 100) / (r.grams || 1),
-          fe: ((r.fe || 0) * 100) / (r.grams || 1),
-          ca: ((r.ca || 0) * 100) / (r.grams || 1),
-          k: ((r.k || 0) * 100) / (r.grams || 1),
-          mg: ((r.mg || 0) * 100) / (r.grams || 1),
-          vitc: ((r.vitc || 0) * 100) / (r.grams || 1),
-          vita: ((r.vita || 0) * 100) / (r.grams || 1),
-          mk: r.mk,
-        },
-        grams: r.grams,
-        kcal: r.kcal,
-      })
-    )
-    toast({
-      title: '📋 Вчерашний день скопирован',
-      description: `Добавлено записей: ${rows.length}`,
-    })
-  }
+  // Повтор дня: кнопка копирования открывает RepeatDayModal — список
+  // последних дней с записями, тап по дню и «Скопировать в сегодня»
 
   return (
     <View className="mb-3">
@@ -95,9 +54,9 @@ export function PlanHeader({ onViewAll, onHistory, onAdd }) {
         )}
       </View>
 
-      {/* служебная строка: копировать / история / порции / все блюда */}
+      {/* служебная строка: повторить день / история / порции / все блюда */}
       <View className="mt-2 flex-row items-center justify-end gap-1.5">
-        <IconBtn onPress={copyYesterday} label="Копировать вчерашний день">
+        <IconBtn onPress={() => setRepeatOpen(true)} label="Повторить день — скопировать еду выбранного дня">
           <Copy size={15} color="#AEB9D9" />
         </IconBtn>
         <IconBtn onPress={onHistory} label="История приёмов">
@@ -120,6 +79,7 @@ export function PlanHeader({ onViewAll, onHistory, onAdd }) {
       </View>
 
       <PortionsModal visible={portionsOpen} onClose={() => setPortionsOpen(false)} />
+      <RepeatDayModal visible={repeatOpen} onClose={() => setRepeatOpen(false)} />
     </View>
   )
 }

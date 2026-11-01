@@ -1,11 +1,14 @@
 // Сворачиваемая карточка: свёрнута по умолчанию, тап по шапке раскрывает.
-// Шапка: иконка + заголовок + короткая сводка + шеврон. Слот right — для
-// тумблеров: он ВНЕ нажимаемой шапки, чтобы переключатель не сворачивал
-// карточку. Тело рендерится только в раскрытом виде.
+// Если передан storageKey — состояние запоминается между запусками
+// (useUiPrefsStore, AsyncStorage). Шапка: иконка + заголовок + короткая
+// сводка + шеврон. Слот right — для тумблеров: он ВНЕ нажимаемой шапки,
+// чтобы переключатель не сворачивал карточку. Тело рендерится только
+// в раскрытом виде.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 
 export function CollapsibleCard({
   icon,
@@ -13,9 +16,20 @@ export function CollapsibleCard({
   summary,
   right,
   children,
+  storageKey,
   accessibilityLabel,
 }) {
-  const [open, setOpen] = useState(false)
+  const stored = useUiPrefsStore((s) => (storageKey ? s.expanded[storageKey] : undefined))
+  const setExpanded = useUiPrefsStore((s) => s.setExpanded)
+  const [localOpen, setLocalOpen] = useState(false)
+
+  // С ключом состояние живёт в сторе, без ключа — как раньше, локально
+  const open = storageKey ? (stored ?? false) : localOpen
+  const toggle = () => {
+    const next = !open
+    if (storageKey) setExpanded(storageKey, next)
+    else setLocalOpen(next)
+  }
 
   return (
     <View
@@ -24,7 +38,7 @@ export function CollapsibleCard({
     >
       <View className="flex-row items-center">
         <Pressable
-          onPress={() => setOpen((v) => !v)}
+          onPress={toggle}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={`${title}${open ? ' — свернуть' : ' — раскрыть'}`}

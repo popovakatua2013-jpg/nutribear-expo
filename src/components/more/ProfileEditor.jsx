@@ -61,6 +61,7 @@ export function ProfileEditor() {
 
   return (
     <CollapsibleCard
+      storageKey="profile"
       accessibilityLabel="Профиль"
       icon={<UserRound size={18} color="#7da2ff" />}
       title="Профиль"

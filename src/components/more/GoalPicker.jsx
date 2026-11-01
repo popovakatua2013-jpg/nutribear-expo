@@ -73,6 +73,7 @@ export function GoalPicker() {
 
   return (
     <CollapsibleCard
+      storageKey="goal"
       accessibilityLabel="Цель питания"
       icon={<Target size={18} color="#c084fc" />}
       title="Моя цель"

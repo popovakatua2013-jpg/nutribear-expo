@@ -83,6 +83,7 @@ export function MealRemindersCard() {
 
   return (
     <CollapsibleCard
+      storageKey="meal-reminders"
       accessibilityLabel="Напоминания о приёмах пищи"
       icon={<UtensilsCrossed size={18} color="#F59E0B" />}
       title="Напоминания о еде"

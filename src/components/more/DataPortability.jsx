@@ -85,6 +85,7 @@ export function DataPortability() {
 
   return (
     <CollapsibleCard
+      storageKey="data-portability"
       accessibilityLabel="Приватность"
       icon={<ShieldCheck size={18} color="#4ade80" />}
       title="Приватность и данные"

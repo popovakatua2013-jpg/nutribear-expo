@@ -5,19 +5,19 @@ export const MEALS = [
   {
     id: 'breakfast',
     name: 'Завтрак',
-    image: require('../../../assets/images/breakfast.jpg'),
+    image: require('../../../assets/images/breakfast.webp'),
     alt: 'Овсяная каша с ягодами',
   },
   {
     id: 'lunch',
     name: 'Обед',
-    image: require('../../../assets/images/lunch.jpg'),
+    image: require('../../../assets/images/lunch.webp'),
     alt: 'Куриная грудка с овощами и рисом',
   },
   {
     id: 'dinner',
     name: 'Ужин',
-    image: require('../../../assets/images/dinner.jpg'),
+    image: require('../../../assets/images/dinner.webp'),
     alt: 'Лосось с зелёной фасолью и овощами',
   },
   {
@@ -25,7 +25,7 @@ export const MEALS = [
     name: 'Перекус/Полдник',
     // короткое имя для узкой плитки на главной (MealCard)
     short: 'Перекус',
-    image: require('../../../assets/images/snack.jpg'),
+    image: require('../../../assets/images/snack.webp'),
     alt: 'Йогурт с ягодами и орехами',
   },
 ]

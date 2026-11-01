@@ -4,7 +4,9 @@
 // Намеренно маленькая (~56 px) — мишка встречает, но не съедает экран.
 
 import { Image, Text, View } from 'react-native'
+import { WifiOff } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { useIsOnline } from '@/lib/useIsOnline'
 
 const BEAR = require('../../../assets/images/bear.webp')
 
@@ -33,6 +35,7 @@ function statusLine(consumed, target) {
 
 export function Greeting({ consumed = 0, target = 0 }) {
   const now = new Date()
+  const online = useIsOnline()
   const dateLabel = `${WEEKDAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`
 
   return (
@@ -66,10 +69,24 @@ export function Greeting({ consumed = 0, target = 0 }) {
         </Text>
       </View>
 
-      <View className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-        <Text maxFontSizeMultiplier={1.25} className="font-medium text-[11px] text-bear-soft">
-          {dateLabel}
-        </Text>
+      {/* Чипы справа: «Офлайн» (когда нет сети) над чипом с датой */}
+      <View className="shrink-0 items-end gap-1">
+        {!online && (
+          <View
+            accessibilityLabel="Нет подключения к интернету"
+            className="flex-row items-center gap-1 rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-2 py-1"
+          >
+            <WifiOff size={11} color="#FBBF24" strokeWidth={2.5} />
+            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[10px] text-[#FBBF24]">
+              Офлайн
+            </Text>
+          </View>
+        )}
+        <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+          <Text maxFontSizeMultiplier={1.25} className="font-medium text-[11px] text-bear-soft">
+            {dateLabel}
+          </Text>
+        </View>
       </View>
     </View>
   )
