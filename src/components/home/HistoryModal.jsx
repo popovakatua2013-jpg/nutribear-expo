@@ -1,8 +1,10 @@
 // Модалка «История приёмов»: журнал добавленной еды по дням.
 // История не сбрасывается «Новый день» — видно прошлые дни.
 // Поиск по названию блюда + фильтр по приёму пищи — работают вместе,
-// фильтруют журнал по всем дням. Кнопка «+» у блюда — записать его
-// снова в любой приём пищи. Кнопка скачивания — экспорт в CSV.
+// фильтруют журнал по всем дням. Есть фильтр «Пользовательские
+// перекусы» — записи в свои дополнительные приёмы пищи («Перекус 2»,
+// «Перекус 3»…, в том числе уже удалённые). Кнопка «+» у блюда —
+// записать его снова в любой приём пищи. Кнопка скачивания — экспорт в CSV.
 
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -73,7 +75,11 @@ export function HistoryModal({ visible, onClose }) {
     const map = new Map()
     for (const row of history) {
       if (q && !String(row.name || '').toLowerCase().includes(q)) continue
-      if (mealFilter !== 'all' && row.mealId !== mealFilter) continue
+      if (mealFilter === 'custom') {
+        // Свои приёмы пищи: всё, что не встроенный приём. Записи в уже
+        // удалённые «Перекус 2/3» тоже здесь — журнал их помнит
+        if (MEALS.some((m) => m.id === row.mealId)) continue
+      } else if (mealFilter !== 'all' && row.mealId !== mealFilter) continue
       if (!map.has(row.day)) map.set(row.day, [])
       map
         .get(row.day)
@@ -139,11 +145,14 @@ export function HistoryModal({ visible, onClose }) {
             </Pressable>
           </View>
 
-          {/* Фильтр по приёму пищи + поиск — работают вместе */}
+          {/* Фильтр по приёму пищи + поиск — работают вместе.
+              «Пользовательские перекусы» — записи в свои дополнительные
+              приёмы пищи (в том числе в уже удалённые) */}
           <View className="px-4 pt-3">
             <View className="flex-row flex-wrap gap-1.5">
               {MEAL_FILTERS.concat(
-                MEALS.map((m) => ({ id: m.id, label: m.id === 'snack' ? 'Перекус' : m.name }))
+                MEALS.map((m) => ({ id: m.id, label: m.id === 'snack' ? 'Перекус' : m.name })),
+                [{ id: 'custom', label: 'Пользовательские перекусы' }]
               ).map((f) => {
                 const active = mealFilter === f.id
                 return (

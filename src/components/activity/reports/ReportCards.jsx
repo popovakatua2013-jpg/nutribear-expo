@@ -2,17 +2,21 @@
 // итог за период и изменение в % к прошлому такому же периоду —
 // плюс отдельная карточка «Вес»: последнее взвешивание и изменение
 // за период в кг (зелёным — движение к здоровому диапазону).
+// Тап по карточке «Вес» открывает вкладку ИМТ и докручивает
+// до графика «Динамика веса».
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
 
 import { useMemo } from 'react'
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { ArrowDownRight, ArrowUpRight, Scale } from 'lucide-react-native'
+import { router } from 'expo-router'
+import { ArrowDownRight, ArrowUpRight, ChevronRight, Scale } from 'lucide-react-native'
 import { changePct, deltaTone, periodTotals } from '@/lib/data/reports'
 import { REPORT_METRICS } from '@/lib/data/metrics'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
+import { requestScrollToWeight } from '@/lib/navEvents'
 
 // Подпись сравнения: с каким прошлым периодом сравниваем
 function prevLabel(days) {
@@ -113,7 +117,20 @@ function WeightReportCard({ days }) {
   const tone = delta == null || delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
   const Arrow = delta != null && delta < 0 ? ArrowDownRight : ArrowUpRight
 
+  // Открыть вкладку ИМТ и докрутить до графика веса
+  function openWeightChart() {
+    router.navigate('/bmi')
+    requestScrollToWeight()
+  }
+
   return (
+    <Pressable
+      onPress={openWeightChart}
+      accessibilityRole="button"
+      accessibilityLabel="Вес — открыть график динамики веса на вкладке ИМТ"
+      className="flex-1 active:opacity-80"
+      style={{ borderRadius: 16 }}
+    >
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -131,7 +148,11 @@ function WeightReportCard({ days }) {
           <Scale size={20} color="#a78bfa" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-sans text-[12.5px] text-bear-soft">Вес</Text>
+          <View className="flex-row items-center gap-1">
+            <Text className="shrink-0 font-sans text-[12.5px] text-bear-soft">Вес</Text>
+            {/* Подсказка: карточка тапабельна — ведёт к графику веса */}
+            <ChevronRight size={13} color="#8B96B8" />
+          </View>
           <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text">
             {lastW ? `${fmtDecimal(lastW.kg)} кг` : '—'}
           </Text>
@@ -148,5 +169,6 @@ function WeightReportCard({ days }) {
         </Text>
       </View>
     </LinearGradient>
+    </Pressable>
   )
 }

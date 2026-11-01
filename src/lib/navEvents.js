@@ -21,3 +21,24 @@ export function consumeOpenWeightModal() {
   pendingWeightModal = false
   return was
 }
+
+// ─── Скролл к графику веса на вкладке ИМТ ────────────────────────────
+// Из отчётов (карточка «Вес») и других мест: открываем вкладку ИМТ и
+// плавно докручиваем до «Динамики веса». Тот же двойной механизм:
+// живое событие для смонтированной вкладки + отложенный флаг на случай,
+// когда вкладка ИМТ ещё лениво не смонтирована.
+let pendingWeightScroll = false
+
+export function requestScrollToWeight() {
+  pendingWeightScroll = true
+  try {
+    DeviceEventEmitter.emit('nutribear/goto-weight-chart')
+  } catch {}
+}
+
+// Возвращает true, если скролл запрашивался (и сбрасывает флаг)
+export function consumeScrollToWeight() {
+  const was = pendingWeightScroll
+  pendingWeightScroll = false
+  return was
+}

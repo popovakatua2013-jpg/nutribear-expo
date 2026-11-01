@@ -97,6 +97,20 @@ export function ActivityStats({
       label: 'Шаги сегодня',
       value: formatNum(steps),
       sub: `/ ${formatNum(stepsGoal)}`,
+      // Остаток до цели — крупно, как у «Калорий»: «осталось 3 200 до цели»;
+      // цель достигнута — зелёным с запасом сверх цели
+      foot:
+        stepsGoal > 0 ? (
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.25}
+            className={`mt-0.5 font-bold text-[11.5px] ${steps >= stepsGoal ? 'text-emerald-300' : 'text-violet-300'}`}
+          >
+            {steps >= stepsGoal
+              ? `цель достигнута · +${formatNum(steps - stepsGoal)}`
+              : `осталось ${formatNum(stepsGoal - steps)} до цели`}
+          </Text>
+        ) : null,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
       onPress: onOpenSteps, // тап — записать шаги вручную

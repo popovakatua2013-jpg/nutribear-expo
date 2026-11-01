@@ -6,7 +6,7 @@
 // Ниже — калькулятор, динамика веса и фото-прогресс.
 
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { DeviceEventEmitter, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
@@ -26,6 +26,7 @@ import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { NormCongrats } from '@/components/bmi/NormCongrats'
 import { WeightNudge } from '@/components/bmi/WeightNudge'
 import { StreakHistoryModal } from '@/components/bmi/StreakHistoryModal'
+import { consumeScrollToWeight } from '@/lib/navEvents'
 
 // Мягкое неоновое свечение (дымка как на макете): радиальный градиент
 // плавно уходит в прозрачность — без жёсткого края круглой заливки
@@ -122,6 +123,19 @@ export default function BmiScreen() {
 
   const scrollToWeight = () =>
     scrollRef.current?.scrollTo({ y: Math.max(0, weightY.current - 8), animated: true })
+
+  // Сквозной скролл к графику веса из других мест (например, тап по
+  // карточке «Вес» в отчётах): если вкладка уже смонтирована — докручиваем
+  // по событию; если вкладку только лениво смонтировали — забираем флаг
+  // и даём списку отрисоваться, иначе scrollRef ещё пуст
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('nutribear/goto-weight-chart', () =>
+      setTimeout(scrollToWeight, 350)
+    )
+    if (consumeScrollToWeight()) setTimeout(scrollToWeight, 600)
+    return () => sub.remove()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <View className="flex-1 bg-bear-bg">
