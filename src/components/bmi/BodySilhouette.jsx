@@ -24,28 +24,35 @@ const LEG_L =
 
 const PARTS = [HEAD, TORSO, ARM_R, ARM_L, LEG_R, LEG_L]
 
-export function BodySilhouette({ width = 104 }) {
-  const height = Math.round((width * 260) / 120)
+export function BodySilhouette({ width = 104, height }) {
+  // height задан — тянем фигуру на неё (как на макете: от кольца
+  // до низа карточек); нет — держим пропорцию 1:2,17
+  const h = height || Math.round((width * 260) / 120)
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 120 260">
+    <Svg
+      width={width}
+      height={h}
+      viewBox="0 0 120 260"
+      preserveAspectRatio={height ? 'none' : 'xMidYMid meet'}
+    >
       <Defs>
         <LinearGradient id="nbsBody" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#A78BFA" stopOpacity="0.42" />
-          <Stop offset="0.55" stopColor="#8B5CF6" stopOpacity="0.26" />
-          <Stop offset="1" stopColor="#4D7CFE" stopOpacity="0.16" />
+          <Stop offset="0" stopColor="#A78BFA" stopOpacity="0.72" />
+          <Stop offset="0.55" stopColor="#8B5CF6" stopOpacity="0.5" />
+          <Stop offset="1" stopColor="#4D7CFE" stopOpacity="0.34" />
         </LinearGradient>
       </Defs>
 
       {/* Мягкое свечение: те же контуры широким бледным штрихом */}
-      <G opacity={0.13} fill="none" stroke="#8B5CF6" strokeWidth={6} strokeLinejoin="round">
+      <G opacity={0.28} fill="none" stroke="#8B5CF6" strokeWidth={6} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`h${i}`} d={d} />
         ))}
       </G>
 
       {/* Тело: заливка градиентом + неоновый контур */}
-      <G fill="url(#nbsBody)" stroke="#C084FC" strokeWidth={1.4} strokeOpacity={0.85} strokeLinejoin="round">
+      <G fill="url(#nbsBody)" stroke="#D8B4FE" strokeWidth={1.4} strokeOpacity={0.95} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`p${i}`} d={d} />
         ))}
@@ -59,7 +66,7 @@ export function BodySilhouette({ width = 104 }) {
         ry={10.5}
         fill="none"
         stroke="#A78BFA"
-        strokeOpacity={0.16}
+        strokeOpacity={0.3}
         strokeWidth={5}
         rotation={-14}
         origin="60,113"

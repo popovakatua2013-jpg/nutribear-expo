@@ -10,10 +10,10 @@ import { Check, Ruler, TrendingDown, TrendingUp, Weight } from 'lucide-react-nat
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange, weekWeights } from '@/lib/data/bmi'
 
-// Чуть светлее фона главного блока — карточки «читаются» на нём
+// Заметно светлее фона блока — карточки «читаются» на нём, как на макете
 const CARD = {
-  backgroundColor: 'rgba(124,58,237,0.10)',
-  borderColor: 'rgba(168,85,247,0.24)',
+  backgroundColor: 'rgba(139,92,246,0.16)',
+  borderColor: 'rgba(196,132,252,0.30)',
   borderWidth: 1,
 }
 

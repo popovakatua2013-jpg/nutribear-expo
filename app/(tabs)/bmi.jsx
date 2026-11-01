@@ -23,8 +23,8 @@ import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { BodySilhouette } from '@/components/bmi/BodySilhouette'
 
 const CARD_STYLE = {
-  backgroundColor: '#181031',
-  borderColor: 'rgba(168,85,247,0.20)',
+  backgroundColor: '#1D1240',
+  borderColor: 'rgba(168,85,247,0.28)',
   borderWidth: 1,
 }
 
@@ -78,7 +78,7 @@ export default function BmiScreen() {
         <View accessibilityLabel="Разделы: ИМТ и динамика веса" className="flex-row items-center gap-1">
           <NavPill
             label="Динамика веса"
-            icon={<ChartColumn size={12} color="#A5AECB" />}
+            icon={<ChartColumn size={12} color="#A78BFA" />}
             onPress={scrollToWeight}
             accessibilityLabel="Перейти к динамике веса"
           />
@@ -119,35 +119,35 @@ export default function BmiScreen() {
           className="overflow-hidden rounded-[26px]"
           style={CARD_STYLE}
         >
-          {/* Фиолетовое свечение фона, как на макете */}
+          {/* Фиолетовое свечение фона, как на макете — насыщеннее */}
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0.85, y: 1 }}
-            colors={['rgba(139,92,246,0.20)', 'rgba(139,92,246,0.04)', 'rgba(168,85,247,0.12)']}
+            colors={['rgba(139,92,246,0.32)', 'rgba(139,92,246,0.10)', 'rgba(168,85,247,0.22)']}
             style={StyleSheet.absoluteFill}
           />
-          <View className="flex-row gap-2 p-3">
-            {/* Силуэт: крупный, слева, тянется через оба ряда */}
-            <View className="shrink-0" style={{ width: 86 }}>
+          <View className="flex-row gap-1.5 p-3">
+            {/* Силуэт: крупный неоновый, тянется от кольца до низа карточек */}
+            <View className="shrink-0" style={{ width: 74 }}>
               <View
                 pointerEvents="none"
                 style={{
                   position: 'absolute',
-                  top: 8,
-                  left: -24,
-                  width: 130,
-                  height: 130,
-                  borderRadius: 65,
-                  backgroundColor: 'rgba(139,92,246,0.20)',
+                  top: 4,
+                  left: -22,
+                  width: 118,
+                  height: 118,
+                  borderRadius: 59,
+                  backgroundColor: 'rgba(139,92,246,0.28)',
                 }}
               />
-              <BodySilhouette width={84} />
+              <BodySilhouette width={74} height={200} />
             </View>
             {/* Правая колонка: кольцо + легенда, ниже — Вес и Рост */}
-            <View className="min-w-0 flex-1 gap-2.5">
+            <View className="min-w-0 flex-1 gap-2">
               <View className="flex-row flex-wrap items-center gap-1.5">
                 <BmiDonut bmi={bmi} />
-                <View className="min-w-0 flex-1 pb-1" style={{ minWidth: 76 }}>
+                <View className="min-w-0 flex-1" style={{ minWidth: 100 }}>
                   <BmiLegend bmi={bmi} />
                 </View>
               </View>

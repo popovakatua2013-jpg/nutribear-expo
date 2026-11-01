@@ -10,8 +10,8 @@ import { Flower2, Heart, Star } from 'lucide-react-native'
 import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
 
 const CARD = {
-  backgroundColor: '#181031',
-  borderColor: 'rgba(168,85,247,0.20)',
+  backgroundColor: '#1D1240',
+  borderColor: 'rgba(168,85,247,0.28)',
   borderWidth: 1,
 }
 
@@ -62,7 +62,7 @@ export function BmiAdvice({ bmi, onDetails }) {
           одной строкой, как на макете */}
       <View
         className="mt-3 flex-row items-center gap-2 rounded-[14px] px-2.5 py-2"
-        style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+        style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
       >
         <Text
           maxFontSizeMultiplier={1.1}
@@ -87,12 +87,12 @@ export function BmiAdvice({ bmi, onDetails }) {
             style={{
               position: 'absolute',
               left: `${pos * 100}%`,
-              top: -4,
-              width: 5,
-              height: 16,
-              borderRadius: 3,
+              top: -6,
+              width: 4,
+              height: 20,
+              borderRadius: 2,
               backgroundColor: '#FFFFFF',
-              transform: [{ translateX: -2.5 }],
+              transform: [{ translateX: -2 }],
               shadowColor: '#FFFFFF',
               shadowOpacity: 0.9,
               shadowRadius: 6,
