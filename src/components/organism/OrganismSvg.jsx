@@ -4,7 +4,22 @@
 // Палитры и пороги flex/wet совпадают с веб-версией.
 
 import { useId, useMemo } from 'react'
-import Svg, { Circle, Ellipse, G, Line, Path } from 'react-native-svg'
+// ВАЖНО: в react-native-svg нет веб-тегов нижнего регистра — теги «defs»,
+// <radialGradient>, <stop> и т.п. роняют приложение с RedBox
+// («View config getter … component `stop`»). Только компоненты:
+// Defs, RadialGradient, LinearGradient, ClipPath, Stop.
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  Ellipse,
+  G,
+  Line,
+  LinearGradient,
+  Path,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg'
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -216,68 +231,68 @@ export function OrganismSvg({ state = 'normal', hydration = 0, protein = 0, size
 
   return (
     <Svg viewBox="0 0 260 260" width={size} height={size}>
-      <defs>
-        <radialGradient id={gid.body} cx="0.36" cy="0.26" r="1">
-          <stop offset="0%" stopColor={p.top} />
-          <stop offset="52%" stopColor={p.mid} />
-          <stop offset="100%" stopColor={p.bottom} />
-        </radialGradient>
-        <radialGradient id={gid.aura} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="58%" stopColor={p.glow} stopOpacity="0" />
-          <stop offset="84%" stopColor={p.glow} stopOpacity="0.32" />
-          <stop offset="100%" stopColor={p.glow} stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.core} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#f7fee7" stopOpacity="0.9" />
-          <stop offset="55%" stopColor={p.glow} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={p.glow} stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.disc} cx="0.4" cy="0.32" r="0.9">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.03" />
-        </radialGradient>
-        <radialGradient id={gid.hand} cx="0.36" cy="0.28" r="1">
-          <stop offset="0%" stopColor={p.top} />
-          <stop offset="100%" stopColor={p.bottom} />
-        </radialGradient>
-        <radialGradient id={gid.glass} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.ground} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#000000" stopOpacity="0.36" />
-          <stop offset="65%" stopColor="#000000" stopOpacity="0.14" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id={gid.drop} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#e0f2fe" />
-          <stop offset="100%" stopColor="#7dd3fc" />
-        </linearGradient>
-        <radialGradient id={gid.blush} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#fb7185" stopOpacity="0.55" />
-          <stop offset="55%" stopColor="#fb7185" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#fb7185" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.aurM} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor={p.accentA} stopOpacity="0.5" />
-          <stop offset="60%" stopColor={p.accentA} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={p.accentA} stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.aurM2} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor={p.accentB} stopOpacity="0.45" />
-          <stop offset="100%" stopColor={p.accentB} stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={gid.rim} cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor={p.glow} stopOpacity="0.45" />
-          <stop offset="100%" stopColor={p.glow} stopOpacity="0" />
-        </radialGradient>
-        <clipPath id={gid.clip}>
+      <Defs>
+        <RadialGradient id={gid.body} cx="0.36" cy="0.26" r="1">
+          <Stop offset="0%" stopColor={p.top} />
+          <Stop offset="52%" stopColor={p.mid} />
+          <Stop offset="100%" stopColor={p.bottom} />
+        </RadialGradient>
+        <RadialGradient id={gid.aura} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="58%" stopColor={p.glow} stopOpacity="0" />
+          <Stop offset="84%" stopColor={p.glow} stopOpacity="0.32" />
+          <Stop offset="100%" stopColor={p.glow} stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.core} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor="#f7fee7" stopOpacity="0.9" />
+          <Stop offset="55%" stopColor={p.glow} stopOpacity="0.5" />
+          <Stop offset="100%" stopColor={p.glow} stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.disc} cx="0.4" cy="0.32" r="0.9">
+          <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.22" />
+          <Stop offset="100%" stopColor="#ffffff" stopOpacity="0.03" />
+        </RadialGradient>
+        <RadialGradient id={gid.hand} cx="0.36" cy="0.28" r="1">
+          <Stop offset="0%" stopColor={p.top} />
+          <Stop offset="100%" stopColor={p.bottom} />
+        </RadialGradient>
+        <RadialGradient id={gid.glass} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
+          <Stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.ground} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor="#000000" stopOpacity="0.36" />
+          <Stop offset="65%" stopColor="#000000" stopOpacity="0.14" />
+          <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+        </RadialGradient>
+        <LinearGradient id={gid.drop} x1="0" y1="0" x2="0.4" y2="1">
+          <Stop offset="0%" stopColor="#e0f2fe" />
+          <Stop offset="100%" stopColor="#7dd3fc" />
+        </LinearGradient>
+        <RadialGradient id={gid.blush} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor="#fb7185" stopOpacity="0.55" />
+          <Stop offset="55%" stopColor="#fb7185" stopOpacity="0.28" />
+          <Stop offset="100%" stopColor="#fb7185" stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.aurM} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor={p.accentA} stopOpacity="0.5" />
+          <Stop offset="60%" stopColor={p.accentA} stopOpacity="0.22" />
+          <Stop offset="100%" stopColor={p.accentA} stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.aurM2} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor={p.accentB} stopOpacity="0.45" />
+          <Stop offset="100%" stopColor={p.accentB} stopOpacity="0" />
+        </RadialGradient>
+        <RadialGradient id={gid.rim} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0%" stopColor={p.glow} stopOpacity="0.45" />
+          <Stop offset="100%" stopColor={p.glow} stopOpacity="0" />
+        </RadialGradient>
+        <ClipPath id={gid.clip}>
           <Path d={CLIP_BLOB} />
-        </clipPath>
-        <clipPath id={gid.mouth}>
+        </ClipPath>
+        <ClipPath id={gid.mouth}>
           <Path d="M113 133 Q130 162 147 133 Q130 145 113 133 Z" />
-        </clipPath>
-      </defs>
+        </ClipPath>
+      </Defs>
 
       {/* мягкая тень на «полу» */}
       <Ellipse cx="130" cy="238" rx="74" ry="12" fill={`url(#${gid.ground})`} opacity={decline ? 0.75 : 1} />

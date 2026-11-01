@@ -123,8 +123,21 @@ export default function BmiScreen() {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0.85, y: 1 }}
-            colors={['rgba(139,92,246,0.32)', 'rgba(139,92,246,0.10)', 'rgba(168,85,247,0.22)']}
+            colors={['rgba(139,92,246,0.38)', 'rgba(139,92,246,0.12)', 'rgba(168,85,247,0.26)']}
             style={StyleSheet.absoluteFill}
+          />
+          {/* Туман в правом верхнем углу — как на макете */}
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: -26,
+              right: -30,
+              width: 160,
+              height: 120,
+              borderRadius: 80,
+              backgroundColor: 'rgba(124,58,237,0.30)',
+            }}
           />
           <View className="flex-row gap-1.5 p-3">
             {/* Силуэт: крупный неоновый, тянется от кольца до низа карточек,
@@ -134,12 +147,12 @@ export default function BmiScreen() {
                 pointerEvents="none"
                 style={{
                   position: 'absolute',
-                  top: 4,
-                  left: -22,
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
-                  backgroundColor: 'rgba(139,92,246,0.30)',
+                  top: 0,
+                  left: -26,
+                  width: 128,
+                  height: 128,
+                  borderRadius: 64,
+                  backgroundColor: 'rgba(139,92,246,0.32)',
                 }}
               />
               {/* Ореол-платформа у ног — светлое пятно, как на макете */}
@@ -147,12 +160,12 @@ export default function BmiScreen() {
                 pointerEvents="none"
                 style={{
                   position: 'absolute',
-                  bottom: -8,
-                  left: -32,
-                  width: 140,
-                  height: 54,
-                  borderRadius: 27,
-                  backgroundColor: 'rgba(147,51,234,0.26)',
+                  bottom: -10,
+                  left: -36,
+                  width: 148,
+                  height: 58,
+                  borderRadius: 29,
+                  backgroundColor: 'rgba(147,51,234,0.30)',
                 }}
               />
               <BodySilhouette width={76} height={204} />

@@ -92,11 +92,11 @@ export function BmiDonut({ bmi }) {
         />
       </Svg>
 
-      <Text className="font-extrabold text-[26px] leading-none tracking-tight text-white">
+      <Text className="font-extrabold text-[29px] leading-none tracking-tight text-white">
         {fmtDecimal(bmi)}
       </Text>
       <View
-        className="mt-1.5 flex-row items-center gap-1 rounded-full px-2 py-[3px]"
+        className="mt-1 flex-row items-center gap-1 rounded-full px-1.5 py-[3px]"
         style={{
           backgroundColor: `${cat.color}26`,
           shadowColor: cat.color,
@@ -106,7 +106,7 @@ export function BmiDonut({ bmi }) {
       >
         <Text
           maxFontSizeMultiplier={1.1}
-          className="font-bold text-[10.5px] leading-none"
+          className="font-bold text-[10px] leading-none"
           style={{ color: cat.color }}
         >
           {cat.label}

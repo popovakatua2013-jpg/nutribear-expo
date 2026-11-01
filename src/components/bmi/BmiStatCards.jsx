@@ -67,7 +67,7 @@ export function BmiStatCards() {
           </Text>
         </View>
         <View className="mt-1.5 flex-row items-baseline gap-1">
-          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[20px] leading-none tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[22px] leading-none tracking-tight text-white">
             {fmtDecimal(weightKg)}
           </Text>
           <Text className="font-semibold text-[11px] text-bear-sub2">кг</Text>
@@ -97,7 +97,7 @@ export function BmiStatCards() {
           </Text>
         </View>
         <View className="mt-1.5 flex-row items-baseline gap-1">
-          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[20px] leading-none tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[22px] leading-none tracking-tight text-white">
             {heightCm}
           </Text>
           <Text className="font-semibold text-[11px] text-bear-sub2">см</Text>

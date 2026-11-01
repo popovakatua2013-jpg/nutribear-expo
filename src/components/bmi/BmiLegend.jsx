@@ -37,7 +37,7 @@ export function BmiLegend({ bmi }) {
               numberOfLines={1}
               maxFontSizeMultiplier={1.1}
               className={`min-w-0 flex-1 text-[9.5px] leading-tight ${
-                isActive ? 'font-bold text-white' : 'font-sans text-bear-sub'
+                isActive ? 'font-bold text-white' : 'font-semibold text-[#E7E3F8]'
               }`}
             >
               {row.label}
@@ -46,7 +46,7 @@ export function BmiLegend({ bmi }) {
               maxFontSizeMultiplier={1.1}
               numberOfLines={1}
               className={`shrink-0 text-[10px] leading-tight ${
-                isActive ? 'font-bold text-white' : 'font-sans text-[#D8D2EE]'
+                isActive ? 'font-bold text-white' : 'font-sans text-[#CBC4E8]'
               }`}
             >
               {row.range}
