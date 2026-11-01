@@ -1,19 +1,14 @@
 // Сцена организма: «комната» с тёмным фоном, звёздами и мягкими пятнами света.
 // Организм парит, реагирует на поглаживание (сердечки + пружинка),
 // вокруг живут купленные предметы-декор. Только transform/opacity — без blur.
+// Анимации — на родном Animated из react-native (native driver), без
+// Reanimated: вкладка должна открываться на любой сборке без нативных сюрпризов.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated'
+import { Animated, Easing, Pressable, Text, View } from 'react-native'
 import { OrganismSvg } from './OrganismSvg'
+
+const EASE_IO = Easing.inOut(Easing.ease)
 
 const STATE_META = {
   bloom: { label: 'Расцвет', color: '#a3e635', text: '#bef264' },
@@ -32,27 +27,32 @@ const HEARTS = [
 ]
 
 function OneHeart({ o, i }) {
-  const t = useSharedValue(0)
+  const t = useRef(new Animated.Value(0)).current
+
   useEffect(() => {
-    t.value = withDelay(
-      i * 70,
-      withTiming(1, { duration: 1200, easing: Easing.out(Easing.quad) })
-    )
-  }, [t])
-  const style = useAnimatedStyle(() => {
-    const p = t.value
-    return {
-      opacity: p < 0.12 ? p / 0.12 : Math.max(0, 1 - (p - 0.12) / 0.88),
-      transform: [
-        { translateX: o.x * (0.4 + 0.6 * p) },
-        { translateY: 40 + (o.y - 40) * p },
-        { scale: 0.5 + 0.6 * p },
-        { rotate: `${(i - 3) * 14}deg` },
-      ],
-    }
-  })
+    const anim = Animated.timing(t, {
+      toValue: 1,
+      duration: 1200,
+      delay: i * 70,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    })
+    anim.start()
+    return () => anim.stop()
+  }, [t, i])
+
+  const opacity = t.interpolate({ inputRange: [0, 0.12, 1], outputRange: [0, 1, 0] })
+  const tx = t.interpolate({ inputRange: [0, 1], outputRange: [o.x * 0.4, o.x] })
+  const ty = t.interpolate({ inputRange: [0, 1], outputRange: [40, o.y] })
+  const scale = t.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.1] })
+
   return (
-    <Animated.Text style={[{ position: 'absolute', left: '50%', top: '50%', fontSize: 20 }, style]}>
+    <Animated.Text
+      style={[
+        { position: 'absolute', left: '50%', top: '50%', fontSize: 20 },
+        { opacity, transform: [{ translateX: tx }, { translateY: ty }, { scale }, { rotate: `${(i - 3) * 14}deg` }] },
+      ]}
+    >
       {i % 2 ? '💗' : '💖'}
     </Animated.Text>
   )
@@ -64,14 +64,23 @@ export function OrganismStage({ state, hydration, protein, phrase, decor = [], o
   const timer = useRef(null)
 
   // Пружинка при нажатии
-  const press = useSharedValue(1)
+  const press = useRef(new Animated.Value(1)).current
   // Парение вверх-вниз
-  const floatT = useSharedValue(0)
-  floatT.value = withRepeat(withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }), -1, true)
+  const floatT = useRef(new Animated.Value(0)).current
 
-  const floatStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -6 + 12 * floatT.value }, { scale: press.value }],
-  }))
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatT, { toValue: 1, duration: 1600, easing: EASE_IO, useNativeDriver: true }),
+        Animated.timing(floatT, { toValue: 0, duration: 1600, easing: EASE_IO, useNativeDriver: true }),
+      ])
+    )
+    anim.start()
+    return () => anim.stop()
+  }, [floatT])
+
+  const floatTy = floatT.interpolate({ inputRange: [0, 1], outputRange: [-6, 6] })
+  const floatStyle = { transform: [{ translateY: floatTy }, { scale: press }] }
 
   const avg = useMemo(
     () => Math.round((hydration + protein) / 2),
@@ -81,11 +90,11 @@ export function OrganismStage({ state, hydration, protein, phrase, decor = [], o
   useEffect(() => () => timer.current && clearTimeout(timer.current), [])
 
   const handlePet = () => {
-    press.value = withSequence(
-      withTiming(0.95, { duration: 90, easing: Easing.out(Easing.quad) }),
-      withTiming(1.05, { duration: 140, easing: Easing.out(Easing.quad) }),
-      withTiming(1, { duration: 160 })
-    )
+    Animated.sequence([
+      Animated.timing(press, { toValue: 0.95, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(press, { toValue: 1.05, duration: 140, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(press, { toValue: 1, duration: 160, useNativeDriver: true }),
+    ]).start()
     setBurst((b) => b + 1)
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setBurst(0), 1700)
