@@ -9,6 +9,7 @@ import { Watch, Footprints } from 'lucide-react-native'
 import { Pedometer } from 'expo-sensors'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useActivityStore } from '@/store/useActivityStore'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 
 const ROWS = [
@@ -71,15 +72,13 @@ export function SyncCard() {
   }
 
   return (
-    <View accessibilityLabel="Синхронизация" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center gap-2">
-        <Watch size={18} color="#38bdf8" />
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Синхронизация
-        </Text>
-      </View>
-
-      <View className="mt-3 gap-2">
+    <CollapsibleCard
+      accessibilityLabel="Синхронизация"
+      icon={<Watch size={18} color="#38bdf8" />}
+      title="Синхронизация"
+      summary={pedometerEnabled ? 'Шагомер вкл' : undefined}
+    >
+      <View className="mt-1 gap-2">
         {ROWS.map((r) => (
           <View
             key={r.key}
@@ -128,6 +127,6 @@ export function SyncCard() {
         Подключение к внешним сервисам включит синхронизацию шагов, когда
         она станет доступна.
       </Text>
-    </View>
+    </CollapsibleCard>
   )
 }

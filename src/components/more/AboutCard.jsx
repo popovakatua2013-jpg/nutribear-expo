@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native'
 import { ChevronRight, FileText } from 'lucide-react-native'
 import Constants from 'expo-constants'
 import { DISCLAIMER } from '@/lib/data/disclaimer'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { LegalModal } from '@/components/more/LegalModal'
 
 // Версия из app.json (expo), а не захардкоженная
@@ -15,15 +16,13 @@ export function AboutCard() {
   const [legalOpen, setLegalOpen] = useState(false)
 
   return (
-    <View accessibilityLabel="О приложении" className="items-center rounded-3xl border border-white/5 bg-bear-card p-5">
-      <Text className="text-[34px]">🐻</Text>
-      <Text className="mt-2 font-extrabold text-[15px] tracking-tight text-bear-text">
-        NutriBear
-      </Text>
-      <View className="mt-2 flex-row items-center justify-center gap-2">
-        <Text className="font-semibold text-[11px] text-bear-dim">Версия {VERSION}</Text>
-      </View>
-      <Text className="mx-auto mt-2 max-w-[300px] text-center font-sans text-[12px] leading-relaxed text-bear-sub2">
+    <CollapsibleCard
+      accessibilityLabel="О приложении"
+      icon={<Text className="text-[20px]">🐻</Text>}
+      title="NutriBear"
+      summary={`Версия ${VERSION}`}
+    >
+      <Text className="mx-auto mt-1 max-w-[300px] text-center font-sans text-[12px] leading-relaxed text-bear-sub2">
         Дневник питания и активности с мишкой-наставником. Веди дневник,
         пей воду, ходи пешком и получай награды — все данные хранятся
         только на твоём устройстве.
@@ -51,6 +50,6 @@ export function AboutCard() {
       </Pressable>
 
       <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
-    </View>
+    </CollapsibleCard>
   )
 }

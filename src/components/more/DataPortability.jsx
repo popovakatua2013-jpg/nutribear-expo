@@ -9,6 +9,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import { readAsStringAsync } from 'expo-file-system/legacy'
 import { collectAll, shareBackupFile } from '@/lib/data/gdpr-export'
 import { applyBackup } from '@/lib/backup'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 
 export function DataPortability() {
@@ -83,15 +84,13 @@ export function DataPortability() {
   }
 
   return (
-    <View accessibilityLabel="Приватность" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center gap-2">
-        <ShieldCheck size={18} color="#4ade80" />
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Приватность (GDPR / 152-ФЗ)
-        </Text>
-      </View>
-
-      <Text className="mt-2 font-sans text-[11px] leading-relaxed text-bear-sub2">
+    <CollapsibleCard
+      accessibilityLabel="Приватность"
+      icon={<ShieldCheck size={18} color="#4ade80" />}
+      title="Приватность и данные"
+      summary="экспорт · восстановление"
+    >
+      <Text className="font-sans text-[11px] leading-relaxed text-bear-sub2">
         Ваши данные о здоровье — особая категория. Они хранятся только на
         устройстве и не передаются в сеть. Вы можете в любой момент
         выгрузить их, перенести на другой телефон или удалить безвозвратно
@@ -132,6 +131,6 @@ export function DataPortability() {
           </Text>
         </View>
       </Pressable>
-    </View>
+    </CollapsibleCard>
   )
 }

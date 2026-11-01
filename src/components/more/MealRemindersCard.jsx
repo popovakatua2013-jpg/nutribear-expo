@@ -7,6 +7,7 @@ import { Switch, Text, TextInput, View } from 'react-native'
 import { UtensilsCrossed } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 
 const ROWS = [
@@ -81,17 +82,11 @@ export function MealRemindersCard() {
   }
 
   return (
-    <View
+    <CollapsibleCard
       accessibilityLabel="Напоминания о приёмах пищи"
-      className="rounded-3xl border border-bear-line bg-bear-card p-4"
-    >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2.5">
-          <UtensilsCrossed size={18} color="#F59E0B" />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-            Напоминания о еде
-          </Text>
-        </View>
+      icon={<UtensilsCrossed size={18} color="#F59E0B" />}
+      title="Напоминания о еде"
+      right={
         <Switch
           accessibilityLabel="Включить напоминания о приёмах пищи"
           value={meals.enabled}
@@ -99,8 +94,9 @@ export function MealRemindersCard() {
           trackColor={{ true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }}
           thumbColor="#fff"
         />
-      </View>
-      <Text className="mt-1 font-sans text-[11.5px] leading-snug text-bear-sub">
+      }
+    >
+      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
         {meals.enabled
           ? 'Уведомление придёт в выбранное время — даже если приложение закрыто.'
           : 'Подскажем, когда пора завтракать, обедать и ужинать.'}
@@ -125,6 +121,6 @@ export function MealRemindersCard() {
           ))}
         </View>
       )}
-    </View>
+    </CollapsibleCard>
   )
 }

@@ -1,7 +1,7 @@
 // Управление данными: начать новый день и стереть все данные (с подтверждением)
 
 import { Alert, Pressable, Text, View } from 'react-native'
-import { Sunrise, Trash2 } from 'lucide-react-native'
+import { Database, Sunrise, Trash2 } from 'lucide-react-native'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { useActivityStore, DEFAULT_VESSELS } from '@/store/useActivityStore'
@@ -16,6 +16,7 @@ import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
 
@@ -84,10 +85,13 @@ export function DataActions() {
   }
 
   return (
-    <View accessibilityLabel="Данные" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <Text className="font-bold text-[15px] tracking-tight text-bear-text">Данные</Text>
-
-      <View className="mt-3 gap-2">
+    <CollapsibleCard
+      accessibilityLabel="Данные"
+      icon={<Database size={18} color="#8DABFF" />}
+      title="Данные"
+      summary="новый день · стереть всё"
+    >
+      <View className="mt-1 gap-2">
         <Pressable
           onPress={newDay}
           className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
@@ -116,6 +120,6 @@ export function DataActions() {
           </View>
         </Pressable>
       </View>
-    </View>
+    </CollapsibleCard>
   )
 }

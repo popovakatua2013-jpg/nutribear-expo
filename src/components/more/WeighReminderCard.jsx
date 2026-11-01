@@ -7,6 +7,7 @@ import { Pressable, Switch, Text, View } from 'react-native'
 import { Scale } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { TimeField } from './MealRemindersCard'
 
@@ -48,17 +49,11 @@ export function WeighReminderCard() {
   }
 
   return (
-    <View
+    <CollapsibleCard
       accessibilityLabel="Напоминание о взвешивании"
-      className="rounded-3xl border border-bear-line bg-bear-card p-4"
-    >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2.5">
-          <Scale size={18} color="#7DD3FC" />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-            Взвешивание
-          </Text>
-        </View>
+      icon={<Scale size={18} color="#7DD3FC" />}
+      title="Взвешивание"
+      right={
         <Switch
           accessibilityLabel="Включить напоминание о взвешивании"
           value={weigh.enabled}
@@ -66,8 +61,9 @@ export function WeighReminderCard() {
           trackColor={{ true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }}
           thumbColor="#fff"
         />
-      </View>
-      <Text className="mt-1 font-sans text-[11.5px] leading-snug text-bear-sub">
+      }
+    >
+      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
         {weigh.enabled
           ? 'Раз в неделю напомним встать на весы и записать вес.'
           : 'Раз в неделю — самое точное измерение динамики.'}
@@ -106,6 +102,6 @@ export function WeighReminderCard() {
           </View>
         </View>
       )}
-    </View>
+    </CollapsibleCard>
   )
 }

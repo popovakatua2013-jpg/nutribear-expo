@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { UserRound } from 'lucide-react-native'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { fmtDecimal } from '@/lib/data/bmi'
@@ -59,13 +60,13 @@ export function ProfileEditor() {
   }
 
   return (
-    <View accessibilityLabel="Профиль" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center gap-2">
-        <UserRound size={18} color="#7da2ff" />
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">Профиль</Text>
-      </View>
-
-      <Text className="mt-3 font-medium text-xs text-bear-sub">Имя</Text>
+    <CollapsibleCard
+      accessibilityLabel="Профиль"
+      icon={<UserRound size={18} color="#7da2ff" />}
+      title="Профиль"
+      summary={`${name ? `${name} · ` : ''}${heightCm} см · ${fmtDecimal(weightKg)} кг`}
+    >
+      <Text className="font-medium text-xs text-bear-sub">Имя</Text>
       <TextInput
         value={current.name}
         onChangeText={(v) => patch({ name: v })}
@@ -101,6 +102,6 @@ export function ProfileEditor() {
           </Text>
         </LinearGradient>
       </Pressable>
-    </View>
+    </CollapsibleCard>
   )
 }

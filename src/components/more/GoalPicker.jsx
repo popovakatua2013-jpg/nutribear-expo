@@ -4,6 +4,7 @@
 import { Alert, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Target } from 'lucide-react-native'
+import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -67,14 +68,21 @@ export function GoalPicker() {
     }
   }
 
-  return (
-    <View accessibilityLabel="Цель питания" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center gap-2">
-        <Target size={18} color="#c084fc" />
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">Моя цель</Text>
-      </View>
+  // Сводка в свёрнутой шапке: текущая цель и её дневная норма
+  const currentGoal = GOALS.find((x) => x.id === goal)
 
-      <View className="mt-3 gap-2" accessibilityLabel="Цель питания">
+  return (
+    <CollapsibleCard
+      accessibilityLabel="Цель питания"
+      icon={<Target size={18} color="#c084fc" />}
+      title="Моя цель"
+      summary={
+        currentGoal
+          ? `${currentGoal.label} · ${formatNum(getDailyTarget(goal))} ккал`
+          : undefined
+      }
+    >
+      <View className="mt-1 gap-2" accessibilityLabel="Цель питания">
         {GOALS.map((g) => {
           const active = goal === g.id
           const body = (
@@ -113,6 +121,6 @@ export function GoalPicker() {
           )
         })}
       </View>
-    </View>
+    </CollapsibleCard>
   )
 }
