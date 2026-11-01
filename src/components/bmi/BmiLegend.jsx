@@ -1,40 +1,57 @@
-// Легенда категорий ИМТ: пять строк с ромбиком, диапазоном и названием.
-// Текущая категория подсвечивается рамкой, как на макете.
+// Легенда категорий ИМТ как на фото-макете: три позиции — Норма
+// (голубая точка, 18,5–24,9), Лишний вес (фиолетовая, 25–29,9) и
+// Ожирение (оранжевая, ≥30). Текущая категория — белым и жирным,
+// её точка светится. Расположена горизонтально под кольцом.
 
 import { Text, View } from 'react-native'
-import { BMI_CATEGORIES, bmiCategory } from '@/lib/data/bmi'
+import { bmiCategory } from '@/lib/data/bmi'
+
+const ROWS = [
+  { ids: ['norm'], label: 'Норма', range: '18,5 – 24,9', color: '#2DD4EF' },
+  { ids: ['over'], label: 'Лишний вес', range: '25 – 29,9', color: '#A855F7' },
+  { ids: ['obese1', 'obese2'], label: 'Ожирение', range: '≥ 30', color: '#F97316' },
+]
 
 export function BmiLegend({ bmi }) {
   const active = bmiCategory(bmi).id
 
   return (
-    <View className="gap-2" accessibilityLabel="Категории ИМТ">
-      {BMI_CATEGORIES.map((cat) => {
-        const isActive = cat.id === active
+    <View
+      className="flex-row items-start justify-between gap-2"
+      accessibilityLabel="Категории ИМТ: норма, лишний вес, ожирение"
+    >
+      {ROWS.map((row) => {
+        const isActive = row.ids.includes(active)
         return (
-          <View
-            key={cat.id}
-            className={`flex-row items-center gap-2.5 rounded-xl border px-3 py-2 ${
-              isActive
-                ? 'border-[#5b7fff]/70 bg-[#5b7fff]/10'
-                : 'border-white/5 bg-[#0d1530]/70'
-            }`}
-          >
+          <View key={row.label} className="min-w-0 flex-row items-center gap-1.5">
             <View
-              className="h-2 w-2 shrink-0 rotate-45 rounded-[2px]"
-              style={{ backgroundColor: cat.color }}
+              className="h-[8px] w-[8px] shrink-0 rounded-full"
+              style={{
+                backgroundColor: row.color,
+                shadowColor: row.color,
+                shadowOpacity: isActive ? 0.95 : 0.4,
+                shadowRadius: 6,
+              }}
             />
-            <Text className="shrink-0 font-semibold text-[12px] text-bear-soft">
-              {cat.range}
-            </Text>
-            <Text
-              numberOfLines={1}
-              className={`min-w-0 flex-1 text-right text-[12px] ${
-                isActive ? 'font-bold text-white' : 'font-sans text-bear-sub'
-              }`}
-            >
-              {cat.label}
-            </Text>
+            <View className="min-w-0">
+              <Text
+                numberOfLines={1}
+                className={`text-[11.5px] leading-tight ${
+                  isActive ? 'font-bold text-white' : 'font-sans text-bear-sub'
+                }`}
+              >
+                {row.label}
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.2}
+                numberOfLines={1}
+                className={`text-[10px] leading-tight ${
+                  isActive ? 'font-semibold text-white/85' : 'font-sans text-bear-dim'
+                }`}
+              >
+                {row.range}
+              </Text>
+            </View>
           </View>
         )
       })}

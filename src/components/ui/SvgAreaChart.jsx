@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { View } from 'react-native'
-import Svg, { Defs, LinearGradient, Stop, Path, Circle, Line, Text as SvgText } from 'react-native-svg'
+import Svg, { Defs, LinearGradient, Stop, Path, Circle, Line, Rect, Text as SvgText } from 'react-native-svg'
 
 const AXIS = '#8B96B8'
 const GRID = 'rgba(255,255,255,0.06)'
@@ -34,11 +34,14 @@ export function SvgAreaChart({
   height = 190,
   yFmt = (v) => String(Math.round(v)),
   dot = true,
+  dotColor = null, // цвет точек (по умолчанию — цвет линии)
   goalLine = null, // горизонтальный пунктир цели (то же значение, что в data)
   activeIndex = null, // подсветка выбранной точки: вертикальная линия + крупная точка
+  bare = false, // без сетки и подписей оси Y (оси не нужны — есть плашка значения)
+  lastBadge = false, // плашка значения над последней точкой, как на макете ИМТ
 }) {
   const [w, setW] = useState(0)
-  const PAD_L = 34
+  const PAD_L = bare ? 12 : 34
   const PAD_R = 8
   const PAD_T = 10
   const PAD_B = 20
@@ -85,32 +88,34 @@ export function SvgAreaChart({
             <Stop offset="1" stopColor={color} stopOpacity={0.02} />
           </LinearGradient>
         </Defs>
-        {ticks.map((t, i) => {
-          const ty = PAD_T + (ih * i) / 3
-          return (
-            <Line
-              key={`g${i}`}
-              x1={PAD_L}
-              y1={ty}
-              x2={w - PAD_R}
-              y2={ty}
-              stroke={GRID}
-              strokeWidth={1}
-            />
-          )
-        })}
-        {ticks.map((t, i) => (
-          <SvgText
-            key={`t${i}`}
-            x={PAD_L - 5}
-            y={PAD_T + (ih * i) / 3 + 3}
-            fill={AXIS}
-            fontSize={9}
-            textAnchor="end"
-          >
-            {yFmt(t)}
-          </SvgText>
-        ))}
+        {!bare &&
+          ticks.map((t, i) => {
+            const ty = PAD_T + (ih * i) / 3
+            return (
+              <Line
+                key={`g${i}`}
+                x1={PAD_L}
+                y1={ty}
+                x2={w - PAD_R}
+                y2={ty}
+                stroke={GRID}
+                strokeWidth={1}
+              />
+            )
+          })}
+        {!bare &&
+          ticks.map((t, i) => (
+            <SvgText
+              key={`t${i}`}
+              x={PAD_L - 5}
+              y={PAD_T + (ih * i) / 3 + 3}
+              fill={AXIS}
+              fontSize={9}
+              textAnchor="end"
+            >
+              {yFmt(t)}
+            </SvgText>
+          ))}
         <Path d={area} fill="url(#fill)" />
         <Path d={line} stroke={color} strokeWidth={2.5} fill="none" />
         {hasGoal && (
@@ -131,7 +136,7 @@ export function SvgAreaChart({
         )}
         {dot &&
           pts.map((p, i) => (
-            <Circle key={`d${i}`} cx={p.x} cy={p.y} r={3} fill={color} />
+            <Circle key={`d${i}`} cx={p.x} cy={p.y} r={3} fill={dotColor || color} />
           ))}
         {activeIndex != null && activeIndex >= 0 && activeIndex < data.length && (
           <>
@@ -148,12 +153,35 @@ export function SvgAreaChart({
               cx={x(activeIndex)}
               cy={y(data[activeIndex].value)}
               r={5.5}
-              fill={color}
+              fill={dotColor || color}
               stroke="#0C1327"
               strokeWidth={2}
             />
           </>
         )}
+        {lastBadge &&
+          data.length > 0 &&
+          (() => {
+            const t = yFmt(data[data.length - 1].value)
+            const bw = Math.min(90, t.length * 6.6 + 12)
+            const bx = Math.min(Math.max(x(data.length - 1) - bw / 2, 2), w - bw - 2)
+            const by = Math.max(2, y(data[data.length - 1].value) - 27)
+            return (
+              <>
+                <Rect x={bx} y={by} width={bw} height={17} rx={8.5} fill="#7B6CF6" />
+                <SvgText
+                  x={bx + bw / 2}
+                  y={by + 12.5}
+                  fill="#FFFFFF"
+                  fontSize={10.5}
+                  fontWeight="bold"
+                  textAnchor="middle"
+                >
+                  {t}
+                </SvgText>
+              </>
+            )
+          })()}
         {data.map((d, i) =>
           i % skip === 0 || i === data.length - 1 ? (
             <SvgText

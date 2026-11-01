@@ -1,6 +1,9 @@
-// Карточка «Калькулятор ИМТ»: расчёт по полным данным пользователя —
-// пол, возраст, рост, вес и уровень активности. Считает живо при вводе,
-// кнопка «Сохранить в профиль» переносит данные в профиль и историю веса.
+// Карточка «Калькулятор ИМТ» в стиле макета: фиолетовый чип-иконка,
+// подзаголовок, пилюли пола с символами ♀/♂, три поля (возраст, рост,
+// вес), градиентная кнопка «Рассчитать» и неоновый силуэт справа.
+// Расчёт по полным данным пользователя — пол, возраст, рост, вес и
+// уровень активности. Кнопка сохраняет данные в профиль и раскрывает
+// подробные результаты (норма веса, обмен, суточная норма, жир).
 //
 // Формулы: ИМТ — ВОЗ; базовый обмен — Миффлин — Сан Жеор;
 // идеальный вес — Девайн; % жира — оценка Дёренберга; TDEE = BMR × коэффициент.
@@ -47,6 +50,7 @@ export function BmiCalculator() {
   const [height, setHeight] = useState(String(profileHeight))
   const [weight, setWeight] = useState(String(profileWeight))
   const [activityId, setActivityId] = useState(profileActivity)
+  const [showResult, setShowResult] = useState(false)
 
   // Один раз подтягиваем биоданные из завершённого онбординга, если профиль
   // их ещё не получал (старые пользователи без sex/age в хранилище)
@@ -104,8 +108,15 @@ export function BmiCalculator() {
   const tdee = tdeeKcal(bmr, tdeeMult(activityId))
   const fatPct = bodyFatPercent(bmi, ageNum, sex)
 
-  function handleSave() {
-    if (!valid) return
+  function handleCalc() {
+    if (!valid) {
+      toast({
+        title: '⚠️ Проверьте данные',
+        description: 'Возраст 10–90 лет, рост 80–250 см, вес 25–300 кг',
+      })
+      return
+    }
+    setShowResult(true)
     const weightChanged = wNum !== profileWeight
     if (weightChanged) addWeight(wNum)
     setProfile({ sex, age: ageNum, heightCm: Math.round(hNum), activityId, hasBio: true })
@@ -120,94 +131,89 @@ export function BmiCalculator() {
   }
 
   return (
-    <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center gap-2">
-        <Calculator size={18} color="#A5AECB" />
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Калькулятор ИМТ
-        </Text>
-      </View>
-      <Text className="mt-0.5 font-sans text-[11px] text-bear-dim">
-        Пол, возраст, рост, вес и активность — расчёт по полным данным
-      </Text>
-
-      {/* Пол */}
-      <Text className="mt-4 font-medium text-xs text-bear-sub">Пол</Text>
-      <View className="mt-1.5 flex-row gap-2">
-        {[['female', 'Женский'], ['male', 'Мужской']].map(([id, label]) => {
-          const active = sex === id
-          return (
-            <Pressable
-              key={id}
-              onPress={() => setSex(id)}
-              accessibilityLabel={label}
-              className={`min-w-0 flex-1 overflow-hidden rounded-2xl border ${
-                active ? 'border-white/0' : 'border-white/10'
-              }`}
-              style={active ? { borderColor: ACTIVE_BORDER } : undefined}
-            >
-              {active ? (
-                <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={CHIP_GRAD}>
-                  <Text className="py-3 text-center font-semibold text-[13px] text-white">
-                    {label}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View className="bg-white/5">
-                  <Text className="py-3 text-center font-medium text-[13px] text-bear-sub">
-                    {label}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-          )
-        })}
+    <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border p-4" style={CARD_STYLE}>
+      {/* Шапка: чип-иконка + заголовок + подзаголовок */}
+      <View className="flex-row items-center gap-2.5">
+        <View
+          className="h-9 w-9 items-center justify-center rounded-xl border"
+          style={{ backgroundColor: 'rgba(139,92,246,0.22)', borderColor: 'rgba(139,92,246,0.35)' }}
+        >
+          <Calculator size={17} color="#C4B5FD" />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text className="font-bold text-[15.5px] tracking-tight text-white">
+            Калькулятор ИМТ
+          </Text>
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[11px] text-bear-dim">
+            Узнай свой индекс массы тела
+          </Text>
+        </View>
       </View>
 
-      {/* Возраст / Рост / Вес */}
-      <View className="mt-3 flex-row gap-2">
-        <NumField label="Возраст, лет" value={age} onChange={setAge} />
-        <NumField label="Рост, см" value={height} onChange={setHeight} />
-        <NumField label="Вес, кг" value={weight} onChange={setWeight} decimal />
+      {/* Пол, данные, кнопка — на всю ширину (силуэт теперь в блоке выше) */}
+      <View className="mt-3">
+        {/* Пол */}
+          <View className="flex-row gap-2">
+            {[['female', '♀', 'Женский'], ['male', '♂', 'Мужской']].map(([id, glyph, label]) => {
+              const active = sex === id
+              return (
+                <Pressable
+                  key={id}
+                  onPress={() => setSex(id)}
+                  accessibilityLabel={label}
+                  className="min-w-0 flex-1 overflow-hidden rounded-full border"
+                  style={{ borderColor: active ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,0.10)' }}
+                >
+                  {active ? (
+                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#6D5AE6', '#8B5CF6']}>
+                      <View className="flex-row items-center justify-center gap-1.5 py-2.5">
+                        <Text className="text-[13px]">{glyph}</Text>
+                        <Text className="font-bold text-[12.5px] text-white">{label}</Text>
+                      </View>
+                    </LinearGradient>
+                  ) : (
+                    <View className="flex-row items-center justify-center gap-1.5 bg-white/[0.05] py-2.5">
+                      <Text className="text-[13px] text-bear-sub">{glyph}</Text>
+                      <Text className="font-medium text-[12.5px] text-bear-sub">{label}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              )
+            })}
+          </View>
+
+          {/* Возраст / Рост / Вес */}
+          <View className="mt-2.5 flex-row gap-2">
+            <NumField label="Возраст, лет" value={age} onChange={setAge} />
+            <NumField label="Рост, см" value={height} onChange={setHeight} />
+            <NumField label="Вес, кг" value={weight} onChange={setWeight} decimal />
+          </View>
+
+          {/* Кнопка «Рассчитать» */}
+          <Pressable
+            onPress={handleCalc}
+            accessibilityLabel="Рассчитать и сохранить индекс массы тела"
+            className="mt-3 overflow-hidden rounded-2xl"
+          >
+            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6']}>
+              <View className="flex-row items-center justify-center gap-2 py-3.5">
+                <Calculator size={16} color="#FFFFFF" />
+                <Text className="font-bold text-[14px] text-white">Рассчитать</Text>
+              </View>
+            </LinearGradient>
+          </Pressable>
       </View>
 
-      {/* Активность */}
-      <Text className="mt-3 font-medium text-xs text-bear-sub">Уровень активности</Text>
-      <View className="mt-1.5 flex-row flex-wrap gap-2">
-        {TDEE_LEVELS.map((l) => {
-          const active = activityId === l.id
-          return (
-            <Pressable
-              key={l.id}
-              onPress={() => setActivityId(l.id)}
-              accessibilityLabel={l.label}
-              className="overflow-hidden rounded-full border"
-              style={{ borderColor: active ? ACTIVE_BORDER : 'rgba(255,255,255,0.10)' }}
-            >
-              {active ? (
-                <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={CHIP_GRAD}>
-                  <Text className="px-3.5 py-2 font-semibold text-[12px] text-white">{l.label}</Text>
-                </LinearGradient>
-              ) : (
-                <View className="bg-white/5">
-                  <Text className="px-3.5 py-2 font-medium text-[12px] text-bear-sub">{l.label}</Text>
-                </View>
-              )}
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {/* Результат */}
-      {valid ? (
-        <View className="mt-4 rounded-2xl bg-white/[0.04] p-4">
+      {/* Подробные результаты — раскрываются кнопкой «Рассчитать» */}
+      {showResult && valid && (
+        <View className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <View className="flex-row items-center justify-between gap-2">
             <Text className="font-medium text-xs text-bear-sub">Ваш ИМТ</Text>
             <Text className="font-semibold text-xs" style={{ color: cat.color }}>
               {cat.label} · {cat.range}
             </Text>
           </View>
-          <Text className="mt-1 font-extrabold text-[32px] leading-tight tracking-tight text-bear-text">
+          <Text className="mt-1 font-extrabold text-[30px] leading-tight tracking-tight text-white">
             {fmtDecimal(bmi)}
           </Text>
 
@@ -226,44 +232,60 @@ export function BmiCalculator() {
             <Text className="font-medium text-[12px] text-bear-soft">
               Жир в организме (оценка)
             </Text>
-            <Text className="font-bold text-[13px] text-bear-text">
+            <Text className="font-bold text-[13px] text-white">
               ≈ {fmtDecimal(fatPct)} %
             </Text>
           </View>
-        </View>
-      ) : (
-        <Text className="mt-4 font-sans text-[12px] leading-relaxed text-bear-dim">
-          Проверьте данные: возраст 10–90 лет, рост 80–250 см, вес 25–300 кг.
-        </Text>
-      )}
 
-      {/* Сохранение в профиль */}
-      <Pressable
-        onPress={handleSave}
-        disabled={!valid}
-        accessibilityLabel="Сохранить данные в профиль"
-        className={`mt-4 overflow-hidden rounded-2xl ${!valid ? 'opacity-50' : ''}`}
-      >
-        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={GRAD}>
-          <Text className="py-3.5 text-center font-bold text-sm text-white">
-            Сохранить в профиль
+          {/* Уровень активности — участвует в суточной норме */}
+          <Text className="mt-3 font-medium text-xs text-bear-sub">Уровень активности</Text>
+          <View className="mt-1.5 flex-row flex-wrap gap-2">
+            {TDEE_LEVELS.map((l) => {
+              const active = activityId === l.id
+              return (
+                <Pressable
+                  key={l.id}
+                  onPress={() => setActivityId(l.id)}
+                  accessibilityLabel={l.label}
+                  className="overflow-hidden rounded-full border"
+                  style={{ borderColor: active ? ACTIVE_BORDER : 'rgba(255,255,255,0.10)' }}
+                >
+                  {active ? (
+                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={CHIP_GRAD}>
+                      <Text className="px-3.5 py-2 font-semibold text-[12px] text-white">{l.label}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View className="bg-white/5">
+                      <Text className="px-3.5 py-2 font-medium text-[12px] text-bear-sub">{l.label}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              )
+            })}
+          </View>
+
+          <Text className="mt-3 font-sans text-[10px] leading-relaxed text-bear-dim">
+            Формулы: базовый обмен — Миффлин — Сан Жеор, идеальный вес — Девайн,
+            жир — оценка Дёренберга, суточная норма — обмен × коэффициент активности.
+            Расчёт ориентировочный и не заменяет консультацию врача.
           </Text>
-        </LinearGradient>
-      </Pressable>
-
-      <Text className="mt-3 font-sans text-[10px] leading-relaxed text-bear-dim">
-        Формулы: базовый обмен — Миффлин — Сан Жеор, идеальный вес — Девайн,
-        жир — оценка Дёренберга, суточная норма — обмен × коэффициент активности.
-        Расчёт ориентировочный и не заменяет консультацию врача.
-      </Text>
+        </View>
+      )}
     </View>
   )
+}
+
+const CARD_STYLE = {
+  backgroundColor: '#181031',
+  borderColor: 'rgba(168,85,247,0.20)',
 }
 
 function NumField({ label, value, onChange, decimal }) {
   return (
     <View className="min-w-0 flex-1">
-      <Text className="font-medium text-[11px] text-bear-sub">{label}</Text>
+      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[10.5px] text-bear-sub">
+        {label}
+      </Text>
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -272,7 +294,7 @@ function NumField({ label, value, onChange, decimal }) {
         placeholder="—"
         placeholderTextColor="#8B96B8"
         accessibilityLabel={label}
-        className="mt-1.5 rounded-xl border border-white/10 bg-white/5 px-1 py-2.5 font-semibold text-[14px] text-white"
+        className="mt-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2.5 font-semibold text-[14px] text-white"
       />
     </View>
   )

@@ -7,7 +7,7 @@ import { ACTIVITY_LEVELS } from './onboarding-options'
 export const BMI_CATEGORIES = [
   { id: 'low', min: 0, max: 18.5, range: '< 18,5', label: 'Недостаток веса', color: '#facc15' },
   { id: 'norm', min: 18.5, max: 25, range: '18,5 – 24,9', label: 'Норма', color: '#4ade80' },
-  { id: 'over', min: 25, max: 30, range: '25 – 29,9', label: 'Избыточный вес', color: '#fb923c' },
+  { id: 'over', min: 25, max: 30, range: '25 – 29,9', label: 'Лишний вес', color: '#fb923c' },
   { id: 'obese1', min: 30, max: 35, range: '30 – 34,9', label: 'Ожирение I ст.', color: '#f87171' },
   { id: 'obese2', min: 35, max: Infinity, range: '35+', label: 'Ожирение II–III ст.', color: '#ef4444' },
 ]
