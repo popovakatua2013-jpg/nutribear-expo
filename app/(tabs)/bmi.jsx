@@ -5,8 +5,8 @@
 // блок «Рекомендации» с полосой идеального диапазона. Ниже — калькулятор,
 // динамика веса и фото-прогресс.
 
-import { useRef, useState, StyleSheet } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
