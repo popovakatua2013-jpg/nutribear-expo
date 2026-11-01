@@ -9,6 +9,7 @@ import { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -65,9 +66,10 @@ export default function BmiScreen() {
 
   const bmi = calcBmi(weightKg, heightCm)
 
-  // Скролл к карточке «Динамика веса» по пилюле-переключателю
+  // Скролл к карточке «Динамика веса» и к блоку рекомендаций
   const scrollRef = useRef(null)
   const weightY = useRef(0)
+  const adviceY = useRef(0)
 
   const scrollToWeight = () =>
     scrollRef.current?.scrollTo({ y: Math.max(0, weightY.current - 8), animated: true })
@@ -136,7 +138,11 @@ export default function BmiScreen() {
               {/* Кольцо ИМТ + легенда категорий. Тап по кольцу —
                   карточка «Что означает твой ИМТ» */}
               <Pressable
-                onPress={() => setDetailsOpen(true)}
+                onPress={() => {
+                  // Лёгкий вибро-отклик при тапе по кольцу
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+                  setDetailsOpen(true)
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Что означает твой ИМТ — открыть подробности"
                 className="shrink-0 active:opacity-80"
@@ -151,8 +157,15 @@ export default function BmiScreen() {
           </View>
         </View>
 
-        {/* Рекомендации + идеальный диапазон ИМТ */}
-        <BmiAdvice bmi={bmi} onDetails={() => setDetailsOpen(true)} />
+        {/* Рекомендации + идеальный диапазон ИМТ (сюда ведёт кнопка
+            «К рекомендациям» из карточки «Что означает твой ИМТ») */}
+        <View
+          onLayout={(e) => {
+            adviceY.current = e.nativeEvent.layout.y
+          }}
+        >
+          <BmiAdvice bmi={bmi} onDetails={() => setDetailsOpen(true)} />
+        </View>
 
         {/* Калькулятор: пол, возраст, рост, вес */}
         <BmiCalculator />
@@ -168,7 +181,23 @@ export default function BmiScreen() {
         <ProgressPhotos />
       </ScrollView>
 
-      <AdviceModal bmi={bmi} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
+      <AdviceModal
+        bmi={bmi}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        onRecommendations={() => {
+          setDetailsOpen(false)
+          // Даём модалке закрыться, затем плавно скроллим к советам
+          setTimeout(
+            () =>
+              scrollRef.current?.scrollTo({
+                y: Math.max(0, adviceY.current - 8),
+                animated: true,
+              }),
+            280
+          )
+        }}
+      />
     </View>
   )
 }

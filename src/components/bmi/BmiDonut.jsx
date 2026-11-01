@@ -1,10 +1,11 @@
 // Кольцевой датчик ИМТ — главный акцент вкладки: крупное градиентное
 // кольцо (голубой → синий → фиолетовый → маджента), при открытии белая
-// дуга плавно «заливается» до текущего ИМТ, а число в центре отсчитывается
-// вверх. Анимация — обычный Animated из react-native (JS-драйвер) поверх
-// strokeDashoffset БЕЗ Reanimated: Reanimated поверх SVG-экранов ронял
-// приложение, не возвращать. Шкала кольца: ИМТ 15 → 40, старт с 9 часов —
-// норма ложится на верх кольца.
+// дуга плавно «заливается» до текущего ИМТ, число в центре отсчитывается
+// вверх, после заливки дуга мягко «дышит» (пульсация яркости).
+// Анимация — обычный Animated из react-native (JS-драйвер) поверх
+// strokeDashoffset и strokeOpacity БЕЗ Reanimated: Reanimated поверх
+// SVG-экранов ронял приложение, не возвращать. Шкала: ИМТ 15 → 40,
+// старт с 9 часов — норма ложится на верх кольца.
 
 import { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, Text, View } from 'react-native'
@@ -65,6 +66,13 @@ export function BmiDonut({ bmi }) {
     return () => numVal.removeListener(sub)
   }, [numVal])
 
+  // Пульсация после заливки: яркость дуги мягко колеблется 1 ↔ 0.76,
+  // свечение под дугой — 0.18 ↔ 0.34 (кольцо «дышит»)
+  const pulseVal = useRef(new Animated.Value(0)).current
+  const pulseLoop = useRef(null)
+
+  useEffect(() => () => pulseLoop.current?.stop(), [])
+
   useEffect(() => {
     const dur = firstRun.current ? 1400 : 700
     firstRun.current = false
@@ -81,13 +89,35 @@ export function BmiDonut({ bmi }) {
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }),
-    ]).start()
-  }, [target, targetFrac, arcVal, numVal])
+    ]).start(({ finished }) => {
+      // Пульс запускаем один раз — когда заливка впервые дошла до конца
+      if (!finished || pulseLoop.current) return
+      pulseLoop.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseVal, {
+            toValue: 1,
+            duration: 950,
+            easing: Easing.inOut(Easing.sine),
+            useNativeDriver: false,
+          }),
+          Animated.timing(pulseVal, {
+            toValue: 0,
+            duration: 950,
+            easing: Easing.inOut(Easing.sine),
+            useNativeDriver: false,
+          }),
+        ])
+      )
+      pulseLoop.current.start()
+    })
+  }, [target, targetFrac, arcVal, numVal, pulseVal])
 
   const dashOffset = arcVal.interpolate({
     inputRange: [0, 1],
     outputRange: [ARC_LEN, ARC_LEN * (1 - targetFrac)],
   })
+  const brightOpacity = pulseVal.interpolate({ inputRange: [0, 1], outputRange: [1, 0.76] })
+  const glowOpacity = pulseVal.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.34] })
 
   return (
     <View className="h-[136px] w-[136px] shrink-0 items-center justify-center">
@@ -125,7 +155,7 @@ export function BmiDonut({ bmi }) {
         <AnimatedPath
           d={FULL_ARC}
           stroke="#FFFFFF"
-          strokeOpacity={0.18}
+          strokeOpacity={glowOpacity}
           strokeWidth={STROKE + 4}
           strokeLinecap="round"
           fill="none"
@@ -135,6 +165,7 @@ export function BmiDonut({ bmi }) {
         <AnimatedPath
           d={FULL_ARC}
           stroke="#FFFFFF"
+          strokeOpacity={brightOpacity}
           strokeWidth={STROKE}
           strokeLinecap="round"
           fill="none"

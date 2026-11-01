@@ -1,12 +1,14 @@
 // Модалка «Рекомендации»: текст и советы по категории ИМТ.
-// Открывается с вкладки «ИМТ» — кнопкой «Подробнее» и стрелкой
-// на трофейном баннере.
+// Открывается с вкладки «ИМТ» — кнопкой «Подробнее», стрелкой
+// на трофейном баннере и тапом по кольцу. Кнопка «К рекомендациям»
+// закрывает модалку и скроллит к блоку советов на вкладке
+// (передаётся как onRecommendations, если не задана — не рисуется).
 
 import { Modal, ScrollView, Text, View, Pressable } from 'react-native'
-import { X } from 'lucide-react-native'
+import { ArrowDown, X } from 'lucide-react-native'
 import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
 
-export function AdviceModal({ bmi, open, onClose }) {
+export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
   const cat = bmiCategory(bmi)
   const rec = RECOMMENDATIONS[cat.id]
 
@@ -48,6 +50,27 @@ export function AdviceModal({ bmi, open, onClose }) {
                 </View>
               ))}
             </View>
+
+            {/* Кнопка «К рекомендациям»: закрыть модалку и показать блок
+                советов на вкладке (рисуется, только если передан обработчик) */}
+            {onRecommendations && (
+              <Pressable
+                onPress={onRecommendations}
+                accessibilityRole="button"
+                accessibilityLabel="К рекомендациям — перейти к блоку советов"
+                className="mt-4 flex-row items-center justify-center gap-1.5 rounded-2xl py-3 active:opacity-75"
+                style={{
+                  backgroundColor: 'rgba(168,85,247,0.16)',
+                  borderColor: 'rgba(168,85,247,0.35)',
+                  borderWidth: 1,
+                }}
+              >
+                <Text className="font-semibold text-[13px] text-[#D8B4FE]">
+                  К рекомендациям
+                </Text>
+                <ArrowDown size={14} color="#D8B4FE" />
+              </Pressable>
+            )}
           </ScrollView>
         </View>
       </View>
