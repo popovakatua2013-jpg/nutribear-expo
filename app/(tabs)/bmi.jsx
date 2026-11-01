@@ -1,7 +1,7 @@
 // Экран «ИМТ» в стиле фото-макета: сверху переключатель-пилюли
 // («Динамика веса» → скролл к карточке веса, «ИМТ и состав тела» — активна,
-// «Подробнее» — советы), главный блок БЕЗ карточки — силуэт, кольцо ИМТ
-// и легенда свободно парят на тёмном фоне (как на макете), ниже — тёмные
+// «Подробнее» — советы), главный блок БЕЗ карточки — кольцо ИМТ
+// и легенда свободно парят на тёмном фоне, ниже — тёмные
 // карточки «Вес / Рост», блок «Рекомендации» с полосой идеального диапазона.
 // Ниже — калькулятор, динамика веса и фото-прогресс.
 
@@ -21,7 +21,6 @@ import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
-import { BodySilhouette } from '@/components/bmi/BodySilhouette'
 
 // Мягкое неоновое свечение (дымка как на макете): радиальный градиент
 // плавно уходит в прозрачность — без жёсткого края круглой заливки
@@ -126,31 +125,21 @@ export default function BmiScreen() {
           />
         </View>
 
-        {/* Главный блок как на макете: БЕЗ карточки — силуэт, кольцо
-            и легенда свободно парят на тёмном фоне; ниже — тёмные
-            карточки «Вес» и «Рост» */}
+        {/* Главный блок: БЕЗ карточки — кольцо и легенда свободно
+            парят на тёмном фоне; ниже — тёмные карточки «Вес» и «Рост» */}
         <View accessibilityLabel="ИМТ и состав тела">
           {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
           <SoftGlow id="nbsGlowTR" w={185} h={150} peak={0.34} style={{ top: -24, right: -42 }} />
           <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
-          <View className="flex-row gap-2">
-            {/* Силуэт: стройная неоновая фигура через всю высоту блока,
-                со свечением сверху и ореолом-платформой у ног */}
-            <View className="shrink-0" style={{ width: 78 }}>
-              {/* Дымка за головой и торсом */}
-              <SoftGlow id="nbsGlowSil" w={140} h={140} peak={0.3} color="#8B5CF6" style={{ top: -6, left: -31 }} />
-              <BodySilhouette width={78} height={216} />
-            </View>
-            {/* Правая колонка: кольцо + легенда, ниже — Вес и Рост */}
-            <View className="min-w-0 flex-1 gap-2.5">
-              <View className="flex-row items-center gap-1.5">
-                <BmiDonut bmi={bmi} />
-                <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
-                  <BmiLegend bmi={bmi} />
-                </View>
+          <View className="gap-2.5">
+            <View className="flex-row items-center gap-2">
+              {/* Кольцо ИМТ + легенда категорий */}
+              <BmiDonut bmi={bmi} />
+              <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
+                <BmiLegend bmi={bmi} />
               </View>
-              <BmiStatCards />
             </View>
+            <BmiStatCards />
           </View>
         </View>
 
