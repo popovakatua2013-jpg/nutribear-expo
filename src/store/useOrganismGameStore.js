@@ -20,11 +20,55 @@ import {
   genesLabel,
   mondayKeyOf,
   rollDrop,
+  yesterdayKeyOf,
 } from '@/lib/data/organism-game'
 
 // За «хороший» день организм делится генами (тяни оси событиями дневника)
 const GENES_BLOOM_DAY = 3
 const MUTATION_MUTAGEN = 5
+
+// Гигиена хранилища: не копим историю бесконечно (AsyncStorage не резиновый).
+// log — последние 30 событий, вклад рейда — только текущая неделя,
+// комбо/хорошие дни — последние 14 дней (стрику нужен только вчера).
+const LOG_MAX = 30
+const DAYS_KEEP = 14
+
+const pushLog = (log, entry) => [entry, ...log].slice(0, LOG_MAX)
+
+function cutoffKey(dayKey) {
+  const [y, m, d] = dayKey.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() - DAYS_KEEP)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
+}
+
+// Убрать накопившееся: старые недели рейда, дни старше 14 дней, хвосты лога.
+// Ключи «ГГГГ-ММ-ДД» сравниваются как строки — это корректно для ISO-дат.
+// Возвращает только то, что реально изменилось ({} — если подрезать нечего).
+function prune(s) {
+  const week = mondayKeyOf()
+  const cut = cutoffKey(dayKeyOf())
+  let changed = false
+  const raidDays = {}
+  for (const [k, v] of Object.entries(s.raidDays)) {
+    if (v && v.weekKey === week) raidDays[k] = v
+    else changed = true
+  }
+  const comboDays = {}
+  for (const [k, v] of Object.entries(s.comboDays)) {
+    if (k >= cut) comboDays[k] = v
+    else changed = true
+  }
+  const goodDays = {}
+  for (const [k, v] of Object.entries(s.goodDays)) {
+    if (k >= cut) goodDays[k] = v
+    else changed = true
+  }
+  const log = s.log.length > LOG_MAX ? s.log.slice(0, LOG_MAX) : s.log
+  if (log !== s.log) changed = true
+  return changed ? { raidDays, comboDays, goodDays, log } : {}
+}
 
 export const useOrganismGameStore = create(
   persist(
@@ -65,6 +109,10 @@ export const useOrganismGameStore = create(
 
       /* ── Ежедневная синхронизация: вызывается при открытии экрана ── */
       syncDay: ({ dayKey, combo, state }) => {
+        // гигиена: сперва подрезать накопившееся (раз в открытие экрана),
+        // затем вся логика ниже работает с уже чистым состоянием
+        const cleaned = prune(get())
+        if (Object.keys(cleaned).length) set(cleaned)
         const s = get()
         if (!s.createdAt) set({ createdAt: mondayKeyOf() })
         if (s.raidWeekStart !== mondayKeyOf()) {
@@ -79,13 +127,13 @@ export const useOrganismGameStore = create(
 
         // стрик: день с заполненной шкалой; стрик 7 → капсула
         if (combo >= 100 && s.streakLastKey !== dayKey) {
-          const cont = s.streakLastKey === yesterdayOf(dayKey)
+          const cont = s.streakLastKey === yesterdayKeyOf(dayKey)
           const streak = cont ? s.streak + 1 : 1
           if (streak >= STREAK_FOR_CAPSULE) {
             patch.streak = 0
             patch.streakLastKey = dayKey
             patch.capsules = s.capsules + 1
-            patch.log = [{ id: makeId(), ts: Date.now(), text: 'Серия 7 дней — выдана генная капсула.' }, ...s.log]
+            patch.log = pushLog(s.log, { id: makeId(), ts: Date.now(), text: 'Серия 7 дней — выдана генная капсула.' })
           } else {
             patch.streak = streak
             patch.streakLastKey = dayKey
@@ -94,17 +142,16 @@ export const useOrganismGameStore = create(
 
         // стабильность: день без упадка; 7 дней подряд → первая мутация
         if (state !== 'decline' && s.stableLastKey !== dayKey) {
-          const cont = s.stableLastKey === yesterdayOf(dayKey)
+          const cont = s.stableLastKey === yesterdayKeyOf(dayKey)
           const stableDays = cont ? s.stableDays + 1 : 1
           patch.stableDays = stableDays
           patch.stableLastKey = dayKey
           if (stableDays >= 7 && !s.mutationUnlocked) {
             patch.mutationUnlocked = true
             patch.mutagen = s.mutagen + MUTATION_MUTAGEN
-            patch.log = [
-              { id: makeId(), ts: Date.now(), text: `Стабильность 7 дней — открыта первая мутация (+${MUTATION_MUTAGEN} мутагена).` },
-              ...(patch.log || s.log),
-            ]
+            patch.log = pushLog(patch.log || s.log, {
+              id: makeId(), ts: Date.now(), text: `Стабильность 7 дней — открыта первая мутация (+${MUTATION_MUTAGEN} мутагена).`,
+            })
           }
         }
 
@@ -135,10 +182,9 @@ export const useOrganismGameStore = create(
           raidRewarded: true,
           genes: s.genes + 15,
           crystals: s.crystals + 5,
-          log: [
-            { id: makeId(), ts: Date.now(), text: `Рейд: ${bossName} павший. Награда стаи: +15 генов, +5 кристаллов.` },
-            ...s.log,
-          ],
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(), text: `Рейд: ${bossName} павший. Награда стаи: +15 генов, +5 кристаллов.`,
+          }),
         })
         return true
       },
@@ -152,7 +198,7 @@ export const useOrganismGameStore = create(
           genes: s.genes - cost,
           evoStage: s.evoStage + 1,
           evoBranch: branch,
-          log: [{ id: makeId(), ts: Date.now(), text: `Эволюция: ${fromName} → ${toName}.` }, ...s.log],
+          log: pushLog(s.log, { id: makeId(), ts: Date.now(), text: `Эволюция: ${fromName} → ${toName}.` }),
         })
         return true
       },
@@ -184,10 +230,10 @@ export const useOrganismGameStore = create(
           }
         }
 
-        patch.log = [
-          { id: makeId(), ts: Date.now(), text: `Капсула: ${itemName ? (dup ? `${itemName} (дубликат → +${DUP_MUTAGEN} мутагена)` : itemName) : drop.reward}.` },
-          ...s.log,
-        ]
+        patch.log = pushLog(s.log, {
+          id: makeId(), ts: Date.now(),
+          text: `Капсула: ${itemName ? (dup ? `${itemName} (дубликат → +${DUP_MUTAGEN} мутагена)` : itemName) : drop.reward}.`,
+        })
         set(patch)
         return { drop, itemName, dup }
       },
@@ -199,10 +245,9 @@ export const useOrganismGameStore = create(
         const e = expeditionOf(key)
         set({
           expedition: { key, startedAt: Date.now() },
-          log: [
-            { id: makeId(), ts: Date.now(), text: `Ушёл в поход: «${e.name}» — вернусь через ${e.hours} ч.` },
-            ...s.log,
-          ],
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(), text: `Ушёл в поход: «${e.name}» — вернусь через ${e.hours} ч.`,
+          }),
         })
         return true
       },
@@ -218,10 +263,10 @@ export const useOrganismGameStore = create(
           expedition: null,
           genes: s.genes + e.genes,
           crystals: s.crystals + e.crystals,
-          log: [
-            { id: makeId(), ts: Date.now(), text: `Экспедиция «${e.name}»: +${genesLabel(e.genes)}, +${crystalsLabel(e.crystals)}. ${tale}` },
-            ...s.log,
-          ],
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Экспедиция «${e.name}»: +${genesLabel(e.genes)}, +${crystalsLabel(e.crystals)}. ${tale}`,
+          }),
         })
         return { name: e.name, genes: e.genes, crystals: e.crystals, tale }
       },
@@ -252,19 +297,6 @@ export const useOrganismGameStore = create(
     }
   )
 )
-
-function yesterdayOf(key) {
-  const [y, m, d] = key.split('-').map(Number)
-  const dt = new Date(y, m - 1, d)
-  dt.setDate(dt.getDate() - 1)
-  const p = (n) => String(n).padStart(2, '0')
-  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
-}
-
-// Победа над боссом фиксируется на экране после расчёта HP (settleRaid)
-export function checkRaidKill(hp) {
-  return hp <= 0
-}
 
 // Номер недели с первой записи (неделя 1 = неделя создания организма)
 export function weekNumberOf(createdAt) {

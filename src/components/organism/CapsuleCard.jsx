@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
 import { Package, Flame, Sparkles } from 'lucide-react-native'
 import { GameCard, GameHeader, RightPill, Panel, GradBar, GAME } from './GameUi'
-import { COMBO_GOAL, DROPS, STREAK_FOR_CAPSULE } from '@/lib/data/organism-game'
+import { COMBO_GOAL, DUP_MUTAGEN, DROPS, STREAK_FOR_CAPSULE } from '@/lib/data/organism-game'
 
 export function CapsuleCard({ combo, streak, capsules, onOpen }) {
   const [result, setResult] = useState(null) // { drop, itemName, dup } | 'empty'
@@ -112,7 +112,7 @@ export function CapsuleCard({ combo, streak, capsules, onOpen }) {
                 {result.itemName && (
                   <Text className="mt-2 text-center font-medium text-[12.5px] leading-snug" style={{ color: GAME.dim }}>
                     {result.dup
-                      ? `Дубликат коллекции — превращён в +3 мутагена`
+                      ? `Дубликат коллекции — превращён в +${DUP_MUTAGEN} мутагена`
                       : 'Новый предмет в коллекции организма!'}
                   </Text>
                 )}

@@ -2,7 +2,7 @@
 // геном X/70, цена в генах и кнопка «Эволюционировать». Ветку выбирает
 // геном, а не магазин — как в веб-макете. Ниже — история организма.
 
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Sparkles, TrendingUp, Dna } from 'lucide-react-native'
 import { GameCard, GameHeader, Panel, Caps, GradBar, Dot, GAME } from './GameUi'
 import {
@@ -99,22 +99,22 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
                 генов: {genes}
               </Text>
             </View>
-            <View
+            <Pressable
+              onPress={canEvolve && next ? () => onEvolve({ cost: next.cost, fromName: form, toName: formName(next.to, branch) }) : undefined}
+              disabled={!canEvolve || !next}
               className="flex-1 items-center justify-center rounded-2xl px-3 py-3.5"
               style={{
                 backgroundColor: canEvolve ? GAME.lime : 'rgba(255,255,255,0.07)',
                 borderWidth: 1,
                 borderColor: canEvolve ? GAME.lime : 'rgba(255,255,255,0.05)',
+                opacity: canEvolve ? 1 : 0.75,
               }}
+              android_ripple={{ color: 'rgba(0,0,0,0.15)' }}
             >
-              <Text
-                onPress={canEvolve && next ? () => onEvolve({ cost: next.cost, fromName: form, toName: formName(next.to, branch) }) : undefined}
-                className="font-bold text-[14px]"
-                style={{ color: canEvolve ? '#12200F' : GAME.dim2 }}
-              >
+              <Text className="font-bold text-[14px]" style={{ color: canEvolve ? '#12200F' : GAME.dim2 }}>
                 Эволюционировать
               </Text>
-            </View>
+            </Pressable>
           </View>
 
           <Text className="mt-3 font-sans text-[12px] leading-snug" style={{ color: GAME.dim }}>
