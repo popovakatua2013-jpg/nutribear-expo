@@ -6,8 +6,9 @@
 // (ровное сравнение) и ужимается до 720 px.
 
 import { useState } from 'react'
-import { Alert, Image, Modal, Pressable, Text, View } from 'react-native'
+import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Camera, Trash2, X } from 'lucide-react-native'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { deletePhotoFile, savePhoto } from '@/lib/photos'
@@ -112,13 +113,27 @@ export function ProgressPhotos() {
         <Text className="font-bold text-[15px] tracking-tight text-bear-text">
           Фото прогресса
         </Text>
+        {/* Крупная цветная кнопка фотоаппарата — заметная, как главная
+            кнопка карточки (раньше была серой 28px и терялась) */}
         <Pressable
           onPress={onAdd}
           accessibilityLabel="Добавить фото прогресса"
           accessibilityRole="button"
-          className="h-7 w-7 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+          className="h-11 w-11 items-center justify-center overflow-hidden rounded-full active:opacity-80"
+          style={{
+            elevation: 5,
+            shadowColor: '#8B5CF6',
+            shadowOpacity: 0.5,
+            shadowRadius: 9,
+          }}
         >
-          <Camera size={15} color="rgba(255,255,255,0.8)" />
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            colors={['#A855F7', '#7C3AED']}
+            style={[StyleSheet.absoluteFillObject, { borderRadius: 22 }]}
+          />
+          <Camera size={21} color="#FFFFFF" strokeWidth={2.2} />
         </Pressable>
       </View>
 

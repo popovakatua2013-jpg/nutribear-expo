@@ -1,11 +1,16 @@
-// ИИ-чат «конвертик»: плавающая кнопка на главной и модалка диалога
-// с ИИ-нутрициологом (порт веб-версии AiChat.jsx).
+// ИИ-чат «конвертик»: плавающая кнопка на главной (крупная, заметная)
+// и модалка диалога с ИИ-нутрициологом (порт веб-версии AiChat.jsx).
+// Клавиатура не перекрывает чат: на Android весь контейнер сжимается
+// (behavior height — внутри модалки системный resize не работает),
+// при открытии клавиатуры список доскроллливается к вводу.
+// Сообщения — полноценные блоки: пузырь не уже 110px, шрифт крупнее.
 // Сначала пробуем настоящий ИИ (веб-версия на ПК, /api/chat),
 // если сервера нет — отвечает офлайн-помощник по данным дневника.
 
 import { useEffect, useRef, useState } from 'react'
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -79,6 +84,17 @@ export function AiChat() {
     listRef.current?.scrollToEnd({ animated: true })
   }, [messages, busy])
 
+  // Клавиатура открылась — доскроллливаем к последнему сообщению,
+  // иначе на Android строки ввода не видно за клавиатурой
+  useEffect(() => {
+    if (!open) return undefined
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const sub = Keyboard.addListener(showEvt, () =>
+      requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }))
+    )
+    return () => sub.remove()
+  }, [open])
+
   async function send() {
     const content = text.trim()
     if (!content || busy) return
@@ -111,25 +127,26 @@ export function AiChat() {
 
   return (
     <>
-      {/* Плавающая кнопка над панелью вкладок */}
+      {/* Плавающая кнопка над панелью вкладок — крупная, чтобы легко
+          находилась и нажималась (60px, иконка 26) */}
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityLabel="Открыть ИИ-чат"
-        className="absolute bottom-6 right-4 h-[52px] w-[52px] items-center justify-center rounded-full active:opacity-80"
+        className="absolute bottom-6 right-4 h-[60px] w-[60px] items-center justify-center rounded-full active:opacity-80"
         style={{
           elevation: 6,
           shadowColor: '#4D7CFE',
-          shadowOpacity: 0.4,
-          shadowRadius: 8,
+          shadowOpacity: 0.45,
+          shadowRadius: 10,
         }}
       >
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           colors={['#4D7CFE', '#A45BFF']}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: 26 }]}
+          style={[StyleSheet.absoluteFillObject, { borderRadius: 30 }]}
         />
-        <Mail size={22} color="#FFFFFF" />
+        <Mail size={26} color="#FFFFFF" strokeWidth={2.2} />
       </Pressable>
 
       <Modal
@@ -139,7 +156,7 @@ export function AiChat() {
         onRequestClose={() => setOpen(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 bg-[#131e3a]"
           style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
         >
@@ -188,22 +205,26 @@ export function AiChat() {
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <View
-                className={`flex ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex-row ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {item.role === 'user' ? (
                   <LinearGradient
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     colors={['#4D7CFE', '#A45BFF']}
-                    className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5"
+                    className="min-w-[110px] rounded-2xl rounded-br-md px-3.5 py-2.5"
+                    style={{ maxWidth: '85%' }}
                   >
-                    <Text className="text-[13px] leading-[19px] text-white">
+                    <Text className="text-[14px] leading-[20px] text-white">
                       {item.content}
                     </Text>
                   </LinearGradient>
                 ) : (
-                  <View className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5">
-                    <Text className="text-[13px] leading-[19px] text-[#dbe3f8]">
+                  <View
+                    className="rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5"
+                    style={{ maxWidth: '85%' }}
+                  >
+                    <Text className="text-[14px] leading-[20px] text-[#dbe3f8]">
                       {item.content}
                     </Text>
                   </View>

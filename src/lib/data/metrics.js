@@ -2,8 +2,11 @@
 // «Общей сводки», карточек «Отчётов» и «Сравнения по неделям».
 // Раньше одинаковые массивы METRICS копировались в трёх файлах и
 // расходились: «Ккал» vs «Калории», разные цвета и форматы.
+// «Опыт» из списка убран: организм его не использует, а в интерфейсе
+// он только путал. Значение по-прежнему пишется в историю дней —
+// данные не теряются, если опыт понадобится позже.
 
-import { Droplets, Flame, Footprints, Sparkles, Star } from 'lucide-react-native'
+import { Droplets, Flame, Footprints, Sparkles } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
 
@@ -43,15 +46,6 @@ export const METRICS = [
     invert: false,
     yFmt: (v) => `${Math.round(v)}`,
     fmt: (v) => formatNum(v),
-  },
-  {
-    key: 'xp',
-    label: 'Опыт',
-    Icon: Star,
-    color: '#a78bfa',
-    invert: false,
-    yFmt: (v) => (v >= 10000 ? `${(v / 1000).toFixed(1).replace('.', ',')}к` : `${Math.round(v)}`),
-    fmt: (v) => `+${formatNum(v)}`,
   },
 ]
 

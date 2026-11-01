@@ -220,16 +220,16 @@ export function AddHub({ mealId, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — сразу над плитками */}
-      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
-        <Search size={16} color="#8B96B8" />
+      {/* строка поиска — сразу над плитками, компактная */}
+      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+        <Search size={15} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 font-sans text-sm text-bear-text"
+          className="min-w-0 flex-1 font-sans text-[13.5px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
@@ -402,26 +402,24 @@ export function AddHub({ mealId, onPick, onSelect }) {
             </Pressable>
           </View>
 
-          {/* ручной поиск: база продуктов отдельным окном */}
+          {/* ручной поиск: база продуктов отдельным окном — компактная
+              строка вместо громоздкого блока (экономит место в хабе) */}
           <Pressable
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Открыть базу продуктов"
-            className="mt-2 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3.5 active:bg-white/10"
+            className="mt-2 flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.04] px-3 py-2 active:bg-white/10"
           >
             <View
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              className="h-7 w-7 shrink-0 items-center justify-center rounded-lg"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <LayoutGrid size={16} color="#FFFFFF" />
+              <LayoutGrid size={13} color="#FFFFFF" />
             </View>
-            <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[13.5px] text-bear-text">База продуктов</Text>
-              <Text className="font-sans text-[11px] text-bear-sub">
-                Ручной поиск · свои продукты · весь список
-              </Text>
-            </View>
-            <ChevronRight size={16} color="#8B96B8" />
+            <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[12.5px] text-bear-text">
+              База продуктов · ручной поиск
+            </Text>
+            <ChevronRight size={15} color="#8B96B8" />
           </Pressable>
         </>
       )}
