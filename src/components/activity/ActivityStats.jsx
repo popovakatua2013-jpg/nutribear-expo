@@ -1,17 +1,37 @@
 // Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
-// У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
-// с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
+// Вертикальный макет: сверху иконка слева, справа — «+» (шаги/вода) или
+// кольцо цели сжигания (активность); ниже — подпись, значение, подстрока
+// и итоговая строка на всю ширину карточки. На узких экранах (361dp) узкая
+// колонка рядом с иконкой обрезала текст («Шаги с…», «осталось 1 525 …») —
+// теперь тексту доступна вся ширина, а длинные строки сжимаются
+// (adjustsFontSizeToFit), а не обрезаются. У всех четырёх карточек один и тот
+// же набор строк (4 текста), поэтому верхний и нижний ряды одной высоты.
 // Тап по карточке записывает показатель: «Шаги» — ручной ввод шагов,
 // «Калории» — окно добавления еды, «Активность» — вкладка активности,
 // «Вода» — окно воды. Долгий тап по «Калории», «Вода» и «Активность» —
-// изменить цель прямо с главной. У «Активности» справа — кольцо
-// прогресса цели сжигания (общий ui/BurnRing).
+// изменить цель прямо с главной. «+» на шагах/воде добавляет 1 000 шагов /
+// стакан воды.
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { BurnRing } from '../ui/BurnRing'
+
+// однострочный текст, который при нехватке ширины сжимается, а не режется
+function FitLine({ className, maxFontSizeMultiplier = 1.25, children }) {
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      className={className}
+    >
+      {children}
+    </Text>
+  )
+}
 
 function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, onPress, onLongPress, longHint, ring }) {
   const Root = onPress || onLongPress ? Pressable : View
@@ -30,7 +50,8 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
       }
       className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
     >
-      <View className="flex-row items-center gap-2.5">
+      {/* шапка: иконка слева, «+»/кольцо справа */}
+      <View className="flex-row items-center justify-between">
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -39,23 +60,6 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
         >
           <Icon size={19} color="#FFFFFF" />
         </LinearGradient>
-        <View className="min-w-0 flex-1">
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="font-medium text-[11px] text-bear-soft">
-            {label}
-          </Text>
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.2}
-            className="font-extrabold text-[19px] leading-tight tracking-tight text-bear-text"
-          >
-            {value}
-          </Text>
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="font-sans text-[10px] text-bear-sub2">
-            {sub}
-          </Text>
-          {/* Дополнительная строка (например, «осталось 520 ккал») */}
-          {foot}
-        </View>
 
         {ring ? (
           // Кольцо прогресса цели сжигания (на карточке «Активность»)
@@ -74,7 +78,36 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
           )
         )}
       </View>
+
+      {/* текст — на всю ширину карточки, ничего не обрезается */}
+      <FitLine className="mt-2.5 font-medium text-[11px] text-bear-soft">
+        {label}
+      </FitLine>
+      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[19px] leading-tight tracking-tight text-bear-text">
+        {value}
+      </FitLine>
+      <FitLine className="mt-0.5 font-sans text-[10px] text-bear-sub2">
+        {sub}
+      </FitLine>
+      {/* итоговая строка — есть у всех карточек, поэтому ряды одной высоты */}
+      {foot}
     </Root>
+  )
+}
+
+// Итоговая строка карточки: всегда присутствует (даже «цель не задана»),
+// чтобы верхний и нижний ряды были одинаковой высоты
+function Foot({ tone = 'muted', children }) {
+  const color =
+    tone === 'good' ? 'text-emerald-300'
+      : tone === 'warn' ? 'text-rose-300'
+        : tone === 'accent' ? 'text-violet-300'
+          : tone === 'sky' ? 'text-sky-300'
+            : 'text-bear-sub2'
+  return (
+    <FitLine className={`mt-0.5 font-bold text-[11.5px] ${color}`}>
+      {children}
+    </FitLine>
   )
 }
 
@@ -84,6 +117,55 @@ export function ActivityStats({
   onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
   onOpenSteps, onOpenMeals, onGoActivity, kcalGoal,
 }) {
+  // остаток/перебор по шагам: короткие формулировки, чтобы влезать в 130dp
+  const stepsLeft = stepsGoal - steps
+  const stepsFoot = stepsGoal > 0 ? (
+    steps > stepsGoal ? (
+      <Foot tone="good">сверх цели +{formatNum(steps - stepsGoal)}</Foot>
+    ) : steps === stepsGoal ? (
+      <Foot tone="good">цель достигнута</Foot>
+    ) : (
+      <Foot tone="accent">осталось {formatNum(stepsLeft)}</Foot>
+    )
+  ) : (
+    <Foot>цель не задана</Foot>
+  )
+
+  const kcalLeft = kcalGoal - kcal
+  const kcalFoot = kcalGoal > 0 ? (
+    kcal > kcalGoal ? (
+      <Foot tone="warn">перебор +{formatNum(kcal - kcalGoal)} ккал</Foot>
+    ) : kcal === kcalGoal ? (
+      <Foot tone="good">цель достигнута</Foot>
+    ) : (
+      <Foot tone="good">осталось {formatNum(kcalLeft)} ккал</Foot>
+    )
+  ) : (
+    <Foot>цель не задана</Foot>
+  )
+
+  // у «Активности» процент дневной цели переехал из подстроки в итоговую строку
+  const minutesFoot = minutesGoal > 0 ? (
+    <Foot tone={minutes >= minutesGoal ? 'good' : 'accent'}>
+      {minutesPct}% от цели
+    </Foot>
+  ) : (
+    <Foot>цель не задана</Foot>
+  )
+
+  const waterLeft = waterGoalMl - waterMl
+  const waterFoot = waterGoalMl > 0 ? (
+    waterMl > waterGoalMl ? (
+      <Foot tone="sky">+{formatNum(waterMl - waterGoalMl)} мл сверх цели</Foot>
+    ) : waterMl === waterGoalMl ? (
+      <Foot tone="good">цель достигнута</Foot>
+    ) : (
+      <Foot tone="sky">осталось {formatNum(waterLeft)} мл</Foot>
+    )
+  ) : (
+    <Foot>цель не задана</Foot>
+  )
+
   const cards = [
     {
       colors: {
@@ -97,20 +179,7 @@ export function ActivityStats({
       label: 'Шаги сегодня',
       value: formatNum(steps),
       sub: `/ ${formatNum(stepsGoal)}`,
-      // Остаток до цели — крупно, как у «Калорий»: «осталось 3 200 до цели»;
-      // цель достигнута — зелёным с запасом сверх цели
-      foot:
-        stepsGoal > 0 ? (
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.25}
-            className={`mt-0.5 font-bold text-[11.5px] ${steps >= stepsGoal ? 'text-emerald-300' : 'text-violet-300'}`}
-          >
-            {steps >= stepsGoal
-              ? `цель достигнута · +${formatNum(steps - stepsGoal)}`
-              : `осталось ${formatNum(stepsGoal - steps)} до цели`}
-          </Text>
-        ) : null,
+      foot: stepsFoot,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
       onPress: onOpenSteps, // тап — записать шаги вручную
@@ -125,19 +194,7 @@ export function ActivityStats({
       label: 'Калории',
       value: formatNum(kcal),
       sub: `сожжено +${formatNum(burned)}`,
-      // Остаток до дневной цели — крупно, зелёным; перебор — красным
-      foot:
-        kcalGoal > 0 ? (
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.25}
-            className={`mt-0.5 font-bold text-[11.5px] ${kcal - kcalGoal >= 0 ? 'text-rose-300' : 'text-emerald-300'}`}
-          >
-            {kcal - kcalGoal >= 0
-              ? `перебор +${formatNum(kcal - kcalGoal)} ккал`
-              : `осталось ${formatNum(kcalGoal - kcal)} ккал`}
-          </Text>
-        ) : null,
+      foot: kcalFoot,
       onPress: onOpenMeals, // тап — записать приём пищи
       onLongPress: onEditKcalGoal, // долгий тап — изменить цель калорий
     },
@@ -150,9 +207,10 @@ export function ActivityStats({
       Icon: Dumbbell,
       label: 'Активность',
       value: `${minutes} мин`,
-      sub: `из ${formatNum(minutesGoal)} мин · ${minutesPct}%`,
+      sub: `из ${formatNum(minutesGoal)} мин`,
       // Кольцо прогресса цели сжигания (как в сводке, но на главной)
       ring: burnGoal > 0 ? { pct: Math.round((burned / burnGoal) * 100) } : null,
+      foot: minutesFoot,
       onPress: onGoActivity, // тап — на вкладку активности записать тренировку
       onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
       longHint: 'Долгий тап — изменить цель сжигания',
@@ -169,6 +227,7 @@ export function ActivityStats({
       label: 'Вода',
       value: `${waterPct}%`,
       sub: `из ${formatNum(waterGoalMl / 1000)} л · ${formatNum(waterMl)} мл`,
+      foot: waterFoot,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
       onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
