@@ -1,12 +1,105 @@
 // Модалка «Рекомендации»: текст и советы по категории ИМТ.
 // Открывается с вкладки «ИМТ» — кнопкой «Подробнее», стрелкой
-// на трофейном баннере и тапом по кольцу. Кнопка «К рекомендациям»
-// закрывает модалку и скроллит к блоку советов на вкладке
-// (передаётся как onRecommendations, если не задана — не рисуется).
+// на трофейном баннере и тапом по кольцу. В шапке — мини-копия
+// кольца с твоим ИМТ (та же шкала 15→40, статичный снимок).
+// Кнопка «К рекомендациям» закрывает модалку и скроллит к блоку
+// советов на вкладке (если передан onRecommendations).
 
 import { Modal, ScrollView, Text, View, Pressable } from 'react-native'
+import Svg, {
+  Defs,
+  LinearGradient as SvgGradient,
+  Stop,
+  Circle,
+  Path,
+} from 'react-native-svg'
 import { ArrowDown, X } from 'lucide-react-native'
-import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
+import { bmiCategory, fmtDecimal, RECOMMENDATIONS } from '@/lib/data/bmi'
+
+// Та же шкала, что у большого кольца на вкладке (BmiDonut)
+const MR_BMI_MIN = 15
+const MR_BMI_MAX = 40
+const MR_START_DEG = 262
+const MR_SWEEP_DEG = 270
+
+// Короткое название категории — чтобы умещалось в отверстии мини-кольца
+const MINI_SHORT = {
+  low: 'Дефицит',
+  norm: 'Норма',
+  over: 'Лишний вес',
+  obese1: 'Ожирение',
+  obese2: 'Ожирение',
+}
+
+// Мини-копия кольца ИМТ: тот же градиент и углы, без анимаций —
+// статичный снимок текущего значения (id градиента свой — nbsRingMini,
+// чтобы не пересекаться с большим кольцом на вкладке)
+function MiniRing({ bmi, catColor, shortLabel }) {
+  const SIZE = 66
+  const C = 33
+  const R = 25
+  const STROKE = 8
+
+  const target = Math.min(MR_BMI_MAX, Math.max(MR_BMI_MIN, bmi || MR_BMI_MIN))
+  // Минимальный сдвиг 4° — чтобы при ИМТ ровно 15 дуга не вырождалась в точку
+  const deg = Math.max(
+    MR_START_DEG + 4,
+    MR_START_DEG + ((target - MR_BMI_MIN) / (MR_BMI_MAX - MR_BMI_MIN)) * MR_SWEEP_DEG
+  )
+  const rad = (d) => (d * Math.PI) / 180
+  const pt = (a) => [C + R * Math.sin(rad(a)), C - R * Math.cos(rad(a))]
+  const [ax, ay] = pt(MR_START_DEG)
+  const [bx, by] = pt(deg)
+  const large = deg - MR_START_DEG > 180 ? 1 : 0
+  const arc = `M ${ax.toFixed(2)} ${ay.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${bx.toFixed(2)} ${by.toFixed(2)}`
+
+  return (
+    <View className="h-[66px] w-[66px] items-center justify-center">
+      <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
+        <Defs>
+          <SvgGradient id="nbsRingMini" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#53E3F2" />
+            <Stop offset="0.42" stopColor="#6366F1" />
+            <Stop offset="0.72" stopColor="#A855F7" />
+            <Stop offset="1" stopColor="#EA5CF5" />
+          </SvgGradient>
+        </Defs>
+        <Circle
+          cx={C}
+          cy={C}
+          r={R}
+          stroke="url(#nbsRingMini)"
+          strokeOpacity={0.22}
+          strokeWidth={STROKE + 4}
+          fill="none"
+        />
+        <Circle cx={C} cy={C} r={R} stroke="url(#nbsRingMini)" strokeWidth={STROKE} fill="none" />
+        <Path
+          d={arc}
+          stroke="#FFFFFF"
+          strokeOpacity={0.2}
+          strokeWidth={STROKE + 3}
+          strokeLinecap="round"
+          fill="none"
+        />
+        <Path d={arc} stroke="#FFFFFF" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+      </Svg>
+      <View className="items-center">
+        <Text className="font-extrabold text-[14px] leading-none text-white">
+          {fmtDecimal(bmi)}
+        </Text>
+        <Text
+          maxFontSizeMultiplier={1.1}
+          numberOfLines={1}
+          className="mt-[2px] font-semibold text-[7px] leading-none"
+          style={{ color: catColor }}
+        >
+          {shortLabel}
+        </Text>
+      </View>
+    </View>
+  )
+}
 
 export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
   const cat = bmiCategory(bmi)
@@ -16,7 +109,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
-          <View className="flex-row items-start justify-between px-5 pb-1 pt-5">
+          <View className="flex-row items-start px-5 pb-1 pt-5">
             <View className="min-w-0 flex-1">
               <Text className="font-bold text-[15px] text-bear-text">
                 💡 Рекомендации
@@ -25,7 +118,25 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations }) {
                 {rec.main}
               </Text>
             </View>
-            <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
+            {/* Мини-копия кольца: твой ИМТ и категория — как на большой вкладке */}
+            <View className="ml-2 items-center">
+              <MiniRing
+                bmi={bmi}
+                catColor={cat.color}
+                shortLabel={MINI_SHORT[cat.id] || cat.label}
+              />
+              <Text
+                maxFontSizeMultiplier={1.1}
+                className="mt-1 font-sans text-[8px] text-bear-dim"
+              >
+                Твой ИМТ
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel="Закрыть"
+              className="ml-1 mt-0.5 p-1"
+            >
               <X size={20} color="#A5AECB" />
             </Pressable>
           </View>

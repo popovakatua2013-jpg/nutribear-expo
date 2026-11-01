@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { calcBmi } from '@/lib/data/bmi'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
@@ -62,6 +63,7 @@ export default function BmiScreen() {
   const insets = useSafeAreaInsets()
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
+  const haptics = useUiPrefsStore((s) => s.haptics)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const bmi = calcBmi(weightKg, heightCm)
@@ -139,8 +141,8 @@ export default function BmiScreen() {
                   карточка «Что означает твой ИМТ» */}
               <Pressable
                 onPress={() => {
-                  // Лёгкий вибро-отклик при тапе по кольцу
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+                  // Лёгкий вибро-отклик при тапе по кольцу (если включён в «Ещё»)
+                  if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
                   setDetailsOpen(true)
                 }}
                 accessibilityRole="button"

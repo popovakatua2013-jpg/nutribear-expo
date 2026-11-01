@@ -1,7 +1,7 @@
 // Легенда категорий ИМТ: вертикальный столбик справа от кольца,
-// каждая позиция — ОДНА строка: точка · название · диапазон прижат вправо.
-// Крупные шрифты (кольцо стало главным акцентом, места хватает).
-// Текущая категория — белым и жирным, её точка светится.
+// каждая позиция — строка «точка · название · диапазон» в капсуле.
+// Активная категория — фиолетовая капсула-подсветка, белым и жирным,
+// её точка светится.
 
 import { Text, View } from 'react-native'
 import { bmiCategory } from '@/lib/data/bmi'
@@ -17,13 +17,24 @@ export function BmiLegend({ bmi }) {
 
   return (
     <View
-      className="gap-[13px]"
+      className="gap-[7px]"
       accessibilityLabel="Категории ИМТ: норма, лишний вес, ожирение"
     >
       {ROWS.map((row) => {
         const isActive = row.ids.includes(active)
         return (
-          <View key={row.label} className="flex-row items-center gap-[7px]">
+          <View
+            key={row.label}
+            className="flex-row items-center gap-[7px] rounded-full px-2.5 py-[6px]"
+            style={{
+              // Активная строка — лёгкая фиолетовая капсула;
+              // у остальных прозрачная рамка той же толщины, чтобы строки
+              // не прыгали при переключении категории
+              backgroundColor: isActive ? 'rgba(168,85,247,0.16)' : 'transparent',
+              borderColor: isActive ? 'rgba(168,85,247,0.35)' : 'transparent',
+              borderWidth: 1,
+            }}
+          >
             <View
               className="h-[10px] w-[10px] shrink-0 rounded-full"
               style={{
