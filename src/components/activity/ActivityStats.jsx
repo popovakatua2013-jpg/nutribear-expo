@@ -1,9 +1,11 @@
 // Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
 // У шагов и воды — аккуратная кнопка «+» в цвет карточки (36px,
 // с обводкой): нажатие добавляет 1 000 шагов / стакан воды.
-// Тап по карточке «Вода» — окно воды; долгий тап по «Калории», «Вода»
-// и «Активность» — изменить цель прямо с главной. У «Активности»
-// справа — кольцо прогресса цели сжигания (общий ui/BurnRing).
+// Тап по карточке записывает показатель: «Шаги» — ручной ввод шагов,
+// «Калории» — окно добавления еды, «Активность» — вкладка активности,
+// «Вода» — окно воды. Долгий тап по «Калории», «Вода» и «Активность» —
+// изменить цель прямо с главной. У «Активности» справа — кольцо
+// прогресса цели сжигания (общий ui/BurnRing).
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -78,6 +80,7 @@ export function ActivityStats({
   steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
   onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
+  onOpenSteps, onOpenMeals, onGoActivity,
 }) {
   const cards = [
     {
@@ -94,6 +97,7 @@ export function ActivityStats({
       sub: `/ ${formatNum(stepsGoal)}`,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
+      onPress: onOpenSteps, // тап — записать шаги вручную
     },
     {
       colors: {
@@ -105,6 +109,7 @@ export function ActivityStats({
       label: 'Калории',
       value: formatNum(kcal),
       sub: `сожжено +${formatNum(burned)}`,
+      onPress: onOpenMeals, // тап — записать приём пищи
       onLongPress: onEditKcalGoal, // долгий тап — изменить цель калорий
     },
     {
@@ -119,6 +124,7 @@ export function ActivityStats({
       sub: `из ${formatNum(minutesGoal)} мин · ${minutesPct}%`,
       // Кольцо прогресса цели сжигания (как в сводке, но на главной)
       ring: burnGoal > 0 ? { pct: Math.round((burned / burnGoal) * 100) } : null,
+      onPress: onGoActivity, // тап — на вкладку активности записать тренировку
       onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
       longHint: 'Долгий тап — изменить цель сжигания',
     },

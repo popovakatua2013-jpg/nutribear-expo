@@ -6,8 +6,9 @@
 // разлёт эмодзи — на нативном Animated (в разметке нет SVG).
 
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Image, Modal, Pressable, Text, View } from 'react-native'
+import { Animated, Easing, Image, Modal, Pressable, Share, Text, View } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import { Share2 } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { fmtDecimal } from '@/lib/data/bmi'
@@ -65,6 +66,15 @@ export function NormCongrats({ open, onClose, bmi }) {
       if (finished) setBurst(null)
     })
   }, [burst])
+
+  // Похвастаться результатом — системное меню «Поделиться»
+  async function shareResult() {
+    try {
+      await Share.share({
+        message: `Мой ИМТ теперь ${fmtDecimal(bmi)} — категория «Норма»! 🐻🎉`,
+      })
+    } catch {}
+  }
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -129,14 +139,24 @@ export function NormCongrats({ open, onClose, bmi }) {
             настоящий результат: медвежонок тобой гордится! 🐻💜
           </Text>
 
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Закрыть поздравление"
-            className="mt-5 w-full items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
-          >
-            <Text className="font-bold text-[14px] text-white">Ура! 🎉</Text>
-          </Pressable>
+          <View className="mt-5 w-full flex-row gap-2">
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Закрыть поздравление"
+              className="min-w-0 flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+            >
+              <Text className="font-bold text-[14px] text-white">Ура! 🎉</Text>
+            </Pressable>
+            <Pressable
+              onPress={shareResult}
+              accessibilityRole="button"
+              accessibilityLabel="Поделиться результатом"
+              className="w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 active:opacity-70"
+            >
+              <Share2 size={16} color="#AEB9D9" />
+            </Pressable>
+          </View>
         </Animated.View>
       </View>
     </Modal>

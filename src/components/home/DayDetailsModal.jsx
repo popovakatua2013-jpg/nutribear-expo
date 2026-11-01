@@ -40,7 +40,9 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-1">
               <Text className="font-bold text-[15px] text-bear-text">{title}</Text>
-              <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">Сводка дня</Text>
+              <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
+                Сводка дня: еда, шаги, вода, тренировки — всё, что записано в этот день
+              </Text>
             </View>
             <Pressable
               onPress={onClose}

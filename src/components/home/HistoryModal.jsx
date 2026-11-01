@@ -1,11 +1,12 @@
 // Модалка «История приёмов»: журнал добавленной еды по дням.
 // История не сбрасывается «Новый день» — видно прошлые дни.
+// Поиск по названию блюда: фильтрует журнал по всем дням.
 // Кнопка «+» у блюда — записать его снова в любой приём пищи.
 // Кнопка скачивания — экспорт дневника в CSV через «Поделиться».
 
 import { useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { Download, History, Plus, X } from 'lucide-react-native'
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Download, History, Plus, Search, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '@/components/ui/Toast'
@@ -48,6 +49,7 @@ export function HistoryModal({ visible, onClose }) {
   const { toast } = useToast()
   const insets = useSafeAreaInsets()
   const [reAddId, setReAddId] = useState(null) // блюдо, для которого открыт выбор приёма
+  const [query, setQuery] = useState('') // поиск по названию блюда
 
   // Записать блюдо из журнала снова — в выбранный приём пищи
   function reAdd(row, meal) {
@@ -59,17 +61,22 @@ export function HistoryModal({ visible, onClose }) {
     setReAddId(null)
   }
 
-  // Группировка по дням, новые сверху
+  // Группировка по дням, новые сверху. Поиск фильтрует блюда по названию
+  // (без учёта регистра) — дни без совпадений прячутся целиком
   const groups = useMemo(() => {
+    const q = query.trim().toLowerCase()
     const map = new Map()
     for (const row of history) {
+      if (q && !String(row.name || '').toLowerCase().includes(q)) continue
       if (!map.has(row.day)) map.set(row.day, [])
       map
         .get(row.day)
         .push({ ...row, mealName: resolveMealName(row.mealId, customMeals) })
     }
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
-  }, [history, customMeals])
+  }, [history, customMeals, query])
+
+  const foundCount = useMemo(() => groups.reduce((n, [, rows]) => n + rows.length, 0), [groups])
 
   async function exportCsv() {
     if (!history.length) {
@@ -126,11 +133,45 @@ export function HistoryModal({ visible, onClose }) {
             </Pressable>
           </View>
 
+          {/* Поиск по названию блюда — по всем дням журнала */}
+          <View className="px-4 pt-3">
+            <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+              <Search size={15} color="#8B96B8" />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Поиск блюда…"
+                placeholderTextColor="#8B96B8"
+                accessibilityLabel="Поиск блюда в истории"
+                returnKeyType="search"
+                className="min-w-0 flex-1 py-0 font-sans text-[13px] text-bear-text"
+              />
+              {query.length > 0 && (
+                <Pressable
+                  onPress={() => setQuery('')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Очистить поиск"
+                  hitSlop={8}
+                  className="shrink-0 rounded-full bg-white/10 p-1 active:opacity-70"
+                >
+                  <X size={12} color="#AEB9D9" />
+                </Pressable>
+              )}
+            </View>
+            {query.trim().length > 0 && (
+              <Text className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-sub">
+                {foundCount > 0
+                  ? `Найдено блюд: ${foundCount}`
+                  : 'Ничего не нашлось — попробуйте другое название'}
+              </Text>
+            )}
+          </View>
+
           {/* Список по дням */}
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {groups.length === 0 ? (
               <Text className="py-10 text-center font-sans text-[12px] text-bear-sub">
-                Пока пусто — добавьте первое блюдо 🐻
+                {query.trim() ? 'Ничего не нашлось 🐻' : 'Пока пусто — добавьте первое блюдо 🐻'}
               </Text>
             ) : (
               <View className="gap-4 pb-3">

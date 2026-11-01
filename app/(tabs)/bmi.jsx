@@ -11,10 +11,10 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
+import { ChartColumn, ChevronRight, Scale, ShieldCheck } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
-import { calcBmi, bmiCategory } from '@/lib/data/bmi'
+import { calcBmi, bmiCategory, normStreakWeeks } from '@/lib/data/bmi'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
 import { BmiStatCards } from '@/components/bmi/BmiStatCards'
@@ -24,6 +24,7 @@ import { WeightCard } from '@/components/bmi/WeightCard'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { NormCongrats } from '@/components/bmi/NormCongrats'
+import { WeightNudge } from '@/components/bmi/WeightNudge'
 
 // Мягкое неоновое свечение (дымка как на макете): радиальный градиент
 // плавно уходит в прозрачность — без жёсткого края круглой заливки
@@ -64,6 +65,7 @@ export default function BmiScreen() {
   const insets = useSafeAreaInsets()
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
+  const weights = useProfileStore((s) => s.weights)
   const haptics = useUiPrefsStore((s) => s.haptics)
   const [detailsOpen, setDetailsOpen] = useState(false)
   // Категория для карточки «Что означает твой ИМТ»: null — своя
@@ -71,6 +73,8 @@ export default function BmiScreen() {
   const [detailsCatId, setDetailsCatId] = useState(null)
 
   const bmi = calcBmi(weightKg, heightCm)
+  // Стрик «в норме N недель» — сколько полных недель ИМТ держится в норме
+  const normWeeks = normStreakWeeks(weightKg, weights, heightCm)
 
   // Открыть карточку пояснения: с лёгкой вибрацией (как у кольца)
   const openDetails = (catId = null) => {
@@ -177,16 +181,38 @@ export default function BmiScreen() {
           <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
-              {/* Кольцо ИМТ + легенда категорий. Тап по кольцу — карточка
-                  со своей категорией, тап по строке легенды — по её категории */}
-              <Pressable
-                onPress={() => openDetails(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Что означает твой ИМТ — открыть подробности"
-                className="shrink-0 active:opacity-80"
-              >
-                <BmiDonut bmi={bmi} />
-              </Pressable>
+              {/* Кольцо + бейдж стрика «в норме N недель» + легенда.
+                  Тап по кольцу — карточка со своей категорией,
+                  тап по строке легенды — по её категории */}
+              <View className="items-center gap-1.5">
+                <Pressable
+                  onPress={() => openDetails(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Что означает твой ИМТ — открыть подробности"
+                  className="shrink-0 active:opacity-80"
+                >
+                  <BmiDonut bmi={bmi} />
+                </Pressable>
+                {normWeeks >= 1 && (
+                  <View
+                    className="flex-row items-center gap-1 rounded-full px-2 py-[3px]"
+                    style={{
+                      backgroundColor: 'rgba(56,189,248,0.13)',
+                      borderColor: 'rgba(56,189,248,0.30)',
+                      borderWidth: 1,
+                    }}
+                  >
+                    <ShieldCheck size={11} color="#38BDF8" />
+                    <Text
+                      maxFontSizeMultiplier={1.1}
+                      numberOfLines={1}
+                      className="font-bold text-[10px] text-[#7DD3FC]"
+                    >
+                      {`В норме ${normWeeks} нед.`}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
                 <BmiLegend bmi={bmi} onRowPress={openDetails} />
               </View>
@@ -208,12 +234,14 @@ export default function BmiScreen() {
         {/* Калькулятор: пол, возраст, рост, вес */}
         <BmiCalculator />
 
-        {/* Динамика веса (пилюля «Динамика веса» скроллит сюда) */}
+        {/* Динамика веса (пилюля «Динамика веса» скроллит сюда).
+            Над ней — мягкое напоминание мишки, если вес >7 дней не записывался */}
         <View
           onLayout={(e) => {
             weightY.current = e.nativeEvent.layout.y
           }}
         >
+          <WeightNudge />
           <WeightCard />
         </View>
         <ProgressPhotos />
@@ -222,6 +250,8 @@ export default function BmiScreen() {
       <AdviceModal
         bmi={bmi}
         catId={detailsCatId}
+        weightKg={weightKg}
+        heightCm={heightCm}
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
         onRecommendations={() => {

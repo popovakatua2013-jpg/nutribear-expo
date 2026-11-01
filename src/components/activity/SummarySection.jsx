@@ -35,9 +35,14 @@ export function SummarySection({ today, rangeId = '7d', onRangeChange = () => {}
     >
       {/* Заголовок + период (один на всю вкладку) */}
       <View className="mb-3 flex-row flex-wrap items-center justify-between gap-2">
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Сводка
-        </Text>
+        <View className="min-w-0 flex-1">
+          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+            Сводка
+          </Text>
+          <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+            Показатели дневника за период: шаги, вода, калории, активность
+          </Text>
+        </View>
         <Pills
           items={RANGES.map((r) => ({ id: r.id, label: r.label }))}
           value={rangeId}
@@ -65,6 +70,11 @@ export function SummarySection({ today, rangeId = '7d', onRangeChange = () => {}
               accessibilityLabel="Показатель"
             />
           </View>
+
+          {/* Что именно на графике: выбранный показатель за каждый день */}
+          <Text className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-sub">
+            {`${metric.label} за каждый день периода — одна точка = один день`}
+          </Text>
 
           {/* График выбранного показателя по дням */}
           <SvgAreaChart

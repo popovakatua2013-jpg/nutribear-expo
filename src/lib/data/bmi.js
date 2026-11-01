@@ -212,3 +212,74 @@ export function allWeights(records) {
     .slice(-24)
     .map(({ d, kg }) => ({ label: shortDate(d), kg: Math.round(kg * 10) / 10 }))
 }
+
+// Сколько кг до следующей (лучшей) категории ИМТ — для подсказки
+// в карточке «Что означает твой ИМТ». Граница честная: до ВЕРХНЕЙ
+// кромки целевой категории (норма → до 24.9, лишний вес → до 29.9).
+// Для «Нормы» лучшей категории нет — возвращаем рабочий диапазон веса.
+export function kgToNextCategory(weightKg, heightCm) {
+  if (!weightKg || !heightCm) return null
+  const h2 = (heightCm / 100) ** 2
+  const bmi = weightKg / h2
+  const cat = bmiCategory(bmi)
+  const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1)
+
+  if (cat.id === 'norm') {
+    const { min, max } = healthyRange(heightCm)
+    return {
+      tone: 'ok',
+      text: `Ты уже в лучшей категории! Держи вес в диапазоне ${min}–${max} кг`,
+    }
+  }
+
+  // Цель — категория на шаг лучше: для «Недостатка веса» — норма
+  // (набрать), для остальных — на ступень вниз (сбросить).
+  // Названия — в родительном падеже: «До „Нормы“ осталось −3.7 кг»
+  const GENITIVE = {
+    norm: 'Нормы',
+    over: 'Лишнего веса',
+    obese1: 'Ожирения I ст.',
+    obese2: 'Ожирения II–III ст.',
+  }
+  const idx = BMI_CATEGORIES.findIndex((c) => c.id === cat.id)
+  const next = cat.id === 'low' ? BMI_CATEGORIES[1] : BMI_CATEGORIES[idx - 1]
+  const bound = cat.id === 'low' ? 18.5 * h2 : (next.max - 0.1) * h2
+  const diff = Math.round(Math.abs(weightKg - bound) * 10) / 10
+  const sign = cat.id === 'low' ? '+' : '−'
+  if (diff < 0.1) return { tone: 'ok', text: 'Совсем чуть-чуть — и следующая категория!' }
+  return {
+    tone: 'info',
+    text: `До «${GENITIVE[next.id] || next.label}» осталось ${sign}${fmt(diff)} кг`,
+  }
+}
+
+// Сколько полных недель ИМТ держится в «Норме» — для бейджа у кольца.
+// Считаем по журналу: идём от свежих измерений назад и ищем последнее,
+// при котором ИМТ был вне нормы; стрик начинается со следующего дня.
+// Нет записей или сейчас вне нормы — стрика нет (0).
+export function normStreakWeeks(weightKg, records, heightCm) {
+  if (!weightKg || !heightCm) return 0
+  const h2 = (heightCm / 100) ** 2
+  const inNorm = (kg) => {
+    const b = kg / h2
+    return b >= 18.5 && b < 25
+  }
+  if (!inNorm(weightKg)) return 0
+
+  const midnight = (d) => {
+    const x = new Date(d)
+    x.setHours(0, 0, 0, 0)
+    return x.getTime()
+  }
+  const days = (records || [])
+    .map((r) => ({ t: midnight(new Date(r.date)), kg: r.kg }))
+    .sort((a, b) => b.t - a.t) // новые сверху
+  if (!days.length) return 0
+
+  // Свежайшее измерение вне нормы; если таких нет — стрик с первой записи
+  const lastBad = days.find((d) => !inNorm(d.kg))
+  const start = lastBad ? lastBad.t : days[days.length - 1].t
+  const today = midnight(new Date())
+  const daysIn = Math.floor((today - start) / 86400000)
+  return Math.max(0, Math.floor(daysIn / 7))
+}

@@ -5,10 +5,13 @@
 // записи веса. Прямо под карточкой «Вес» — мини-график веса за 30 дней
 // (спарклайн без осей). У роста — «✓ Постоянный».
 
+import { useEffect, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Check, Ruler, TrendingDown, TrendingUp, Weight } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { fmtDecimal, healthyRange, monthWeights, weekWeights } from '@/lib/data/bmi'
 import { WeightMiniChart } from './WeightMiniChart'
 
@@ -34,6 +37,18 @@ export function BmiStatCards() {
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
   const weights = useProfileStore((s) => s.weights)
+  const hapticsOn = useUiPrefsStore((s) => s.haptics)
+
+  // Выбранная точка мини-графика (тап) — подпись «дата · вес» вместо
+  // заголовка; через 5 секунд возвращается заголовок
+  const [sel, setSel] = useState(null)
+  const selTimer = useRef(null)
+  useEffect(() => {
+    if (sel == null) return
+    clearTimeout(selTimer.current)
+    selTimer.current = setTimeout(() => setSel(null), 5000)
+    return () => clearTimeout(selTimer.current)
+  }, [sel])
 
   // Изменение веса за неделю — как в карточке «Динамика веса»
   const week = weekWeights(weightKg, weights)
@@ -53,6 +68,7 @@ export function BmiStatCards() {
 
   // Мини-график за 30 дней (точка каждые 3 дня) — под карточкой «Вес»
   const month = monthWeights(weightKg, weights)
+  const selPoint = sel != null && month[sel] ? month[sel] : null
 
   return (
     <View className="flex-row items-stretch gap-2">
@@ -95,7 +111,7 @@ export function BmiStatCards() {
         </Pressable>
 
         {/* Мини-график веса за 30 дней — прямо под карточкой «Вес»
-            (тап тоже открывает окно записи веса) */}
+            (тап по точке — дата и вес того дня, тап по карточке — запись) */}
         <Pressable
           onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
           accessibilityRole="button"
@@ -103,14 +119,35 @@ export function BmiStatCards() {
           className="rounded-[16px] p-2 pt-1.5 active:opacity-80"
           style={CARD}
         >
-          <Text
-            maxFontSizeMultiplier={1.1}
-            numberOfLines={1}
-            className="font-sans text-[9.5px] text-bear-dim"
-          >
-            Вес за 30 дней
-          </Text>
-          <WeightMiniChart data={month} color="#A78BFA" height={30} />
+          {selPoint ? (
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.1}
+              className="font-bold text-[10px] text-white"
+            >
+              {`${selPoint.label} · ${fmtDecimal(selPoint.kg)} кг`}
+            </Text>
+          ) : (
+            <Text
+              maxFontSizeMultiplier={1.1}
+              numberOfLines={1}
+              className="font-sans text-[9.5px] text-bear-dim"
+            >
+              Вес за 30 дней
+            </Text>
+          )}
+          <WeightMiniChart
+            data={month}
+            color="#A78BFA"
+            height={30}
+            activeIndex={sel}
+            onPick={(idx) => {
+              setSel(idx)
+              if (idx != null && hapticsOn) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+              }
+            }}
+          />
         </Pressable>
       </View>
 

@@ -5,8 +5,8 @@
 // Показатели дня пишутся в историю — для отчётов.
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { router, useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ActivityStats } from '@/components/activity/ActivityStats'
@@ -39,6 +39,9 @@ export default function HomeScreen() {
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
+  // Ручной ввод шагов (тап по плитке «Шаги»)
+  const [stepsOpen, setStepsOpen] = useState(false)
+  const [stepsVal, setStepsVal] = useState('')
   // Долгий тап по карточке «Калории»/«Вода» — быстрый редактор цели
   const [goalEdit, setGoalEdit] = useState(null) // {field, title, unit, min, max}
   const [goalVal, setGoalVal] = useState('')
@@ -122,6 +125,25 @@ export default function HomeScreen() {
     })
   }
 
+  // Ручной ввод шагов с плитки «Шаги»: пишем в ту же копилку, что и «+»
+  function saveSteps() {
+    const n = Math.round(Number(String(stepsVal).replace(/\s/g, '').replace(',', '.')) || 0)
+    if (!Number.isFinite(n) || n < 1 || n > 50000) {
+      toast({
+        title: '❗ Проверьте шаги',
+        description: 'От 1 до 50 000 за раз, например 4 500',
+      })
+      return
+    }
+    addSteps(n)
+    setStepsOpen(false)
+    setStepsVal('')
+    toast({
+      title: '🚶 Шаги записаны!',
+      description: `+${formatNum(n)} шагов к сегодняшнему результату`,
+    })
+  }
+
   // Активация онбординга: «Добавить свой завтрак» — окно открытия блюда
   const openBreakfast = useOnboardingStore((s) => s.openBreakfast)
   const consumeOpenBreakfast = useOnboardingStore((s) => s.consumeOpenBreakfast)
@@ -141,6 +163,7 @@ export default function HomeScreen() {
         setAddOpen(false)
         setAllOpen(false)
         setWaterOpen(false)
+        setStepsOpen(false)
       },
       []
     )
@@ -214,6 +237,9 @@ export default function HomeScreen() {
           onEditWaterGoal={() =>
             openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
           }
+          onOpenSteps={() => setStepsOpen(true)}
+          onOpenMeals={() => openAdd('breakfast')}
+          onGoActivity={() => router.navigate('/activity')}
         />
 
         {/* Вечерняя подсказка: с 19:00 догоняем воду/калории, если отстаём */}
@@ -284,6 +310,66 @@ export default function HomeScreen() {
         goalMl={goals.waterMl}
         ml={waterMl}
       />
+
+      {/* Ручной ввод шагов (тап по плитке «Шаги»): та же копилка, что и «+» */}
+      <Modal
+        visible={stepsOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setStepsOpen(false)}
+      >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
+          <Pressable
+            className="flex-1 items-center justify-center bg-black/60 px-8"
+            onPress={() => setStepsOpen(false)}
+          >
+            <Pressable
+              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              onPress={() => {}}
+              accessibilityLabel="Записать шаги вручную"
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="font-bold text-[15px] text-bear-text">🚶 Записать шаги</Text>
+                <Pressable
+                  onPress={() => setStepsOpen(false)}
+                  accessibilityLabel="Закрыть"
+                  className="p-1"
+                >
+                  <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+                </Pressable>
+              </View>
+              <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+                Добавим к сегодняшним шагам — {formatNum(extraSteps)} уже есть
+              </Text>
+              <View className="mt-3 flex-row items-center gap-2">
+                <TextInput
+                  value={stepsVal}
+                  onChangeText={setStepsVal}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  placeholder="Например, 4500"
+                  placeholderTextColor="#8B96B8"
+                  accessibilityLabel="Количество шагов"
+                  autoFocus
+                  onSubmitEditing={saveSteps}
+                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+                />
+                <Text className="shrink-0 font-sans text-sm text-bear-sub">шагов</Text>
+              </View>
+              <Pressable
+                onPress={saveSteps}
+                accessibilityRole="button"
+                accessibilityLabel="Сохранить шаги"
+                className="mt-4 rounded-2xl py-3 active:opacity-80"
+                style={{ backgroundColor: '#7B6CF6' }}
+              >
+                <Text className="text-center font-bold text-sm text-white">Записать</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Быстрая правка цели с главной (долгий тап по карточке) */}
       <Modal

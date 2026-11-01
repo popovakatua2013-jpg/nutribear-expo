@@ -25,9 +25,15 @@ export function ReportsSection({ today, days }) {
   return (
     <View accessibilityLabel="Отчёты" className="gap-3">
       <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-extrabold text-[17px] tracking-tight text-bear-text">
-          Отчёты
-        </Text>
+        <View className="min-w-0 flex-1">
+          <Text className="font-extrabold text-[17px] tracking-tight text-bear-text">
+            Отчёты
+          </Text>
+          <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+            Итоги из твоего дневника за период — шаги, калории, вода, сожжено и опыт, со
+            сравнением с прошлым периодом. Период выбирается в «Сводке» выше
+          </Text>
+        </View>
         <Pressable
           onPress={() => setShareOpen(true)}
           accessibilityRole="button"

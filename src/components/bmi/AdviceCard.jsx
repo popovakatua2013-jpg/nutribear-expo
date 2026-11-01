@@ -16,8 +16,8 @@ import Svg, {
   Circle,
   Path,
 } from 'react-native-svg'
-import { ArrowDown, X } from 'lucide-react-native'
-import { BMI_CATEGORIES, bmiCategory, fmtDecimal, RECOMMENDATIONS } from '@/lib/data/bmi'
+import { ArrowDown, Target, X } from 'lucide-react-native'
+import { BMI_CATEGORIES, bmiCategory, fmtDecimal, kgToNextCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
 
 // Та же шкала, что у большого кольца на вкладке (BmiDonut)
 const MR_BMI_MIN = 15
@@ -104,13 +104,15 @@ function MiniRing({ bmi, catColor, shortLabel }) {
   )
 }
 
-export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = null }) {
+export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = null, weightKg, heightCm }) {
   // Своя категория — по реальному ИМТ; catId (тап по строке легенды)
   // подменяет только текст пояснения, мини-кольцо остаётся «твоим»
   const own = bmiCategory(bmi)
   const cat = (catId && BMI_CATEGORIES.find((c) => c.id === catId)) || own
   const rec = RECOMMENDATIONS[cat.id] || RECOMMENDATIONS[own.id]
   const isOwn = cat.id === own.id
+  // Сколько кг до следующей (лучшей) категории — только для своей категории
+  const nextKg = isOwn ? kgToNextCategory(weightKg, heightCm) : null
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -152,6 +154,26 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
             <Text className="mt-2 font-semibold text-xs" style={{ color: cat.color }}>
               {isOwn ? 'Ваша категория' : 'Категория'}: {cat.label} ({cat.range})
             </Text>
+
+            {/* Сколько кг до следующей (лучшей) категории — по реальным весу и росту */}
+            {nextKg && (
+              <View
+                className="mt-2 flex-row items-center gap-1.5 self-start rounded-full px-3 py-1.5"
+                style={{
+                  backgroundColor: nextKg.tone === 'ok' ? 'rgba(74,222,128,0.12)' : 'rgba(141,171,255,0.12)',
+                }}
+              >
+                <Target size={12} color={nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF'} />
+                <Text
+                  numberOfLines={2}
+                  maxFontSizeMultiplier={1.1}
+                  className="min-w-0 flex-1 font-semibold text-[11.5px]"
+                  style={{ color: nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF' }}
+                >
+                  {nextKg.text}
+                </Text>
+              </View>
+            )}
             <View className="mt-3 gap-2">
               {rec.tips.map((tip) => (
                 <View
