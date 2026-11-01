@@ -18,6 +18,7 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useShopStore } from '@/store/useShopStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { expeditionOf } from '@/lib/data/organism-game'
 import { restorePhotos } from '@/lib/photos'
 
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
@@ -156,6 +157,12 @@ export async function applyBackup(data) {
     items: arr(og.items),
     opened: Math.max(0, Math.round(num(og.opened))),
     log: arr(og.log),
+    // Активная экспедиция: ключ проверяется по справочнику, время — по
+    // реальным часам; битые записи превращаются в «организм дома»
+    expedition:
+      og.expedition && expeditionOf(og.expedition.key) && num(og.expedition.startedAt) > 0
+        ? { key: og.expedition.key, startedAt: num(og.expedition.startedAt) }
+        : null,
   })
 
   // ── Мелкие настройки: вибро-отклик, порог напоминания мишки ──

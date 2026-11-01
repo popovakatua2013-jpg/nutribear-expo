@@ -164,3 +164,81 @@ export function yesterdayKeyOf(key) {
   const p = (n) => String(n).padStart(2, '0')
   return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
 }
+
+// ── Экспедиции ──────────────────────────────────────────────────────────────
+// Организм уходит в поход на реальное время (idle-механика из прототипа):
+// можно закрыть приложение — время идёт само. Вернулся — забери добычу.
+// Длинный путь выгоднее за час, но ждать дольше: 0.5 / 0.63 / 0.75 гена в час.
+export const EXPEDITIONS = [
+  { key: 'walk', name: 'Прогулка к холмам', emoji: '🌿', hours: 4, genes: 2, crystals: 3 },
+  { key: 'hike', name: 'Поход к роднику', emoji: '🏞️', hours: 8, genes: 5, crystals: 7 },
+  { key: 'quest', name: 'Большая экспедиция', emoji: '🧭', hours: 12, genes: 9, crystals: 12 },
+]
+
+export function expeditionOf(key) {
+  return EXPEDITIONS.find((e) => e.key === key) || null
+}
+
+// Прогресс похода: done / remainingMs / fraction 0…1. Нет похода — null.
+// Скачок часов вперёд (startedAt в будущем) = «только ушёл», без читов.
+export function expeditionProgress(expedition, now = Date.now()) {
+  const e = expeditionOf(expedition && expedition.key)
+  const startedAt = expedition && expedition.startedAt
+  if (!e || !startedAt) return null
+  const durationMs = e.hours * 3600000
+  const elapsed = Math.max(0, now - startedAt)
+  return {
+    done: elapsed >= durationMs,
+    remainingMs: Math.max(0, durationMs - elapsed),
+    fraction: Math.min(1, elapsed / durationMs),
+  }
+}
+
+// Лор возвращения — короткая фраза для истории организма
+export const EXPEDITION_TALES = {
+  walk: [
+    'Тропа была мягкой, взгляд — ясным.',
+    'Скатился с холма тёплым шариком — смех и трава в геноме.',
+    'Нашёл лужайку, где светится мох. Немного забрал с собой.',
+  ],
+  hike: [
+    'У родника вода звенела так, что резонировал геном.',
+    'Дорога была долгой, но каждый шаг ложился в ДНК ровно.',
+    'Встретил на тропе улитку-философа. Разошлись довольные.',
+  ],
+  quest: [
+    'За туманом нашёл поляну, где растут гены. Аккуратно собрал.',
+    'Перешёл хребет — оттуда виден весь биом. Геном гудел от гордости.',
+    'Вернулся с сумкой полных кристаллов и историей на неделю.',
+  ],
+}
+
+export function expeditionTale(key, rand = Math.random()) {
+  const list = EXPEDITION_TALES[key] || EXPEDITION_TALES.walk
+  return list[Math.floor(rand * list.length) % list.length]
+}
+
+// Русские формы слов: 1 ген / 2 гена / 5 генов
+function plural(n, one, few, many) {
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return one
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few
+  return many
+}
+
+export function genesLabel(n) {
+  return `${n} ${plural(n, 'ген', 'гена', 'генов')}`
+}
+
+export function crystalsLabel(n) {
+  return `${n} ${plural(n, 'кристалл', 'кристалла', 'кристаллов')}`
+}
+
+// «3 ч 12 м» / «45 м» — остаток пути для таймера
+export function fmtRemaining(ms) {
+  const min = Math.max(0, Math.ceil(ms / 60000))
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return h > 0 ? `${h} ч ${m} м` : `${m} м`
+}

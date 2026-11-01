@@ -13,6 +13,11 @@ import {
   AURAS,
   DUP_MUTAGEN,
   STREAK_FOR_CAPSULE,
+  crystalsLabel,
+  expeditionOf,
+  expeditionProgress,
+  expeditionTale,
+  genesLabel,
   mondayKeyOf,
   rollDrop,
 } from '@/lib/data/organism-game'
@@ -54,6 +59,9 @@ export const useOrganismGameStore = create(
       items: [], // артефакты и ауры (дубликаты → мутаген)
       opened: 0,
       log: [], // история организма (новые сверху)
+
+      // экспедиция (idle): организм в походе на реальное время
+      expedition: null, // { key, startedAt } | null
 
       /* ── Ежедневная синхронизация: вызывается при открытии экрана ── */
       syncDay: ({ dayKey, combo, state }) => {
@@ -184,6 +192,40 @@ export const useOrganismGameStore = create(
         return { drop, itemName, dup }
       },
 
+      /* ── Экспедиция: отправить организм в поход (idle, реальное время) ── */
+      startExpedition: (key) => {
+        const s = get()
+        if (s.expedition || !expeditionOf(key)) return false
+        const e = expeditionOf(key)
+        set({
+          expedition: { key, startedAt: Date.now() },
+          log: [
+            { id: makeId(), ts: Date.now(), text: `Ушёл в поход: «${e.name}» — вернусь через ${e.hours} ч.` },
+            ...s.log,
+          ],
+        })
+        return true
+      },
+
+      /* ── Экспедиция: забрать добычу, когда время вышло ── */
+      collectExpedition: () => {
+        const s = get()
+        const pr = expeditionProgress(s.expedition)
+        if (!pr || !pr.done) return null
+        const e = expeditionOf(s.expedition.key)
+        const tale = expeditionTale(s.expedition.key)
+        set({
+          expedition: null,
+          genes: s.genes + e.genes,
+          crystals: s.crystals + e.crystals,
+          log: [
+            { id: makeId(), ts: Date.now(), text: `Экспедиция «${e.name}»: +${genesLabel(e.genes)}, +${crystalsLabel(e.crystals)}. ${tale}` },
+            ...s.log,
+          ],
+        })
+        return { name: e.name, genes: e.genes, crystals: e.crystals, tale }
+      },
+
       /* ── Полный сброс (вместе с «Стереть все данные») ── */
       resetAll: () =>
         set({
@@ -192,7 +234,7 @@ export const useOrganismGameStore = create(
           stableDays: 0, stableLastKey: null, mutationUnlocked: false,
           raidWeekStart: mondayKeyOf(), raidDays: {}, raidKilled: false, raidRewarded: false,
           comboDays: {}, goodDays: {}, streak: 0, streakLastKey: null,
-          items: [], opened: 0, log: [],
+          items: [], opened: 0, log: [], expedition: null,
         }),
     }),
     {
@@ -205,6 +247,7 @@ export const useOrganismGameStore = create(
         raidWeekStart: s.raidWeekStart, raidDays: s.raidDays, raidKilled: s.raidKilled, raidRewarded: s.raidRewarded,
         comboDays: s.comboDays, goodDays: s.goodDays, streak: s.streak, streakLastKey: s.streakLastKey,
         items: s.items, opened: s.opened, log: s.log,
+        expedition: s.expedition,
       }),
     }
   )

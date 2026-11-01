@@ -23,6 +23,14 @@ import {
   STREAK_FOR_CAPSULE,
   dayCombo,
   yesterdayKeyOf,
+  EXPEDITIONS,
+  EXPEDITION_TALES,
+  expeditionOf,
+  expeditionProgress,
+  expeditionTale,
+  genesLabel,
+  crystalsLabel,
+  fmtRemaining,
 } from '@/lib/data/organism-game'
 
 describe('геном', () => {
@@ -150,5 +158,68 @@ describe('капсулы и комбо', () => {
     expect(yesterdayKeyOf('2026-11-01')).toBe('2026-10-31')
     expect(yesterdayKeyOf('2026-03-01')).toBe('2026-02-28') // 2026 не високосный
     expect(yesterdayKeyOf('2026-01-01')).toBe('2025-12-31')
+  })
+})
+
+describe('экспедиции', () => {
+  const HOUR = 3600000
+
+  test('три маршрута: 4/8/12 ч, добыча растёт быстрее времени', () => {
+    expect(EXPEDITIONS.map((e) => e.hours)).toEqual([4, 8, 12])
+    expect(new Set(EXPEDITIONS.map((e) => e.key)).size).toBe(3)
+    // за час: 0.5 / 0.63 / 0.75 гена — длинный путь выгоднее
+    const perHour = EXPEDITIONS.map((e) => e.genes / e.hours)
+    expect(perHour[1]).toBeGreaterThan(perHour[0])
+    expect(perHour[2]).toBeGreaterThan(perHour[1])
+    expect(EXPEDITIONS.every((e) => e.crystals > 0 && e.name && e.emoji)).toBe(true)
+  })
+
+  test('экспедиция прогресса: половина пути, финиш, будущий старт', () => {
+    const now = 1_700_000_000_000
+    const half = expeditionProgress({ key: 'walk', startedAt: now - 2 * HOUR }, now)
+    expect(half).toEqual({ done: false, remainingMs: 2 * HOUR, fraction: 0.5 })
+
+    const done = expeditionProgress({ key: 'walk', startedAt: now - 5 * HOUR }, now)
+    expect(done.done).toBe(true)
+    expect(done.remainingMs).toBe(0)
+    expect(done.fraction).toBe(1)
+
+    // скачок часов (startedAt в будущем) — «только ушёл», без читов
+    const future = expeditionProgress({ key: 'hike', startedAt: now + HOUR }, now)
+    expect(future.done).toBe(false)
+    expect(future.remainingMs).toBe(8 * HOUR)
+    expect(future.fraction).toBe(0)
+  })
+
+  test('нет похода или битый ключ — null', () => {
+    expect(expeditionProgress(null)).toBeNull()
+    expect(expeditionProgress(undefined)).toBeNull()
+    expect(expeditionProgress({ key: 'walk', startedAt: 0 })).toBeNull()
+    expect(expeditionProgress({ key: 'nope', startedAt: 1_700_000_000_000 })).toBeNull()
+    expect(expeditionOf('nope')).toBeNull()
+    expect(expeditionOf('quest').hours).toBe(12)
+  })
+
+  test('лор возвращения — фраза из списка своего маршрута', () => {
+    expect(expeditionTale('walk', 0)).toBe(EXPEDITION_TALES.walk[0])
+    expect(expeditionTale('quest', 0.99)).toBe(EXPEDITION_TALES.quest[2]) // floor(0.99·3) = 2
+    // неизвестный маршрут — честный фолбэк на прогулку
+    expect(EXPEDITION_TALES.walk).toContain(expeditionTale('nope', 0.5))
+    // внутри диапазона rand всегда строка списка
+    expect(EXPEDITION_TALES.hike).toContain(expeditionTale('hike', 0.4))
+  })
+
+  test('формы слов и таймер', () => {
+    expect(genesLabel(1)).toBe('1 ген')
+    expect(genesLabel(2)).toBe('2 гена')
+    expect(genesLabel(5)).toBe('5 генов')
+    expect(genesLabel(11)).toBe('11 генов')
+    expect(genesLabel(21)).toBe('21 ген')
+    expect(crystalsLabel(3)).toBe('3 кристалла')
+    expect(crystalsLabel(12)).toBe('12 кристаллов')
+    expect(fmtRemaining(4 * HOUR)).toBe('4 ч 0 м')
+    expect(fmtRemaining(2 * HOUR + 12 * 60000)).toBe('2 ч 12 м')
+    expect(fmtRemaining(45 * 60000)).toBe('45 м')
+    expect(fmtRemaining(0)).toBe('0 м')
   })
 })

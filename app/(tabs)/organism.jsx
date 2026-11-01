@@ -1,13 +1,15 @@
 // Экран «Организм»: живой двойник, который отражает твой день.
 // Гидратация — из воды, белок и калории — из дневника питания,
 // активность — из шагов. Ниже — игровые системы по макету:
-// Эволюция, Рейд стаи, Генные капсулы (демо-экономика, без pay-to-win).
+// Экспедиции, Эволюция, Рейд стаи, Генные капсулы (демо-экономика,
+// без pay-to-win).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
 import { GenomeCard } from '@/components/organism/GenomeCard'
+import { ExpeditionCard } from '@/components/organism/ExpeditionCard'
 import { EvolutionCard } from '@/components/organism/EvolutionCard'
 import { RaidCard } from '@/components/organism/RaidCard'
 import { CapsuleCard } from '@/components/organism/CapsuleCard'
@@ -116,6 +118,8 @@ export default function OrganismScreen() {
     []
   )
   const handleOpenCapsule = useCallback(() => game.openCapsule(), [])
+  const handleStartExpedition = useCallback((key) => game.startExpedition(key), [])
+  const handleCollectExpedition = useCallback(() => game.collectExpedition(), [])
 
   // Реплика: базовая по состоянию, при поглаживании — милая, потом возврат
   const [phrase, setPhrase] = useState('')
@@ -153,6 +157,12 @@ export default function OrganismScreen() {
         />
 
         <GenomeCard org={org} stats={stats} />
+
+        <ExpeditionCard
+          expedition={game.expedition}
+          onStart={handleStartExpedition}
+          onCollect={handleCollectExpedition}
+        />
 
         <EvolutionCard
           org={org}
