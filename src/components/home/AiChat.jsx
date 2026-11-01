@@ -3,12 +3,15 @@
 // Клавиатура не перекрывает чат: на Android весь контейнер сжимается
 // (behavior height — внутри модалки системный resize не работает),
 // при открытии клавиатуры список доскроллливается к вводу.
-// Сообщения — полноценные блоки: пузырь не уже 110px, шрифт крупнее.
+// Сообщения — полноценные блоки: пузырь не уже 110px у ОБОИХ сторон,
+// шрифт 14px; переносы строк из ответа ИИ сохраняются (ответ рендерится
+// построчно). В шапке — кнопка «Очистить чат»: начать диалог заново.
 // Сначала пробуем настоящий ИИ (веб-версия на ПК, /api/chat),
 // если сервера нет — отвечает офлайн-помощник по данным дневника.
 
 import { useEffect, useRef, useState } from 'react'
 import {
+  Alert,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -21,7 +24,7 @@ import {
   View,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Mail, Send, WifiOff, X } from 'lucide-react-native'
+import { Mail, Send, Trash2, WifiOff, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOffline } from '@/lib/useOffline'
 import { askNutritionist, offlineReply } from '@/lib/chat'
@@ -35,6 +38,22 @@ const GREETING = {
   role: 'assistant',
   content:
     'Привет! Я ИИ-помощник NutriBear 🐻 Спросите про питание, калории, воду или привычки — помогу!',
+}
+
+// Текст сообщения построчно: переносы из ответа ИИ (и многострочного
+// ввода) гарантированно видны — каждая строка свой Text, пустая
+// строка даёт абзацный отступ
+function MessageText({ content, className }) {
+  const lines = String(content || '').split('\n')
+  return (
+    <>
+      {lines.map((ln, i) => (
+        <Text key={i} className={className}>
+          {ln || ' '}
+        </Text>
+      ))}
+    </>
+  )
 }
 
 export function AiChat() {
@@ -125,6 +144,21 @@ export function AiChat() {
     }
   }
 
+  // «Очистить чат» из шапки: диалог начинается заново с приветствия
+  function clearChat() {
+    Alert.alert('Очистить чат?', 'Диалог начнётся заново — история сообщений удалится.', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Очистить',
+        style: 'destructive',
+        onPress: () => {
+          setMessages([GREETING])
+          setText('')
+        },
+      },
+    ])
+  }
+
   return (
     <>
       {/* Плавающая кнопка над панелью вкладок — крупная, чтобы легко
@@ -171,6 +205,15 @@ export function AiChat() {
               </Text>
             </View>
             <Pressable
+              onPress={clearChat}
+              accessibilityLabel="Очистить чат — начать диалог заново"
+              accessibilityRole="button"
+              hitSlop={6}
+              className="mr-1 h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+            >
+              <Trash2 size={17} color="#AEB9D9" />
+            </Pressable>
+            <Pressable
               onPress={() => setOpen(false)}
               accessibilityLabel="Закрыть чат"
               className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
@@ -215,18 +258,23 @@ export function AiChat() {
                     className="min-w-[110px] rounded-2xl rounded-br-md px-3.5 py-2.5"
                     style={{ maxWidth: '85%' }}
                   >
-                    <Text className="text-[14px] leading-[20px] text-white">
-                      {item.content}
-                    </Text>
+                    <MessageText
+                      content={item.content}
+                      className="text-[14px] leading-[20px] text-white"
+                    />
                   </LinearGradient>
                 ) : (
+                  // Ответ ИИ: та же минимальная ширина пузыря, что у
+                  // сообщений пользователя, и построчный рендер — переносы
+                  // строк из ответа не теряются
                   <View
-                    className="rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5"
+                    className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5"
                     style={{ maxWidth: '85%' }}
                   >
-                    <Text className="text-[14px] leading-[20px] text-[#dbe3f8]">
-                      {item.content}
-                    </Text>
+                    <MessageText
+                      content={item.content}
+                      className="text-[14px] leading-[20px] text-[#dbe3f8]"
+                    />
                   </View>
                 )}
               </View>

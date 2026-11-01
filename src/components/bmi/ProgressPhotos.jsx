@@ -3,9 +3,10 @@
 // только на устройстве (папка приложения), попадают в резервную копию
 // и стираются кнопкой «Стереть все данные».
 // Кнопка «+» предлагает камеру или галерею; снимок обрезается в квадрат
-// (ровное сравнение) и ужимается до 720 px.
+// (ровное сравнение) и ужимается до 720 px. Удаление — двойным тапом
+// по кнопке в просмотре (без Alert-окна).
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -15,6 +16,9 @@ import { deletePhotoFile, savePhoto } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
 
 const MAX = 1.25
+
+// Сколько секунд кнопка удаления ждёт второй тап, прежде чем сброситься
+const DELETE_CONFIRM_MS = 2600
 
 // «24.10» из ISO-даты
 const shortDay = (iso) =>
@@ -26,6 +30,10 @@ export function ProgressPhotos() {
   const removePhoto = useProgressPhotosStore((s) => s.removePhoto)
   const { toast } = useToast()
   const [preview, setPreview] = useState(null) // фото в полноэкранном просмотре
+  // Удаление двойным тапом вместо Alert: первый тап — кнопка просит
+  // «нажмите ещё раз», второй — удаляет. Смена фото/закрытие — сброс
+  const [confirmDel, setConfirmDel] = useState(false)
+  const delTimer = useRef(null)
 
   const newest = items[0]
   const oldest = items.length > 1 ? items[items.length - 1] : null
@@ -87,21 +95,29 @@ export function ProgressPhotos() {
     ])
   }
 
+  // Смена фото в просмотре — сбрасываем состояние «нажмите ещё раз»
+  useEffect(() => {
+    setConfirmDel(false)
+    return () => {
+      if (delTimer.current) clearTimeout(delTimer.current)
+    }
+  }, [preview?.id])
+
   function removePreview() {
     if (!preview) return
-    Alert.alert('Удалить фото?', 'Снимок будет удалён с устройства безвозвратно.', [
-      { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Удалить',
-        style: 'destructive',
-        onPress: () => {
-          deletePhotoFile(preview.uri)
-          removePhoto(preview.id)
-          setPreview(null)
-          toast({ title: '🗑 Фото удалено' })
-        },
-      },
-    ])
+    if (!confirmDel) {
+      // Первый тап: предупреждаем на самой кнопке и даём пару секунд
+      setConfirmDel(true)
+      if (delTimer.current) clearTimeout(delTimer.current)
+      delTimer.current = setTimeout(() => setConfirmDel(false), DELETE_CONFIRM_MS)
+      return
+    }
+    if (delTimer.current) clearTimeout(delTimer.current)
+    setConfirmDel(false)
+    deletePhotoFile(preview.uri)
+    removePhoto(preview.id)
+    setPreview(null)
+    toast({ title: '🗑 Фото удалено' })
   }
 
   return (
@@ -212,12 +228,20 @@ export function ProgressPhotos() {
           ) : null}
           <Pressable
             onPress={removePreview}
-            accessibilityLabel="Удалить фото"
+            accessibilityLabel={
+              confirmDel ? 'Нажмите ещё раз, чтобы удалить фото' : 'Удалить фото'
+            }
             accessibilityRole="button"
-            className="mt-4 flex-row items-center justify-center gap-2 rounded-2xl border border-rose-400/30 bg-rose-400/10 py-3 active:opacity-80"
+            className={`mt-4 flex-row items-center justify-center gap-2 rounded-2xl py-3 active:opacity-80 ${
+              confirmDel
+                ? 'border border-rose-400 bg-rose-400/25'
+                : 'border border-rose-400/30 bg-rose-400/10'
+            }`}
           >
             <Trash2 size={17} color="#fb7185" />
-            <Text className="font-bold text-[13px] text-rose-300">Удалить фото</Text>
+            <Text className="font-bold text-[13px] text-rose-300">
+              {confirmDel ? 'Точно удалить? Нажмите ещё раз' : 'Удалить фото'}
+            </Text>
           </Pressable>
         </View>
       </Modal>

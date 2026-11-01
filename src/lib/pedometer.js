@@ -8,7 +8,7 @@
 // и в течение дня не может уменьшиться: после перезагрузки телефона счётчик
 // сбрасывается — держим максимум, а на новый день начинаем с нуля.
 
-import { Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { Pedometer } from 'expo-sensors'
 import { useActivityStore } from '@/store/useActivityStore'
 
@@ -68,7 +68,16 @@ function subscribeLive() {
   }
 }
 
-function startAll() {
+async function startAll() {
+  if (timer || subscription) return
+  // Разрешение на физическую активность: на Android 10+ это
+  // ACTIVITY_RECOGNITION, на iOS — Motion & Fitness. Без него датчик
+  // молчит, и выглядит так, будто шагомер «не работает» (в историю
+  // попадают только ручные шаги). Просим тихо; отказ — просто не стартуем.
+  try {
+    const perm = await Pedometer.requestPermissionsAsync()
+    if (perm && perm.granted === false) return
+  } catch {}
   if (timer || subscription) return
   const s = useActivityStore.getState()
   shownDayKey = s.dayKey
@@ -97,9 +106,23 @@ function stopAll() {
 // «Встроенный шагомер» и сменой дня: на новом дне сумма с нуля,
 // подписка перезапускается (база событий обнуляется), на iOS —
 // сразу опрашиваем шаги с полуночи.
+// Плюс возврат из фона: на Android стрим событий мог заглохнуть, пока
+// приложение было свёрнуто — переподписываемся (publish держит максимум,
+// сумма не упадёт), на iOS сразу опрашиваем шаги с полуночи.
 export function startPedometerAgent() {
   if (started) return
   started = true
+  const appSub = AppState.addEventListener('change', (st) => {
+    if (st !== 'active') return
+    if (!useActivityStore.getState().pedometerEnabled) return
+    if (Platform.OS === 'ios') {
+      pollToday()
+    } else if (timer || subscription) {
+      subscribeLive()
+    } else {
+      startAll()
+    }
+  })
   useActivityStore.subscribe((s, prev) => {
     if (s.pedometerEnabled !== prev.pedometerEnabled) {
       if (s.pedometerEnabled) startAll()
@@ -115,4 +138,9 @@ export function startPedometerAgent() {
     }
   })
   if (useActivityStore.getState().pedometerEnabled) startAll()
+  return () => {
+    try {
+      appSub.remove()
+    } catch {}
+  }
 }

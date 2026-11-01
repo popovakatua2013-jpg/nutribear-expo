@@ -2,13 +2,14 @@
 // балансу нутриентов и витаминам/минералам — за день и за месяц.
 // По умолчанию видны три главные метрики (клетчатка, сахар, белки),
 // остальное — жиры, углеводы, витамины/минералы — под «Подробнее».
-// Тап по крупному баллу слева (или «что это значит?») раскрывает
-// простое объяснение, из чего складывается оценка и как её поднять.
+// Тап по крупному баллу слева сразу раскрывает метрики и доскролливает
+// до раздела «Подробнее»; ссылка «Что даёт этот балл?» показывает
+// простое объяснение состава оценки и как её поднять.
 // Расчёты — src/lib/data/nutrition.js; данные дня — дневник (entries),
 // месяца — журнал приёмов (history) со средними за день с записями.
 
-import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Leaf } from 'lucide-react-native'
 import { ProgressBar } from '../ui/ProgressBar'
 import { formatNum } from '@/lib/format'
@@ -67,6 +68,22 @@ export function NutritionRating() {
   const [expanded, setExpanded] = useState(false)
   // Пояснение «что даёт балл»: тап по крупной цифре или по ссылке
   const [explain, setExplain] = useState(false)
+  // Блок «Подробнее» с метриками: тап по баллу раскрывает его и
+  // просит главный экран доскроллить до этого блока
+  const metricsRef = useRef(null)
+
+  // Тап по крупному баллу: сразу к разделу «Подробнее» с раскрытыми
+  // метриками. Раскрываем список и скроллим: нативный тег блока уходит
+  // на главный экран, его ScrollView доскролливает до видимости
+  function gotoDetails() {
+    setExpanded(true)
+    requestAnimationFrame(() => {
+      try {
+        const tag = findNodeHandle(metricsRef.current)
+        if (tag) DeviceEventEmitter.emit('nutribear/scroll-to-view', { tag })
+      } catch {}
+    })
+  }
 
   const now = new Date()
   const monthName = MONTHS[now.getMonth()]
@@ -150,13 +167,13 @@ export function NutritionRating() {
 
       {hasData ? (
         <>
-          {/* общий балл: тап — простое объяснение, что даёт цифра */}
+          {/* общий балл: тап — сразу к «Подробнее» с раскрытыми метриками */}
           <View className="mt-4 flex-row items-center gap-3">
             <Pressable
-              onPress={() => setExplain((v) => !v)}
+              onPress={gotoDetails}
               accessibilityRole="button"
-              accessibilityLabel="Что означает балл питания — открыть пояснение"
-              accessibilityState={{ selected: explain }}
+              accessibilityLabel="Открыть подробные метрики рейтинга питания"
+              accessibilityState={{ selected: expanded }}
               className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-line bg-white/[0.04] active:opacity-70"
             >
               <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[22px] tracking-tight text-bear-text">
@@ -212,34 +229,38 @@ export function NutritionRating() {
             </View>
           )}
 
-          {/* показатели: по умолчанию 3 главные, остальные под «Подробнее» */}
-          <View className="mt-4 gap-3">
-            {visibleRows.map(({ key, ...rest }) => (
-              <MetricRow key={key} {...rest} />
-            ))}
+          {/* показатели: по умолчанию 3 главные, остальные под «Подробнее».
+              Обёртка с ref и collapsable={false} — её нативный тег уходит
+              в событие скролла, поэтому View нельзя «схлопывать» */}
+          <View ref={metricsRef} collapsable={false}>
+            <View className="mt-4 gap-3">
+              {visibleRows.map(({ key, ...rest }) => (
+                <MetricRow key={key} {...rest} />
+              ))}
+            </View>
+
+            <Pressable
+              onPress={() => setExpanded((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={expanded ? 'Свернуть подробности' : 'Показать подробности'}
+              className="mt-3 flex-row items-center justify-center gap-1 rounded-xl bg-white/5 py-2 active:bg-white/10"
+            >
+              {expanded ? (
+                <ChevronUp size={14} color="#AEB9D9" />
+              ) : (
+                <ChevronDown size={14} color="#AEB9D9" />
+              )}
+              <Text className="font-semibold text-[12px] text-bear-sub">
+                {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}
+              </Text>
+            </Pressable>
+
+            {expanded && microNote ? (
+              <Text className="mt-2 font-sans text-[10.5px] leading-[14px] text-bear-dim">
+                {microNote}
+              </Text>
+            ) : null}
           </View>
-
-          <Pressable
-            onPress={() => setExpanded((v) => !v)}
-            accessibilityRole="button"
-            accessibilityLabel={expanded ? 'Свернуть подробности' : 'Показать подробности'}
-            className="mt-3 flex-row items-center justify-center gap-1 rounded-xl bg-white/5 py-2 active:bg-white/10"
-          >
-            {expanded ? (
-              <ChevronUp size={14} color="#AEB9D9" />
-            ) : (
-              <ChevronDown size={14} color="#AEB9D9" />
-            )}
-            <Text className="font-semibold text-[12px] text-bear-sub">
-              {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}
-            </Text>
-          </Pressable>
-
-          {expanded && microNote ? (
-            <Text className="mt-2 font-sans text-[10.5px] leading-[14px] text-bear-dim">
-              {microNote}
-            </Text>
-          ) : null}
         </>
       ) : (
         <Text className="mt-3 font-sans text-[12px] leading-relaxed text-bear-dim">

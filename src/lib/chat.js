@@ -28,6 +28,13 @@ export function getChatApiUrl() {
   return `http://${host}:3000/api/chat`
 }
 
+// Переносы строк в ответе ИИ: приводим \r\n и «залитые» литеральные \n
+// (случается при двойном кодировании на сервере) к настоящим переводам
+// строк — иначе ответ приходит сплошной кашей без абзацев
+function normalizeReply(s) {
+  return String(s).replace(/\r\n/g, '\n').replace(/\\n/g, '\n').trim()
+}
+
 // Реальный ИИ: POST { messages } → { reply } (как в веб-версии)
 export async function askNutritionist(messages, timeoutMs = 8000) {
   const url = getChatApiUrl()
@@ -43,7 +50,7 @@ export async function askNutritionist(messages, timeoutMs = 8000) {
       signal: ctrl.signal,
     })
     const data = await res.json()
-    if (data && data.reply) return data.reply
+    if (data && data.reply) return normalizeReply(data.reply)
     throw new Error((data && data.error) || 'empty')
   } finally {
     clearTimeout(timer)

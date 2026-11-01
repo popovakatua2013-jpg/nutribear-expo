@@ -2,9 +2,12 @@
 // (новые сверху) — и все его блюда копируются в сегодняшний дневник,
 // каждый в свой приём пищи. Замена старой кнопки «копировать вчера»:
 // теперь день виден списком, с числом записей и калориями.
+// Если в сегодняшнем дневнике уже есть еда — сначала спросим
+// «добавить к имеющимся?», а в тосте «День повторён» есть кнопка
+// «Отменить» — убирает только что скопированные блюда.
 
 import { useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { CalendarDays, Check, Copy, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -33,6 +36,7 @@ export function RepeatDayModal({ visible, onClose }) {
   const history = useFoodStore((s) => s.history)
   const entries = useFoodStore((s) => s.entries)
   const addEntry = useFoodStore((s) => s.addEntry)
+  const removeEntry = useFoodStore((s) => s.removeEntry)
   const { toast } = useToast()
   const insets = useSafeAreaInsets()
   const [picked, setPicked] = useState(null)
@@ -65,7 +69,9 @@ export function RepeatDayModal({ visible, onClose }) {
   const todayKey = dayKey(Date.now())
 
   // Скопировать все записи выбранного дня в сегодняшний дневник.
-  // Источник: журнал истории, а если он пуст — сегодняшние записи дневника
+  // Источник: журнал истории, а если он пуст — сегодняшние записи дневника.
+  // Если в сегодняшнем дневнике уже есть еда — сначала подтверждение:
+  // добавляем к имеющимся, ничего не затирая
   function repeatPicked() {
     let rows = history.filter((h) => h.day === picked)
     if (!rows.length && picked === dayKey(Date.now())) {
@@ -74,13 +80,54 @@ export function RepeatDayModal({ visible, onClose }) {
         .map((e, i) => ({ ...e, id: `${e.id}-rp-${i}`, mealId: e.mealId || 'snack' }))
     }
     if (!rows.length) return
-    rows.forEach((r) => readdRow(addEntry, r.mealId, r))
+
+    const hasFoodToday = Object.values(entries || {}).some((arr) => (arr || []).length > 0)
+    if (hasFoodToday) {
+      Alert.alert(
+        'В сегодняшнем дневнике уже есть еда',
+        `Добавить ${rows.length} скопированных записей к имеющимся? Ничего не будет затёрто.`,
+        [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Добавить', onPress: () => doCopy(rows) },
+        ]
+      )
+      return
+    }
+    doCopy(rows)
+  }
+
+  function doCopy(rows) {
+    // Собираем id только что добавленных записей — по ним работает «Отменить»
+    const added = []
+    rows.forEach((r) => {
+      try {
+        const e = readdRow(addEntry, r.mealId, r)
+        if (e?.id) added.push({ mealId: r.mealId, id: e.id })
+      } catch {}
+    })
     toast({
       title: '📋 День повторён',
-      description: `Добавлено записей: ${rows.length}`,
+      description: `Добавлено записей: ${added.length}`,
+      action: added.length
+        ? { label: 'Отменить', onPress: () => undoCopy(added) }
+        : undefined,
     })
     setPicked(null)
     onClose()
+  }
+
+  // «Отменить» в тосте: убираем только что скопированные блюда —
+  // и из дневника, и из журнала (removeEntry чистит обе стороны)
+  function undoCopy(added) {
+    added.forEach(({ mealId, id }) => {
+      try {
+        removeEntry(mealId, id)
+      } catch {}
+    })
+    toast({
+      title: '↩ Копирование отменено',
+      description: `Убрано записей: ${added.length}`,
+    })
   }
 
   return (

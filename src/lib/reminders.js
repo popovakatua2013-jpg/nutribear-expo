@@ -13,16 +13,23 @@
 // макета и следит за настройками стора: любое изменение reminder
 // (тумблер, интервал, время приёмов) перепланирует уведомления.
 
-import { DeviceEventEmitter, Platform } from 'react-native'
+import { AppState, DeviceEventEmitter, Platform } from 'react-native'
 import Notifications from '@/lib/notifs'
 import { router } from 'expo-router'
-import { useActivityStore } from '@/store/useActivityStore'
+import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
+import { useFoodStore } from '@/store/useFoodStore'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { totalConsumed } from '@/lib/data/diary'
+import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal } from '@/lib/navEvents'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
 const QUIET_FROM = 8
 const QUIET_TO = 23
+
+// Во сколько утром приходит «Новый день» с итогами вчерашнего дня
+const MORNING_HOUR = 8
 
 // Обработчик на момент срабатывания: показывать уведомление или нет
 // (только если библиотека загрузилась — см. lib/notifs.js)
@@ -87,7 +94,73 @@ async function ensureChannels() {
       name: 'Напоминания о взвешивании',
       importance: Notifications.AndroidImportance.HIGH,
     })
+    await Notifications.setNotificationChannelAsync('day', {
+      name: 'Утро и итоги дня',
+      importance: Notifications.AndroidImportance.HIGH,
+    })
   } catch {}
+}
+
+// ── Утренний пуш «Новый день» с итогами вчерашнего дня ────────────────
+// В 8:00 утра приходит «Вчера: 1 850 ккал, 6 400 шагов». Итоги берём
+// из дневной истории (там лежат финальные значения за завершившийся
+// день). Поскольку устройство может быть выключено в полночь, финал
+// невозможно знать заранее — поэтому планируем ОДНОРАЗОВО на ближайшие
+// 8:00 и перепланируем при каждом открытии приложения: содержимое —
+// итоги дня, ПРЕДШЕСТВУЮЩЕГО утру срабатывания. Если это сегодня —
+// вчерашний день уже заархивирован; если завтра — берём живые значения
+// сегодняшнего дня (обновятся при следующем открытии приложения).
+function summaryTotalsFor(key) {
+  const row = useHistoryStore.getState().days?.[key]
+  if (row && (row.kcal > 0 || row.steps > 0)) {
+    return { kcal: row.kcal || 0, steps: row.steps || 0 }
+  }
+  if (key === dayKeyOf()) {
+    const act = useActivityStore.getState()
+    return { kcal: totalConsumed(useFoodStore.getState().entries || {}), steps: selectTotalSteps(act) }
+  }
+  return null
+}
+
+// Перепланировать одноразовое утреннее уведомление (безопасно звать
+// сколько угодно раз — старое с тем же identifier отменяется)
+export async function scheduleMorningSummary() {
+  if (Platform.OS === 'web' || !Notifications) return
+  try {
+    const granted = await requestNotifPermission()
+    if (!granted) return
+    await ensureChannels()
+
+    const fire = new Date()
+    fire.setHours(MORNING_HOUR, 0, 0, 0)
+    if (fire.getTime() <= Date.now()) fire.setDate(fire.getDate() + 1)
+
+    // «Вчера» относительно утра срабатывания — день перед fire
+    const yst = new Date(fire)
+    yst.setDate(yst.getDate() - 1)
+    const t = summaryTotalsFor(dayKeyOf(yst))
+    const body = t
+      ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. Хорошего дня! 🐻`
+      : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
+
+    await Notifications.cancelScheduledNotificationAsync('morning-summary')
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'morning-summary',
+      content: {
+        title: '🌅 Новый день',
+        body,
+        sound: 'default',
+        data: { kind: 'day' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: fire,
+        channelId: 'day',
+      },
+    })
+  } catch (e) {
+    console.warn('Утренняя сводка не запланирована:', e)
+  }
 }
 
 // Перепланировать все напоминания по текущим настройкам стора.
@@ -194,6 +267,10 @@ export async function rescheduleReminders() {
       }
     }
   }
+
+  // Утренняя сводка «Новый день» — не зависит от тумблеров напоминаний
+  if (my !== seq) return
+  await scheduleMorningSummary()
 }
 
 // Тап по уведомлению: открываем соответствующее место приложения
@@ -239,13 +316,25 @@ export function startReminderAgent() {
     })
   } catch {}
 
+  // Вернулись в приложение — перепланируем утреннюю сводку: возможно,
+  // сменился день, и «вчера» для следующего срабатывания стало другим
+  const appSub = AppState.addEventListener('change', (st) => {
+    if (st === 'active') scheduleMorningSummary()
+  })
+
   // Любое изменение настроек напоминаний — перепланировать
   const unsub = useActivityStore.subscribe((s, prev) => {
     if (s.reminder !== prev.reminder) rescheduleReminders()
+    // Переход на новый день: сводка на ближайшее утро должна показать
+    // только что завершившийся день (его итоги уже в истории)
+    else if (s.dayKey !== prev.dayKey) scheduleMorningSummary()
   })
 
   return () => {
     if (respSub) respSub.remove()
+    try {
+      appSub.remove()
+    } catch {}
     unsub()
     started = false
   }

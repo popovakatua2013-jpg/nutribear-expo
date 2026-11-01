@@ -4,7 +4,7 @@
 // и «Ваши цели» удалены по запросу. Модалки: еда (хаб), все приёмы.
 // Показатели дня пишутся в историю — для отчётов.
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
@@ -35,6 +35,7 @@ import { useToast } from '@/components/ui/Toast'
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { toast } = useToast()
+  const scrollRef = useRef(null)
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
@@ -197,6 +198,20 @@ export default function HomeScreen() {
     }
   }, [])
 
+  // Скролл к произвольному блоку по нативному тегу (например, тап по
+  // баллу рейтинга питания — к раскрытому разделу «Подробнее»)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('nutribear/scroll-to-view', ({ tag }) => {
+      try {
+        const sc = scrollRef.current
+        if (sc && typeof sc.scrollResponderScrollNativeHandleToKeyboard === 'function') {
+          sc.scrollResponderScrollNativeHandleToKeyboard(tag, 90, true)
+        }
+      } catch {}
+    })
+    return () => sub.remove()
+  }, [])
+
   function openAdd(id) {
     setMealId(id)
     setAddOpen(true)
@@ -205,6 +220,7 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-bear-bg">
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >

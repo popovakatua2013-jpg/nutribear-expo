@@ -32,7 +32,8 @@ export const useFoodStore = create(
       setGoal: (goal) => set({ goal }),
 
       // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю).
-      // mk — маркер «по продукту известны витамины/минералы» (продукты базы)
+      // mk — маркер «по продукту известны витамины/минералы» (продукты базы).
+      // Возвращает созданную запись — тостам удобно предлагать «Отменить»
       addEntry: (mealId, { food, grams, kcal, desc }) => {
         const time = nowTime()
         const bju = bjuForPortion(food, grams)
@@ -53,6 +54,7 @@ export const useFoodStore = create(
         }))
         // +3 монетки за запись в дневнике — копилка организма
         useShopStore.getState().earn(EARN.meal)
+        return entry
       },
 
       // Изменить граммовку записи: ккал и БЖУ пересчитываются пропорционально
@@ -83,7 +85,8 @@ export const useFoodStore = create(
         set((state) => ({
           entries: {
             ...state.entries,
-            [mealId]: state.entries[mealId].filter((e) => e.id !== entryId),
+            // приёма может уже не быть (удалён доп. перекус) — не падаем
+            [mealId]: (state.entries[mealId] || []).filter((e) => e.id !== entryId),
           },
           // ошибочная запись уходит и из журнала — иначе она продолжает
           // учитываться в месячном рейтинге и копировании вчерашнего дня

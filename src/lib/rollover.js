@@ -14,7 +14,7 @@
 import { AppState } from 'react-native'
 import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
-import { useActivityStore } from '@/store/useActivityStore'
+import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { xpForDay } from '@/lib/data/activity'
@@ -28,7 +28,11 @@ function archiveOutgoingDay(key, food, act) {
     const hist = useHistoryStore.getState().days[key] || {}
     const mealCount = Object.values(food.entries || {}).flat().length
     const kcal = totalConsumed(food.entries || {})
-    const steps = act.extraSteps || 0
+    // ВАЖНО: шаги дня = датчик телефона + ручные (selectTotalSteps),
+    // а не только extraSteps — раньше в историю уходили лишь ручные,
+    // и графики шагов занижали дни, когда главная/активность не
+    // открывались и живая запись не успела сработать
+    const steps = selectTotalSteps(act)
     const waterMl = act.waterMl || 0
     const burned = totalBurned(useExerciseStore.getState().logs, key, steps)
     const xp = xpForDay({ steps, waterMl, mealCount, burned })

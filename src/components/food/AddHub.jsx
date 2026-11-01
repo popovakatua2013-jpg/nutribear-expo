@@ -267,12 +267,17 @@ export function AddHub({ mealId, onPick, onSelect }) {
         </>
       ) : (
         <>
-          {/* комбо: сохранённые наборы блюд + сохранение текущего приёма */}
+          {/* комбо: сохранённые наборы блюд + сохранение текущего приёма.
+              Блок не показывается, когда нечего показывать: без сохранённых
+              комбо остаётся только компактный чип «Сохранить приём»
+              (без шапки «Мои комбо»), а при пустом приёме — ничего */}
           {(combos.length > 0 || mealEntries.length > 0) && (
             <View className="mt-3">
-              <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
-                Мои комбо
-              </Text>
+              {combos.length > 0 && (
+                <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+                  Мои комбо
+                </Text>
+              )}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -307,7 +312,7 @@ export function AddHub({ mealId, onPick, onSelect }) {
                   >
                     <Plus size={12} color="#AEB9D9" />
                     <Text className="font-semibold text-[11px] text-bear-soft">
-                      Сохранить приём
+                      {combos.length > 0 ? 'Сохранить приём' : 'Сохранить приём как комбо'}
                     </Text>
                   </Pressable>
                 )}
