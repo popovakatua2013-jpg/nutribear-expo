@@ -1,21 +1,17 @@
 // Экран «Организм»: живой двойник, который отражает твой день.
 // Гидратация — из воды, белок и калории — из дневника питания,
-// активность — из шагов. Магазин переехал сюда как «Забота и декор».
+// активность — из шагов. Цели — из профиля.
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
 import { GenomeCard } from '@/components/organism/GenomeCard'
-import { CareSection } from '@/components/organism/CareSection'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useShopStore } from '@/store/useShopStore'
 import { bjuSum } from '@/lib/data/bju'
-import { SHOP_ITEMS } from '@/lib/data/shop'
 import { computeOrganism } from '@/lib/data/organism'
-import { formatNum } from '@/lib/format'
 
 const PET_PHRASES = [
   'Мур-р… Продолжай!',
@@ -33,8 +29,6 @@ export default function OrganismScreen() {
   // Шаги: датчик телефона + добавленные вручную — organism видит весь день
   const stepsToday = useActivityStore(selectTotalSteps)
   const goals = useGoalsStore((s) => s.goals)
-  const coins = useShopStore((s) => s.coins)
-  const owned = useShopStore((s) => s.owned)
 
   // Оси организма из дневника и воды
   const { kcal, proteinG } = useMemo(() => {
@@ -66,9 +60,6 @@ export default function OrganismScreen() {
     stepsGoal: goals.steps,
   }
 
-  // Купленные предметы живут на сцене
-  const decor = useMemo(() => SHOP_ITEMS.filter((i) => owned[i.id]), [owned])
-
   // Реплика: базовая по состоянию, при поглаживании — милая, потом возврат
   const [phrase, setPhrase] = useState('')
   const phraseTimer = useRef(null)
@@ -92,28 +83,19 @@ export default function OrganismScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-row items-center justify-between">
-          <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
-            Организм
-          </Text>
-          <View className="flex-row items-center gap-1.5 rounded-full border border-bear-line bg-bear-card px-3 py-1.5">
-            <Text className="text-[13px]">🪙</Text>
-            <Text className="font-bold text-[13px] text-amber-300">{formatNum(coins)}</Text>
-          </View>
-        </View>
+        <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+          Организм
+        </Text>
 
         <OrganismStage
           state={org.state}
           hydration={org.axes.hydration}
           protein={org.axes.protein}
           phrase={shownPhrase}
-          decor={decor}
           onPet={handlePet}
         />
 
         <GenomeCard org={org} stats={stats} />
-
-        <CareSection />
       </ScrollView>
     </View>
   )
