@@ -16,6 +16,7 @@ import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { useShopStore } from '@/store/useShopStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
@@ -65,6 +66,8 @@ export function DataActions() {
     wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
+    // Копилка организма и купленный декор — тоже данные пользователя
+    useShopStore.getState().resetAll()
     // GDPR-удаление: онбординг начнётся заново (корневой макет переключится сам)
     useOnboardingStore.getState().reset()
     toast({

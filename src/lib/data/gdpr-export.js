@@ -17,6 +17,7 @@ import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { useHistoryStore } from '@/store/useHistoryStore'
+import { useShopStore } from '@/store/useShopStore'
 import { collectPhotosForBackup } from '@/lib/photos'
 
 // Снимок всех данных приложения (персональные данные здоровья —
@@ -43,6 +44,8 @@ export async function collectAll() {
     photos,
     // Дневная история (шаги/ккал/вода/тренировки по датам) — для отчётов
     history: useHistoryStore.getState(),
+    // Копилка организма: монетки и купленный декор
+    shop: useShopStore.getState(),
   }
 }
 

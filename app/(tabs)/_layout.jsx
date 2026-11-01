@@ -1,17 +1,18 @@
-// Нижняя навигация: Главная / Активность / ИМТ / Ещё
-// (магазин удалён по запросу). Активная вкладка — иконка
+// Нижняя навигация: Главная / Активность / ИМТ / Организм / Ещё.
+// Активная вкладка — иконка
 // в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
 // серые, без подложки: сразу видно, где вы находитесь.
 
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Footprints, House, Menu, Scale } from 'lucide-react-native'
+import { Footprints, House, Menu, Scale, Sparkles } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Активность', Icon: Footprints },
   { name: 'bmi', label: 'ИМТ', Icon: Scale },
+  { name: 'organism', label: 'Организм', Icon: Sparkles },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
