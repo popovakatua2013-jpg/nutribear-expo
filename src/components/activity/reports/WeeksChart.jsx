@@ -97,8 +97,11 @@ export function WeeksChart({ today, embedded = false }) {
             <View className="mt-2 flex-row flex-wrap gap-2">
               {REPORT_METRICS.map((m) => {
                 const pct = prev ? changePct(row[m.key] || 0, prev[m.key] || 0) : 0
-                const shown = prev && (row[m.key] || prev[m.key])
-                const tone = !prev || !shown ? '#7c87a8' : deltaTone(pct, m.invert)
+                // булевы флаги вместо «числовых» — иначе при нуле в обеих
+                // неделях React рендерит 0 как ребёнка View и RN падает
+                // с «Text strings must be rendered within a <Text>»
+                const shown = !!(prev && (row[m.key] || prev[m.key]))
+                const tone = !shown ? '#7c87a8' : deltaTone(pct, m.invert)
                 const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
                 return (
                   <View key={m.key} className="min-w-0 rounded-lg bg-white/[0.03] px-2 py-1.5" style={{ width: '48.5%' }}>
@@ -110,9 +113,9 @@ export function WeeksChart({ today, embedded = false }) {
                       <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="flex-1 font-bold text-[13px] text-bear-text">
                         {m.fmt(row[m.key] || 0)}
                       </Text>
-                      {prev && shown && <Arrow size={11} color={tone} />}
+                      {shown && <Arrow size={11} color={tone} />}
                       <Text className="font-semibold text-[9.5px]" style={{ color: tone }}>
-                        {!prev || !shown ? '—' : `${pct > 0 ? '+' : ''}${pct}%`}
+                        {!shown ? '—' : `${pct > 0 ? '+' : ''}${pct}%`}
                       </Text>
                     </View>
                   </View>
