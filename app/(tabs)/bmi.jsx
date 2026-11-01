@@ -133,8 +133,16 @@ export default function BmiScreen() {
           <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
-              {/* Кольцо ИМТ + легенда категорий */}
-              <BmiDonut bmi={bmi} />
+              {/* Кольцо ИМТ + легенда категорий. Тап по кольцу —
+                  карточка «Что означает твой ИМТ» */}
+              <Pressable
+                onPress={() => setDetailsOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Что означает твой ИМТ — открыть подробности"
+                className="shrink-0 active:opacity-80"
+              >
+                <BmiDonut bmi={bmi} />
+              </Pressable>
               <View className="min-w-0 flex-1" style={{ minWidth: 96 }}>
                 <BmiLegend bmi={bmi} />
               </View>

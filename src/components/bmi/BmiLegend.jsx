@@ -1,6 +1,6 @@
-// Легенда категорий ИМТ 1-в-1 с макетом: вертикальный столбик справа
-// от кольца, каждая позиция — ОДНА строка: точка · название · диапазон
-// прижат вправо (диапазоны чуть крупнее подписей, как на макете).
+// Легенда категорий ИМТ: вертикальный столбик справа от кольца,
+// каждая позиция — ОДНА строка: точка · название · диапазон прижат вправо.
+// Крупные шрифты (кольцо стало главным акцентом, места хватает).
 // Текущая категория — белым и жирным, её точка светится.
 
 import { Text, View } from 'react-native'
@@ -17,15 +17,15 @@ export function BmiLegend({ bmi }) {
 
   return (
     <View
-      className="gap-[8px]"
+      className="gap-[13px]"
       accessibilityLabel="Категории ИМТ: норма, лишний вес, ожирение"
     >
       {ROWS.map((row) => {
         const isActive = row.ids.includes(active)
         return (
-          <View key={row.label} className="flex-row items-center gap-[4px]">
+          <View key={row.label} className="flex-row items-center gap-[7px]">
             <View
-              className="h-[9px] w-[9px] shrink-0 rounded-full"
+              className="h-[10px] w-[10px] shrink-0 rounded-full"
               style={{
                 backgroundColor: row.color,
                 shadowColor: row.color,
@@ -36,7 +36,7 @@ export function BmiLegend({ bmi }) {
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.1}
-              className={`min-w-0 flex-1 text-[9px] leading-tight ${
+              className={`min-w-0 flex-1 text-[11.5px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-semibold text-[#E7E3F8]'
               }`}
             >
@@ -45,7 +45,7 @@ export function BmiLegend({ bmi }) {
             <Text
               maxFontSizeMultiplier={1.1}
               numberOfLines={1}
-              className={`shrink-0 text-[9.5px] leading-tight ${
+              className={`shrink-0 text-[12px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-sans text-[#CBC4E8]'
               }`}
             >

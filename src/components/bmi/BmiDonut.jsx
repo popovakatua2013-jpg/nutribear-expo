@@ -1,19 +1,21 @@
-// Кольцевой датчик ИМТ 1-в-1 с макетом: толстое градиентное кольцо
-// (голубой → синий → фиолетовый → маджента), белая светящаяся ДУГА на
-// позиции текущего ИМТ, в центре — крупное значение и компактный бейдж
-// категории (КОРОТКОЕ название — «Норма», «Ожирение» — чтобы бейдж
-// целиком помещался внутри отверстия кольца и не налезал на дугу).
-// Шкала кольца: ИМТ 15 → 40, старт с 9 часов — норма ложится на верх.
+// Кольцевой датчик ИМТ — главный акцент вкладки: крупное градиентное
+// кольцо (голубой → синий → фиолетовый → маджента), при открытии белая
+// дуга плавно «заливается» до текущего ИМТ, а число в центре отсчитывается
+// вверх. Анимация — обычный Animated из react-native (JS-драйвер) поверх
+// strokeDashoffset БЕЗ Reanimated: Reanimated поверх SVG-экранов ронял
+// приложение, не возвращать. Шкала кольца: ИМТ 15 → 40, старт с 9 часов —
+// норма ложится на верх кольца.
 
-import { Text, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { Animated, Easing, Text, View } from 'react-native'
 import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle, Path } from 'react-native-svg'
 import { Check } from 'lucide-react-native'
 import { bmiCategory, fmtDecimal } from '@/lib/data/bmi'
 
-const SIZE = 116
+const SIZE = 136
 const C = SIZE / 2
-const R = 45
-const STROKE = 15
+const R = 53
+const STROKE = 17.5
 
 // Короткое название категории для бейджа внутри кольца — полное
 // («Ожирение II–III ст.») не помещается в отверстии
@@ -25,36 +27,70 @@ const SHORT_LABEL = {
   obese2: 'Ожирение',
 }
 
-// Шкала маркера: ИМТ 15 → 40; угол по часовой от 12 часов.
+// Шкала: ИМТ 15 → 40; угол по часовой от 12 часов.
 // 262° — старт (9 часов), 270° дуги: норма 18,5–25 ложится на верх,
-// лишний вес — на верх-право, ожирение — на правую сторону, как на макете.
+// лишний вес — на верх-право, ожирение — на правую сторону.
 const BMI_MIN = 15
 const BMI_MAX = 40
 const START_DEG = 262
 const SWEEP_DEG = 270
 
-// Полудлина белой дуги-маркера в градусах (~20° — компактный маркер
-// как на макете, а не широкая белая «капсула» на краю кольца)
-const HALF_DEG = 10
+// Длина полной дуги — через неё работает эффект «заливания»
+const ARC_LEN = 2 * Math.PI * R * (SWEEP_DEG / 360)
+
+const rad = (d) => (d * Math.PI) / 180
+const ptOnRing = (deg) => [C + R * Math.sin(rad(deg)), C - R * Math.cos(rad(deg))]
+
+// Полная дуга шкалы: от START_DEG по часовой на SWEEP_DEG;
+// видимая часть управляется strokeDashoffset
+const [SX, SY] = ptOnRing(START_DEG)
+const [EX, EY] = ptOnRing(START_DEG + SWEEP_DEG)
+const FULL_ARC = `M ${SX.toFixed(2)} ${SY.toFixed(2)} A ${R} ${R} 0 1 1 ${EX.toFixed(2)} ${EY.toFixed(2)}`
+
+const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 export function BmiDonut({ bmi }) {
   const cat = bmiCategory(bmi)
+  const target = Math.min(BMI_MAX, Math.max(BMI_MIN, bmi || BMI_MIN))
+  const targetFrac = (target - BMI_MIN) / (BMI_MAX - BMI_MIN)
 
-  // Угол маркера (по часовой от 12 часов)
-  const t = Math.min(BMI_MAX, Math.max(BMI_MIN, bmi || BMI_MIN))
-  const deg = START_DEG + ((t - BMI_MIN) / (BMI_MAX - BMI_MIN)) * SWEEP_DEG
+  // Дуга «заливается» (dashoffset), число отсчитывается вверх (numVal)
+  const arcVal = useRef(new Animated.Value(0)).current
+  const numVal = useRef(new Animated.Value(BMI_MIN)).current
+  const [num, setNum] = useState(BMI_MIN)
+  const firstRun = useRef(true)
 
-  // Точки белой дуги: от deg−HALF до deg+HALF, по часовой
-  const a1 = ((deg - HALF_DEG) * Math.PI) / 180
-  const a2 = ((deg + HALF_DEG) * Math.PI) / 180
-  const ax = C + R * Math.sin(a1)
-  const ay = C - R * Math.cos(a1)
-  const bx = C + R * Math.sin(a2)
-  const by = C - R * Math.cos(a2)
-  const arc = `M ${ax.toFixed(2)} ${ay.toFixed(2)} A ${R} ${R} 0 0 1 ${bx.toFixed(2)} ${by.toFixed(2)}`
+  useEffect(() => {
+    const sub = numVal.addListener(({ value }) => setNum(value))
+    return () => numVal.removeListener(sub)
+  }, [numVal])
+
+  useEffect(() => {
+    const dur = firstRun.current ? 1400 : 700
+    firstRun.current = false
+    Animated.parallel([
+      Animated.timing(arcVal, {
+        toValue: targetFrac,
+        duration: dur,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(numVal, {
+        toValue: target,
+        duration: dur,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ]).start()
+  }, [target, targetFrac, arcVal, numVal])
+
+  const dashOffset = arcVal.interpolate({
+    inputRange: [0, 1],
+    outputRange: [ARC_LEN, ARC_LEN * (1 - targetFrac)],
+  })
 
   return (
-    <View className="h-[116px] w-[116px] shrink-0 items-center justify-center">
+    <View className="h-[136px] w-[136px] shrink-0 items-center justify-center">
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRing" x1="0" y1="0" x2="1" y2="1">
@@ -72,7 +108,7 @@ export function BmiDonut({ bmi }) {
           r={R}
           stroke="url(#nbsRing)"
           strokeOpacity={0.22}
-          strokeWidth={22}
+          strokeWidth={26}
           fill="none"
         />
         {/* Основное толстое градиентное кольцо */}
@@ -84,31 +120,34 @@ export function BmiDonut({ bmi }) {
           strokeWidth={STROKE}
           fill="none"
         />
-        {/* Лёгкое свечение белой дуги — деликатное, чтобы маркер читался
-            как тонкая метка на кольце, а не белая капсула */}
-        <Path
-          d={arc}
+        {/* Заливающаяся белая дуга: лёгкое свечение + яркая линия.
+            При открытии плавно дорастает до текущего ИМТ */}
+        <AnimatedPath
+          d={FULL_ARC}
           stroke="#FFFFFF"
           strokeOpacity={0.18}
           strokeWidth={STROKE + 4}
           strokeLinecap="round"
           fill="none"
+          strokeDasharray={ARC_LEN}
+          strokeDashoffset={dashOffset}
         />
-        {/* Белая светящаяся дуга на позиции ИМТ — как на макете */}
-        <Path
-          d={arc}
+        <AnimatedPath
+          d={FULL_ARC}
           stroke="#FFFFFF"
           strokeWidth={STROKE}
           strokeLinecap="round"
           fill="none"
+          strokeDasharray={ARC_LEN}
+          strokeDashoffset={dashOffset}
         />
       </Svg>
 
-      <Text className="font-extrabold text-[30px] leading-none tracking-tight text-white">
-        {fmtDecimal(bmi)}
+      <Text className="font-extrabold text-[36px] leading-none tracking-tight text-white">
+        {fmtDecimal(num)}
       </Text>
       <View
-        className="mt-[3px] flex-row items-center gap-[3px] rounded-full px-1 py-[2.5px]"
+        className="mt-[4px] flex-row items-center gap-[4px] rounded-full px-1.5 py-[3px]"
         style={{
           backgroundColor: `${cat.color}26`,
           shadowColor: cat.color,
@@ -119,17 +158,17 @@ export function BmiDonut({ bmi }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="font-bold text-[8.5px] leading-none"
+          className="font-bold text-[10px] leading-none"
           style={{ color: cat.color }}
         >
           {SHORT_LABEL[cat.id] || cat.label}
         </Text>
-        {/* Галочка в залитом кружке — как на макете */}
+        {/* Галочка в залитом кружке */}
         <View
-          className="h-[13px] w-[13px] items-center justify-center rounded-full"
+          className="h-[15px] w-[15px] items-center justify-center rounded-full"
           style={{ backgroundColor: cat.color }}
         >
-          <Check size={8.5} color="#0B1B12" strokeWidth={3.6} />
+          <Check size={10} color="#0B1B12" strokeWidth={3.6} />
         </View>
       </View>
     </View>
