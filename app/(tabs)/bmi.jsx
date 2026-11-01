@@ -7,6 +7,7 @@
 
 import { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChartColumn, ChevronRight, Scale } from 'lucide-react-native'
@@ -21,6 +22,22 @@ import { WeightCard } from '@/components/bmi/WeightCard'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { BodySilhouette } from '@/components/bmi/BodySilhouette'
+
+// Мягкое неоновое свечение (дымка как на макете): радиальный градиент
+// плавно уходит в прозрачность — без жёсткого края круглой заливки
+function SoftGlow({ w, h, style, color = '#7C3AED', peak = 0.32, id }) {
+  return (
+    <Svg width={w} height={h} pointerEvents="none" style={[{ position: 'absolute' }, style]}>
+      <Defs>
+        <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
+          <Stop offset="0" stopColor={color} stopOpacity={peak} />
+          <Stop offset="1" stopColor={color} stopOpacity="0" />
+        </RadialGradient>
+      </Defs>
+      <Rect x={0} y={0} width={w} height={h} fill={`url(#${id})`} />
+    </Svg>
+  )
+}
 
 // Неактивная пилюля переключателя
 function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
@@ -113,47 +130,15 @@ export default function BmiScreen() {
             и легенда свободно парят на тёмном фоне; ниже — тёмные
             карточки «Вес» и «Рост» */}
         <View accessibilityLabel="ИМТ и состав тела">
-          {/* Мягкое свечение справа сверху — как неоновые волны на макете */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: -20,
-              right: -38,
-              width: 175,
-              height: 145,
-              borderRadius: 88,
-              backgroundColor: 'rgba(124,58,237,0.22)',
-            }}
-          />
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 70,
-              right: -24,
-              width: 120,
-              height: 210,
-              borderRadius: 60,
-              backgroundColor: 'rgba(139,92,246,0.10)',
-            }}
-          />
+          {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
+          <SoftGlow id="nbsGlowTR" w={185} h={150} peak={0.34} style={{ top: -24, right: -42 }} />
+          <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
           <View className="flex-row gap-2">
             {/* Силуэт: стройная неоновая фигура через всю высоту блока,
                 со свечением сверху и ореолом-платформой у ног */}
             <View className="shrink-0" style={{ width: 78 }}>
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: -4,
-                  left: -28,
-                  width: 134,
-                  height: 134,
-                  borderRadius: 67,
-                  backgroundColor: 'rgba(139,92,246,0.28)',
-                }}
-              />
+              {/* Дымка за головой и торсом */}
+              <SoftGlow id="nbsGlowSil" w={140} h={140} peak={0.3} color="#8B5CF6" style={{ top: -6, left: -31 }} />
               <BodySilhouette width={78} height={216} />
             </View>
             {/* Правая колонка: кольцо + легенда, ниже — Вес и Рост */}

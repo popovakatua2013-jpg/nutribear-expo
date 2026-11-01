@@ -33,8 +33,9 @@ const BMI_MAX = 40
 const START_DEG = 262
 const SWEEP_DEG = 270
 
-// Полудлина белой дуги-маркера в градусах (как на макете ~24°)
-const HALF_DEG = 12
+// Полудлина белой дуги-маркера в градусах (~20° — компактный маркер
+// как на макете, а не широкая белая «капсула» на краю кольца)
+const HALF_DEG = 10
 
 export function BmiDonut({ bmi }) {
   const cat = bmiCategory(bmi)
@@ -83,12 +84,13 @@ export function BmiDonut({ bmi }) {
           strokeWidth={STROKE}
           fill="none"
         />
-        {/* Свечение белой дуги */}
+        {/* Лёгкое свечение белой дуги — деликатное, чтобы маркер читался
+            как тонкая метка на кольце, а не белая капсула */}
         <Path
           d={arc}
           stroke="#FFFFFF"
-          strokeOpacity={0.3}
-          strokeWidth={STROKE + 8}
+          strokeOpacity={0.18}
+          strokeWidth={STROKE + 4}
           strokeLinecap="round"
           fill="none"
         />
