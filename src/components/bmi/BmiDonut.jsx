@@ -1,26 +1,30 @@
-// Кольцевой датчик ИМТ как на фото-макете: сплошное градиентное кольцо
-// (голубой → синий → фиолетовый → маджента), белый светящийся маркер на
-// позиции текущего ИМТ, в центре — крупное значение и цветной бейдж
-// категории с галочкой (для нормы — зелёная пилюля «Норма ✓»).
-// Шкала кольца: ИМТ 15 → 40, норма занимает верхнюю левую дугу.
+// Кольцевой датчик ИМТ 1-в-1 с макетом: толстое градиентное кольцо
+// (голубой → синий → фиолетовый → маджента), белая светящаяся ДУГА на
+// позиции текущего ИМТ (как на макете — сверху для нормы), в центре —
+// крупное значение и бейдж категории: полупрозрачный фон цвета категории,
+// яркий текст и галочка в залитом кружке («Норма ✓» — зелёная пилюля).
+// Шкала кольца: ИМТ 15 → 40, старт с 9 часов — норма ложится на верх.
 
 import { Text, View } from 'react-native'
-import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle } from 'react-native-svg'
+import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle, Path } from 'react-native-svg'
 import { Check } from 'lucide-react-native'
 import { bmiCategory, fmtDecimal } from '@/lib/data/bmi'
 
-const SIZE = 104
+const SIZE = 100
 const C = SIZE / 2
-const R = 41
-const STROKE = 11
+const R = 40
+const STROKE = 14
 
 // Шкала маркера: ИМТ 15 → 40; угол по часовой от 12 часов.
-// 225° — старт (низ-лево), 270° дуги: норма 18,5–25 ложится на верх-лево,
+// 262° — старт (9 часов), 270° дуги: норма 18,5–25 ложится на верх,
 // лишний вес — на верх-право, ожирение — на правую сторону, как на макете.
 const BMI_MIN = 15
 const BMI_MAX = 40
-const START_DEG = 225
+const START_DEG = 262
 const SWEEP_DEG = 270
+
+// Полудлина белой дуги-маркера в градусах (как на макете ~24°)
+const HALF_DEG = 12
 
 export function BmiDonut({ bmi }) {
   const cat = bmiCategory(bmi)
@@ -28,12 +32,18 @@ export function BmiDonut({ bmi }) {
   // Угол маркера (по часовой от 12 часов)
   const t = Math.min(BMI_MAX, Math.max(BMI_MIN, bmi || BMI_MIN))
   const deg = START_DEG + ((t - BMI_MIN) / (BMI_MAX - BMI_MIN)) * SWEEP_DEG
-  const rad = (deg * Math.PI) / 180
-  const mx = C + R * Math.sin(rad)
-  const my = C - R * Math.cos(rad)
+
+  // Точки белой дуги: от deg−HALF до deg+HALF, по часовой
+  const a1 = ((deg - HALF_DEG) * Math.PI) / 180
+  const a2 = ((deg + HALF_DEG) * Math.PI) / 180
+  const ax = C + R * Math.sin(a1)
+  const ay = C - R * Math.cos(a1)
+  const bx = C + R * Math.sin(a2)
+  const by = C - R * Math.cos(a2)
+  const arc = `M ${ax.toFixed(2)} ${ay.toFixed(2)} A ${R} ${R} 0 0 1 ${bx.toFixed(2)} ${by.toFixed(2)}`
 
   return (
-    <View className="h-[104px] w-[104px] shrink-0 items-center justify-center">
+    <View className="h-[100px] w-[100px] shrink-0 items-center justify-center">
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRing" x1="0" y1="0" x2="1" y2="1">
@@ -50,11 +60,11 @@ export function BmiDonut({ bmi }) {
           cy={C}
           r={R}
           stroke="url(#nbsRing)"
-          strokeOpacity={0.18}
-          strokeWidth={18}
+          strokeOpacity={0.22}
+          strokeWidth={22}
           fill="none"
         />
-        {/* Основное градиентное кольцо */}
+        {/* Основное толстое градиентное кольцо */}
         <Circle
           cx={C}
           cy={C}
@@ -63,27 +73,51 @@ export function BmiDonut({ bmi }) {
           strokeWidth={STROKE}
           fill="none"
         />
-        {/* Белый светящийся маркер на позиции ИМТ */}
-        <Circle cx={mx} cy={my} r={7} fill="#FFFFFF" fillOpacity={0.22} />
-        <Circle cx={mx} cy={my} r={3.5} fill="#FFFFFF" />
+        {/* Свечение белой дуги */}
+        <Path
+          d={arc}
+          stroke="#FFFFFF"
+          strokeOpacity={0.3}
+          strokeWidth={STROKE + 8}
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Белая светящаяся дуга на позиции ИМТ — как на макете */}
+        <Path
+          d={arc}
+          stroke="#FFFFFF"
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          fill="none"
+        />
       </Svg>
 
-      <Text className="font-extrabold text-[24px] leading-none tracking-tight text-white">
+      <Text className="font-extrabold text-[26px] leading-none tracking-tight text-white">
         {fmtDecimal(bmi)}
       </Text>
       <View
-        className="mt-1.5 flex-row items-center gap-1 rounded-full px-1.5 py-[3px]"
+        className="mt-1.5 flex-row items-center gap-1 rounded-full px-2 py-[3px]"
         style={{
-          backgroundColor: cat.color,
+          backgroundColor: `${cat.color}26`,
           shadowColor: cat.color,
-          shadowOpacity: 0.55,
+          shadowOpacity: 0.5,
           shadowRadius: 9,
         }}
       >
-        <Text maxFontSizeMultiplier={1.1} className="font-bold text-[9.5px] leading-none" style={{ color: '#0A1310' }}>
+        <Text
+          maxFontSizeMultiplier={1.1}
+          className="font-bold text-[10.5px] leading-none"
+          style={{ color: cat.color }}
+        >
           {cat.label}
         </Text>
-        <Check size={9} color="#0A1310" strokeWidth={3.6} />
+        {/* Галочка в залитом кружке — как на макете */}
+        <View
+          className="h-[14px] w-[14px] items-center justify-center rounded-full"
+          style={{ backgroundColor: cat.color }}
+        >
+          <Check size={9} color="#0B1B12" strokeWidth={3.6} />
+        </View>
       </View>
     </View>
   )

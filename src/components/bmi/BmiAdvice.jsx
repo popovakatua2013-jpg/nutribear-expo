@@ -27,10 +27,10 @@ export function BmiAdvice({ bmi, onDetails }) {
 
   return (
     <View accessibilityLabel="Рекомендации по индексу массы тела" className="rounded-[24px] p-4" style={CARD}>
-      {/* Шапка: звезда + заголовок + кнопка-лотос (подробные советы) */}
+      {/* Шапка: звезда-контур + заголовок + кнопка-лотос (подробные советы) */}
       <View className="flex-row items-center gap-2">
-        <Star size={18} color="#A78BFA" fill="#A78BFA" />
-        <Text className="min-w-0 flex-1 font-bold text-[15px] tracking-tight text-white">
+        <Star size={21} color="#C4B5FD" fill="rgba(196,181,253,0.18)" strokeWidth={2} />
+        <Text className="min-w-0 flex-1 font-bold text-[16px] tracking-tight text-white">
           Рекомендации
         </Text>
         <Pressable
@@ -52,7 +52,7 @@ export function BmiAdvice({ bmi, onDetails }) {
         <Text
           accessibilityLabel={rec.main}
           maxFontSizeMultiplier={1.3}
-          className="min-w-0 flex-1 font-sans text-[12.5px] leading-relaxed text-[#E4DBFF]"
+          className="min-w-0 flex-1 font-sans text-[13px] leading-relaxed text-[#E4DBFF]"
         >
           {rec.main}
         </Text>
@@ -61,8 +61,12 @@ export function BmiAdvice({ bmi, onDetails }) {
       {/* Идеальный диапазон ИМТ: подпись · полоса с бегунком · диапазон —
           одной строкой, как на макете */}
       <View
-        className="mt-3 flex-row items-center gap-2 rounded-[14px] px-2.5 py-2"
-        style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}
+        className="mt-3 flex-row items-center gap-2 rounded-[14px] border px-2.5 py-2"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.06)',
+          borderColor: 'rgba(168,85,247,0.26)',
+          borderWidth: 1,
+        }}
       >
         <Text
           maxFontSizeMultiplier={1.1}
@@ -72,7 +76,7 @@ export function BmiAdvice({ bmi, onDetails }) {
           Идеальный диапазон ИМТ
         </Text>
         <View className="min-w-0 flex-1">
-          <View className="h-[8px] overflow-hidden rounded-full">
+          <View className="h-[7px] overflow-hidden rounded-full">
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -81,25 +85,25 @@ export function BmiAdvice({ bmi, onDetails }) {
               style={{ flex: 1 }}
             />
           </View>
-          {/* Белый бегунок на позиции текущего ИМТ */}
+          {/* Тонкий белый штрих-бегунок на позиции текущего ИМТ — как на макете */}
           <View
             accessibilityLabel={`Ваш ИМТ ${Math.round(bmi * 10) / 10} — отметка на шкале идеального диапазона`}
             style={{
               position: 'absolute',
               left: `${pos * 100}%`,
-              top: -6,
-              width: 4,
-              height: 20,
+              top: -5.5,
+              width: 3.5,
+              height: 18,
               borderRadius: 2,
               backgroundColor: '#FFFFFF',
-              transform: [{ translateX: -2 }],
+              transform: [{ translateX: -1.75 }],
               shadowColor: '#FFFFFF',
               shadowOpacity: 0.9,
               shadowRadius: 6,
             }}
           />
         </View>
-        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[11px] text-white">
+        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[12px] text-white">
           18,5 – 24,9
         </Text>
       </View>

@@ -1,9 +1,18 @@
-// Неоновый силуэт человека как на макете «Калькулятора ИМТ»:
-// составная фигура (голова, торс, руки, ноги) с лёгким свечением
-// и орбитальным кольцом на талии. Части нарисованы с зазорами —
-// стиль неоновой фигурки, стыки не видны.
+// Неоновый силуэт человека 1-в-1 с макетом: составная яркая фигура
+// (голова, торс, руки, ноги) с плотным свечением, орбитальным кольцом
+// на талии и светящимся ореолом-платформой у ног. Части нарисованы
+// с зазорами — стиль неоновой фигурки, стыки не видны.
 
-import Svg, { Defs, LinearGradient, Stop, Ellipse, G, Path, Circle } from 'react-native-svg'
+import Svg, {
+  Defs,
+  LinearGradient,
+  RadialGradient,
+  Stop,
+  Ellipse,
+  G,
+  Path,
+  Circle,
+} from 'react-native-svg'
 
 const HEAD = 'M 60 6.5 C 67 6.5 72.5 12.5 72.5 21 C 72.5 29.5 67 35.5 60 35.5 C 53 35.5 47.5 29.5 47.5 21 C 47.5 12.5 53 6.5 60 6.5 Z'
 
@@ -38,21 +47,50 @@ export function BodySilhouette({ width = 104, height }) {
     >
       <Defs>
         <LinearGradient id="nbsBody" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#A78BFA" stopOpacity="0.72" />
-          <Stop offset="0.55" stopColor="#8B5CF6" stopOpacity="0.5" />
-          <Stop offset="1" stopColor="#4D7CFE" stopOpacity="0.34" />
+          <Stop offset="0" stopColor="#C4B5FD" stopOpacity="0.88" />
+          <Stop offset="0.5" stopColor="#8B5CF6" stopOpacity="0.62" />
+          <Stop offset="1" stopColor="#60A5FA" stopOpacity="0.42" />
         </LinearGradient>
+        {/* Ореол-платформа у ног — радиальное свечение */}
+        <RadialGradient id="nbsAura" cx="0.5" cy="0.5" rx="0.5" ry="0.5">
+          <Stop offset="0" stopColor="#A855F7" stopOpacity="0.5" />
+          <Stop offset="0.6" stopColor="#7C3AED" stopOpacity="0.22" />
+          <Stop offset="1" stopColor="#7C3AED" stopOpacity="0" />
+        </RadialGradient>
       </Defs>
 
-      {/* Мягкое свечение: те же контуры широким бледным штрихом */}
-      <G opacity={0.28} fill="none" stroke="#8B5CF6" strokeWidth={6} strokeLinejoin="round">
+      {/* Ореол под ногами: широкое свечение + светящееся кольцо платформы */}
+      <Ellipse cx={60} cy={249} rx={56} ry={16} fill="url(#nbsAura)" />
+      <Ellipse
+        cx={60}
+        cy={249}
+        rx={48}
+        ry={10}
+        fill="none"
+        stroke="#7C3AED"
+        strokeOpacity={0.3}
+        strokeWidth={5}
+      />
+      <Ellipse
+        cx={60}
+        cy={249}
+        rx={44}
+        ry={8.5}
+        fill="none"
+        stroke="#C084FC"
+        strokeOpacity={0.75}
+        strokeWidth={2}
+      />
+
+      {/* Плотное свечение: те же контуры широким насыщенным штрихом */}
+      <G opacity={0.4} fill="none" stroke="#A855F7" strokeWidth={8} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`h${i}`} d={d} />
         ))}
       </G>
 
-      {/* Тело: заливка градиентом + неоновый контур */}
-      <G fill="url(#nbsBody)" stroke="#D8B4FE" strokeWidth={1.4} strokeOpacity={0.95} strokeLinejoin="round">
+      {/* Тело: яркая градиентная заливка + светлый неоновый контур */}
+      <G fill="url(#nbsBody)" stroke="#E9D5FF" strokeWidth={1.6} strokeOpacity={0.95} strokeLinejoin="round">
         {PARTS.map((d, i) => (
           <Path key={`p${i}`} d={d} />
         ))}
@@ -66,7 +104,7 @@ export function BodySilhouette({ width = 104, height }) {
         ry={10.5}
         fill="none"
         stroke="#A78BFA"
-        strokeOpacity={0.3}
+        strokeOpacity={0.32}
         strokeWidth={5}
         rotation={-14}
         origin="60,113"
@@ -77,18 +115,18 @@ export function BodySilhouette({ width = 104, height }) {
         rx={41}
         ry={10.5}
         fill="none"
-        stroke="#A78BFA"
+        stroke="#C4B5FD"
         strokeWidth={1.8}
-        strokeOpacity={0.9}
+        strokeOpacity={0.95}
         rotation={-14}
         origin="60,113"
       />
 
       {/* Искры */}
-      <Circle cx={17} cy={44} r={1.6} fill="#C4B5FD" opacity={0.55} />
-      <Circle cx={104} cy={150} r={2.2} fill="#C4B5FD" opacity={0.5} />
-      <Circle cx={12} cy={184} r={1.3} fill="#C4B5FD" opacity={0.45} />
-      <Circle cx={108} cy={34} r={1.4} fill="#C4B5FD" opacity={0.5} />
+      <Circle cx={17} cy={44} r={1.6} fill="#DDD6FE" opacity={0.6} />
+      <Circle cx={104} cy={150} r={2.2} fill="#DDD6FE" opacity={0.55} />
+      <Circle cx={12} cy={184} r={1.3} fill="#DDD6FE" opacity={0.5} />
+      <Circle cx={108} cy={34} r={1.4} fill="#DDD6FE" opacity={0.55} />
     </Svg>
   )
 }

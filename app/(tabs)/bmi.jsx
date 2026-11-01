@@ -127,21 +127,35 @@ export default function BmiScreen() {
             style={StyleSheet.absoluteFill}
           />
           <View className="flex-row gap-1.5 p-3">
-            {/* Силуэт: крупный неоновый, тянется от кольца до низа карточек */}
-            <View className="shrink-0" style={{ width: 74 }}>
+            {/* Силуэт: крупный неоновый, тянется от кольца до низа карточек,
+                со свечением сверху и ореолом-платформой у ног — как на макете */}
+            <View className="shrink-0" style={{ width: 76 }}>
               <View
                 pointerEvents="none"
                 style={{
                   position: 'absolute',
                   top: 4,
                   left: -22,
-                  width: 118,
-                  height: 118,
-                  borderRadius: 59,
-                  backgroundColor: 'rgba(139,92,246,0.28)',
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: 'rgba(139,92,246,0.30)',
                 }}
               />
-              <BodySilhouette width={74} height={200} />
+              {/* Ореол-платформа у ног — светлое пятно, как на макете */}
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  bottom: -8,
+                  left: -32,
+                  width: 140,
+                  height: 54,
+                  borderRadius: 27,
+                  backgroundColor: 'rgba(147,51,234,0.26)',
+                }}
+              />
+              <BodySilhouette width={76} height={204} />
             </View>
             {/* Правая колонка: кольцо + легенда, ниже — Вес и Рост */}
             <View className="min-w-0 flex-1 gap-2">

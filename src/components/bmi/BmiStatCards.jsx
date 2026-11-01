@@ -40,6 +40,13 @@ export function BmiStatCards() {
     (delta < 0 && week[week.length - 1].kg >= min) ||
     (delta > 0 && week[week.length - 1].kg <= max)
   const deltaColor = delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
+  // Пилюля под дельтой — как на макете («↑ +0,5» в цветной капсуле)
+  const deltaBg =
+    delta === 0
+      ? 'rgba(139,150,184,0.14)'
+      : towardNorm
+        ? 'rgba(74,222,128,0.14)'
+        : 'rgba(251,113,133,0.14)'
 
   return (
     <View className="flex-row items-stretch gap-2">
@@ -60,12 +67,15 @@ export function BmiStatCards() {
           </Text>
         </View>
         <View className="mt-1.5 flex-row items-baseline gap-1">
-          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[19px] leading-none tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[20px] leading-none tracking-tight text-white">
             {fmtDecimal(weightKg)}
           </Text>
           <Text className="font-semibold text-[11px] text-bear-sub2">кг</Text>
         </View>
-        <View className="mt-1 flex-row items-center gap-1">
+        <View
+          className="mt-1.5 flex-row items-center gap-1 self-start rounded-full px-1.5 py-[2px]"
+          style={{ backgroundColor: deltaBg }}
+        >
           {delta < 0 && <TrendingDown size={11} color={deltaColor} />}
           {delta > 0 && <TrendingUp size={11} color={deltaColor} />}
           <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-bold text-[10.5px]" style={{ color: deltaColor }}>
@@ -87,14 +97,17 @@ export function BmiStatCards() {
           </Text>
         </View>
         <View className="mt-1.5 flex-row items-baseline gap-1">
-          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[19px] leading-none tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} numberOfLines={1} className="font-extrabold text-[20px] leading-none tracking-tight text-white">
             {heightCm}
           </Text>
           <Text className="font-semibold text-[11px] text-bear-sub2">см</Text>
         </View>
-        <View className="mt-1 flex-row items-center gap-1">
+        <View
+          className="mt-1.5 flex-row items-center gap-1 self-start rounded-full px-1.5 py-[2px]"
+          style={{ backgroundColor: 'rgba(74,222,128,0.12)' }}
+        >
           <Check size={11} color="#4ADE80" strokeWidth={3} />
-          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} className="font-bold text-[10px] text-[#4ADE80]">
+          <Text maxFontSizeMultiplier={1.05} numberOfLines={1} className="font-bold text-[10.5px] text-[#4ADE80]">
             Постоянный
           </Text>
         </View>
