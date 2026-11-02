@@ -97,13 +97,15 @@ export function BmiDonut({ bmi }) {
           Animated.timing(pulseVal, {
             toValue: 1,
             duration: 950,
-            easing: Easing.inOut(Easing.sine),
+            // именно sin: Easing.sine в react-native не существует
+            // (undefined) — пульс кольца падал с «undefined is not a function»
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: false,
           }),
           Animated.timing(pulseVal, {
             toValue: 0,
             duration: 950,
-            easing: Easing.inOut(Easing.sine),
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: false,
           }),
         ])
