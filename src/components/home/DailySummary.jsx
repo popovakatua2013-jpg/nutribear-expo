@@ -6,25 +6,40 @@
 // «заливается» от нуля, число в центре отсчитывается вверх — и всё
 // это повторяется при каждом возврате на «Главную» (запрос пользователя).
 // Долгий тап по левой половине — изменить цель по калориям, по правому
-// кольцу и строке итога — цель «сжечь за день» (карточка «Калории» с
+// кольцу — цель «сжечь за день» (карточка «Калории» с
 // главной убрана как дубликат, её единственная уникальная функция
 // переехала сюда). Мини-чипы шагов/воды/минут удалены — эти цифры
 // живут в трёх карточках над сводкой. Ниже — строка «Итог: съедено −
-// сожжено», далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками
+// сожжено» с зелёным огоньком (дефицит — это хорошо) и без карандаша
+// (по запросу: правка цели сжигания осталась на долгом тапе по кольцу),
+// далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками
 // и разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
 // (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»);
 // сетка 2×2 с точками и барами заменена — при чтении «столбиками»
-// порядок сбивался. Нормы БЖУ — «классическая тарелка» (20/30/50%
-// калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
+// порядок сбивался. Нормы БЖУ — свои из целей (маленький карандашик
+// в конце строки открывает окно правки), а если не заданы — «классическая
+// тарелка» (20/30/50% калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Text, View, Pressable } from 'react-native'
+import {
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplet, Flame, Hexagon, Leaf, Pencil } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
+import { useGoalsStore } from '@/store/useGoalsStore'
 import { daysLabel } from '@/lib/streak'
+import { useToast } from '../ui/Toast'
 
 const MAX = 1.25
 const RING = 72
@@ -196,14 +211,58 @@ export function DailySummary({
   burned = 0, // вся активность за день: тренировки + шаги
   burnGoal = 0, // цель «сжечь за день», ккал
   streak = 0, // дней подряд с дневником (чип с огоньком)
-  onEditBurnGoal, // долгий тап по кольцу сжигания и строке итога — изменить цель
+  onEditBurnGoal, // долгий тап по кольцу сжигания — изменить цель
   onEditKcalGoal, // долгий тап по левой половине — изменить цель по калориям
 }) {
+  const goals = useGoalsStore((s) => s.goals)
+  const setGoals = useGoalsStore((s) => s.setGoals)
+  const { toast } = useToast()
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   const remaining = Math.max(0, target - consumed)
   const over = Math.max(0, consumed - target)
   const done = consumed > 0 && remaining === 0 && over === 0
-  const norms = macroTargets(target)
+
+  // Нормы нутриентов: свои из целей (макросы > 0), иначе — авто от
+  // цели по калориям («тарелка» 20/30/50 % + 25 г клетчатки)
+  const macroNorms = goals.macroNorms || { p: 0, f: 0, c: 0, fib: 0 }
+  const autoNorms = macroTargets(target)
+  const norms = {
+    p: macroNorms.p > 0 ? macroNorms.p : autoNorms.p,
+    f: macroNorms.f > 0 ? macroNorms.f : autoNorms.f,
+    c: macroNorms.c > 0 ? macroNorms.c : autoNorms.c,
+    fib: macroNorms.fib > 0 ? macroNorms.fib : autoNorms.fib,
+  }
+
+  // Окно правки своих норм нутриентов (карандашик в строке нутриентов)
+  const [normsOpen, setNormsOpen] = useState(false)
+  const [normsDraft, setNormsDraft] = useState({ p: '', f: '', c: '', fib: '' })
+
+  function openNormsEdit() {
+    // В полях — только свои значения; авто-нормы видны в подсказках
+    setNormsDraft({
+      p: macroNorms.p > 0 ? String(macroNorms.p) : '',
+      f: macroNorms.f > 0 ? String(macroNorms.f) : '',
+      c: macroNorms.c > 0 ? String(macroNorms.c) : '',
+      fib: macroNorms.fib > 0 ? String(macroNorms.fib) : '',
+    })
+    setNormsOpen(true)
+  }
+
+  function saveNorms() {
+    // Пусто или 0 — вернуться к автоматическому расчёту от цели калорий
+    const parse = (s) =>
+      Math.min(500, Math.max(0, Math.round(Number(String(s).replace(',', '.')) || 0)))
+    setGoals({
+      macroNorms: {
+        p: parse(normsDraft.p),
+        f: parse(normsDraft.f),
+        c: parse(normsDraft.c),
+        fib: parse(normsDraft.fib),
+      },
+    })
+    setNormsOpen(false)
+    toast({ title: '🎯 Нормы нутриентов обновлены', description: 'Пустое поле — считаем от цели по калориям' })
+  }
 
   const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const net = consumed - burned // итог дня с учётом активности
@@ -219,8 +278,6 @@ export function DailySummary({
   const Row = onEditKcalGoal ? Pressable : View
   // Правое кольцо — Pressable для правки цели сжигания, иначе View
   const BurnZone = onEditBurnGoal ? Pressable : View
-  // Строка итога — тоже правка цели сжигания долгим тапом
-  const NetRow = onEditBurnGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
   const pillTone = over > 0
@@ -324,19 +381,14 @@ export function DailySummary({
         </BurnZone>
       </View>
 
-      {/* итог дня с учётом активности; долгий тап — изменить цель сжигания */}
-      <NetRow
-        onLongPress={onEditBurnGoal}
-        delayLongPress={450}
-        accessibilityRole={onEditBurnGoal ? 'button' : undefined}
-        accessibilityLabel={
-          onEditBurnGoal
-            ? `Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий. Долгий тап — изменить цель сжигания`
-            : undefined
-        }
-        className="mt-2.5 flex-row items-center gap-2 rounded-2xl bg-[#f87171]/[0.07] px-3 py-2.5"
+      {/* итог дня с учётом активности: зелёный огонёк (дефицит — к цели)
+          без карандаша — правка цели сжигания осталась долгим тапом
+          по кольцу «сожжено» и карточке «Активность» */}
+      <View
+        accessibilityLabel={`Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий`}
+        className="mt-2.5 flex-row items-center gap-2 rounded-2xl bg-[#34D399]/[0.07] px-3 py-2.5"
       >
-        <Flame size={13} color="#f87171" />
+        <Flame size={13} color="#34D399" />
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
@@ -346,11 +398,11 @@ export function DailySummary({
         >
           {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
         </Text>
-        {onEditBurnGoal && <Pencil size={12} color="#8B96B8" />}
-      </NetRow>
+      </View>
 
       {/* нутриенты одной строкой в заданном порядке:
-          1. Белки  2. Жиры  3. Углеводы  4. Клетчатка */}
+          1. Белки  2. Жиры  3. Углеводы  4. Клетчатка.
+          В конце — маленький карандашик: свои нормы нутриентов */}
       <View
         accessibilityLabel={
           `Белки ${formatNum(Math.round(bju.p))} из ${formatNum(norms.p)} грамм, `
@@ -373,7 +425,119 @@ export function DailySummary({
           color="#34D399"
           Icon={Leaf}
         />
+        <Pressable
+          onPress={openNormsEdit}
+          accessibilityRole="button"
+          accessibilityLabel="Изменить нормы белков, жиров, углеводов и клетчатки"
+          hitSlop={6}
+          className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+        >
+          <Pencil size={12} color="#8B96B8" />
+        </Pressable>
       </View>
+
+      {/* Окно правки своих норм нутриентов: 4 поля, пустое — авто от цели калорий */}
+      <Modal
+        visible={normsOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setNormsOpen(false)}
+      >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
+          <Pressable
+            className="flex-1 items-center justify-center bg-black/60 px-8"
+            onPress={() => setNormsOpen(false)}
+          >
+            <Pressable
+              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              onPress={() => {}}
+              accessibilityLabel="Нормы нутриентов"
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="font-bold text-[15px] text-bear-text">🥗 Нормы нутриентов</Text>
+                <Pressable
+                  onPress={() => setNormsOpen(false)}
+                  accessibilityLabel="Закрыть"
+                  className="p-1"
+                >
+                  <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+                </Pressable>
+              </View>
+              <Text className="mt-1 font-sans text-[11px] leading-relaxed text-bear-sub">
+                Граммы в день. Пустое поле — считать от цели по калориям
+                (тарелка 20/30/50 %, клетчатка 25 г)
+              </Text>
+              <View className="mt-3 flex-row gap-2.5">
+                <NormInput
+                  label="Белки, г"
+                  value={normsDraft.p}
+                  onChange={(t) => setNormsDraft((d) => ({ ...d, p: t }))}
+                  placeholder={String(norms.p)}
+                  color="#A78BFA"
+                />
+                <NormInput
+                  label="Жиры, г"
+                  value={normsDraft.f}
+                  onChange={(t) => setNormsDraft((d) => ({ ...d, f: t }))}
+                  placeholder={String(norms.f)}
+                  color="#FB923C"
+                />
+              </View>
+              <View className="mt-2.5 flex-row gap-2.5">
+                <NormInput
+                  label="Углеводы, г"
+                  value={normsDraft.c}
+                  onChange={(t) => setNormsDraft((d) => ({ ...d, c: t }))}
+                  placeholder={String(norms.c)}
+                  color="#38BDF8"
+                />
+                <NormInput
+                  label="Клетчатка, г"
+                  value={normsDraft.fib}
+                  onChange={(t) => setNormsDraft((d) => ({ ...d, fib: t }))}
+                  placeholder={String(norms.fib)}
+                  color="#34D399"
+                />
+              </View>
+              <Pressable
+                onPress={saveNorms}
+                accessibilityRole="button"
+                accessibilityLabel="Сохранить нормы нутриентов"
+                className="mt-4 rounded-2xl py-3 active:opacity-80"
+                style={{ backgroundColor: '#7B6CF6' }}
+              >
+                <Text className="text-center font-bold text-sm text-white">Сохранить</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+    </View>
+  )
+}
+
+// Поле ввода своей нормы: подпись с цветной точкой нутриента и ввод
+// по центру, как в остальных окнах целей
+function NormInput({ label, value, onChange, placeholder, color }) {
+  return (
+    <View className="min-w-0 flex-1">
+      <View className="mb-1.5 flex-row items-center gap-1">
+        <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+        <Text numberOfLines={1} className="font-sans text-[11px] text-bear-sub2">
+          {label}
+        </Text>
+      </View>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        keyboardType="number-pad"
+        maxLength={3}
+        placeholder={placeholder}
+        placeholderTextColor="#8B96B8"
+        accessibilityLabel={label}
+        className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center font-bold text-[14px] text-bear-text"
+      />
     </View>
   )
 }
