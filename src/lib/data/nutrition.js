@@ -14,6 +14,8 @@
 // пропорционально полноте данных (маркер mk — у записей из базы продуктов).
 // Если еды есть, а клетчатки ноль — общий балл не поднимается выше
 // «Средне» (59): рацион без клетчатки не может считаться хорошим.
+// Норму клетчатки можно переопределить (opts.fiberNorm) — свои нормы
+// из целей «Съедено за сегодня»; без неё считается 25 г/день (ВОЗ).
 
 // Нормы дня
 export const FIBER_NORM = 25 // г клетчатки в день
@@ -89,8 +91,8 @@ function enoughScore(amount, norm) {
   return Math.min(100, Math.round((amount / norm) * 100))
 }
 
-function fiberScore(grams) {
-  return enoughScore(grams, FIBER_NORM)
+function fiberScore(grams, norm = FIBER_NORM) {
+  return enoughScore(grams, norm > 0 ? norm : FIBER_NORM)
 }
 
 function sugarScore(grams) {
@@ -100,9 +102,12 @@ function sugarScore(grams) {
 }
 
 // Итог: оценки по каждому показателю + общий балл 0–100.
+// opts.fiberNorm — своя норма клетчатки (иначе 25 г/день, ВОЗ);
+// норма возвращается в parts.fiber.norm — для подписи в UI.
 // Микро-часть входит в общий балл с весом, пропорциональным полноте
 // данных (mk/rows): дни из чистой базы — 100%, ИИ/старые записи — 0%
-export function nutritionRating(n) {
+export function nutritionRating(n, opts = {}) {
+  const fiberNorm = opts.fiberNorm > 0 ? opts.fiberNorm : FIBER_NORM
   const { pPct, fPct, cPct } = macroShares(n)
   const micro = {
     fe: { value: n.fe, score: enoughScore(n.fe, MICRO_NORMS.fe) },
@@ -116,7 +121,7 @@ export function nutritionRating(n) {
     MICRO_KEYS.reduce((s, key) => s + micro[key].score, 0) / MICRO_KEYS.length
   )
   const parts = {
-    fiber: { value: n.fib, score: fiberScore(n.fib) },
+    fiber: { value: n.fib, score: fiberScore(n.fib, fiberNorm), norm: fiberNorm },
     sugar: { value: n.sug, score: n.kcal > 0 || n.sug > 0 ? sugarScore(n.sug) : 0 },
     protein: { value: pPct, score: band(pPct, 0, 15, 30, 40) },
     fat: { value: fPct, score: band(fPct, 0, 20, 35, 45) },

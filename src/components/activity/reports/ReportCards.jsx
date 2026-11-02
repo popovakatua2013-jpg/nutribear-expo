@@ -4,9 +4,12 @@
 // за период в кг (зелёным — движение к здоровому диапазону).
 // Тап по карточке «Вес» открывает вкладку Тело и докручивает
 // до графика «Динамика веса».
+// Тап по карточке показателя (шаги/калории/вода/сожжено) открывает
+// историю по дням: «сколько прошёл в каждый день», «сколько выпито
+// за день» — вся история сохраняется по дням (MetricDaysModal).
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
@@ -19,6 +22,7 @@ import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
 import { requestScrollToWeight } from '@/lib/navEvents'
+import { MetricDaysModal } from './MetricDaysModal'
 
 // Подпись сравнения: с каким прошлым периодом сравниваем
 function prevLabel(days) {
@@ -27,42 +31,58 @@ function prevLabel(days) {
   return `к предыдущим ${days} дням`
 }
 
-function ReportCard({ m, cur, prev, days }) {
+function ReportCard({ m, cur, prev, days, onPress }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
 
   return (
-    <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      colors={[`${m.color}14`, '#121B33']}
-      style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', padding: 16 }}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={
+        onPress
+          ? `${m.label}: ${m.fmt(cur[m.key])} за период — открыть по дням`
+          : undefined
+      }
+      className="flex-1 active:opacity-80"
+      style={{ borderRadius: 16 }}
     >
-      <View className="flex-row items-start gap-3">
-        <View
-          style={{
-            width: 44, height: 44, borderRadius: 12,
-            backgroundColor: `${m.color}1f`,
-            alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <m.Icon size={20} color={m.color} />
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        colors={[`${m.color}14`, '#121B33']}
+        style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', padding: 16 }}
+      >
+        <View className="flex-row items-start gap-3">
+          <View
+            style={{
+              width: 44, height: 44, borderRadius: 12,
+              backgroundColor: `${m.color}1f`,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <m.Icon size={20} color={m.color} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <View className="flex-row items-center gap-1">
+              <Text className="shrink-0 font-sans text-[12.5px] text-bear-soft">{m.label}</Text>
+              {/* Подсказка: тап открывает историю по дням */}
+              {onPress && <ChevronRight size={13} color="#8B96B8" />}
+            </View>
+            <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text">
+              {m.fmt(cur[m.key])}
+            </Text>
+          </View>
         </View>
-        <View className="min-w-0 flex-1">
-          <Text className="font-sans text-[12.5px] text-bear-soft">{m.label}</Text>
-          <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text">
-            {m.fmt(cur[m.key])}
+        <View className="mt-2.5 flex-row items-center gap-1">
+          <Arrow size={14} color={tone} />
+          <Text className="font-medium text-[11px]" style={{ color: tone }}>
+            {Math.abs(pct)}% {prevLabel(days)}
           </Text>
         </View>
-      </View>
-      <View className="mt-2.5 flex-row items-center gap-1">
-        <Arrow size={14} color={tone} />
-        <Text className="font-medium text-[11px]" style={{ color: tone }}>
-          {Math.abs(pct)}% {prevLabel(days)}
-        </Text>
-      </View>
-    </LinearGradient>
+      </LinearGradient>
+    </Pressable>
   )
 }
 
@@ -71,6 +91,8 @@ export function ReportCards({ today, days }) {
   // смене периода/данных, а не на каждом рендере экрана
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
   const prev = useMemo(() => periodTotals(days, days), [days])
+  // История по дням: тап по карточке показателя открывает окно
+  const [detail, setDetail] = useState(null)
 
   // Карточки идут рядами по две: пять метрик дневника + особые карточки
   // веса ({key:'weight'}) и аудита ({key:'audit'}), последние непарные
@@ -94,11 +116,28 @@ export function ReportCards({ today, days }) {
             ) : m.key === 'audit' ? (
               <AuditReportCard key={m.key} days={days} />
             ) : (
-              <ReportCard key={m.key} m={m} cur={cur} prev={prev} days={days} />
+              <ReportCard
+                key={m.key}
+                m={m}
+                cur={cur}
+                prev={prev}
+                days={days}
+                onPress={() => setDetail(m)}
+              />
             )
           )}
         </View>
       ))}
+
+      {/* История показателя по дням: тап по карточке шаги/калории/
+          вода/сожжено — вся сохранённая история выбранного периода */}
+      <MetricDaysModal
+        open={!!detail}
+        metric={detail}
+        days={days}
+        today={today}
+        onClose={() => setDetail(null)}
+      />
     </View>
   )
 }
