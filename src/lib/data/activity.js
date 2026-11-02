@@ -25,10 +25,6 @@ export function shortDate(date) {
   }).format(date)
 }
 
-function sum(arr, field) {
-  return arr.reduce((s, x) => s + (x[field] || 0), 0)
-}
-
 function savedDays() {
   return useHistoryStore.getState().days || {}
 }
@@ -61,37 +57,6 @@ export function history(days, today) {
     })
   }
   return out
-}
-
-// Агрегация по неделям — для периодов 30/90 дней
-export function weeklyHistory(days, today) {
-  const all = history(days, today)
-  const weeks = []
-  for (let i = 0; i < all.length; i += 7) {
-    const chunk = all.slice(i, i + 7)
-    weeks.push({
-      label: chunk[0].label,
-      steps: sum(chunk, 'steps'),
-      kcal: sum(chunk, 'kcal'),
-      waterMl: sum(chunk, 'waterMl'),
-      burned: sum(chunk, 'burned'),
-      xp: sum(chunk, 'xp'),
-    })
-  }
-  return weeks
-}
-
-// Итоги за период: сумма реальных дней, «сегодня» — из живых сторов
-export function blendedTotals(days, today) {
-  return history(days, today).reduce(
-    (acc, r) => {
-      Object.keys(EMPTY_DAY).forEach((f) => {
-        acc[f] += r[f] || 0
-      })
-      return acc
-    },
-    { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0 }
-  )
 }
 
 // Опыт за день: шаги + стаканы воды + приёмы пищи + тренировки

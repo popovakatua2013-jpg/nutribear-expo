@@ -8,6 +8,8 @@
 // историю по дням: «сколько прошёл в каждый день», «сколько выпито
 // за день» — вся история сохраняется по дням (MetricDaysModal).
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
+// Итоги периода (totals) и дни (rows) приходят готовыми из ReportsSection —
+// periodTotals и history на экране считаются один раз.
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -15,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, ChevronRight, Scale, Stethoscope } from 'lucide-react-native'
 import { changePct, deltaTone, periodTotals } from '@/lib/data/reports'
-import { REPORT_METRICS } from '@/lib/data/metrics'
+import { METRICS } from '@/lib/data/metrics'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
@@ -86,19 +88,18 @@ function ReportCard({ m, cur, prev, days, onPress }) {
   )
 }
 
-export function ReportCards({ today, days }) {
-  // periodTotals обходит до 180 дней истории — считаем только при
-  // смене периода/данных, а не на каждом рендере экрана
-  const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
+export function ReportCards({ days, totals, rows }) {
+  // Итоги текущего периода (totals) приходят из ReportsSection — там
+  // они и так считались для шеринга; прошлый период — только здесь
   const prev = useMemo(() => periodTotals(days, days), [days])
   // История по дням: тап по карточке показателя открывает окно
   const [detail, setDetail] = useState(null)
 
-  // Карточки идут рядами по две: пять метрик дневника + особые карточки
+  // Карточки идут рядами по две: четыре метрики дневника + особые карточки
   // веса ({key:'weight'}) и аудита ({key:'audit'}), последние непарные
-  // тянутся на всю ширину
-  const rows = useMemo(() => {
-    const items = [...REPORT_METRICS, { key: 'weight' }, { key: 'audit' }]
+  // тянутся на всю ширину. cardRows — чтобы не путать с rows (дни периода)
+  const cardRows = useMemo(() => {
+    const items = [...METRICS, { key: 'weight' }, { key: 'audit' }]
     const out = []
     for (let i = 0; i < items.length; i += 2) {
       out.push(items.slice(i, i + 2))
@@ -108,7 +109,7 @@ export function ReportCards({ today, days }) {
 
   return (
     <View className="gap-3" accessibilityLabel="Отчёты за период">
-      {rows.map((row, ri) => (
+      {cardRows.map((row, ri) => (
         <View key={ri} className="flex-row gap-3">
           {row.map((m) =>
             m.key === 'weight' ? (
@@ -119,7 +120,7 @@ export function ReportCards({ today, days }) {
               <ReportCard
                 key={m.key}
                 m={m}
-                cur={cur}
+                cur={totals}
                 prev={prev}
                 days={days}
                 onPress={() => setDetail(m)}
@@ -135,7 +136,7 @@ export function ReportCards({ today, days }) {
         open={!!detail}
         metric={detail}
         days={days}
-        today={today}
+        rows={rows}
         onClose={() => setDetail(null)}
       />
     </View>

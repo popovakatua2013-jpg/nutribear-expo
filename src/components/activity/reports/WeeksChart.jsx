@@ -1,19 +1,19 @@
-// «Сравнение по неделям»: переключатель показателя (шаги/калории/
-// вода/опыт) — каждая метрика на своей шкале со своими единицами,
-// тап по неделе открывает панель со значениями всех показателей и
-// Δ% к прошлой неделе. Текущая неделя помечена «идёт».
-// Показатели — из общего реестра lib/data/metrics.js.
-// Режим embedded — рендер без своей карточки и заголовка: блок
-// живёт внутри «Отчётов» как режим «По неделям» (раньше был отдельной
-// карточкой с дублирующим переключателем показателя).
+// «Сравнение по неделям» — режим «По неделям» внутри «Отчётов»:
+// график показателя за 6 недель, тап по неделе открывает панель со
+// значениями всех показателей и Δ% к прошлой неделе. Текущая неделя
+// помечена «идёт». Показатель выбирается общими пилюлями «Отчётов»
+// и приходит пропсом — у блока один metricId на оба режима
+// («По дням» и «По неделям»); реестр — lib/data/metrics.js.
+// Раньше здесь были свои пилюли показателя (дубль общих) и отдельная
+// карточка с заголовком «Сравнение по неделям» — обе ветки удалены
+// как неиспользуемые: блок живёт только внутри «Отчётов».
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react-native'
 import { SvgAreaChart } from '@/components/ui/SvgAreaChart'
-import { Pills } from '@/components/ui/Pills'
 import { changePct, deltaTone, weeksComparison } from '@/lib/data/reports'
-import { REPORT_METRICS } from '@/lib/data/metrics'
+import { METRICS } from '@/lib/data/metrics'
 
 const WEEKS = 6
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
@@ -29,29 +29,17 @@ function weekRange(i, now) {
   return `${d(start)} – ${d(end)}`
 }
 
-export function WeeksChart({ today, embedded = false }) {
+export function WeeksChart({ today, metric }) {
   const rows = useMemo(() => weeksComparison(WEEKS, today), [today])
-  const [metricId, setMetricId] = useState('steps')
   const [sel, setSel] = useState(WEEKS - 1) // по умолчанию — текущая неделя
-  const metric = REPORT_METRICS.find((m) => m.key === metricId) || REPORT_METRICS[0]
 
   const hasData = rows.some((r) => r.steps || r.kcal || r.waterMl || r.burned || r.xp)
   const row = rows[sel] || rows[rows.length - 1]
   const prev = sel > 0 ? rows[sel - 1] : null
   const isCurrent = sel === rows.length - 1
 
-  const content = (
+  return (
     <>
-      {/* Переключатель показателя — у каждого своя шкала */}
-      <View className={embedded ? '' : 'mt-2.5'}>
-        <Pills
-          items={REPORT_METRICS.map((m) => ({ id: m.key, label: m.label, color: m.color }))}
-          value={metricId}
-          onChange={setMetricId}
-          accessibilityLabel="Показатель"
-        />
-      </View>
-
       {!hasData ? (
         <View className="items-center justify-center py-8" accessibilityLabel="Нет данных">
           <Text className="text-[12.5px] text-bear-sub">Пока мало данных</Text>
@@ -95,7 +83,7 @@ export function WeeksChart({ today, embedded = false }) {
               )}
             </View>
             <View className="mt-2 flex-row flex-wrap gap-2">
-              {REPORT_METRICS.map((m) => {
+              {METRICS.map((m) => {
                 const pct = prev ? changePct(row[m.key] || 0, prev[m.key] || 0) : 0
                 // булевы флаги вместо «числовых» — иначе при нуле в обеих
                 // неделях React рендерит 0 как ребёнка View и RN падает
@@ -126,17 +114,5 @@ export function WeeksChart({ today, embedded = false }) {
         </>
       )}
     </>
-  )
-
-  // Встроенный режим — без своей карточки (живёт внутри «Отчётов»)
-  if (embedded) return content
-
-  return (
-    <View className="rounded-2xl border border-white/5 bg-bear-card p-4" accessibilityLabel="Сравнение по неделям">
-      <Text className="font-bold text-[14px] tracking-tight text-bear-text">
-        Сравнение по неделям
-      </Text>
-      {content}
-    </View>
   )
 }

@@ -2,10 +2,13 @@
 // почти одинаковых раздела: «Сводка» (график показателя по дням и
 // сравнение по неделям) и «Отчёты» (итоговые карточки за период) —
 // по просьбе пользователя все функции «Сводки» переехали сюда.
-// Теперь один блок: период (7/30/90), режимы «По дням»/«По неделям»,
-// переключатель показателя с графиком — и под ними итоговые карточки
-// с Δ% к прошлому периоду, «Весом» и «Аудитом организма».
+// Один блок: период (7/30/90), режимы «По дням»/«По неделям»,
+// общий переключатель показателя с графиком — и под ними итоговые
+// карточки с Δ% к прошлому периоду, «Весом» и «Аудитом организма».
 // Кнопка «Итоги» открывает шеринговую карточку (медведь + цифры).
+// Данные периода считаются здесь ОДИН раз и раздаются детям:
+// rows (дни) → график и MetricDaysModal, totals (итоги) → шеринговая
+// карточка и ReportCards — раньше periodTotals звался в двух местах.
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -34,6 +37,7 @@ export function ReportsSection({ today }) {
   // только для графической части.
   const [rangeId, setRangeId] = useState('7d')
   const [mode, setMode] = useState('days')
+  // Один показатель на оба режима: выбор в «По дням» виден и в «По неделям»
   const [metricId, setMetricId] = useState('steps')
 
   const range = RANGES.find((r) => r.id === rangeId) || RANGES[0]
@@ -45,8 +49,9 @@ export function ReportsSection({ today }) {
   const rows = useMemo(() => history(days, today), [days, today])
 
   const historyDays = useHistoryStore((s) => s.days)
-  const streak = streakOf(historyDays)
-  // Итоги выбранного периода (включая живое «сегодня») для шеринга
+  const streak = useMemo(() => streakOf(historyDays), [historyDays])
+  // Итоги выбранного периода (включая живое «сегодня») — единственный
+  // расчёт на экран: и для шеринга, и для карточек отчётов
   const totals = useMemo(() => periodTotals(days, 0, today), [days, today])
 
   return (
@@ -94,18 +99,18 @@ export function ReportsSection({ today }) {
           />
         </View>
 
+        {/* Переключатель показателя — общий для «По дням» и «По неделям» */}
+        <View className="mt-2.5">
+          <Pills
+            items={METRICS.map((m) => ({ id: m.key, label: m.label, color: m.color }))}
+            value={metricId}
+            onChange={setMetricId}
+            accessibilityLabel="Показатель"
+          />
+        </View>
+
         {mode === 'days' ? (
           <>
-            {/* Переключатель показателя */}
-            <View className="mt-2.5">
-              <Pills
-                items={METRICS.map((m) => ({ id: m.key, label: m.label, color: m.color }))}
-                value={metricId}
-                onChange={setMetricId}
-                accessibilityLabel="Показатель"
-              />
-            </View>
-
             {/* Что именно на графике: выбранный показатель за каждый день */}
             <Text className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-sub">
               {`${metric.label} за каждый день периода — одна точка = один день`}
@@ -123,13 +128,13 @@ export function ReportsSection({ today }) {
         ) : (
           /* Сравнение по неделям: тап по неделе — панель со всеми показателями */
           <View className="mt-3">
-            <WeeksChart today={today} embedded />
+            <WeeksChart today={today} metric={metric} />
           </View>
         )}
       </View>
 
       <GoalCelebration />
-      <ReportCards today={today} days={days} />
+      <ReportCards days={days} totals={totals} rows={rows} />
 
       <WeeklyShareCard
         open={shareOpen}

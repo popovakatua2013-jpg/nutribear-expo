@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { fmtDecimal, shortDate } from '@/lib/data/bmi'
+import { fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/goal'
 import { formatNum, pluralDays } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
@@ -189,7 +189,7 @@ export function GoalCelebration() {
             </Text>
             <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
               Вес {fmtDecimal(weightKg)} кг
-              {goalReachedAt ? ` · достигнута ${shortDate(new Date(goalReachedAt))}` : ''}
+              {goalReachedAt ? ` · достигнута ${shortDateNum(new Date(goalReachedAt))}` : ''}
             </Text>
           </View>
         </View>
@@ -266,7 +266,7 @@ export function GoalCelebration() {
           </Text>
           <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
             Цель {fmtDecimal(goalWeightKg)} кг была достигнута{' '}
-            {shortDate(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
+            {shortDateNum(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
             {fmtDecimal(Math.abs(diff))} кг
           </Text>
         </View>

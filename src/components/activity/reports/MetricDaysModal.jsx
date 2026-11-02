@@ -2,24 +2,17 @@
 // (Шаги, Калории, Вода, Сожжено) открывает сохранённую по дням историю
 // выбранного периода — «тап на шаги — видно, сколько прошёл в каждый
 // день», «тап на воду — сколько выпито за день» и т.д.
-// Данные — дневная история useHistoryStore (каждый день пишется сам),
-// с живым «сегодня» поверх истории; строка «сегодня» подсвечена.
-// Дни, когда дневник не вели, показываются как «нет записей» вместо
-// ложных нулей; среднее считается только по дням с записями.
+// rows (дни периода, последний — сегодня) приходят готовыми из
+// ReportsSection — history() на экране строится один раз; строка
+// «сегодня» подсвечена. Дни, когда дневник не вели, показываются
+// как «нет записей» вместо ложных нулей; среднее считается только
+// по дням с записями.
 
 import { useMemo } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
-import { history } from '@/lib/data/activity'
 
-export function MetricDaysModal({ open, onClose, metric, days, today }) {
-  // Дни периода (последний — сегодня); пересчитываем при открытии,
-  // смене показателя или периода
-  const rows = useMemo(
-    () => (open && metric ? history(days, today) : []),
-    [open, metric, days, today]
-  )
-
+export function MetricDaysModal({ open, onClose, metric, days, rows }) {
   const stats = useMemo(() => {
     const values = rows.map((r) => r[metric?.key] || 0)
     const total = values.reduce((s, v) => s + v, 0)
@@ -35,7 +28,7 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
       avg: recorded.length ? total / recorded.length : 0,
       max: Math.max(...values, 1),
     }
-  }, [rows, metric, days])
+  }, [rows, metric])
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>

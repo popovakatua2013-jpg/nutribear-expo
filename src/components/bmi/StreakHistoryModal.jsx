@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Share, Text, View } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg'
 import { Share2, X } from 'lucide-react-native'
-import { calcBmi, bmiCategory, fmtDecimal, shortDate } from '@/lib/data/bmi'
+import { calcBmi, bmiCategory, fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { smoothPath } from '../ui/SvgAreaChart'
 import { useToast } from '../ui/Toast'
 
@@ -156,7 +156,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
     }
     const bmi = kg != null ? calcBmi(kg, heightCm) : 0
     const cat = bmiCategory(bmi)
-    rows.push({ label: shortDate(end), kg, bmi, cat })
+    rows.push({ label: shortDateNum(end), kg, bmi, cat })
   }
 
   // Экспорт истории по неделям в системное «Поделиться» — текстом:

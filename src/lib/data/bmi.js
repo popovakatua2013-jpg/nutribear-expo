@@ -2,6 +2,9 @@
 // ИМТ = вес (кг) / рост² (м)
 
 import { ACTIVITY_LEVELS } from './onboarding-options'
+// shortWeekday — один на проект («Пн»…«Вс»): раньше в bmi.js была
+// своя приватная копия, байтово равная экспорту из activity.js
+import { shortWeekday } from './activity'
 
 // Пять категорий: диапазон, название, цвет ромбика и цвет кольца.
 // Диапазоны — с точками, как на фото-макете (18.5 – 24.9)
@@ -158,16 +161,13 @@ export function weekWeights(weightKg, records) {
   return out
 }
 
-function shortWeekday(date) {
-  const s = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' }).format(date)
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
 // Числовой ключ дня (20251024) — надёжное сравнение дат без строк
 const dayNum = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
 
-// «24.10» — короткая дата для месяцев и всего журнала
-export function shortDate(date) {
+// «24.10» — короткая числовая дата для месяцев и всего журнала.
+// Имя shortDateNum — чтобы не путать со shortDate из activity.js
+// (там формат «3 ноя» — подписи дней графиков дневника)
+export function shortDateNum(date) {
   return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit' }).format(date)
 }
 
@@ -191,7 +191,7 @@ export function monthWeights(weightKg, records) {
       else break
     }
     out.push({
-      label: shortDate(d),
+      label: shortDateNum(d),
       kg: Math.round(((kg ?? asc[0]?.kg ?? weightKg) || 0) * 10) / 10,
     })
   }
@@ -210,7 +210,7 @@ export function allWeights(records) {
   return [...byDay.values()]
     .sort((a, b) => a.d - b.d)
     .slice(-24)
-    .map(({ d, kg }) => ({ label: shortDate(d), kg: Math.round(kg * 10) / 10 }))
+    .map(({ d, kg }) => ({ label: shortDateNum(d), kg: Math.round(kg * 10) / 10 }))
 }
 
 // Сколько кг до следующей (лучшей) категории ИМТ — для подсказки

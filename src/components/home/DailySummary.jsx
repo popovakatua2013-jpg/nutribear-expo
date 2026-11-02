@@ -20,7 +20,8 @@
 // сетка 2×2 с точками и барами заменена — при чтении «столбиками»
 // порядок сбивался. Нормы БЖУ — свои из целей (маленький карандашик
 // в конце строки открывает окно правки), а если не заданы — «классическая
-// тарелка» (20/30/50% калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
+// тарелка» (20/30/50% калорий), клетчатка — своя норма, иначе 25 г/день
+// (ВОЗ, FIBER_NORM).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -37,10 +38,9 @@ import {
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplet, Flame, Hexagon, Leaf, Pencil } from 'lucide-react-native'
-import { formatNum } from '@/lib/format'
+import { formatNum, pluralDays } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { daysLabel } from '@/lib/streak'
 import { useToast } from '../ui/Toast'
 
 const MAX = 1.25
@@ -313,13 +313,13 @@ export function DailySummary({
         </Text>
         {streak > 0 ? (
           <View
-            accessibilityLabel={`Стрик: ${streak} ${daysLabel(streak)} подряд`}
+            accessibilityLabel={`Стрик: ${streak} ${pluralDays(streak)} подряд`}
             className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
             style={{ backgroundColor: 'rgba(251,146,60,0.13)' }}
           >
             <Flame size={12} color="#fb923c" />
             <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11px] text-[#fdba74]">
-              {`${streak} ${daysLabel(streak)}`}
+              {`${streak} ${pluralDays(streak)}`}
             </Text>
           </View>
         ) : null}
