@@ -10,6 +10,10 @@
 | `src/components/organism/OrganismSvg.jsx` | SVG-двойник (порт веб-макета): палитра состояний, глаза, усики, лапки, ДНК-ядро, орбиты, аврора, блик, румянец |
 | `src/components/organism/OrganismStage.jsx` | Сцена как в макете: карточка-градиент, мягкие пятна света, арена 320px, парение, поглаживание (сердечки + пружинка) |
 | `src/components/organism/GenomeCard.jsx` | Карточка «Геном»: 4 шкалы + подсказка, что улучшить |
+| `src/lib/data/audit.js` | Аудит организма: Доктор Топтыгин — вердикты, фразы с чёрным юмором, рекомендации, пулы прыщей |
+| `src/components/organism/AuditCard.jsx` | Карточка «Аудит»: сканирование, заключение, Freemium-замки |
+| `src/components/organism/AuditPaywall.jsx` | Пейволл Premium аудита (демо-активация, RevenueCat — потом) |
+| `src/store/useProStore.js` | Флаг Premium (не сбрасывается «Стереть все данные») |
 | `app/(tabs)/organism.jsx` | Экран вкладки, связывает все сторы |
 
 ## Как связаны функции

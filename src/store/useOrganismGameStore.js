@@ -62,11 +62,16 @@ function prune(s) {
     if (k >= cut) goodDays[k] = v
     else changed = true
   }
+  const auditDays = {}
+  for (const [k, v] of Object.entries(s.auditDays || {})) {
+    if (k >= cut) auditDays[k] = v
+    else changed = true
+  }
   const log = s.log.length > LOG_MAX ? s.log.slice(0, LOG_MAX) : s.log
   if (log !== s.log) changed = true
   // разовая уборка comboDays у тех, кто обновился со старой версией
   if (s.comboDays && Object.keys(s.comboDays).length) changed = true
-  return changed ? { raidDays, goodDays, log, comboDays: undefined } : {}
+  return changed ? { raidDays, goodDays, auditDays, log, comboDays: undefined } : {}
 }
 
 export const useOrganismGameStore = create(
@@ -109,6 +114,11 @@ export const useOrganismGameStore = create(
       // уже выдан бонус за полную чистку
       pimplePop: { dayKey: null, popped: [] },
       pimpleBonusDay: null,
+
+      // аудит организма: счёт за день (для истории в Premium) и день,
+      // когда уже выдан +1 ген за медосмотр
+      auditDays: {}, // { '2026-11-03': 78 }
+      auditBonusDay: null,
 
       /* ── Ежедневная синхронизация: вызывается при открытии экрана ── */
       syncDay: ({ dayKey, combo, state }) => {
@@ -274,6 +284,25 @@ export const useOrganismGameStore = create(
         return { popped, doneAll }
       },
 
+      /* ── Аудит организма: штамп медосмотра за день (+1 ген раз в день).
+           Повторные осмотры в тот же день — только ради свежих шуток ── */
+      runAudit: ({ dayKey, score }) => {
+        const s = get()
+        const patch = { auditDays: { ...(s.auditDays || {}), [dayKey]: score } }
+        let awarded = false
+        if (s.auditBonusDay !== dayKey) {
+          patch.auditBonusDay = dayKey
+          patch.genes = s.genes + 1
+          patch.log = pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Медосмотр: ${score}/100. Доктор Топтыгин доволен (+1 ген).`,
+          })
+          awarded = true
+        }
+        set(patch)
+        return { awarded }
+      },
+
       /* ── Экспедиция: отправить организм в поход (idle, реальное время) ── */
       startExpedition: (key) => {
         const s = get()
@@ -317,6 +346,7 @@ export const useOrganismGameStore = create(
           goodDays: {}, streak: 0, streakLastKey: null,
           items: [], opened: 0, log: [], expedition: null,
           pimplePop: { dayKey: null, popped: [] }, pimpleBonusDay: null,
+          auditDays: {}, auditBonusDay: null,
         }),
     }),
     {
@@ -331,6 +361,7 @@ export const useOrganismGameStore = create(
         items: s.items, opened: s.opened, log: s.log,
         expedition: s.expedition,
         pimplePop: s.pimplePop, pimpleBonusDay: s.pimpleBonusDay,
+        auditDays: s.auditDays, auditBonusDay: s.auditBonusDay,
       }),
     }
   )

@@ -8,6 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
+import { AuditCard } from '@/components/organism/AuditCard'
+import { AuditPaywall } from '@/components/organism/AuditPaywall'
 import { GenomeCard } from '@/components/organism/GenomeCard'
 import { ExpeditionCard } from '@/components/organism/ExpeditionCard'
 import { EvolutionCard } from '@/components/organism/EvolutionCard'
@@ -19,6 +21,8 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useOrganismGameStore, weekNumberOf } from '@/store/useOrganismGameStore'
+import { useProStore } from '@/store/useProStore'
+import { pickPimpleDonePhrase, pickPimplePopPhrase } from '@/lib/data/audit'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { bjuSum } from '@/lib/data/bju'
 import { computeOrganism } from '@/lib/data/organism'
@@ -155,6 +159,8 @@ export default function OrganismScreen() {
   // Прыщи от игнора: сегодня ни стакана воды и/или ни одной записи еды.
   // Считаем сколько должно быть пятен, вычитаем уже выдавленные (по индексам)
   const haptics = useUiPrefsStore((s) => s.haptics)
+  // Premium: фразы прыщей и полнота аудита зависят от подписки
+  const pro = useProStore((s) => s.pro)
   const pimpleTotal = useMemo(() => {
     const noWater = waterMl < 250
     const noFood = flatEntries.length === 0
@@ -172,14 +178,14 @@ export default function OrganismScreen() {
   const handlePopPimple = useCallback(
     (spot) => {
       const res = game.popPimple({ dayKey, total: pimpleTotal, index: spot.idx })
-      if (res.doneAll) {
-        setPhrase('Фух! Чисто! Спасибо, что выдавил всё')
-        clearTimeout(phraseTimer.current)
-        phraseTimer.current = setTimeout(() => setPhrase(''), 3500)
-      }
+      // каждый выдавленный прыщ — своя шутка (позитивный чёрный юмор),
+      // последний — особая реплика благодарности
+      setPhrase(res.doneAll ? pickPimpleDonePhrase(pro) : pickPimplePopPhrase(pro))
+      clearTimeout(phraseTimer.current)
+      phraseTimer.current = setTimeout(() => setPhrase(''), 3500)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [game.popPimple, dayKey, pimpleTotal]
+    [game.popPimple, dayKey, pimpleTotal, pro]
   )
 
   // Реплика: базовая по состоянию, при поглаживании — милая, потом возврат
@@ -187,6 +193,15 @@ export default function OrganismScreen() {
   const phraseTimer = useRef(null)
   const basePhrase = org.phrase
   const shownPhrase = phrase || basePhrase
+
+  /* ── Аудит организма: Доктор Топтыгин + пейволл Premium ── */
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const handleRunAudit = useCallback(({ dayKey: k, score }) => game.runAudit({ dayKey: k, score }), [])
+  const handleAuditActivated = useCallback(() => {
+    setPhrase('Premium активирован! Теперь осмотр полный — готовься к редким диагнозам')
+    clearTimeout(phraseTimer.current)
+    phraseTimer.current = setTimeout(() => setPhrase(''), 4000)
+  }, [])
 
   const handlePet = useCallback(() => {
     const list = PET_PHRASES[org.state] || PET_PHRASES.normal
@@ -219,6 +234,19 @@ export default function OrganismScreen() {
           genome={genome}
           pimples={pimples}
           onPopPimple={handlePopPimple}
+          haptics={haptics}
+        />
+
+        <AuditCard
+          org={org}
+          streak={game.streak}
+          auditDays={game.auditDays || {}}
+          dayKey={dayKey}
+          kcal={kcal}
+          kcalGoal={goals.kcal}
+          pro={pro}
+          onRunAudit={handleRunAudit}
+          onOpenPaywall={() => setPaywallOpen(true)}
           haptics={haptics}
         />
 
@@ -270,6 +298,13 @@ export default function OrganismScreen() {
           Демо-экономика · без pay-to-win · ресурсы только из дневника
         </Text>
       </ScrollView>
+
+      {/* пейволл аудита: все 6 систем, редкие диагнозы, история */}
+      <AuditPaywall
+        visible={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        onActivated={handleAuditActivated}
+      />
     </View>
   )
 }
