@@ -96,7 +96,7 @@ export function blendedTotals(days, today) {
 
 // Опыт за день: шаги + стаканы воды + приёмы пищи + тренировки
 // (1 ккал ≈ 0.1 опыта). Формула была продублирована на экранах
-// «Главная» и «Активность» — теперь одна на оба экрана.
+// «Главная» и «Дневник» — теперь одна на оба экрана.
 export function xpForDay({ steps, waterMl, mealCount, burned }) {
   const glasses = Math.round(waterMl / WATER_GLASS)
   return (

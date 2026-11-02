@@ -1,20 +1,20 @@
-// Экран «Активность»: календарь (перенесён с главной), баннер с мишкой,
-// закономерности (перенесены с главной), общая сводка, тренировки и отчёты.
-// Карточки показателей (шаги, калории, вода, активность) перенесены на главную.
+// Экран «Дневник» (вкладка, раньше называлась «Активность»): календарь
+// (перенесён с главной), баннер с мишкой, закономерности (перенесены
+// с главной), тренировки и объединённый блок «Отчёты».
+// Карточки показателей (шаги, калории, вода, активность) — на главной.
 // Все показатели дня автоматически пишутся в историю (useHistoryStore) —
 // поэтому графики и отчёты видят реальные данные за прошедшие дни.
-// Период 7/30/90 выбирается один раз в «Общей сводке» и управляет
-// и графиком, и «Отчётами» — раньше одинаковые переключатели
-// дублировались в двух блоках.
+// Блоки «Сводка» и «Отчёты» объединены: графики (по дням/по неделям),
+// период 7/30/90 и итоговые карточки теперь живут в одном блоке
+// «Отчёты» — раньше два раздела выглядели почти одинаково.
 
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Footprints } from 'lucide-react-native'
+import { BookOpen } from 'lucide-react-native'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
-import { SummarySection } from '@/components/activity/SummarySection'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
@@ -22,13 +22,10 @@ import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
-import { RANGES, WATER_GLASS, xpForDay } from '@/lib/data/activity'
+import { xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
-  // Один период для «Общей сводки» и «Отчётов»
-  const [rangeId, setRangeId] = useState('7d')
-  const days = RANGES.find((r) => r.id === rangeId)?.days || 7
 
   const waterMl = useActivityStore((s) => s.waterMl)
   const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
@@ -65,14 +62,14 @@ export default function ActivityScreen() {
         {/* Шапка экрана: иконка-чип + заголовок + подзаголовок */}
         <View className="flex-row items-center gap-3">
           <View className="h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-            <Footprints size={19} color="#A78BFA" />
+            <BookOpen size={19} color="#A78BFA" />
           </View>
           <View className="min-w-0 flex-1">
             <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
-              Активность
+              Дневник
             </Text>
             <Text maxFontSizeMultiplier={1.25} className="font-sans text-[11.5px] text-bear-dim">
-              Шаги, вода и тренировки
+              Питание, активность и прогресс по дням
             </Text>
           </View>
         </View>
@@ -85,14 +82,14 @@ export default function ActivityScreen() {
         {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
         <HomeInsights />
 
-        <SummarySection today={today} rangeId={rangeId} onRangeChange={setRangeId} />
-
         <ExerciseSection />
 
-        <ReportsSection today={today} days={days} />
+        {/* Объединённый блок «Отчёты»: графики бывшей «Сводки»
+            (по дням/по неделям, период 7/30/90) + итоговые карточки */}
+        <ReportsSection today={today} />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
-          Шаги, вода и тренировки попадают в сводку и отчёты.
+          Шаги, вода и тренировки попадают в графики и отчёты.
           {'\n'}
           Прошлые дни накапливаются сами, пока вы пользуетесь приложением.
         </Text>

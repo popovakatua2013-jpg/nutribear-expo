@@ -35,7 +35,7 @@ export function ProgressChart({ steps }) {
         style={{ height: H }}
       >
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
-          Пока нет данных за неделю.{'\n'}Добавляйте шаги кнопкой «+» на экране «Активность»
+          Пока нет данных за неделю.{'\n'}Добавляйте шаги кнопкой «+» на главной
         </Text>
       </View>
     )
