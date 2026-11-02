@@ -9,11 +9,12 @@ import { GameCard, GameHeader, RightPill, Panel, GradBar, GAME } from './GameUi'
 import { EXPEDITIONS, expeditionProgress, fmtRemaining } from '@/lib/data/organism-game'
 
 export function ExpeditionCard({ expedition, onStart, onCollect }) {
-  // Тик раз в секунду — двигает таймер и полоску, пока организм в пути
+  // Тик раз в 30 секунд — двигает таймер и полоску, пока организм в пути
+  // (таймер показывает минуты, чаще перерисовываться незачем)
   const [, setTick] = useState(0)
   useEffect(() => {
     if (!expedition) return
-    const t = setInterval(() => setTick((n) => n + 1), 1000)
+    const t = setInterval(() => setTick((n) => n + 1), 30000)
     return () => clearInterval(t)
   }, [expedition])
 

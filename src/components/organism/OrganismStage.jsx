@@ -3,9 +3,11 @@
 // мягкие радиальные пятна света сверху/по углам, арена 320px, парение ±6px
 // за 3.2 c, реплика справа сверху, при поглаживании — 6 сердечек (#fb7185)
 // с траекториями из макета. Без звёзд и декора — сцена как в макете.
+// Прыщи от игнора: если за день не было воды/еды, организм покрывается
+// прыщами — тап лопает один прыщ («Пок!» + вибро), пока не выдавишь все.
 
 import { useEffect, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, Text, View } from 'react-native'
+import { Animated, Easing, Pressable, Text, Vibration, View } from 'react-native'
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Heart } from 'lucide-react-native'
@@ -84,7 +86,84 @@ function OneHeart({ o, i }) {
   )
 }
 
-export function OrganismStage({ state, hydration, protein, phrase, onPet }) {
+// Один прыщ: пульсирует, по тапу лопается («Пок!» + вибро) и исчезает.
+// Анимация лопания проигрывается локально, onPop — после неё.
+function Pimple({ spot, haptics, onPop }) {
+  const pulse = useRef(new Animated.Value(0)).current
+  const t = useRef(new Animated.Value(0)).current
+  const [gone, setGone] = useState(false)
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 900, easing: EASE_IO, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 900, easing: EASE_IO, useNativeDriver: true }),
+      ])
+    )
+    anim.start()
+    return () => anim.stop()
+  }, [pulse])
+
+  const handlePop = () => {
+    if (gone) return
+    setGone(true)
+    if (haptics) Vibration.vibrate(18)
+    Animated.timing(t, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) onPop?.()
+    })
+  }
+
+  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.16] })
+  const popScale = t.interpolate({ inputRange: [0, 0.45, 1], outputRange: [1, 1.55, 0.1] })
+  const opacity = t.interpolate({ inputRange: [0, 0.75, 1], outputRange: [1, 1, 0] })
+  const bubbleOpacity = t.interpolate({ inputRange: [0, 0.2, 0.75, 1], outputRange: [0, 1, 1, 0] })
+  const bubbleTy = t.interpolate({ inputRange: [0, 1], outputRange: [0, -30] })
+
+  return (
+    <Animated.View
+      style={{ position: 'absolute', left: `${spot.x * 100}%`, top: `${spot.y * 100}%`, opacity }}
+    >
+      <Animated.Text
+        style={{
+          position: 'absolute', top: -30, left: -4,
+          opacity: bubbleOpacity, transform: [{ translateY: bubbleTy }],
+        }}
+        className="font-extrabold text-[13px] text-rose-300"
+      >
+        Пок!
+      </Animated.Text>
+      <Pressable
+        onPress={handlePop}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Выдавить прыщ"
+      >
+        <Animated.View style={{ transform: [{ scale: popScale }] }}>
+          <Animated.View
+            style={{
+              width: 18, height: 18, borderRadius: 9,
+              backgroundColor: '#FB7185',
+              borderWidth: 2, borderColor: 'rgba(190,24,60,0.6)',
+              transform: [{ scale }],
+            }}
+          >
+            {/* блик — прыщ «живой» */}
+            <View
+              style={{ position: 'absolute', top: 3, left: 4, width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.85)' }}
+            />
+          </Animated.View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+export function OrganismStage({ state, hydration, protein, phrase, onPet, genome = 0, pimples = [], onPopPimple, haptics = true }) {
   const meta = STATE_META[state] || STATE_META.normal
   const [burst, setBurst] = useState(0)
   const timer = useRef(null)
@@ -107,8 +186,6 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet }) {
 
   const floatTy = floatT.interpolate({ inputRange: [0, 1], outputRange: [-6, 6] })
   const floatStyle = { transform: [{ translateY: floatTy }, { scale: press }] }
-
-  const avg = Math.round((hydration + protein) / 2)
 
   useEffect(() => () => timer.current && clearTimeout(timer.current), [])
 
@@ -151,7 +228,7 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet }) {
               {meta.label}
             </Text>
             <Text className="font-medium text-[12px] opacity-70" style={{ color: meta.text }}>
-              · геном {avg}
+              · геном {genome}/70
             </Text>
           </View>
           <Text className="font-sans text-[10.5px] text-emerald-200/50">нажми, чтобы погладить</Text>
@@ -171,6 +248,11 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet }) {
             <Animated.View style={floatStyle}>
               <OrganismSvg state={state} hydration={hydration} protein={protein} size={288} />
             </Animated.View>
+
+            {/* прыщи от игнора: тап — лопнуть (один тап — один прыщ) */}
+            {pimples.map((spot) => (
+              <Pimple key={`${spot.x}-${spot.y}`} spot={spot} haptics={haptics} onPop={() => onPopPimple?.(spot)} />
+            ))}
 
             {/* сердечки при поглаживании */}
             {burst > 0 &&

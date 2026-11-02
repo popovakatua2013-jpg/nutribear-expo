@@ -17,26 +17,48 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useOrganismGameStore, weekNumberOf } from '@/store/useOrganismGameStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { bjuSum } from '@/lib/data/bju'
 import { computeOrganism } from '@/lib/data/organism'
 import {
   BOSSES,
+  PIMPLE_SPOTS,
   dayCombo,
   dayRaidDamage,
+  genomeAvg70,
   mondayKeyOf,
   myWeekTotals,
   packDamage,
+  raidBattleHp,
+  raidHealAbsorb,
   weekDayIdx,
 } from '@/lib/data/organism-game'
+import { CollectionCard } from '@/components/organism/CollectionCard'
 
-const PET_PHRASES = [
-  'Мур-р… Продолжай!',
-  'Как приятно! Спасибо!',
-  'Ещё-ещё, я люблю заботу',
-  'Ты лучший друг моего генома',
-]
+// Реплики при поглаживании — по состоянию организма: в упадке не мурчит,
+// а просит помочь
+const PET_PHRASES = {
+  bloom: [
+    'Мур-р… Продолжай!',
+    'Как приятно! Спасибо!',
+    'Ещё-ещё, я люблю заботу',
+    'Ты лучший друг моего генома',
+  ],
+  normal: [
+    'Мур-р… Хорошо!',
+    'Спасибо! Так гораздо лучше',
+    'Тепло… Погладь ещё разок',
+    'С тобой мне спокойно',
+  ],
+  decline: [
+    'Ой… лучше сначала помоги мне',
+    'Мне нехорошо… добавь воды и еды',
+    'Погладишь потом — сначала стакан воды',
+    'Я в упадке… позаботься обо мне, пожалуйста',
+  ],
+}
 
 export default function OrganismScreen() {
   const insets = useSafeAreaInsets()
@@ -70,6 +92,9 @@ export default function OrganismScreen() {
     [waterMl, goals.waterMl, proteinG, kcal, goals.kcal, stepsToday, goals.steps]
   )
 
+  // Единый геном для бейджа на сцене и карточки эволюции (из 70, 4 оси)
+  const genome = genomeAvg70(org.axes)
+
   const stats = {
     waterMl,
     waterGoalMl: goals.waterMl,
@@ -99,13 +124,18 @@ export default function OrganismScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayKey, kcal, workouts, glasses])
 
-  // Расчёт рейда на текущую неделю
+  // Расчёт рейда на текущую неделю: крит удваивает урон еды (день с
+  // тренировкой), пропущенные дни лечат босса, щиты (вода) гасят лечение
   const weekKey = mondayKeyOf()
   const weekNo = weekNumberOf(game.createdAt)
   const boss = BOSSES[(weekNo - 1) % BOSSES.length]
   const mine = myWeekTotals(game.raidDays, weekKey)
   const pack = packDamage(weekKey, weekDayIdx())
-  const raidHp = boss.hp - mine.dmg - pack
+  const elapsedDays = weekDayIdx() + 1
+  const myDays = Object.values(game.raidDays).filter((v) => v && v.weekKey === weekKey).length
+  const skips = Math.max(0, elapsedDays - myDays)
+  const raidHp = raidBattleHp(boss.hp, mine.dmg, pack, skips, mine.shield)
+  const { heal, absorb } = raidHealAbsorb(skips, mine.shield)
 
   // Босс павший — зафиксировать награду (один раз в неделю)
   useEffect(() => {
@@ -118,8 +148,39 @@ export default function OrganismScreen() {
     []
   )
   const handleOpenCapsule = useCallback(() => game.openCapsule(), [])
+  const handleConvertMutagen = useCallback(() => game.convertMutagen(), [])
   const handleStartExpedition = useCallback((key) => game.startExpedition(key), [])
   const handleCollectExpedition = useCallback(() => game.collectExpedition(), [])
+
+  // Прыщи от игнора: сегодня ни стакана воды и/или ни одной записи еды.
+  // Считаем сколько должно быть пятен, вычитаем уже выдавленные (по индексам)
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  const pimpleTotal = useMemo(() => {
+    const noWater = waterMl < 250
+    const noFood = flatEntries.length === 0
+    let n = (noWater ? 2 : 0) + (noFood ? 2 : 0)
+    if (org.state === 'decline') n += 1
+    if (noWater && noFood) n += 1 // полный игнор дня
+    return Math.min(n, PIMPLE_SPOTS.length)
+  }, [waterMl, flatEntries.length, org.state])
+
+  const poppedIdx = game.pimplePop.dayKey === dayKey ? game.pimplePop.popped : []
+  const pimples = PIMPLE_SPOTS.slice(0, pimpleTotal)
+    .map((spot, idx) => ({ ...spot, idx }))
+    .filter((p) => !poppedIdx.includes(p.idx))
+
+  const handlePopPimple = useCallback(
+    (spot) => {
+      const res = game.popPimple({ dayKey, total: pimpleTotal, index: spot.idx })
+      if (res.doneAll) {
+        setPhrase('Фух! Чисто! Спасибо, что выдавил всё')
+        clearTimeout(phraseTimer.current)
+        phraseTimer.current = setTimeout(() => setPhrase(''), 3500)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game.popPimple, dayKey, pimpleTotal]
+  )
 
   // Реплика: базовая по состоянию, при поглаживании — милая, потом возврат
   const [phrase, setPhrase] = useState('')
@@ -128,10 +189,11 @@ export default function OrganismScreen() {
   const shownPhrase = phrase || basePhrase
 
   const handlePet = useCallback(() => {
-    setPhrase(PET_PHRASES[Math.floor(Math.random() * PET_PHRASES.length)])
+    const list = PET_PHRASES[org.state] || PET_PHRASES.normal
+    setPhrase(list[Math.floor(Math.random() * list.length)])
     clearTimeout(phraseTimer.current)
     phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
-  }, [])
+  }, [org.state])
 
   return (
     <View className="flex-1 bg-bear-bg">
@@ -154,6 +216,10 @@ export default function OrganismScreen() {
           protein={org.axes.protein}
           phrase={shownPhrase}
           onPet={handlePet}
+          genome={genome}
+          pimples={pimples}
+          onPopPimple={handlePopPimple}
+          haptics={haptics}
         />
 
         <GenomeCard org={org} stats={stats} />
@@ -185,14 +251,20 @@ export default function OrganismScreen() {
           packDmg={pack}
           killed={game.raidKilled}
           rewarded={game.raidRewarded}
+          heal={heal}
+          absorb={absorb}
         />
 
         <CapsuleCard
           combo={combo}
           streak={game.streak}
           capsules={game.capsules}
+          mutagen={game.mutagen}
           onOpen={handleOpenCapsule}
+          onConvert={handleConvertMutagen}
         />
+
+        <CollectionCard items={game.items} opened={game.opened} />
 
         <Text className="text-center font-sans text-[11px]" style={{ color: 'rgba(127,168,144,0.7)' }}>
           Демо-экономика · без pay-to-win · ресурсы только из дневника

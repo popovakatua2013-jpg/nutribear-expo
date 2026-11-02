@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { GameCard, GameHeader, RightPill, Caps, GAME } from './GameUi'
 import { PACK_SIZE } from '@/lib/data/organism-game'
 
-export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, killed, rewarded }) {
+export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, killed, rewarded, heal = 0, absorb = 0 }) {
   const hpPct = Math.max(0, Math.min(100, (hp / maxHp) * 100))
   const dead = hp <= 0
 
@@ -43,6 +43,13 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
           </View>
         </View>
 
+        {/* регенерация за пропущенные дни и то, что погасили щиты */}
+        {heal > 0 && (
+          <Text className="mt-1.5 font-sans text-[10.5px]" style={{ color: GAME.dim2 }}>
+            босс подлечился +{heal} HP{absorb > 0 ? ` · щиты погасили ${absorb}` : ''}
+          </Text>
+        )}
+
         {/* урон / щиты / стая */}
         <View className="mt-3 flex-row gap-2">
           <Stat label="ВАШ УРОН" value={myDmg} />
@@ -54,8 +61,8 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
       {/* механика */}
       <View className="mt-3 flex-row gap-2">
         <Chip icon={Utensils} color={GAME.lime} text="приём пищи = удар" />
-        <Chip icon={Droplets} color={GAME.cyan} text="вода = щит" />
-        <Chip icon={Dumbbell} color={GAME.yellow} text="тренировка = крит" />
+        <Chip icon={Droplets} color={GAME.cyan} text="вода = щит от лечения" />
+        <Chip icon={Dumbbell} color={GAME.yellow} text="тренировка = крит ×2" />
       </View>
 
       {dead && (
@@ -70,9 +77,10 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
       )}
 
       <Text className="mt-3 font-sans text-[12px] leading-relaxed" style={{ color: GAME.dim }}>
-        Вклад показан нейтрально — «вклад в урон» вместо таблицы позора.
-        Пропущенный день стая лечит босса лишь частично: сорвался один —
-        босс всё равно падает, просто с меньшей наградой.
+        Механика честная: за каждый день недели без еды босс лечится +30 HP,
+        но стаканы воды гасят лечение (−6 HP за стакан), а день с тренировкой
+        бьёт критом — урон еды удваивается. Вклад показан нейтрально —
+        «вклад в урон» вместо таблицы позора.
       </Text>
     </GameCard>
   )
