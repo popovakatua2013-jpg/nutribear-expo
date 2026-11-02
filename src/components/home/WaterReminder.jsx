@@ -1,23 +1,26 @@
-// Напоминания о воде: тумблер в шапке окна + панель интервалов
+// Напоминания о воде: колокольчик в шапке окна (тап — вкл/выкл,
+// перечёркнутый колокольчик — выключено) + панель интервалов
 // (30/60/90/120 минут и своё значение от 5 до 720)
 
 import { useState } from 'react'
-import { Pressable, Switch, Text, TextInput, View } from 'react-native'
-import { Bell } from 'lucide-react-native'
+import { Pressable, Text, TextInput, View } from 'react-native'
+import { Bell, BellOff } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
 
-// Тумблер без текста — ставится в шапку окна «Вода».
-// При включении запрашивает разрешение на уведомления: без него
-// напоминания приходить не могут.
+// Только колокольчик, без переключателя — ставится в шапку окна «Вода».
+// Тап — включить/выключить: обычный колокольчик — включено,
+// перечёркнутый (BellOff) — выключено. При включении запрашивает
+// разрешение на уведомления: без него напоминания приходить не могут.
 export function ReminderToggle() {
   const reminder = useActivityStore((s) => s.reminder)
   const setReminder = useActivityStore((s) => s.setReminder)
   const { toast } = useToast()
 
-  async function handleToggle(v) {
-    if (v) {
+  async function handleToggle() {
+    const next = !reminder.enabled
+    if (next) {
       const ok = await requestNotifPermission()
       if (!ok) {
         toast({
@@ -27,27 +30,33 @@ export function ReminderToggle() {
         return
       }
     }
-    setReminder({ enabled: v })
+    setReminder({ enabled: next })
     toast({
-      title: v ? '🔔 Напоминания включены' : 'Напоминания выключены',
-      description: v
+      title: next ? '🔔 Напоминания включены' : 'Напоминания выключены',
+      description: next
         ? `Будем напоминать каждые ${reminder.everyMin} мин, если норма не выпита`
         : undefined,
     })
   }
 
   return (
-    <View className="flex-row items-center">
-      <Bell size={16} color={reminder.enabled ? '#7DD3FC' : '#8B96B8'} />
-      <Switch
-        accessibilityLabel="Напоминания о воде"
-        value={reminder.enabled}
-        onValueChange={handleToggle}
-        trackColor={{ true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }}
-        thumbColor="#fff"
-        style={{ transform: [{ scale: 0.75 }] }}
-      />
-    </View>
+    <Pressable
+      onPress={handleToggle}
+      accessibilityRole="button"
+      accessibilityLabel={
+        reminder.enabled
+          ? 'Напоминания о воде включены, нажмите, чтобы выключить'
+          : 'Напоминания о воде выключены, нажмите, чтобы включить'
+      }
+      hitSlop={8}
+      className="p-1 active:opacity-70"
+    >
+      {reminder.enabled ? (
+        <Bell size={18} color="#7DD3FC" />
+      ) : (
+        <BellOff size={18} color="#8B96B8" />
+      )}
+    </Pressable>
   )
 }
 
