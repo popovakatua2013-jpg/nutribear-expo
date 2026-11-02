@@ -45,7 +45,7 @@ const TILES = [
   { id: 'recipes', label: 'Рецепты', Icon: ChefHat, color: '#22C55E' },
 ]
 
-export function AddHub({ mealId, onPick, onSelect }) {
+export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const recipes = useRecipesStore((s) => s.items)
   const userFoods = useUserFoodsStore((s) => s.items)
   const combos = useCombosStore((s) => s.items)
@@ -142,13 +142,16 @@ export function AddHub({ mealId, onPick, onSelect }) {
     return { day: rows[0].day, list }
   }, [history, mealId])
 
-  // Добавить запись из журнала с той же граммовкой (1 тап по чипу)
+  // Добавить запись из журнала с той же граммовкой (1 тап по чипу).
+  // dayOff — выбранный в шапке день (сегодня/вчера)
   function addFromRow(row, silent) {
-    readdRow(addEntry, mealId, row)
+    readdRow(addEntry, mealId, row, dayOff)
     if (!silent) {
       toast({
         title: `${row.emoji || '🍽️'} ${row.name} — в «${mealName}»`,
-        description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал`,
+        description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал${
+          dayOff ? ' · записано за вчера' : ''
+        }`,
       })
     }
   }
@@ -165,10 +168,10 @@ export function AddHub({ mealId, onPick, onSelect }) {
 
   // Комбо: весь набор одним тапом; долгий тап по чипу — удалить
   function addCombo(combo) {
-    combo.items.forEach((row) => readdRow(addEntry, mealId, row))
+    combo.items.forEach((row) => readdRow(addEntry, mealId, row, dayOff))
     toast({
       title: `${combo.emoji} ${combo.name} — в «${mealName}»`,
-      description: `${combo.items.length} блюд(а) из комбо`,
+      description: `${combo.items.length} блюд(а) из комбо${dayOff ? ' · записано за вчера' : ''}`,
     })
   }
 
@@ -206,13 +209,20 @@ export function AddHub({ mealId, onPick, onSelect }) {
       return
     }
     const name = qName.trim().slice(0, 40) || 'Быстрая запись'
-    addEntry(mealId, {
-      food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
-      grams: 0,
-      kcal,
-      desc: '',
+    addEntry(
+      mealId,
+      {
+        food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
+        grams: 0,
+        kcal,
+        desc: '',
+      },
+      dayOff
+    )
+    toast({
+      title: `⚡ ${kcal} ккал — в «${mealName}»`,
+      description: `${name}${dayOff ? ' · записано за вчера' : ''}`,
     })
-    toast({ title: `⚡ ${kcal} ккал — в «${mealName}»`, description: name })
     setQuickOpen(false)
     setQName('')
     setQKcal('')

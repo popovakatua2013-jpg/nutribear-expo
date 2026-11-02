@@ -1,6 +1,8 @@
 // Модалка добавления блюда: выбор приёма пищи и способа добавления.
 // В хабе — строка поиска над плитками и отдельное окно базы продуктов.
 // Тело монтируется с key = mealId — состояние поиска сбрасывается само.
+// Рядом с вкладками приёмов — выбор дня «Сегодня / Вчера» (как у
+// тренировок): приём после полуночи уходит во вчера, а не в чужой день.
 
 import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
@@ -14,6 +16,7 @@ import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
+import { Pills } from '../ui/Pills'
 import { MEALS } from '@/lib/data/meals'
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
@@ -22,12 +25,17 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
   const meals = MEALS
   const [mode, setMode] = useState('hub')
   const [picked, setPicked] = useState(null)
+  // За какой день записываем: 0 = сегодня, 1 = вчера. Выбор действует
+  // на все способы добавления из этого окна (чипы, комбо, быстрая
+  // запись, подтверждение порции); при закрытии сбрасывается на сегодня
+  const [dayOff, setDayOff] = useState(0)
 
   const meal = meals.find((m) => m.id === mealId) || meals[0]
 
   function close() {
     setMode('hub')
     setPicked(null)
+    setDayOff(0)
     onClose()
   }
 
@@ -46,6 +54,8 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
               mealId={mealId}
               meal={meal}
               item={picked}
+              dayOff={dayOff}
+              onDayOffChange={setDayOff}
               onBack={back}
               onClose={close}
             />
@@ -67,6 +77,23 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                   </Pressable>
                 </View>
                 <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />
+
+                {/* За какой день записываем — как у тренировок: тап по плитке
+                    приёма после полуночи, а еда вчерашняя. Действует на все
+                    способы ниже, на экране порции выбор можно поменять */}
+                <View className="mt-2.5 flex-row items-center gap-2">
+                  <Text className="font-sans text-[11px] text-bear-sub">За какой день?</Text>
+                  <Pills
+                    items={[
+                      { id: 0, label: 'Сегодня' },
+                      { id: 1, label: 'Вчера' },
+                    ]}
+                    value={dayOff}
+                    onChange={setDayOff}
+                    size="sm"
+                    accessibilityLabel="День приёма пищи"
+                  />
+                </View>
               </View>
 
               {/* Тело: хаб способов / выбранный режим */}
@@ -85,7 +112,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                 )}
 
                 {mode === 'hub' && (
-                  <AddHub mealId={mealId} onPick={setPicked} onSelect={setMode} />
+                  <AddHub mealId={mealId} dayOff={dayOff} onPick={setPicked} onSelect={setMode} />
                 )}
                 {mode === 'barcode' && <BarcodeMode onPick={setPicked} />}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}

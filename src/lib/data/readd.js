@@ -29,13 +29,18 @@ export function foodFromRow(row) {
 }
 
 // Добавить запись (из журнала/комбо) в приём пищи с той же граммовкой.
+// dayOff — «за какой день» (0 = сегодня, 1 = вчера), пробрасывается в стор.
 // Возвращает созданную запись (с её id) — чтобы тост мог предложить
 // «Отменить» и убрать только что добавленное.
-export function readdRow(addEntry, mealId, row) {
-  return addEntry(mealId, {
-    food: foodFromRow(row),
-    grams: row.grams > 0 ? row.grams : 0,
-    kcal: Math.max(1, Math.round(row.kcal || 0)),
-    desc: row.desc,
-  })
+export function readdRow(addEntry, mealId, row, dayOff = 0) {
+  return addEntry(
+    mealId,
+    {
+      food: foodFromRow(row),
+      grams: row.grams > 0 ? row.grams : 0,
+      kcal: Math.max(1, Math.round(row.kcal || 0)),
+      desc: row.desc,
+    },
+    dayOff
+  )
 }

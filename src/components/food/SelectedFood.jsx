@@ -12,6 +12,7 @@ import { formatNum } from '@/lib/format'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '../ui/Toast'
 import { GramsPicker } from '../home/GramsPicker'
+import { Pills } from '../ui/Pills'
 import { toBuildItem } from '@/lib/data/to-item'
 import { EditAiFoodModal } from './EditAiFoodModal'
 
@@ -19,7 +20,7 @@ import { EditAiFoodModal } from './EditAiFoodModal'
 // продукты ошибаются редко, но поправить под себя можно всегда
 const EDITABLE_SOURCES = ['ai', 'off', 'base', 'user', 'label']
 
-export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
+export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, onBack, onClose }) {
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const [grams, setGrams] = useState(String(item.defaultGrams || 100))
@@ -57,10 +58,12 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
   }
 
   function handleAdd() {
-    addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc })
+    addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc }, dayOff)
     toast({
       title: `${food.emoji} ${food.name} — в «${meal.name}»`,
-      description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(previewBju)}`,
+      description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(
+        previewBju
+      )}${dayOff ? ' · записано за вчера' : ''}`,
     })
     onClose()
   }
@@ -128,14 +131,29 @@ export function SelectedFood({ mealId, meal, item, onBack, onClose }) {
         </View>
       </ScrollView>
 
-      <View className="border-t border-bear-line p-5">
+      <View className="border-t border-bear-line p-5 pt-3.5">
+        {/* За какой день: выбор из шапки виден и здесь — приём после
+            полуночи уходит во вчера, поменять можно прямо перед добавлением */}
+        <View className="mb-3 flex-row items-center justify-between">
+          <Text className="font-sans text-[11px] text-bear-sub">За какой день?</Text>
+          <Pills
+            items={[
+              { id: 0, label: 'Сегодня' },
+              { id: 1, label: 'Вчера' },
+            ]}
+            value={dayOff}
+            onChange={onDayOffChange}
+            size="sm"
+            accessibilityLabel="День приёма пищи"
+          />
+        </View>
         <Pressable
           onPress={handleAdd}
           className="rounded-2xl py-3.5 active:opacity-80"
           style={{ backgroundColor: '#7B6CF6' }}
         >
           <Text className="text-center font-bold text-sm text-white">
-            Добавить в «{meal.name}»
+            {dayOff ? `Добавить за вчера в «${meal.name}»` : `Добавить в «${meal.name}»`}
           </Text>
         </Pressable>
       </View>
