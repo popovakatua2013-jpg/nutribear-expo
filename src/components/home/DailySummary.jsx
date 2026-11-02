@@ -1,20 +1,25 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
 // слева кольцо 72 px, внутри — съеденные ккал («0 из 1800 ккал»),
 // справа такое же кольцо с сожжёнными за день ккал, между ними —
-// пилюля статуса («Осталось / Перебор / Цель достигнута»). Долгий тап
-// по левой половине — изменить цель по калориям, по правому кольцу и
-// строке итога — цель «сжечь за день» (карточка «Калории» с главной
-// убрана как дубликат, её единственная уникальная функция переехала
-// сюда). Мини-чипы шагов/воды/минут удалены — эти цифры живут в трёх
-// карточках над сводкой. Ниже — строка «Итог: съедено − сожжено»,
-// далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками и
-// разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
+// пилюля статуса («Осталось / Перебор / Цель достигнута»). Оба кольца
+// анимируются как донат ИМТ (BmiDonut): при открытии вкладки дуга
+// «заливается» от нуля, число в центре отсчитывается вверх — и всё
+// это повторяется при каждом возврате на «Главную» (запрос пользователя).
+// Долгий тап по левой половине — изменить цель по калориям, по правому
+// кольцу и строке итога — цель «сжечь за день» (карточка «Калории» с
+// главной убрана как дубликат, её единственная уникальная функция
+// переехала сюда). Мини-чипы шагов/воды/минут удалены — эти цифры
+// живут в трёх карточках над сводкой. Ниже — строка «Итог: съедено −
+// сожжено», далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками
+// и разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
 // (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»);
 // сетка 2×2 с точками и барами заменена — при чтении «столбиками»
 // порядок сбивался. Нормы БЖУ — «классическая тарелка» (20/30/50%
 // калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
 
-import { Text, View, Pressable } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Animated, Easing, Text, View, Pressable } from 'react-native'
+import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplet, Flame, Hexagon, Leaf, Pencil } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
@@ -71,10 +76,63 @@ function VDivider() {
 }
 
 // Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
-// справа — сожжено за день. Заливка дуги — процент, внутри крупно
-// значение и мелко «из N ккал», под кольцом — подпись
-function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel }) {
-  const dash = (C * Math.max(0, Math.min(100, pct))) / 100
+// справа — сожжено за день. Анимация как у доната ИМТ (BmiDonut):
+// дуга плавно «заливается» до текущего процента (Animated поверх
+// strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
+// число в центре отсчитывается вверх. runId приходит из DailySummary и
+// растёт при каждом возврате на вкладку «Главная» — заливка повторяется.
+function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId }) {
+  // Прогресс 0…1 — по нему длина дуги и смещение узора;
+  // при 0% прогресс-круг не рисуем вовсе (иначе на Android
+  // остаётся точка скруглённого конца на 12 часах)
+  const frac = Math.max(0, Math.min(100, pct)) / 100
+  const arcVal = useRef(new Animated.Value(0)).current
+  const numVal = useRef(new Animated.Value(0)).current
+  const [num, setNum] = useState(0)
+  const prevRun = useRef(runId)
+  const firstRun = useRef(true)
+
+  // Число в центре — зеркало анимированного значения
+  useEffect(() => {
+    const sub = numVal.addListener(({ value: v }) => setNum(v))
+    return () => numVal.removeListener(sub)
+  }, [numVal])
+
+  useEffect(() => {
+    // Возврат на вкладку (runId сменился) — заливка заново с нуля;
+    // обычное изменение значения — плавный перелив к новой доле
+    if (prevRun.current !== runId) {
+      prevRun.current = runId
+      arcVal.setValue(0)
+      numVal.setValue(0)
+    }
+    const dur = firstRun.current ? 1100 : 600
+    firstRun.current = false
+    const anim = Animated.parallel([
+      Animated.timing(arcVal, {
+        toValue: Math.max(frac, 0.0001),
+        duration: dur,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(numVal, {
+        toValue: value,
+        duration: dur,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+    ])
+    anim.start()
+    return () => anim.stop()
+  }, [value, frac, runId, arcVal, numVal])
+
+  const dashOffset = arcVal.interpolate({
+    // arcVal идёт 0…frac (текущая доля кольца): смещение C — дуга пустая,
+    // C·(1−frac) — залита ровно на frac окружности
+    inputRange: [0, 1],
+    outputRange: [C, 0],
+  })
+
   return (
     <View className="items-center" style={{ width: RING }}>
       <View
@@ -92,17 +150,20 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             </Defs>
           )}
           <Circle cx={RING / 2} cy={RING / 2} r={R} stroke="rgba(255,255,255,0.07)" strokeWidth={SW} fill="none" />
-          <Circle
-            cx={RING / 2}
-            cy={RING / 2}
-            r={R}
-            stroke={color || 'url(#ringGrad)'}
-            strokeWidth={SW}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={`${dash} ${C}`}
-            transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-          />
+          {pct > 0 && (
+            <AnimatedCircle
+              cx={RING / 2}
+              cy={RING / 2}
+              r={R}
+              stroke={color || 'url(#ringGrad)'}
+              strokeWidth={SW}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={`${C} ${C}`}
+              strokeDashoffset={dashOffset}
+              transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+            />
+          )}
         </Svg>
         <View className="absolute inset-0 items-center justify-center">
           <Text
@@ -112,7 +173,7 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             className="text-center font-extrabold text-[16px] leading-tight text-bear-text"
             style={{ width: RING - 16 }}
           >
-            {formatNum(value)}
+            {formatNum(Math.round(num))}
           </Text>
           <Text maxFontSizeMultiplier={MAX} className="font-sans text-[8px] leading-tight text-bear-dim">
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
@@ -125,6 +186,8 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
     </View>
   )
 }
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 export function DailySummary({
   consumed = 0,
@@ -144,6 +207,12 @@ export function DailySummary({
 
   const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const net = consumed - burned // итог дня с учётом активности
+
+  // Анимация колец перезапускается при каждом возврате на вкладку
+  // «Главная» — как у доната ИМТ, который заливается при переходе
+  // на свою вкладку (запрос пользователя)
+  const [runId, setRunId] = useState(0)
+  useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
 
   // Левая половина (кольцо + пилюля) — Pressable, когда умеет менять
   // цель по калориям долгим тапом, иначе обычный View
@@ -205,6 +274,7 @@ export function DailySummary({
             caption="съедено"
             pct={pct}
             gradient
+            runId={runId}
             accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
           />
           <View className="min-w-0 flex-1 items-center">
@@ -248,6 +318,7 @@ export function DailySummary({
             caption="сожжено"
             pct={burnPct}
             color="#f87171"
+            runId={runId}
             accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
           />
         </BurnZone>

@@ -6,11 +6,12 @@
 // исправить вручную (например, по цифре с тренажёра или смарт-часов).
 // Тап по записи — изменение, корзина — удаление.
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ChevronLeft, ChevronRight, Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useExerciseStore, todayKey, dayBurned } from '@/store/useExerciseStore'
+import { useFocusEffect } from 'expo-router'
+import { useExerciseStore, todayKey, dayBurned, syncHistoryBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { shortWeekday } from '@/lib/data/activity'
 import {
@@ -49,6 +50,16 @@ function closestExercise(met) {
   )
 }
 
+// Дефолт дня для новой тренировки: после полуночи (пока не 5 утра)
+// тренировка почти всегда относится к предыдущему дню — вечерней
+// прогулке/залу, о которых вспомнили после 00:00. Раньше окно
+// открывалось с «Сегодня», и такие записи уходили в новый день:
+// назавтра в сводке горели «сожжено за сегодня», хотя ничего
+// не добавляли. Днём — как раньше, «Сегодня».
+function defaultDayOff() {
+  return new Date().getHours() < 5 ? 1 : 0
+}
+
 export function ExerciseSection() {
   const logs = useExerciseStore((s) => s.logs)
   const addLog = useExerciseStore((s) => s.addLog)
@@ -62,10 +73,10 @@ export function ExerciseSection() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null) // запись на изменение
-  // За какой день записываем новую тренировку: 0 — сегодня, 1 — вчера.
-  // Если записать тренировку после полуночи (или забыть вчера) — она
-  // попадёт в чужой день; выбор дня решает это
-  const [dayOff, setDayOff] = useState(0)
+  // День записи: 0 — сегодня, 1 — вчера. Для новой тренировки после
+  // полуночи по умолчанию «Вчера» (см. defaultDayOff), при изменении
+  // 0 — запись остаётся в своём дне, «Вчера» — перенести её туда
+  const [dayOff, setDayOff] = useState(defaultDayOff)
   const [exId, setExId] = useState(null)
   const [minutes, setMinutes] = useState(null)
   // Сожжённые калории: null — «по формуле», число — ручная правка
@@ -80,7 +91,11 @@ export function ExerciseSection() {
   const [newMode, setNewMode] = useState('level') // level | kcal
   const [newKcal30, setNewKcal30] = useState('')
 
-  const key = todayKey()
+  // Ключ дня — в состоянии и обновляется при каждом возврате на вкладку:
+  // если приложение оставалось открытым через полночь, список «Сегодня»
+  // без этого показывал бы вчерашние записи до первого ререндера
+  const [key, setKey] = useState(todayKey)
+  useFocusEffect(useCallback(() => { setKey(todayKey()) }, []))
   const items = logs[key] || []
   const burned = dayBurned(logs, key)
   // Последние 7 дней с тренировками (новые раньше) — для «Повторить»:
@@ -112,12 +127,15 @@ export function ExerciseSection() {
       setMinutes(entry.minutes)
       // Если калории правили вручную — открываем с этим значением
       setKcalManual(entry.manual ? entry.kcal : null)
+      // Запись остаётся в своём дне, пока не выберут перенос «Вчера»
+      setDayOff(0)
     } else {
       setEditing(null)
       setExId(null)
       setMinutes(null)
       setKcalManual(null)
-      setDayOff(0)
+      // После полуночи — по умолчанию «Вчера» (см. defaultDayOff)
+      setDayOff(defaultDayOff())
     }
     setKcalEditing(false)
     setCreating(false)
@@ -167,19 +185,40 @@ export function ExerciseSection() {
     const payload = { exId: ex.id, name: ex.name, emoji: ex.emoji, minutes, kcal: kcalShow }
     if (kcalManual != null) payload.manual = true
     if (editing) {
-      updateLog(key, editing.id, payload)
-      toast({
-        title: `${ex.emoji} ${ex.name} — изменено`,
-        description: `${minutes} мин · ${formatNum(kcalShow)} ккал${
-          kcalManual != null ? ' · вручную' : ''
-        }`,
-      })
+      if (dayOff) {
+        // Перенос записи за вчера: убираем из сегодняшних, пишем
+        // во вчерашний день — «сожжено» обоих дней сразу пересчитывается
+        // в дневной истории (календарь, сводка, отчёты)
+        removeLog(key, editing.id)
+        const d = new Date()
+        d.setDate(d.getDate() - dayOff)
+        const movedKey = todayKey(d)
+        addLog(movedKey, payload)
+        syncHistoryBurned(movedKey)
+        syncHistoryBurned(key)
+        toast({
+          title: `${ex.emoji} ${ex.name} — за вчера`,
+          description: `${minutes} мин · ${formatNum(kcalShow)} ккал · запись перенесена`,
+        })
+      } else {
+        updateLog(key, editing.id, payload)
+        syncHistoryBurned(key)
+        toast({
+          title: `${ex.emoji} ${ex.name} — изменено`,
+          description: `${minutes} мин · ${formatNum(kcalShow)} ккал${
+            kcalManual != null ? ' · вручную' : ''
+          }`,
+        })
+      }
     } else {
       // Ключ дня по выбору «Сегодня / Вчера» — не по времени сохранения:
       // тренировка, записанная после полуночи, уходит во вчерашний день
+      // (после полуночи «Вчера» выбрано по умолчанию)
       const d = new Date()
       if (dayOff) d.setDate(d.getDate() - dayOff)
-      addLog(todayKey(d), payload)
+      const dayKey = todayKey(d)
+      addLog(dayKey, payload)
+      syncHistoryBurned(dayKey)
       toast({
         title: `${ex.emoji} ${ex.name} — ${minutes} мин`,
         description: `Сожжено ${formatNum(kcalShow)} ккал · записано${
@@ -192,6 +231,7 @@ export function ExerciseSection() {
 
   function remove(entry) {
     removeLog(key, entry.id)
+    syncHistoryBurned(key)
     if (editing && editing.id === entry.id) closeModal()
     toast({ title: '🗑 Удалено', description: `${entry.name} убрана из дневника` })
   }
@@ -239,6 +279,7 @@ export function ExerciseSection() {
     repDay.list.forEach((e) =>
       addLog(key, { exId: e.exId, name: e.name, emoji: e.emoji, minutes: e.minutes, kcal: e.kcal, manual: e.manual })
     )
+    syncHistoryBurned(key)
     toast({
       title: '🔁 Тренировки повторены',
       description: `${repDay.list.length} ${
@@ -507,25 +548,29 @@ export function ExerciseSection() {
                 </View>
               ) : (
                 <>
-                  {/* За какой день записываем: сегодня или вчера. Только для
-                      новых записей — при изменении запись остаётся в своём дне */}
-                  {!editing && (
-                    <View>
-                      <Text className="mb-1.5 font-sans text-[11px] text-bear-sub2">
-                        За какой день?
+                  {/* День записи: для новой — куда записать (после полуночи
+                      по умолчанию «Вчера»), при изменении — где лежит;
+                      выбор «Вчера» при изменении переносит запись туда */}
+                  <View>
+                    <Text className="mb-1.5 font-sans text-[11px] text-bear-sub2">
+                      {editing ? 'День записи' : 'За какой день?'}
+                    </Text>
+                    <Pills
+                      items={[
+                        { id: 0, label: 'Сегодня' },
+                        { id: 1, label: 'Вчера' },
+                      ]}
+                      value={dayOff}
+                      onChange={setDayOff}
+                      size="md"
+                      accessibilityLabel="День тренировки"
+                    />
+                    {editing && dayOff ? (
+                      <Text className="mt-1 font-sans text-[10.5px] text-bear-dim">
+                        Сохраните — запись перенесётся за вчера
                       </Text>
-                      <Pills
-                        items={[
-                          { id: 0, label: 'Сегодня' },
-                          { id: 1, label: 'Вчера' },
-                        ]}
-                        value={dayOff}
-                        onChange={setDayOff}
-                        size="md"
-                        accessibilityLabel="День тренировки"
-                      />
-                    </View>
-                  )}
+                    ) : null}
+                  </View>
 
                   {/* Каталог упражнений + свои: сетка 2 колонки */}
                   <View className="gap-2">
