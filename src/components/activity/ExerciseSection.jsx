@@ -62,6 +62,10 @@ export function ExerciseSection() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null) // запись на изменение
+  // За какой день записываем новую тренировку: 0 — сегодня, 1 — вчера.
+  // Если записать тренировку после полуночи (или забыть вчера) — она
+  // попадёт в чужой день; выбор дня решает это
+  const [dayOff, setDayOff] = useState(0)
   const [exId, setExId] = useState(null)
   const [minutes, setMinutes] = useState(null)
   // Сожжённые калории: null — «по формуле», число — ручная правка
@@ -113,6 +117,7 @@ export function ExerciseSection() {
       setExId(null)
       setMinutes(null)
       setKcalManual(null)
+      setDayOff(0)
     }
     setKcalEditing(false)
     setCreating(false)
@@ -170,10 +175,16 @@ export function ExerciseSection() {
         }`,
       })
     } else {
-      addLog(key, payload)
+      // Ключ дня по выбору «Сегодня / Вчера» — не по времени сохранения:
+      // тренировка, записанная после полуночи, уходит во вчерашний день
+      const d = new Date()
+      if (dayOff) d.setDate(d.getDate() - dayOff)
+      addLog(todayKey(d), payload)
       toast({
         title: `${ex.emoji} ${ex.name} — ${minutes} мин`,
-        description: `Сожжено ${formatNum(kcalShow)} ккал · записано`,
+        description: `Сожжено ${formatNum(kcalShow)} ккал · записано${
+          dayOff ? ' за вчера' : ''
+        }`,
       })
     }
     closeModal()
@@ -496,6 +507,26 @@ export function ExerciseSection() {
                 </View>
               ) : (
                 <>
+                  {/* За какой день записываем: сегодня или вчера. Только для
+                      новых записей — при изменении запись остаётся в своём дне */}
+                  {!editing && (
+                    <View>
+                      <Text className="mb-1.5 font-sans text-[11px] text-bear-sub2">
+                        За какой день?
+                      </Text>
+                      <Pills
+                        items={[
+                          { id: 0, label: 'Сегодня' },
+                          { id: 1, label: 'Вчера' },
+                        ]}
+                        value={dayOff}
+                        onChange={setDayOff}
+                        size="md"
+                        accessibilityLabel="День тренировки"
+                      />
+                    </View>
+                  )}
+
                   {/* Каталог упражнений + свои: сетка 2 колонки */}
                   <View className="gap-2">
                     {allExercises.reduce((rows, e, i) => {

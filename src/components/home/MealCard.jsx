@@ -1,8 +1,10 @@
-// Плитка приёма пищи — как в референсе: компактная карточка в ряд
-// по четыре штуки. Сверху фото блюда, на нём — галочки-бейджи
+// Плитка приёма пищи: сетка 2×2 — карточки заметно крупнее, чем было
+// в ряд из четырёх. Сверху высокое фото блюда, на нём — галочки-бейджи
 // (фиолетовая — в приём уже что-то внесено), ниже — название и
-// калории приёма («628 ккал», у пустого — «0 ккал»).
-// Тап по плитке добавляет блюдо именно в этот приём.
+// калории приёма («628 ккал», у пустого — «0 ккал»). Плитки в одном
+// ряду одной высоты (flex-stretch: одинаковая структура растягивает
+// обе до общего роста). Тап по плитке добавляет блюдо в этот приём —
+// отдельная кнопка «Добавить» удалена как дубль.
 
 import { Image, Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
@@ -24,7 +26,7 @@ export function MealCard({ meal, consumed, onAdd }) {
       }
       className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] active:opacity-80"
     >
-      <View className="h-16 w-full items-center justify-center bg-white/[0.04]">
+      <View className="h-24 w-full items-center justify-center bg-white/[0.04]">
         {meal.image ? (
           // фото заливает плитку целиком (cover): у всех четырёх плиток
           // одинаковый масштаб и выравнивание — раньше contain давал
@@ -59,15 +61,15 @@ export function MealCard({ meal, consumed, onAdd }) {
         )}
       </View>
 
-      <View className="items-center px-1 pb-2.5 pt-1.5">
+      <View className="items-center px-2 pb-3 pt-2">
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="font-semibold text-[11.5px] leading-tight text-bear-text"
+          className="font-semibold text-[13px] leading-tight text-bear-text"
         >
           {meal.short || meal.name}
         </Text>
-        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[10.5px] text-bear-dim">
+        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[11.5px] text-bear-dim">
           {formatNum(consumed)} ккал
         </Text>
       </View>
