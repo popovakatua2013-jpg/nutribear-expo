@@ -4,6 +4,8 @@
 // день», «тап на воду — сколько выпито за день» и т.д.
 // Данные — дневная история useHistoryStore (каждый день пишется сам),
 // с живым «сегодня» поверх истории; строка «сегодня» подсвечена.
+// Дни, когда дневник не вели, показываются как «нет записей» вместо
+// ложных нулей; среднее считается только по дням с записями.
 
 import { useMemo } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
@@ -21,10 +23,16 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
   const stats = useMemo(() => {
     const values = rows.map((r) => r[metric?.key] || 0)
     const total = values.reduce((s, v) => s + v, 0)
+    // Дни с записями — дневник хоть что-то фиксировал (как в стрике).
+    // Среднее считаем только по ним: простои «нет записей» на 30/90
+    // днях не должны тянуть среднее вниз (9398 за 30 дней — это не
+    // «313 в день», если записи были только в восьми)
+    const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned)
     return {
       values,
       total,
-      avg: days > 0 ? total / days : 0,
+      recorded: recorded.length,
+      avg: recorded.length ? total / recorded.length : 0,
       max: Math.max(...values, 1),
     }
   }, [rows, metric, days])
@@ -62,7 +70,9 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
                     maxFontSizeMultiplier={1.2}
                     className="mt-0.5 font-sans text-[10.5px] text-bear-sub"
                   >
-                    {`${days} дн. · всего ${metric.fmt(stats.total)} · в среднем ${metric.fmt(Math.round(stats.avg))} в день`}
+                    {stats.recorded > 0
+                      ? `${days} дн. · всего ${metric.fmt(stats.total)} · в среднем ${metric.fmt(Math.round(stats.avg))} в день`
+                      : `${days} дн. — записей пока нет`}
                   </Text>
                 </View>
               </View>
@@ -85,10 +95,14 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
                 const v = stats.values[i]
                 const w = Math.max(2, Math.round((v / stats.max) * 100))
                 const isToday = i === rows.length - 1
+                // День без записей: дневник ничего не фиксировал — вместо
+                // «0» честно пишем «нет записей» (нулевой показатель дня
+                // с записями остаётся честным «0»)
+                const emptyDay = !(r.steps || r.kcal || r.waterMl || r.burned)
                 return (
                   <View
                     key={i}
-                    accessibilityLabel={`${r.label}${isToday ? ', сегодня' : ''}: ${metric.fmt(v)}`}
+                    accessibilityLabel={`${r.label}${isToday ? ', сегодня' : ''}: ${emptyDay ? 'нет записей' : metric.fmt(v)}`}
                     className="mt-1.5 flex-row items-center gap-2"
                   >
                     <Text
@@ -112,9 +126,13 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
                     <Text
                       numberOfLines={1}
                       maxFontSizeMultiplier={1.1}
-                      className={`w-[76px] shrink-0 text-right font-semibold text-[11.5px] ${isToday ? 'text-bear-text' : 'text-bear-soft'}`}
+                      className={`w-[76px] shrink-0 text-right ${
+                        emptyDay
+                          ? 'font-sans text-[10.5px] text-bear-dim'
+                          : `font-semibold text-[11.5px] ${isToday ? 'text-bear-text' : 'text-bear-soft'}`
+                      }`}
                     >
-                      {metric.fmt(v)}
+                      {emptyDay ? 'нет записей' : metric.fmt(v)}
                     </Text>
                   </View>
                 )
@@ -122,8 +140,9 @@ export function MetricDaysModal({ open, onClose, metric, days, today }) {
             </ScrollView>
 
             <Text className="mt-2.5 font-sans text-[10px] leading-snug text-bear-dim">
-              Дни записаны сами, пока вы пользовались дневником.
-              Период меняется пилюлями 7/30/90 в графиках выше
+              {stats.recorded < rows.length
+                ? 'Дни, когда дневник не вели, помечены «нет записей» — в среднее они не входят. Период меняется пилюлями 7/30/90 в графиках выше'
+                : 'Дни записаны сами, пока вы пользовались дневником. Период меняется пилюлями 7/30/90 в графиках выше'}
             </Text>
           </View>
         )}
