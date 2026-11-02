@@ -1,11 +1,14 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
 // слева кольцо прогресса 80 px с процентом от дневной нормы,
 // справа — калории крупно и пилюля статуса («Осталось / Перебор /
-// Цель достигнута»); ниже — строка «Сожжено за сегодня» (вся
-// активность: тренировки + шаги), далее нутриенты сеткой 2×2
-// (белки, жиры, углеводы, клетчатка): цветная точка + подпись +
-// значение, под ними тонкий бар. Нормы БЖУ — «классическая тарелка»
-// (20/30/50% калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
+// Цель достигнута»); долгий тап по этой строке — изменить цель
+// по калориям (карточка «Калории» с главной убрана как дубликат,
+// её единственная уникальная функция переехала сюда). Ниже —
+// строка «Сожжено за сегодня» (вся активность: тренировки + шаги),
+// далее нутриенты сеткой 2×2 (белки, жиры, углеводы, клетчатка):
+// цветная точка + подпись + значение, под ними тонкий бар. Нормы
+// БЖУ — «классическая тарелка» (20/30/50% калорий), клетчатка —
+// 25 г/день (ВОЗ, FIBER_NORM).
 
 import { Text, View, Pressable } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
@@ -83,6 +86,7 @@ export function DailySummary({
   burnGoal = 0, // цель «сжечь за день», ккал
   streak = 0, // дней подряд с дневником (чип с огоньком)
   onEditBurnGoal, // долгий тап по блоку сжигания — изменить цель
+  onEditKcalGoal, // долгий тап по строке калорий — изменить цель по калориям
 }) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   const remaining = Math.max(0, target - consumed)
@@ -94,6 +98,10 @@ export function DailySummary({
   const minutes = Math.round(steps / 100)
   const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const net = consumed - burned // итог дня с учётом активности
+
+  // Строка «кольцо + калории» — Pressable, когда умеет менять цель
+  // по калориям долгим тапом, иначе обычный View
+  const Row = onEditKcalGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
   const pillTone = over > 0
@@ -125,8 +133,20 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо + калории + плашка остатка */}
-      <View className="mt-3 flex-row items-center gap-3.5">
+      {/* кольцо + калории + плашка остатка. Долгий тап — изменить цель
+          по калориям: единственное уникальное действие бывшей карточки
+          «Калории», остальное в ней дублировало эту сводку */}
+      <Row
+        onLongPress={onEditKcalGoal}
+        delayLongPress={450}
+        accessibilityRole={onEditKcalGoal ? 'button' : undefined}
+        accessibilityLabel={
+          onEditKcalGoal
+            ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
+            : undefined
+        }
+        className="mt-3 flex-row items-center gap-3.5"
+      >
         <View
           accessibilityRole="progressbar"
           accessibilityLabel={`Выполнено ${Math.round(pct)} процентов дневной нормы`}
@@ -185,7 +205,7 @@ export function DailySummary({
             </Text>
           </View>
         </View>
-      </View>
+      </Row>
 
       {/* три мини-значка дня под калориями: шаги, вода, активность */}
       <View className="mt-2.5 flex-row gap-2" accessibilityLabel="Шаги, вода и активность за сегодня">

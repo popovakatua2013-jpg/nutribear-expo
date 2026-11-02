@@ -227,12 +227,12 @@ export default function HomeScreen() {
         {/* Приветствие: мишка, время суток, статус дневника и дата */}
         <Greeting consumed={consumed} target={goals.kcal} />
 
-        {/* 4 карточки показателей дня: шаги, калории, активность, вода.
-            У «Активности» — кольцо цели сжигания (долгий тап — правка) */}
+        {/* 3 карточки показателей дня: шаги, вода, активность.
+            У «Активности» — кольцо цели сжигания (долгий тап — правка).
+            Карточку «Калории» убрали — её данные уже в сводке
+            «Съедено за сегодня» ниже */}
         <ActivityStats
           steps={extraSteps}
-          kcal={consumed}
-          kcalGoal={goals.kcal}
           burned={burned}
           minutes={minutes}
           minutesGoal={goals.minutes}
@@ -248,14 +248,10 @@ export default function HomeScreen() {
           onAddSteps={handleAddSteps}
           onAddWater={handleAddWater}
           onOpenWater={() => setWaterOpen(true)}
-          onEditKcalGoal={() =>
-            openGoalEdit({ field: 'kcal', title: 'Цель по калориям', unit: 'ккал', min: 800, max: 6000 })
-          }
           onEditWaterGoal={() =>
             openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
           }
           onOpenSteps={() => setStepsOpen(true)}
-          onOpenMeals={() => openAdd('breakfast')}
           onGoActivity={() => router.navigate('/activity')}
         />
 
@@ -281,6 +277,9 @@ export default function HomeScreen() {
           waterMl={waterMl}
           burnGoal={goals.burnKcal}
           streak={streak}
+          onEditKcalGoal={() =>
+            openGoalEdit({ field: 'kcal', title: 'Цель по калориям', unit: 'ккал', min: 800, max: 6000 })
+          }
           onEditBurnGoal={() =>
             openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
           }

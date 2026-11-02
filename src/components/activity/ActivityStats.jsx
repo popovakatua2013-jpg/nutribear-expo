@@ -1,20 +1,22 @@
-// Четыре карточки показателей за сегодня: шаги, калории, активность, вода.
+// Три карточки показателей за сегодня: шаги, вода, активность.
 // Вертикальный макет: сверху иконка слева, справа — «+» (шаги/вода) или
 // кольцо цели сжигания (активность); ниже — подпись, значение, подстрока
 // и итоговая строка на всю ширину карточки. На узких экранах (361dp) узкая
 // колонка рядом с иконкой обрезала текст («Шаги с…», «осталось 1 525 …») —
 // теперь тексту доступна вся ширина, а длинные строки сжимаются
-// (adjustsFontSizeToFit), а не обрезаются. У всех четырёх карточек один и тот
-// же набор строк (4 текста), поэтому верхний и нижний ряды одной высоты.
+// (adjustsFontSizeToFit), а не обрезаются. «Шаги» и «Вода» — в верхнем ряду
+// (у обеих кнопка «+»), «Активность» — во всю ширину снизу. Карточку
+// «Калории» убрали: она дублировала сводку «Съедено за сегодня» (там и
+// съедено/цель, и пилюля «Осталось/Перебор», и сожжено; долгий тап по
+// строке калорий в сводке — изменить цель калорий).
 // Тап по карточке записывает показатель: «Шаги» — ручной ввод шагов,
-// «Калории» — окно добавления еды, «Активность» — вкладка активности,
-// «Вода» — окно воды. Долгий тап по «Калории», «Вода» и «Активность» —
-// изменить цель прямо с главной. «+» на шагах/воде добавляет 1 000 шагов /
-// стакан воды.
+// «Активность» — вкладка активности, «Вода» — окно воды. Долгий тап по
+// «Вода» и «Активность» — изменить цель прямо с главной. «+» на шагах/воде
+// добавляет 1 000 шагов / стакан воды.
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Footprints, Flame, Dumbbell, Droplets, Plus } from 'lucide-react-native'
+import { Footprints, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { BurnRing } from '../ui/BurnRing'
 
@@ -112,10 +114,10 @@ function Foot({ tone = 'muted', children }) {
 }
 
 export function ActivityStats({
-  steps, kcal, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
+  steps, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
-  onAddSteps, onAddWater, onOpenWater, onEditKcalGoal, onEditWaterGoal,
-  onOpenSteps, onOpenMeals, onGoActivity, kcalGoal,
+  onAddSteps, onAddWater, onOpenWater, onEditWaterGoal,
+  onOpenSteps, onGoActivity,
 }) {
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в 130dp
   const stepsLeft = stepsGoal - steps
@@ -126,19 +128,6 @@ export function ActivityStats({
       <Foot tone="good">цель достигнута</Foot>
     ) : (
       <Foot tone="accent">осталось {formatNum(stepsLeft)}</Foot>
-    )
-  ) : (
-    <Foot>цель не задана</Foot>
-  )
-
-  const kcalLeft = kcalGoal - kcal
-  const kcalFoot = kcalGoal > 0 ? (
-    kcal > kcalGoal ? (
-      <Foot tone="warn">перебор +{formatNum(kcal - kcalGoal)} ккал</Foot>
-    ) : kcal === kcalGoal ? (
-      <Foot tone="good">цель достигнута</Foot>
-    ) : (
-      <Foot tone="good">осталось {formatNum(kcalLeft)} ккал</Foot>
     )
   ) : (
     <Foot>цель не задана</Foot>
@@ -186,17 +175,21 @@ export function ActivityStats({
     },
     {
       colors: {
-        border: 'border-rose-400/20',
-        bg: 'bg-rose-400/[0.06]',
-        icon: ['#FB923C', '#E11D48'],
+        border: 'border-sky-400/20',
+        bg: 'bg-sky-400/[0.06]',
+        icon: ['#38BDF8', '#2563EB'],
+        btn: 'border-sky-400/30 bg-sky-400/10',
+        tint: '#38BDF8',
       },
-      Icon: Flame,
-      label: 'Калории',
-      value: formatNum(kcal),
-      sub: `сожжено +${formatNum(burned)}`,
-      foot: kcalFoot,
-      onPress: onOpenMeals, // тап — записать приём пищи
-      onLongPress: onEditKcalGoal, // долгий тап — изменить цель калорий
+      Icon: Droplets,
+      label: 'Вода',
+      value: `${waterPct}%`,
+      sub: `из ${formatNum(waterGoalMl / 1000)} л · ${formatNum(waterMl)} мл`,
+      foot: waterFoot,
+      onPlus: onAddWater,
+      plusLabel: 'Выпить стакан воды',
+      onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
+      onLongPress: onEditWaterGoal, // долгий тап — изменить цель воды
     },
     {
       colors: {
@@ -215,33 +208,17 @@ export function ActivityStats({
       onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
       longHint: 'Долгий тап — изменить цель сжигания',
     },
-    {
-      colors: {
-        border: 'border-sky-400/20',
-        bg: 'bg-sky-400/[0.06]',
-        icon: ['#38BDF8', '#2563EB'],
-        btn: 'border-sky-400/30 bg-sky-400/10',
-        tint: '#38BDF8',
-      },
-      Icon: Droplets,
-      label: 'Вода',
-      value: `${waterPct}%`,
-      sub: `из ${formatNum(waterGoalMl / 1000)} л · ${formatNum(waterMl)} мл`,
-      foot: waterFoot,
-      onPlus: onAddWater,
-      plusLabel: 'Выпить стакан воды',
-      onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
-      onLongPress: onEditWaterGoal, // долгий тап — изменить цель воды
-    },
   ]
 
+  // Верхний ряд: «Шаги» и «Вода» (у обеих кнопка «+»), нижний ряд:
+  // «Активность» во всю ширину — flex-1 растягивает единственную карточку
   return (
     <View className="gap-3">
       <View className="flex-row gap-3">
         {cards.slice(0, 2).map((c) => <StatCard key={c.label} {...c} />)}
       </View>
       <View className="flex-row gap-3">
-        {cards.slice(2, 4).map((c) => <StatCard key={c.label} {...c} />)}
+        {cards.slice(2).map((c) => <StatCard key={c.label} {...c} />)}
       </View>
     </View>
   )
