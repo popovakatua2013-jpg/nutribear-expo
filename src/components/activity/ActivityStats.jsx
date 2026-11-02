@@ -1,14 +1,13 @@
-// Три карточки показателей за сегодня: шаги, вода, активность.
-// Вертикальный макет: сверху иконка слева, справа — «+» (шаги/вода) или
-// кольцо цели сжигания (активность); ниже — подпись, значение, подстрока
-// и итоговая строка на всю ширину карточки. На узких экранах (361dp) узкая
-// колонка рядом с иконкой обрезала текст («Шаги с…», «осталось 1 525 …») —
-// теперь тексту доступна вся ширина, а длинные строки сжимаются
-// (adjustsFontSizeToFit), а не обрезаются. «Шаги» и «Вода» — в верхнем ряду
-// (у обеих кнопка «+»), «Активность» — во всю ширину снизу. Карточку
-// «Калории» убрали: она дублировала сводку «Съедено за сегодня» (там и
-// съедено/цель, и пилюля «Осталось/Перебор», и сожжено; долгий тап по
-// строке калорий в сводке — изменить цель калорий).
+// Компактный ряд из трёх карточек за сегодня: «Шаги», «Вода»,
+// «Активность» — в одну строку (361dp ≈ 102dp на карточку).
+// Карточка: сверху иконка слева и «+» (шаги/вода) или кольцо цели
+// сжигания (активность) справа; ниже — подпись, значение, подстрока
+// и итоговая строка. Текст однострочный и при нехватке ширины сжимается
+// (adjustsFontSizeToFit, минимум 80%), а не обрезается; иконки/шрифты
+// уменьшены против полноразмерной версии, чтобы всё влезало в узкую
+// колонку. Карточку «Калории» убрали ранее — она дублировала сводку
+// «Съедено за сегодня» (там и съедено/цель, и пилюля «Осталось/Перебор»,
+// и сожжено; долгий тап по строке калорий в сводке — изменить цель).
 // Тап по карточке записывает показатель: «Шаги» — ручной ввод шагов,
 // «Активность» — вкладка активности, «Вода» — окно воды. Долгий тап по
 // «Вода» и «Активность» — изменить цель прямо с главной. «+» на шагах/воде
@@ -50,7 +49,7 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
             ? `Открыть: ${label}`
             : undefined
       }
-      className={`flex-1 rounded-2xl border p-3.5 ${colors.border} ${colors.bg} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
+      className={`flex-1 rounded-2xl border p-3 ${colors.border} ${colors.bg} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
     >
       {/* шапка: иконка слева, «+»/кольцо справа */}
       <View className="flex-row items-center justify-between">
@@ -58,9 +57,9 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           colors={colors.icon}
-          style={{ width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Icon size={19} color="#FFFFFF" />
+          <Icon size={16} color="#FFFFFF" />
         </LinearGradient>
 
         {ring ? (
@@ -73,22 +72,22 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
               accessibilityRole="button"
               accessibilityLabel={plusLabel}
               hitSlop={6}
-              className={`h-9 w-9 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
+              className={`h-8 w-8 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
             >
-              <Plus size={17} color={colors.tint} strokeWidth={2.5} />
+              <Plus size={15} color={colors.tint} strokeWidth={2.5} />
             </Pressable>
           )
         )}
       </View>
 
       {/* текст — на всю ширину карточки, ничего не обрезается */}
-      <FitLine className="mt-2.5 font-medium text-[11px] text-bear-soft">
+      <FitLine className="mt-2 font-medium text-[10px] text-bear-soft">
         {label}
       </FitLine>
-      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[19px] leading-tight tracking-tight text-bear-text">
+      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[17px] leading-tight tracking-tight text-bear-text">
         {value}
       </FitLine>
-      <FitLine className="mt-0.5 font-sans text-[10px] text-bear-sub2">
+      <FitLine className="mt-0.5 font-sans text-[9.5px] text-bear-sub2">
         {sub}
       </FitLine>
       {/* итоговая строка — есть у всех карточек, поэтому ряды одной высоты */}
@@ -107,7 +106,7 @@ function Foot({ tone = 'muted', children }) {
           : tone === 'sky' ? 'text-sky-300'
             : 'text-bear-sub2'
   return (
-    <FitLine className={`mt-0.5 font-bold text-[11.5px] ${color}`}>
+    <FitLine className={`mt-0.5 font-bold text-[10px] ${color}`}>
       {children}
     </FitLine>
   )
@@ -123,7 +122,7 @@ export function ActivityStats({
   const stepsLeft = stepsGoal - steps
   const stepsFoot = stepsGoal > 0 ? (
     steps > stepsGoal ? (
-      <Foot tone="good">сверх цели +{formatNum(steps - stepsGoal)}</Foot>
+      <Foot tone="good">сверх +{formatNum(steps - stepsGoal)}</Foot>
     ) : steps === stepsGoal ? (
       <Foot tone="good">цель достигнута</Foot>
     ) : (
@@ -145,7 +144,7 @@ export function ActivityStats({
   const waterLeft = waterGoalMl - waterMl
   const waterFoot = waterGoalMl > 0 ? (
     waterMl > waterGoalMl ? (
-      <Foot tone="sky">+{formatNum(waterMl - waterGoalMl)} мл сверх цели</Foot>
+      <Foot tone="sky">сверх +{formatNum(waterMl - waterGoalMl)} мл</Foot>
     ) : waterMl === waterGoalMl ? (
       <Foot tone="good">цель достигнута</Foot>
     ) : (
@@ -210,16 +209,11 @@ export function ActivityStats({
     },
   ]
 
-  // Верхний ряд: «Шаги» и «Вода» (у обеих кнопка «+»), нижний ряд:
-  // «Активность» во всю ширину — flex-1 растягивает единственную карточку
+  // Компактный ряд: три карточки в одну строку — «Шаги», «Вода»,
+  // «Активность»; flex-1 делит ширину поровну, текст сжимается сам
   return (
-    <View className="gap-3">
-      <View className="flex-row gap-3">
-        {cards.slice(0, 2).map((c) => <StatCard key={c.label} {...c} />)}
-      </View>
-      <View className="flex-row gap-3">
-        {cards.slice(2).map((c) => <StatCard key={c.label} {...c} />)}
-      </View>
+    <View className="flex-row gap-3">
+      {cards.map((c) => <StatCard key={c.label} {...c} />)}
     </View>
   )
 }
