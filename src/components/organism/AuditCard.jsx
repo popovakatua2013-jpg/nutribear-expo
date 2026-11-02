@@ -5,18 +5,29 @@
 // Сканирование — статичный бар на JS-драйвере (2 с) + сменяющиеся статусы.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, Text, Vibration, View } from 'react-native'
+import { Animated, Easing, Pressable, Share, Text, Vibration, View } from 'react-native'
 import {
   ArrowRight,
   ChevronRight,
   ClipboardCheck,
   Lock,
   RefreshCw,
+  Share2,
   Sparkles,
   Stethoscope,
 } from 'lucide-react-native'
 import { GameCard, GameHeader, RightPill, Panel, Caps, GAME } from './GameUi'
-import { SCAN_STAGES, VERDICT_META, computeAudit, auditScore } from '@/lib/data/audit'
+import {
+  SCAN_STAGES,
+  VERDICT_META,
+  computeAudit,
+  auditScore,
+  auditShareText,
+  auditStreak,
+  auditDateLabel,
+  weekdayLetterOf,
+} from '@/lib/data/audit'
+import { pluralDays } from '@/lib/format'
 
 const SCAN_MS = 2000
 
@@ -95,13 +106,25 @@ function SystemRow({ s, pro, onLocked }) {
   )
 }
 
-// Чип истории: счёт за день
-function ScoreChip({ score }) {
+// Чип истории: счёт за день + буква дня недели, сегодняшний подсвечен
+function ScoreChip({ score, weekday, today }) {
   return (
-    <View className="rounded-lg px-2 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+    <View
+      className="min-w-[32px] items-center rounded-lg px-1.5 py-1"
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        borderColor: today ? 'rgba(163,230,53,0.45)' : 'transparent',
+      }}
+    >
       <Text className="font-extrabold text-[12px]" style={{ color: scoreColor(score) }}>
         {score}
       </Text>
+      {!!weekday && (
+        <Text className="font-sans text-[9px]" style={{ color: today ? GAME.lime : GAME.dim2 }}>
+          {weekday}
+        </Text>
+      )}
     </View>
   )
 }
@@ -125,6 +148,19 @@ export function AuditCard({
   const bar = useRef(new Animated.Value(0)).current
   const stageTimer = useRef(null)
   const finishTimer = useRef(null)
+
+  // серия осмотров подряд — для панели истории (Premium).
+  // Внимание: проп streak — это стрик организма (Нервы), не путать.
+  const auditSeries = useMemo(() => auditStreak(auditDays, dayKey), [auditDays, dayKey])
+
+  // Поделиться заключением: системный шэринг, бесплатно для всех.
+  // Бесплатнику в текст попадают только открытые системы — тизер Premium.
+  const handleShare = useCallback(() => {
+    if (!report) return
+    Share.share({
+      message: auditShareText(report, { pro, dateLabel: auditDateLabel(dayKey) }),
+    }).catch(() => {})
+  }, [report, pro, dayKey])
 
   useEffect(
     () => () => {
@@ -243,7 +279,7 @@ export function AuditCard({
       {report && !scanning && (
         <>
           <Panel style={{ marginTop: 12 }}>
-            <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-2.5">
               <Text className="font-extrabold text-[30px] tracking-tight" style={{ color: scoreColor(report.score) }}>
                 {report.score}
               </Text>
@@ -255,6 +291,16 @@ export function AuditCard({
                   {report.conclusion}
                 </Text>
               </View>
+              <Pressable
+                onPress={handleShare}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel="Поделиться заключением"
+                className="h-9 w-9 items-center justify-center rounded-full"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              >
+                <Share2 size={15} color={GAME.dim} />
+              </Pressable>
             </View>
             {stale && (
               <View
@@ -280,15 +326,24 @@ export function AuditCard({
           {pro ? (
             <Panel style={{ marginTop: 10 }}>
               <Caps>аудиты недели</Caps>
-              <View className="mt-2 min-h-[26px] flex-row flex-wrap items-center gap-1.5">
-                {history.length === 0 ? (
-                  <Text className="font-sans text-[11.5px]" style={{ color: GAME.dim2 }}>
-                    Пока пусто — осмотры появятся здесь
-                  </Text>
-                ) : (
-                  history.map(([k, v]) => <ScoreChip key={k} score={v} />)
-                )}
-              </View>
+              {history.length === 0 ? (
+                <Text className="mt-2 font-sans text-[11.5px]" style={{ color: GAME.dim2 }}>
+                  Пока пусто — осмотры появятся здесь
+                </Text>
+              ) : (
+                <>
+                  <View className="mt-2 flex-row flex-wrap items-stretch gap-1.5">
+                    {history.map(([k, v]) => (
+                      <ScoreChip key={k} score={v} weekday={weekdayLetterOf(k)} today={k === dayKey} />
+                    ))}
+                  </View>
+                  {auditSeries > 0 && (
+                    <Text className="mt-2 font-sans text-[11.5px]" style={{ color: GAME.dim }}>
+                      Серия осмотров: {auditSeries} {pluralDays(auditSeries)} подряд 🩺
+                    </Text>
+                  )}
+                </>
+              )}
             </Panel>
           ) : (
             <Pressable

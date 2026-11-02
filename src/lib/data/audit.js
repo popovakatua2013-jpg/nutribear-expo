@@ -307,6 +307,68 @@ export const PIMPLE_DONE_PHRASES_PRO = [
   'Кожа как у младенца. Младенцы завидуют',
 ]
 
+// ── Поделиться заключением ──────────────────────────────────────────────────
+// Текст для системного «Поделиться»: счёт, заключение доктора и открытые
+// системы. Закрытые системы бесплатника в текст не попадают — это тизер
+// Premium (пусть друг скачает и посмотрит свои).
+export function auditShareText(report = {}, { pro = false, dateLabel = '' } = {}) {
+  const head = dateLabel
+    ? `🩺 Аудит организма, ${dateLabel} — ${report.score ?? 0}/100`
+    : `🩺 Аудит организма — ${report.score ?? 0}/100`
+  const lines = [head]
+  if (report.conclusion) lines.push(`«${report.conclusion}»`)
+  for (const s of report.systems || []) {
+    if (s.pro && !pro) continue
+    const meta = VERDICT_META[s.verdict] || {}
+    lines.push('', `${s.emoji} ${s.name}${s.rare ? ' ✨' : ''} — ${meta.label || 'Норма'}`)
+    if (s.phrase) lines.push(`«${s.phrase}»`)
+  }
+  lines.push('', 'Осмотр провёл Доктор Топтыгин · NutriBear 🐻')
+  return lines.join('\n')
+}
+
+// ── Даты по ключу дня («YYYY-MM-DD», локальная зона как в useHistoryStore) ──
+function dateFromKey(key) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ''))
+  if (!m) return null
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+export function dateKeyOf(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// ── Серия осмотров: сколько дней подряд был аудит, считая от dayKey назад ──
+export function auditStreak(auditDays = {}, dayKey = '') {
+  const d = dateFromKey(dayKey)
+  if (!d) return 0
+  let n = 0
+  while (auditDays[dateKeyOf(d)] != null) {
+    n += 1
+    d.setDate(d.getDate() - 1)
+  }
+  return n
+}
+
+// Буквы дней недели для чипов истории (индекс = getDay(), 0 = воскресенье)
+export const WEEKDAY_LETTERS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
+
+export function weekdayLetterOf(key) {
+  const d = dateFromKey(key)
+  return d ? WEEKDAY_LETTERS[d.getDay()] : ''
+}
+
+// Подпись даты для шаринга: «3 ноября»
+export function auditDateLabel(key) {
+  const d = dateFromKey(key)
+  if (!d) return ''
+  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(d)
+}
+
 // ── Выбор фраз ──────────────────────────────────────────────────────────────
 // rng подаётся отдельно — так тесты делают выборку детерминированной.
 export function pick(list, rng = Math.random) {

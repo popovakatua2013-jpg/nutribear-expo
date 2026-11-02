@@ -19,6 +19,11 @@ import {
   pick,
   pickPimplePopPhrase,
   pickPimpleDonePhrase,
+  auditShareText,
+  auditStreak,
+  auditDateLabel,
+  weekdayLetterOf,
+  dateKeyOf,
 } from '@/lib/data/audit'
 
 const HEALTHY = { hydration: 100, protein: 100, energy: 100, activity: 100 }
@@ -236,5 +241,89 @@ describe('фразы прыщей — позитивный чёрный юмор
     const list = ['a', 'b', 'c']
     expect(pick(list, () => 0)).toBe('a')
     expect(pick(list, () => 0.999)).toBe('c')
+  })
+})
+
+describe('auditShareText — текст для «Поделиться»', () => {
+  // rng = 0.99: без редких диагнозов, последние фразы списков
+  const report = computeAudit(
+    { axes: HEALTHY, state: 'bloom', streak: 3, kcal: 1800, kcalGoal: 2000 },
+    { pro: true, rng: () => 0.99 }
+  )
+
+  test('шапка со счётом, датой и заключением', () => {
+    const txt = auditShareText(report, { pro: true, dateLabel: '3 ноября' })
+    expect(txt).toContain('🩺 Аудит организма, 3 ноября —')
+    expect(txt).toContain('/100')
+    expect(txt).toContain(`«${report.conclusion}»`)
+    expect(txt).toContain('Доктор Топтыгин')
+  })
+
+  test('бесплатнику закрытые системы не раскрываются', () => {
+    const txt = auditShareText(report, { pro: false })
+    expect(txt).toContain('Кожа')
+    expect(txt).toContain('Желудок')
+    expect(txt).toContain('Сердце и ноги')
+    expect(txt).not.toContain('Мышцы')
+    expect(txt).not.toContain('Нервы')
+    expect(txt).not.toContain('Иммунитет')
+  })
+
+  test('в Premium — все 6 систем с вердиктами', () => {
+    const txt = auditShareText(report, { pro: true })
+    for (const s of AUDIT_SYSTEMS) expect(txt).toContain(s.name)
+    for (const s of report.systems) expect(txt).toContain(VERDICT_META[s.verdict].label)
+  })
+
+  test('редкий диагноз помечается ✨ и пустой отчёт не роняет', () => {
+    const rare = {
+      score: 80,
+      conclusion: 'Годен!',
+      systems: [
+        { key: 'skin', name: 'Кожа', emoji: '🧴', pro: false, verdict: 'good', rare: true, phrase: 'Р', tip: 'Т' },
+      ],
+    }
+    expect(auditShareText(rare)).toContain('Кожа ✨')
+    expect(auditShareText({})).toContain('🩺 Аудит организма — 0/100')
+  })
+})
+
+describe('auditStreak — серия осмотров подряд', () => {
+  const days = { '2026-10-31': 50, '2026-11-01': 60, '2026-11-02': 70, '2026-11-03': 80 }
+
+  test('считает дни подряд от dayKey назад', () => {
+    expect(auditStreak(days, '2026-11-03')).toBe(4)
+    expect(auditStreak(days, '2026-11-02')).toBe(3)
+  })
+
+  test('пропуск дня обрывает серию', () => {
+    expect(auditStreak({ '2026-11-01': 50, '2026-11-03': 70 }, '2026-11-03')).toBe(1)
+    expect(auditStreak(days, '2026-11-05')).toBe(0)
+  })
+
+  test('пустые данные и кривые ключи не роняют', () => {
+    expect(auditStreak({}, '2026-11-03')).toBe(0)
+    expect(auditStreak(days, '')).toBe(0)
+    expect(auditStreak(days, 'мусор')).toBe(0)
+    expect(auditStreak()).toBe(0)
+  })
+})
+
+describe('weekdayLetterOf / auditDateLabel / dateKeyOf', () => {
+  test('буквы дней недели (3 ноября 2026 — вторник)', () => {
+    expect(weekdayLetterOf('2026-11-03')).toBe('Вт')
+    expect(weekdayLetterOf('2026-11-01')).toBe('Вс')
+    expect(weekdayLetterOf('2026-11-08')).toBe('Вс')
+    expect(weekdayLetterOf('мусор')).toBe('')
+  })
+
+  test('подпись даты для шаринга', () => {
+    expect(auditDateLabel('2026-11-03')).toBe('3 ноября')
+    expect(auditDateLabel('')).toBe('')
+  })
+
+  test('ключ дня из даты — с ведущими нулями', () => {
+    expect(dateKeyOf(new Date(2026, 10, 3))).toBe('2026-11-03')
+    expect(dateKeyOf(new Date(2026, 0, 9))).toBe('2026-01-09')
   })
 })
