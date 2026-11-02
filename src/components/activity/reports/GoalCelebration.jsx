@@ -66,7 +66,7 @@ export function GoalCelebration() {
     ? supportSwitchPlan({ goalId, hasBio, sex, age, heightCm, weightKg, activityId })
     : null
 
-  // Открыть вкладку ИМТ сразу с окном записи веса
+  // Открыть вкладку Тело сразу с окном записи веса
   function openWeightModal() {
     router.navigate('/bmi')
     requestOpenWeightModal()
@@ -232,13 +232,13 @@ export function GoalCelebration() {
           <Pressable
             onPress={openWeightModal}
             accessibilityRole="button"
-            accessibilityLabel="Записать вес во вкладке ИМТ"
+            accessibilityLabel="Записать вес во вкладке Тело"
             className="mt-1.5 active:opacity-70"
           >
             <Text className="font-sans text-[11px] leading-snug text-[#d9b96a]">
               {Number.isFinite(lastWeighDays)
                 ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
-                : '📅 Записать вес во вкладке ИМТ — взвешивание раз в неделю держит стрик честным →'}
+                : '📅 Записать вес во вкладке Тело — взвешивание раз в неделю держит стрик честным →'}
             </Text>
           </Pressable>
         )}
@@ -247,7 +247,7 @@ export function GoalCelebration() {
   }
 
   // Цель когда-то была достигнута, но вес снова ушёл — зовём вернуться:
-  // тап открывает вкладку ИМТ сразу с окном записи веса
+  // тап открывает вкладку Тело сразу с окном записи веса
   if (goalReachedAt) {
     const diff = Math.round((weightKg - goalWeightKg) * 10) / 10
     return (
@@ -274,6 +274,6 @@ export function GoalCelebration() {
     )
   }
 
-  // Цель есть, но до неё ещё идти — прогресс виден на плашке во вкладке ИМТ
+  // Цель есть, но до неё ещё идти — прогресс виден на плашке во вкладке Тело
   return null
 }

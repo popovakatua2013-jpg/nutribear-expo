@@ -1,4 +1,4 @@
-// Редактор профиля: имя, рост, вес — общие данные с разделом «ИМТ»
+// Редактор профиля: имя, рост, вес — общие данные с разделом «Тело»
 
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'

@@ -1,9 +1,9 @@
-// Экран «ИМТ» в стиле фото-макета: сверху переключатель-пилюли
-// («Динамика веса» → скролл к карточке веса, «ИМТ и состав тела» — активна,
-// «Подробнее» — советы), главный блок БЕЗ карточки — кольцо ИМТ
-// и легенда свободно парят на тёмном фоне, ниже — тёмные
-// карточки «Вес / Рост», блок «Рекомендации» с полосой идеального диапазона.
-// Ниже — калькулятор, динамика веса и фото-прогресс.
+// Экран «Тело» (вкладка, раньше называлась «ИМТ») в стиле фото-макета:
+// сверху переключатель-пилюли («Динамика веса» → скролл к карточке веса,
+// «ИМТ и состав тела» — активна, «Подробнее» — советы), главный блок БЕЗ
+// карточки — кольцо ИМТ и легенда свободно парят на тёмном фоне, ниже —
+// тёмные карточки «Вес / Рост», блок «Рекомендации» с полосой идеального
+// диапазона. Ниже — калькулятор, динамика веса, замеры тела и фото-прогресс.
 
 import { useEffect, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, ScrollView, Text, View } from 'react-native'
@@ -21,6 +21,7 @@ import { BmiStatCards } from '@/components/bmi/BmiStatCards'
 import { BmiAdvice } from '@/components/bmi/BmiAdvice'
 import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
+import { MeasurementsCard } from '@/components/bmi/MeasurementsCard'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { NormCongrats } from '@/components/bmi/NormCongrats'
@@ -267,6 +268,10 @@ export default function BmiScreen() {
           <WeightNudge />
           <WeightCard />
         </View>
+
+        {/* Замеры тела: грудь, талия, живот, попа, бёдра + свои через «+» */}
+        <MeasurementsCard />
+
         <ProgressPhotos />
       </ScrollView>
 

@@ -6,12 +6,12 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, House, Menu, Scale, Sparkles } from 'lucide-react-native'
+import { BookOpen, House, Menu, PersonStanding, Scale, Sparkles } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Дневник', Icon: BookOpen },
-  { name: 'bmi', label: 'ИМТ', Icon: Scale },
+  { name: 'bmi', label: 'Тело', Icon: PersonStanding },
   { name: 'organism', label: 'Организм', Icon: Sparkles },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]

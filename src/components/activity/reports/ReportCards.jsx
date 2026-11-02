@@ -2,7 +2,7 @@
 // итог за период и изменение в % к прошлому такому же периоду —
 // плюс отдельная карточка «Вес»: последнее взвешивание и изменение
 // за период в кг (зелёным — движение к здоровому диапазону).
-// Тап по карточке «Вес» открывает вкладку ИМТ и докручивает
+// Тап по карточке «Вес» открывает вкладку Тело и докручивает
 // до графика «Динамика веса».
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
 
@@ -226,7 +226,7 @@ function WeightReportCard({ days }) {
   const tone = delta == null || delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
   const Arrow = delta != null && delta < 0 ? ArrowDownRight : ArrowUpRight
 
-  // Открыть вкладку ИМТ и докрутить до графика веса
+  // Открыть вкладку Тело и докрутить до графика веса
   function openWeightChart() {
     router.navigate('/bmi')
     requestScrollToWeight()
@@ -236,7 +236,7 @@ function WeightReportCard({ days }) {
     <Pressable
       onPress={openWeightChart}
       accessibilityRole="button"
-      accessibilityLabel="Вес — открыть график динамики веса на вкладке ИМТ"
+      accessibilityLabel="Вес — открыть график динамики веса на вкладке Тело"
       className="flex-1 active:opacity-80"
       style={{ borderRadius: 16 }}
     >
