@@ -26,15 +26,24 @@ export function MealCard({ meal, consumed, onAdd }) {
       }
       className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] active:opacity-80"
     >
-      <View className="h-24 w-full items-center justify-center bg-white/[0.04]">
+      <View className="h-24 w-full items-center justify-center overflow-hidden bg-white/[0.04]">
         {meal.image ? (
           // фото заливает плитку целиком (cover): у всех четырёх плиток
           // одинаковый масштаб и выравнивание — раньше contain давал
-          // у каждой свой масштаб и поля, ряд выглядел съехавшим
+          // у каждой свой масштаб и поля, ряд выглядел съехавшим.
+          // ВАЖНО: Android не обрезает абсолютную картинку по скруглению
+          // родителя — углы фото вылезали за rounded-2xl карточки, поэтому
+          // скругляем верхние углы самой картинки (16 = rounded-2xl)
           <Image
             source={meal.image}
             resizeMode="cover"
-            style={{ position: 'absolute', width: '100%', height: '100%' }}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+            }}
           />
         ) : (
           <View className="h-full w-full items-center justify-center bg-white/5">
