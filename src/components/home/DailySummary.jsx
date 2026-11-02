@@ -7,18 +7,19 @@
 // убрана как дубликат, её единственная уникальная функция переехала
 // сюда). Мини-чипы шагов/воды/минут удалены — эти цифры живут в трёх
 // карточках над сводкой. Ниже — строка «Итог: съедено − сожжено»,
-// далее нутриенты сеткой 2×2 (белки, жиры, углеводы, клетчатка):
-// цветная точка + подпись + значение, под ними тонкий бар. Нормы
-// БЖУ — «классическая тарелка» (20/30/50% калорий), клетчатка —
-// 25 г/день (ВОЗ, FIBER_NORM).
+// далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками и
+// разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
+// (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»);
+// сетка 2×2 с точками и барами заменена — при чтении «столбиками»
+// порядок сбивался. Нормы БЖУ — «классическая тарелка» (20/30/50%
+// калорий), клетчатка — 25 г/день (ВОЗ, FIBER_NORM).
 
 import { Text, View, Pressable } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Flame, Pencil } from 'lucide-react-native'
+import { Droplet, Flame, Hexagon, Leaf, Pencil } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { daysLabel } from '@/lib/streak'
-import { ProgressBar } from '../ui/ProgressBar'
 
 const MAX = 1.25
 const RING = 72
@@ -36,31 +37,37 @@ function macroTargets(kcal) {
   }
 }
 
-function NutrientCell({ label, value, target, color }) {
-  const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0
+// Ячейка нутриента: иконка слева, справа подпись и жирное значение
+// «0 / N г». Четыре такие ячейки стоят в одну строку с разделителями
+function NutrientCell({ label, value, target, color, Icon }) {
   return (
-    <View className="min-w-0 flex-1">
-      <View className="flex-row items-center gap-1.5">
-        <View className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+    <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
+      <Icon size={16} color={color} />
+      <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="min-w-0 flex-1 font-sans text-[10.5px] text-bear-sub"
+          className="font-sans text-[10px] leading-tight text-bear-sub"
         >
           {label}
         </Text>
         <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
           maxFontSizeMultiplier={MAX}
-          className="shrink-0 font-sans text-[10.5px] text-bear-sub2"
+          className="font-bold text-[12px] leading-tight text-bear-text"
         >
           {`${formatNum(Math.round(value))} / ${formatNum(target)} г`}
         </Text>
       </View>
-      <View className="mt-1">
-        <ProgressBar pct={pct} h={3} color={color} />
-      </View>
     </View>
   )
+}
+
+// Тонкий разделитель между ячейками нутриентов
+function VDivider() {
+  return <View className="mx-1 h-7 w-px shrink-0 bg-white/[0.08]" />
 }
 
 // Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
@@ -271,14 +278,30 @@ export function DailySummary({
         {onEditBurnGoal && <Pencil size={12} color="#8B96B8" />}
       </NetRow>
 
-      {/* нутриенты сеткой 2×2: точка + подпись + значение, под ними бар */}
-      <View className="mt-3 flex-row gap-3">
-        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#34D399" />
-        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" />
-      </View>
-      <View className="mt-2.5 flex-row gap-3">
-        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" />
-        <NutrientCell label="Клетчатка" value={bju.fib || 0} target={norms.fib} color="#2DD4BF" />
+      {/* нутриенты одной строкой в заданном порядке:
+          1. Белки  2. Жиры  3. Углеводы  4. Клетчатка */}
+      <View
+        accessibilityLabel={
+          `Белки ${formatNum(Math.round(bju.p))} из ${formatNum(norms.p)} грамм, `
+          + `жиры ${formatNum(Math.round(bju.f))} из ${formatNum(norms.f)} грамм, `
+          + `углеводы ${formatNum(Math.round(bju.c))} из ${formatNum(norms.c)} грамм, `
+          + `клетчатка ${formatNum(Math.round(bju.fib || 0))} из ${formatNum(norms.fib)} грамм`
+        }
+        className="mt-3 flex-row items-center"
+      >
+        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
+        <VDivider />
+        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
+        <VDivider />
+        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
+        <VDivider />
+        <NutrientCell
+          label="Клетчатка"
+          value={bju.fib || 0}
+          target={norms.fib}
+          color="#34D399"
+          Icon={Leaf}
+        />
       </View>
     </View>
   )
