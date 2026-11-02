@@ -309,6 +309,33 @@ describe('auditStreak — серия осмотров подряд', () => {
   })
 })
 
+describe('computeAudit — гарантия редкого диагноза (юбилей серии)', () => {
+  test('в юбилей редкий диагноз гарантирован в Premium', () => {
+    const r = computeAudit({ axes: HEALTHY }, { pro: true, rng: () => 0.99, guaranteeRare: true })
+    expect(r.systems.some((s) => s.rare)).toBe(true)
+    // редкий — только у Premium-системы и с фразой из пула редких
+    const rare = r.systems.find((s) => s.rare)
+    expect(rare.pro).toBe(true)
+    expect(RARE_PHRASES).toContain(rare.phrase)
+  })
+
+  test('без юбилея при rng 0.99 редких нет', () => {
+    const r = computeAudit({ axes: HEALTHY }, { pro: true, rng: () => 0.99 })
+    expect(r.systems.some((s) => s.rare)).toBe(false)
+  })
+
+  test('бесплатнику гарантия редких не выдаёт', () => {
+    const r = computeAudit({ axes: HEALTHY }, { pro: false, rng: () => 0.99, guaranteeRare: true })
+    expect(r.systems.some((s) => s.rare)).toBe(false)
+  })
+
+  test('если редкие выпали сами — принудительный не добавляется', () => {
+    const r = computeAudit({ axes: HEALTHY }, { pro: true, rng: () => 0.05, guaranteeRare: true })
+    // все 3 Premium-системы редкие естественным розыгрышем
+    expect(r.systems.filter((s) => s.rare)).toHaveLength(3)
+  })
+})
+
 describe('weekdayLetterOf / auditDateLabel / dateKeyOf', () => {
   test('буквы дней недели (3 ноября 2026 — вторник)', () => {
     expect(weekdayLetterOf('2026-11-03')).toBe('Вт')

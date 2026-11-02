@@ -5,7 +5,8 @@
 // без pay-to-win).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ChevronDown, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
 import { AuditCard } from '@/components/organism/AuditCard'
@@ -22,8 +23,8 @@ import { useExerciseStore } from '@/store/useExerciseStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useOrganismGameStore, weekNumberOf } from '@/store/useOrganismGameStore'
 import { useProStore } from '@/store/useProStore'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { pickPimpleDonePhrase, pickPimplePopPhrase } from '@/lib/data/audit'
-import { dayKeyOf } from '@/store/useHistoryStore'
 import { bjuSum } from '@/lib/data/bju'
 import { computeOrganism } from '@/lib/data/organism'
 import {
@@ -196,7 +197,13 @@ export default function OrganismScreen() {
 
   /* ── Аудит организма: Доктор Топтыгин + пейволл Premium ── */
   const [paywallOpen, setPaywallOpen] = useState(false)
-  const handleRunAudit = useCallback(({ dayKey: k, score }) => game.runAudit({ dayKey: k, score }), [])
+  const handleRunAudit = useCallback(({ dayKey: k, score }) => {
+    const res = game.runAudit({ dayKey: k, score })
+    // счёт аудита — в дневную историю: сводка дня и отчёты видят тренд,
+    // не заходя во вкладку «Организм» (история хранит дольше auditDays)
+    useHistoryStore.getState().record(k, { audit: score })
+    return res
+  }, [])
   const handleAuditActivated = useCallback(() => {
     setPhrase('Premium активирован! Теперь осмотр полный — готовься к редким диагнозам')
     clearTimeout(phraseTimer.current)
@@ -210,9 +217,20 @@ export default function OrganismScreen() {
     phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
   }, [org.state])
 
+  // Организм в упадке и осмотр ещё не проведён — приглашение к доктору:
+  // тап доскролливает до карточки аудита
+  const scrollRef = useRef(null)
+  const auditYRef = useRef(0)
+  const auditNotDone = (game.auditDays || {})[dayKey] == null
+  const showAuditInvite = org.state === 'decline' && auditNotDone
+  const scrollToAudit = () => {
+    scrollRef.current?.scrollTo({ y: Math.max(0, auditYRef.current - 8), animated: true })
+  }
+
   return (
     <View className="flex-1 bg-bear-bg">
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
@@ -237,18 +255,41 @@ export default function OrganismScreen() {
           haptics={haptics}
         />
 
-        <AuditCard
-          org={org}
-          streak={game.streak}
-          auditDays={game.auditDays || {}}
-          dayKey={dayKey}
-          kcal={kcal}
-          kcalGoal={goals.kcal}
-          pro={pro}
-          onRunAudit={handleRunAudit}
-          onOpenPaywall={() => setPaywallOpen(true)}
-          haptics={haptics}
-        />
+        {/* Организм в упадке — зовём к доктору (тап скроллит к аудиту) */}
+        {showAuditInvite && (
+          <Pressable
+            onPress={scrollToAudit}
+            accessibilityRole="button"
+            accessibilityLabel="Пройти осмотр у Доктора Топтыгина"
+            className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-3"
+            style={{
+              backgroundColor: 'rgba(250,204,21,0.08)',
+              borderWidth: 1,
+              borderColor: 'rgba(250,204,21,0.25)',
+            }}
+          >
+            <Stethoscope size={16} color="#FACC15" />
+            <Text className="flex-1 font-medium text-[12px] leading-snug" style={{ color: '#FDE68A' }}>
+              Организм в упадке. Доктор Топтыгин подскажет, что чинить
+            </Text>
+            <ChevronDown size={16} color="#FDE68A" />
+          </Pressable>
+        )}
+
+        <View onLayout={(e) => (auditYRef.current = e.nativeEvent.layout.y)}>
+          <AuditCard
+            org={org}
+            streak={game.streak}
+            auditDays={game.auditDays || {}}
+            dayKey={dayKey}
+            kcal={kcal}
+            kcalGoal={goals.kcal}
+            pro={pro}
+            onRunAudit={handleRunAudit}
+            onOpenPaywall={() => setPaywallOpen(true)}
+            haptics={haptics}
+          />
+        </View>
 
         <GenomeCard org={org} stats={stats} />
 

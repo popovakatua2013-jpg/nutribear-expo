@@ -5,7 +5,7 @@
 // Сканирование — статичный бар на JS-драйвере (2 с) + сменяющиеся статусы.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, Share, Text, Vibration, View } from 'react-native'
+import { Animated, Easing, Pressable, Text, Vibration, View } from 'react-native'
 import {
   ArrowRight,
   ChevronRight,
@@ -17,12 +17,12 @@ import {
   Stethoscope,
 } from 'lucide-react-native'
 import { GameCard, GameHeader, RightPill, Panel, Caps, GAME } from './GameUi'
+import { AuditShareCard } from './AuditShareCard'
 import {
   SCAN_STAGES,
   VERDICT_META,
   computeAudit,
   auditScore,
-  auditShareText,
   auditStreak,
   auditDateLabel,
   weekdayLetterOf,
@@ -145,6 +145,7 @@ export function AuditCard({
   const [scanning, setScanning] = useState(false)
   const [stage, setStage] = useState(0)
   const [awarded, setAwarded] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const bar = useRef(new Animated.Value(0)).current
   const stageTimer = useRef(null)
   const finishTimer = useRef(null)
@@ -152,15 +153,16 @@ export function AuditCard({
   // серия осмотров подряд — для панели истории (Premium).
   // Внимание: проп streak — это стрик организма (Нервы), не путать.
   const auditSeries = useMemo(() => auditStreak(auditDays, dayKey), [auditDays, dayKey])
+  // серия с зачётом сегодняшнего дня: 7-й, 14-й… день — юбилей,
+  // в Premium редкий диагноз гарантирован
+  const seriesToday = useMemo(
+    () => auditStreak({ ...auditDays, [dayKey]: 1 }, dayKey),
+    [auditDays, dayKey]
+  )
+  const jubilee = seriesToday > 0 && seriesToday % 7 === 0
 
-  // Поделиться заключением: системный шэринг, бесплатно для всех.
-  // Бесплатнику в текст попадают только открытые системы — тизер Premium.
-  const handleShare = useCallback(() => {
-    if (!report) return
-    Share.share({
-      message: auditShareText(report, { pro, dateLabel: auditDateLabel(dayKey) }),
-    }).catch(() => {})
-  }, [report, pro, dayKey])
+  // Поделиться заключением: карточка-картинка через системный шэринг
+  const handleShare = useCallback(() => setShareOpen(true), [])
 
   useEffect(
     () => () => {
@@ -186,6 +188,15 @@ export function AuditCard({
     [auditDays]
   )
 
+  // средний балл за неделю — панель истории (Premium)
+  const avgScore = useMemo(
+    () =>
+      history.length
+        ? Math.round(history.reduce((sum, [, v]) => sum + v, 0) / history.length)
+        : null,
+    [history]
+  )
+
   const runScan = useCallback(() => {
     setScanning(true)
     setStage(0)
@@ -201,7 +212,7 @@ export function AuditCard({
       clearInterval(stageTimer.current)
       const res = computeAudit(
         { axes: org.axes, state: org.state, streak, kcal, kcalGoal },
-        { pro }
+        { pro, guaranteeRare: jubilee }
       )
       setReport(res)
       setScanning(false)
@@ -210,7 +221,7 @@ export function AuditCard({
       if (haptics) Vibration.vibrate(24)
     }, SCAN_MS + 120)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bar, dayKey, org.axes, org.state, streak, kcal, kcalGoal, pro, onRunAudit, haptics])
+  }, [bar, dayKey, org.axes, org.state, streak, kcal, kcalGoal, pro, jubilee, onRunAudit, haptics])
 
   const overallMeta = report ? scoreVerdictMeta(report.score) : null
 
@@ -242,6 +253,11 @@ export function AuditCard({
             В Premium — ещё 💪 Мышцы, 🧠 Нервы и 🛡️ Иммунитет, редкие диагнозы
             и история аудитов за неделю
           </Text>
+          {pro && jubilee && (
+            <Text className="mt-2 font-medium text-[12px] leading-snug" style={{ color: GAME.lime }}>
+              Юбилей серии: {seriesToday} осмотров подряд — редкий диагноз гарантирован ✨
+            </Text>
+          )}
           <Pressable
             onPress={runScan}
             className="mt-3 items-center rounded-2xl py-3.5"
@@ -313,6 +329,17 @@ export function AuditCard({
                 </Text>
               </View>
             )}
+            {pro && jubilee && (
+              <View
+                className="mt-2.5 flex-row items-center gap-2 rounded-xl px-3 py-2.5"
+                style={{ backgroundColor: 'rgba(163,230,53,0.08)', borderWidth: 1, borderColor: 'rgba(163,230,53,0.25)' }}
+              >
+                <Sparkles size={14} color={GAME.lime} />
+                <Text className="flex-1 font-medium text-[12px] leading-snug" style={{ color: GAME.lime }}>
+                  Юбилей серии: {seriesToday} осмотров подряд — редкий диагноз гарантирован ✨
+                </Text>
+              </View>
+            )}
           </Panel>
 
           {/* системы: открытые диагнозы + Premium-замки */}
@@ -340,6 +367,11 @@ export function AuditCard({
                   {auditSeries > 0 && (
                     <Text className="mt-2 font-sans text-[11.5px]" style={{ color: GAME.dim }}>
                       Серия осмотров: {auditSeries} {pluralDays(auditSeries)} подряд 🩺
+                    </Text>
+                  )}
+                  {avgScore != null && (
+                    <Text className="mt-1 font-sans text-[11.5px]" style={{ color: GAME.dim }}>
+                      Средний балл за неделю: {avgScore}
                     </Text>
                   )}
                 </>
@@ -385,6 +417,15 @@ export function AuditCard({
           </View>
         </>
       )}
+
+      {/* шеринг заключения картинкой (как «Итоги недели») */}
+      <AuditShareCard
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+        report={report}
+        pro={pro}
+        dateLabel={auditDateLabel(dayKey)}
+      />
     </GameCard>
   )
 }

@@ -384,16 +384,22 @@ export function pickPimpleDonePhrase(pro = false, rng = Math.random) {
 }
 
 // ── Главный расчёт: заключение по всем системам ─────────────────────────────
-// input: { axes, state, streak, kcal, kcalGoal }; opts: { pro, rng }.
-// Каждый вызов rng — отдельный розыгрыш, поэтому с Math.random фразы
-// при каждом осмотре новые («провести ещё раз» = свежие шутки).
-export function computeAudit(input = {}, { pro = false, rng = Math.random } = {}) {
+// input: { axes, state, streak, kcal, kcalGoal }; opts: { pro, rng,
+// guaranteeRare }. Каждый вызов rng — отдельный розыгрыш, поэтому с
+// Math.random фразы при каждом осмотре новые («провести ещё раз» = свежие
+// шутки).
+//
+// guaranteeRare — юбилей серии осмотров (каждый 7-й день подряд): в
+// Premium хотя бы один редкий диагноз гарантирован. Если обычный
+// розыгрыш ничего не дал, форсим редкий одной случайной Premium-системе
+// (фраза — из пула редких, рекомендация — по реальному вердикту).
+export function computeAudit(input = {}, { pro = false, rng = Math.random, guaranteeRare = false } = {}) {
   const { axes = {}, state = 'normal', streak = 0, kcal = 0, kcalGoal = 0 } = input
   const score = auditScore(axes)
   const verdict = score >= 75 ? 'good' : score >= 45 ? 'ok' : 'bad'
   const systems = AUDIT_SYSTEMS.map((s) => {
     const v = systemVerdict(s.key, { axes, state, streak, kcal, kcalGoal })
-    const rare = pro && rng() < RARE_CHANCE
+    const rare = pro && !!s.pro && rng() < RARE_CHANCE
     return {
       key: s.key,
       name: s.name,
@@ -405,5 +411,12 @@ export function computeAudit(input = {}, { pro = false, rng = Math.random } = {}
       tip: pick(TIPS[s.key][v], rng),
     }
   })
+  if (pro && guaranteeRare && !systems.some((s) => s.rare)) {
+    const proIdx = systems.map((s, i) => (s.pro ? i : null)).filter((i) => i != null)
+    if (proIdx.length > 0) {
+      const i = proIdx[Math.floor(rng() * proIdx.length) % proIdx.length]
+      systems[i] = { ...systems[i], rare: true, phrase: pick(RARE_PHRASES, rng) }
+    }
+  }
   return { score, verdict, conclusion: pick(CONCLUSION[verdict], rng), systems }
 }
