@@ -266,15 +266,14 @@ export default function HomeScreen() {
           onAddFood={() => openAdd('dinner')}
         />
 
-        {/* Съедено за сегодня — сводка над планом питания (с сожжённым,
-            шагами, водой и итогом дня; долгий тап по сжиганию — цель) */}
+        {/* Съедено за сегодня — сводка над планом питания: кольца «съедено»
+            и «сожжено», пилюля остатка и итог дня; долгий тап по левой
+            половине — цель по калориям, по кольцу сжигания — его цель */}
         <DailySummary
           consumed={consumed}
           target={goals.kcal}
           bju={day}
           burned={burned}
-          steps={extraSteps}
-          waterMl={waterMl}
           burnGoal={goals.burnKcal}
           streak={streak}
           onEditKcalGoal={() =>

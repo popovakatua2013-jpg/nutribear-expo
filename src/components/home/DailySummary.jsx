@@ -1,10 +1,12 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
-// слева кольцо прогресса 80 px с процентом от дневной нормы,
-// справа — калории крупно и пилюля статуса («Осталось / Перебор /
-// Цель достигнута»); долгий тап по этой строке — изменить цель
-// по калориям (карточка «Калории» с главной убрана как дубликат,
-// её единственная уникальная функция переехала сюда). Ниже —
-// строка «Сожжено за сегодня» (вся активность: тренировки + шаги),
+// слева кольцо 72 px, внутри — съеденные ккал («0 из 1800 ккал»),
+// справа такое же кольцо с сожжёнными за день ккал, между ними —
+// пилюля статуса («Осталось / Перебор / Цель достигнута»). Долгий тап
+// по левой половине — изменить цель по калориям, по правому кольцу и
+// строке итога — цель «сжечь за день» (карточка «Калории» с главной
+// убрана как дубликат, её единственная уникальная функция переехала
+// сюда). Мини-чипы шагов/воды/минут удалены — эти цифры живут в трёх
+// карточках над сводкой. Ниже — строка «Итог: съедено − сожжено»,
 // далее нутриенты сеткой 2×2 (белки, жиры, углеводы, клетчатка):
 // цветная точка + подпись + значение, под ними тонкий бар. Нормы
 // БЖУ — «классическая тарелка» (20/30/50% калорий), клетчатка —
@@ -12,16 +14,15 @@
 
 import { Text, View, Pressable } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Droplets, Flame, Footprints, Timer } from 'lucide-react-native'
+import { Flame, Pencil } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { daysLabel } from '@/lib/streak'
 import { ProgressBar } from '../ui/ProgressBar'
-import { BurnRing } from '../ui/BurnRing'
 
 const MAX = 1.25
-const RING = 80
-const SW = 9
+const RING = 72
+const SW = 8
 const R = (RING - SW) / 2
 const C = 2 * Math.PI * R
 
@@ -62,31 +63,71 @@ function NutrientCell({ label, value, target, color }) {
   )
 }
 
-// Мини-значок дня: иконка + значение (шаги / вода / активность)
-function DayChip({ Icon, color, value }) {
+// Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
+// справа — сожжено за день. Заливка дуги — процент, внутри крупно
+// значение и мелко «из N ккал», под кольцом — подпись
+function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel }) {
+  const dash = (C * Math.max(0, Math.min(100, pct))) / 100
   return (
-    <View className="min-w-0 flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-white/[0.04] px-2 py-2">
-      <Icon size={13} color={color} />
-      <Text numberOfLines={1} maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-bear-text">
-        {value}
+    <View className="items-center" style={{ width: RING }}>
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel={accessibilityLabel}
+        style={{ width: RING, height: RING }}
+      >
+        <Svg width={RING} height={RING}>
+          {gradient && (
+            <Defs>
+              <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor="#8B5CF6" />
+                <Stop offset="1" stopColor="#6C8CFF" />
+              </LinearGradient>
+            </Defs>
+          )}
+          <Circle cx={RING / 2} cy={RING / 2} r={R} stroke="rgba(255,255,255,0.07)" strokeWidth={SW} fill="none" />
+          <Circle
+            cx={RING / 2}
+            cy={RING / 2}
+            r={R}
+            stroke={color || 'url(#ringGrad)'}
+            strokeWidth={SW}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${C}`}
+            transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+          />
+        </Svg>
+        <View className="absolute inset-0 items-center justify-center">
+          <Text
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX}
+            className="text-center font-extrabold text-[16px] leading-tight text-bear-text"
+            style={{ width: RING - 16 }}
+          >
+            {formatNum(value)}
+          </Text>
+          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[8px] leading-tight text-bear-dim">
+            {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
+          </Text>
+        </View>
+      </View>
+      <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[9.5px] text-bear-sub">
+        {caption}
       </Text>
     </View>
   )
 }
-
-// Малое кольцо прогресса цели сжигания — общий компонент ui/BurnRing
 
 export function DailySummary({
   consumed = 0,
   target = 0,
   bju = { p: 0, f: 0, c: 0, fib: 0 },
   burned = 0, // вся активность за день: тренировки + шаги
-  steps = 0,
-  waterMl = 0,
   burnGoal = 0, // цель «сжечь за день», ккал
   streak = 0, // дней подряд с дневником (чип с огоньком)
-  onEditBurnGoal, // долгий тап по блоку сжигания — изменить цель
-  onEditKcalGoal, // долгий тап по строке калорий — изменить цель по калориям
+  onEditBurnGoal, // долгий тап по кольцу сжигания и строке итога — изменить цель
+  onEditKcalGoal, // долгий тап по левой половине — изменить цель по калориям
 }) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   const remaining = Math.max(0, target - consumed)
@@ -94,14 +135,16 @@ export function DailySummary({
   const done = consumed > 0 && remaining === 0 && over === 0
   const norms = macroTargets(target)
 
-  // Активность (минуты): ~100 шагов ≈ 1 минута ходьбы (как на главной)
-  const minutes = Math.round(steps / 100)
   const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const net = consumed - burned // итог дня с учётом активности
 
-  // Строка «кольцо + калории» — Pressable, когда умеет менять цель
-  // по калориям долгим тапом, иначе обычный View
+  // Левая половина (кольцо + пилюля) — Pressable, когда умеет менять
+  // цель по калориям долгим тапом, иначе обычный View
   const Row = onEditKcalGoal ? Pressable : View
+  // Правое кольцо — Pressable для правки цели сжигания, иначе View
+  const BurnZone = onEditBurnGoal ? Pressable : View
+  // Строка итога — тоже правка цели сжигания долгим тапом
+  const NetRow = onEditBurnGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
   const pillTone = over > 0
@@ -133,110 +176,100 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо + калории + плашка остатка. Долгий тап — изменить цель
-          по калориям: единственное уникальное действие бывшей карточки
-          «Калории», остальное в ней дублировало эту сводку */}
-      <Row
-        onLongPress={onEditKcalGoal}
-        delayLongPress={450}
-        accessibilityRole={onEditKcalGoal ? 'button' : undefined}
-        accessibilityLabel={
-          onEditKcalGoal
-            ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
-            : undefined
-        }
-        className="mt-3 flex-row items-center gap-3.5"
-      >
-        <View
-          accessibilityRole="progressbar"
-          accessibilityLabel={`Выполнено ${Math.round(pct)} процентов дневной нормы`}
-          className="shrink-0"
-          style={{ width: RING, height: RING }}
+      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Долгий тап
+          по левой половине — цель по калориям, по правому кольцу — цель
+          сжигания: единственные уникальные действия бывшей карточки
+          «Калории» и старой строки «Сожжено за сегодня» */}
+      <View className="mt-3 flex-row items-center gap-2.5">
+        <Row
+          onLongPress={onEditKcalGoal}
+          delayLongPress={450}
+          accessibilityRole={onEditKcalGoal ? 'button' : undefined}
+          accessibilityLabel={
+            onEditKcalGoal
+              ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
+              : undefined
+          }
+          className="min-w-0 flex-1 flex-row items-center gap-2.5"
         >
-          <Svg width={RING} height={RING}>
-            <Defs>
-              <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#8B5CF6" />
-                <Stop offset="1" stopColor="#6C8CFF" />
-              </LinearGradient>
-            </Defs>
-            <Circle cx={RING / 2} cy={RING / 2} r={R} stroke="rgba(255,255,255,0.07)" strokeWidth={SW} fill="none" />
-            <Circle
-              cx={RING / 2}
-              cy={RING / 2}
-              r={R}
-              stroke={ringColor || 'url(#ringGrad)'}
-              strokeWidth={SW}
-              fill="none"
-              strokeLinecap="round"
-              strokeDasharray={`${(C * pct) / 100} ${C}`}
-              transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-            />
-          </Svg>
-          <View className="absolute inset-0 items-center justify-center">
-            <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[17px] leading-tight text-bear-text">
-              {Math.round(pct)}%
-            </Text>
-            <Text maxFontSizeMultiplier={MAX} className="font-sans text-[8px] leading-tight text-bear-dim">
-              от нормы
-            </Text>
+          <KcalRing
+            value={consumed}
+            goal={target}
+            caption="съедено"
+            pct={pct}
+            gradient
+            accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
+          />
+          <View className="min-w-0 flex-1 items-center">
+            <View
+              className="flex-row items-center self-center gap-1 rounded-full px-2.5 py-1"
+              style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
+            >
+              <Flame size={12} color={pillTone.text} />
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                maxFontSizeMultiplier={MAX}
+                className="font-semibold text-[11px]"
+                style={{ color: pillTone.text }}
+              >
+                {over > 0
+                  ? `Перебор +${formatNum(over)}`
+                  : done
+                    ? 'Цель достигнута'
+                    : `Осталось ${formatNum(remaining)}`}
+              </Text>
+            </View>
           </View>
-        </View>
+        </Row>
 
-        <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text">
-            {formatNum(consumed)}
-            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-bear-sub">
-              {`  / ${formatNum(target)} ккал`}
-            </Text>
-          </Text>
-
-          <View
-            className="mt-1.5 shrink-0 flex-row items-center self-start gap-1 rounded-full px-2.5 py-1"
-            style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
-          >
-            <Flame size={12} color={pillTone.text} />
-            <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[11px]" style={{ color: pillTone.text }}>
-              {over > 0
-                ? `Перебор +${formatNum(over)}`
-                : done
-                  ? 'Цель достигнута 🎉'
-                  : `Осталось ${formatNum(remaining)}`}
-            </Text>
-          </View>
-        </View>
-      </Row>
-
-      {/* три мини-значка дня под калориями: шаги, вода, активность */}
-      <View className="mt-2.5 flex-row gap-2" accessibilityLabel="Шаги, вода и активность за сегодня">
-        <DayChip Icon={Footprints} color="#4ade80" value={`${formatNum(steps)}`} />
-        <DayChip Icon={Droplets} color="#38bdf8" value={`${formatNum(waterMl)} мл`} />
-        <DayChip Icon={Timer} color="#a78bfa" value={`${formatNum(minutes)} мин`} />
+        <BurnZone
+          onLongPress={onEditBurnGoal}
+          delayLongPress={450}
+          accessibilityRole={onEditBurnGoal ? 'button' : undefined}
+          accessibilityLabel={
+            onEditBurnGoal
+              ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Долгий тап — изменить цель сжигания`
+              : undefined
+          }
+          className="shrink-0"
+        >
+          <KcalRing
+            value={burned}
+            goal={burnGoal > 0 ? burnGoal : null}
+            caption="сожжено"
+            pct={burnPct}
+            color="#f87171"
+            accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
+          />
+        </BurnZone>
       </View>
 
-      {/* сожжено за сегодня: вся активность + цель (долгий тап — изменить) */}
-      <Pressable
+      {/* итог дня с учётом активности; долгий тап — изменить цель сжигания */}
+      <NetRow
         onLongPress={onEditBurnGoal}
         delayLongPress={450}
+        accessibilityRole={onEditBurnGoal ? 'button' : undefined}
         accessibilityLabel={
           onEditBurnGoal
-            ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Долгий тап — изменить цель сжигания`
-            : `Сожжено за сегодня ${formatNum(burned)} килокалорий`
+            ? `Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий. Долгий тап — изменить цель сжигания`
+            : undefined
         }
-        className="mt-2 flex-row items-center gap-2.5 rounded-2xl bg-[#f87171]/[0.07] px-3 py-2.5"
-        style={onEditBurnGoal ? undefined : { opacity: 1 }}
+        className="mt-2.5 flex-row items-center gap-2 rounded-2xl bg-[#f87171]/[0.07] px-3 py-2.5"
       >
-        <BurnRing pct={burnPct} />
-        <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[11.5px] text-[#f87171]">
-            {`Сожжено за сегодня: ${formatNum(burned)} ккал${burnGoal > 0 ? ` · ${Math.min(999, burnPct)}% цели` : ''}`}
-          </Text>
-          <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[10.5px] text-bear-sub2">
-            {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
-          </Text>
-        </View>
-        {onEditBurnGoal && <Flame size={14} color="#f87171" />}
-      </Pressable>
+        <Flame size={13} color="#f87171" />
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+          maxFontSizeMultiplier={MAX}
+          className="min-w-0 flex-1 font-semibold text-[11px] text-bear-sub"
+        >
+          {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
+        </Text>
+        {onEditBurnGoal && <Pencil size={12} color="#8B96B8" />}
+      </NetRow>
 
       {/* нутриенты сеткой 2×2: точка + подпись + значение, под ними бар */}
       <View className="mt-3 flex-row gap-3">
