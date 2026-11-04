@@ -7,7 +7,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, ScrollView, Text, View } from 'react-native'
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +14,7 @@ import { ChartColumn, ChevronRight, Scale, ShieldCheck } from 'lucide-react-nati
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { calcBmi, bmiCategory, normStreakWeeks } from '@/lib/data/bmi'
+import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
 import { BmiStatCards } from '@/components/bmi/BmiStatCards'
@@ -29,21 +29,8 @@ import { WeightNudge } from '@/components/bmi/WeightNudge'
 import { StreakHistoryModal } from '@/components/bmi/StreakHistoryModal'
 import { consumeScrollToWeight } from '@/lib/navEvents'
 
-// Мягкое неоновое свечение (дымка как на макете): радиальный градиент
-// плавно уходит в прозрачность — без жёсткого края круглой заливки
-function SoftGlow({ w, h, style, color = '#7C3AED', peak = 0.32, id }) {
-  return (
-    <Svg width={w} height={h} pointerEvents="none" style={[{ position: 'absolute' }, style]}>
-      <Defs>
-        <RadialGradient id={id} cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0" stopColor={color} stopOpacity={peak} />
-          <Stop offset="1" stopColor={color} stopOpacity="0" />
-        </RadialGradient>
-      </Defs>
-      <Rect x={0} y={0} width={w} height={h} fill={`url(#${id})`} />
-    </Svg>
-  )
-}
+// Мягкое неоновое свечение (дымка как на макете) — SoftGlow переехал
+// в ui/SoftGlow.jsx: ту же дымку получают шапки всех страниц
 
 // Неактивная пилюля переключателя
 function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {

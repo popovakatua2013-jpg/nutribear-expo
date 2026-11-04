@@ -1,24 +1,29 @@
 // Главный экран: 4 карточки показателей дня (шаги, калории, активность,
-// вода), сводка «Съедено за сегодня», приёмы пищи и рейтинг питания
-// (клетчатка, сахар, нутриенты — за день и месяц). Блоки «Голодание»
-// и «Ваши цели» удалены по запросу. Модалки: еда (хаб), все приёмы.
+// вода), сводка «Съедено за сегодня», тренировки (перенесены с вкладки
+// «Дневник»), приёмы пищи и рейтинг питания (клетчатка, сахар,
+// нутриенты — за день и месяц). Блоки «Голодание» и «Ваши цели» удалены
+// по запросу. Модалки: еда (хаб), все приёмы. Шапка экрана — с мягкой
+// неоновой дымкой, как на вкладке «Тело» (единый стиль страниц).
 // Показатели дня пишутся в историю — для отчётов.
 // История живёт внутри блоков: тап по карточке «Шаги»/«Вода» и по
 // кольцам калорий/сожжённого в сводке открывает «показатель по дням»
 // (MetricDaysModal, период 7/30/90 — пилюли внутри окна); быстрое
 // добавление осталось на «+» карточек, ручной ввод шагов и правка
-// стаканов — из подвала окна истории.
+// стаканов — из подвала окна истории. Тап по карточке «Активность» —
+// плавный скролл к блоку «Тренировки».
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { router, useFocusEffect } from 'expo-router'
+import { useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { ActivityStats } from '@/components/activity/ActivityStats'
+import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { MetricDaysModal } from '@/components/activity/reports/MetricDaysModal'
+import { SoftGlow } from '@/components/ui/SoftGlow'
 import { Greeting } from '@/components/home/Greeting'
 import { EveningNudge } from '@/components/home/EveningNudge'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
@@ -44,6 +49,11 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { toast } = useToast()
   const scrollRef = useRef(null)
+  // Скролл к блоку «Тренировки» (тап по карточке «Активность»):
+  // y-координата блока запоминается в onLayout
+  const exercisesY = useRef(0)
+  const goToExercises = () =>
+    scrollRef.current?.scrollTo({ y: Math.max(0, exercisesY.current - 8), animated: true })
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
@@ -235,6 +245,9 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-bear-bg">
+      {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
+      <SoftGlow id="glowHomeTR" w={190} h={160} peak={0.3} color="#7C3AED" style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowHomeL" w={120} h={150} peak={0.14} color="#4D7CFE" style={{ top: 60, left: -40 }} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
@@ -268,7 +281,7 @@ export default function HomeScreen() {
             openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
           }
           onOpenStepsHistory={() => setHist('steps')}
-          onGoActivity={() => router.navigate('/activity')}
+          onGoActivity={goToExercises}
         />
 
         {/* Вечерняя подсказка: с 19:00 догоняем воду/калории, если отстаём */}
@@ -302,6 +315,17 @@ export default function HomeScreen() {
           onOpenKcalHistory={() => setHist('kcal')}
           onOpenBurnHistory={() => setHist('burned')}
         />
+
+        {/* Тренировки — перенесены с вкладки «Дневник» по запросу:
+            сожжённое из сводки и кольца рядом с записью тренировок.
+            Тап по карточке «Активность» плавно скроллит сюда */}
+        <View
+          onLayout={(e) => {
+            exercisesY.current = e.nativeEvent.layout.y
+          }}
+        >
+          <ExerciseSection />
+        </View>
 
         {/* План питания: 4 приёма пищи */}
         <MealPlanCard

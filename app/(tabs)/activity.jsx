@@ -1,19 +1,19 @@
-// Экран «Активность» (вкладка «Дневник»): баннер с мишкой, тренировки
-// и отчёты. Календарь и «Закономерности» удалены по решению: их работа
-// осталась в «Отчётах» (теплокарта-календарь месяца, карточки Δ%, рекорды)
-// и в блоках на «Главной» — тап по карточке показателя открывает его
-// историю по дням. Все показатели дня автоматически пишутся в историю
-// (useHistoryStore) — поэтому графики и отчёты видят реальные данные.
-// Период (7/30/90) и показатель выбираются в «Отчётах»: период —
-// пилюлями в шапке секции, показатель — тапом по карточке-итогу.
+// Экран «Активность» (вкладка «Дневник»): баннер с мишкой и отчёты.
+// Календарь и «Закономерности» удалены по решению, тренировки перенесены
+// на «Главную»: здесь осталась аналитика — «Отчёты» с итогами, дисциплиной,
+// панелью истории показателя (дни периода + календарь месяца, разворачивается
+// тапом по карточке) и нутриентами. Все показатели дня автоматически пишутся
+// в историю (useHistoryStore) — поэтому графики и отчёты видят реальные данные,
+// где бы ни были записаны: на «Главной» или в «Отчётах».
+// Период (7/30/90) выбирается пилюлями в шапке «Отчётов».
 
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Footprints } from 'lucide-react-native'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
-import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
+import { SoftGlow } from '@/components/ui/SoftGlow'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
@@ -53,6 +53,9 @@ export default function ActivityScreen() {
 
   return (
     <View className="flex-1 bg-bear-bg">
+      {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
+      <SoftGlow id="glowDiaryTR" w={190} h={160} peak={0.3} color="#4D7CFE" style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowDiaryL" w={120} h={150} peak={0.14} color="#8B5CF6" style={{ top: 60, left: -40 }} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 16,
@@ -79,8 +82,6 @@ export default function ActivityScreen() {
 
         <MotivationBanner />
 
-        <ExerciseSection />
-
         <ReportsSection
           today={today}
           days={days}
@@ -91,9 +92,9 @@ export default function ActivityScreen() {
         />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
-          Шаги, вода и тренировки попадают в отчёты.
-          {'\n'}
-          Прошлые дни накапливаются сами, пока вы пользуетесь приложением.
+          Показатели дня пишутся в историю сами — отчёты видят шаги, воду,
+          еду и тренировки, где бы они ни были записаны (тренировки теперь
+          на «Главной»).
         </Text>
       </ScrollView>
     </View>

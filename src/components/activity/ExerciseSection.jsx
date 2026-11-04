@@ -560,14 +560,16 @@ export function ExerciseSection() {
                     ) : null}
                   </View>
 
-                  {/* Каталог упражнений + свои: сетка 2 колонки */}
-                  <View className="gap-2">
+                  {/* Каталог упражнений + свои: сетка 2 колонки.
+                      Плитки компактные — на небольшом экране каталог
+                      почти целиком влезает без прокрутки */}
+                  <View className="gap-1.5">
                     {allExercises.reduce((rows, e, i) => {
                       if (i % 2 === 0) rows.push([])
                       rows[rows.length - 1].push(e)
                       return rows
                     }, []).map((row) => (
-                      <View key={row[0].id} className="flex-row gap-2">
+                      <View key={row[0].id} className="flex-row gap-1.5">
                         {row.map((e) => (
                           <ExButton key={e.id} e={e} exId={exId} setExId={setExId} />
                         ))}
@@ -580,11 +582,11 @@ export function ExerciseSection() {
                       onPress={() => setCreating(true)}
                       accessibilityRole="button"
                       accessibilityLabel="Создать свою тренировку"
-                      className="mt-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/15 py-2.5 active:opacity-70"
+                      className="mt-0.5 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/15 py-2 active:opacity-70"
                       style={{ borderStyle: 'dashed' }}
                     >
-                      <Plus size={14} color="#A5AECB" />
-                      <Text className="font-bold text-[12px] text-bear-soft">
+                      <Plus size={13} color="#A5AECB" />
+                      <Text className="font-bold text-[11.5px] text-bear-soft">
                         Своя тренировка
                       </Text>
                     </Pressable>
@@ -686,8 +688,9 @@ export function ExerciseSection() {
                 прокруткой, и казалось, что кнопки нет вовсе. Теперь шапка,
                 список и кнопка разделены: кнопка видна всегда, а прокручивается
                 только каталог активностей. Пока не выбраны активность и
-                длительность — кнопка видна, но приглушена и не нажимается. */}
-            <View className="border-t border-bear-line px-5 pb-4 pt-3">
+                длительность — кнопка видна, но приглушена, а под ней
+                подсказка, чего не хватает. */}
+            <View className="gap-1.5 border-t border-bear-line px-5 pb-4 pt-3">
               {creating ? (
                 <Pressable
                   onPress={saveCustom}
@@ -699,19 +702,31 @@ export function ExerciseSection() {
                   <Text className="font-bold text-[12.5px] text-white">Запомнить</Text>
                 </Pressable>
               ) : (
-                <Pressable
-                  onPress={save}
-                  disabled={!ex || !minutes}
-                  accessibilityRole="button"
-                  accessibilityLabel={editing ? 'Сохранить изменения' : 'Добавить тренировку'}
-                  className={`overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
-                >
-                  <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                    <Text className="w-full py-3.5 text-center font-bold text-[14px] text-white">
-                      {editing ? 'Сохранить' : 'Добавить тренировку'}
+                <>
+                  <Pressable
+                    onPress={save}
+                    disabled={!ex || !minutes}
+                    accessibilityRole="button"
+                    accessibilityLabel={editing ? 'Сохранить изменения' : 'Добавить тренировку'}
+                    className={`overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
+                  >
+                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+                      <Text className="w-full py-3.5 text-center font-bold text-[14px] text-white">
+                        {editing ? 'Сохранить' : 'Добавить тренировку'}
+                      </Text>
+                    </LinearGradient>
+                  </Pressable>
+                  {/* Чего не хватает до добавления — под приглушённой кнопкой */}
+                  {!ex || !minutes ? (
+                    <Text maxFontSizeMultiplier={1.2} className="text-center font-sans text-[10.5px] text-bear-dim">
+                      {!ex && !minutes
+                        ? 'Выберите активность и длительность'
+                        : !ex
+                          ? 'Выберите активность'
+                          : 'Выберите длительность'}
                     </Text>
-                  </LinearGradient>
-                </Pressable>
+                  ) : null}
+                </>
               )}
             </View>
           </View>
@@ -721,22 +736,25 @@ export function ExerciseSection() {
   )
 }
 
+// Плитка каталога: компактная (меньше внутренние отступы и иконка),
+// чтобы на небольшом экране список активностей почти целиком
+// влезал без прокрутки
 function ExButton({ e, exId, setExId }) {
   const active = exId === e.id
   const isCustom = e.id.startsWith('custom-')
   return (
     <Pressable
       onPress={() => setExId(e.id)}
-      className={`min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border p-3 ${
+      className={`min-w-0 flex-1 flex-row items-center gap-1.5 rounded-2xl border px-2.5 py-2 ${
         active ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10' : 'border-white/5 bg-white/[0.03]'
       }`}
     >
-      <Text className="text-[20px]">{e.emoji}</Text>
+      <Text className="text-[17px]">{e.emoji}</Text>
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-bold text-[12px] text-bear-text">
+        <Text numberOfLines={1} className="font-bold text-[11.5px] text-bear-text">
           {e.name}
         </Text>
-        <Text numberOfLines={1} className="font-sans text-[10px] text-bear-sub2">
+        <Text numberOfLines={1} className="font-sans text-[9.5px] text-bear-sub2">
           {`MET ${e.met}${isCustom ? ' · моё' : ''}`}
         </Text>
       </View>

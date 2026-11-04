@@ -1,4 +1,6 @@
-// Экран «Ещё»: профиль, цель питания, данные и информация о приложении
+// Экран «Ещё»: профиль, цель питания, данные и информация о приложении.
+// Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
+// (единый стиль страниц)
 
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -13,12 +15,16 @@ import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { AboutCard } from '@/components/more/AboutCard'
+import { SoftGlow } from '@/components/ui/SoftGlow'
 
 export default function MoreScreen() {
   const insets = useSafeAreaInsets()
 
   return (
     <View className="flex-1 bg-bear-bg">
+      {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
+      <SoftGlow id="glowMoreTR" w={190} h={160} peak={0.26} color="#7C3AED" style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowMoreL" w={120} h={150} peak={0.12} color="#4D7CFE" style={{ top: 60, left: -40 }} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 16,

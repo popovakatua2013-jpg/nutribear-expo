@@ -41,6 +41,7 @@ import {
   weekDayIdx,
 } from '@/lib/data/organism-game'
 import { CollectionCard } from '@/components/organism/CollectionCard'
+import { SoftGlow } from '@/components/ui/SoftGlow'
 
 // Реплики при поглаживании — по состоянию организма: в упадке не мурчит,
 // а просит помочь
@@ -229,6 +230,9 @@ export default function OrganismScreen() {
 
   return (
     <View className="flex-1 bg-bear-bg">
+      {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
+      <SoftGlow id="glowOrgTR" w={190} h={160} peak={0.3} color="#A855F7" style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowOrgL" w={120} h={150} peak={0.14} color="#7C3AED" style={{ top: 60, left: -40 }} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{

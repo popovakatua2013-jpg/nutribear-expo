@@ -2,6 +2,9 @@
 // шаги, вода, тренировки, аудит организма, опыт. Данные — дневная
 // история + взвешивания; аудит для недавних дней подмешивается из
 // стора организма (там окно 14 дней, история хранит дольше).
+// Кнопка «Закрыть» закреплена внизу окна — видна всегда, даже когда
+// список строк не влезает на небольшом экране (крестик в шапке тоже
+// остался). Прокручивается только список строк.
 
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
@@ -61,8 +64,8 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View className="px-5 pb-6 pt-1">
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
+            <View className="px-5 pb-4 pt-1">
               {empty ? (
                 <Text className="py-6 text-center font-sans text-[13px] leading-relaxed text-bear-sub">
                   Записей в этот день нет.{'\n'}
@@ -101,6 +104,19 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               )}
             </View>
           </ScrollView>
+
+          {/* Закрыть — закреплено внизу: на небольшом экране кнопка
+              не прячется за краем вместе со списком строк */}
+          <View className="border-t border-bear-line px-5 pb-4 pt-3">
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Закрыть сводку дня"
+              className="items-center rounded-2xl bg-white/10 py-3 active:opacity-70"
+            >
+              <Text className="font-bold text-[13px] text-bear-text">Закрыть</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
