@@ -13,6 +13,10 @@ export const useUiPrefsStore = create(
       expanded: {}, // { [storageKey]: true|false }
       haptics: true, // вибро-отклик в приложении (тап по кольцу ИМТ и т.д.)
       weighNudgeDays: 7, // порог напоминания мишки о взвешивании (5/7/10 дней)
+      // Ключ закрытой крестиком золотой карточки «Цель по весу достигнута»
+      // («дата достижения|цель в кг»): переживёт перезапуск, а при смене
+      // цели ключ изменится и карточка покажется снова
+      weightGoalCelebrationDismissed: null,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -21,6 +25,9 @@ export const useUiPrefsStore = create(
 
       setWeighNudgeDays: (n) =>
         set({ weighNudgeDays: [5, 7, 10].includes(n) ? n : 7 }),
+
+      dismissWeightGoalCelebration: (key) =>
+        set({ weightGoalCelebrationDismissed: key }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',

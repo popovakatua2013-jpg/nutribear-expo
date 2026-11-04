@@ -1,7 +1,8 @@
 // Празднование цели по весу в «Отчётах». Вес у цели — золотая карточка
-// с датой достижения и «стриком» удержания результата; если вес давно
-// не фиксировался — мягкое напоминание взвешиваться раз в неделю;
-// если после достижения вес снова ушёл — карточка «Возвращаемся
+// с датой достижения и «стриком» удержания результата; закрытие крестиком
+// прячет её до смены цели (useUiPrefsStore, переживает перезапуск);
+// если вес давно не фиксировался — мягкое напоминание взвешиваться раз
+// в неделю; если после достижения вес снова ушёл — карточка «Возвращаемся
 // к результату». Без цели карточка не показывается вовсе.
 // Живой переход «не достиг → достиг» — поп-анимация и бurst эмодзи.
 // После достижения цель питания можно одним тапом перевести
@@ -10,11 +11,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, Pressable, Share, Text, View } from 'react-native'
-import { PartyPopper, Scale, Share2, Target } from 'lucide-react-native'
+import { PartyPopper, Scale, Share2, Target, X } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/goal'
 import { formatNum, pluralDays } from '@/lib/format'
@@ -57,6 +59,10 @@ export function GoalCelebration() {
   const setGoal = useFoodStore((s) => s.setGoal)
   const setGoals = useGoalsStore((s) => s.setGoals)
   const { toast } = useToast()
+  // Золотая карточка закрывается крестиком: ключ «дата|цель» — после
+  // смены цели карточка покажется снова
+  const celebrationDismissed = useUiPrefsStore((s) => s.weightGoalCelebrationDismissed)
+  const dismissWeightGoalCelebration = useUiPrefsStore((s) => s.dismissWeightGoalCelebration)
 
   const reached = goalWeightKg != null && isAtGoal(weightKg, goalWeightKg)
 
@@ -140,6 +146,9 @@ export function GoalCelebration() {
 
   // Цель достигнута: дата награды, сколько дней держим и честность стрика
   if (reached) {
+    // Закрыли крестиком — прячем до смены цели/даты достижения
+    const celebrationKey = `${goalReachedAt || 'x'}|${goalWeightKg ?? ''}`
+    if (celebrationDismissed === celebrationKey) return null
     const heldDays = goalReachedAt ? daysSince(goalReachedAt) : 0
     const lastWeighDays = weights[0]?.date ? daysSince(weights[0].date) : Infinity
     const overdue = lastWeighDays > WEIGH_NUDGE_DAYS
@@ -178,6 +187,16 @@ export function GoalCelebration() {
             ))}
           </View>
         )}
+
+        {/* Крестик: спрятать карточку до смены цели */}
+        <Pressable
+          onPress={() => dismissWeightGoalCelebration(celebrationKey)}
+          accessibilityRole="button"
+          accessibilityLabel="Скрыть карточку «Цель по весу достигнута»"
+          className="absolute right-1.5 top-1.5 p-1.5 active:opacity-70"
+        >
+          <X size={16} color="#d9b96a" />
+        </Pressable>
 
         <View className="flex-row items-center gap-2.5">
           <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fbbf24]/15">
