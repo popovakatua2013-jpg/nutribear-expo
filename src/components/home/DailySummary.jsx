@@ -37,7 +37,7 @@ import {
 } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Droplet, Flame, Hexagon, Leaf, Pencil } from 'lucide-react-native'
+import { Droplet, Flame, Hexagon, Leaf, Pencil, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -483,7 +483,7 @@ export function DailySummary({
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+                  <X size={20} color="#A5AECB" />
                 </Pressable>
               </View>
               <Text className="mt-1 font-sans text-[11px] leading-relaxed text-bear-sub">

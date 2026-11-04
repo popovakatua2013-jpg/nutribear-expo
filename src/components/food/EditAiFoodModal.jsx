@@ -326,17 +326,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               </Text>
             </View>
 
-            {/* Кнопки */}
-            <View className="mt-4 flex-row gap-2">
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-3 active:bg-white/10"
-              >
-                <Text className="text-center font-bold text-sm text-bear-text">
-                  Отмена
-                </Text>
-              </Pressable>
+            {/* Кнопки: крестик закрытия — в шапке, здесь только «Готово» */}
+            <View className="mt-4 flex-row">
               <Pressable
                 onPress={apply}
                 accessibilityRole="button"
