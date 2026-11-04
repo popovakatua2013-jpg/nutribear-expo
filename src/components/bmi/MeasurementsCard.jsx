@@ -1,13 +1,13 @@
-// Карточка «Замеры» на вкладке «Тело»: обхваты сантиметром —
-// грудь, талия, живот, попа, бёдра — плюс свои замеры через «+».
-// Плитка = последний замер и изменение к предыдущему (у талии и
-// живота минус — зелёный: похудение, у остальных цвет нейтральный).
-// «+» (или тап по плитке) открывает окно записи: значения подставлены
-// последними, меняем то, что измерили; внизу окна — «+ Свой замер».
+// Карточка «Измерения тела» на вкладке «Тело» — оформление по макету
+// пользователя: компактный ряд чипов (цветная точка, название,
+// последний замер и Δ к предыдущему), прокручивается по горизонтали,
+// свои замеры — в том же ряду; справа в шапке — кнопка «Добавить».
+// Чип или «Добавить» открывают окно записи: значения подставлены
+// последними, меняем то, что измерили; в окне — «+ Свой замер».
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { ArrowDownRight, ArrowUpRight, Plus, Trash2, X } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal } from '@/lib/data/bmi'
@@ -46,23 +46,30 @@ export function MeasurementsCard() {
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-            Замеры
+            Измерения тела
           </Text>
           <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
-            Сантиметром: грудь, талия, живот, попа, бёдра — и свои замеры через «+»
+            Сантиметром — тап по чипу или «Добавить»
           </Text>
         </View>
         <Pressable
           onPress={() => setOpen(true)}
+          accessibilityRole="button"
           accessibilityLabel="Записать замеры"
-          className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+          className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 active:opacity-70"
         >
-          <Plus size={16} color="rgba(255,255,255,0.8)" />
+          <Text className="font-bold text-[11.5px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
       </View>
 
-      {/* Плитки: последний замер + изменение к предыдущему */}
-      <View className="mt-3 flex-row flex-wrap justify-between gap-y-2">
+      {/* Чипы: последний замер + изменение к предыдущему; ряд прокручивается,
+          если замеров больше, чем влезает (свои — рядом с встроенными) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="mt-3"
+        contentContainerStyle={{ gap: 8, paddingRight: 4 }}
+      >
         {items.map((m) => {
           const list = measurements[m.key] || []
           const last = list[0] || null
@@ -84,17 +91,17 @@ export function MeasurementsCard() {
               onPress={() => setOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
-              className="rounded-2xl border border-white/5 bg-white/[0.04] p-3 active:opacity-70"
-              style={{ width: '48.5%' }}
+              className="rounded-2xl border border-white/5 bg-white/[0.04] px-3 py-2.5 active:opacity-70"
+              style={{ width: 106 }}
             >
               <View className="flex-row items-center gap-1.5">
                 <View
-                  style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: m.color }}
+                  style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: m.color }}
                 />
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-sans text-[11px] text-bear-sub"
+                  className="min-w-0 flex-1 font-sans text-[10.5px] text-bear-sub"
                 >
                   {m.label}
                 </Text>
@@ -103,17 +110,17 @@ export function MeasurementsCard() {
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="mt-1 font-extrabold text-[16px] tracking-tight text-bear-text"
+                className="mt-1 font-extrabold text-[15.5px] tracking-tight text-bear-text"
               >
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
 
-              <View className="mt-0.5 flex-row items-center gap-1">
-                {d != null && d !== 0 && <Arrow size={11} color={tone} />}
+              <View className="mt-0.5 flex-row items-center gap-0.5">
+                {d != null && d !== 0 && <Arrow size={10} color={tone} />}
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-semibold text-[10.5px]"
+                  className="min-w-0 flex-1 font-semibold text-[10px]"
                   style={{ color: tone }}
                 >
                   {d == null
@@ -121,14 +128,14 @@ export function MeasurementsCard() {
                       ? `от ${shortDay(last.date)}`
                       : 'нет замеров'
                     : d === 0
-                      ? 'без изменений'
+                      ? 'без измен.'
                       : `${d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(d))} см`}
                 </Text>
               </View>
             </Pressable>
           )
         })}
-      </View>
+      </ScrollView>
 
       <MeasurementsModal open={open} onClose={() => setOpen(false)} />
     </View>

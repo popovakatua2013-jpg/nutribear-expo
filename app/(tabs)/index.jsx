@@ -307,8 +307,16 @@ export default function HomeScreen() {
           }
         />
 
-        {/* Тренировки — перенесены с вкладки «Дневник» по запросу:
-            сожжённое из сводки и кольца рядом с записью тренировок.
+        {/* План питания: 4 приёма пищи */}
+        <MealPlanCard
+          onAdd={openAdd}
+          onRemove={removeEntry}
+          onViewAll={() => setAllOpen(true)}
+        />
+
+        {/* Тренировки — перенесены с вкладки «Дневник» по запросу, блок
+            стоит после «Приёмов пищи» (решение пользователя): сожжённое
+            из сводки и кольца рядом с записью тренировок.
             Тап по карточке «Активность» плавно скроллит сюда */}
         <View
           onLayout={(e) => {
@@ -317,13 +325,6 @@ export default function HomeScreen() {
         >
           <ExerciseSection />
         </View>
-
-        {/* План питания: 4 приёма пищи */}
-        <MealPlanCard
-          onAdd={openAdd}
-          onRemove={removeEntry}
-          onViewAll={() => setAllOpen(true)}
-        />
 
         {/* Рейтинг питания: клетчатка, сахар, нутриенты — день/месяц */}
         <NutritionRating />

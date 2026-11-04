@@ -1,11 +1,12 @@
 // Окно «Вода»: компактное, без сцены, кольца и «своей порции» —
 // тап по ёмкости записывает воду, карандашик у ёмкости меняет её объём.
 // Напоминания — только колокольчик в шапке (перечёркнутый — выкл).
-// Статистика 7 дней — тонкие «свечи»: зелёная — норма выпита,
-// красная — нет. Записи за сегодня по умолчанию свёрнуты,
-// тап по записи — правка мл/времени прямо в строке, корзина — удаление.
+// Истории за 7 дней здесь больше нет (решение пользователя): вся
+// история — во вкладке «Дневник», тап по карточке «Вода» в «Отчётах».
+// Записи за сегодня по умолчанию свёрнуты, тап по записи — правка
+// мл/времени прямо в строке, корзина — удаление.
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Check, ChevronDown, ChevronUp, Droplets, Pencil, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -13,7 +14,6 @@ import { VesselCard } from './VesselCard'
 import { ReminderToggle, ReminderIntervals } from './WaterReminder'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
 
@@ -38,7 +38,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const waterLog = useActivityStore((s) => s.waterLog)
   const reminder = useActivityStore((s) => s.reminder)
   const goals = useGoalsStore((s) => s.goals)
-  const historyDays = useHistoryStore((s) => s.days)
   const { toast } = useToast()
 
   const [editingId, setEditingId] = useState(null) // запись журнала на изменении
@@ -47,25 +46,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [logOpen, setLogOpen] = useState(false) // записи за сегодня по умолчанию свёрнуты
 
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
-
-  // Последние 7 дней (из дневной истории) — мини-график выпитого
-  const week = useMemo(() => {
-    const labels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
-    const out = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000)
-      const key = dayKeyOf(d)
-      out.push({
-        key,
-        label: labels[d.getDay()],
-        ml: historyDays[key]?.waterMl || 0,
-        today: i === 0,
-      })
-    }
-    return out
-  }, [historyDays])
-  const weekMax = Math.max(500, ...week.map((d) => d.ml))
-  const weekAvg = Math.round(week.reduce((s, d) => s + d.ml, 0) / 7)
 
   function drink(v) {
     addWater(v.ml)
@@ -147,42 +127,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   {vessels.map((v) => (
                     <VesselCard key={v.id} vessel={v} onDrink={drink} />
                   ))}
-                </View>
-
-                {/* Последние 7 дней — тонкие «свечи»: зелёная — норма выпита,
-                    красная — норма не сделана (сравнение с целью) */}
-                <View className="mt-3">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
-                      Последние 7 дней
-                    </Text>
-                    <Text className="font-sans text-[10.5px] text-bear-sub">
-                      {`в среднем ${formatNum(weekAvg)} мл/день`}
-                    </Text>
-                  </View>
-                  <View className="mt-1.5 h-[58px] flex-row items-end gap-1.5">
-                    {week.map((d) => (
-                      <View key={d.key} className="min-w-0 flex-1 items-center gap-1">
-                        <View
-                          style={{
-                            width: 6,
-                            height: Math.max(4, Math.round((d.ml / weekMax) * 42)),
-                            borderRadius: 3,
-                            backgroundColor:
-                              d.ml >= goalMl ? '#34D399' : '#f87171',
-                            opacity: d.today ? 1 : 0.55,
-                          }}
-                        />
-                        <Text
-                          className={`text-[10px] ${
-                            d.today ? 'font-bold text-bear-text' : 'font-sans text-bear-sub'
-                          }`}
-                        >
-                          {d.label}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
                 </View>
 
                 {/* Журнал за сегодня: по умолчанию свёрнут; тап по шапке —
