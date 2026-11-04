@@ -429,7 +429,11 @@ export function ExerciseSection() {
               </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 24 }}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ flexShrink: 1 }}
+              contentContainerStyle={{ padding: 20, paddingBottom: 16 }}
+            >
               {creating ? (
                 /* Форма своей тренировки: название + иконка + интенсивность */
                 <View className="gap-3.5">
@@ -527,18 +531,8 @@ export function ExerciseSection() {
                     </Text>
                   )}
 
-                  {/* Кнопки: крестик закрытия — в шапке, здесь только «Запомнить» */}
-                  <View className="mt-1 flex-row">
-                    <Pressable
-                      onPress={saveCustom}
-                      accessibilityRole="button"
-                      accessibilityLabel="Запомнить тренировку"
-                      className="flex-1 items-center rounded-2xl py-3 active:opacity-80"
-                      style={{ backgroundColor: '#7B6CF6' }}
-                    >
-                      <Text className="font-bold text-[12.5px] text-white">Запомнить</Text>
-                    </Pressable>
-                  </View>
+                  {/* Кнопка «Запомнить» закреплена внизу окна — общая зона
+                      действий под прокручиваемым списком (см. ниже) */}
                 </View>
               ) : (
                 <>
@@ -682,21 +676,44 @@ export function ExerciseSection() {
                       </Text>
                     </Pressable>
                   )}
-
-                  <Pressable
-                    onPress={save}
-                    disabled={!ex || !minutes}
-                    className={`mt-4 overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
-                  >
-                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                      <Text className="w-full py-3.5 text-center font-bold text-[14px] text-white">
-                        {editing ? 'Сохранить' : 'Добавить тренировку'}
-                      </Text>
-                    </LinearGradient>
-                  </Pressable>
                 </>
               )}
             </ScrollView>
+
+            {/* Кнопка действия — закреплена внизу окна, вне прокрутки.
+                Раньше «Добавить тренировку» была последним элементом списка:
+                на небольшом экране она уходила за нижний край вместе с
+                прокруткой, и казалось, что кнопки нет вовсе. Теперь шапка,
+                список и кнопка разделены: кнопка видна всегда, а прокручивается
+                только каталог активностей. Пока не выбраны активность и
+                длительность — кнопка видна, но приглушена и не нажимается. */}
+            <View className="border-t border-bear-line px-5 pb-4 pt-3">
+              {creating ? (
+                <Pressable
+                  onPress={saveCustom}
+                  accessibilityRole="button"
+                  accessibilityLabel="Запомнить тренировку"
+                  className="items-center rounded-2xl py-3 active:opacity-80"
+                  style={{ backgroundColor: '#7B6CF6' }}
+                >
+                  <Text className="font-bold text-[12.5px] text-white">Запомнить</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={save}
+                  disabled={!ex || !minutes}
+                  accessibilityRole="button"
+                  accessibilityLabel={editing ? 'Сохранить изменения' : 'Добавить тренировку'}
+                  className={`overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
+                >
+                  <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+                    <Text className="w-full py-3.5 text-center font-bold text-[14px] text-white">
+                      {editing ? 'Сохранить' : 'Добавить тренировку'}
+                    </Text>
+                  </LinearGradient>
+                </Pressable>
+              )}
+            </View>
           </View>
         </View>
       </Modal>
