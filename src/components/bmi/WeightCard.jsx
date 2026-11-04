@@ -322,15 +322,8 @@ export function WeightCard() {
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[14px] text-white"
             />
 
-            <View className="mt-5 flex-row gap-2">
-              <Pressable
-                onPress={() => setEditing(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Отменить изменение веса"
-                className="flex-1 items-center rounded-2xl border border-white/10 bg-white/5 py-3 active:opacity-70"
-              >
-                <Text className="font-bold text-[13px] text-bear-soft">Отмена</Text>
-              </Pressable>
+            {/* Кнопки: крестик закрытия — в шапке, здесь только «Сохранить» */}
+            <View className="mt-5 flex-row">
               <Pressable
                 onPress={saveEdit}
                 accessibilityRole="button"

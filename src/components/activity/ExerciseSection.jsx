@@ -475,14 +475,8 @@ export function ExerciseSection() {
                     </Text>
                   )}
 
-                  <View className="mt-1 flex-row gap-2">
-                    <Pressable
-                      onPress={() => setCreating(false)}
-                      accessibilityLabel="Отменить создание"
-                      className="flex-1 items-center rounded-2xl bg-white/5 py-3 active:opacity-70"
-                    >
-                      <Text className="font-bold text-[12.5px] text-bear-soft">Отмена</Text>
-                    </Pressable>
+                  {/* Кнопки: крестик закрытия — в шапке, здесь только «Запомнить» */}
+                  <View className="mt-1 flex-row">
                     <Pressable
                       onPress={saveCustom}
                       accessibilityRole="button"

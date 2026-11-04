@@ -9,6 +9,7 @@ import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, S
 import { router, useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { X } from 'lucide-react-native'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
@@ -353,7 +354,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+                  <X size={20} color="#A5AECB" />
                 </Pressable>
               </View>
               <Text className="mt-1 font-sans text-[11px] text-bear-sub">
@@ -407,7 +408,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <Text className="font-sans text-[13px] text-bear-sub">отмена</Text>
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[11px] text-bear-sub">

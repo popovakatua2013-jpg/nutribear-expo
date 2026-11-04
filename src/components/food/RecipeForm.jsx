@@ -69,7 +69,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
 
   return (
     <View className="rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/5 p-4">
-      {/* Шапка: что делаем + отмена (только в режиме изменения) */}
+      {/* Шапка: что делаем + крестик закрытия (только в режиме изменения) */}
       <View className="mb-2 flex-row items-center justify-between">
         <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-link">
           {editing ? 'Изменение рецепта' : 'Новый рецепт'}
@@ -79,10 +79,9 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             onPress={onCancel}
             accessibilityRole="button"
             accessibilityLabel="Отменить изменение рецепта"
-            className="flex-row items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 active:opacity-70"
+            className="p-1 active:opacity-70"
           >
-            <X size={12} color="#AEB9D9" />
-            <Text className="font-sans text-[11px] text-bear-soft">отмена</Text>
+            <X size={18} color="#A5AECB" />
           </Pressable>
         )}
       </View>
