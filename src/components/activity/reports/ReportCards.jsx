@@ -2,34 +2,28 @@
 // изменение в % к прошлому такому же периоду и рекорд («Лучший день») —
 // плюс отдельная карточка «Вес»: последнее взвешивание и изменение
 // за период в кг (зелёным — движение к здоровому диапазону).
-// Тап по карточке показателя выбирает его для календаря-теплокарты
-// ниже (выбранная подсвечена рамкой в цвет метрики). Тап по карточке
-// «Вес» открывает вкладку ИМТ и докручивает до графика «Динамика веса».
-// Показатели и форматы берутся из общего реестра lib/data/metrics.js.
-// Поверхности — в стиле вкладки «Тело»: градиент от цветного тинта
-// метрики к фиолетовой подложке (#1A123A — непрозрачный эквивалент
-// bear-bodyCard) и фиолетовая обводка неактивной карточки
+// Тап по карточке показателя ОТКРЫВАЕТ ОКНО ИСТОРИИ (MetricHistoryModal):
+// среднее за день, столбики по дням, лучшие дни и теплокарта недели —
+// панель, разворачивавшаяся под карточками, заменена окном. Тап по
+// карточке «Вес» открывает вкладку ИМТ и докручивает до графика
+// «Динамика веса». Показатели и форматы берутся из общего реестра
+// lib/data/metrics.js. Поверхности — в стиле вкладки «Тело»: градиент
+// от цветного тинта метрики к фиолетовой подложке (#1A123A —
+// непрозрачный эквивалент bear-bodyCard) и фиолетовая обводка
 
 import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, ChevronRight, Scale } from 'lucide-react-native'
-import { bestDay, changePct, deltaTone, periodTotals } from '@/lib/data/reports'
+import { bestDay, changePct, deltaTone, periodTotals, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
 import { requestScrollToWeight } from '@/lib/navEvents'
 
-// Подпись сравнения: с каким прошлым периодом сравниваем
-function prevLabel(days) {
-  if (days <= 7) return 'к прошлой неделе'
-  if (days === 30) return 'к прошлому месяцу'
-  return `к предыдущим ${days} дням`
-}
-
-function ReportCard({ m, cur, prev, days, best = 0, selected = false, onPress = () => {} }) {
+function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
@@ -38,19 +32,19 @@ function ReportCard({ m, cur, prev, days, best = 0, selected = false, onPress = 
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${m.label}: ${m.fmt(cur[m.key])}${selected ? ', показатель для календаря выбран' : ', выбрать для календаря'}`}
+      accessibilityLabel={`${m.label}: ${m.fmt(cur[m.key])}. Тап — история показателя`}
       className="flex-1 active:opacity-90"
       style={{ borderRadius: 16 }}
     >
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[`${m.color}${selected ? '2e' : '14'}`, '#1A123A']}
+      colors={[`${m.color}14`, '#1A123A']}
       style={{
         flex: 1,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: selected ? m.color : 'rgba(168,85,247,0.30)',
+        borderColor: 'rgba(168,85,247,0.30)',
         padding: 16,
       }}
     >
@@ -89,7 +83,7 @@ function ReportCard({ m, cur, prev, days, best = 0, selected = false, onPress = 
   )
 }
 
-export function ReportCards({ today, days, rows = [], metricId = 'steps', onSelectMetric = () => {} }) {
+export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} }) {
   // periodTotals обходит до 180 дней истории — считаем только при
   // смене периода/данных, а не на каждом рендере экрана
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
@@ -123,16 +117,15 @@ export function ReportCards({ today, days, rows = [], metricId = 'steps', onSele
                 prev={prev}
                 days={days}
                 best={bestDay(rows, m.key)}
-                selected={metricId === m.key}
                 onPress={() => onSelectMetric(m.key)}
               />
             )
           )}
         </View>
       ))}
-      {/* Подсказка: тап по карточке разворачивает панель истории */}
+      {/* Подсказка: тап по карточке открывает окно истории показателя */}
       <Text className="px-1 pt-0.5 font-sans text-[10.5px] text-bear-dim">
-        Тап по карточке разворачивает историю: дни периода и календарь месяца · повторный тап сворачивает
+        Тап по карточке открывает историю: среднее за день, график, лучшие дни
       </Text>
     </View>
   )

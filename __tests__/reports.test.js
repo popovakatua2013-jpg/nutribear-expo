@@ -1,11 +1,23 @@
 // Тесты данных «Отчётов»: дисциплина периода, уровни дней теплокарты,
-// рекорд периода, нутриенты по дням и итоги нутриентов за период.
+// рекорды, среднее за день, топ дней, сетка «по дням недели»,
+// подпись сравнения периодов, нутриенты по дням и итоги нутриентов.
 
 // RN-стабы должны встать до импортов стора (dayKeyOf живёт рядом с ним)
 jest.requireActual('./helpers/react-native-stub')
 jest.requireActual('./helpers/async-storage-stub')
 
-const { discipline, dayLevel, bestDay, nutrientsByDay, nutrientTotals, compressDayRows, gapLabel, dayHasRecords } = require('@/lib/data/reports')
+const {
+  discipline,
+  dayLevel,
+  bestDay,
+  bestDays,
+  dailyAverage,
+  weekdayMatrix,
+  prevLabel,
+  nutrientsByDay,
+  nutrientTotals,
+  dayHasRecords,
+} = require('@/lib/data/reports')
 const { dayKeyOf } = require('@/store/useHistoryStore')
 
 // Ключ дня со сдвигом: keyAt(0) — сегодня, keyAt(-1) — вчера
@@ -165,7 +177,7 @@ describe('nutrientTotals', () => {
   })
 })
 
-// ===== Сжатый список «по дням»: простои сворачиваются в пролёты =====
+// ===== Окно истории: среднее, топ дней, теплокарта недели =====
 
 describe('dayHasRecords', () => {
   test('день с любой записью — день с записями, пустой — нет', () => {
@@ -180,84 +192,97 @@ describe('dayHasRecords', () => {
   })
 })
 
-describe('compressDayRows', () => {
-  test('все дни с записями — без пролётов', () => {
-    const rows = [row({ steps: 1000, label: 'Пн' }), row({ steps: 2000, label: 'Вт' })]
-    const segs = compressDayRows(rows)
-    expect(segs).toHaveLength(2)
-    expect(segs.every((s) => s.type === 'day')).toBe(true)
+describe('dailyAverage', () => {
+  test('среднее делится только на ведённые дни: простои его не топят', () => {
+    // второй день велись (вода) — ноль шагов честный; третий — простой
+    const rows = [row({ steps: 8000 }), row({ waterMl: 300 }), row()]
+    expect(dailyAverage(rows, 'steps')).toBe(4000) // (8000 + 0) / 2
   })
 
-  test('подряд идущие дни без записей — один пролёт с границами', () => {
-    const rows = [
-      row({ steps: 8000, label: '1 авг' }),
-      row({ label: '2 авг' }),
-      row({ label: '3 авг' }),
-      row({ label: '4 авг' }),
-      row({ steps: 5000, label: '5 авг' }),
-    ]
-    const segs = compressDayRows(rows)
-    expect(segs).toHaveLength(3)
-    expect(segs[0]).toMatchObject({ type: 'day' })
-    expect(segs[1]).toMatchObject({ type: 'gap', count: 3 })
-    expect(segs[1].from.label).toBe('2 авг')
-    expect(segs[1].to.label).toBe('4 авг')
-    expect(segs[2]).toMatchObject({ type: 'day' })
+  test('округление до целого', () => {
+    const rows = [row({ steps: 1000 }), row({ steps: 500 })]
+    expect(dailyAverage(rows, 'steps')).toBe(750)
   })
 
-  test('сегодня (последняя строка) не прячется в пролёт, даже если пустой', () => {
-    const rows = [
-      row({ steps: 8000, label: '1 авг' }),
-      row({ label: '2 авг' }),
-      row({ label: '3 авг' }), // сегодня, записей нет
-    ]
-    const segs = compressDayRows(rows)
-    expect(segs).toHaveLength(3)
-    expect(segs[0]).toMatchObject({ type: 'day' })
-    expect(segs[1]).toMatchObject({ type: 'gap', count: 1 }) // только «2 авг»
-    expect(segs[1].to.label).toBe('2 авг')
-    expect(segs[2]).toMatchObject({ type: 'day' })
-    expect(segs[2].row.label).toBe('3 авг')
-  })
-
-  test('полностью пустой период: один пролёт + сегодняшний день отдельно', () => {
-    const rows = [row({ label: 'Пн' }), row({ label: 'Вт' }), row({ label: 'Ср' })]
-    const segs = compressDayRows(rows)
-    expect(segs).toHaveLength(2)
-    expect(segs[0]).toMatchObject({ type: 'gap', count: 2 })
-    expect(segs[1]).toMatchObject({ type: 'day', index: 2 })
-  })
-
-  test('пустые rows — пустой список сегментов без ошибок', () => {
-    expect(compressDayRows([])).toEqual([])
-    expect(compressDayRows(null)).toEqual([])
-  })
-
-  test('чередование записей и простоев даёт чередование сегментов', () => {
-    const rows = [
-      row({ steps: 1000, label: '1' }),
-      row({ label: '2' }),
-      row({ steps: 2000, label: '3' }),
-      row({ label: '4' }),
-      row({ steps: 3000, label: '5' }), // сегодня
-    ]
-    const segs = compressDayRows(rows)
-    expect(segs.map((s) => s.type)).toEqual(['day', 'gap', 'day', 'gap', 'day'])
+  test('пустой период — 0 без NaN', () => {
+    expect(dailyAverage([], 'steps')).toBe(0)
+    expect(dailyAverage([row(), row()], 'kcal')).toBe(0)
+    expect(dailyAverage(null, 'steps')).toBe(0)
   })
 })
 
-describe('gapLabel', () => {
-  test('пролёт из нескольких дней — «нет записей · от – до»', () => {
-    const label = gapLabel({ key: '2026-08-07', label: '7 авг' }, { key: '2026-08-27', label: '27 авг' })
-    expect(label).toBe('нет записей · 7 авг – 27 авг')
+describe('bestDays', () => {
+  const rows = [
+    row({ steps: 3000, label: 'Пн' }),
+    row({ steps: 12400, label: 'Вт' }),
+    row({ label: 'Ср' }), // день без записей — не участвует
+    row({ steps: 8000, label: 'Чт' }),
+    row({ steps: 12400, label: 'Пт' }),
+  ]
+
+  test('топ-3 дня по значению, пустые дни не участвуют', () => {
+    const top = bestDays(rows, 'steps', 3)
+    expect(top.map((d) => d.row.label)).toEqual(['Вт', 'Пт', 'Чт'])
+    expect(top[0].value).toBe(12400)
   })
 
-  test('один день без записей — «нет записей · дата»', () => {
-    const label = gapLabel({ key: '2026-11-04', label: '4 ноя' }, { key: '2026-11-04', label: '4 ноя' })
-    expect(label).toBe('нет записей · 4 ноя')
+  test('равные значения — в хронологическом порядке (сортировка стабильна)', () => {
+    const top = bestDays(rows, 'steps', 2)
+    expect(top.map((d) => d.row.label)).toEqual(['Вт', 'Пт'])
   })
 
-  test('без границ — не падает', () => {
-    expect(gapLabel(null, null)).toBe('нет записей · ')
+  test('дней меньше, чем нужно, и пустой список', () => {
+    expect(bestDays(rows, 'steps', 10)).toHaveLength(4)
+    expect(bestDays([], 'steps')).toEqual([])
+    expect(bestDays(null, 'steps')).toEqual([])
+  })
+})
+
+describe('weekdayMatrix', () => {
+  function dayRows(keys) {
+    return keys.map((key) => ({ ...row(), key, label: key }))
+  }
+
+  test('начало дополняется пустыми клетками до понедельника', () => {
+    // 4–8 ноября 2026: среда … воскресенье → две пустые клетки слева
+    const grid = weekdayMatrix(dayRows(['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08']))
+    expect(grid).toHaveLength(1)
+    expect(grid[0][0]).toBe(null)
+    expect(grid[0][1]).toBe(null)
+    expect(grid[0][2].key).toBe('2026-11-04')
+    expect(grid[0][6].key).toBe('2026-11-08')
+  })
+
+  test('ровно две недели (пн…вс) — две строки без добивки', () => {
+    const keys = []
+    for (let d = 2; d <= 15; d++) keys.push(`2026-11-${String(d).padStart(2, '0')}`)
+    const grid = weekdayMatrix(dayRows(keys))
+    expect(grid).toHaveLength(2)
+    expect(grid[0][0].key).toBe('2026-11-02')
+    expect(grid[0][6].key).toBe('2026-11-08')
+    expect(grid[1][0].key).toBe('2026-11-09')
+    expect(grid[1][6].key).toBe('2026-11-15')
+  })
+
+  test('конец дополняется до полной недели', () => {
+    // 9–10 ноября 2026: пн, вт → хвост строки добит пустыми клетками
+    const grid = weekdayMatrix(dayRows(['2026-11-09', '2026-11-10']))
+    expect(grid).toHaveLength(1)
+    expect(grid[0][0].key).toBe('2026-11-09')
+    expect(grid[0][2]).toBe(null)
+    expect(grid[0][6]).toBe(null)
+  })
+
+  test('пустые rows — пустая сетка', () => {
+    expect(weekdayMatrix([])).toEqual([])
+    expect(weekdayMatrix(null)).toEqual([])
+  })
+})
+
+describe('prevLabel', () => {
+  test('неделя, месяц, произвольный период', () => {
+    expect(prevLabel(7)).toBe('к прошлой неделе')
+    expect(prevLabel(30)).toBe('к прошлому месяцу')
+    expect(prevLabel(90)).toBe('к предыдущим 90 дням')
   })
 })

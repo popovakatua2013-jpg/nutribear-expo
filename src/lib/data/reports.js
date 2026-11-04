@@ -117,47 +117,56 @@ export function bestDay(rows, key) {
   return (rows || []).reduce((mx, r) => Math.max(mx, r[key] || 0), 0)
 }
 
+// Топ дней периода по показателю — для списка «Лучшие дни» в окне
+// истории. Пустые дни не участвуют; равные значения сохраняют
+// хронологический порядок (сортировка стабильна): раньше — выше.
+export function bestDays(rows, key, n = 3) {
+  return (rows || [])
+    .map((r) => ({ row: r, value: r[key] || 0 }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, n)
+}
+
+// Среднее за день по показателю — для карточки «В среднем за день»
+// в окне истории. Делится только на дни, которые велись (dayHasRecords):
+// простои среднее не топят, а ноль в ведённый день — честный ноль
+// (та же философия, что у nutrientTotals и дисциплины).
+export function dailyAverage(rows, key) {
+  const kept = (rows || []).filter(dayHasRecords)
+  if (!kept.length) return 0
+  const sum = kept.reduce((acc, r) => acc + (r[key] || 0), 0)
+  return Math.round(sum / kept.length)
+}
+
+// Сетка точечной теплокарты «по дням недели» (окно истории): столбцы
+// Пн…Вс, строки — недели периода, старшая сверху. Начало дополняется
+// пустыми клетками до понедельника, конец — до полной недели.
+// День недели берётся из ключа «ГГГГ-ММ-ДД», поэтому функция чистая.
+export function weekdayMatrix(rows) {
+  const list = rows || []
+  if (!list.length) return []
+  const pad = (new Date(`${list[0].key}T00:00:00`).getDay() + 6) % 7
+  const cells = [...Array.from({ length: pad }, () => null), ...list]
+  while (cells.length % 7 !== 0) cells.push(null)
+  const grid = []
+  for (let i = 0; i < cells.length; i += 7) grid.push(cells.slice(i, i + 7))
+  return grid
+}
+
+// Подпись сравнения: с каким прошлым периодом сравниваем — общая
+// для карточек-итогов и окна истории (раньше жила в ReportCards)
+export function prevLabel(days) {
+  if (days <= 7) return 'к прошлой неделе'
+  if (days === 30) return 'к прошлому месяцу'
+  return `к предыдущим ${days} дням`
+}
+
 // День «с записями» — дневник хоть что-то фиксировал (та же честная
 // проверка, что у дисциплины и стрика; нулевой показатель дня с
 // едой/водой — не «простой», а честный ноль)
 export function dayHasRecords(row) {
   return !!(row && (row.steps || row.kcal || row.waterMl || row.burned))
-}
-
-// Сжатый список «по дням» для истории показателя: дни с записями идут
-// по одному, а подряд идущие дни без записей сворачиваются в один
-// пролёт {type:'gap', from, to, count} — вместо десятка строк «нет
-// записей» одна строка «нет записей · 7 авг – 27 авг».
-// Сегодня (последняя строка) не прячется в пролёт: он всегда виден
-// отдельной строкой, пусть даже «нет записей».
-// Возвращает чередование {type:'day', row, index} и {type:'gap', …}.
-export function compressDayRows(rows) {
-  const segs = []
-  let gap = null
-  ;(rows || []).forEach((row, index) => {
-    const isLast = index === (rows.length || 1) - 1
-    if (dayHasRecords(row) || isLast) {
-      if (gap) {
-        segs.push(gap)
-        gap = null
-      }
-      segs.push({ type: 'day', row, index })
-    } else if (gap) {
-      gap.to = row
-      gap.count += 1
-    } else {
-      gap = { type: 'gap', from: row, to: row, count: 1 }
-    }
-  })
-  if (gap) segs.push(gap)
-  return segs
-}
-
-// Подпись пролёта без записей: один день — «нет записей · 4 ноя»,
-// несколько — «нет записей · 7 авг – 27 авг»
-export function gapLabel(from, to) {
-  if (!from || !to || from.key === to.key) return `нет записей · ${from?.label || ''}`
-  return `нет записей · ${from.label} – ${to.label}`
 }
 
 // Нутриенты по дням из журнала приёмов (useFoodStore.history — у записей

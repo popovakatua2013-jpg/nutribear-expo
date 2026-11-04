@@ -1,9 +1,9 @@
 // Экран «Активность» (вкладка «Дневник»): баннер с мишкой и отчёты.
 // Календарь и «Закономерности» удалены по решению, тренировки перенесены
 // на «Главную»: здесь осталась аналитика — «Отчёты» с итогами, дисциплиной,
-// панелью истории показателя (дни периода + календарь месяца, разворачивается
-// тапом по карточке) и нутриентами. Все показатели дня автоматически пишутся
-// в историю (useHistoryStore) — поэтому графики и отчёты видят реальные данные,
+// нутриентами и окном истории показателя (MetricHistoryModal — тап по
+// карточке-итогу). Все показатели дня автоматически пишутся в историю
+// (useHistoryStore) — поэтому графики и отчёты видят реальные данные,
 // где бы ни были записаны: на «Главной» или в «Отчётах».
 // Период (7/30/90) выбирается пилюлями в шапке «Отчётов».
 
@@ -24,11 +24,10 @@ import { RANGES, xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
-  // Один период и один показатель для всей вкладки: период — пилюли
-  // в шапке «Отчётов», показатель — тап по карточке-итогу (общий
-  // с календарём-теплокартой)
+  // Один период для всей вкладки — пилюли в шапке «Отчётов»: им живут
+  // карточки-итоги, дисциплина, нутриенты и шеринговые «Итоги».
+  // Окно истории открывается с этого периода и дальше живёт своим
   const [rangeId, setRangeId] = useState('7d')
-  const [metricId, setMetricId] = useState('steps')
   const days = RANGES.find((r) => r.id === rangeId)?.days || 7
 
   const waterMl = useActivityStore((s) => s.waterMl)
@@ -86,8 +85,6 @@ export default function ActivityScreen() {
           days={days}
           rangeId={rangeId}
           onRangeChange={setRangeId}
-          metricId={metricId}
-          onMetricChange={setMetricId}
         />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">

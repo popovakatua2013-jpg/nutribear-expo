@@ -1,11 +1,11 @@
 // Секция «Отчёты»: дисциплина периода, карточки итогов с Δ% и рекордом,
-// панель истории выбранного показателя и нутриенты из журнала питания.
-// Период (7/30/90) выбирается пилюлями в шапке секции. Тап по карточке
-// показателя РАЗВОРАЧИВАЕТ панель истории (дни периода + календарь
-// месяца этого показателя) прямо под карточками — отдельного блока
-// «Календарь» больше нет; повторный тап сворачивает. Тап по клетке
-// календаря открывает сводку дня. Кнопка «Итоги» — шеринговая
-// PNG-карточка периода (медведь + цифры + сравнение).
+// нутриенты из журнала питания и окно истории показателя. Период (7/30/90)
+// выбирается пилюлями в шапке секции — им живут карточки, дисциплина и
+// нутриенты. Тап по карточке показателя ОТКРЫВАЕТ ОКНО ИСТОРИИ
+// (MetricHistoryModal): у окна свой период (открывается с периода секции),
+// внутри — среднее за день, столбики по дням, лучшие дни и теплокарта
+// недели; сводка дня открывается тапом по дню внутри окна. Кнопка
+// «Итоги» — шеринговая PNG-карточка периода (медведь + цифры + сравнение).
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -13,16 +13,13 @@ import { Share2 } from 'lucide-react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
 import { DisciplineCard } from './DisciplineCard'
-import { MetricHistoryPanel } from './MetricHistoryPanel'
+import { MetricHistoryModal } from './MetricHistoryModal'
 import { NutrientsCard } from './NutrientsCard'
 import { WeeklyShareCard } from './WeeklyShareCard'
-import { DayDetailsModal } from '../../home/DayDetailsModal'
 import { Pills } from '../../ui/Pills'
 import { periodTotals } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
 import { useHistoryStore } from '@/store/useHistoryStore'
-import { useProfileStore } from '@/store/useProfileStore'
-import { useGoalsStore } from '@/store/useGoalsStore'
 import { streakOf } from '@/lib/streak'
 
 export function ReportsSection({
@@ -30,16 +27,12 @@ export function ReportsSection({
   days,
   rangeId = '7d',
   onRangeChange = () => {},
-  metricId = 'steps',
-  onMetricChange = () => {},
 }) {
   const [shareOpen, setShareOpen] = useState(false)
-  const [dayKey, setDayKey] = useState(null)
-  // Панель истории: разворачивается/сворачивается тапом по карточке
-  const [panelOpen, setPanelOpen] = useState(false)
-  const savedDays = useHistoryStore((s) => s.days) // карта истории: { 'ГГГГ-ММ-ДД': … }
-  const weights = useProfileStore((s) => s.weights)
-  const goals = useGoalsStore((s) => s.goals)
+  // Окно истории: какой показатель открыт (null — закрыто).
+  // Панель, разворачивавшаяся под карточками, заменена окном
+  const [historyMetric, setHistoryMetric] = useState(null)
+  const savedDays = useHistoryStore((s) => s.days) // карта истории: { 'ГГГГ-ММ-ДД': … } — для стрика
   const streak = streakOf(savedDays)
 
   // Дневные строки периода — один обход истории на все блоки секции:
@@ -51,19 +44,11 @@ export function ReportsSection({
   // Сколько дней периода велся дневник — для шерингового чипа
   const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned).length
 
-  // Тап по карточке-итогу: тот же показатель — свернуть/развернуть панель,
-  // другой — выбрать и развернуть. «Вес» без панели: он живёт графиком
-  // и журналом на вкладке «Тело», в дневной истории его нет
+  // Тап по карточке-итогу: открываем окно истории этого показателя.
+  // «Вес» сюда не попадает — у него свой тап, ведущий к графику на
+  // вкладке «Тело» (ReportCards обрабатывает его отдельно)
   function handleSelectMetric(id) {
-    if (id === 'weight') {
-      setPanelOpen(false)
-      return
-    }
-    if (id === metricId) setPanelOpen((v) => !v)
-    else {
-      onMetricChange(id)
-      setPanelOpen(true)
-    }
+    setHistoryMetric(id)
   }
 
   return (
@@ -105,22 +90,8 @@ export function ReportsSection({
         today={today}
         days={days}
         rows={rows}
-        metricId={metricId}
         onSelectMetric={handleSelectMetric}
       />
-
-      {/* Панель истории выбранного показателя: дни периода + календарь месяца.
-          Разворачивается тапом по карточке — отдельный блок «Календарь» удалён */}
-      {panelOpen && metricId !== 'weight' && (
-        <MetricHistoryPanel
-          today={today}
-          metricId={metricId}
-          days={days}
-          rows={rows}
-          onPickDay={setDayKey}
-          onCollapse={() => setPanelOpen(false)}
-        />
-      )}
 
       <NutrientsCard days={days} />
 
@@ -134,15 +105,18 @@ export function ReportsSection({
         days={days}
       />
 
-      {/* Сводка дня по тапу на клетку календаря панели истории */}
-      <DayDetailsModal
-        open={Boolean(dayKey)}
-        onClose={() => setDayKey(null)}
-        dayKey={dayKey}
-        history={savedDays}
-        goals={goals}
-        weights={weights}
-      />
+      {/* Окно истории показателя: монтируется только открытым — каждый
+          раз стартует с периода секции и живёт своим переключателем;
+          сводка дня — тапом по дню внутри окна */}
+      {historyMetric && (
+        <MetricHistoryModal
+          open
+          onClose={() => setHistoryMetric(null)}
+          metricId={historyMetric}
+          initialRangeId={rangeId}
+          today={today}
+        />
+      )}
     </View>
   )
 }

@@ -13,10 +13,13 @@ import { Droplets, Flame, Footprints, Sparkles } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
 
+// gen — родительный падеж для подзаголовка окна истории
+// («Динамика шагов за 30 дней»)
 export const METRICS = [
   {
     key: 'steps',
     label: 'Шаги',
+    gen: 'шагов',
     Icon: Footprints,
     color: '#4ade80',
     invert: false, // рост — хорошо
@@ -26,6 +29,7 @@ export const METRICS = [
   {
     key: 'kcal',
     label: 'Калории',
+    gen: 'калорий',
     Icon: Flame,
     color: '#f87171',
     invert: true, // рост — переедание, отмечается красным
@@ -35,6 +39,7 @@ export const METRICS = [
   {
     key: 'waterMl',
     label: 'Вода',
+    gen: 'воды',
     Icon: Droplets,
     color: '#38bdf8',
     invert: false,
@@ -44,6 +49,7 @@ export const METRICS = [
   {
     key: 'burned',
     label: 'Сожжено',
+    gen: 'сожжённых калорий',
     Icon: Sparkles,
     color: '#fb923c',
     invert: false,
