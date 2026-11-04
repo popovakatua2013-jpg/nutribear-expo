@@ -1,29 +1,22 @@
-// Онбординг NutriBear: максимально быстрый опрос (9 этапов вместо 13):
-// приветствие → цель → данные → активность → особые состояния → план →
-// пейволл → разрешения → активация. Срезаны шаги-фильтры: «Мотивация»
-// (не влияет на план), «Пищевые привычки» и «Привычки» (6 вопросов —
-// дефолты уже в сторе), мок-«Регистрация» (тормозила вход; аккаунт
-// появится, когда будет реальный бэкенд — подписки RevenueCat работают
-// и без него). Ответы хранятся анонимно на устройстве.
+// Онбординг NutriBear: быстрый запуск в 5 шагов (по витринному
+// макету): «Твоя цель» → «Расскажи о себе» → «Отлично!» (план) →
+// пейволл → разрешения. Цель выбирается чипом на первом экране,
+// анкета собрана в один экран строками-карточками, финальный шаг
+// «Всё готово!» удалён: план применяется сразу после разрешений,
+// а первый завтрак пользователь добавит с Главной (подсказка).
+// Ответы хранятся анонимно на устройстве.
 
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { ObProgress } from './ob/ObProgress'
 import { WelcomeStep } from './ob/WelcomeStep'
-import { GoalStep } from './ob/GoalStep'
-import { BodyStep } from './ob/BodyStep'
-import { ActivityStep } from './ob/ActivityStep'
-import { ConditionsStep } from './ob/ConditionsStep'
+import { ProfileStep } from './ob/ProfileStep'
 import { RevealStep } from './ob/RevealStep'
 import { PaywallStep } from './ob/PaywallStep'
 import { PermissionsStep } from './ob/PermissionsStep'
-import { ActivationStep } from './ob/ActivationStep'
 
-const STEPS = [
-  WelcomeStep, GoalStep, BodyStep, ActivityStep, ConditionsStep,
-  RevealStep, PaywallStep, PermissionsStep, ActivationStep,
-]
+const STEPS = [WelcomeStep, ProfileStep, RevealStep, PaywallStep, PermissionsStep]
 
 export function OnboardingFlow() {
   const insets = useSafeAreaInsets()

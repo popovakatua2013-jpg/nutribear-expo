@@ -2,6 +2,7 @@
 // активности, целевые КБЖУ и прогнозная кривая веса к цели.
 
 import { ACTIVITY_LEVELS } from './onboarding-options'
+import { getDailyTarget } from './goals'
 
 const KCAL_PER_KG = 7700 // энергетическая ценность 1 кг жира
 const num = (v) => Number(String(v).replace(',', '.')) || 0
@@ -28,13 +29,41 @@ export function calcTdee(bmr, activityId, workouts) {
 }
 
 // Полный план по ответам анкеты. Беременность/ГВ — калории НЕ режем.
+// Анкету можно пропустить (кнопка «Пропустить» на «Расскажи о себе»):
+// без биоданных возвращаем пресетную норму по цели (у «Похудения»
+// это 1800 ккал/день), BMR/TDEE и прогноз не считаем.
 export function calcPlan(answers) {
   const a = answers
-  const bmr = calcBmr(a)
-  const tdee = calcTdee(bmr, a.activity, a.workouts)
   const noDeficit = a.special.includes('pregnant') || a.special.includes('lactating')
   const dailyDelta =
     a.goalId === 'maintain' || noDeficit ? 0 : (a.pace * KCAL_PER_KG) / 7
+
+  const hasBio =
+    (a.sex === 'female' || a.sex === 'male') &&
+    a.age >= 10 && a.age <= 90 &&
+    a.heightCm >= 120 && a.heightCm <= 230 &&
+    a.weightKg >= 35 && a.weightKg <= 250
+
+  if (!hasBio) {
+    const targetKcal = getDailyTarget(a.goalId)
+    return {
+      bmr: null,
+      tdee: null,
+      targetKcal,
+      protein: Math.round((targetKcal * 0.3) / 4),
+      fat: Math.round((targetKcal * 0.3) / 9),
+      carbs: Math.round((targetKcal * 0.4) / 4),
+      dailyDelta: 0,
+      deltaLabel: a.goalId === 'gain' ? 'Профицит' : 'Дефицит',
+      pace: a.pace,
+      weeks: null,
+      projection: null,
+      preset: true,
+    }
+  }
+
+  const bmr = calcBmr(a)
+  const tdee = calcTdee(bmr, a.activity, a.workouts)
   const raw = a.goalId === 'gain' ? tdee + dailyDelta : tdee - dailyDelta
   const floor = a.sex === 'female' ? 1200 : 1500 // пол безопасности
   const targetKcal = Math.max(Math.round(raw), floor)
@@ -70,6 +99,9 @@ export function calcPlan(answers) {
 }
 
 export function planDoneText(plan) {
+  if (plan.preset) {
+    return 'Данные не заполнены — пока держим среднюю норму для вашей цели. Заполните профиль позже, и мишка посчитает точнее.'
+  }
   if (plan.weeks && plan.goalDate) {
     return `При текущем темпе вы достигнете цели к ${plan.goalDate}`
   }

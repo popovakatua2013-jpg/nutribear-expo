@@ -26,11 +26,18 @@ export function applyOnboarding(answers, plan) {
     })
   }
 
-  // Биоданные для калькулятора ИМТ: пол, возраст, уровень активности
-  const bioPatch = { hasBio: true }
-  if (a.sex === 'female' || a.sex === 'male') bioPatch.sex = a.sex
+  // Биоданные для калькулятора ИМТ: пол, возраст, уровень активности.
+  // hasBio честный: анкету могли пропустить — тогда данных нет,
+  // и калькулятор ИМТ остаётся «без данных», а не падает на пустых.
+  const validSex = a.sex === 'female' || a.sex === 'male'
   const ageNum = Number(a.age)
-  if (Number.isFinite(ageNum) && ageNum >= 10 && ageNum <= 90) bioPatch.age = ageNum
+  const validAge = Number.isFinite(ageNum) && ageNum >= 10 && ageNum <= 90
+  const validBody =
+    Number(a.heightCm) >= 120 && Number(a.heightCm) <= 230 &&
+    Number(a.weightKg) >= 35 && Number(a.weightKg) <= 250
+  const bioPatch = { hasBio: validSex && validAge && validBody }
+  if (validSex) bioPatch.sex = a.sex
+  if (validAge) bioPatch.age = ageNum
   if (TDEE_LEVELS.some((l) => l.id === a.activity)) bioPatch.activityId = a.activity
   useProfileStore.getState().setProfile(bioPatch)
 

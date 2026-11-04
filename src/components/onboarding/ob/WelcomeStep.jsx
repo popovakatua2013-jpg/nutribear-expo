@@ -1,63 +1,90 @@
-// Этап 1. Приветствие: 3 слайда — ценностное предложение (приложение
-// для любой цели: похудение / поддержка / набор веса),
-// соцдоказательство (★4.8, 10 млн пользователей), результаты.
+// Этап 1. «Твоя цель»: витринный первый экран — мишка, заголовок
+// «Похудей, поддерживай или набирай вес» и выбор цели чипами прямо
+// здесь (по макету). Выбор сразу пишется в стор, поэтому отдельный
+// шаг «Какая у вас цель?» из цепочки удалён.
 
-import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
+import { Image, Pressable, Text, View } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { ObShell } from './ObShell'
+import { useOnboardingStore } from '@/store/useOnboardingStore'
 
-const SLIDES = [
-  {
-    emoji: '🐻',
-    title: 'К своей цели без стресса',
-    text: 'Ешь любимую еду и достигай цели: худей, держи вес или набирай. Мишка посчитает калории и БЖУ за тебя — просто веди дневник.',
-  },
-  {
-    emoji: '⭐',
-    title: '4.8 из 5',
-    text: '10 млн пользователей уже ведут дневник с NutriBear. Средняя оценка в магазинах — 4.8.',
-  },
-  {
-    emoji: '📸',
-    title: 'Реальные результаты',
-    text: '«−12 кг за полгода без диет» — Марина, 34. «Держу вес второй год» — Ольга, 41. «+6 кг — и это мышцы» — Артём, 27.',
-  },
+const BEAR = require('../../../../assets/images/bear.webp')
+
+const CHIPS = [
+  { id: 'lose', emoji: '🔥', label: 'Похудеть' },
+  { id: 'maintain', emoji: '⚖️', label: 'Поддерживать' },
+  { id: 'gain', emoji: '💪', label: 'Набрать вес' },
 ]
 
 export function WelcomeStep({ onNext }) {
-  const [i, setI] = useState(0)
-  const slide = SLIDES[i]
-  const last = i === SLIDES.length - 1
+  const goalId = useOnboardingStore((s) => s.answers.goalId)
+  const patch = useOnboardingStore((s) => s.patchAnswers)
 
   return (
-    <ObShell title="NutriBear" onNext={onNext} nextLabel={last ? 'Начать' : 'Далее'}>
-      <View className="min-h-[340px] items-center justify-center rounded-3xl border border-white/5 bg-bear-card p-6 text-center">
-        <Text className="text-[64px]">{slide.emoji}</Text>
-        <Text className="mt-4 font-extrabold text-[22px] tracking-tight text-bear-text">
-          {slide.title}
+    <ObShell title="NutriBear" onNext={onNext} nextDisabled={!goalId} nextLabel="Далее">
+      <View className="items-center pt-1">
+        {/* Мишка со свечением, как на макете */}
+        <View className="h-[148px] w-[200px] items-center justify-center">
+          <View className="absolute h-[92px] w-[176px] rounded-full bg-[#7C5CFC]/25" />
+          <View className="absolute h-[60px] w-[132px] rounded-full bg-[#8B6CFF]/25" />
+          <Image source={BEAR} style={{ width: 126, height: 126 }} resizeMode="contain" />
+        </View>
+
+        <Text className="mt-1 text-center font-extrabold text-[24px] leading-[30px] tracking-tight text-bear-text">
+          Похудей, поддерживай{'\n'}
+          <Text className="text-[#A78BFA]">или набирай вес</Text>
         </Text>
         <Text className="mx-auto mt-2 max-w-[280px] text-center font-sans text-[13px] leading-relaxed text-[#aab4d4]">
-          {slide.text}
+          Персональный план питания и тренировок под твои цели
         </Text>
 
-        <View className="mt-6 flex-row items-center gap-1.5" accessibilityLabel="Слайды">
-          {SLIDES.map((s, idx) => (
-            <Pressable
-              key={s.title}
-              onPress={() => setI(idx)}
-              accessibilityLabel={`Слайд ${idx + 1}`}
-              className="h-2 overflow-hidden rounded-full"
-            >
-              {idx === i ? (
-                <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#A45BFF']} style={{ width: 24, height: 8, borderRadius: 999 }} />
-              ) : (
-                <View className="h-2 w-2 rounded-full bg-white/15" />
-              )}
-            </Pressable>
-          ))}
+        {/* Карточка «Твоя цель» с тремя чипами */}
+        <View className="mt-5 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
+          <Text className="font-bold text-[13px] text-bear-sub2">Твоя цель</Text>
+          <View className="mt-3 flex-row gap-2.5">
+            {CHIPS.map((c) => (
+              <GoalChip
+                key={c.id}
+                chip={c}
+                active={goalId === c.id}
+                onPress={() => patch({ goalId: c.id })}
+              />
+            ))}
+          </View>
         </View>
       </View>
     </ObShell>
+  )
+}
+
+function GoalChip({ chip, active, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={chip.label}
+      accessibilityState={{ selected: active }}
+      className="min-w-0 flex-1"
+    >
+      <View
+        className={`items-center rounded-2xl border px-1 pb-3 pt-3.5 ${
+          active ? 'border-[#A45BFF] bg-[#A45BFF]/10' : 'border-white/10 bg-white/[0.03]'
+        }`}
+      >
+        {active ? (
+          <View className="absolute right-1.5 top-1.5 h-[18px] w-[18px] items-center justify-center rounded-full bg-[#A45BFF]">
+            <Check size={11} color="#FFFFFF" strokeWidth={3.2} />
+          </View>
+        ) : null}
+        <Text className="text-[24px]">{chip.emoji}</Text>
+        <Text
+          numberOfLines={2}
+          className={`mt-1.5 text-center font-bold text-[11px] leading-[14px] ${
+            active ? 'text-white' : 'text-bear-sub'
+          }`}
+        >
+          {chip.label}
+        </Text>
+      </View>
+    </Pressable>
   )
 }

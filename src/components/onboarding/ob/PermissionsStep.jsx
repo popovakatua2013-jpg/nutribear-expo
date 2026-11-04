@@ -1,18 +1,25 @@
-// Этап 11. Разрешения — в контексте, по одному: push-напоминания,
-// синхронизация здоровья (Google Fit / Apple Health / шагомер), камера.
+// Финальный (5-й) шаг: разрешения — push, синхронизация здоровья,
+// шагомер, камера. Бывший 9-й шаг «Всё готово!» убран: кнопка
+// «Начать» сразу применяет план к целям/профилю и завершает онбординг,
+// а на Главной мишка предложит добавить первый завтрак.
 
-import { Switch, Text, View } from 'react-native'
+import { Pressable, Switch, Text, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Bell, Watch, Camera, Footprints } from 'lucide-react-native'
 import { Pedometer } from 'expo-sensors'
 import { ObShell } from './ObShell'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useToast } from '../../ui/Toast'
+import { applyOnboarding } from '@/lib/data/onboarding-apply'
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
 const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
 
-export function PermissionsStep({ onNext, onBack }) {
+export function PermissionsStep({ onBack }) {
+  const answers = useOnboardingStore((s) => s.answers)
+  const plan = useOnboardingStore((s) => s.plan)
+  const finish = useOnboardingStore((s) => s.finish)
   const permissions = useOnboardingStore((s) => s.permissions)
   const sync = useOnboardingStore((s) => s.sync)
   const setPermission = useOnboardingStore((s) => s.setPermission)
@@ -20,6 +27,13 @@ export function PermissionsStep({ onNext, onBack }) {
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
   const setPedometerEnabled = useActivityStore((s) => s.setPedometerEnabled)
   const { toast } = useToast()
+
+  // Завершение онбординга: план применяется здесь же (шаг «Всё готово!»
+  // удалён), openBreakfast — подсказка «добавить завтрак» на Главной
+  function done() {
+    if (plan) applyOnboarding(answers, plan)
+    finish({ openBreakfast: true })
+  }
 
   function askPush() {
     if (permissions.push === 'granted') return
@@ -50,7 +64,18 @@ export function PermissionsStep({ onNext, onBack }) {
   }
 
   return (
-    <ObShell sub="Шаг 8 из 9" title="Настроим уведомления" onBack={onBack} onNext={onNext} nextLabel="Продолжить">
+    <ObShell
+      sub="Шаг 5 из 5"
+      title="Настроим уведомления"
+      onBack={onBack}
+      footer={
+        <Pressable onPress={done} className="overflow-hidden rounded-2xl" accessibilityLabel="Начать">
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+            <Text className="py-3.5 text-center font-bold text-[15px] text-white">Начать</Text>
+          </LinearGradient>
+        </Pressable>
+      }
+    >
       <View className="gap-3">
         <View className={row}>
           <Bell size={20} color="#fbbf24" />

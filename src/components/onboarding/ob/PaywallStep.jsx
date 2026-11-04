@@ -20,7 +20,7 @@ export function PaywallStep({ onNext, onBack }) {
 
   return (
     <ObShell
-      sub="Шаг 7 из 9"
+      sub="Шаг 4 из 5"
       title="NutriBear Premium"
       onBack={onBack}
       footer={
