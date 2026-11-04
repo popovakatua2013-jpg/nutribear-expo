@@ -6,7 +6,8 @@
 // листаются стрелками ‹ › (вперёд от текущего нельзя), тап по клетке
 // открывает сводку дня (DayDetailsModal остаётся на секции «Отчётов»).
 // Сетка как в GitHub: столбцы — недели, строки — дни недели Пн…Вс;
-// у калорий «перебор» подсвечен красным.
+// у калорий «перебор» подсвечен красным. Поверхность и шапка — в стиле
+// вкладки «Тело» (bear-bodyCard + чип с иконкой показателя).
 
 import { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -16,6 +17,7 @@ import { history } from '@/lib/data/activity'
 import { dayLevel } from '@/lib/data/reports'
 import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { BodyChip } from '../../ui/BodyChip'
 
 const CELL = 15 // размер клетки
 const GAP = 3 // промежуток
@@ -97,17 +99,20 @@ export function MetricHistoryPanel({ today, metricId = 'steps', days, rows, onPi
   return (
     <View
       accessibilityLabel={`История: ${metric.label}`}
-      className="rounded-3xl border border-white/5 bg-bear-card p-5"
+      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
     >
       {/* Шапка панели: показатель + свернуть */}
       <View className="flex-row items-center justify-between gap-2">
-        <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-            {`${metric.label} · история`}
-          </Text>
-          <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
-            Дни периода и календарь месяца · тап по дню — сводка дня
-          </Text>
+        <View className="min-w-0 flex-1 flex-row items-center gap-2">
+          <BodyChip icon={<metric.Icon size={15} />} />
+          <View className="min-w-0 flex-1">
+            <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+              {`${metric.label} · история`}
+            </Text>
+            <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+              Дни периода и календарь месяца · тап по дню — сводка дня
+            </Text>
+          </View>
         </View>
         <Pressable
           onPress={onCollapse}

@@ -16,6 +16,7 @@ import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { AboutCard } from '@/components/more/AboutCard'
 import { SoftGlow } from '@/components/ui/SoftGlow'
+import { BodyChip } from '@/components/ui/BodyChip'
 
 export default function MoreScreen() {
   const insets = useSafeAreaInsets()
@@ -34,11 +35,9 @@ export default function MoreScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Шапка экрана: иконка-чип + заголовок + подзаголовок */}
+        {/* Шапка экрана: иконка-чип (стиль «Тела») + заголовок + подзаголовок */}
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-            <Settings size={19} color="#A78BFA" />
-          </View>
+          <BodyChip icon={<Settings size={19} />} size={40} />
           <View className="min-w-0 flex-1">
             <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
               Ещё

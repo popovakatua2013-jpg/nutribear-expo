@@ -3,12 +3,15 @@
 // (useUiPrefsStore, AsyncStorage). Шапка: иконка + заголовок + короткая
 // сводка + шеврон. Слот right — для тумблеров: он ВНЕ нажимаемой шапки,
 // чтобы переключатель не сворачивал карточку. Тело рендерится только
-// в раскрытом виде.
+// в раскрытом виде. Поверхность и шапка — в стиле вкладки «Тело»
+// (фиолетовая bear-bodyCard, иконка — в градиентном чипе BodyChip):
+// карточки вкладки «Ещё» выглядят как карточки «Тела» (единый стиль).
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { BodyChip } from './BodyChip'
 
 export function CollapsibleCard({
   icon,
@@ -34,7 +37,7 @@ export function CollapsibleCard({
   return (
     <View
       accessibilityLabel={accessibilityLabel}
-      className="overflow-hidden rounded-3xl border border-white/5 bg-bear-card"
+      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
     >
       <View className="flex-row items-center">
         <Pressable
@@ -44,7 +47,7 @@ export function CollapsibleCard({
           accessibilityLabel={`${title}${open ? ' — свернуть' : ' — раскрыть'}`}
           className="min-w-0 flex-1 flex-row items-center gap-2.5 px-4 py-3.5 active:opacity-70"
         >
-          {icon}
+          {icon ? <BodyChip icon={icon} /> : null}
           <Text
             numberOfLines={1}
             className="min-w-0 flex-1 font-bold text-[15px] tracking-tight text-bear-text"

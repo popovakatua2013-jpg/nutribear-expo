@@ -23,7 +23,8 @@
 // порядок сбивался. Нормы БЖУ — свои из целей (маленький карандашик
 // в конце строки открывает окно правки), а если не заданы — «классическая
 // тарелка» (20/30/50% калорий), клетчатка — своя норма, иначе 25 г/день
-// (ВОЗ, FIBER_NORM).
+// (ВОЗ, FIBER_NORM). Карточка оформлена в стиле вкладки «Тело»
+// (фиолетовая поверхность bear-bodyCard + чип-иконка в шапке BodyChip).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -39,11 +40,12 @@ import {
 } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Droplet, Flame, Hexagon, Leaf, Pencil, X } from 'lucide-react-native'
+import { ChevronRight, Droplet, Flame, Hexagon, Leaf, Pencil, Utensils, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useToast } from '../ui/Toast'
+import { BodyChip } from '../ui/BodyChip'
 
 const MAX = 1.25
 const RING = 72
@@ -296,6 +298,9 @@ export function DailySummary({
   // Левая половина (кольцо + пилюля) — Pressable, когда умеет открывать
   // историю калорий (тап) или менять цель (долгий тап), иначе обычный View
   const Row = onEditKcalGoal || onOpenKcalHistory ? Pressable : View
+  // Строка «Итог» тоже тапабельна — открывает ту же историю калорий:
+  // крупная цель для пальца на весь итог дня (по запросу пользователя)
+  const NetRow = onOpenKcalHistory ? Pressable : View
   // Правое кольцо — Pressable для истории сжигания (тап) и правки цели
   // (долгий тап), иначе View
   const BurnZone = onEditBurnGoal || onOpenBurnHistory ? Pressable : View
@@ -310,12 +315,15 @@ export function DailySummary({
   return (
     <View
       accessibilityLabel="Сводка за день"
-      className="rounded-3xl border border-bear-line bg-bear-card p-4"
+      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4"
     >
       <View className="flex-row items-center justify-between gap-2">
-        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14.5px] tracking-tight text-bear-text">
-          Съедено за сегодня
-        </Text>
+        <View className="min-w-0 flex-row items-center gap-2">
+          <BodyChip icon={<Utensils size={15} />} />
+          <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14.5px] tracking-tight text-bear-text">
+            Съедено за сегодня
+          </Text>
+        </View>
         {streak > 0 ? (
           <View
             accessibilityLabel={`Стрик: ${streak} ${pluralDays(streak)} подряд`}
@@ -407,15 +415,17 @@ export function DailySummary({
 
       {/* итог дня с учётом активности: умный огонёк — зелёный при дефиците,
           жёлтый/красный при переборе; без карандаша — правка цели сжигания
-          осталась долгим тапом по кольцу «сожжено» */}
-      <View
+          осталась долгим тапом по кольцу «сожжено». Строка тапабельна —
+          открывает историю калорий по дням (та же, что у левого кольца) */}
+      <NetRow
+        onPress={onOpenKcalHistory}
+        accessibilityRole={onOpenKcalHistory ? 'button' : undefined}
         accessibilityLabel={
           `Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий, ` +
-          (overNet <= 0
-            ? 'в пределах цели'
-            : `перебор ${formatNum(Math.round(overNet))} килокалорий`)
+          (overNet <= 0 ? 'в пределах цели' : `перебор ${formatNum(Math.round(overNet))} килокалорий`) +
+          (onOpenKcalHistory ? '. Тап — история калорий по дням' : '')
         }
-        className="mt-2.5 flex-row items-center gap-2 rounded-2xl px-3 py-2.5"
+        className={`mt-2.5 flex-row items-center gap-2 rounded-2xl px-3 py-2.5 ${onOpenKcalHistory ? 'active:opacity-70' : ''}`}
         style={{ backgroundColor: netBg }}
       >
         <Flame size={13} color={netTone} />
@@ -428,7 +438,8 @@ export function DailySummary({
         >
           {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
         </Text>
-      </View>
+        {onOpenKcalHistory ? <ChevronRight size={14} color="#8B96B8" /> : null}
+      </NetRow>
 
       {/* нутриенты одной строкой в заданном порядке:
           1. Белки  2. Жиры  3. Углеводы  4. Клетчатка.

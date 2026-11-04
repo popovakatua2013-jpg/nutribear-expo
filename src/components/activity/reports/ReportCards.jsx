@@ -6,6 +6,9 @@
 // ниже (выбранная подсвечена рамкой в цвет метрики). Тап по карточке
 // «Вес» открывает вкладку ИМТ и докручивает до графика «Динамика веса».
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
+// Поверхности — в стиле вкладки «Тело»: градиент от цветного тинта
+// метрики к фиолетовой подложке (#1A123A — непрозрачный эквивалент
+// bear-bodyCard) и фиолетовая обводка неактивной карточки
 
 import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -42,12 +45,12 @@ function ReportCard({ m, cur, prev, days, best = 0, selected = false, onPress = 
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[`${m.color}${selected ? '2e' : '14'}`, '#121B33']}
+      colors={[`${m.color}${selected ? '2e' : '14'}`, '#1A123A']}
       style={{
         flex: 1,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: selected ? m.color : 'rgba(255,255,255,0.05)',
+        borderColor: selected ? m.color : 'rgba(168,85,247,0.30)',
         padding: 16,
       }}
     >
@@ -171,8 +174,8 @@ function WeightReportCard({ days }) {
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={['#a78bfa14', '#121B33']}
-      style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', padding: 16 }}
+      colors={['#a78bfa14', '#1A123A']}
+      style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(168,85,247,0.30)', padding: 16 }}
     >
       <View className="flex-row items-start gap-3">
         <View

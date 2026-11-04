@@ -14,6 +14,7 @@ import { Footprints } from 'lucide-react-native'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
 import { SoftGlow } from '@/components/ui/SoftGlow'
+import { BodyChip } from '@/components/ui/BodyChip'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
@@ -65,11 +66,9 @@ export default function ActivityScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Шапка экрана: иконка-чип + заголовок + подзаголовок */}
+        {/* Шапка экрана: иконка-чип (стиль «Тела») + заголовок + подзаголовок */}
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-            <Footprints size={19} color="#A78BFA" />
-          </View>
+          <BodyChip icon={<Footprints size={19} />} size={40} />
           <View className="min-w-0 flex-1">
             <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
               Активность

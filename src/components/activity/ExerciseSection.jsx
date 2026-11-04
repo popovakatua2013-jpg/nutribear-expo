@@ -4,7 +4,8 @@
 // интенсивность — приложение запоминает её между сессиями.
 // Сожжённые калории считаются по формуле MET, но значение можно
 // исправить вручную (например, по цифре с тренажёра или смарт-часов).
-// Тап по записи — изменение, корзина — удаление.
+// Тап по записи — изменение, корзина — удаление. Поверхность и шапка —
+// в стиле вкладки «Тело» (фиолетовая bear-bodyCard + чип BodyChip).
 
 import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -24,6 +25,7 @@ import {
 } from '@/lib/data/exercises'
 import { useToast } from '../ui/Toast'
 import { Pills } from '../ui/Pills'
+import { BodyChip } from '../ui/BodyChip'
 import { formatNum, makeId } from '@/lib/format'
 
 const KCAL_MAX = 10000
@@ -297,10 +299,10 @@ export function ExerciseSection() {
   }
 
   return (
-    <View accessibilityLabel="Тренировки" className="rounded-3xl border border-white/5 bg-bear-card p-5">
+    <View accessibilityLabel="Тренировки" className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5">
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-row items-center gap-2">
-          <Dumbbell size={18} color="#f472b6" />
+          <BodyChip icon={<Dumbbell size={15} />} />
           <Text className="font-bold text-[15px] tracking-tight text-bear-text">
             Тренировки
           </Text>

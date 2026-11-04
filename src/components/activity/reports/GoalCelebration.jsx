@@ -274,7 +274,7 @@ export function GoalCelebration() {
         onPress={openWeightModal}
         accessibilityRole="button"
         accessibilityLabel="Возвращаемся к результату — записать вес"
-        className="flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-bear-card p-4 active:opacity-80"
+        className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard p-4 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8DABFF]/15">
           <Target size={20} color="#8DABFF" />

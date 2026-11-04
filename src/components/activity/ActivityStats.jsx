@@ -14,6 +14,9 @@
 // из подвала окна истории), «Активность» — скролл к тренировкам.
 // Долгий тап по «Вода» и «Активность» — изменить цель прямо с главной.
 // «+» на шагах/воде добавляет 1 000 шагов / стакан воды.
+// Поверхность плиток — в стиле вкладки «Тело» (фиолетовая
+// bear-bodyCard); цветовая кодировка показателя остаётся в обводке,
+// градиентном чипе-иконке и кнопке «+»
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -51,7 +54,7 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
             ? `Открыть: ${label}`
             : undefined
       }
-      className={`flex-1 rounded-2xl border p-3 ${colors.border} ${colors.bg} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
+      className={`flex-1 rounded-2xl border bg-bear-bodyCard p-3 ${colors.border} ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
     >
       {/* шапка: иконка слева, «+»/кольцо справа */}
       <View className="flex-row items-center justify-between">
@@ -160,7 +163,6 @@ export function ActivityStats({
     {
       colors: {
         border: 'border-emerald-400/20',
-        bg: 'bg-emerald-400/[0.06]',
         icon: ['#34D399', '#16A34A'],
         btn: 'border-emerald-400/30 bg-emerald-400/10',
         tint: '#34D399',
@@ -177,7 +179,6 @@ export function ActivityStats({
     {
       colors: {
         border: 'border-sky-400/20',
-        bg: 'bg-sky-400/[0.06]',
         icon: ['#38BDF8', '#2563EB'],
         btn: 'border-sky-400/30 bg-sky-400/10',
         tint: '#38BDF8',
@@ -195,7 +196,6 @@ export function ActivityStats({
     {
       colors: {
         border: 'border-violet-400/20',
-        bg: 'bg-violet-400/[0.06]',
         icon: ['#A78BFA', '#9333EA'],
       },
       Icon: Dumbbell,

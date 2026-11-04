@@ -4,14 +4,16 @@
 // прошлому периоду — нейтральным серым (у БЖУ нет однозначного
 // «больше = лучше», в отличие от шагов). Журнал хранит ~900 записей
 // (около 2 месяцев) — самые старые дни 90-дневного периода могут
-// отсутствовать, они честно не входят в среднее.
+// отсутствовать, они честно не входят в среднее. Поверхность и шапка —
+// в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
 
 import { useMemo } from 'react'
 import { Text, View } from 'react-native'
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, Wheat } from 'lucide-react-native'
 import { changePct, nutrientTotals, nutrientsByDay } from '@/lib/data/reports'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
+import { BodyChip } from '../../ui/BodyChip'
 
 const round1 = (v) => Math.round(v * 10) / 10
 
@@ -60,12 +62,15 @@ export function NutrientsCard({ days }) {
   return (
     <View
       accessibilityLabel="Нутриенты за период"
-      className="rounded-3xl border border-white/5 bg-bear-card p-5"
+      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
     >
       <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Нутриенты
-        </Text>
+        <View className="min-w-0 flex-row items-center gap-2">
+          <BodyChip icon={<Wheat size={15} />} />
+          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+            Нутриенты
+          </Text>
+        </View>
         <View className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1">
           <Text className="font-semibold text-[11px] text-bear-soft">
             {`${cur.recorded} из ${days} дн. с едой`}

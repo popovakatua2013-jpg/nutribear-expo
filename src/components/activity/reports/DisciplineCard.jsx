@@ -3,10 +3,13 @@
 // есть любая запись (шаги, еда, вода, тренировка): дни полного молчания
 // не портят картину 30/90-дневных периодов. Данные — дневная история
 // (те же rows, что у карточек итогов), цели — из хранилища целей.
+// Поверхность и шапка — в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
 
 import { Text, View } from 'react-native'
+import { CalendarCheck } from 'lucide-react-native'
 import { discipline } from '@/lib/data/reports'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { BodyChip } from '../../ui/BodyChip'
 
 // Порядок и цвета — как в реестре метрик (steps/water/kcal)
 const LINES = [
@@ -31,12 +34,15 @@ export function DisciplineCard({ rows }) {
   return (
     <View
       accessibilityLabel="Дисциплина периода"
-      className="rounded-3xl border border-white/5 bg-bear-card p-5"
+      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
     >
       <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Дисциплина
-        </Text>
+        <View className="min-w-0 flex-row items-center gap-2">
+          <BodyChip icon={<CalendarCheck size={15} />} />
+          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+            Дисциплина
+          </Text>
+        </View>
         <View className={`shrink-0 rounded-full px-2.5 py-1 ${tone.chip}`}>
           <Text className={`font-semibold text-[11px] ${tone.text}`}>
             вели дневник {recorded} из {days} дней

@@ -6,7 +6,8 @@
 // блюдо в этот приём (отдельной кнопки «Добавить» нет — дубль).
 // Управление блюдами (правка, удаление) — по ссылке «Все»
 // (AllMealsModal). Сводка дня («Съедено за сегодня») — отдельным
-// блоком над карточкой.
+// блоком над карточкой. Поверхность — в стиле вкладки «Тело»
+// (фиолетовая bear-bodyCard + обводка bear-bodyLine).
 
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -25,7 +26,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   const rows = [MEALS.slice(0, 2), MEALS.slice(2, 4)]
 
   return (
-    <View accessibilityLabel="Приёмы пищи на сегодня" className="rounded-3xl border border-bear-line bg-bear-card p-4">
+    <View accessibilityLabel="Приёмы пищи на сегодня" className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4">
       <PlanHeader
         onViewAll={onViewAll}
         onHistory={() => setHistoryOpen(true)}

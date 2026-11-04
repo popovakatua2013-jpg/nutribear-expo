@@ -1,4 +1,5 @@
-// Шапка карточки «Приёмы пищи»: фиолетовый значок и заголовок.
+// Шапка карточки «Приёмы пищи»: фиолетовый чип-иконка BodyChip (стиль
+// вкладки «Тело») и заголовок.
 // Кнопки «+ Добавить» больше нет — добавление по тапу на плитку
 // приёма (завтрак/обед/ужин/перекус), дубли не нужны. Ниже — только
 // серые иконки-кнопки без подписей: «Повторить день» (выбор дня и
@@ -11,6 +12,7 @@ import { Pressable, Text, View } from 'react-native'
 import { Copy, History, UtensilsCrossed, ChevronRight, Hand } from 'lucide-react-native'
 import { PortionsModal } from './PortionsModal'
 import { RepeatDayModal } from './RepeatDayModal'
+import { BodyChip } from '../ui/BodyChip'
 
 // Серая иконка-кнопка без подписи; назначение — в accessibilityLabel
 function IconButton({ onPress, label, Icon }) {
@@ -39,7 +41,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
       {/* заголовок; добавление — тап по плитке приёма ниже */}
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
-          <UtensilsCrossed size={18} color="#A78BFA" />
+          <BodyChip icon={<UtensilsCrossed size={15} />} />
           <Text className="font-bold text-[15px] tracking-tight text-bear-text">
             Приёмы пищи
           </Text>

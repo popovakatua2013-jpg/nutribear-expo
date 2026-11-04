@@ -8,12 +8,14 @@
 // Расчёты — src/lib/data/nutrition.js; данные дня — дневник (entries),
 // месяца — журнал приёмов (history) со средними за день с записями.
 // Норма клетчатки — своя из целей «Съедено за сегодня» (если задана),
-// иначе 25 г/день (ВОЗ): и в балле, и в подписи строки.
+// иначе 25 г/день (ВОЗ): и в балле, и в подписи строки. Поверхность и
+// шапка — в стиле вкладки «Тело» (фиолетовая bear-bodyCard + BodyChip).
 
 import { useRef, useState } from 'react'
 import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Leaf } from 'lucide-react-native'
 import { ProgressBar } from '../ui/ProgressBar'
+import { BodyChip } from '../ui/BodyChip'
 import { formatNum } from '@/lib/format'
 import { round1 } from '@/lib/data/bju'
 import {
@@ -139,12 +141,12 @@ export function NutritionRating() {
   return (
     <View
       accessibilityLabel="Рейтинг питания"
-      className="rounded-3xl border border-bear-line bg-bear-card p-5"
+      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
     >
       {/* шапка: заголовок + переключатель День/Месяц */}
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2">
-          <Leaf size={18} color="#6EE7B7" />
+          <BodyChip icon={<Leaf size={15} />} />
           <Text className="font-bold text-[15px] tracking-tight text-bear-text">
             Рейтинг питания
           </Text>
