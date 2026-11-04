@@ -1,21 +1,48 @@
 // Карточка «Измерения тела» на вкладке «Тело» — оформление по макету
-// пользователя: компактный ряд чипов (цветная точка, название,
-// последний замер и Δ к предыдущему), прокручивается по горизонтали,
-// свои замеры — в том же ряду; справа в шапке — кнопка «Добавить».
-// Чип или «Добавить» открывают окно записи: значения подставлены
-// последними, меняем то, что измерили; в окне — «+ Свой замер».
+// пользователя: шапка-секция (иконка + заголовок + подзаголовок +
+// кнопка «+ Добавить»), ряд плиток замеров (цветная иконка, последний
+// замер и Δ к предыдущему, свои замеры — рядом), карточка «Общий
+// прогресс» (полукруглый датчик ScoreGauge, подпись и звёзды — оценка
+// bodyProgressScore из lib/data/bmi) и таблица «Измерение / Сегодня /
+// Изменение». Тап по плитке или строке открывает окно записи: значения
+// подставлены последними, меняем то, что измерили; в окне — «+ Свой
+// замер».
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { ArrowDownRight, ArrowUpRight, Trash2, X } from 'lucide-react-native'
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Donut,
+  Heart,
+  Hourglass,
+  Info,
+  Ruler,
+  Shirt,
+  Star,
+  StarHalf,
+  Trash2,
+  Waves,
+  X,
+} from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
-import { fmtDecimal } from '@/lib/data/bmi'
+import { bodyProgressScore, fmtDecimal } from '@/lib/data/bmi'
+import { ScoreGauge } from './ScoreGauge'
 import { useToast } from '../ui/Toast'
 
 const CUSTOM_COLOR = '#4ADE80'
 const MIN_CM = 20
 const MAX_CM = 300
+
+// Иконки плиток: весёлые «прозвища» замеров (шрифт-стайл мишки NutriBear)
+const MEAS_ICONS = {
+  chest: Shirt, // грудь
+  waist: Hourglass, // талия
+  belly: Donut, // живот
+  glutes: Heart, // попа
+  hips: Waves, // бёдра
+}
 
 // Полный список пунктов: встроенные + свои замеры
 function allItems(customs) {
@@ -32,23 +59,49 @@ const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
 const shortDay = (iso) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
 
+// Тон дельты: талия/живот — минус это прогресс (зелёный), плюс — красный;
+// остальные замеры и «нет изменений» — нейтральный серый
+function deltaTone(m, d) {
+  if (d == null || d === 0 || !m.slimGood) return '#8B96B8'
+  return d < 0 ? '#34D399' : '#FB7185'
+}
+
 export function MeasurementsCard() {
   const measurements = useProfileStore((s) => s.measurements)
   const customs = useProfileStore((s) => s.customMeasurements)
+  const weightKg = useProfileStore((s) => s.weightKg)
+  const heightCm = useProfileStore((s) => s.heightCm)
+  const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
+  const weights = useProfileStore((s) => s.weights)
   const [open, setOpen] = useState(false)
   const items = useMemo(() => allItems(customs), [customs])
 
+  // Оценка общего прогресса: вес к цели + динамика талии/живота +
+  // регулярность замеров (формула в lib/data/bmi.js)
+  const { score, caption, stars } = bodyProgressScore({
+    weightKg,
+    weights,
+    goalWeightKg,
+    heightCm,
+    measurements,
+  })
+
   return (
-    <View
-      accessibilityLabel="Замеры тела"
-      className="rounded-3xl border border-white/5 bg-bear-card p-5"
-    >
-      <View className="flex-row items-center justify-between gap-2">
+    <View accessibilityLabel="Замеры тела" className="gap-2.5">
+      {/* Шапка-секция: иконка + заголовок с подзаголовком + «+ Добавить» */}
+      <View className="flex-row items-center gap-2.5">
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
+          <Ruler size={18} color="#A78BFA" />
+        </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[17px] tracking-tight text-bear-text">
             Измерения тела
           </Text>
-          <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="mt-0.5 font-sans text-[10.5px] text-bear-sub"
+          >
             Сантиметром — тап по чипу или «Добавить»
           </Text>
         </View>
@@ -56,18 +109,17 @@ export function MeasurementsCard() {
           onPress={() => setOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Записать замеры"
-          className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 active:opacity-70"
+          className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-[7px] active:opacity-70"
         >
-          <Text className="font-bold text-[11.5px] text-[#8DABFF]">+ Добавить</Text>
+          <Text className="font-bold text-[11px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
       </View>
 
-      {/* Чипы: последний замер + изменение к предыдущему; ряд прокручивается,
-          если замеров больше, чем влезает (свои — рядом с встроенными) */}
+      {/* Плитки замеров: последний замер + Δ к предыдущему; ряд
+          прокручивается, если замеров больше, чем влезает */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="mt-3"
         contentContainerStyle={{ gap: 8, paddingRight: 4 }}
       >
         {items.map((m) => {
@@ -75,15 +127,8 @@ export function MeasurementsCard() {
           const last = list[0] || null
           const prev = list[1] || null
           const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
-          // Талия/живот: минус — прогресс (зелёный), плюс — красный.
-          // Остальные замеры (грудь/попа/бёдра/свои) — нейтральный серый
-          const tone =
-            d == null || d === 0 || !m.slimGood
-              ? '#8B96B8'
-              : d < 0
-                ? '#34D399'
-                : '#FB7185'
-          const Arrow = d > 0 ? ArrowUpRight : ArrowDownRight
+          const tone = deltaTone(m, d)
+          const Icon = m.custom ? Ruler : MEAS_ICONS[m.key] || Ruler
 
           return (
             <Pressable
@@ -91,42 +136,39 @@ export function MeasurementsCard() {
               onPress={() => setOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
-              className="rounded-2xl border border-white/5 bg-white/[0.04] px-3 py-2.5 active:opacity-70"
-              style={{ width: 106 }}
+              className="w-[112px] shrink-0 rounded-2xl border border-white/5 bg-bear-card p-3 active:opacity-70"
             >
-              <View className="flex-row items-center gap-1.5">
-                <View
-                  style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: m.color }}
-                />
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-sans text-[10.5px] text-bear-sub"
-                >
-                  {m.label}
-                </Text>
+              <View
+                className="h-8 w-8 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `${m.color}22` }}
+              >
+                <Icon size={15} color={m.color} />
               </View>
 
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="mt-1 font-extrabold text-[15.5px] tracking-tight text-bear-text"
+                className="mt-1.5 font-sans text-[10px] text-bear-sub"
+              >
+                {m.label}
+              </Text>
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="mt-0.5 font-extrabold text-[15px] tracking-tight text-bear-text"
               >
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
 
-              <View className="mt-0.5 flex-row items-center gap-0.5">
-                {d != null && d !== 0 && <Arrow size={10} color={tone} />}
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-semibold text-[10px]"
-                  style={{ color: tone }}
-                >
+              <View
+                className="mt-1.5 self-start rounded-full px-1.5 py-[2px]"
+                style={{ backgroundColor: `${tone}1f` }}
+              >
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[9px]" style={{ color: tone }}>
                   {d == null
                     ? last
                       ? `от ${shortDay(last.date)}`
-                      : 'нет замеров'
+                      : 'нет данных'
                     : d === 0
                       ? 'без измен.'
                       : `${d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(d))} см`}
@@ -137,7 +179,122 @@ export function MeasurementsCard() {
         })}
       </ScrollView>
 
+      {/* Общий прогресс: датчик + подпись + звёзды (85 → 4.5★, как на макете) */}
+      <View className="flex-row items-center gap-2 rounded-2xl border border-white/5 bg-bear-card p-3.5">
+        <ScoreGauge score={score} />
+        <View className="min-w-0 flex-1">
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
+            Общий прогресс
+          </Text>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="mt-0.5 font-bold text-[14.5px] text-bear-text"
+          >
+            {caption}
+          </Text>
+          <Stars value={stars} />
+          <Text
+            numberOfLines={2}
+            maxFontSizeMultiplier={1.25}
+            className="mt-1 font-sans text-[9.5px] leading-snug text-bear-dim"
+          >
+            Вес к цели, динамика талии и регулярность замеров
+          </Text>
+        </View>
+      </View>
+
+      {/* Таблица «Измерение / Сегодня / Изменение» — все замеры списком */}
+      <View className="rounded-2xl border border-white/5 bg-bear-card px-4 py-2">
+        <View className="flex-row items-center border-b border-white/[0.06] py-2.5">
+          <Text className="min-w-0 flex-1 font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+            Измерение
+          </Text>
+          <Text className="w-[72px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+            Сегодня
+          </Text>
+          <Text className="w-[84px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+            Изменение
+          </Text>
+        </View>
+        {items.map((m, i) => {
+          const list = measurements[m.key] || []
+          const last = list[0] || null
+          const prev = list[1] || null
+          const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
+          const tone = deltaTone(m, d)
+          const Arrow = d > 0 ? ArrowUpRight : ArrowDownRight
+
+          return (
+            <Pressable
+              key={m.key}
+              onPress={() => setOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
+              className={`flex-row items-center py-2.5 active:opacity-70 ${
+                i < items.length - 1 ? 'border-b border-white/[0.05]' : ''
+              }`}
+            >
+              <View className="min-w-0 flex-1 flex-row items-center gap-2">
+                <View
+                  style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: m.color }}
+                />
+                <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
+                  className="min-w-0 flex-1 font-semibold text-[12px] text-bear-text"
+                >
+                  {m.label}
+                </Text>
+                {m.custom && <Info size={11} color="#8B96B8" />}
+              </View>
+              <Text className="w-[72px] text-right font-bold text-[12px] text-bear-text">
+                {last ? `${fmtDecimal(last.cm)} см` : '—'}
+              </Text>
+              <View className="w-[84px] flex-row items-center justify-end gap-0.5">
+                {d != null && d !== 0 && <Arrow size={11} color={tone} />}
+                <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
+                  className="font-semibold text-[10.5px]"
+                  style={{ color: tone }}
+                >
+                  {d == null
+                    ? '—'
+                    : d === 0
+                      ? 'без изм.'
+                      : `${d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(d))} см`}
+                </Text>
+              </View>
+            </Pressable>
+          )
+        })}
+      </View>
+
       <MeasurementsModal open={open} onClose={() => setOpen(false)} />
+    </View>
+  )
+}
+
+// Звёзды 0…5 с половинками: 4.5 — четыре золотых + пол-звезды
+function Stars({ value }) {
+  const full = Math.floor(value)
+  const half = value - full >= 0.5
+  const DIM = 'rgba(255,255,255,0.14)'
+  return (
+    <View className="mt-1 flex-row items-center gap-0.5" accessibilityLabel={`Оценка: ${value} из 5 звёзд`}>
+      {[0, 1, 2, 3, 4].map((i) => {
+        if (i < full) return <Star key={i} size={13} color="#FACC15" fill="#FACC15" />
+        if (i === full && half) {
+          return (
+            <View key={i} className="h-[13px] w-[13px] items-center justify-center">
+              <Star size={13} color={DIM} fill={DIM} style={{ position: 'absolute' }} />
+              <StarHalf size={13} color="#FACC15" fill="#FACC15" />
+            </View>
+          )
+        }
+        return <Star key={i} size={13} color={DIM} fill={DIM} />
+      })}
     </View>
   )
 }

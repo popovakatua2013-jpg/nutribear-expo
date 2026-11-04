@@ -7,12 +7,12 @@ import { memo } from 'react'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { fmtDecimal } from '@/lib/data/bmi'
 
-function WeightChartImpl({ data, goalKg = null, lastBadge = false }) {
+function WeightChartImpl({ data, goalKg = null, lastBadge = false, height = 150 }) {
   return (
     <SvgAreaChart
       data={data.map((d) => ({ label: d.label, value: d.kg }))}
       color="#4ade80"
-      height={150}
+      height={height}
       yFmt={(v) => `${Math.round(v)}`}
       goalLine={goalKg}
       lastBadge={lastBadge}

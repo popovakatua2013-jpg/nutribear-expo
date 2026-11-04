@@ -253,6 +253,160 @@ export function kgToNextCategory(weightKg, heightCm) {
   }
 }
 
+// ─── «Общий прогресс» тела и поддержка под графиком веса ────────────
+
+// Подпись-поддержка под графиком веса («Ваш вес стабилен…», как на
+// макете). delta — изменение веса за выбранный период в кг,
+// towardGoal — движется ли вес к цели (true — к цели, false — от цели,
+// null/undefined — цели нет), goalReached — цель уже достигнута.
+// Тон: stable — всё спокойно (зелёный лайк), good — похвала,
+// bad — мягкая поддержка без оценщины
+export function weightStrip({ delta = 0, towardGoal = null, goalReached = false }) {
+  if (goalReached) {
+    return {
+      tone: 'good',
+      title: 'Цель достигнута!',
+      text: 'Удерживайте результат — взвешивайтесь раз в неделю.',
+    }
+  }
+  if (delta === 0) {
+    return {
+      tone: 'stable',
+      title: 'Ваш вес стабилен',
+      text: 'Отличная работа! Продолжайте в том же духе.',
+    }
+  }
+  if (towardGoal === true) {
+    return {
+      tone: 'good',
+      title: 'Вес движется к цели',
+      text: 'Отличный темп — продолжайте в том же духе!',
+    }
+  }
+  if (towardGoal === false) {
+    return {
+      tone: 'bad',
+      title: 'Вес уходит от цели',
+      text: 'Не сдавайтесь — регулярность важнее скорости!',
+    }
+  }
+  // Цели нет — нейтрально по направлению динамики
+  if (delta < 0) {
+    return {
+      tone: 'good',
+      title: 'Вес пошёл вниз',
+      text: 'Отличный сдвиг — продолжайте в том же духе!',
+    }
+  }
+  return {
+    tone: 'stable',
+    title: 'Вес пошёл вверх',
+    text: 'Следите за динамикой — дневник и замеры помогут.',
+  }
+}
+
+// Оценка «Общий прогресс» 0–100 для карточки замеров. Три части:
+//   вес (до 60) — пройденный путь от первого измерения к цели
+//   (работает и на похудение, и на набор); без цели — позиция ИМТ
+//   (норма 60 → ожирение II–III 12); цель есть, динамики ещё нет — 24;
+//   замеры (до 25) — талия и живот: минус сантиметры = прогресс
+//   (−1 см и больше — 12.5, чуть меньше — 9, на месте — 6, плюс — 3,
+//   динамики пока нет — 4);
+//   регулярность (до 15) — замеры с данными (по 4, максимум 12) и
+//   свежая запись веса за последние 7 дней (+3).
+export function bodyProgressScore({
+  weightKg = 0,
+  weights = [],
+  goalWeightKg = null,
+  heightCm = 0,
+  measurements = {},
+  now = new Date(),
+}) {
+  const clamp01 = (x) => Math.min(1, Math.max(0, x))
+
+  // ВЕС
+  const oldest = weights.length ? weights[weights.length - 1] : null
+  const atGoal = goalWeightKg != null && Math.abs(weightKg - goalWeightKg) < 0.05
+  const hasPath =
+    goalWeightKg != null &&
+    oldest &&
+    weights.length >= 2 &&
+    Math.abs(oldest.kg - goalWeightKg) > 0.05
+  let weightPart
+  if (atGoal) {
+    weightPart = 60
+  } else if (hasPath) {
+    weightPart = clamp01((oldest.kg - weightKg) / (oldest.kg - goalWeightKg)) * 60
+  } else if (goalWeightKg != null) {
+    weightPart = 24
+  } else {
+    weightPart =
+      { norm: 60, low: 36, over: 32, obese1: 20, obese2: 12 }[
+        bmiCategory(calcBmi(weightKg, heightCm)).id
+      ] ?? 24
+  }
+
+  // ЗАМЕРЫ: талия/живот — «похудательные», минус сантиметры это прогресс
+  let measurePart = 0
+  for (const key of ['waist', 'belly']) {
+    const list = measurements[key] || []
+    if (list.length >= 2) {
+      const d = Math.round((list[0].cm - list[list.length - 1].cm) * 10) / 10
+      measurePart += d <= -1 ? 12.5 : d < 0 ? 9 : d === 0 ? 6 : 3
+    } else {
+      measurePart += 4
+    }
+  }
+
+  // РЕГУЛЯРНОСТЬ: замеры с данными + свежий вес за последние 7 дней
+  const withData = Object.keys(measurements).filter(
+    (k) => (measurements[k] || []).length > 0
+  )
+  let regularity = Math.min(3, withData.length) * 4
+  if (weights[0]?.date && now - new Date(weights[0].date) <= 7 * 86400000) {
+    regularity += 3
+  }
+
+  const score = Math.round(
+    Math.min(100, Math.max(0, weightPart + measurePart + regularity))
+  )
+  return { score, caption: scoreCaption(score), stars: scoreStars(score) }
+}
+
+// Подпись к оценке «Общего прогресса» по шкале
+export function scoreCaption(score) {
+  if (score >= 85) return 'Отличный прогресс!'
+  if (score >= 65) return 'Хороший результат!'
+  if (score >= 40) return 'Есть движение!'
+  return 'Начало положено!'
+}
+
+// Звёзды 0…5 с шагом 0,5 (85 баллов → 4.5, как на макете)
+export function scoreStars(score) {
+  return Math.round((Math.min(100, Math.max(0, score)) / 20) * 2) / 2
+}
+
+// ─── Совет дня ───────────────────────────────────────────────────────
+
+// Восемь советов про вес, замеры и регулярность — один на день
+export const TIPS_OF_DAY = [
+  'Регулярные измерения помогают лучше отслеживать прогресс.',
+  'Взвешивайтесь утром натощак — так цифры честнее.',
+  'Талия уменьшается даже тогда, когда вес стоит: замеры не врут.',
+  'Один сантиметр с талии — это примерно минус килограмм жира.',
+  'Стакан воды перед едой — проще держать норму калорий.',
+  'Прогулка после ужина помогает и весам, и сну.',
+  'Фото-прогресс раз в месяц видит то, что цифры скрывают.',
+  'Ставьте цель по весу — путь короче, а мотивация крепче.',
+]
+
+// Совет дня: по дню года — один и тот же в течение суток
+export function tipOfDay(now = new Date()) {
+  const start = new Date(now.getFullYear(), 0, 0)
+  const doy = Math.floor((now.getTime() - start.getTime()) / 86400000)
+  return TIPS_OF_DAY[doy % TIPS_OF_DAY.length]
+}
+
 // Сколько полных недель ИМТ держится в «Норме» — для бейджа у кольца.
 // Считаем по журналу: идём от свежих измерений назад и ищем последнее,
 // при котором ИМТ был вне нормы; стрик начинается со следующего дня.

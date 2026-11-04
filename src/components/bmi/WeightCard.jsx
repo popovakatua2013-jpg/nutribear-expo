@@ -1,17 +1,32 @@
 // Карточка «Динамика веса» — оформление по макету пользователя:
-// заголовок с кнопкой «+» (модалка записи веса), пилюли периода
-// (неделя/месяц/всё), ряд «вес сейчас + цель» с бейджем
-// «Достигнуто!», график на всю ширину с плашкой значения над
-// последней точкой и золотым пунктиром цели; ниже — два столбца:
-// «Журнал измерений» (тап по записи — изменить, корзина — удалить)
-// и «Прогресс» (кольцо % пути к цели, общий Δ кг с первого измерения
-// и короткая поддержка). Кольцо считается от первого измерения:
-// пройдено (старт − сейчас) / (старт − цель).
+// шапка-секция (иконка + заголовок + пилюля периода с дропдауном
+// «Неделя / Месяц / Всё»), ниже ряд: слева узкая карточка «Текущий
+// вес» с целью и кнопкой «Задать цель», справа — карточка с пилюлей
+// «Изменение: N кг», зелёным графиком с днями и внутренней строкой-
+// поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi).
+// Журнал измерений свёрнут в строку «Журнал измерений · N» — тап
+// раскрывает список (тап по записи — изменить, корзина — удалить).
+// Кольцо «Прогресс» из старой карточки переехало в блок замеров
+// («Общий прогресс», MeasurementsCard) — карточка стала легче.
 
 import { useEffect, useState } from 'react'
 import { Alert, DeviceEventEmitter, Modal, Pressable, Text, TextInput, View } from 'react-native'
-import Svg, { Circle, Text as SvgText } from 'react-native-svg'
-import { TrendingDown, TrendingUp, Plus, Trash2, X } from 'lucide-react-native'
+import {
+  Activity,
+  Calendar,
+  ChartLine,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Target,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { goalRewardAfterSave } from '@/lib/goal'
 import { consumeOpenWeightModal } from '@/lib/navEvents'
@@ -22,13 +37,13 @@ import {
   healthyRange,
   fmtDecimal,
   shortDateNum,
+  weightStrip,
 } from '@/lib/data/bmi'
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
-import { fontFamilies } from '../home/ring-font'
 
-const HIST_VISIBLE = 4 // строк журнала в столбце до «Ещё N»
+const HIST_VISIBLE = 4 // строк журнала до «Ещё N»
 
 const PERIODS = [
   { id: 'week', label: 'Неделя' },
@@ -55,6 +70,8 @@ export function WeightCard() {
   const [open, setOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [period, setPeriod] = useState('week')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [journalOpen, setJournalOpen] = useState(false)
   const [editing, setEditing] = useState(null) // измерение на изменении
   const [kgText, setKgText] = useState('')
 
@@ -76,43 +93,33 @@ export function WeightCard() {
         ? allPts
         : weekWeights(weightKg, weights)
   const last = data[data.length - 1]
-  const weekDelta = Math.round((last.kg - data[0].kg) * 10) / 10
+  const periodDelta = Math.round((last.kg - data[0].kg) * 10) / 10
 
-  // Зелёный — вес движется к норме, красный — в сторону
+  // Зелёный — вес движется к норме, красный — в сторону (без цели)
   const { min, max } = healthyRange(heightCm)
   const towardNorm =
-    (weekDelta < 0 && last?.kg >= min) || (weekDelta > 0 && last?.kg <= max)
+    (periodDelta < 0 && last?.kg >= min) || (periodDelta > 0 && last?.kg <= max)
 
   // Прогресс к цели: «до цели −3,5 кг» или «Цель достигнута!»
   const goalDiff =
     goalWeightKg != null ? Math.round((weightKg - goalWeightKg) * 10) / 10 : 0
   const goalReached = goalWeightKg != null && Math.abs(goalDiff) < 0.05
 
-  // Общий ход с первого измерения и % пути к цели (для карточки «Прогресс»):
-  // пройдено (старт − сейчас) / (старт − цель) — работает и на похудение,
-  // и на набор; без цели кольца нет — только Δ кг
+  // Движение к цели по направлению общего хода с первого измерения
   const oldest = weights.length > 0 ? weights[weights.length - 1] : null
   const deltaAll = oldest ? Math.round((weightKg - oldest.kg) * 10) / 10 : null
   const towardGoal =
     goalReached || (goalWeightKg != null && deltaAll != null
       ? goalDiff > 0.05 ? deltaAll < 0 : goalDiff < -0.05 ? deltaAll > 0 : true
       : null)
-  const progressPct = goalReached
-    ? 100
-    : goalWeightKg != null && oldest && Math.abs(oldest.kg - goalWeightKg) > 0.05
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round(((oldest.kg - weightKg) / (oldest.kg - goalWeightKg)) * 100)
-          )
-        )
-      : null
-  const motivation = goalReached
-    ? 'Цель достигнута — удерживай результат!'
-    : towardGoal
-      ? 'Ты на верном пути — продолжай!'
-      : 'Главное — регулярность, всё получится!'
+
+  // Строка-поддержка: с целью — по движению к цели, без цели — по норме
+  const strip = weightStrip({
+    delta: periodDelta,
+    towardGoal: goalWeightKg != null ? towardGoal : periodDelta === 0 ? null : towardNorm,
+    goalReached,
+  })
+  const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
 
   function handleSave({ heightCm: h, weightKg: w, weightChanged, goalKg }) {
     // Награда за достижение цели: чистые правила в lib/goal.js — при смене
@@ -159,134 +166,246 @@ export function WeightCard() {
   }
 
   return (
-    <View accessibilityLabel="Динамика веса" className="rounded-3xl border border-white/5 bg-bear-card p-5">
-      <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+    <View accessibilityLabel="Динамика веса" className="gap-2.5">
+      {/* Шапка-секция: иконка + заголовок + пилюля периода (дропдаун) */}
+      <View className="flex-row items-center gap-2.5">
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
+          <ChartLine size={18} color="#7DD3FC" />
+        </View>
+        <Text className="min-w-0 flex-1 font-bold text-[17px] tracking-tight text-bear-text">
           Динамика веса
         </Text>
+
+        {/* Записать вес: круглый «+» (модалка веса) */}
         <Pressable
           onPress={() => setOpen(true)}
           accessibilityLabel="Записать вес"
-          className="h-7 w-7 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+          className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
         >
-          <Plus size={16} color="rgba(255,255,255,0.8)" />
+          <Plus size={15} color="#A78BFA" />
         </Pressable>
-      </View>
 
-      {/* Период графика: неделя / месяц / весь журнал */}
-      <View className="mt-2 flex-row gap-1.5">
-        {PERIODS.map((p) => {
-          const active = period === p.id
-          return (
+        {/* Период графика: пилюля с дропдауном, как на макете */}
+        <View>
+          {menuOpen && (
+            // Невидимая шторка на тап мимо меню — закрывает дропдаун
             <Pressable
-              key={p.id}
-              onPress={() => setPeriod(p.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`Период графика: ${p.label}`}
-              className={`rounded-full px-3 py-1 active:opacity-70 ${active ? 'bg-white/15' : 'bg-white/5'}`}
-            >
-              <Text
-                className={`font-semibold text-[11px] ${active ? 'text-white' : 'text-bear-sub'}`}
-              >
-                {p.label}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {/* Вес сейчас и цель — ряд как на макете: большой вес и тренд
-          слева, цель с бейджем справа (тап — окно записи веса) */}
-      <View className="mt-3 flex-row items-end justify-between gap-3">
-        <View className="min-w-0">
-          <Text className="font-extrabold text-[24px] leading-tight tracking-tight text-bear-text">
-            {fmtDecimal(weightKg)}
-            <Text className="font-semibold text-[13px] text-bear-sub2"> кг</Text>
-          </Text>
-          <View className="mt-1 flex-row items-center gap-1">
-            {weekDelta < 0 && <TrendingDown size={14} color={towardNorm ? '#34d399' : '#fb7185'} />}
-            {weekDelta > 0 && <TrendingUp size={14} color={towardNorm ? '#34d399' : '#fb7185'} />}
-            <Text
-              className={`font-semibold text-[12px] ${
-                weekDelta === 0 ? 'text-bear-sub2' : towardNorm ? 'text-emerald-400' : 'text-rose-400'
-              }`}
-            >
-              {weekDelta === 0
-                ? 'без изм.'
-                : `${weekDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(weekDelta))} кг`}
-            </Text>
-            <Text numberOfLines={1} className="font-sans text-[10px] text-bear-dim">
-              {`· ${DELTA_CAPTION[period]}`}
-            </Text>
-          </View>
-        </View>
-
-        {goalWeightKg != null ? (
+              accessibilityLabel="Закрыть выбор периода"
+              onPress={() => setMenuOpen(false)}
+              style={{ position: 'absolute', top: -999, left: -999, right: -999, bottom: -999 }}
+            />
+          )}
           <Pressable
-            onPress={() => setOpen(true)}
-            accessibilityLabel={
-              goalReached
-                ? 'Цель по весу достигнута — нажмите, чтобы изменить'
-                : 'Цель по весу — нажмите, чтобы изменить'
-            }
-            className="shrink-0 items-end active:opacity-70"
+            onPress={() => setMenuOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={`Период графика: ${PERIODS.find((p) => p.id === period)?.label}. Нажмите, чтобы изменить`}
+            className="flex-row items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-[7px] active:opacity-70"
           >
-            <Text className="font-sans text-[11px] text-bear-sub">
-              Цель {fmtDecimal(goalWeightKg)} кг
+            <Calendar size={11} color="#A78BFA" />
+            <Text className="font-semibold text-[11px] text-[#D6DCF2]">
+              {PERIODS.find((p) => p.id === period)?.label}
             </Text>
-            {goalReached ? (
-              <View
-                className="mt-1 rounded-full px-2 py-[3px]"
-                style={{ backgroundColor: 'rgba(52,211,153,0.14)' }}
-              >
-                <Text numberOfLines={1} className="font-bold text-[10.5px] text-emerald-300">
-                  {goalReachedAt
-                    ? `Достигнуто · ${shortDateNum(new Date(goalReachedAt))}`
-                    : 'Достигнуто!'}
-                </Text>
-              </View>
+            {menuOpen ? (
+              <ChevronUp size={12} color="#A5AECB" />
             ) : (
-              <View
-                className="mt-1 rounded-full px-2 py-[3px]"
-                style={{ backgroundColor: 'rgba(141,171,255,0.13)' }}
-              >
-                <Text numberOfLines={1} className="font-bold text-[10.5px] text-[#8DABFF]">
-                  {`до цели ${goalDiff > 0 ? '−' : '+'}${fmtDecimal(Math.abs(goalDiff))} кг`}
-                </Text>
-              </View>
+              <ChevronDown size={12} color="#A5AECB" />
             )}
           </Pressable>
-        ) : (
+
+          {menuOpen && (
+            <View
+              className="absolute right-0 top-9 z-10 w-[124px] overflow-hidden rounded-2xl border border-white/10 bg-bear-pop py-1"
+              style={{ elevation: 16 }}
+            >
+              {PERIODS.map((p) => {
+                const active = period === p.id
+                return (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => {
+                      setPeriod(p.id)
+                      setMenuOpen(false)
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Период графика: ${p.label}`}
+                    className="flex-row items-center justify-between px-3 py-2 active:opacity-60"
+                  >
+                    <Text
+                      className={`font-semibold text-[12px] ${active ? 'text-white' : 'text-bear-sub'}`}
+                    >
+                      {p.label}
+                    </Text>
+                    {active && <Check size={13} color="#A78BFA" />}
+                  </Pressable>
+                )
+              })}
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Ряд: узкая карточка веса/цели + карточка с графиком */}
+      <View className="flex-row items-stretch gap-2.5">
+        {/* Текущий вес + цель + кнопка «Задать цель»; тап по весу — запись */}
+        <View className="w-[122px] shrink-0 rounded-2xl border border-white/5 bg-bear-card p-3.5">
           <Pressable
             onPress={() => setOpen(true)}
-            accessibilityLabel="Задать цель по весу"
-            className="shrink-0 items-end active:opacity-70"
+            accessibilityLabel="Записать вес"
+            className="active:opacity-70"
           >
-            <Text className="font-sans text-[11px] text-bear-sub">Цель не задана</Text>
-            <View
-              className="mt-1 rounded-full px-2 py-[3px]"
-              style={{ backgroundColor: 'rgba(141,171,255,0.13)' }}
-            >
-              <Text className="font-bold text-[10.5px] text-[#8DABFF]">Задать цель</Text>
-            </View>
+            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
+              Текущий вес
+            </Text>
+            <Text className="mt-1.5 font-extrabold text-[25px] leading-none tracking-tight text-bear-text">
+              {fmtDecimal(weightKg)}
+              <Text className="font-semibold text-[12px] text-bear-sub2"> кг</Text>
+            </Text>
           </Pressable>
-        )}
+
+          <View className="mt-2 flex-row items-center gap-1">
+            {periodDelta < 0 && (
+              <TrendingDown size={12} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+            )}
+            {periodDelta > 0 && (
+              <TrendingUp size={12} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+            )}
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+              className="font-semibold text-[10.5px]"
+              style={{ color: toneColor }}
+            >
+              {periodDelta === 0
+                ? 'без изменений'
+                : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
+            </Text>
+          </View>
+          <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[9px] text-bear-dim">
+            {DELTA_CAPTION[period]}
+          </Text>
+
+          <View className="my-2.5 h-px bg-white/[0.06]" />
+
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
+            Цель
+          </Text>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="mt-0.5 font-bold text-[13px] text-bear-text"
+          >
+            {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
+          </Text>
+
+          <Pressable
+            onPress={() => setOpen(true)}
+            accessibilityLabel={goalWeightKg != null ? 'Изменить цель по весу' : 'Задать цель по весу'}
+            className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] py-2 active:opacity-70"
+          >
+            <Target size={12} color="#8DABFF" />
+            <Text className="font-bold text-[10.5px] text-[#8DABFF]">
+              {goalWeightKg != null ? 'Изменить' : 'Задать цель'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* График + строка-поддержка */}
+        <View className="min-w-0 flex-1 rounded-2xl border border-white/5 bg-bear-card p-3">
+          {/* Пилюля изменения за период: точка в цвет тона */}
+          <View
+            className="self-start rounded-full bg-white/[0.06] px-2.5 py-1"
+            accessibilityLabel={`Изменение веса ${DELTA_CAPTION[period]}: ${
+              periodDelta === 0 ? '0 кг' : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
+            }`}
+          >
+            <View className="flex-row items-center gap-1.5">
+              <View
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: toneColor,
+                }}
+              />
+              <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[10.5px] text-bear-sub">
+                {`Изменение: ${
+                  periodDelta === 0
+                    ? '0 кг'
+                    : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
+                }`}
+              </Text>
+            </View>
+          </View>
+
+          <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
+
+          {/* Строка-поддержка: «Ваш вес стабилен…» с лайком */}
+          <View
+            accessibilityLabel={`${strip.title}. ${strip.text}`}
+            className="mt-0.5 flex-row items-center gap-2 rounded-xl bg-white/[0.04] p-2.5"
+          >
+            <View
+              className="h-7 w-7 shrink-0 items-center justify-center rounded-full"
+              style={{
+                backgroundColor:
+                  strip.tone === 'bad' ? 'rgba(251,191,36,0.14)' : 'rgba(56,189,248,0.14)',
+              }}
+            >
+              <Activity
+                size={14}
+                color={strip.tone === 'bad' ? '#FBBF24' : '#38BDF8'}
+              />
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="font-bold text-[11.5px] text-bear-text"
+              >
+                {strip.title}
+              </Text>
+              <Text
+                numberOfLines={2}
+                maxFontSizeMultiplier={1.25}
+                className="font-sans text-[9.5px] leading-snug text-bear-sub"
+              >
+                {strip.text}
+              </Text>
+            </View>
+            {strip.tone === 'bad' ? (
+              <ThumbsDown size={20} color="#FBBF24" />
+            ) : (
+              <ThumbsUp size={20} color="#4ADE80" />
+            )}
+          </View>
+        </View>
       </View>
 
-      {/* График на всю ширину: над последней точкой — плашка значения,
-          цель — золотой пунктир (как на макете) */}
-      <View className="mt-1">
-        <WeightChart data={data} goalKg={goalWeightKg} lastBadge />
-      </View>
-
-      {/* Журнал измерений + «Прогресс» — два столбца, как на макете.
+      {/* Журнал измерений: свёрнут в строку, тап раскрывает список.
           Тап по записи — окно изменения, корзина — удалить */}
       {weights.length > 0 && (
-        <View className="mt-1 flex-row items-stretch gap-3">
-          <View className="min-w-0 flex-1">
-            <Text className="px-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-bear-sub">
+        <View>
+          <Pressable
+            onPress={() => setJournalOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              journalOpen
+                ? 'Скрыть журнал измерений'
+                : `Журнал измерений, записей: ${weights.length} — открыть`
+            }
+            className="flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3.5 py-2.5 active:opacity-70"
+          >
+            <Text className="font-semibold text-[11.5px] text-bear-sub">
               {`Журнал измерений · ${weights.length}`}
             </Text>
+            {journalOpen ? (
+              <ChevronUp size={14} color="#A5AECB" />
+            ) : (
+              <ChevronDown size={14} color="#A5AECB" />
+            )}
+          </Pressable>
+
+          {journalOpen && (
             <View className="mt-1.5 gap-1">
               {(showAll ? weights : weights.slice(0, HIST_VISIBLE)).map((w) => (
                 <Pressable
@@ -302,7 +421,10 @@ export function WeightCard() {
                   <Text className="shrink-0 font-sans text-[11px] text-bear-dim">
                     {shortDay(w.date)}
                   </Text>
-                  <Text numberOfLines={1} className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text">
+                  <Text
+                    numberOfLines={1}
+                    className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text"
+                  >
                     {fmtDecimal(w.kg)} кг
                   </Text>
                   <Pressable
@@ -328,44 +450,7 @@ export function WeightCard() {
                 </Pressable>
               )}
             </View>
-          </View>
-
-          {/* Прогресс: кольцо % пути к цели (от первого измерения),
-              общий Δ кг и короткая поддержка */}
-          <View
-            accessibilityLabel={
-              progressPct != null
-                ? `Прогресс к цели: ${progressPct}%, ${motivation}`
-                : motivation
-            }
-            className="w-[116px] shrink-0 rounded-2xl border border-bear-bodyLine bg-white/[0.04] p-3"
-          >
-            <Text className="text-center font-sans text-[10px] font-semibold uppercase tracking-wide text-bear-sub">
-              Прогресс
-            </Text>
-            {progressPct != null && (
-              <View className="mt-1 items-center">
-                <MiniRing pct={progressPct} />
-              </View>
-            )}
-            <Text
-              numberOfLines={1}
-              className="mt-1 text-center font-bold text-[13px]"
-              style={{
-                color:
-                  deltaAll == null || deltaAll === 0 || towardGoal == null
-                    ? '#8B96B8'
-                    : towardGoal
-                      ? '#4ade80'
-                      : '#fb7185',
-              }}
-            >
-              {`${deltaAll > 0 ? '+' : deltaAll < 0 ? '−' : ''}${fmtDecimal(Math.abs(deltaAll))} кг`}
-            </Text>
-            <Text maxFontSizeMultiplier={1.25} className="mt-0.5 text-center font-sans text-[9.5px] leading-snug text-bear-dim">
-              {motivation}
-            </Text>
-          </View>
+          )}
         </View>
       )}
 
@@ -418,42 +503,5 @@ export function WeightCard() {
         </View>
       </Modal>
     </View>
-  )
-}
-
-// Маленькое кольцо прогресса для карточки «Прогресс»: одна фиолетовая
-// дуга — % пути от первого измерения к цели, в центре — процент.
-function MiniRing({ pct }) {
-  const R = 26
-  const CIRC = 2 * Math.PI * R
-  const len = (Math.min(100, Math.max(0, pct)) / 100) * CIRC
-  return (
-    <Svg width={64} height={64} viewBox="0 0 64 64">
-      <Circle cx="32" cy="32" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
-      {len > 0 && (
-        <Circle
-          cx="32"
-          cy="32"
-          r={R}
-          fill="none"
-          stroke="#A78BFA"
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={`${len} ${CIRC}`}
-          transform="rotate(-90 32 32)"
-        />
-      )}
-      <SvgText
-        x="32"
-        y="37"
-        fill="#EEF2FB"
-        fontSize="13"
-        fontWeight="800"
-        fontFamily={fontFamilies.extrabold}
-        textAnchor="middle"
-      >
-        {`${pct}%`}
-      </SvgText>
-    </Svg>
   )
 }

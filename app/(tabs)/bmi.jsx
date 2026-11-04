@@ -22,6 +22,7 @@ import { BmiAdvice } from '@/components/bmi/BmiAdvice'
 import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
 import { MeasurementsCard } from '@/components/bmi/MeasurementsCard'
+import { TipOfDay } from '@/components/bmi/TipOfDay'
 import { ProgressPhotos } from '@/components/bmi/ProgressPhotos'
 import { AdviceModal } from '@/components/bmi/AdviceCard'
 import { NormCongrats } from '@/components/bmi/NormCongrats'
@@ -256,8 +257,11 @@ export default function BmiScreen() {
           <WeightCard />
         </View>
 
-        {/* Замеры тела: грудь, талия, живот, попа, бёдра + свои через «+» */}
+        {/* Замеры тела: плитки, «Общий прогресс» с датчиком и таблица */}
         <MeasurementsCard />
+
+        {/* Совет дня: один совет про вес/замеры на день */}
+        <TipOfDay />
 
         <ProgressPhotos />
       </ScrollView>
