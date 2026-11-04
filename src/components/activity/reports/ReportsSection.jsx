@@ -2,21 +2,24 @@
 // почти одинаковых раздела: «Сводка» (график показателя по дням и
 // сравнение по неделям) и «Отчёты» (итоговые карточки за период) —
 // по просьбе пользователя все функции «Сводки» переехали сюда.
-// Один блок: период (7/30/90), режимы «По дням»/«По неделям»,
-// общий переключатель показателя с графиком — и под ними итоговые
-// карточки с Δ% к прошлому периоду, «Весом» и «Аудитом организма».
-// Кнопка «Итоги» открывает шеринговую карточку (медведь + цифры).
+// Управление без дублей: период (7/30/90) — над итоговыми карточками,
+// а показатель выбирается тапом по самой карточке (выбранная
+// подсвечена рамкой в цвет метрики) — отдельных пилюль
+// «шаги/калории/вода/сожжено» больше нет, они дублировали карточки.
+// История показателя по дням — кнопка «История» под графиком
+// (MetricDaysModal). Кнопка «Итоги» открывает шеринговую карточку.
 // Данные периода считаются здесь ОДИН раз и раздаются детям:
 // rows (дни) → график и MetricDaysModal, totals (итоги) → шеринговая
 // карточка и ReportCards — раньше periodTotals звался в двух местах.
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Share2 } from 'lucide-react-native'
+import { History, Share2 } from 'lucide-react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
 import { WeeklyShareCard } from './WeeklyShareCard'
 import { WeeksChart } from './WeeksChart'
+import { MetricDaysModal } from './MetricDaysModal'
 import { SvgAreaChart } from '@/components/ui/SvgAreaChart'
 import { Pills } from '@/components/ui/Pills'
 import { periodTotals } from '@/lib/data/reports'
@@ -32,13 +35,16 @@ const MODES = [
 
 export function ReportsSection({ today }) {
   const [shareOpen, setShareOpen] = useState(false)
-  // Период (7/30/90) — единственный переключатель периода: управляет
-  // и графиками, и итоговыми карточками. Режим и показатель —
-  // только для графической части.
+  // Период (7/30/90) — единственный переключатель периода на вкладке:
+  // живёт над итоговыми карточками и управляет и графиками, и итогами.
+  // Режим «По дням/По неделям» — только для графической части.
   const [rangeId, setRangeId] = useState('7d')
   const [mode, setMode] = useState('days')
-  // Один показатель на оба режима: выбор в «По дням» виден и в «По неделям»
+  // Один показатель на оба режима: выбирается тапом по карточке-итогу
+  // ниже, выбранная карточка подсвечена рамкой в цвет метрики
   const [metricId, setMetricId] = useState('steps')
+  // История показателя по дням: кнопка «История» под графиком
+  const [detail, setDetail] = useState(null)
 
   const range = RANGES.find((r) => r.id === rangeId) || RANGES[0]
   const days = range.days
@@ -62,8 +68,8 @@ export function ReportsSection({ today }) {
             Отчёты
           </Text>
           <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
-            Графики и итоги дневника за период — шаги, калории, вода, сожжено, вес и аудит,
-            со сравнением с прошлым периодом
+            Графики и итоги дневника за период, со сравнением с прошлым.
+            Тап по карточке меняет показатель на графике выше
           </Text>
         </View>
         <Pressable
@@ -82,39 +88,32 @@ export function ReportsSection({ today }) {
         accessibilityLabel="Графики отчётов"
         className="rounded-3xl border border-white/5 bg-bear-card p-5"
       >
+        {/* Режим: дни / недели. Показатель — тап по карточке-итогу ниже */}
         <Pills
-          items={RANGES.map((r) => ({ id: r.id, label: r.label }))}
-          value={rangeId}
-          onChange={setRangeId}
-          accessibilityLabel="Период"
+          items={MODES}
+          value={mode}
+          onChange={setMode}
+          accessibilityLabel="Режим отчётов"
         />
-
-        {/* Режим: дни / недели */}
-        <View className="mt-2.5">
-          <Pills
-            items={MODES}
-            value={mode}
-            onChange={setMode}
-            accessibilityLabel="Режим отчётов"
-          />
-        </View>
-
-        {/* Переключатель показателя — общий для «По дням» и «По неделям» */}
-        <View className="mt-2.5">
-          <Pills
-            items={METRICS.map((m) => ({ id: m.key, label: m.label, color: m.color }))}
-            value={metricId}
-            onChange={setMetricId}
-            accessibilityLabel="Показатель"
-          />
-        </View>
 
         {mode === 'days' ? (
           <>
-            {/* Что именно на графике: выбранный показатель за каждый день */}
-            <Text className="mt-1.5 px-1 font-sans text-[10.5px] text-bear-sub">
-              {`${metric.label} за каждый день периода — одна точка = один день`}
-            </Text>
+            {/* Что на графике + кнопка «История»: вся сохранённая история
+                выбранного показателя по дням (MetricDaysModal) */}
+            <Pressable
+              onPress={() => setDetail(metric)}
+              accessibilityRole="button"
+              accessibilityLabel={`${metric.label} — открыть историю по дням`}
+              className="mt-1.5 flex-row flex-wrap items-center justify-between gap-1.5 px-1 active:opacity-70"
+            >
+              <Text className="min-w-0 flex-1 font-sans text-[10.5px] text-bear-sub">
+                {`${metric.label} за каждый день периода — одна точка = один день`}
+              </Text>
+              <View className="shrink-0 flex-row items-center gap-1 rounded-full bg-white/[0.06] px-2 py-1">
+                <History size={11} color="#8DABFF" />
+                <Text className="font-semibold text-[10px] text-[#8DABFF]">История</Text>
+              </View>
+            </Pressable>
 
             {/* График выбранного показателя по дням */}
             <SvgAreaChart
@@ -134,7 +133,22 @@ export function ReportsSection({ today }) {
       </View>
 
       <GoalCelebration />
-      <ReportCards days={days} totals={totals} rows={rows} />
+
+      {/* Период — над итоговыми карточками: один переключатель управляет
+          и графиком выше, и итогами. Раньше он жил в шапке графиков */}
+      <Pills
+        items={RANGES.map((r) => ({ id: r.id, label: r.label }))}
+        value={rangeId}
+        onChange={setRangeId}
+        accessibilityLabel="Период"
+      />
+
+      <ReportCards
+        days={days}
+        totals={totals}
+        metricId={metricId}
+        onSelectMetric={setMetricId}
+      />
 
       <WeeklyShareCard
         open={shareOpen}
@@ -142,6 +156,16 @@ export function ReportsSection({ today }) {
         totals={totals}
         streak={streak}
         days={days}
+      />
+
+      {/* История показателя по дням — кнопка «История» под графиком;
+          период и дни общие с графиком */}
+      <MetricDaysModal
+        open={!!detail}
+        metric={detail}
+        days={days}
+        rows={rows}
+        onClose={() => setDetail(null)}
       />
     </View>
   )

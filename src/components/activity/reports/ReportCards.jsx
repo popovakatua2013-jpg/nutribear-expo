@@ -1,17 +1,18 @@
-// Карточки «Отчётов»: шаги, калории, вода, сожжено (+ опыт) —
-// итог за период и изменение в % к прошлому такому же периоду —
-// плюс отдельная карточка «Вес»: последнее взвешивание и изменение
-// за период в кг (зелёным — движение к здоровому диапазону).
+// Карточки «Отчётов»: шаги, калории, вода, сожжено — итог за период
+// и изменение в % к прошлому такому же периоду — плюс отдельные
+// карточки «Вес» и «Аудит организма».
+// Карточка показателя = переключатель графиков: тап выделяет её рамкой
+// в цвет метрики и меняет показатель на графике выше («По дням» и
+// «По неделям»). Отдельных пилюль показателя больше нет — они
+// дублировали карточки. История по дням — кнопка «История» под
+// графиком (MetricDaysModal живёт в ReportsSection).
 // Тап по карточке «Вес» открывает вкладку Тело и докручивает
-// до графика «Динамика веса».
-// Тап по карточке показателя (шаги/калории/вода/сожжено) открывает
-// историю по дням: «сколько прошёл в каждый день», «сколько выпито
-// за день» — вся история сохраняется по дням (MetricDaysModal).
+// до графика «Динамика веса», «Аудит» — вкладку «Организм».
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
-// Итоги периода (totals) и дни (rows) приходят готовыми из ReportsSection —
-// periodTotals и history на экране считаются один раз.
+// Итоги периода (totals) приходят готовыми из ReportsSection —
+// periodTotals на экране считается один раз (прошлый период — здесь).
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
@@ -24,7 +25,6 @@ import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
 import { requestScrollToWeight } from '@/lib/navEvents'
-import { MetricDaysModal } from './MetricDaysModal'
 
 // Подпись сравнения: с каким прошлым периодом сравниваем
 function prevLabel(days) {
@@ -33,7 +33,7 @@ function prevLabel(days) {
   return `к предыдущим ${days} дням`
 }
 
-function ReportCard({ m, cur, prev, days, onPress }) {
+function ReportCard({ m, cur, prev, days, selected, onPress }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
@@ -41,20 +41,21 @@ function ReportCard({ m, cur, prev, days, onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={
-        onPress
-          ? `${m.label}: ${m.fmt(cur[m.key])} за период — открыть по дням`
-          : undefined
-      }
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${m.label}: ${m.fmt(cur[m.key])} за период — выбрать для графиков`}
       className="flex-1 active:opacity-80"
       style={{ borderRadius: 16 }}
     >
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        colors={[`${m.color}14`, '#121B33']}
-        style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', padding: 16 }}
+        colors={selected ? [`${m.color}26`, '#121B33'] : [`${m.color}14`, '#121B33']}
+        style={{
+          flex: 1, borderRadius: 16, borderWidth: 1,
+          borderColor: selected ? m.color : 'rgba(255,255,255,0.05)',
+          padding: 16,
+        }}
       >
         <View className="flex-row items-start gap-3">
           <View
@@ -67,11 +68,7 @@ function ReportCard({ m, cur, prev, days, onPress }) {
             <m.Icon size={20} color={m.color} />
           </View>
           <View className="min-w-0 flex-1">
-            <View className="flex-row items-center gap-1">
-              <Text className="shrink-0 font-sans text-[12.5px] text-bear-soft">{m.label}</Text>
-              {/* Подсказка: тап открывает историю по дням */}
-              {onPress && <ChevronRight size={13} color="#8B96B8" />}
-            </View>
+            <Text className="font-sans text-[12.5px] text-bear-soft">{m.label}</Text>
             <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text">
               {m.fmt(cur[m.key])}
             </Text>
@@ -88,12 +85,10 @@ function ReportCard({ m, cur, prev, days, onPress }) {
   )
 }
 
-export function ReportCards({ days, totals, rows }) {
+export function ReportCards({ days, totals, metricId = 'steps', onSelectMetric = () => {} }) {
   // Итоги текущего периода (totals) приходят из ReportsSection — там
   // они и так считались для шеринга; прошлый период — только здесь
   const prev = useMemo(() => periodTotals(days, days), [days])
-  // История по дням: тап по карточке показателя открывает окно
-  const [detail, setDetail] = useState(null)
 
   // Карточки идут рядами по две: четыре метрики дневника + особые карточки
   // веса ({key:'weight'}) и аудита ({key:'audit'}), последние непарные
@@ -123,22 +118,13 @@ export function ReportCards({ days, totals, rows }) {
                 cur={totals}
                 prev={prev}
                 days={days}
-                onPress={() => setDetail(m)}
+                selected={metricId === m.key}
+                onPress={() => onSelectMetric(m.key)}
               />
             )
           )}
         </View>
       ))}
-
-      {/* История показателя по дням: тап по карточке шаги/калории/
-          вода/сожжено — вся сохранённая история выбранного периода */}
-      <MetricDaysModal
-        open={!!detail}
-        metric={detail}
-        days={days}
-        rows={rows}
-        onClose={() => setDetail(null)}
-      />
     </View>
   )
 }

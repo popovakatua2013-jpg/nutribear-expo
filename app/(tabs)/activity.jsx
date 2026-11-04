@@ -84,8 +84,8 @@ export default function ActivityScreen() {
 
         <ExerciseSection />
 
-        {/* Объединённый блок «Отчёты»: графики бывшей «Сводки»
-            (по дням/по неделям, период 7/30/90) + итоговые карточки */}
+        {/* Объединённый блок «Отчёты»: графики (по дням/по неделям),
+            период над карточками, тап по карточке — показатель графика */}
         <ReportsSection today={today} />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
