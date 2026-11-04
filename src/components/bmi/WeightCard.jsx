@@ -7,14 +7,16 @@
 // целью и кнопкой «Задать цель», справа — карточка с пилюлей
 // «Изменение: N кг», зелёным графиком с днями и внутренней строкой-
 // поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi).
-// Журнал измерений свёрнут в строку «Журнал измерений · N» — тап
-// раскрывает список (тап по записи — изменить, корзина — удалить).
-// Поверхность карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
-// Кольцо «Прогресс» из старой карточки переехало в блок замеров
-// («Общий прогресс», MeasurementsCard) — карточка стала легче.
+// Журнал измерений больше не живёт отдельной секцией под блоком
+// (решение пользователя): тап по графику в правой карточке открывает
+// окно журнала — список измерений (тап по записи — изменить,
+// корзина — удалить). Поверхность карточек — фиолетовая, одинаковая
+// с ИМТ-блоком выше. Кольцо «Прогресс» из старой карточки переехало
+// в блок замеров («Общий прогресс», MeasurementsCard) — карточка
+// стала легче.
 
 import { useEffect, useState } from 'react'
-import { Alert, DeviceEventEmitter, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Alert, DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   Activity,
   Calendar,
@@ -22,6 +24,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  NotebookText,
   Pencil,
   Plus,
   Target,
@@ -47,8 +50,6 @@ import {
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
-
-const HIST_VISIBLE = 4 // строк журнала до «Ещё N»
 
 // Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
 // bodyCard с фиолетовой обводкой): цвета блоков «Динамики веса»
@@ -86,7 +87,6 @@ export function WeightCard() {
   // и «Измерения тела» на «Теле» всегда закрыты, тап по шапке открывает).
   // Не храним в сторe — при каждом запуске снова свёрнуто
   const [secOpen, setSecOpen] = useState(false)
-  const [showAll, setShowAll] = useState(false)
   const [period, setPeriod] = useState('week')
   const [menuOpen, setMenuOpen] = useState(false)
   const [journalOpen, setJournalOpen] = useState(false)
@@ -414,7 +414,28 @@ export function WeightCard() {
             </View>
           </View>
 
-          <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
+          {/* График открывает журнал измерений (решение пользователя:
+              журнал больше не отдельная секция под блоком — тап по линии
+              графика открывает окно журнала). Под графиком — подсказка
+              с числом записей; без записей график без тапа */}
+          {weights.length > 0 ? (
+            <Pressable
+              onPress={() => setJournalOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`График веса — открыть журнал измерений, записей: ${weights.length}`}
+              className="active:opacity-70"
+            >
+              <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
+              <View className="mt-1 flex-row items-center justify-center gap-1">
+                <NotebookText size={10} color="#8DABFF" />
+                <Text className="font-sans text-[9.5px] font-semibold text-[#8DABFF]">
+                  {`Журнал измерений · ${weights.length}`}
+                </Text>
+              </View>
+            </Pressable>
+          ) : (
+            <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
+          )}
 
           {/* Строка-поддержка: «Ваш вес стабилен…» с лайком */}
           <View
@@ -458,78 +479,6 @@ export function WeightCard() {
         </View>
       </View>
 
-      {/* Журнал измерений: свёрнут в строку, тап раскрывает список.
-          Тап по записи — окно изменения, корзина — удалить */}
-      {weights.length > 0 && (
-        <View>
-          <Pressable
-            onPress={() => setJournalOpen((v) => !v)}
-            accessibilityRole="button"
-            accessibilityLabel={
-              journalOpen
-                ? 'Скрыть журнал измерений'
-                : `Журнал измерений, записей: ${weights.length} — открыть`
-            }
-            className="flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3.5 py-2.5 active:opacity-70"
-          >
-            <Text className="font-semibold text-[11.5px] text-bear-sub">
-              {`Журнал измерений · ${weights.length}`}
-            </Text>
-            {journalOpen ? (
-              <ChevronUp size={14} color="#A5AECB" />
-            ) : (
-              <ChevronDown size={14} color="#A5AECB" />
-            )}
-          </Pressable>
-
-          {journalOpen && (
-            <View className="mt-1.5 gap-1">
-              {(showAll ? weights : weights.slice(0, HIST_VISIBLE)).map((w) => (
-                <Pressable
-                  key={w.id}
-                  onPress={() => {
-                    setEditing(w)
-                    setKgText(String(w.kg))
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Изменить вес ${fmtDecimal(w.kg)} кг от ${shortDay(w.date)}`}
-                  className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-2.5 py-2 active:opacity-70"
-                >
-                  <Text className="shrink-0 font-sans text-[11px] text-bear-dim">
-                    {shortDay(w.date)}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text"
-                  >
-                    {fmtDecimal(w.kg)} кг
-                  </Text>
-                  <Pressable
-                    onPress={() => removeMeasurement(w)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
-                    className="shrink-0 rounded p-1 active:opacity-60"
-                  >
-                    <Trash2 size={13} color="#98A2C2" />
-                  </Pressable>
-                </Pressable>
-              ))}
-              {weights.length > HIST_VISIBLE && (
-                <Pressable
-                  onPress={() => setShowAll((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityLabel={showAll ? 'Скрыть старые измерения' : 'Показать все измерения'}
-                  className="px-1 py-1 active:opacity-70"
-                >
-                  <Text className="font-sans text-[11px] font-semibold text-[#8DABFF]">
-                    {showAll ? 'Свернуть' : `Ещё ${weights.length - HIST_VISIBLE}`}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </View>
-      )}
         </>
       )}
 
@@ -541,6 +490,71 @@ export function WeightCard() {
         goalWeight={goalWeightKg}
         onSave={handleSave}
       />
+
+      {/* Журнал измерений: окно поверх секции — открывается тапом по
+          графику. Тап по записи — окно изменения (открывается поверх,
+          оно ниже по JSX), корзина — удалить; удаление последней записи
+          закрывает пустой журнал само */}
+      <Modal
+        visible={journalOpen && weights.length > 0}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setJournalOpen(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/60 px-6">
+          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-bold text-[15px] text-bear-text">Журнал измерений</Text>
+              <Pressable
+                onPress={() => setJournalOpen(false)}
+                accessibilityLabel="Закрыть журнал измерений"
+                className="p-1"
+              >
+                <X size={20} color="#A5AECB" />
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+              {`Записей: ${weights.length} · тап по записи — изменить`}
+            </Text>
+
+            <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false} className="mt-3">
+              <View className="gap-1">
+                {weights.map((w) => (
+                  <Pressable
+                    key={w.id}
+                    onPress={() => {
+                      setEditing(w)
+                      setKgText(String(w.kg))
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Изменить вес ${fmtDecimal(w.kg)} кг от ${shortDay(w.date)}`}
+                    className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-2.5 py-2 active:opacity-70"
+                  >
+                    <Text className="shrink-0 font-sans text-[11px] text-bear-dim">
+                      {shortDay(w.date)}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text"
+                    >
+                      {fmtDecimal(w.kg)} кг
+                    </Text>
+                    <Pressable
+                      onPress={() => removeMeasurement(w)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
+                      className="shrink-0 rounded p-1 active:opacity-60"
+                    >
+                      <Trash2 size={13} color="#98A2C2" />
+                    </Pressable>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Окно изменения измерения */}
       <Modal visible={Boolean(editing)} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
