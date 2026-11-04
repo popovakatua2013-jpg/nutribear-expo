@@ -1,11 +1,15 @@
 // Карточка «Динамика веса» — оформление по макету пользователя:
 // шапка-секция (иконка + заголовок + пилюля периода с дропдауном
-// «Неделя / Месяц / Всё»), ниже ряд: слева узкая карточка «Текущий
-// вес» с целью и кнопкой «Задать цель», справа — карточка с пилюлей
+// «Неделя / Месяц / Всё») — по решению пользователя секция по умолчанию
+// СВЁРНУТА: тап по шапке разворачивает/сворачивает содержимое. Ниже ряд:
+// слева узкая карточка «Текущий вес» с ростом под весом (карандаш — окно
+// изменения роста: поле роста из окна записи веса убрано как дубль),
+// целью и кнопкой «Задать цель», справа — карточка с пилюлей
 // «Изменение: N кг», зелёным графиком с днями и внутренней строкой-
 // поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi).
 // Журнал измерений свёрнут в строку «Журнал измерений · N» — тап
 // раскрывает список (тап по записи — изменить, корзина — удалить).
+// Поверхность карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
 // Кольцо «Прогресс» из старой карточки переехало в блок замеров
 // («Общий прогресс», MeasurementsCard) — карточка стала легче.
 
@@ -18,6 +22,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Pencil,
   Plus,
   Target,
   ThumbsDown,
@@ -45,6 +50,15 @@ import { useToast } from '../ui/Toast'
 
 const HIST_VISIBLE = 4 // строк журнала до «Ещё N»
 
+// Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
+// bodyCard с фиолетовой обводкой): цвета блоков «Динамики веса»
+// и «Измерений тела» выровнены с ИМТ (решение пользователя)
+const CARD = {
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
+  borderWidth: 1,
+}
+
 const PERIODS = [
   { id: 'week', label: 'Неделя' },
   { id: 'month', label: 'Месяц' },
@@ -68,12 +82,28 @@ export function WeightCard() {
   const setProfile = useProfileStore((s) => s.setProfile)
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
+  // Секция свёрнута по умолчанию (решение пользователя: «Динамика веса»
+  // и «Измерения тела» на «Теле» всегда закрыты, тап по шапке открывает).
+  // Не храним в сторe — при каждом запуске снова свёрнуто
+  const [secOpen, setSecOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [period, setPeriod] = useState('week')
   const [menuOpen, setMenuOpen] = useState(false)
   const [journalOpen, setJournalOpen] = useState(false)
   const [editing, setEditing] = useState(null) // измерение на изменении
   const [kgText, setKgText] = useState('')
+  // Окно изменения роста (карандаш в карточке «Текущий вес»)
+  const [heightOpen, setHeightOpen] = useState(false)
+  const [heightText, setHeightText] = useState('')
+
+  // Сквозное раскрытие секции: пилюля «Динамика веса» в шапке вкладки
+  // разворачивает секцию, затем экран докручивает до неё
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('nutribear/expand-weight-section', () =>
+      setSecOpen(true)
+    )
+    return () => sub.remove()
+  }, [])
 
   // Сквозное открытие окна веса: из тапа «запишите вес» в золотой
   // карточке и из уведомления о взвешивании (живое событие + флаг,
@@ -165,10 +195,30 @@ export function WeightCard() {
     toast({ title: '🗑 Измерение удалено', description: `${shortDay(w.date)} · ${fmtDecimal(w.kg)} кг` })
   }
 
+  // Сохранить рост из карандаша в карточке «Текущий вес» — в окне записи
+  // веса поля роста больше нет (убрали как дубль)
+  function saveHeight() {
+    const h = Math.round(Number(String(heightText).trim().replace(',', '.')))
+    if (!Number.isFinite(h) || h < 80 || h > 250) {
+      toast({ title: '❗ Проверьте рост', description: 'От 80 до 250 см, например 165' })
+      return
+    }
+    setProfile({ heightCm: h })
+    setHeightOpen(false)
+    toast({ title: '📏 Рост обновлён', description: `${h} см — ИМТ пересчитан` })
+  }
+
   return (
     <View accessibilityLabel="Динамика веса" className="gap-2.5">
-      {/* Шапка-секция: иконка + заголовок + пилюля периода (дропдаун) */}
-      <View className="flex-row items-center gap-2.5">
+      {/* Шапка-секция: тап по ней разворачивает/сворачивает блок;
+          иконка + заголовок + круглый «+» записи веса + пилюля периода */}
+      <Pressable
+        onPress={() => setSecOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: secOpen }}
+        accessibilityLabel={secOpen ? 'Свернуть динамику веса' : 'Развернуть динамику веса'}
+        className="flex-row items-center gap-2.5 active:opacity-80"
+      >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
           <ChartLine size={18} color="#7DD3FC" />
         </View>
@@ -242,12 +292,21 @@ export function WeightCard() {
             </View>
           )}
         </View>
-      </View>
 
+        {/* Шеврон состояния секции — секция по умолчанию свёрнута */}
+        {secOpen ? (
+          <ChevronUp size={15} color="#A5AECB" />
+        ) : (
+          <ChevronDown size={15} color="#A5AECB" />
+        )}
+      </Pressable>
+
+      {secOpen && (
+        <>
       {/* Ряд: узкая карточка веса/цели + карточка с графиком */}
       <View className="flex-row items-stretch gap-2.5">
         {/* Текущий вес + цель + кнопка «Задать цель»; тап по весу — запись */}
-        <View className="w-[122px] shrink-0 rounded-2xl border border-white/5 bg-bear-card p-3.5">
+        <View className="w-[122px] shrink-0 rounded-2xl p-3.5" style={CARD}>
           <Pressable
             onPress={() => setOpen(true)}
             accessibilityLabel="Записать вес"
@@ -260,6 +319,24 @@ export function WeightCard() {
               {fmtDecimal(weightKg)}
               <Text className="font-semibold text-[12px] text-bear-sub2"> кг</Text>
             </Text>
+          </Pressable>
+
+          {/* Рост — под весом, карандаш открывает окно изменения
+              (поле роста из окна записи веса убрано как дубль) */}
+          <Pressable
+            onPress={() => {
+              setHeightText(String(heightCm))
+              setHeightOpen(true)
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Рост ${heightCm} сантиметров — изменить`}
+            className="mt-1.5 flex-row items-center gap-1 self-start active:opacity-70"
+          >
+            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">Рост</Text>
+            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[11.5px] text-bear-text">
+              {heightCm} см
+            </Text>
+            <Pencil size={11} color="#8DABFF" />
           </Pressable>
 
           <View className="mt-2 flex-row items-center gap-1">
@@ -310,7 +387,7 @@ export function WeightCard() {
         </View>
 
         {/* График + строка-поддержка */}
-        <View className="min-w-0 flex-1 rounded-2xl border border-white/5 bg-bear-card p-3">
+        <View className="min-w-0 flex-1 rounded-2xl p-3" style={CARD}>
           {/* Пилюля изменения за период: точка в цвет тона */}
           <View
             className="self-start rounded-full bg-white/[0.06] px-2.5 py-1"
@@ -453,6 +530,8 @@ export function WeightCard() {
           )}
         </View>
       )}
+        </>
+      )}
 
       <WeightModal
         open={open}
@@ -494,6 +573,45 @@ export function WeightCard() {
                 onPress={saveEdit}
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить новый вес"
+                className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+              >
+                <Text className="font-bold text-[13px] text-white">Сохранить</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Окно изменения роста (карандаш в карточке «Текущий вес») */}
+      <Modal visible={heightOpen} transparent animationType="fade" onRequestClose={() => setHeightOpen(false)}>
+        <View className="flex-1 items-center justify-center bg-black/60 px-6">
+          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-bold text-[15px] text-bear-text">Изменить рост</Text>
+              <Pressable onPress={() => setHeightOpen(false)} accessibilityLabel="Закрыть" className="p-1">
+                <X size={20} color="#A5AECB" />
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+              ИМТ и норма калорий пересчитаются сами
+            </Text>
+
+            <Text className="mt-4 font-medium text-xs text-bear-sub">Рост, см</Text>
+            <TextInput
+              value={heightText}
+              onChangeText={setHeightText}
+              keyboardType="number-pad"
+              maxLength={3}
+              textAlign="center"
+              accessibilityLabel="Рост в сантиметрах"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[14px] text-white"
+            />
+
+            <View className="mt-5 flex-row">
+              <Pressable
+                onPress={saveHeight}
+                accessibilityRole="button"
+                accessibilityLabel="Сохранить рост"
                 className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
               >
                 <Text className="font-bold text-[13px] text-white">Сохранить</Text>

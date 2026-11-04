@@ -1,7 +1,9 @@
-// Модалка записи веса и роста: Сохранить → история веса + пересчёт ИМТ.
-// Третье поле — цель по весу (необязательно): пустое поле и существующая
-// цель = цель убирается. Цель видна в «Динамике веса» прогрессом.
-// Под цель предлагаем норму веса для роста одним тапом и после сохранения
+// Модалка записи веса: Сохранить → история веса + пересчёт ИМТ.
+// Поле роста из окна убрано (дубль): рост меняется карандашом в карточке
+// «Текущий вес» на вкладке «Тело». Второе поле — цель по весу
+// (необязательно): пустое поле и существующая цель = цель убирается.
+// Цель видна в «Динамике веса» прогрессом. Под цель предлагаем норму
+// веса для роста (берётся из профиля) одним тапом и после сохранения
 // цели предлагаем пересчитать дневную норму калорий (дефицит/профицит).
 // Кнопка «Сохранить» закреплена внизу окна: прокручиваются только поля,
 // на небольшом экране кнопка не прячется за краем.
@@ -40,18 +42,14 @@ export function WeightModal({ open, onClose, height, weight, goalWeight, onSave 
 
 function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
   const { toast } = useToast()
-  const [heightCm, setHeightCm] = useState(String(height))
   const [kg, setKg] = useState(String(weight))
   const [goal, setGoal] = useState(goalWeight == null ? '' : String(goalWeight))
 
   // Русская запятая тоже десятичный разделитель: «72,5» → 72.5
   const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
-  const hRaw = parseNum(heightCm)
+  const hRaw = Number(height)
   const wRaw = parseNum(kg)
-  const valid =
-    Number.isFinite(hRaw) && hRaw >= 80 && hRaw <= 250 &&
-    Number.isFinite(wRaw) && wRaw >= 25 && wRaw <= 300
-  const h = Math.round(hRaw)
+  const valid = Number.isFinite(wRaw) && wRaw >= 25 && wRaw <= 300
   const w = Math.round(wRaw * 10) / 10
 
   // Цель: пустое поле — не менять; было и стало пустым — убрать (null).
@@ -99,17 +97,19 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
   function handleSave() {
     if (!valid || !goalValid) return
     const weightChanged = w !== weight
-    onSave({ heightCm: h, weightKg: w, weightChanged, goalKg: goalChanged ? goalKg : undefined })
+    // Рост в окне не меняем — он приходит из профиля (правка карандашом
+    // в карточке «Текущий вес»), onSave лишь передаёт его дальше
+    onSave({ heightCm: Math.round(hRaw), weightKg: w, weightChanged, goalKg: goalChanged ? goalKg : undefined })
     let description = weightChanged
       ? `${fmtDecimal(w)} кг · ИМТ обновлён`
-      : `Рост ${h} см`
+      : `Вес ${fmtDecimal(w)} кг`
     if (goalChanged && goalKg != null) description += ` · цель ${fmtDecimal(goalKg)} кг`
     toast({
-      title: weightChanged ? '⚖️ Вес записан!' : '📏 Данные сохранены',
+      title: weightChanged ? '⚖️ Вес записан!' : '⚖️ Вес сохранён',
       description,
     })
     onClose()
-    if (goalChanged && goalKg != null) maybeRecalcKcal(goalKg, w, h)
+    if (goalChanged && goalKg != null) maybeRecalcKcal(goalKg, w, Math.round(hRaw))
   }
 
   return (
@@ -118,7 +118,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         <View className="flex-1">
           <Text className="font-bold text-[15px] text-bear-text">Записать вес</Text>
           <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
-            Обновите рост и текущий вес — ИМТ пересчитается сам
+            Обновите текущий вес — ИМТ пересчитается сам
           </Text>
         </View>
         <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
@@ -128,17 +128,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
 
       {/* Поля прокручиваются, кнопка закреплена внизу окна */}
       <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
-        <Text className="mt-4 font-medium text-xs text-bear-sub">Рост, см</Text>
-        <TextInput
-          value={heightCm}
-          onChangeText={setHeightCm}
-          keyboardType="number-pad"
-          textAlign="center"
-          accessibilityLabel="Рост в сантиметрах"
-          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[14px] text-white"
-        />
-
-        <Text className="mt-3 font-medium text-xs text-bear-sub">Вес, кг</Text>
+        <Text className="mt-4 font-medium text-xs text-bear-sub">Вес, кг</Text>
         <TextInput
           value={kg}
           onChangeText={setKg}

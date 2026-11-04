@@ -1,18 +1,22 @@
 // Карточка «Измерения тела» на вкладке «Тело» — оформление по макету
-// пользователя: шапка-секция (иконка + заголовок + подзаголовок +
-// кнопка «+ Добавить»), ряд плиток замеров (цветная иконка, последний
-// замер и Δ к предыдущему, свои замеры — рядом), карточка «Общий
-// прогресс» (полукруглый датчик ScoreGauge, подпись и звёзды — оценка
-// bodyProgressScore из lib/data/bmi) и таблица «Измерение / Сегодня /
-// Изменение». Тап по плитке или строке открывает окно записи: значения
-// подставлены последними, меняем то, что измерили; в окне — «+ Свой
-// замер».
+// пользователя: шапка-секция (иконка + заголовок + подзаголовок + кнопка
+// «+ Добавить») — по решению пользователя секция по умолчанию СВЁРНУТА,
+// тап по шапке разворачивает/сворачивает. Внутри: ряд плиток замеров
+// (цветная иконка, последний замер и Δ к предыдущему, свои замеры —
+// рядом), карточка «Общий прогресс» (полукруглый датчик ScoreGauge,
+// подпись и звёзды — оценка bodyProgressScore из lib/data/bmi) и
+// таблица «Измерение / Сегодня / Изменение». Поверхность карточек —
+// фиолетовая, одинаковая с ИМТ-блоком выше. Тап по плитке или строке
+// открывает окно записи: значения подставлены последними, меняем то,
+// что измерили; в окне — «+ Свой замер».
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   ArrowDownRight,
   ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
   Donut,
   Heart,
   Hourglass,
@@ -34,6 +38,14 @@ import { useToast } from '../ui/Toast'
 const CUSTOM_COLOR = '#4ADE80'
 const MIN_CM = 20
 const MAX_CM = 300
+
+// Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
+// bodyCard с фиолетовой обводкой): цвета блока выровнены с ИМТ
+const CARD = {
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
+  borderWidth: 1,
+}
 
 // Иконки плиток: весёлые «прозвища» замеров (шрифт-стайл мишки NutriBear)
 const MEAS_ICONS = {
@@ -74,6 +86,9 @@ export function MeasurementsCard() {
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const weights = useProfileStore((s) => s.weights)
   const [open, setOpen] = useState(false)
+  // Секция свёрнута по умолчанию (как «Динамика веса») — не храним
+  // в сторe: при каждом запуске снова свёрнуто
+  const [secOpen, setSecOpen] = useState(false)
   const items = useMemo(() => allItems(customs), [customs])
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
@@ -88,8 +103,15 @@ export function MeasurementsCard() {
 
   return (
     <View accessibilityLabel="Замеры тела" className="gap-2.5">
-      {/* Шапка-секция: иконка + заголовок с подзаголовком + «+ Добавить» */}
-      <View className="flex-row items-center gap-2.5">
+      {/* Шапка-секция: тап разворачивает/сворачивает блок; иконка +
+          заголовок с подзаголовком + «+ Добавить» */}
+      <Pressable
+        onPress={() => setSecOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: secOpen }}
+        accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
+        className="flex-row items-center gap-2.5 active:opacity-80"
+      >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
           <Ruler size={18} color="#A78BFA" />
         </View>
@@ -113,8 +135,16 @@ export function MeasurementsCard() {
         >
           <Text className="font-bold text-[11px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
-      </View>
+        {/* Шеврон состояния секции — по умолчанию свёрнута */}
+        {secOpen ? (
+          <ChevronUp size={15} color="#A5AECB" />
+        ) : (
+          <ChevronDown size={15} color="#A5AECB" />
+        )}
+      </Pressable>
 
+      {secOpen && (
+        <>
       {/* Плитки замеров: последний замер + Δ к предыдущему; ряд
           прокручивается, если замеров больше, чем влезает */}
       <ScrollView
@@ -136,7 +166,8 @@ export function MeasurementsCard() {
               onPress={() => setOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
-              className="w-[112px] shrink-0 rounded-2xl border border-white/5 bg-bear-card p-3 active:opacity-70"
+              className="w-[112px] shrink-0 rounded-2xl p-3 active:opacity-70"
+              style={CARD}
             >
               <View
                 className="h-8 w-8 items-center justify-center rounded-lg"
@@ -180,7 +211,7 @@ export function MeasurementsCard() {
       </ScrollView>
 
       {/* Общий прогресс: датчик + подпись + звёзды (85 → 4.5★, как на макете) */}
-      <View className="flex-row items-center gap-2 rounded-2xl border border-white/5 bg-bear-card p-3.5">
+      <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>
         <ScoreGauge score={score} />
         <View className="min-w-0 flex-1">
           <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
@@ -205,7 +236,7 @@ export function MeasurementsCard() {
       </View>
 
       {/* Таблица «Измерение / Сегодня / Изменение» — все замеры списком */}
-      <View className="rounded-2xl border border-white/5 bg-bear-card px-4 py-2">
+      <View className="rounded-2xl px-4 py-2" style={CARD}>
         <View className="flex-row items-center border-b border-white/[0.06] py-2.5">
           <Text className="min-w-0 flex-1 font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Измерение
@@ -270,6 +301,8 @@ export function MeasurementsCard() {
           )
         })}
       </View>
+        </>
+      )}
 
       <MeasurementsModal open={open} onClose={() => setOpen(false)} />
     </View>

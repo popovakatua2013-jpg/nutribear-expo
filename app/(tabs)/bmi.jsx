@@ -1,9 +1,12 @@
 // Экран «Тело» (вкладка, раньше называлась «ИМТ») в стиле фото-макета:
-// сверху переключатель-пилюли («Динамика веса» → скролл к карточке веса,
-// «ИМТ и состав тела» — активна, «Подробнее» — советы), главный блок БЕЗ
-// карточки — кольцо ИМТ и легенда свободно парят на тёмном фоне, ниже —
-// тёмные карточки «Вес / Рост», блок «Рекомендации» с полосой идеального
-// диапазона. Ниже — калькулятор, динамика веса, замеры тела и фото-прогресс.
+// сверху переключатель-пилюли («Динамика веса» — раскрывает секцию
+// и скроллит к ней, «ИМТ и состав тела» — активна, «Подробнее» — советы),
+// главный блок БЕЗ карточки — кольцо ИМТ и легенда свободно парят на
+// тёмном фоне (карточки «Вес / Рост» и «Вес за 30 дней» убраны: вес живёт
+// в «Динамике веса», рост — карандашом в карточке «Текущий вес»),
+// ниже — «Рекомендации» (с крестиком — скрывается), калькулятор,
+// секции «Динамика веса» и «Измерения тела» (свёрнуты по умолчанию,
+// тап по шапке раскрывает; цвета как у ИМТ), советы и фото-прогресс.
 
 import { useEffect, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, ScrollView, Text, View } from 'react-native'
@@ -17,7 +20,6 @@ import { calcBmi, bmiCategory, normStreakWeeks } from '@/lib/data/bmi'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BmiDonut } from '@/components/bmi/BmiDonut'
 import { BmiLegend } from '@/components/bmi/BmiLegend'
-import { BmiStatCards } from '@/components/bmi/BmiStatCards'
 import { BmiAdvice } from '@/components/bmi/BmiAdvice'
 import { BmiCalculator } from '@/components/bmi/BmiCalculator'
 import { WeightCard } from '@/components/bmi/WeightCard'
@@ -58,6 +60,10 @@ export default function BmiScreen() {
   const weightKg = useProfileStore((s) => s.weightKg)
   const weights = useProfileStore((s) => s.weights)
   const haptics = useUiPrefsStore((s) => s.haptics)
+  // Блок «Рекомендации» скрыт крестиком (флаг в сторe переживает
+  // перезапуск); кнопка «К рекомендациям» возвращает его
+  const adviceHidden = useUiPrefsStore((s) => s.bmiAdviceHidden)
+  const setBmiAdviceHidden = useUiPrefsStore((s) => s.setBmiAdviceHidden)
   const [detailsOpen, setDetailsOpen] = useState(false)
   // Категория для карточки «Что означает твой ИМТ»: null — своя
   // (тап по кольцу, «Подробнее»), id — категория из строки легенды
@@ -110,8 +116,15 @@ export default function BmiScreen() {
   const weightY = useRef(0)
   const adviceY = useRef(0)
 
-  const scrollToWeight = () =>
-    scrollRef.current?.scrollTo({ y: Math.max(0, weightY.current - 8), animated: true })
+  // Секция «Динамика веса» по умолчанию свёрнута: пилюля сначала
+  // раскрывает её, затем экран докручивает (даём отрисоваться)
+  const scrollToWeight = () => {
+    DeviceEventEmitter.emit('nutribear/expand-weight-section')
+    setTimeout(
+      () => scrollRef.current?.scrollTo({ y: Math.max(0, weightY.current - 8), animated: true }),
+      350
+    )
+  }
 
   // Сквозной скролл к графику веса из других мест (например, тап по
   // карточке «Вес» в отчётах): если вкладка уже смонтирована — докручиваем
@@ -229,19 +242,22 @@ export default function BmiScreen() {
                 <BmiLegend bmi={bmi} onRowPress={openDetails} />
               </View>
             </View>
-            <BmiStatCards />
           </View>
         </View>
 
         {/* Рекомендации + идеальный диапазон ИМТ (сюда ведёт кнопка
-            «К рекомендациям» из карточки «Что означает твой ИМТ») */}
-        <View
-          onLayout={(e) => {
-            adviceY.current = e.nativeEvent.layout.y
-          }}
-        >
-          <BmiAdvice bmi={bmi} onDetails={() => openDetails(null)} />
-        </View>
+            «К рекомендациям» из карточки «Что означает твой ИМТ»).
+            Крестик в шапке блока прячет его до следующего вызова
+            «К рекомендациям» */}
+        {adviceHidden ? null : (
+          <View
+            onLayout={(e) => {
+              adviceY.current = e.nativeEvent.layout.y
+            }}
+          >
+            <BmiAdvice bmi={bmi} onDetails={() => openDetails(null)} />
+          </View>
+        )}
 
         {/* Калькулятор: пол, возраст, рост, вес */}
         <BmiCalculator />
@@ -275,14 +291,16 @@ export default function BmiScreen() {
         onClose={() => setDetailsOpen(false)}
         onRecommendations={() => {
           setDetailsOpen(false)
-          // Даём модалке закрыться, затем плавно скроллим к советам
+          // Если блок закрыт крестиком — возвращаем его, затем
+          // плавно скроллим к советам
+          setBmiAdviceHidden(false)
           setTimeout(
             () =>
               scrollRef.current?.scrollTo({
                 y: Math.max(0, adviceY.current - 8),
                 animated: true,
               }),
-            280
+            350
           )
         }}
       />

@@ -3,11 +3,15 @@
 // советы. Внизу — «Идеальный диапазон ИМТ»: градиентная полоса
 // (голубой → зелёный → фиолетовый) с белым бегунком на позиции
 // текущего ИМТ (шкала 15–35: норма приходится на зелёный участок).
+// Крестик в шапке прячет блок (флаг bmiAdviceHidden в useUiPrefsStore —
+// переживает перезапуск; блок возвращается кнопкой «К рекомендациям»
+// из окна «Что означает твой ИМТ»).
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Flower2, Heart, Star } from 'lucide-react-native'
+import { Flower2, Heart, Star, X } from 'lucide-react-native'
 import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 
 const CARD = {
   backgroundColor: '#1D1240',
@@ -21,6 +25,7 @@ const BMI_MAX = 35
 export function BmiAdvice({ bmi, onDetails }) {
   const cat = bmiCategory(bmi)
   const rec = RECOMMENDATIONS[cat.id]
+  const setBmiAdviceHidden = useUiPrefsStore((s) => s.setBmiAdviceHidden)
 
   // Позиция бегунка на шкале 15–35
   const pos = Math.min(1, Math.max(0, ((bmi || BMI_MIN) - BMI_MIN) / (BMI_MAX - BMI_MIN)))
@@ -41,6 +46,16 @@ export function BmiAdvice({ bmi, onDetails }) {
           style={{ backgroundColor: 'rgba(139,92,246,0.14)', borderColor: 'rgba(168,85,247,0.32)' }}
         >
           <Flower2 size={21} color="#C4B5FD" />
+        </Pressable>
+        {/* Крестик: спрятать блок — решение запоминается */}
+        <Pressable
+          onPress={() => setBmiAdviceHidden(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Скрыть блок рекомендаций"
+          hitSlop={6}
+          className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] active:opacity-70"
+        >
+          <X size={15} color="#A5AECB" />
         </Pressable>
       </View>
 
