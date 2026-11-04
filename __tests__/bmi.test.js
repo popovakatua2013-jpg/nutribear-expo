@@ -9,6 +9,7 @@ import {
   tdeeKcal,
   idealWeightDevine,
   bodyFatPercent,
+  bodyFatLevel,
   fmtDecimal,
   allWeights,
   kgToNextCategory,
@@ -93,6 +94,34 @@ describe('формулы плана', () => {
     expect(fmtDecimal(22.856)).toBe('22.9')
     expect(fmtDecimal(40)).toBe('40.0')
     expect(fmtDecimal(null)).toBe('0.0')
+  })
+})
+
+describe('bodyFatLevel — цвет строки «Жир в организме»', () => {
+  test('женщина 37 лет, ИМТ 31.6 → 41 % — ожирение (красный)', () => {
+    const fat = bodyFatPercent(31.6, 37, 'female')
+    expect(fat).toBe(41)
+    expect(bodyFatLevel(fat, 'female').id).toBe('obese')
+    expect(bodyFatLevel(fat, 'female').color).toBe('#f87171')
+  })
+
+  test('границы по полу: норма / предожирение / ожирение', () => {
+    // Женщины: норма < 32, ожирение ≥ 35
+    expect(bodyFatLevel(31.9, 'female').id).toBe('norm')
+    expect(bodyFatLevel(32, 'female').id).toBe('pred')
+    expect(bodyFatLevel(34.9, 'female').id).toBe('pred')
+    expect(bodyFatLevel(35, 'female').id).toBe('obese')
+    // Мужчины: норма < 25, ожирение ≥ 30
+    expect(bodyFatLevel(24.9, 'male').id).toBe('norm')
+    expect(bodyFatLevel(25, 'male').id).toBe('pred')
+    expect(bodyFatLevel(29.9, 'male').id).toBe('pred')
+    expect(bodyFatLevel(30, 'male').id).toBe('obese')
+  })
+
+  test('цвета уровней: норма — зелёный, предожирение — оранжевый, ожирение — красный', () => {
+    expect(bodyFatLevel(20, 'female').color).toBe('#4ade80')
+    expect(bodyFatLevel(33, 'female').color).toBe('#fb923c')
+    expect(bodyFatLevel(40, 'male').color).toBe('#f87171')
   })
 })
 

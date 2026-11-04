@@ -10,7 +10,10 @@
 // Журнал измерений больше не живёт отдельной секцией под блоком
 // (решение пользователя): тап по графику в правой карточке открывает
 // окно журнала — список измерений (тап по записи — изменить,
-// корзина — удалить). Поверхность карточек — фиолетовая, одинаковая
+// корзина — удалить). Записей нет — в окне мишка «Запишите первый вес»
+// с кнопкой записи (рекомендация пользователя); запись сегодняшнего
+// дня подсвечена («Сегодня» фиолетовым, как «сегодня» в истории
+// показателей). Поверхность карточек — фиолетовая, одинаковая
 // с ИМТ-блоком выше. Кольцо «Прогресс» из старой карточки переехало
 // в блок замеров («Общий прогресс», MeasurementsCard) — карточка
 // стала легче.
@@ -150,6 +153,10 @@ export function WeightCard() {
     goalReached,
   })
   const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
+
+  // Ключ сегодняшнего дня (локальная дата) — запись сегодняшнего
+  // взвешивания в журнале подсвечивается словом «Сегодня»
+  const todayStr = new Date().toDateString()
 
   function handleSave({ heightCm: h, weightKg: w, weightChanged, goalKg }) {
     // Награда за достижение цели: чистые правила в lib/goal.js — при смене
@@ -417,25 +424,25 @@ export function WeightCard() {
           {/* График открывает журнал измерений (решение пользователя:
               журнал больше не отдельная секция под блоком — тап по линии
               графика открывает окно журнала). Под графиком — подсказка
-              с числом записей; без записей график без тапа */}
-          {weights.length > 0 ? (
-            <Pressable
-              onPress={() => setJournalOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`График веса — открыть журнал измерений, записей: ${weights.length}`}
-              className="active:opacity-70"
-            >
-              <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
-              <View className="mt-1 flex-row items-center justify-center gap-1">
-                <NotebookText size={10} color="#8DABFF" />
-                <Text className="font-sans text-[9.5px] font-semibold text-[#8DABFF]">
-                  {`Журнал измерений · ${weights.length}`}
-                </Text>
-              </View>
-            </Pressable>
-          ) : (
+              с числом записей; пустой журнал открывает окно с мишкой */}
+          <Pressable
+            onPress={() => setJournalOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              weights.length > 0
+                ? `График веса — открыть журнал измерений, записей: ${weights.length}`
+                : 'График веса — открыть журнал измерений'
+            }
+            className="active:opacity-70"
+          >
             <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
-          )}
+            <View className="mt-1 flex-row items-center justify-center gap-1">
+              <NotebookText size={10} color="#8DABFF" />
+              <Text className="font-sans text-[9.5px] font-semibold text-[#8DABFF]">
+                {weights.length > 0 ? `Журнал измерений · ${weights.length}` : 'Журнал измерений'}
+              </Text>
+            </View>
+          </Pressable>
 
           {/* Строка-поддержка: «Ваш вес стабилен…» с лайком */}
           <View
@@ -493,10 +500,10 @@ export function WeightCard() {
 
       {/* Журнал измерений: окно поверх секции — открывается тапом по
           графику. Тап по записи — окно изменения (открывается поверх,
-          оно ниже по JSX), корзина — удалить; удаление последней записи
-          закрывает пустой журнал само */}
+          оно ниже по JSX), корзина — удалить; запись сегодняшнего дня
+          подсвечена. Пустой журнал — мишка и кнопка записи веса */}
       <Modal
-        visible={journalOpen && weights.length > 0}
+        visible={journalOpen}
         transparent
         animationType="fade"
         statusBarTranslucent
@@ -514,44 +521,85 @@ export function WeightCard() {
                 <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
-              {`Записей: ${weights.length} · тап по записи — изменить`}
-            </Text>
 
-            <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false} className="mt-3">
-              <View className="gap-1">
-                {weights.map((w) => (
-                  <Pressable
-                    key={w.id}
-                    onPress={() => {
-                      setEditing(w)
-                      setKgText(String(w.kg))
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Изменить вес ${fmtDecimal(w.kg)} кг от ${shortDay(w.date)}`}
-                    className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-2.5 py-2 active:opacity-70"
-                  >
-                    <Text className="shrink-0 font-sans text-[11px] text-bear-dim">
-                      {shortDay(w.date)}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text"
-                    >
-                      {fmtDecimal(w.kg)} кг
-                    </Text>
-                    <Pressable
-                      onPress={() => removeMeasurement(w)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
-                      className="shrink-0 rounded p-1 active:opacity-60"
-                    >
-                      <Trash2 size={13} color="#98A2C2" />
-                    </Pressable>
-                  </Pressable>
-                ))}
+            {weights.length === 0 ? (
+              <View className="items-center py-5" accessibilityLabel="Журнал измерений пуст">
+                <Text className="text-[36px]">🐻</Text>
+                <Text className="mt-2 font-bold text-[13.5px] text-bear-text">
+                  Журнал пока пуст
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={1.25}
+                  className="mt-1 text-center font-sans text-[11px] leading-snug text-bear-sub"
+                >
+                  Запишите первый вес — и здесь появится история измерений
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setJournalOpen(false)
+                    setOpen(true)
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Записать вес"
+                  className="mt-4 w-full items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+                >
+                  <Text className="font-bold text-[13px] text-white">Записать вес</Text>
+                </Pressable>
               </View>
-            </ScrollView>
+            ) : (
+              <>
+                <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+                  {`Записей: ${weights.length} · тап по записи — изменить`}
+                </Text>
+
+                <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false} className="mt-3">
+                  <View className="gap-1">
+                    {weights.map((w) => {
+                      const isToday = new Date(w.date).toDateString() === todayStr
+                      return (
+                        <Pressable
+                          key={w.id}
+                          onPress={() => {
+                            setEditing(w)
+                            setKgText(String(w.kg))
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Изменить вес ${fmtDecimal(w.kg)} кг от ${isToday ? 'сегодня' : shortDay(w.date)}`}
+                          className="flex-row items-center gap-2 rounded-xl px-2.5 py-2 active:opacity-70"
+                          style={{
+                            backgroundColor: isToday
+                              ? 'rgba(167,139,250,0.12)'
+                              : 'rgba(255,255,255,0.04)',
+                          }}
+                        >
+                          <Text
+                            className={`shrink-0 font-sans text-[11px] ${
+                              isToday ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                            }`}
+                          >
+                            {isToday ? 'Сегодня' : shortDay(w.date)}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            className="min-w-0 flex-1 text-right font-semibold text-[12.5px] text-bear-text"
+                          >
+                            {fmtDecimal(w.kg)} кг
+                          </Text>
+                          <Pressable
+                            onPress={() => removeMeasurement(w)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
+                            className="shrink-0 rounded p-1 active:opacity-60"
+                          >
+                            <Trash2 size={13} color="#98A2C2" />
+                          </Pressable>
+                        </Pressable>
+                      )
+                    })}
+                  </View>
+                </ScrollView>
+              </>
+            )}
           </View>
         </View>
       </Modal>

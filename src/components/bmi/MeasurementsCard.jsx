@@ -5,7 +5,10 @@
 // (цветная иконка, последний замер и Δ к предыдущему, свои замеры —
 // рядом), карточка «Общий прогресс» (полукруглый датчик ScoreGauge,
 // подпись и звёзды — оценка bodyProgressScore из lib/data/bmi) и
-// таблица «Измерение / Сегодня / Изменение». Поверхность карточек —
+// таблица «Измерение / Сегодня / Изменение». Таблица по решению
+// пользователя ВСЕГДА свёрнута: шапка таблицы — тап-переключатель с
+// шевроном, при каждом открытии секции снова свёрнута (не храним).
+// Поверхность карточек —
 // фиолетовая, одинаковая с ИМТ-блоком выше. Тап по плитке или строке
 // открывает окно записи: значения подставлены последними, меняем то,
 // что измерили; в окне — «+ Свой замер».
@@ -89,6 +92,10 @@ export function MeasurementsCard() {
   // Секция свёрнута по умолчанию (как «Динамика веса») — не храним
   // в сторe: при каждом запуске снова свёрнуто
   const [secOpen, setSecOpen] = useState(false)
+  // Таблица «Измерение / Сегодня / Изменение» — всегда свёрнута
+  // (решение пользователя): шапка таблицы раскрывает строки, состояние
+  // не храним — при каждом открытии секции снова свёрнута
+  const [tableOpen, setTableOpen] = useState(false)
   const items = useMemo(() => allItems(customs), [customs])
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
@@ -235,20 +242,40 @@ export function MeasurementsCard() {
         </View>
       </View>
 
-      {/* Таблица «Измерение / Сегодня / Изменение» — все замеры списком */}
+      {/* Таблица «Измерение / Сегодня / Изменение» — всегда свёрнута:
+          шапка — тап-переключатель (шеврон у колонки «Измерение»),
+          тап разворачивает строки; тап по строке — окно записи */}
       <View className="rounded-2xl px-4 py-2" style={CARD}>
-        <View className="flex-row items-center border-b border-white/[0.06] py-2.5">
-          <Text className="min-w-0 flex-1 font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
-            Измерение
-          </Text>
+        <Pressable
+          onPress={() => setTableOpen((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: tableOpen }}
+          accessibilityLabel={
+            tableOpen
+              ? 'Свернуть таблицу замеров'
+              : 'Таблица замеров: измерение, сегодня, изменение — открыть'
+          }
+          className="flex-row items-center border-b border-white/[0.06] py-2.5 active:opacity-70"
+        >
+          <View className="min-w-0 flex-1 flex-row items-center gap-1">
+            <Text className="font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+              Измерение
+            </Text>
+            {tableOpen ? (
+              <ChevronUp size={11} color="#8B96B8" />
+            ) : (
+              <ChevronDown size={11} color="#8B96B8" />
+            )}
+          </View>
           <Text className="w-[72px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Сегодня
           </Text>
           <Text className="w-[84px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Изменение
           </Text>
-        </View>
-        {items.map((m, i) => {
+        </Pressable>
+        {tableOpen &&
+          items.map((m, i) => {
           const list = measurements[m.key] || []
           const last = list[0] || null
           const prev = list[1] || null

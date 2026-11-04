@@ -2,10 +2,13 @@
 // подзаголовок, пилюли пола с символами ♀/♂, три поля (возраст, рост,
 // вес), градиентная кнопка «Рассчитать» и неоновый силуэт справа.
 // По умолчанию карточка СВЁРНУТА (запрос пользователя): видна только
-// шапка с шевроном — тап раскрывает поля; состояние живёт до перезагрузки
-// экрана. Расчёт по полным данным пользователя — пол, возраст, рост, вес
-// и уровень активности. Кнопка сохраняет данные в профиль и раскрывает
-// подробные результаты (норма веса, обмен, суточная норма, жир).
+// шапка с шевроном — тап по шапке раскрывает поля; состояние живёт до
+// перезагрузки экрана. Результаты («Рассчитать») живут внутри развёрнутой
+// карточки: сворачивание шапкой прячет и их — калькулятор можно закрыть
+// после ввода данных (решение пользователя). Строка «Жир в организме»
+// красится по уровню жира: норма — зелёным, предожирение — оранжевым,
+// ожирение — красным (строка и цифры, bodyFatLevel). Подсказка с
+// перечислением формул убрана по решению пользователя.
 //
 // Формулы: ИМТ — ВОЗ; базовый обмен — Миффлин — Сан Жеор;
 // идеальный вес — Девайн; % жира — оценка Дёренберга; TDEE = BMR × коэффициент.
@@ -28,6 +31,7 @@ import {
   tdeeKcal,
   idealWeightDevine,
   bodyFatPercent,
+  bodyFatLevel,
 } from '@/lib/data/bmi'
 
 const GRAD = ['#4D7CFE', '#8B5CF6', '#A45BFF']
@@ -111,6 +115,9 @@ export function BmiCalculator() {
   const bmr = bmrMifflin(sex, ageNum, hNum, wNum)
   const tdee = tdeeKcal(bmr, tdeeMult(activityId))
   const fatPct = bodyFatPercent(bmi, ageNum, sex)
+  // Цвет строки «Жир в организме»: норма — зелёный, предожирение —
+  // оранжевый, ожирение — красный (пороги по полу)
+  const fatLevel = bodyFatLevel(fatPct, sex)
 
   function handleCalc() {
     if (!valid) {
@@ -225,8 +232,10 @@ export function BmiCalculator() {
       </View>
       )}
 
-      {/* Подробные результаты — раскрываются кнопкой «Рассчитать» */}
-      {showResult && valid && (
+      {/* Подробные результаты — раскрываются кнопкой «Рассчитать»;
+          живут внутри развёрнутой карточки: шапка сворачивает и их,
+          иначе после ввода данных калькулятор нельзя закрыть */}
+      {open && showResult && valid && (
         <View className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <View className="flex-row items-center justify-between gap-2">
             <Text className="font-medium text-xs text-bear-sub">Ваш ИМТ</Text>
@@ -249,11 +258,13 @@ export function BmiCalculator() {
             </View>
           </View>
 
+          {/* Жир в организме: строка и цифры в цвете уровня жира —
+              норма зелёным, предожирение оранжевым, ожирение красным */}
           <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5">
-            <Text className="font-medium text-[12px] text-bear-soft">
+            <Text className="font-medium text-[12px]" style={{ color: fatLevel.color }}>
               Жир в организме (оценка)
             </Text>
-            <Text className="font-bold text-[13px] text-white">
+            <Text className="font-bold text-[13px]" style={{ color: fatLevel.color }}>
               ≈ {fmtDecimal(fatPct)} %
             </Text>
           </View>
@@ -284,12 +295,6 @@ export function BmiCalculator() {
               )
             })}
           </View>
-
-          <Text className="mt-3 font-sans text-[10px] leading-relaxed text-bear-dim">
-            Формулы: базовый обмен — Миффлин — Сан Жеор, идеальный вес — Девайн,
-            жир — оценка Дёренберга, суточная норма — обмен × коэффициент активности.
-            Расчёт ориентировочный и не заменяет консультацию врача.
-          </Text>
         </View>
       )}
     </View>

@@ -133,6 +133,19 @@ export function bodyFatPercent(bmi, age, sex) {
   return Math.round(Math.min(60, Math.max(5, raw)) * 10) / 10
 }
 
+// Уровень жира для расцветки строки «Жир в организме» (решение
+// пользователя: норма — зелёным, предожирение — оранжевым, ожирение —
+// красным; цвет строки и цифр). Пороги по полу: женщины — норма < 32 %,
+// ожирение ≥ 35 %; мужчины — норма < 25 %, ожирение ≥ 30 %; между —
+// предожирение. Цвета — из палитры категорий ИМТ (norm/over/obese1)
+export function bodyFatLevel(fatPct, sex) {
+  const normMax = sex === 'male' ? 25 : 32
+  const obeseMin = sex === 'male' ? 30 : 35
+  if (fatPct >= obeseMin) return { id: 'obese', label: 'ожирение', color: '#f87171' }
+  if (fatPct >= normMax) return { id: 'pred', label: 'предожирение', color: '#fb923c' }
+  return { id: 'norm', label: 'норма', color: '#4ade80' }
+}
+
 // «22.4» / «62.3» — с точкой, как на фото-макете (не локаль ru-RU с запятой)
 export function fmtDecimal(n) {
   return (Math.round((n || 0) * 10) / 10).toFixed(1)
