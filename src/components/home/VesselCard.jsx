@@ -1,5 +1,6 @@
-// Карточка ёмкости воды: тап — записать воду, карандашик — правка
-// названия и объёма прямо в карточке (инлайн-редактор)
+// Плитка ёмкости «Быстро добавить» (горизонтальная, по 2 в ряд):
+// иконка слева, название и объём справа. Тап — записать воду,
+// карандашик — правка названия и объёма прямо в карточке (инлайн-редактор)
 
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
@@ -59,24 +60,26 @@ export function VesselCard({ vessel, onDrink }) {
   }
 
   return (
-    <View className="relative flex-1">
+    <View className="relative min-w-0 flex-1">
       <Pressable
         onPress={() => onDrink(vessel)}
         accessibilityRole="button"
         accessibilityLabel={`Добавить ${vessel.label}, ${vessel.ml} мл`}
-        className="items-center gap-1 rounded-2xl border border-bear-line bg-bear-card2/70 px-1 py-2.5 active:border-sky-400/40 active:bg-[#122544]"
+        className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:border-sky-400/40 active:bg-[#122544]"
       >
         <Icon size={20} color="#7DD3FC" />
-        <Text numberOfLines={1} className="max-w-full font-semibold text-[10.5px] text-bear-text">
-          {vessel.label}
-        </Text>
-        <Text className="font-sans text-[9px] text-bear-sub2">+{vessel.ml} мл</Text>
+        <View className="min-w-0 flex-1 pr-4">
+          <Text numberOfLines={1} className="font-semibold text-[12px] text-bear-text">
+            {vessel.label}
+          </Text>
+          <Text className="font-sans text-[9.5px] text-bear-sub2">+{vessel.ml} мл</Text>
+        </View>
       </Pressable>
       <Pressable
         onPress={() => setEdit(true)}
         accessibilityRole="button"
         accessibilityLabel={`Редактировать «${vessel.label}»`}
-        className="absolute right-0.5 top-0.5 rounded-full bg-white/10 p-1"
+        className="absolute right-1 top-1 rounded-full bg-white/10 p-1"
       >
         <Pencil size={9} color="#AEB9D9" />
       </Pressable>
