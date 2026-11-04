@@ -5,7 +5,7 @@
 // Склейку «история + живое сегодня» берём из activity.js (dayRow) —
 // раньше одна и та же логика была написана здесь второй раз.
 
-import { useHistoryStore } from '@/store/useHistoryStore'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { dayRow } from './activity'
 
 const FIELDS = ['steps', 'kcal', 'waterMl', 'burned', 'xp']
@@ -73,4 +73,85 @@ export function weeksComparison(weeks, today) {
     out.push({ label: `${weeks - w} нед`, ...bucket })
   }
   return out
+}
+
+// ===== Дисциплина, теплокарта, рекорды, нутриенты периода =====
+
+// Дисциплина периода: сколько дней дневник вели (есть любая запись —
+// шаги, еда, вода, тренировка) и сколько дней дневная цель достигнута.
+// Калории считаются достигнутыми, когда еда записана и не выше цели —
+// пустой день не «автоматически молодец», а честно не считается.
+export function discipline(rows, goals) {
+  const days = rows.length
+  const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned).length
+  const g = goals || {}
+  const met = {
+    steps: g.steps > 0 ? rows.filter((r) => r.steps >= g.steps).length : 0,
+    waterMl: g.waterMl > 0 ? rows.filter((r) => r.waterMl >= g.waterMl).length : 0,
+    kcal: g.kcal > 0 ? rows.filter((r) => r.kcal > 0 && r.kcal <= g.kcal).length : 0,
+  }
+  return { days, recorded, met }
+}
+
+// Уровень дня для теплокарты: met — цель достигнута, mid — не меньше
+// половины цели (для калорий — в пределах +15% сверх), low — записи были,
+// но совсем мало, over — перебор калорий, none — день без записей.
+// Цель не задана (0) — любой ненулевой день считается достигнутым.
+export function dayLevel(key, value, goal) {
+  if (!value || value <= 0) return 'none'
+  if (key === 'kcal') {
+    if (!(goal > 0)) return 'met'
+    if (value <= goal) return 'met'
+    if (value <= goal * 1.15) return 'mid'
+    return 'over'
+  }
+  if (!(goal > 0)) return 'met'
+  if (value >= goal) return 'met'
+  if (value >= goal / 2) return 'mid'
+  return 'low'
+}
+
+// Лучший день периода: максимум показателя по дням (0 — записей нет).
+// Для «калорий» не показываем: есть больше всех — не достижение.
+export function bestDay(rows, key) {
+  return (rows || []).reduce((mx, r) => Math.max(mx, r[key] || 0), 0)
+}
+
+// Нутриенты по дням из журнала приёмов (useFoodStore.history — у записей
+// есть день «ГГГГ-ММ-ДД» и БЖУ с клетчаткой). Старые записи без fib/sug
+// считаются нулями — как в «Рейтинге питания».
+export function nutrientsByDay(foodHistory) {
+  const out = {}
+  for (const e of foodHistory || []) {
+    if (!e || typeof e.day !== 'string') continue
+    const b = out[e.day] || (out[e.day] = { kcal: 0, p: 0, f: 0, c: 0, fib: 0 })
+    b.kcal += e.kcal || 0
+    b.p += e.p || 0
+    b.f += e.f || 0
+    b.c += e.c || 0
+    b.fib += e.fib || 0
+  }
+  return out
+}
+
+// Итоги нутриентов за `days` дней со сдвигом `offset` (0 — текущий период,
+// days — предыдущий). recorded — только дни, где еда действительно была:
+// среднее делится на них, простои среднее не топят.
+export function nutrientTotals(byDay, days, offset = 0) {
+  const acc = { kcal: 0, p: 0, f: 0, c: 0, fib: 0, recorded: 0 }
+  const now = new Date()
+  for (let i = offset; i < offset + days; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const row = byDay[dayKeyOf(d)]
+    if (row && (row.kcal > 0 || row.p > 0 || row.f > 0 || row.c > 0 || row.fib > 0)) {
+      acc.recorded += 1
+      acc.kcal += row.kcal
+      acc.p += row.p
+      acc.f += row.f
+      acc.c += row.c
+      acc.fib += row.fib
+    }
+  }
+  return acc
 }

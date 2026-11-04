@@ -26,8 +26,10 @@ import { RANGES, WATER_GLASS, xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
-  // Один период для «Общей сводки» и «Отчётов»
+  // Один период и один показатель для «Общей сводки» и «Отчётов»:
+  // теплокарта календаря показывает тот же показатель, что и график
   const [rangeId, setRangeId] = useState('7d')
+  const [metricId, setMetricId] = useState('steps')
   const days = RANGES.find((r) => r.id === rangeId)?.days || 7
 
   const waterMl = useActivityStore((s) => s.waterMl)
@@ -85,11 +87,17 @@ export default function ActivityScreen() {
         {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
         <HomeInsights />
 
-        <SummarySection today={today} rangeId={rangeId} onRangeChange={setRangeId} />
+        <SummarySection
+          today={today}
+          rangeId={rangeId}
+          onRangeChange={setRangeId}
+          metricId={metricId}
+          onMetricChange={setMetricId}
+        />
 
         <ExerciseSection />
 
-        <ReportsSection today={today} days={days} />
+        <ReportsSection today={today} days={days} metricId={metricId} />
 
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
           Шаги, вода и тренировки попадают в сводку и отчёты.

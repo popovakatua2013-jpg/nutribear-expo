@@ -18,9 +18,19 @@ const MODES = [
   { id: 'weeks', label: 'По неделям' },
 ]
 
-export function SummarySection({ today, rangeId = '7d', onRangeChange = () => {} }) {
+export function SummarySection({
+  today,
+  rangeId = '7d',
+  onRangeChange = () => {},
+  // Показатель можно поднять на экран (общий с теплокартой «Отчётов»);
+  // если пропсы не переданы — локальное состояние, как раньше
+  metricId: metricIdProp,
+  onMetricChange,
+}) {
   const [mode, setMode] = useState('days')
-  const [metricId, setMetricId] = useState('steps')
+  const [localMetricId, setLocalMetricId] = useState('steps')
+  const metricId = metricIdProp ?? localMetricId
+  const setMetricId = onMetricChange || setLocalMetricId
   const range = RANGES.find((r) => r.id === rangeId) || RANGES[0]
   const metric = METRICS.find((m) => m.key === metricId) || METRICS[0]
 

@@ -18,6 +18,31 @@ if not exist package.json (
   exit /b
 )
 
+rem ===== Update from GitHub (only if this folder is a git clone) =====
+where git >nul 2>nul
+if errorlevel 1 goto no-git
+if not exist ".git" goto no-git
+
+echo.
+echo ============================================
+echo   Checking for updates (git pull)...
+echo ============================================
+echo.
+call git pull origin main
+if errorlevel 1 (
+  echo.
+  echo [!] git pull stumbled - resetting package-lock.json and retrying...
+  call git checkout -- package-lock.json
+  call git pull origin main
+  if errorlevel 1 (
+    echo.
+    echo [!] Could not update - starting the current version anyway.
+  )
+)
+
+:no-git
+rem Folder is not a git clone - for example, extracted from a zip - update skipped
+
 echo.
 echo ============================================
 echo   NutriBear - installing packages...

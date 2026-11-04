@@ -8,9 +8,10 @@ import { Image, Modal, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { captureRef } from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
-import { Droplets, Flame, Footprints, Share2, Timer, X } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Share2, Timer, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
-import { formatLiters } from '@/lib/data/reports'
+import { formatLiters, changePct, deltaTone } from '@/lib/data/reports'
+import { METRICS } from '@/lib/data/metrics'
 import { daysLabel } from '@/lib/streak'
 
 const BEAR = require('../../../../assets/images/bear.webp')
@@ -36,7 +37,7 @@ function Stat({ Icon, color, value, label }) {
   )
 }
 
-export function WeeklyShareCard({ open, onClose, totals, streak = 0, days = 7 }) {
+export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak = 0, days = 7 }) {
   const cardRef = useRef(null)
   const [busy, setBusy] = useState(false)
 
@@ -104,12 +105,47 @@ export function WeeklyShareCard({ open, onClose, totals, streak = 0, days = 7 })
               <Stat Icon={Flame} color="#f87171" value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
             </View>
 
+            {/* Сравнение с прошлым периодом: только показатели, по которым
+                в прошлый период были данные — иначе Δ бессмысленна */}
+            {METRICS.some((m) => (prev?.[m.key] || 0) > 0) ? (
+              <View className="mt-2.5 rounded-2xl bg-white/[0.05] px-3 py-2.5">
+                <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px] text-white/50">
+                  К прошлому периоду
+                </Text>
+                <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
+                  {METRICS.filter((m) => (prev?.[m.key] || 0) > 0).map((m) => {
+                    const pct = changePct(totals?.[m.key] || 0, prev[m.key])
+                    const tone = deltaTone(pct, m.invert, '#8B96B8')
+                    const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
+                    return (
+                      <View key={m.key} className="flex-row items-center gap-1">
+                        {Arrow ? <Arrow size={11} color={tone} /> : null}
+                        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10.5px]" style={{ color: tone }}>
+                          {`${m.label.toLowerCase()} ${pct > 0 ? '+' : ''}${pct}%`}
+                        </Text>
+                      </View>
+                    )
+                  })}
+                </View>
+              </View>
+            ) : null}
+
             {/* Стрик */}
             {streak > 0 ? (
               <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
                 <Flame size={13} color="#fb923c" />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#fdba74]">
                   {`${streak} ${daysLabel(streak)} подряд 🔥`}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Дисциплина: сколько дней периода велся дневник */}
+            {recorded != null ? (
+              <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-[#4D7CFE]/15 px-3 py-1.5">
+                <BookOpen size={13} color="#8DABFF" />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#8DABFF]">
+                  {`вели дневник ${recorded} из ${days} дней`}
                 </Text>
               </View>
             ) : null}

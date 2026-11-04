@@ -11,7 +11,7 @@ import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, ChevronRight, Scale } from 'lucide-react-native'
-import { changePct, deltaTone, periodTotals } from '@/lib/data/reports'
+import { bestDay, changePct, deltaTone, periodTotals } from '@/lib/data/reports'
 import { REPORT_METRICS } from '@/lib/data/metrics'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
@@ -25,7 +25,7 @@ function prevLabel(days) {
   return `к предыдущим ${days} дням`
 }
 
-function ReportCard({ m, cur, prev, days }) {
+function ReportCard({ m, cur, prev, days, best = 0 }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
@@ -60,19 +60,28 @@ function ReportCard({ m, cur, prev, days }) {
           {Math.abs(pct)}% {prevLabel(days)}
         </Text>
       </View>
+      {/* Рекорд периода — только у показателей «чем больше, тем лучше»;
+        у калорий есть больше всех — не достижение */}
+      {!m.invert && best > 0 ? (
+        <Text numberOfLines={1} className="mt-1.5 font-sans text-[10.5px] text-bear-dim">
+          {`Лучший день: ${m.fmt(best)}`}
+        </Text>
+      ) : null}
     </LinearGradient>
   )
 }
 
-export function ReportCards({ today, days }) {
+export function ReportCards({ today, days, rows = [] }) {
   // periodTotals обходит до 180 дней истории — считаем только при
   // смене периода/данных, а не на каждом рендере экрана
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
   const prev = useMemo(() => periodTotals(days, days), [days])
 
   // Карточки идут рядами по две: пять метрик дневника + особая карточка
-  // веса ({key:'weight'}), последняя непарная тянется на всю ширину
-  const rows = useMemo(() => {
+  // веса ({key:'weight'}), последняя непарная тянется на всю ширину.
+  // Имя cardRows, чтобы не путать с пропом rows — дневными строками
+  // истории (по ним считается «Лучший день»)
+  const cardRows = useMemo(() => {
     const items = [...REPORT_METRICS, { key: 'weight' }]
     const out = []
     for (let i = 0; i < items.length; i += 2) {
@@ -83,13 +92,13 @@ export function ReportCards({ today, days }) {
 
   return (
     <View className="gap-3" accessibilityLabel="Отчёты за период">
-      {rows.map((row, ri) => (
+      {cardRows.map((row, ri) => (
         <View key={ri} className="flex-row gap-3">
           {row.map((m) =>
             m.key === 'weight' ? (
               <WeightReportCard key={m.key} days={days} />
             ) : (
-              <ReportCard key={m.key} m={m} cur={cur} prev={prev} days={days} />
+              <ReportCard key={m.key} m={m} cur={cur} prev={prev} days={days} best={bestDay(rows, m.key)} />
             )
           )}
         </View>

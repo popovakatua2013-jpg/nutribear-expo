@@ -57,6 +57,7 @@ export function history(days, today) {
     d.setDate(d.getDate() - i)
     out.push({
       ...dayRow(d, today),
+      key: dayKeyOf(d), // «ГГГГ-ММ-ДД» — теплокарта открывает по нему сводку дня
       label: days <= 7 ? shortWeekday(d) : shortDate(d),
     })
   }
