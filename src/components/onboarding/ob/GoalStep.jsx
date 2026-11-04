@@ -1,5 +1,5 @@
 // Этап 2. Цель: похудеть / поддержать / набрать + целевой вес и темп
-// (0.25 / 0.5 / 1 кг в неделю — от него считается дефицит).
+// (0.25 / 0.5 / 1 кг в неделю — от него считается дефицит или профицит).
 
 import { Text, View } from 'react-native'
 import { ObShell } from './ObShell'
@@ -46,7 +46,7 @@ export function GoalStep({ onNext, onBack }) {
               placeholder={imperial ? '130' : '60'}
             />
             <PillRow
-              label="Темп (влияет на дефицит калорий)"
+              label="Темп (влияет на норму калорий)"
               options={PACE_OPTIONS}
               value={a.pace}
               onChange={(v) => patch({ pace: v })}

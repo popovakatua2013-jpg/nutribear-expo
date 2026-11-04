@@ -6,6 +6,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^expo-constants$': '<rootDir>/__tests__/helpers/expo-constants-stub.js',
     '^@react-native-async-storage/async-storage$': '<rootDir>/__tests__/helpers/async-storage-stub.js',
     '^react-native$': '<rootDir>/__tests__/helpers/react-native-stub.js',
   },
