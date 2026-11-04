@@ -124,13 +124,17 @@ export function ReportsSection({
         weights={weights}
       />
 
-      {/* История показателя по дням — кнопка «История» в шапке календаря */}
+      {/* История показателя по дням — кнопка «История» в шапке календаря.
+          Период меняется пилюлями внутри окна — это тот же период,
+          что и у всей секции (единое состояние на вкладке) */}
       <MetricDaysModal
         open={histOpen}
         onClose={() => setHistOpen(false)}
         metric={metric}
         days={days}
         rows={rows}
+        rangeId={rangeId}
+        onRangeChange={onRangeChange}
       />
     </View>
   )

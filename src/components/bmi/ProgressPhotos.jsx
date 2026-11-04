@@ -2,6 +2,10 @@
 // видеть прогресс глазами, а не только цифрой на весах. Фото хранятся
 // только на устройстве (папка приложения), попадают в резервную копию
 // и стираются кнопкой «Стереть все данные».
+// Фото свёрнуты по умолчанию (запрос: постоянно висящие снимки
+// раздражают) — вместо них строка «N фото скрыто · последнее …»;
+// тап по заголовку или строке разворачивает ленту. При добавлении
+// нового снимка лента разворачивается сама — видно результат.
 // Кнопка «+» предлагает камеру или галерею; снимок обрезается в квадрат
 // (ровное сравнение) и ужимается до 720 px. Удаление — двойным тапом
 // по кнопке в просмотре (без Alert-окна).
@@ -10,7 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Camera, Trash2, X } from 'lucide-react-native'
+import { Camera, ChevronDown, ChevronRight, Trash2, X } from 'lucide-react-native'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { deletePhotoFile, savePhoto } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
@@ -30,6 +34,9 @@ export function ProgressPhotos() {
   const removePhoto = useProgressPhotosStore((s) => s.removePhoto)
   const { toast } = useToast()
   const [preview, setPreview] = useState(null) // фото в полноэкранном просмотре
+  // Лента свёрнута по умолчанию: снимки не висят на виду постоянно.
+  // Разворачивается тапом по заголовку/строке-сводке и при добавлении фото
+  const [expanded, setExpanded] = useState(false)
   // Удаление двойным тапом вместо Alert: первый тап — кнопка просит
   // «нажмите ещё раз», второй — удаляет. Смена фото/закрытие — сброс
   const [confirmDel, setConfirmDel] = useState(false)
@@ -76,6 +83,7 @@ export function ProgressPhotos() {
         try {
           const saved = await savePhoto(uri)
           addPhoto(saved)
+          setExpanded(true) // только что снятое видно сразу — лента разворачивается
           toast({
             title: '📸 Фото добавлено',
             description: items.length === 0 ? 'Это ваше фото «до» — продолжайте!' : undefined,
@@ -126,9 +134,30 @@ export function ProgressPhotos() {
       className="rounded-3xl border border-white/5 bg-bear-card p-5"
     >
       <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-bold text-[15px] tracking-tight text-bear-text">
-          Фото прогресса
-        </Text>
+        {/* Заголовок — тап разворачивает/сворачивает ленту (когда есть фото) */}
+        <Pressable
+          onPress={() => items.length > 0 && setExpanded((v) => !v)}
+          disabled={items.length === 0}
+          accessibilityRole={items.length > 0 ? 'button' : undefined}
+          accessibilityLabel={
+            items.length > 0
+              ? expanded
+                ? 'Свернуть фото прогресса'
+                : `Развернуть фото прогресса: ${items.length} фото`
+              : 'Фото прогресса'
+          }
+          className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
+        >
+          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+            Фото прогресса
+          </Text>
+          {items.length > 0 &&
+            (expanded ? (
+              <ChevronDown size={16} color="#8B96B8" />
+            ) : (
+              <ChevronRight size={16} color="#8B96B8" />
+            ))}
+        </Pressable>
         {/* Крупная цветная кнопка фотоаппарата — заметная, как главная
             кнопка карточки (раньше была серой 28px и терялась) */}
         <Pressable
@@ -153,8 +182,29 @@ export function ProgressPhotos() {
         </Pressable>
       </View>
 
-      {/* Сравнение до/после: самое старое и самое свежее фото */}
-      {oldest && newest && oldest.id !== newest.id ? (
+      {/* Свёрнуто: вместо снимков — тихая строка-сводка, ничего не бросается в глаза */}
+      {items.length > 0 && !expanded ? (
+        <Pressable
+          onPress={() => setExpanded(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Показать фото прогресса"
+          className="mt-3 flex-row items-center justify-between gap-2 rounded-2xl border border-white/5 bg-white/[0.03] px-3.5 py-2.5 active:opacity-70"
+        >
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX}
+            className="min-w-0 flex-1 font-sans text-[11.5px] text-bear-sub2"
+          >
+            {items.length === 1
+              ? `1 фото скрыто · снято ${shortDay(newest.date)}`
+              : `${items.length} фото скрыто · последнее ${shortDay(newest.date)}`}
+          </Text>
+          <Text className="shrink-0 font-semibold text-[11px] text-[#8DABFF]">Показать</Text>
+        </Pressable>
+      ) : items.length > 0 ? (
+        <>
+          {/* Сравнение до/после: самое старое и самое свежее фото */}
+          {oldest && newest && oldest.id !== newest.id ? (
         <View className="mt-3 flex-row gap-2.5">
           <View className="min-w-0 flex-1">
             <Image
@@ -181,26 +231,26 @@ export function ProgressPhotos() {
         </View>
       ) : null}
 
-      {/* Вся лента снимков: тап — просмотр и удаление */}
-      {items.length > 0 ? (
-        <View className="mt-3 flex-row flex-wrap" style={{ gap: 6 }}>
-          {items.map((p) => (
-            <Pressable
-              key={p.id}
-              onPress={() => setPreview(p)}
-              accessibilityLabel={`Фото от ${shortDay(p.date)} — открыть`}
-              style={{ width: '31%', aspectRatio: 1 }}
-              className="overflow-hidden rounded-xl active:opacity-80"
-            >
-              <Image source={{ uri: p.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            </Pressable>
-          ))}
-        </View>
+          {/* Вся лента снимков: тап — просмотр и удаление */}
+          <View className="mt-3 flex-row flex-wrap" style={{ gap: 6 }}>
+            {items.map((p) => (
+              <Pressable
+                key={p.id}
+                onPress={() => setPreview(p)}
+                accessibilityLabel={`Фото от ${shortDay(p.date)} — открыть`}
+                style={{ width: '31%', aspectRatio: 1 }}
+                className="overflow-hidden rounded-xl active:opacity-80"
+              >
+                <Image source={{ uri: p.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              </Pressable>
+            ))}
+          </View>
+        </>
       ) : (
         <Text maxFontSizeMultiplier={MAX} className="mt-2 font-sans text-[11.5px] leading-snug text-bear-sub2">
           Снимайте фигуру раз в пару недель в одном и том же ракурсе —
           здесь появится сравнение «до/после». Фото остаются только на
-          вашем устройстве.
+          вашем устройстве и не видны, пока вы сами их не откроете.
         </Text>
       )}
 

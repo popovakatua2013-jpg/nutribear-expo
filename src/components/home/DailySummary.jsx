@@ -8,7 +8,9 @@
 // Долгий тап по левой половине — изменить цель по калориям, по правому
 // кольцу — цель «сжечь за день» (карточка «Калории» с
 // главной убрана как дубликат, её единственная уникальная функция
-// переехала сюда). Мини-чипы шагов/воды/минут удалены — эти цифры
+// переехала сюда); обычный тап по этим же зонам — история показателя
+// по дням (вся история живёт внутри блоков). Мини-чипы шагов/воды/минут
+// удалены — эти цифры
 // живут в трёх карточках над сводкой. Ниже — строка «Итог: съедено −
 // сожжено» с умным огоньком: зелёный — дефицит (итог в пределах цели),
 // жёлтый — небольшой перебор (до 100 ккал), красный — большой; цели нет —
@@ -215,6 +217,8 @@ export function DailySummary({
   streak = 0, // дней подряд с дневником (чип с огоньком)
   onEditBurnGoal, // долгий тап по кольцу сжигания — изменить цель
   onEditKcalGoal, // долгий тап по левой половине — изменить цель по калориям
+  onOpenKcalHistory, // тап по левой половине — история калорий по дням
+  onOpenBurnHistory, // тап по кольцу сжигания — история сожжённого по дням
 }) {
   const goals = useGoalsStore((s) => s.goals)
   const setGoals = useGoalsStore((s) => s.setGoals)
@@ -289,11 +293,12 @@ export function DailySummary({
   const [runId, setRunId] = useState(0)
   useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
 
-  // Левая половина (кольцо + пилюля) — Pressable, когда умеет менять
-  // цель по калориям долгим тапом, иначе обычный View
-  const Row = onEditKcalGoal ? Pressable : View
-  // Правое кольцо — Pressable для правки цели сжигания, иначе View
-  const BurnZone = onEditBurnGoal ? Pressable : View
+  // Левая половина (кольцо + пилюля) — Pressable, когда умеет открывать
+  // историю калорий (тап) или менять цель (долгий тап), иначе обычный View
+  const Row = onEditKcalGoal || onOpenKcalHistory ? Pressable : View
+  // Правое кольцо — Pressable для истории сжигания (тап) и правки цели
+  // (долгий тап), иначе View
+  const BurnZone = onEditBurnGoal || onOpenBurnHistory ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
   const pillTone = over > 0
@@ -325,18 +330,20 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Долгий тап
-          по левой половине — цель по калориям, по правому кольцу — цель
-          сжигания: единственные уникальные действия бывшей карточки
+      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Тап по
+          левой половине — история калорий по дням, по правому кольцу —
+          история сожжённого; долгий тап — правка соответствующей цели:
+          единственные уникальные действия бывшей карточки
           «Калории» и старой строки «Сожжено за сегодня» */}
       <View className="mt-3 flex-row items-center gap-2.5">
         <Row
+          onPress={onOpenKcalHistory}
           onLongPress={onEditKcalGoal}
           delayLongPress={450}
-          accessibilityRole={onEditKcalGoal ? 'button' : undefined}
+          accessibilityRole={onEditKcalGoal || onOpenKcalHistory ? 'button' : undefined}
           accessibilityLabel={
-            onEditKcalGoal
-              ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
+            onEditKcalGoal || onOpenKcalHistory
+              ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Тап — история по дням, долгий тап — изменить цель по калориям`
               : undefined
           }
           className="min-w-0 flex-1 flex-row items-center gap-2.5"
@@ -375,12 +382,13 @@ export function DailySummary({
         </Row>
 
         <BurnZone
+          onPress={onOpenBurnHistory}
           onLongPress={onEditBurnGoal}
           delayLongPress={450}
-          accessibilityRole={onEditBurnGoal ? 'button' : undefined}
+          accessibilityRole={onEditBurnGoal || onOpenBurnHistory ? 'button' : undefined}
           accessibilityLabel={
-            onEditBurnGoal
-              ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Долгий тап — изменить цель сжигания`
+            onEditBurnGoal || onOpenBurnHistory
+              ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Тап — история по дням, долгий тап — изменить цель сжигания`
               : undefined
           }
           className="shrink-0"

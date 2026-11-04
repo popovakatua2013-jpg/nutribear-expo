@@ -8,10 +8,12 @@
 // колонку. Карточку «Калории» убрали ранее — она дублировала сводку
 // «Съедено за сегодня» (там и съедено/цель, и пилюля «Осталось/Перебор»,
 // и сожжено; долгий тап по строке калорий в сводке — изменить цель).
-// Тап по карточке записывает показатель: «Шаги» — ручной ввод шагов,
-// «Активность» — вкладка активности, «Вода» — окно воды. Долгий тап по
-// «Вода» и «Активность» — изменить цель прямо с главной. «+» на шагах/воде
-// добавляет 1 000 шагов / стакан воды.
+// Тап по карточке открывает ИСТОРИЮ показателя по дням (вся история
+// живёт внутри блоков): «Шаги» — шаги за день, «Вода» — вода за день
+// (быстрое добавление — на «+», ручной ввод шагов и правка стаканов —
+// из подвала окна истории), «Активность» — вкладка дневника.
+// Долгий тап по «Вода» и «Активность» — изменить цель прямо с главной.
+// «+» на шагах/воде добавляет 1 000 шагов / стакан воды.
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -115,8 +117,8 @@ function Foot({ tone = 'muted', children }) {
 export function ActivityStats({
   steps, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
-  onAddSteps, onAddWater, onOpenWater, onEditWaterGoal,
-  onOpenSteps, onGoActivity,
+  onAddSteps, onAddWater, onOpenWaterHistory, onEditWaterGoal,
+  onOpenStepsHistory, onGoActivity,
 }) {
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в 130dp
   const stepsLeft = stepsGoal - steps
@@ -170,7 +172,7 @@ export function ActivityStats({
       foot: stepsFoot,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
-      onPress: onOpenSteps, // тап — записать шаги вручную
+      onPress: onOpenStepsHistory, // тап — история шагов по дням (ввод — из окна истории)
     },
     {
       colors: {
@@ -187,7 +189,7 @@ export function ActivityStats({
       foot: waterFoot,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
-      onPress: onOpenWater, // тап по карточке — окно воды (добавить/изменить/удалить)
+      onPress: onOpenWaterHistory, // тап — история воды по дням (стаканы — из окна истории)
       onLongPress: onEditWaterGoal, // долгий тап — изменить цель воды
     },
     {

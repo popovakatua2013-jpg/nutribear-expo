@@ -1,18 +1,25 @@
-// Окно «показатель по дням» из «Отчётов»: кнопка «История» в шапке
-// календаря-теплокарты открывает сохранённую по дням историю выбранного
-// показателя за период — «сколько прошёл в каждый день», «сколько
-// выпито за день» и т.д.
-// rows (дни периода, последний — сегодня) приходят готовыми из
-// ReportsSection — history() на экране строится один раз; строка
-// «сегодня» подсвечена. Дни, когда дневник не вели, показываются
-// как «нет записей» вместо ложных нулей; среднее считается только
-// по дням с записями.
+// Окно «показатель по дням» — история живёт внутри блоков: открывается
+// кнопкой «История» в шапке календаря-теплокарты «Отчётов» и тапом по
+// карточкам показателей на «Главной» (шаги, калории, вода, сожжено).
+// Показывает сохранённую по дням историю за период — «сколько прошёл
+// в каждый день», «сколько выпито за день» и т.д.
+// Период (7/30/90) — пилюли внутри окна (onRangeChange + rangeId):
+// на «Главной» нет шапки отчётов, поэтому окно самоуправляемое;
+// в «Отчётах» пилюли меняют тот же период всей секции.
+// rows (дни периода, последний — сегодня) приходят готовыми с экрана —
+// history() строится один раз на рендер; строка «сегодня» подсвечена.
+// Дни, когда дневник не вели, показываются как «нет записей» вместо
+// ложных нулей; среднее считается только по дням с записями.
+// footer — необязательный слот под списком (кнопки «Записать шаги»,
+// «Изменить стаканы» и т.п.): закреплён внизу окна, виден всегда.
 
 import { useMemo } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
+import { Pills } from '../../ui/Pills'
+import { RANGES } from '@/lib/data/activity'
 
-export function MetricDaysModal({ open, onClose, metric, days, rows }) {
+export function MetricDaysModal({ open, onClose, metric, days, rows, rangeId, onRangeChange, footer }) {
   const stats = useMemo(() => {
     const values = rows.map((r) => r[metric?.key] || 0)
     const total = values.reduce((s, v) => s + v, 0)
@@ -33,8 +40,11 @@ export function MetricDaysModal({ open, onClose, metric, days, rows }) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
+        {/* max-h на окне + flexShrink у списка: окно не выше 85% экрана —
+            на небольших устройствах прокручивается только список дней,
+            а шапка, пилюли периода и кнопки остаются на виду */}
         {open && metric && (
-          <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
             {/* Шапка: показатель + закрыть */}
             <View className="flex-row items-center justify-between">
               <View className="min-w-0 flex-1 flex-row items-center gap-2">
@@ -78,11 +88,23 @@ export function MetricDaysModal({ open, onClose, metric, days, rows }) {
               </Pressable>
             </View>
 
+            {/* Период — пилюли внутри окна (если экран умеет его менять) */}
+            {onRangeChange && (
+              <View className="mt-3">
+                <Pills
+                  items={RANGES.map((r) => ({ id: r.id, label: r.label }))}
+                  value={rangeId}
+                  onChange={onRangeChange}
+                  accessibilityLabel="Период истории"
+                />
+              </View>
+            )}
+
             {/* День за днём: подпись, полоска от максимума периода, значение */}
             <ScrollView
-              style={{ maxHeight: 400 }}
+              style={{ maxHeight: 400, flexShrink: 1 }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 4 }}
+              contentContainerStyle={{ paddingTop: 10, paddingBottom: 4 }}
             >
               {rows.map((r, i) => {
                 const v = stats.values[i]
@@ -132,10 +154,14 @@ export function MetricDaysModal({ open, onClose, metric, days, rows }) {
               })}
             </ScrollView>
 
+            {/* Действия показателя (необязательно): закреплены внизу,
+                видны без прокрутки даже на небольшом экране */}
+            {footer ? <View className="mt-3 flex-row gap-2">{footer}</View> : null}
+
             <Text className="mt-2.5 font-sans text-[10px] leading-snug text-bear-dim">
               {stats.recorded < rows.length
-                ? 'Дни, когда дневник не вели, помечены «нет записей» — в среднее они не входят. Период меняется пилюлями 7/30/90 в шапке отчётов'
-                : 'Дни записаны сами, пока вы пользовались дневником. Период меняется пилюлями 7/30/90 в шапке отчётов'}
+                ? 'Дни, когда дневник не вели, помечены «нет записей» — в среднее они не входят'
+                : 'Дни записаны сами, пока вы пользовались дневником'}
             </Text>
           </View>
         )}

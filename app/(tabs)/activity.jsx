@@ -1,8 +1,9 @@
-// Экран «Активность»: календарь (перенесён с главной), баннер с мишкой,
-// закономерности (перенесены с главной), тренировки и отчёты.
-// Карточки показателей (шаги, калории, вода, активность) перенесены на главную.
-// Все показатели дня автоматически пишутся в историю (useHistoryStore) —
-// поэтому графики и отчёты видят реальные данные за прошедшие дни.
+// Экран «Активность» (вкладка «Дневник»): баннер с мишкой, тренировки
+// и отчёты. Календарь и «Закономерности» удалены по решению: их работа
+// осталась в «Отчётах» (теплокарта-календарь месяца, карточки Δ%, рекорды)
+// и в блоках на «Главной» — тап по карточке показателя открывает его
+// историю по дням. Все показатели дня автоматически пишутся в историю
+// (useHistoryStore) — поэтому графики и отчёты видят реальные данные.
 // Период (7/30/90) и показатель выбираются в «Отчётах»: период —
 // пилюлями в шапке секции, показатель — тапом по карточке-итогу.
 
@@ -10,8 +11,6 @@ import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Footprints } from 'lucide-react-native'
-import { HomeCalendar } from '@/components/home/HomeCalendar'
-import { HomeInsights } from '@/components/home/HomeInsights'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
@@ -78,13 +77,7 @@ export default function ActivityScreen() {
           </View>
         </View>
 
-        {/* Календарь: строка недели / полный месяц (перенесён с главной) */}
-        <HomeCalendar />
-
         <MotivationBanner />
-
-        {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
-        <HomeInsights />
 
         <ExerciseSection />
 
