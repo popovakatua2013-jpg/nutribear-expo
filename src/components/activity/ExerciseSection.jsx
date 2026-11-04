@@ -6,6 +6,9 @@
 // исправить вручную (например, по цифре с тренажёра или смарт-часов).
 // Тап по записи — изменение, корзина — удаление. Поверхность и шапка —
 // в стиле вкладки «Тело» (фиолетовая bear-bodyCard + чип BodyChip).
+// Режим flat — без собственной карточки: секция встраивается внутрь
+// блока «Активность» на главной (тап по плитке «Активность» раскрывает
+// тренировки прямо под плитками, отдельной секции на странице больше нет).
 
 import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -62,7 +65,7 @@ function defaultDayOff() {
   return new Date().getHours() < 5 ? 1 : 0
 }
 
-export function ExerciseSection() {
+export function ExerciseSection({ flat = false }) {
   const logs = useExerciseStore((s) => s.logs)
   const addLog = useExerciseStore((s) => s.addLog)
   const updateLog = useExerciseStore((s) => s.updateLog)
@@ -299,7 +302,10 @@ export function ExerciseSection() {
   }
 
   return (
-    <View accessibilityLabel="Тренировки" className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5">
+    <View
+      accessibilityLabel="Тренировки"
+      className={flat ? '' : 'rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5'}
+    >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-row items-center gap-2">
           <BodyChip icon={<Dumbbell size={15} />} />

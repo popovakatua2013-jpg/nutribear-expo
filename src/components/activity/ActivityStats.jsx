@@ -10,10 +10,12 @@
 // и сожжено; долгий тап по строке калорий в сводке — изменить цель).
 // Тап по карточке — её быстрое действие за сегодня: «Шаги» — записать
 // шаги вручную, «Вода» — изменить стаканы за день, «Активность» —
-// скролл к тренировкам. История по дням больше не здесь: по решению
-// пользователя «Главная» — только сегодня, а история (вчера и старше)
-// живёт во вкладке «Дневник» — тап по карточке-итогу в «Отчётах»
-// открывает окно истории (MetricHistoryModal).
+// раскрыть/скрыть блок «Тренировки» (по решению пользователя тренировки
+// живут внутри блока «Активность», а не отдельной секцией — шеврон
+// в итоговой строке показывает состояние). История по дням больше не
+// здесь: по решению пользователя «Главная» — только сегодня, а история
+// (вчера и старше) живёт во вкладке «Дневник» — тап по карточке-итогу
+// в «Отчётах» открывает окно истории (MetricHistoryModal).
 // Долгий тап по «Вода» и «Активность» — изменить цель прямо с главной.
 // «+» на шагах/воде добавляет 1 000 шагов / стакан воды.
 // Поверхность плиток — в стиле вкладки «Тело» (фиолетовая
@@ -22,7 +24,7 @@
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Footprints, Dumbbell, Droplets, Plus } from 'lucide-react-native'
+import { ChevronDown, ChevronUp, Footprints, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { BurnRing } from '../ui/BurnRing'
 
@@ -123,7 +125,7 @@ export function ActivityStats({
   steps, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
   onAddSteps, onAddWater, onOpenWater, onEditWaterGoal,
-  onOpenStepsInput, onGoActivity,
+  onOpenStepsInput, onGoActivity, exOpen = false,
 }) {
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в 130dp
   const stepsLeft = stepsGoal - steps
@@ -139,13 +141,27 @@ export function ActivityStats({
     <Foot>цель не задана</Foot>
   )
 
-  // у «Активности» процент дневной цели переехал из подстроки в итоговую строку
-  const minutesFoot = minutesGoal > 0 ? (
-    <Foot tone={minutes >= minutesGoal ? 'good' : 'accent'}>
-      {minutesPct}% от цели
-    </Foot>
-  ) : (
-    <Foot>цель не задана</Foot>
+  // у «Активности» итоговая строка двойная: процент дневной цели слева
+  // и шеврон раскрытия тренировок справа (тап по карточке разворачивает
+  // блок «Тренировки» прямо под плитками — как строка «Журнал измерений»
+  // на вкладке «Тело»)
+  const minutesFoot = (
+    <View className="mt-0.5 flex-row items-center justify-between">
+      <FitLine
+        className={`flex-1 font-bold text-[10px] ${
+          minutesGoal > 0
+            ? minutes >= minutesGoal ? 'text-emerald-300' : 'text-violet-300'
+            : 'text-bear-sub2'
+        }`}
+      >
+        {minutesGoal > 0 ? `${minutesPct}% от цели` : 'цель не задана'}
+      </FitLine>
+      {exOpen ? (
+        <ChevronUp size={12} color="#A78BFA" />
+      ) : (
+        <ChevronDown size={12} color="#A78BFA" />
+      )}
+    </View>
   )
 
   const waterLeft = waterGoalMl - waterMl
@@ -207,14 +223,16 @@ export function ActivityStats({
       // Кольцо прогресса цели сжигания (как в сводке, но на главной)
       ring: burnGoal > 0 ? { pct: Math.round((burned / burnGoal) * 100) } : null,
       foot: minutesFoot,
-      onPress: onGoActivity, // тап — плавный скролл к блоку «Тренировки» (на этой же странице)
+      // тап — раскрыть/скрыть тренировки прямо под плитками (этот же блок)
+      onPress: onGoActivity,
       onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
       longHint: 'Долгий тап — изменить цель сжигания',
     },
   ]
 
   // Компактный ряд: три карточки в одну строку — «Шаги», «Вода»,
-  // «Активность»; flex-1 делит ширину поровну, текст сжимается сам
+  // «Активность»; flex-1 делит ширину поровну, текст сжимается сам.
+  // Раскрытые тренировки рендерит родитель (блок «Активность» на главной)
   return (
     <View className="flex-row gap-3">
       {cards.map((c) => <StatCard key={c.label} {...c} />)}

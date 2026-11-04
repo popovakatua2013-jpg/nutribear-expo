@@ -1,16 +1,17 @@
-// Главный экран: 4 карточки показателей дня (шаги, калории, активность,
-// вода), сводка «Съедено за сегодня», тренировки (перенесены с вкладки
-// «Дневник»), приёмы пищи и рейтинг питания (клетчатка, сахар,
+// Главный экран: блок «Активность» (3 плитки: шаги, вода, активность;
+// тап по «Активности» раскрывает тренировки прямо внутри блока —
+// отдельной секции тренировок на главной больше нет), сводка
+// «Съедено за сегодня», приёмы пищи и рейтинг питания (клетчатка, сахар,
 // нутриенты — за день и месяц). Блоки «Голодание» и «Ваши цели» удалены
 // по запросу. Модалки: еда (хаб), все приёмы. Шапка экрана — с мягкой
 // неоновой дымкой, как на вкладке «Тело» (единый стиль страниц).
 // Показатели дня пишутся в историю — для отчётов.
 // «Главная» — только сегодня (по запросу пользователя): карточки
 // показателей открывают свои быстрые действия (тап «Шаги» — записать
-// шаги вручную, тап «Вода» — изменить стаканы, «Активность» — скролл
-// к тренировкам), тапы по кольцам и строке «Итог» убраны — история
-// по дням теперь живёт во вкладке «Дневник»: тап по карточке-итогу
-// в «Отчётах» открывает окно истории (MetricHistoryModal).
+// шаги вручную, тап «Вода» — изменить стаканы, тап «Активность» —
+// раскрыть тренировки внутри блока), история по дням теперь живёт
+// во вкладке «Дневник»: тап по карточке-итогу в «Отчётах» открывает
+// окно истории (MetricHistoryModal).
 // История за вчера и старше — там, за сегодня — здесь.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -48,11 +49,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { toast } = useToast()
   const scrollRef = useRef(null)
-  // Скролл к блоку «Тренировки» (тап по карточке «Активность»):
-  // y-координата блока запоминается в onLayout
-  const exercisesY = useRef(0)
-  const goToExercises = () =>
-    scrollRef.current?.scrollTo({ y: Math.max(0, exercisesY.current - 8), animated: true })
+  // Раскрытые тренировки внутри блока «Активность» (тап по плитке):
+  // по умолчанию скрыты — главная короче без отдельной секции
+  const [exOpen, setExOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
@@ -247,35 +246,47 @@ export default function HomeScreen() {
         {/* Приветствие: мишка, время суток, статус дневника и дата */}
         <Greeting consumed={consumed} target={goals.kcal} />
 
-        {/* Компактный ряд из 3 карточек в одну строку: шаги, вода,
-            активность (кольцо цели сжигания, долгий тап — правка).
+        {/* Блок «Активность» — единый контейнер: ряд плиток за сегодня
+            (шаги, вода, активность с кольцом сжигания) и тренировки,
+            которые по тапу на «Активность» раскрываются прямо здесь.
             Карточку «Калории» убрали — её данные уже в сводке
-            «Съедено за сегодня» ниже. Тап по карточке — её быстрое
-            действие (записать шаги / изменить стаканы / к тренировкам);
-            история по дням — во вкладке «Дневник» */}
-        <ActivityStats
-          steps={extraSteps}
-          burned={burned}
-          minutes={minutes}
-          minutesGoal={goals.minutes}
-          minutesPct={minutesPct}
-          waterPct={waterPct}
-          waterMl={waterMl}
-          stepsGoal={goals.steps}
-          waterGoalMl={goals.waterMl}
-          burnGoal={goals.burnKcal}
-          onEditBurnGoal={() =>
-            openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
-          }
-          onAddSteps={handleAddSteps}
-          onAddWater={handleAddWater}
-          onOpenWater={() => setWaterOpen(true)}
-          onEditWaterGoal={() =>
-            openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
-          }
-          onOpenStepsInput={() => setStepsOpen(true)}
-          onGoActivity={goToExercises}
-        />
+            «Съедено за сегодня» ниже. Долгий тап по плиткам — правка
+            целей; история по дням — во вкладке «Дневник» */}
+        <View className="rounded-3xl border border-bear-bodyLine bg-white/[0.02] p-3">
+          <ActivityStats
+            steps={extraSteps}
+            burned={burned}
+            minutes={minutes}
+            minutesGoal={goals.minutes}
+            minutesPct={minutesPct}
+            waterPct={waterPct}
+            waterMl={waterMl}
+            stepsGoal={goals.steps}
+            waterGoalMl={goals.waterMl}
+            burnGoal={goals.burnKcal}
+            onEditBurnGoal={() =>
+              openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
+            }
+            onAddSteps={handleAddSteps}
+            onAddWater={handleAddWater}
+            onOpenWater={() => setWaterOpen(true)}
+            onEditWaterGoal={() =>
+              openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
+            }
+            onOpenStepsInput={() => setStepsOpen(true)}
+            onGoActivity={() => setExOpen((v) => !v)}
+            exOpen={exOpen}
+          />
+
+          {/* Тренировки: живут внутри блока «Активность» — без обводки
+              (flat), под разделителем; повторно открытые — со своим
+              списком за сегодня, повтором дня и суммой сожжённого */}
+          {exOpen && (
+            <View className="mt-3 border-t border-white/[0.06] pt-3">
+              <ExerciseSection flat />
+            </View>
+          )}
+        </View>
 
         {/* Вечерняя подсказка: с 19:00 догоняем воду/калории, если отстаём */}
         <EveningNudge
@@ -313,18 +324,6 @@ export default function HomeScreen() {
           onRemove={removeEntry}
           onViewAll={() => setAllOpen(true)}
         />
-
-        {/* Тренировки — перенесены с вкладки «Дневник» по запросу, блок
-            стоит после «Приёмов пищи» (решение пользователя): сожжённое
-            из сводки и кольца рядом с записью тренировок.
-            Тап по карточке «Активность» плавно скроллит сюда */}
-        <View
-          onLayout={(e) => {
-            exercisesY.current = e.nativeEvent.layout.y
-          }}
-        >
-          <ExerciseSection />
-        </View>
 
         {/* Рейтинг питания: клетчатка, сахар, нутриенты — день/месяц */}
         <NutritionRating />
