@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, ChevronRight, Scale } from 'lucide-react-native'
 import { bestDay, changePct, deltaTone, periodTotals } from '@/lib/data/reports'
-import { REPORT_METRICS } from '@/lib/data/metrics'
+import { METRICS } from '@/lib/data/metrics'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
@@ -82,7 +82,7 @@ export function ReportCards({ today, days, rows = [] }) {
   // Имя cardRows, чтобы не путать с пропом rows — дневными строками
   // истории (по ним считается «Лучший день»)
   const cardRows = useMemo(() => {
-    const items = [...REPORT_METRICS, { key: 'weight' }]
+    const items = [...METRICS, { key: 'weight' }]
     const out = []
     for (let i = 0; i < items.length; i += 2) {
       out.push(items.slice(i, i + 2))

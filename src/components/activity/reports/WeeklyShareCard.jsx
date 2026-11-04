@@ -11,10 +11,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { captureRef } from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
 import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Share2, Sparkles, Timer, X } from 'lucide-react-native'
-import { formatNum } from '@/lib/format'
+import { formatNum, pluralDays } from '@/lib/format'
 import { formatLiters, changePct, deltaTone } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
-import { daysLabel } from '@/lib/streak'
 
 const BEAR = require('../../../../assets/images/bear.webp')
 const MAX = 1.25
