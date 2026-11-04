@@ -5,7 +5,7 @@
 jest.requireActual('./helpers/react-native-stub')
 jest.requireActual('./helpers/async-storage-stub')
 
-const { discipline, dayLevel, bestDay, nutrientsByDay, nutrientTotals } = require('@/lib/data/reports')
+const { discipline, dayLevel, bestDay, nutrientsByDay, nutrientTotals, compressDayRows, gapLabel, dayHasRecords } = require('@/lib/data/reports')
 const { dayKeyOf } = require('@/store/useHistoryStore')
 
 // Ключ дня со сдвигом: keyAt(0) — сегодня, keyAt(-1) — вчера
@@ -162,5 +162,102 @@ describe('nutrientTotals', () => {
     const t = nutrientTotals({}, 7)
     expect(t.recorded).toBe(0)
     expect(t.p).toBe(0)
+  })
+})
+
+// ===== Сжатый список «по дням»: простои сворачиваются в пролёты =====
+
+describe('dayHasRecords', () => {
+  test('день с любой записью — день с записями, пустой — нет', () => {
+    expect(dayHasRecords(row({ steps: 100 }))).toBe(true)
+    expect(dayHasRecords(row({ kcal: 500 }))).toBe(true)
+    expect(dayHasRecords(row({ waterMl: 250 }))).toBe(true)
+    expect(dayHasRecords(row({ burned: 50 }))).toBe(true)
+    // нули при записях в другом поле — честный ноль дня с записями
+    expect(dayHasRecords(row({ kcal: 0, waterMl: 300 }))).toBe(true)
+    expect(dayHasRecords(row())).toBe(false)
+    expect(dayHasRecords(null)).toBe(false)
+  })
+})
+
+describe('compressDayRows', () => {
+  test('все дни с записями — без пролётов', () => {
+    const rows = [row({ steps: 1000, label: 'Пн' }), row({ steps: 2000, label: 'Вт' })]
+    const segs = compressDayRows(rows)
+    expect(segs).toHaveLength(2)
+    expect(segs.every((s) => s.type === 'day')).toBe(true)
+  })
+
+  test('подряд идущие дни без записей — один пролёт с границами', () => {
+    const rows = [
+      row({ steps: 8000, label: '1 авг' }),
+      row({ label: '2 авг' }),
+      row({ label: '3 авг' }),
+      row({ label: '4 авг' }),
+      row({ steps: 5000, label: '5 авг' }),
+    ]
+    const segs = compressDayRows(rows)
+    expect(segs).toHaveLength(3)
+    expect(segs[0]).toMatchObject({ type: 'day' })
+    expect(segs[1]).toMatchObject({ type: 'gap', count: 3 })
+    expect(segs[1].from.label).toBe('2 авг')
+    expect(segs[1].to.label).toBe('4 авг')
+    expect(segs[2]).toMatchObject({ type: 'day' })
+  })
+
+  test('сегодня (последняя строка) не прячется в пролёт, даже если пустой', () => {
+    const rows = [
+      row({ steps: 8000, label: '1 авг' }),
+      row({ label: '2 авг' }),
+      row({ label: '3 авг' }), // сегодня, записей нет
+    ]
+    const segs = compressDayRows(rows)
+    expect(segs).toHaveLength(3)
+    expect(segs[0]).toMatchObject({ type: 'day' })
+    expect(segs[1]).toMatchObject({ type: 'gap', count: 1 }) // только «2 авг»
+    expect(segs[1].to.label).toBe('2 авг')
+    expect(segs[2]).toMatchObject({ type: 'day' })
+    expect(segs[2].row.label).toBe('3 авг')
+  })
+
+  test('полностью пустой период: один пролёт + сегодняшний день отдельно', () => {
+    const rows = [row({ label: 'Пн' }), row({ label: 'Вт' }), row({ label: 'Ср' })]
+    const segs = compressDayRows(rows)
+    expect(segs).toHaveLength(2)
+    expect(segs[0]).toMatchObject({ type: 'gap', count: 2 })
+    expect(segs[1]).toMatchObject({ type: 'day', index: 2 })
+  })
+
+  test('пустые rows — пустой список сегментов без ошибок', () => {
+    expect(compressDayRows([])).toEqual([])
+    expect(compressDayRows(null)).toEqual([])
+  })
+
+  test('чередование записей и простоев даёт чередование сегментов', () => {
+    const rows = [
+      row({ steps: 1000, label: '1' }),
+      row({ label: '2' }),
+      row({ steps: 2000, label: '3' }),
+      row({ label: '4' }),
+      row({ steps: 3000, label: '5' }), // сегодня
+    ]
+    const segs = compressDayRows(rows)
+    expect(segs.map((s) => s.type)).toEqual(['day', 'gap', 'day', 'gap', 'day'])
+  })
+})
+
+describe('gapLabel', () => {
+  test('пролёт из нескольких дней — «нет записей · от – до»', () => {
+    const label = gapLabel({ key: '2026-08-07', label: '7 авг' }, { key: '2026-08-27', label: '27 авг' })
+    expect(label).toBe('нет записей · 7 авг – 27 авг')
+  })
+
+  test('один день без записей — «нет записей · дата»', () => {
+    const label = gapLabel({ key: '2026-11-04', label: '4 ноя' }, { key: '2026-11-04', label: '4 ноя' })
+    expect(label).toBe('нет записей · 4 ноя')
+  })
+
+  test('без границ — не падает', () => {
+    expect(gapLabel(null, null)).toBe('нет записей · ')
   })
 })

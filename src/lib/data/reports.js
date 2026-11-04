@@ -117,6 +117,49 @@ export function bestDay(rows, key) {
   return (rows || []).reduce((mx, r) => Math.max(mx, r[key] || 0), 0)
 }
 
+// День «с записями» — дневник хоть что-то фиксировал (та же честная
+// проверка, что у дисциплины и стрика; нулевой показатель дня с
+// едой/водой — не «простой», а честный ноль)
+export function dayHasRecords(row) {
+  return !!(row && (row.steps || row.kcal || row.waterMl || row.burned))
+}
+
+// Сжатый список «по дням» для истории показателя: дни с записями идут
+// по одному, а подряд идущие дни без записей сворачиваются в один
+// пролёт {type:'gap', from, to, count} — вместо десятка строк «нет
+// записей» одна строка «нет записей · 7 авг – 27 авг».
+// Сегодня (последняя строка) не прячется в пролёт: он всегда виден
+// отдельной строкой, пусть даже «нет записей».
+// Возвращает чередование {type:'day', row, index} и {type:'gap', …}.
+export function compressDayRows(rows) {
+  const segs = []
+  let gap = null
+  ;(rows || []).forEach((row, index) => {
+    const isLast = index === (rows.length || 1) - 1
+    if (dayHasRecords(row) || isLast) {
+      if (gap) {
+        segs.push(gap)
+        gap = null
+      }
+      segs.push({ type: 'day', row, index })
+    } else if (gap) {
+      gap.to = row
+      gap.count += 1
+    } else {
+      gap = { type: 'gap', from: row, to: row, count: 1 }
+    }
+  })
+  if (gap) segs.push(gap)
+  return segs
+}
+
+// Подпись пролёта без записей: один день — «нет записей · 4 ноя»,
+// несколько — «нет записей · 7 авг – 27 авг»
+export function gapLabel(from, to) {
+  if (!from || !to || from.key === to.key) return `нет записей · ${from?.label || ''}`
+  return `нет записей · ${from.label} – ${to.label}`
+}
+
 // Нутриенты по дням из журнала приёмов (useFoodStore.history — у записей
 // есть день «ГГГГ-ММ-ДД» и БЖУ с клетчаткой). Старые записи без fib/sug
 // считаются нулями — как в «Рейтинге питания».

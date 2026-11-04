@@ -8,10 +8,12 @@
 // колонку. Карточку «Калории» убрали ранее — она дублировала сводку
 // «Съедено за сегодня» (там и съедено/цель, и пилюля «Осталось/Перебор»,
 // и сожжено; долгий тап по строке калорий в сводке — изменить цель).
-// Тап по карточке открывает ИСТОРИЮ показателя по дням (вся история
-// живёт внутри блоков): «Шаги» — шаги за день, «Вода» — вода за день
-// (быстрое добавление — на «+», ручной ввод шагов и правка стаканов —
-// из подвала окна истории), «Активность» — скролл к тренировкам.
+// Тап по карточке — её быстрое действие за сегодня: «Шаги» — записать
+// шаги вручную, «Вода» — изменить стаканы за день, «Активность» —
+// скролл к тренировкам. История по дням больше не здесь: по решению
+// пользователя «Главная» — только сегодня, а история (вчера и старше)
+// живёт во вкладке «Дневник» — тап по карточке-итогу в «Отчётах»
+// разворачивает панель истории (MetricHistoryPanel).
 // Долгий тап по «Вода» и «Активность» — изменить цель прямо с главной.
 // «+» на шагах/воде добавляет 1 000 шагов / стакан воды.
 // Поверхность плиток — в стиле вкладки «Тело» (фиолетовая
@@ -120,8 +122,8 @@ function Foot({ tone = 'muted', children }) {
 export function ActivityStats({
   steps, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
-  onAddSteps, onAddWater, onOpenWaterHistory, onEditWaterGoal,
-  onOpenStepsHistory, onGoActivity,
+  onAddSteps, onAddWater, onOpenWater, onEditWaterGoal,
+  onOpenStepsInput, onGoActivity,
 }) {
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в 130dp
   const stepsLeft = stepsGoal - steps
@@ -174,7 +176,7 @@ export function ActivityStats({
       foot: stepsFoot,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
-      onPress: onOpenStepsHistory, // тап — история шагов по дням (ввод — из окна истории)
+      onPress: onOpenStepsInput, // тап — записать шаги вручную (за сегодня)
     },
     {
       colors: {
@@ -190,7 +192,7 @@ export function ActivityStats({
       foot: waterFoot,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
-      onPress: onOpenWaterHistory, // тап — история воды по дням (стаканы — из окна истории)
+      onPress: onOpenWater, // тап — изменить стаканы за день
       onLongPress: onEditWaterGoal, // долгий тап — изменить цель воды
     },
     {

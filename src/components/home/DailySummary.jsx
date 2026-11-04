@@ -8,8 +8,10 @@
 // Долгий тап по левой половине — изменить цель по калориям, по правому
 // кольцу — цель «сжечь за день» (карточка «Калории» с
 // главной убрана как дубликат, её единственная уникальная функция
-// переехала сюда); обычный тап по этим же зонам — история показателя
-// по дням (вся история живёт внутри блоков). Мини-чипы шагов/воды/минут
+// переехала сюда). Обычный тап нигде не открывает историю: по решению
+// пользователя «Главная» — только сегодня, история по дням живёт во
+// вкладке «Дневник» (тап по карточке-итогу в «Отчётах» разворачивает
+// панель истории). Мини-чипы шагов/воды/минут
 // удалены — эти цифры
 // живут в трёх карточках над сводкой. Ниже — строка «Итог: съедено −
 // сожжено» с умным огоньком: зелёный — дефицит (итог в пределах цели),
@@ -40,7 +42,7 @@ import {
 } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { ChevronRight, Droplet, Flame, Hexagon, Leaf, Pencil, Utensils, X } from 'lucide-react-native'
+import { Droplet, Flame, Hexagon, Leaf, Pencil, Utensils, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -219,8 +221,6 @@ export function DailySummary({
   streak = 0, // дней подряд с дневником (чип с огоньком)
   onEditBurnGoal, // долгий тап по кольцу сжигания — изменить цель
   onEditKcalGoal, // долгий тап по левой половине — изменить цель по калориям
-  onOpenKcalHistory, // тап по левой половине — история калорий по дням
-  onOpenBurnHistory, // тап по кольцу сжигания — история сожжённого по дням
 }) {
   const goals = useGoalsStore((s) => s.goals)
   const setGoals = useGoalsStore((s) => s.setGoals)
@@ -295,15 +295,14 @@ export function DailySummary({
   const [runId, setRunId] = useState(0)
   useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
 
-  // Левая половина (кольцо + пилюля) — Pressable, когда умеет открывать
-  // историю калорий (тап) или менять цель (долгий тап), иначе обычный View
-  const Row = onEditKcalGoal || onOpenKcalHistory ? Pressable : View
-  // Строка «Итог» тоже тапабельна — открывает ту же историю калорий:
-  // крупная цель для пальца на весь итог дня (по запросу пользователя)
-  const NetRow = onOpenKcalHistory ? Pressable : View
-  // Правое кольцо — Pressable для истории сжигания (тап) и правки цели
-  // (долгий тап), иначе View
-  const BurnZone = onEditBurnGoal || onOpenBurnHistory ? Pressable : View
+  // Левая половина (кольцо + пилюля) — Pressable для правки цели
+  // (долгий тап), иначе обычный View. Обычный тап ничего не открывает:
+  // история по дням — во вкладке «Дневник»
+  const Row = onEditKcalGoal ? Pressable : View
+  // Строка «Итог» — просто итог дня с огоньком, без тапов (история
+  // калорий по дням — в панели истории «Отчётов» на «Дневнике»)
+  // Правое кольцо — Pressable для правки цели (долгий тап), иначе View
+  const BurnZone = onEditBurnGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
   const pillTone = over > 0
@@ -338,20 +337,18 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Тап по
-          левой половине — история калорий по дням, по правому кольцу —
-          история сожжённого; долгий тап — правка соответствующей цели:
-          единственные уникальные действия бывшей карточки
-          «Калории» и старой строки «Сожжено за сегодня» */}
+      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Долгий тап
+          по левой половине — правка цели по калориям, по правому кольцу —
+          цели сжигания; обычный тап ничего не открывает — история по дням
+          во вкладке «Дневник» */}
       <View className="mt-3 flex-row items-center gap-2.5">
         <Row
-          onPress={onOpenKcalHistory}
           onLongPress={onEditKcalGoal}
           delayLongPress={450}
-          accessibilityRole={onEditKcalGoal || onOpenKcalHistory ? 'button' : undefined}
+          accessibilityRole={onEditKcalGoal ? 'button' : undefined}
           accessibilityLabel={
-            onEditKcalGoal || onOpenKcalHistory
-              ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Тап — история по дням, долгий тап — изменить цель по калориям`
+            onEditKcalGoal
+              ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
               : undefined
           }
           className="min-w-0 flex-1 flex-row items-center gap-2.5"
@@ -390,13 +387,12 @@ export function DailySummary({
         </Row>
 
         <BurnZone
-          onPress={onOpenBurnHistory}
           onLongPress={onEditBurnGoal}
           delayLongPress={450}
-          accessibilityRole={onEditBurnGoal || onOpenBurnHistory ? 'button' : undefined}
+          accessibilityRole={onEditBurnGoal ? 'button' : undefined}
           accessibilityLabel={
-            onEditBurnGoal || onOpenBurnHistory
-              ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Тап — история по дням, долгий тап — изменить цель сжигания`
+            onEditBurnGoal
+              ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Долгий тап — изменить цель сжигания`
               : undefined
           }
           className="shrink-0"
@@ -415,17 +411,14 @@ export function DailySummary({
 
       {/* итог дня с учётом активности: умный огонёк — зелёный при дефиците,
           жёлтый/красный при переборе; без карандаша — правка цели сжигания
-          осталась долгим тапом по кольцу «сожжено». Строка тапабельна —
-          открывает историю калорий по дням (та же, что у левого кольца) */}
-      <NetRow
-        onPress={onOpenKcalHistory}
-        accessibilityRole={onOpenKcalHistory ? 'button' : undefined}
+          осталась долгим тапом по кольцу «сожжено». Строка без тапов:
+          история калорий по дням — в панели истории «Отчётов» */}
+      <View
         accessibilityLabel={
           `Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий, ` +
-          (overNet <= 0 ? 'в пределах цели' : `перебор ${formatNum(Math.round(overNet))} килокалорий`) +
-          (onOpenKcalHistory ? '. Тап — история калорий по дням' : '')
+          (overNet <= 0 ? 'в пределах цели' : `перебор ${formatNum(Math.round(overNet))} килокалорий`)
         }
-        className={`mt-2.5 flex-row items-center gap-2 rounded-2xl px-3 py-2.5 ${onOpenKcalHistory ? 'active:opacity-70' : ''}`}
+        className="mt-2.5 flex-row items-center gap-2 rounded-2xl px-3 py-2.5"
         style={{ backgroundColor: netBg }}
       >
         <Flame size={13} color={netTone} />
@@ -438,8 +431,7 @@ export function DailySummary({
         >
           {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
         </Text>
-        {onOpenKcalHistory ? <ChevronRight size={14} color="#8B96B8" /> : null}
-      </NetRow>
+      </View>
 
       {/* нутриенты одной строкой в заданном порядке:
           1. Белки  2. Жиры  3. Углеводы  4. Клетчатка.

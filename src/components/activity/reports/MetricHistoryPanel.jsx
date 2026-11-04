@@ -1,16 +1,18 @@
 // Панель истории показателя «Отчётов» — разворачивается тапом по
 // карточке-итогу (отдельный блок «Календарь» больше не нужен).
-// Две секции: «По дням» — значения показателя за каждый день периода
-// (7/30/90 — пилюли в шапке секции) и «Календарь месяца» — теплокарта
-// выбранного месяца: цвет клетки — выполнение дневной цели, месяцы
-// листаются стрелками ‹ › (вперёд от текущего нельзя), тап по клетке
-// открывает сводку дня (DayDetailsModal остаётся на секции «Отчётов»).
-// Сетка как в GitHub: столбцы — недели, строки — дни недели Пн…Вс;
-// у калорий «перебор» подсвечен красным. Поверхность и шапка — в стиле
-// вкладки «Тело» (bear-bodyCard + чип с иконкой показателя).
+// Две секции: «По дням» — MetricDayList (дни с записями по одному,
+// простои свёрнуты в строки «нет записей · …», пустой период —
+// уведомление по центру; тап по дню — сводка дня) и «Календарь месяца»
+// — теплокарта выбранного месяца: цвет клетки — выполнение дневной
+// цели, месяцы листаются стрелками ‹ › (вперёд от текущего нельзя),
+// тап по клетке открывает сводку дня (DayDetailsModal остаётся на
+// секции «Отчётов»). Сетка как в GitHub: столбцы — недели, строки —
+// дни недели Пн…Вс; у калорий «перебор» подсвечен красным.
+// Поверхность и шапка — в стиле вкладки «Тело» (bear-bodyCard + чип
+// с иконкой показателя).
 
 import { useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { METRICS } from '@/lib/data/metrics'
 import { history } from '@/lib/data/activity'
@@ -18,6 +20,7 @@ import { dayLevel } from '@/lib/data/reports'
 import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { BodyChip } from '../../ui/BodyChip'
+import { MetricDayList } from './MetricDayList'
 
 const CELL = 15 // размер клетки
 const GAP = 3 // промежуток
@@ -74,11 +77,9 @@ export function MetricHistoryPanel({ today, metricId = 'steps', days, rows, onPi
   }, [monthOffset, savedDays, today])
   const nCols = Math.max(1, Math.ceil(cells.length / 7))
 
-  // Значения по дням периода (для секции «По дням»)
-  const dayStats = useMemo(() => {
-    const values = rows.map((r) => r[metric.key] || 0)
-    return { values, max: Math.max(...values, 1) }
-  }, [rows, metric])
+  // Значения по дням периода больше не нужны здесь: список «По дням»
+  // (полоски, сжатие простоев, пустое состояние) целиком переехал в
+  // MetricDayList — общий компонент списка «показатель по дням»
 
   // Легенда: у калорий «больше» не значит «лучше» — своя шкала
   const legend =
@@ -124,63 +125,14 @@ export function MetricHistoryPanel({ today, metricId = 'steps', days, rows, onPi
         </Pressable>
       </View>
 
-      {/* Секция 1: дни периода — подпись, полоска от максимума, значение.
-          Прокручивается только список: сворачивать панель можно всегда */}
+      {/* Секция 1: дни периода — дни с записями по одному, простои
+          свёрнуты в строки «нет записей · …»; тап по дню — сводка дня
+          (как у клеток календаря). Прокручивается только список:
+          сворачивать панель можно всегда */}
       <Text className="mt-3 px-1 font-sans text-[10px] font-semibold uppercase tracking-wide text-bear-sub">
         По дням · {days} дн.
       </Text>
-      <ScrollView
-        style={{ maxHeight: 180, flexShrink: 1 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 4, paddingBottom: 2 }}
-      >
-        {rows.map((r, i) => {
-          const v = dayStats.values[i]
-          const w = Math.max(2, Math.round((v / dayStats.max) * 100))
-          const isToday = i === rows.length - 1
-          // День без записей: дневник ничего не фиксировал — вместо
-          // «0» честно пишем «нет записей» (нулевой показатель дня
-          // с записями остаётся честным «0»)
-          const emptyDay = !(r.steps || r.kcal || r.waterMl || r.burned)
-          return (
-            <View
-              key={i}
-              accessibilityLabel={`${r.label}${isToday ? ', сегодня' : ''}: ${emptyDay ? 'нет записей' : metric.fmt(v)}`}
-              className="mt-1.5 flex-row items-center gap-2"
-            >
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.1}
-                className={`w-[74px] shrink-0 font-sans text-[11px] ${isToday ? 'font-bold text-[#A78BFA]' : 'text-bear-sub'}`}
-              >
-                {r.label}
-              </Text>
-              <View className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                <View
-                  style={{
-                    width: `${w}%`,
-                    height: '100%',
-                    borderRadius: 999,
-                    backgroundColor: metric.color,
-                    opacity: v > 0 ? 0.9 : 0,
-                  }}
-                />
-              </View>
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.1}
-                className={`w-[76px] shrink-0 text-right ${
-                  emptyDay
-                    ? 'font-sans text-[10.5px] text-bear-dim'
-                    : `font-semibold text-[11.5px] ${isToday ? 'text-bear-text' : 'text-bear-soft'}`
-                }`}
-              >
-                {emptyDay ? 'нет записей' : metric.fmt(v)}
-              </Text>
-            </View>
-          )
-        })}
-      </ScrollView>
+      <MetricDayList rows={rows} metric={metric} onPickDay={onPickDay} maxHeight={220} />
 
       {/* Секция 2: календарь месяца — навигация ‹ назад, вперёд до текущего */}
       <View className="mt-3 flex-row items-center justify-between">

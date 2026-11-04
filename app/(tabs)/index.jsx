@@ -5,13 +5,13 @@
 // по запросу. Модалки: еда (хаб), все приёмы. Шапка экрана — с мягкой
 // неоновой дымкой, как на вкладке «Тело» (единый стиль страниц).
 // Показатели дня пишутся в историю — для отчётов.
-// История живёт внутри блоков: тап по карточке «Шаги»/«Вода», по
-// кольцам калорий/сожжённого и по строке «Итог: съедено − сожжено»
-// в сводке открывает «показатель по дням»
-// (MetricDaysModal, период 7/30/90 — пилюли внутри окна); быстрое
-// добавление осталось на «+» карточек, ручной ввод шагов и правка
-// стаканов — из подвала окна истории. Тап по карточке «Активность» —
-// плавный скролл к блоку «Тренировки».
+// «Главная» — только сегодня (по запросу пользователя): карточки
+// показателей открывают свои быстрые действия (тап «Шаги» — записать
+// шаги вручную, тап «Вода» — изменить стаканы, «Активность» — скролл
+// к тренировкам), тапы по кольцам и строке «Итог» убраны — история
+// по дням теперь живёт во вкладке «Дневник»: тап по карточке-итогу
+// в «Отчётах» разворачивает панель истории (MetricHistoryPanel).
+// История за вчера и старше — там, за сегодня — здесь.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -23,7 +23,6 @@ import { ActivityStats } from '@/components/activity/ActivityStats'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
-import { MetricDaysModal } from '@/components/activity/reports/MetricDaysModal'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { Greeting } from '@/components/home/Greeting'
 import { EveningNudge } from '@/components/home/EveningNudge'
@@ -41,8 +40,7 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
-import { WATER_GLASS, xpForDay, history, RANGES } from '@/lib/data/activity'
-import { METRICS } from '@/lib/data/metrics'
+import { WATER_GLASS, xpForDay } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 
@@ -59,19 +57,12 @@ export default function HomeScreen() {
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
-  // Ручной ввод шагов (из подвала окна истории шагов)
+  // Ручной ввод шагов (тап по карточке «Шаги»)
   const [stepsOpen, setStepsOpen] = useState(false)
   const [stepsVal, setStepsVal] = useState('')
-  // Долгий тап по карточке «Калории»/«Вода» — быстрый редактор цели
+  // Долгий тап по карточке «Вода»/«Активность»/кольцам — быстрый редактор цели
   const [goalEdit, setGoalEdit] = useState(null) // {field, title, unit, min, max}
   const [goalVal, setGoalVal] = useState('')
-  // История показателя внутри блоков: тап по карточке/кольцу — окно
-  // «показатель по дням». hist — ключ показателя из METRICS, histRange —
-  // период 7/30/90 (пилюли внутри окна)
-  const [hist, setHist] = useState(null)
-  const [histRange, setHistRange] = useState('7d')
-  const histDays = RANGES.find((r) => r.id === histRange)?.days || 7
-  const histMetric = hist ? METRICS.find((m) => m.key === hist) : null
 
   function openGoalEdit(cfg) {
     setGoalEdit(cfg)
@@ -191,7 +182,6 @@ export default function HomeScreen() {
         setAllOpen(false)
         setWaterOpen(false)
         setStepsOpen(false)
-        setHist(null)
       },
       []
     )
@@ -260,7 +250,9 @@ export default function HomeScreen() {
         {/* Компактный ряд из 3 карточек в одну строку: шаги, вода,
             активность (кольцо цели сжигания, долгий тап — правка).
             Карточку «Калории» убрали — её данные уже в сводке
-            «Съедено за сегодня» ниже */}
+            «Съедено за сегодня» ниже. Тап по карточке — её быстрое
+            действие (записать шаги / изменить стаканы / к тренировкам);
+            история по дням — во вкладке «Дневник» */}
         <ActivityStats
           steps={extraSteps}
           burned={burned}
@@ -277,11 +269,11 @@ export default function HomeScreen() {
           }
           onAddSteps={handleAddSteps}
           onAddWater={handleAddWater}
-          onOpenWaterHistory={() => setHist('waterMl')}
+          onOpenWater={() => setWaterOpen(true)}
           onEditWaterGoal={() =>
             openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
           }
-          onOpenStepsHistory={() => setHist('steps')}
+          onOpenStepsInput={() => setStepsOpen(true)}
           onGoActivity={goToExercises}
         />
 
@@ -297,9 +289,9 @@ export default function HomeScreen() {
         />
 
         {/* Съедено за сегодня — сводка над планом питания: кольца «съедено»
-            и «сожжено», пилюля остатка и итог дня; тап по левой половине —
-            история калорий по дням, по кольцу сжигания — история сожжённого;
-            долгий тап — правка соответствующей цели */}
+            и «сожжено», пилюля остатка и итог дня; долгий тап по половинам —
+            правка соответствующей цели. История по дням — во вкладке
+            «Дневник» (тап по карточке-итогу в «Отчётах») */}
         <DailySummary
           consumed={consumed}
           target={goals.kcal}
@@ -313,8 +305,6 @@ export default function HomeScreen() {
           onEditBurnGoal={() =>
             openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
           }
-          onOpenKcalHistory={() => setHist('kcal')}
-          onOpenBurnHistory={() => setHist('burned')}
         />
 
         {/* Тренировки — перенесены с вкладки «Дневник» по запросу:
@@ -362,8 +352,7 @@ export default function HomeScreen() {
         }}
       />
 
-      {/* Вода: правка стаканов за день — из подвала окна истории воды
-          (тап по карточке «Вода» теперь открывает историю) */}
+      {/* Вода: правка стаканов за день — тап по карточке «Вода» */}
       <WaterModal
         open={waterOpen}
         onClose={() => setWaterOpen(false)}
@@ -371,59 +360,8 @@ export default function HomeScreen() {
         ml={waterMl}
       />
 
-      {/* История показателя по дням — тап по карточке «Шаги»/«Вода» или
-          по кольцам калорий/сожжённого в сводке. Период 7/30/90 —
-          пилюлями внутри окна; у шагов и воды в подвале — их прежние
-          действия (ручной ввод / правка стаканов), чтобы ничего не потерялось */}
-      <MetricDaysModal
-        open={Boolean(histMetric)}
-        onClose={() => setHist(null)}
-        metric={histMetric}
-        days={histDays}
-        rows={histMetric ? history(histDays, { steps: extraSteps, kcal: consumed, waterMl, burned, xp }) : []}
-        rangeId={histRange}
-        onRangeChange={setHistRange}
-        footer={
-          hist === 'steps' ? (
-            <Pressable
-              onPress={() => {
-                setHist(null)
-                setStepsOpen(true)
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Записать шаги вручную"
-              className="min-w-0 flex-1 items-center rounded-2xl bg-white/10 py-2.5 active:opacity-70"
-            >
-              <Text className="font-bold text-[12px] text-bear-text">Записать шаги</Text>
-            </Pressable>
-          ) : hist === 'waterMl' ? (
-            <>
-              <Pressable
-                onPress={handleAddWater}
-                accessibilityRole="button"
-                accessibilityLabel="Выпить стакан воды"
-                className="min-w-0 flex-1 items-center rounded-2xl bg-white/10 py-2.5 active:opacity-70"
-              >
-                <Text className="font-bold text-[12px] text-bear-text">+ Стакан</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setHist(null)
-                  setWaterOpen(true)
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Изменить стаканы за сегодня"
-                className="min-w-0 flex-1 items-center rounded-2xl border border-white/10 bg-white/5 py-2.5 active:opacity-70"
-              >
-                <Text className="font-bold text-[12px] text-bear-text">Изменить стаканы</Text>
-              </Pressable>
-            </>
-          ) : null
-        }
-      />
-
       {/* Ручной ввод шагов: та же копилка, что и «+»; открывается
-          из подвала окна истории шагов */}
+          тапом по карточке «Шаги» */}
       <Modal
         visible={stepsOpen}
         transparent
