@@ -1,23 +1,21 @@
-// Окно «Вода»: фоновая сцена с мишкой, прогресс-кольцо, карточки
-// ёмкостей (4 в ряд, карандашик у каждой), своя порция с выбором времени
-// и журнал записей за сегодня (тап по записи — изменение, корзина — удаление).
-// Тумблер напоминаний — в шапке
+// Окно «Вода»: компактное, без сцены, кольца и «своей порции» —
+// тап по ёмкости записывает воду, карандашик у ёмкости меняет её объём.
+// Напоминания — только колокольчик в шапке (перечёркнутый — выкл).
+// Статистика 7 дней — тонкие «свечи»: зелёная — норма выпита,
+// красная — нет. Записи за сегодня по умолчанию свёрнуты,
+// тап по записи — правка мл/времени прямо в строке, корзина — удаление.
 
 import { useMemo, useState } from 'react'
-import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { Droplets, Pencil, Trash2, X } from 'lucide-react-native'
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Check, ChevronDown, ChevronUp, Droplets, Pencil, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { VesselCard } from './VesselCard'
-import { WaterRing } from './WaterRing'
 import { ReminderToggle, ReminderIntervals } from './WaterReminder'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useToast } from '../ui/Toast'
-import { WATER_GLASS } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
-
-const SCENE = require('../../../assets/images/water-bear.webp')
 
 const nowTime = () =>
   new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -43,12 +41,11 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const historyDays = useHistoryStore((s) => s.days)
   const { toast } = useToast()
 
-  const [customMl, setCustomMl] = useState('')
-  const [customTime, setCustomTime] = useState(nowTime())
   const [editingId, setEditingId] = useState(null) // запись журнала на изменении
+  const [editMl, setEditMl] = useState('')
+  const [editTime, setEditTime] = useState('')
+  const [logOpen, setLogOpen] = useState(false) // записи за сегодня по умолчанию свёрнуты
 
-  const glasses = Math.round(ml / WATER_GLASS)
-  const glassesGoal = Math.max(1, Math.round(goalMl / WATER_GLASS))
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
 
   // Последние 7 дней (из дневной истории) — мини-график выпитого
@@ -78,39 +75,30 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
     })
   }
 
-  // Записать новую порцию — или сохранить изменения выбранной записи
-  function submitCustom() {
-    const mlNum = Math.round(Number(String(customMl).replace(',', '.')) || 0)
-    if (mlNum < 10) {
-      toast({ title: '💧 Укажите объём', description: 'От 10 мл, например 200' })
-      return
-    }
-    const time = normalizeTime(customTime) || nowTime()
-    const safeMl = Math.min(2000, mlNum)
-
-    if (editingId) {
-      editWaterLog(editingId, { ml: safeMl, time })
-      toast({ title: '✏️ Изменено', description: `${formatNum(safeMl)} мл · ${time}` })
-      setEditingId(null)
-    } else {
-      addWater(safeMl, time)
-      toast({ title: `💧 ${safeMl} мл · ${time}`, description: 'Записано в журнал воды' })
-    }
-    setCustomMl('')
-    setCustomTime(nowTime())
-  }
-
-  // Тап по записи журнала — подставить её в форму «Своя порция»
+  // Тап по записи журнала — править объём и время прямо в строке
   function startEdit(w) {
     setEditingId(w.id)
-    setCustomMl(String(w.ml))
-    setCustomTime(w.time)
+    setEditMl(String(w.ml))
+    setEditTime(w.time)
   }
 
   function cancelEdit() {
     setEditingId(null)
-    setCustomMl('')
-    setCustomTime(nowTime())
+    setEditMl('')
+    setEditTime('')
+  }
+
+  function saveEdit() {
+    const mlNum = Math.round(Number(String(editMl).replace(',', '.')) || 0)
+    if (mlNum < 10) {
+      toast({ title: '💧 Укажите объём', description: 'От 10 мл, например 200' })
+      return
+    }
+    const safeMl = Math.min(2000, mlNum)
+    const time = normalizeTime(editTime) || nowTime()
+    editWaterLog(editingId, { ml: safeMl, time })
+    toast({ title: '✏️ Изменено', description: `${formatNum(safeMl)} мл · ${time}` })
+    cancelEdit()
   }
 
   function removeEntry(w) {
@@ -123,28 +111,14 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10">
-          {/* Градиентный фон окна */}
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             colors={['#16234A', '#131E3A', '#101A36']}
           >
-            {/* Сцена с мишкой прибита к низу окна */}
-            <View pointerEvents="none" className="absolute inset-x-0 bottom-0 h-[200px]">
-              <Image
-                source={SCENE}
-                style={{ width: '100%', height: '100%', resizeMode: 'cover', opacity: 0.9 }}
-              />
-              <LinearGradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                colors={['#131E3A', 'rgba(19,30,58,0.3)', 'transparent']}
-                style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
-              />
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
-              <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 14 }}>
+              {/* Шапка: название, итог, тумблер напоминаний, крестик */}
+              <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-2.5 pt-3.5">
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2">
                     <Droplets size={18} color="#38BDF8" />
@@ -163,28 +137,21 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
               </View>
 
               {reminder.enabled && (
-                <View className="px-5 pt-3">
+                <View className="px-4 pt-2.5">
                   <ReminderIntervals />
                 </View>
               )}
 
-              <View className="px-5 pt-4">
-                <View className="flex-row items-center gap-4">
-                  <WaterRing pct={pct} glasses={glasses} glassesGoal={glassesGoal} />
-                  <Text className="flex-1 font-sans text-[12px] leading-relaxed text-bear-sub">
-                    Нажмите на ёмкость — вода запишется с текущим временем.{'\n'}
-                    Выпили раньше? Впишите своё время ниже.
-                  </Text>
-                </View>
-
-                <View className="mt-4 flex-row gap-2">
+              <View className="px-4 pt-3">
+                <View className="flex-row gap-2">
                   {vessels.map((v) => (
                     <VesselCard key={v.id} vessel={v} onDrink={drink} />
                   ))}
                 </View>
 
-                {/* Последние 7 дней — мини-график выпитого */}
-                <View className="mt-4">
+                {/* Последние 7 дней — тонкие «свечи»: зелёная — норма выпита,
+                    красная — норма не сделана (сравнение с целью) */}
+                <View className="mt-3">
                   <View className="flex-row items-center justify-between">
                     <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
                       Последние 7 дней
@@ -193,14 +160,17 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                       {`в среднем ${formatNum(weekAvg)} мл/день`}
                     </Text>
                   </View>
-                  <View className="mt-2 h-[74px] flex-row items-end gap-1.5">
+                  <View className="mt-1.5 h-[58px] flex-row items-end gap-1.5">
                     {week.map((d) => (
                       <View key={d.key} className="min-w-0 flex-1 items-center gap-1">
                         <View
-                          className="w-full rounded-t-md"
                           style={{
-                            height: Math.max(3, Math.round((d.ml / weekMax) * 56)),
-                            backgroundColor: d.today ? '#38BDF8' : 'rgba(56,189,248,0.35)',
+                            width: 6,
+                            height: Math.max(4, Math.round((d.ml / weekMax) * 42)),
+                            borderRadius: 3,
+                            backgroundColor:
+                              d.ml >= goalMl ? '#34D399' : '#f87171',
+                            opacity: d.today ? 1 : 0.55,
                           }}
                         />
                         <Text
@@ -215,82 +185,96 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   </View>
                 </View>
 
-                {/* Своя порция / изменение записи: объём + время */}
-                <View className="mt-4 flex-row items-center justify-between">
-                  <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
-                    {editingId ? 'Изменение записи' : 'Своя порция'}
-                  </Text>
-                  {editingId && (
-                    <Pressable onPress={cancelEdit} accessibilityLabel="Отменить изменение" hitSlop={6}>
-                      <Text className="font-sans text-[11px] text-[#8DABFF]">отмена</Text>
-                    </Pressable>
-                  )}
-                </View>
-                <View className="mt-1.5 flex-row items-center gap-2">
-                  <TextInput
-                    value={customMl}
-                    onChangeText={setCustomMl}
-                    keyboardType="number-pad"
-                    maxLength={4}
-                    placeholder="250"
-                    placeholderTextColor="#8B96B8"
-                    accessibilityLabel="Объём порции в миллилитрах"
-                    className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
-                  />
-                  <Text className="shrink-0 font-sans text-xs text-bear-sub">мл в</Text>
-                  <TextInput
-                    value={customTime}
-                    onChangeText={setCustomTime}
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={5}
-                    placeholder="14:30"
-                    placeholderTextColor="#8B96B8"
-                    accessibilityLabel="Время в формате часы:минуты"
-                    className="w-[64px] shrink-0 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
-                  />
-                  <Pressable
-                    onPress={submitCustom}
-                    accessibilityRole="button"
-                    accessibilityLabel={editingId ? 'Сохранить изменения' : 'Записать свою порцию воды'}
-                    className="shrink-0 rounded-2xl px-4 py-2.5 active:opacity-80"
-                    style={{ backgroundColor: editingId ? '#22C55E' : '#0EA5E9' }}
-                  >
-                    <Text className="font-bold text-[13px] text-white">
-                      {editingId ? 'Сохранить' : 'Записать'}
+                {/* Журнал за сегодня: по умолчанию свёрнут; тап по шапке —
+                    развернуть, тап по записи — правка в строке, корзина — удалить */}
+                <Pressable
+                  onPress={() => setLogOpen((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    logOpen ? 'Свернуть записи за сегодня' : 'Развернуть записи за сегодня'
+                  }
+                  className="mt-3 flex-row items-center justify-between active:opacity-80"
+                >
+                  <View className="flex-row items-center gap-1.5">
+                    <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
+                      Записи за сегодня
                     </Text>
-                  </Pressable>
-                </View>
-
-                {/* Журнал за сегодня */}
-                <View className="mt-4 flex-row items-center justify-between">
-                  <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
-                    Записи за сегодня
-                  </Text>
-                  {waterLog.length > 0 && (
-                    <Text className="font-sans text-[10px] text-bear-dim">
-                      всего {waterLog.length}
-                    </Text>
+                    {waterLog.length > 0 && (
+                      <View
+                        className="rounded-full bg-white/10 px-1.5 py-0.5"
+                        accessibilityLabel={`Всего записей: ${waterLog.length}`}
+                      >
+                        <Text className="font-semibold text-[9.5px] text-bear-sub">
+                          {waterLog.length}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {logOpen ? (
+                    <ChevronUp size={15} color="#8B96B8" />
+                  ) : (
+                    <ChevronDown size={15} color="#8B96B8" />
                   )}
-                </View>
-                {waterLog.length === 0 ? (
-                  <Text className="mt-1.5 font-sans text-[11px] text-bear-dim">
-                    Пока ничего. Нажмите на ёмкость или запишите свою порцию.
-                  </Text>
-                ) : (
-                  <View className="mt-1.5 gap-1.5">
+                </Pressable>
+                {logOpen &&
+                  (waterLog.length === 0 ? (
+                    <Text className="mt-1.5 font-sans text-[11px] text-bear-dim">
+                      Пока ничего. Нажмите на ёмкость выше.
+                    </Text>
+                  ) : (
+                    <View className="mt-1.5 gap-1.5">
                     {waterLog.map((w) => {
                       const isEditing = editingId === w.id
+                      if (isEditing) {
+                        return (
+                          <View
+                            key={w.id}
+                            className="flex-row items-center gap-1.5 rounded-2xl border border-sky-400/40 bg-sky-400/10 px-2.5 py-2"
+                          >
+                            <TextInput
+                              value={editMl}
+                              onChangeText={setEditMl}
+                              keyboardType="number-pad"
+                              maxLength={4}
+                              accessibilityLabel="Объём в миллилитрах"
+                              className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1 text-center font-semibold text-[13px] text-bear-text"
+                            />
+                            <Text className="shrink-0 font-sans text-[10px] text-bear-sub">мл в</Text>
+                            <TextInput
+                              value={editTime}
+                              onChangeText={setEditTime}
+                              keyboardType="numbers-and-punctuation"
+                              maxLength={5}
+                              accessibilityLabel="Время в формате часы:минуты"
+                              className="w-[56px] shrink-0 rounded-lg bg-white/5 px-1 py-1 text-center font-semibold text-[13px] text-bear-text"
+                            />
+                            <Pressable
+                              onPress={saveEdit}
+                              accessibilityRole="button"
+                              accessibilityLabel="Сохранить изменения"
+                              className="shrink-0 rounded-lg p-1.5 active:opacity-80"
+                              style={{ backgroundColor: '#22C55E' }}
+                            >
+                              <Check size={15} color="#fff" strokeWidth={2.5} />
+                            </Pressable>
+                            <Pressable
+                              onPress={cancelEdit}
+                              accessibilityRole="button"
+                              accessibilityLabel="Отменить изменение"
+                              className="shrink-0 rounded-lg bg-white/10 p-1.5 active:opacity-80"
+                            >
+                              <X size={15} color="#A5AECB" />
+                            </Pressable>
+                          </View>
+                        )
+                      }
                       return (
                         <Pressable
                           key={w.id}
                           onPress={() => startEdit(w)}
                           accessibilityRole="button"
                           accessibilityLabel={`Изменить запись ${w.ml} мл`}
-                          className={`flex-row items-center gap-2.5 rounded-2xl border px-3.5 py-2.5 active:opacity-80 ${
-                            isEditing
-                              ? 'border-sky-400/40 bg-sky-400/10'
-                              : 'border-white/10 bg-white/[0.05]'
-                          }`}
+                          className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2 active:opacity-80"
                         >
                           <Droplets size={14} color="#38BDF8" />
                           <Text className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
@@ -301,7 +285,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           </Text>
                           <View className="shrink-0 flex-row items-center gap-0.5">
                             <View className="p-1">
-                              <Pencil size={13} color={isEditing ? '#38BDF8' : '#8B96B8'} />
+                              <Pencil size={13} color="#8B96B8" />
                             </View>
                             <Pressable
                               onPress={() => removeEntry(w)}
@@ -315,8 +299,8 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                         </Pressable>
                       )
                     })}
-                  </View>
-                )}
+                    </View>
+                  ))}
               </View>
             </ScrollView>
           </LinearGradient>

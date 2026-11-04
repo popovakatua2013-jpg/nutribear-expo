@@ -5,9 +5,12 @@
 // без pay-to-win).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ChevronDown, Stethoscope } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
+import { AuditCard } from '@/components/organism/AuditCard'
+import { AuditPaywall } from '@/components/organism/AuditPaywall'
 import { GenomeCard } from '@/components/organism/GenomeCard'
 import { ExpeditionCard } from '@/components/organism/ExpeditionCard'
 import { EvolutionCard } from '@/components/organism/EvolutionCard'
@@ -17,26 +20,50 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useOrganismGameStore, weekNumberOf } from '@/store/useOrganismGameStore'
-import { dayKeyOf } from '@/store/useHistoryStore'
+import { useProStore } from '@/store/useProStore'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { pickPimpleDonePhrase, pickPimplePopPhrase } from '@/lib/data/audit'
 import { bjuSum } from '@/lib/data/bju'
 import { computeOrganism } from '@/lib/data/organism'
 import {
   BOSSES,
+  PIMPLE_SPOTS,
   dayCombo,
   dayRaidDamage,
+  genomeAvg70,
   mondayKeyOf,
   myWeekTotals,
   packDamage,
+  raidBattleHp,
+  raidHealAbsorb,
   weekDayIdx,
 } from '@/lib/data/organism-game'
+import { CollectionCard } from '@/components/organism/CollectionCard'
 
-const PET_PHRASES = [
-  'Мур-р… Продолжай!',
-  'Как приятно! Спасибо!',
-  'Ещё-ещё, я люблю заботу',
-  'Ты лучший друг моего генома',
-]
+// Реплики при поглаживании — по состоянию организма: в упадке не мурчит,
+// а просит помочь
+const PET_PHRASES = {
+  bloom: [
+    'Мур-р… Продолжай!',
+    'Как приятно! Спасибо!',
+    'Ещё-ещё, я люблю заботу',
+    'Ты лучший друг моего генома',
+  ],
+  normal: [
+    'Мур-р… Хорошо!',
+    'Спасибо! Так гораздо лучше',
+    'Тепло… Погладь ещё разок',
+    'С тобой мне спокойно',
+  ],
+  decline: [
+    'Ой… лучше сначала помоги мне',
+    'Мне нехорошо… добавь воды и еды',
+    'Погладишь потом — сначала стакан воды',
+    'Я в упадке… позаботься обо мне, пожалуйста',
+  ],
+}
 
 export default function OrganismScreen() {
   const insets = useSafeAreaInsets()
@@ -70,6 +97,9 @@ export default function OrganismScreen() {
     [waterMl, goals.waterMl, proteinG, kcal, goals.kcal, stepsToday, goals.steps]
   )
 
+  // Единый геном для бейджа на сцене и карточки эволюции (из 70, 4 оси)
+  const genome = genomeAvg70(org.axes)
+
   const stats = {
     waterMl,
     waterGoalMl: goals.waterMl,
@@ -99,13 +129,18 @@ export default function OrganismScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayKey, kcal, workouts, glasses])
 
-  // Расчёт рейда на текущую неделю
+  // Расчёт рейда на текущую неделю: крит удваивает урон еды (день с
+  // тренировкой), пропущенные дни лечат босса, щиты (вода) гасят лечение
   const weekKey = mondayKeyOf()
   const weekNo = weekNumberOf(game.createdAt)
   const boss = BOSSES[(weekNo - 1) % BOSSES.length]
   const mine = myWeekTotals(game.raidDays, weekKey)
   const pack = packDamage(weekKey, weekDayIdx())
-  const raidHp = boss.hp - mine.dmg - pack
+  const elapsedDays = weekDayIdx() + 1
+  const myDays = Object.values(game.raidDays).filter((v) => v && v.weekKey === weekKey).length
+  const skips = Math.max(0, elapsedDays - myDays)
+  const raidHp = raidBattleHp(boss.hp, mine.dmg, pack, skips, mine.shield)
+  const { heal, absorb } = raidHealAbsorb(skips, mine.shield)
 
   // Босс павший — зафиксировать награду (один раз в неделю)
   useEffect(() => {
@@ -118,8 +153,41 @@ export default function OrganismScreen() {
     []
   )
   const handleOpenCapsule = useCallback(() => game.openCapsule(), [])
+  const handleConvertMutagen = useCallback(() => game.convertMutagen(), [])
   const handleStartExpedition = useCallback((key) => game.startExpedition(key), [])
   const handleCollectExpedition = useCallback(() => game.collectExpedition(), [])
+
+  // Прыщи от игнора: сегодня ни стакана воды и/или ни одной записи еды.
+  // Считаем сколько должно быть пятен, вычитаем уже выдавленные (по индексам)
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  // Premium: фразы прыщей и полнота аудита зависят от подписки
+  const pro = useProStore((s) => s.pro)
+  const pimpleTotal = useMemo(() => {
+    const noWater = waterMl < 250
+    const noFood = flatEntries.length === 0
+    let n = (noWater ? 2 : 0) + (noFood ? 2 : 0)
+    if (org.state === 'decline') n += 1
+    if (noWater && noFood) n += 1 // полный игнор дня
+    return Math.min(n, PIMPLE_SPOTS.length)
+  }, [waterMl, flatEntries.length, org.state])
+
+  const poppedIdx = game.pimplePop.dayKey === dayKey ? game.pimplePop.popped : []
+  const pimples = PIMPLE_SPOTS.slice(0, pimpleTotal)
+    .map((spot, idx) => ({ ...spot, idx }))
+    .filter((p) => !poppedIdx.includes(p.idx))
+
+  const handlePopPimple = useCallback(
+    (spot) => {
+      const res = game.popPimple({ dayKey, total: pimpleTotal, index: spot.idx })
+      // каждый выдавленный прыщ — своя шутка (позитивный чёрный юмор),
+      // последний — особая реплика благодарности
+      setPhrase(res.doneAll ? pickPimpleDonePhrase(pro) : pickPimplePopPhrase(pro))
+      clearTimeout(phraseTimer.current)
+      phraseTimer.current = setTimeout(() => setPhrase(''), 3500)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game.popPimple, dayKey, pimpleTotal, pro]
+  )
 
   // Реплика: базовая по состоянию, при поглаживании — милая, потом возврат
   const [phrase, setPhrase] = useState('')
@@ -127,15 +195,42 @@ export default function OrganismScreen() {
   const basePhrase = org.phrase
   const shownPhrase = phrase || basePhrase
 
+  /* ── Аудит организма: Доктор Топтыгин + пейволл Premium ── */
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const handleRunAudit = useCallback(({ dayKey: k, score }) => {
+    const res = game.runAudit({ dayKey: k, score })
+    // счёт аудита — в дневную историю: сводка дня и отчёты видят тренд,
+    // не заходя во вкладку «Организм» (история хранит дольше auditDays)
+    useHistoryStore.getState().record(k, { audit: score })
+    return res
+  }, [])
+  const handleAuditActivated = useCallback(() => {
+    setPhrase('Premium активирован! Теперь осмотр полный — готовься к редким диагнозам')
+    clearTimeout(phraseTimer.current)
+    phraseTimer.current = setTimeout(() => setPhrase(''), 4000)
+  }, [])
+
   const handlePet = useCallback(() => {
-    setPhrase(PET_PHRASES[Math.floor(Math.random() * PET_PHRASES.length)])
+    const list = PET_PHRASES[org.state] || PET_PHRASES.normal
+    setPhrase(list[Math.floor(Math.random() * list.length)])
     clearTimeout(phraseTimer.current)
     phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
-  }, [])
+  }, [org.state])
+
+  // Организм в упадке и осмотр ещё не проведён — приглашение к доктору:
+  // тап доскролливает до карточки аудита
+  const scrollRef = useRef(null)
+  const auditYRef = useRef(0)
+  const auditNotDone = (game.auditDays || {})[dayKey] == null
+  const showAuditInvite = org.state === 'decline' && auditNotDone
+  const scrollToAudit = () => {
+    scrollRef.current?.scrollTo({ y: Math.max(0, auditYRef.current - 8), animated: true })
+  }
 
   return (
     <View className="flex-1 bg-bear-bg">
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
@@ -154,7 +249,47 @@ export default function OrganismScreen() {
           protein={org.axes.protein}
           phrase={shownPhrase}
           onPet={handlePet}
+          genome={genome}
+          pimples={pimples}
+          onPopPimple={handlePopPimple}
+          haptics={haptics}
         />
+
+        {/* Организм в упадке — зовём к доктору (тап скроллит к аудиту) */}
+        {showAuditInvite && (
+          <Pressable
+            onPress={scrollToAudit}
+            accessibilityRole="button"
+            accessibilityLabel="Пройти осмотр у Доктора Топтыгина"
+            className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-3"
+            style={{
+              backgroundColor: 'rgba(250,204,21,0.08)',
+              borderWidth: 1,
+              borderColor: 'rgba(250,204,21,0.25)',
+            }}
+          >
+            <Stethoscope size={16} color="#FACC15" />
+            <Text className="flex-1 font-medium text-[12px] leading-snug" style={{ color: '#FDE68A' }}>
+              Организм в упадке. Доктор Топтыгин подскажет, что чинить
+            </Text>
+            <ChevronDown size={16} color="#FDE68A" />
+          </Pressable>
+        )}
+
+        <View onLayout={(e) => (auditYRef.current = e.nativeEvent.layout.y)}>
+          <AuditCard
+            org={org}
+            streak={game.streak}
+            auditDays={game.auditDays || {}}
+            dayKey={dayKey}
+            kcal={kcal}
+            kcalGoal={goals.kcal}
+            pro={pro}
+            onRunAudit={handleRunAudit}
+            onOpenPaywall={() => setPaywallOpen(true)}
+            haptics={haptics}
+          />
+        </View>
 
         <GenomeCard org={org} stats={stats} />
 
@@ -185,19 +320,32 @@ export default function OrganismScreen() {
           packDmg={pack}
           killed={game.raidKilled}
           rewarded={game.raidRewarded}
+          heal={heal}
+          absorb={absorb}
         />
 
         <CapsuleCard
           combo={combo}
           streak={game.streak}
           capsules={game.capsules}
+          mutagen={game.mutagen}
           onOpen={handleOpenCapsule}
+          onConvert={handleConvertMutagen}
         />
+
+        <CollectionCard items={game.items} opened={game.opened} />
 
         <Text className="text-center font-sans text-[11px]" style={{ color: 'rgba(127,168,144,0.7)' }}>
           Демо-экономика · без pay-to-win · ресурсы только из дневника
         </Text>
       </ScrollView>
+
+      {/* пейволл аудита: все 6 систем, редкие диагнозы, история */}
+      <AuditPaywall
+        visible={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        onActivated={handleAuditActivated}
+      />
     </View>
   )
 }

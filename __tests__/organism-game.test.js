@@ -1,9 +1,15 @@
 // Юнит-тесты игровых систем организма: эволюция, рейд стаи, капсулы, комбо.
 import {
+  ARTIFACTS,
+  AURAS,
+  BOSS_HEAL_PER_SKIP,
   BRANCHES,
   EVOLVE_COST,
   EVOLVE_GENOME,
   GENOME_MAX,
+  MUTAGEN_PER_CAPSULE,
+  PIMPLE_SPOTS,
+  SHIELD_ABSORB_PER_GLASS,
   genomeAvg70,
   tendencyOf,
   formName,
@@ -17,6 +23,9 @@ import {
   packDamage,
   myWeekTotals,
   dayRaidDamage,
+  raidBattleHp,
+  raidHealAbsorb,
+  journalDayLabel,
   DROPS,
   rollDrop,
   COMBO_GOAL,
@@ -116,11 +125,33 @@ describe('неделя рейда', () => {
     expect(myWeekTotals(null, '2026-11-02')).toEqual({ dmg: 0, shield: 0, crit: 0 })
   })
 
-  test('урон дня: еда = ккал/40, тренировка = +15', () => {
-    expect(dayRaidDamage(2000, 2)).toBe(80) // 50 + 30
+  test('урон дня: еда = ккал/40, тренировка = крит ×2 и +15', () => {
+    expect(dayRaidDamage(2000, 2)).toBe(130) // 50 + крит 50 + 30
+    expect(dayRaidDamage(2000, 0)).toBe(50) // без тренировки крита нет
     expect(dayRaidDamage(95, 0)).toBe(2) // round(2.375)
+    expect(dayRaidDamage(0, 1)).toBe(15) // есть тренировка — есть +15
     expect(dayRaidDamage(0, 0)).toBe(0)
     expect(dayRaidDamage()).toBe(0)
+  })
+
+  test('бой рейда: пропуски лечат босса, щиты гасят лечение', () => {
+    const hp = 1200
+    // чистая неделя без пропусков и щитов — как раньше
+    expect(raidBattleHp(hp, 100, 500, 0, 0)).toBe(600)
+    // 2 пропуска — босс подлечился на 60
+    expect(raidBattleHp(hp, 100, 500, 2, 0)).toBe(660)
+    // 10 стаканов воды гасят 60 из лечения — вернулись к 600
+    expect(raidBattleHp(hp, 100, 500, 2, 10)).toBe(600)
+    // щитов больше, чем лечения, — absorbing не уходит в минус
+    expect(raidBattleHp(hp, 100, 500, 2, 40)).toBe(600)
+    // HP не падает ниже нуля
+    expect(raidBattleHp(100, 999, 999, 0, 0)).toBe(0)
+    // raidHealAbsorb: healing и поглощённое
+    expect(raidHealAbsorb(2, 0)).toEqual({ heal: 60, absorb: 0 })
+    expect(raidHealAbsorb(2, 10)).toEqual({ heal: 60, absorb: 60 })
+    expect(raidHealAbsorb(0, 10)).toEqual({ heal: 0, absorb: 0 })
+    expect(BOSS_HEAL_PER_SKIP).toBe(30)
+    expect(SHIELD_ABSORB_PER_GLASS).toBe(6)
   })
 
   test('боссы и награда на месте', () => {
@@ -152,6 +183,31 @@ describe('капсулы и комбо', () => {
     expect(dayCombo(10, 10, 10)).toBe(COMBO_GOAL) // 500 → зажим
     expect(dayCombo()).toBe(0)
     expect(STREAK_FOR_CAPSULE).toBe(7)
+  })
+
+  test('мутации и коллекция: 9 мутагена = капсула, 4 артефакта и 3 ауры', () => {
+    expect(MUTAGEN_PER_CAPSULE).toBe(9)
+    expect(ARTIFACTS).toHaveLength(4)
+    expect(AURAS).toHaveLength(3)
+  })
+
+  test('метка дня журнала: сегодня, вчера, «31 окт»', () => {
+    const now = new Date(2026, 10, 3, 12).getTime()
+    expect(journalDayLabel(new Date(2026, 10, 3, 9).getTime(), now)).toBe('сегодня')
+    expect(journalDayLabel(new Date(2026, 10, 2, 22).getTime(), now)).toBe('вчера')
+    expect(journalDayLabel(new Date(2026, 9, 31).getTime(), now)).toBe('31 окт')
+    expect(journalDayLabel(new Date(2025, 11, 30).getTime(), now)).toBe('30 дек')
+  })
+
+  test('прыщи: шесть детерминированных пятен в долях арены', () => {
+    expect(PIMPLE_SPOTS).toHaveLength(6)
+    for (const p of PIMPLE_SPOTS) {
+      expect(p.x).toBeGreaterThan(0)
+      expect(p.x).toBeLessThan(1)
+      expect(p.y).toBeGreaterThan(0)
+      expect(p.y).toBeLessThan(1)
+    }
+    expect(new Set(PIMPLE_SPOTS.map((p) => `${p.x}-${p.y}`)).size).toBe(6)
   })
 
   test('вчерашний ключ: границы месяцев и года', () => {

@@ -4,11 +4,11 @@
 
 import { useState } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
-import { Package, Flame, Sparkles } from 'lucide-react-native'
+import { Package, Flame, Sparkles, Dna } from 'lucide-react-native'
 import { GameCard, GameHeader, RightPill, Panel, GradBar, GAME } from './GameUi'
-import { COMBO_GOAL, DUP_MUTAGEN, DROPS, STREAK_FOR_CAPSULE } from '@/lib/data/organism-game'
+import { COMBO_GOAL, DUP_MUTAGEN, DROPS, MUTAGEN_PER_CAPSULE, STREAK_FOR_CAPSULE } from '@/lib/data/organism-game'
 
-export function CapsuleCard({ combo, streak, capsules, onOpen }) {
+export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onConvert }) {
   const [result, setResult] = useState(null) // { drop, itemName, dup } | 'empty'
 
   const handleOpen = () => {
@@ -64,6 +64,32 @@ export function CapsuleCard({ combo, streak, capsules, onOpen }) {
         </View>
       </Panel>
 
+      {/* мутации: мутаген из дубликатов и стабильности меняется на капсулы */}
+      <View className="mt-3 flex-row items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(196,181,253,0.18)' }}>
+        <Dna size={15} color="#C4B5FD" />
+        <Text className="flex-1 font-bold text-[12.5px] leading-tight" style={{ color: '#C4B5FD' }}>
+          мутаген: {mutagen} · {MUTAGEN_PER_CAPSULE} → капсула
+        </Text>
+        <Pressable
+          onPress={onConvert}
+          disabled={mutagen < MUTAGEN_PER_CAPSULE}
+          accessibilityRole="button"
+          accessibilityLabel={`Обменять ${MUTAGEN_PER_CAPSULE} мутагена на капсулу`}
+          className="items-center rounded-xl px-3.5 py-2"
+          style={{
+            backgroundColor: mutagen >= MUTAGEN_PER_CAPSULE ? '#C4B5FD' : 'rgba(255,255,255,0.07)',
+            opacity: mutagen >= MUTAGEN_PER_CAPSULE ? 1 : 0.6,
+          }}
+        >
+          <Text
+            className="font-extrabold text-[12px]"
+            style={{ color: mutagen >= MUTAGEN_PER_CAPSULE ? '#231A02' : GAME.dim2 }}
+          >
+            Обменять
+          </Text>
+        </Pressable>
+      </View>
+
       {/* честная таблица шансов */}
       <View className="mt-3 gap-2">
         {DROPS.map((d) => (
@@ -86,8 +112,8 @@ export function CapsuleCard({ combo, streak, capsules, onOpen }) {
       <View className="mt-3 flex-row items-start gap-2 px-1">
         <Sparkles size={14} color={GAME.lime} />
         <Text className="flex-1 font-sans text-[12px] leading-relaxed" style={{ color: GAME.dim }}>
-          Дубликаты не пропадают — превращаются в мутаген, а редкая аура
-          сезона — статус, который не купить.
+          Дубликаты не пропадают — превращаются в мутаген, а мутаген меняется
+          на капсулы. Редкая аура сезона — статус, который не купить.
         </Text>
       </View>
 

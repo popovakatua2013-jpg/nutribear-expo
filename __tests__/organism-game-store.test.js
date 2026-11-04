@@ -52,10 +52,9 @@ describe('useOrganismGameStore', () => {
   test('комбо дня хранит лучшее значение за день', () => {
     const store = useOrganismGameStore
     const dayKey = keyAt(0)
+    // comboDays удалён из стора (нигде не читался): поле не создаётся
     store.getState().syncDay({ dayKey, combo: 40, state: 'normal' })
-    store.getState().syncDay({ dayKey, combo: 88, state: 'normal' })
-    store.getState().syncDay({ dayKey, combo: 72, state: 'normal' })
-    expect(store.getState().comboDays[dayKey]).toBe(88)
+    expect(useOrganismGameStore.getState().comboDays).toBeUndefined()
   })
 
   test('стрик 7 дней подряд → генная капсула, счётчик обнуляется', () => {
@@ -88,18 +87,22 @@ describe('useOrganismGameStore', () => {
         [oldDay]: { weekKey: '2001-01-01', dmg: 99, shield: 0, crit: 0 },
         [keyAt(0)]: { weekKey: mondayKeyOf(), dmg: 30, shield: 4, crit: 1 },
       },
-      comboDays: { [oldDay]: 100, [keyAt(0)]: 50 },
       goodDays: { [oldDay]: true },
       log: Array.from({ length: 35 }, (_, i) => ({ id: `x${i}`, ts: 0, text: `e${i}` })),
     })
     store.getState().syncDay({ dayKey: keyAt(0), combo: 0, state: 'normal' })
     const s = store.getState()
     expect(Object.keys(s.raidDays)).toEqual([keyAt(0)])
-    expect(Object.keys(s.comboDays)).toEqual([keyAt(0)])
     expect(Object.keys(s.goodDays)).toEqual([])
     expect(s.log.length).toBe(30)
     expect(s.log[0].text).toBe('e0') // новые сверху — первые 30 и остались
     expect(s.log[29].text).toBe('e29')
+  })
+
+  test('гигиена: comboDays из старой версии вычищается', () => {
+    useOrganismGameStore.setState({ comboDays: { [keyAt(0)]: 88 } })
+    useOrganismGameStore.getState().syncDay({ dayKey: keyAt(0), combo: 0, state: 'normal' })
+    expect(useOrganismGameStore.getState().comboDays).toBeUndefined()
   })
 
   test('эволюция: без генов отказ, с генами — стадия и списание', () => {
@@ -179,5 +182,53 @@ describe('useOrganismGameStore', () => {
     expect(s.genes).toBe(27) // 12 + 15
     expect(s.crystals).toBe(5)
     expect(s.log[0].text).toContain('Диван-Пожиратель')
+  })
+
+  test('мутаген: обмен 9 → капсула, при нехватке отказ', () => {
+    const store = useOrganismGameStore
+    expect(store.getState().convertMutagen()).toBe(false) // 0 < 9
+    useOrganismGameStore.setState({ mutagen: 8 })
+    expect(store.getState().convertMutagen()).toBe(false)
+    useOrganismGameStore.setState({ mutagen: 9, capsules: 1 })
+    expect(store.getState().convertMutagen()).toBe(true)
+    const s = store.getState()
+    expect(s.mutagen).toBe(0)
+    expect(s.capsules).toBe(2)
+    expect(s.log[0].text).toContain('Мутации')
+  })
+
+  test('прыщи: тап лопает по одному, за все — +1 ген раз в день', () => {
+    const store = useOrganismGameStore
+    const dayKey = keyAt(0)
+    // три пятна: выдавили два
+    store.getState().popPimple({ dayKey, total: 3, index: 0 })
+    store.getState().popPimple({ dayKey, total: 3, index: 2 })
+    let s = store.getState()
+    expect(s.pimplePop).toEqual({ dayKey, popped: [0, 2] })
+    expect(s.genes).toBe(12) // бонус ещё не выдан
+    // повторный тап по тому же пятну — тихо
+    s = store.getState().popPimple({ dayKey, total: 3, index: 0 })
+    expect(s.popped).toEqual([0, 2])
+    // третье — все выдавлены: +1 ген и запись в журнале
+    const res = store.getState().popPimple({ dayKey, total: 3, index: 1 })
+    expect(res.doneAll).toBe(true)
+    s = store.getState()
+    expect(s.genes).toBe(13)
+    expect(s.pimpleBonusDay).toBe(dayKey)
+    expect(s.log[0].text).toContain('Все прыщи выдавлены')
+    // ещё тап в тот же день — повторного бонуса нет
+    store.getState().popPimple({ dayKey, total: 3, index: 4 })
+    expect(store.getState().genes).toBe(13)
+  })
+
+  test('прыщи: новый день — счётчик выдавленных обнуляется', () => {
+    const store = useOrganismGameStore
+    const d1 = keyAt(0)
+    store.getState().popPimple({ dayKey: d1, total: 2, index: 0 })
+    expect(store.getState().pimplePop.popped).toEqual([0])
+    const d2 = keyAt(1)
+    const res = store.getState().popPimple({ dayKey: d2, total: 2, index: 1 })
+    expect(res.popped).toEqual([1])
+    expect(store.getState().pimplePop.dayKey).toBe(d2)
   })
 })

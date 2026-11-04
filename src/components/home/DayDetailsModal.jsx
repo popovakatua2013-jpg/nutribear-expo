@@ -1,10 +1,13 @@
 // Сводка дня по тапу на клетку календаря: вес, калории против цели,
-// шаги, вода, тренировки, опыт. Данные — дневная история + взвешивания.
+// шаги, вода, тренировки, аудит организма, опыт. Данные — дневная
+// история + взвешивания; аудит для недавних дней подмешивается из
+// стора организма (там окно 14 дней, история хранит дольше).
 
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { dayData, dayStatus } from '@/lib/data/calendar'
+import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 
 const MONTHS = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -24,10 +27,14 @@ function Row({ icon, label, value, tone }) {
 }
 
 export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights }) {
+  // счёт аудита: сначала дневная история (пишется при осмотре),
+  // для недавних дней — фолбэк на стор организма (окно 14 дней)
+  const auditDays = useOrganismGameStore((s) => s.auditDays || {})
   const d = dayData(history, dayKey, null)
   const status = dayStatus(d, goals.kcal)
   const weight = (weights || []).find((w) => String(w.date || '').slice(0, 10) === dayKey)
-  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !weight
+  const auditVal = d.audit != null ? d.audit : auditDays[dayKey]
+  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !weight && auditVal == null
 
   const dt = dayKey ? new Date(`${dayKey}T00:00:00`) : null
   const title = dt ? `${dt.getDate()} ${MONTHS[dt.getMonth()]} · ${WD[dt.getDay()]}` : ''
@@ -81,6 +88,14 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
                     label="Сожжено на тренировках"
                     value={d.burned ? `+${formatNum(d.burned)} ккал` : '—'}
                   />
+                  {auditVal != null && (
+                    <Row
+                      icon="🩺"
+                      label="Аудит организма"
+                      value={`${auditVal}/100`}
+                      tone={auditVal >= 75 ? 'text-emerald-400' : auditVal >= 45 ? 'text-amber-400' : 'text-rose-400'}
+                    />
+                  )}
                   <Row icon="⭐" label="Опыт" value={`+${formatNum(d.xp)}`} />
                 </View>
               )}

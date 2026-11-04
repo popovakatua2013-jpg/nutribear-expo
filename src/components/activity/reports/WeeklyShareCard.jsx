@@ -2,13 +2,15 @@
 // мишка, средние калории, шаги, вода, сжигание и стрик. Кнопка
 // «Поделиться» снимает карточку в PNG (react-native-view-shot) и
 // открывает системное меню («Сохранить в файл», WhatsApp, Telegram…).
+// Иконки показателей — из общего реестра lib/data/metrics.js
+// («Сожжено» — Sparkles, как на графиках и карточках отчётов).
 
 import { useRef, useState } from 'react'
 import { Image, Modal, Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { captureRef } from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
-import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Share2, Timer, X } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Share2, Sparkles, Timer, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters, changePct, deltaTone } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
@@ -42,7 +44,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
   const [busy, setBusy] = useState(false)
 
   const avgKcal = Math.round((totals?.kcal || 0) / Math.max(1, days))
-  const title = days === 7 ? 'Итоги недели' : `Итоги за ${days} ${daysLabel(days)}`
+  const title = days === 7 ? 'Итоги недели' : `Итоги за ${days} ${pluralDays(days)}`
 
   async function share() {
     if (busy || !cardRef.current) return
@@ -85,7 +87,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
               </View>
               <View className="rounded-full bg-white/10 px-2.5 py-1">
                 <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10px] text-white/70">
-                  {days} {daysLabel(days)}
+                  {days} {pluralDays(days)}
                 </Text>
               </View>
             </View>
@@ -102,7 +104,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
             </View>
             <View className="mt-2.5 flex-row gap-2.5">
               <Stat Icon={Droplets} color="#38bdf8" value={formatLiters(totals?.waterMl || 0)} label="воды выпито" />
-              <Stat Icon={Flame} color="#f87171" value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
+              <Stat Icon={Sparkles} color="#fb923c" value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
             </View>
 
             {/* Сравнение с прошлым периодом: только показатели, по которым
@@ -135,7 +137,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
               <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
                 <Flame size={13} color="#fb923c" />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#fdba74]">
-                  {`${streak} ${daysLabel(streak)} подряд 🔥`}
+                  {`${streak} ${pluralDays(streak)} подряд 🔥`}
                 </Text>
               </View>
             ) : null}

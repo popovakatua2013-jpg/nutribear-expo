@@ -8,7 +8,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
-import { dayKeyOf } from './useHistoryStore'
+import { dayKeyOf, useHistoryStore } from './useHistoryStore'
 import { KCAL_PER_STEP } from '@/lib/data/activity'
 
 // Ключ дня «ГГГГ-ММ-ДД» по локальным часам (единый с историей)
@@ -81,4 +81,24 @@ export function dayBurned(logs, key) {
 // и шаги в сожжённых калориях терялись.
 export function totalBurned(logs, key, steps) {
   return dayBurned(logs, key) + Math.round((steps || 0) * KCAL_PER_STEP)
+}
+
+// Сразу пересчитать «сожжено» дня в дневной истории после правки
+// тренировок (добавили за вчера, изменили, перенесли, удалили):
+// календарь, сводка дня и отчёты показывают свежее число, не дожидаясь
+// архивации на следующую полночь. Шаги берём из истории дня — датчик
+// телефона за прошлые дни уже не достать. Уже архивированное большее
+// значение не уронить (Math.max) — сторы могут быть не догидрированы.
+export function syncHistoryBurned(dayKey) {
+  try {
+    const logs = useExerciseStore.getState().logs
+    const hist = useHistoryStore.getState().days[dayKey] || {}
+    const burned = totalBurned(logs, dayKey, hist.steps || 0)
+    // Дня ещё нет в истории и считать нечего — не плодим пустые записи
+    // (иначе появятся нули в графиках и стрике)
+    if (!useHistoryStore.getState().days[dayKey] && !burned) return
+    useHistoryStore.getState().record(dayKey, {
+      burned: Math.max(hist.burned || 0, Math.round(burned)),
+    })
+  } catch {}
 }

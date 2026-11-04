@@ -150,13 +150,21 @@ export async function applyBackup(data) {
     raidDays: obj(og.raidDays),
     raidKilled: Boolean(og.raidKilled),
     raidRewarded: Boolean(og.raidRewarded),
-    comboDays: obj(og.comboDays),
     goodDays: obj(og.goodDays),
     streak: Math.max(0, Math.round(num(og.streak))),
     streakLastKey: typeof og.streakLastKey === 'string' ? og.streakLastKey : null,
     items: arr(og.items),
     opened: Math.max(0, Math.round(num(og.opened))),
     log: arr(og.log),
+    // Прыщи от игнора: какие пятна выдавлены сегодня; битые записи — «чисто»
+    pimplePop:
+      og.pimplePop && Array.isArray(og.pimplePop.popped)
+        ? {
+            dayKey: typeof og.pimplePop.dayKey === 'string' ? og.pimplePop.dayKey : null,
+            popped: og.pimplePop.popped.filter((n) => Number.isFinite(n)).map((n) => Math.round(n)),
+          }
+        : { dayKey: null, popped: [] },
+    pimpleBonusDay: typeof og.pimpleBonusDay === 'string' ? og.pimpleBonusDay : null,
     // Активная экспедиция: ключ проверяется по справочнику, время — по
     // реальным часам; битые записи превращаются в «организм дома»
     expedition:

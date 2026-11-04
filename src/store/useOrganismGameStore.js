@@ -12,6 +12,7 @@ import {
   ARTIFACTS,
   AURAS,
   DUP_MUTAGEN,
+  MUTAGEN_PER_CAPSULE,
   STREAK_FOR_CAPSULE,
   crystalsLabel,
   expeditionOf,
@@ -29,7 +30,8 @@ const MUTATION_MUTAGEN = 5
 
 // Гигиена хранилища: не копим историю бесконечно (AsyncStorage не резиновый).
 // log — последние 30 событий, вклад рейда — только текущая неделя,
-// комбо/хорошие дни — последние 14 дней (стрику нужен только вчера).
+// дни расцвета — последние 14 (стрику нужен только вчера).
+// comboDays удалён: лучший комбо дня нигде не читался — мёртвые данные.
 const LOG_MAX = 30
 const DAYS_KEEP = 14
 
@@ -55,19 +57,21 @@ function prune(s) {
     if (v && v.weekKey === week) raidDays[k] = v
     else changed = true
   }
-  const comboDays = {}
-  for (const [k, v] of Object.entries(s.comboDays)) {
-    if (k >= cut) comboDays[k] = v
-    else changed = true
-  }
   const goodDays = {}
   for (const [k, v] of Object.entries(s.goodDays)) {
     if (k >= cut) goodDays[k] = v
     else changed = true
   }
+  const auditDays = {}
+  for (const [k, v] of Object.entries(s.auditDays || {})) {
+    if (k >= cut) auditDays[k] = v
+    else changed = true
+  }
   const log = s.log.length > LOG_MAX ? s.log.slice(0, LOG_MAX) : s.log
   if (log !== s.log) changed = true
-  return changed ? { raidDays, comboDays, goodDays, log } : {}
+  // разовая уборка comboDays у тех, кто обновился со старой версией
+  if (s.comboDays && Object.keys(s.comboDays).length) changed = true
+  return changed ? { raidDays, goodDays, auditDays, log, comboDays: undefined } : {}
 }
 
 export const useOrganismGameStore = create(
@@ -94,7 +98,6 @@ export const useOrganismGameStore = create(
       raidRewarded: false,
 
       // комбо и стрик
-      comboDays: {}, // { dayKey: лучший комбо дня }
       goodDays: {}, // { dayKey: true } — день в расцвете (гены начислены)
       streak: 0,
       streakLastKey: null,
@@ -106,6 +109,16 @@ export const useOrganismGameStore = create(
 
       // экспедиция (idle): организм в походе на реальное время
       expedition: null, // { key, startedAt } | null
+
+      // прыщи от игнора: какие пятна выдавлены сегодня и за какой день
+      // уже выдан бонус за полную чистку
+      pimplePop: { dayKey: null, popped: [] },
+      pimpleBonusDay: null,
+
+      // аудит организма: счёт за день (для истории в Premium) и день,
+      // когда уже выдан +1 ген за медосмотр
+      auditDays: {}, // { '2026-11-03': 78 }
+      auditBonusDay: null,
 
       /* ── Ежедневная синхронизация: вызывается при открытии экрана ── */
       syncDay: ({ dayKey, combo, state }) => {
@@ -120,10 +133,6 @@ export const useOrganismGameStore = create(
           set({ raidWeekStart: mondayKeyOf(), raidKilled: false, raidRewarded: false })
         }
         const patch = {}
-
-        // комбо дня (лучшее значение за день)
-        const prevCombo = s.comboDays[dayKey] || 0
-        if (combo > prevCombo) patch.comboDays = { ...s.comboDays, [dayKey]: combo }
 
         // стрик: день с заполненной шкалой; стрик 7 → капсула
         if (combo >= 100 && s.streakLastKey !== dayKey) {
@@ -238,6 +247,62 @@ export const useOrganismGameStore = create(
         return { drop, itemName, dup }
       },
 
+      /* ── Мутации: обменять мутаген на капсулу (9 → 1) ── */
+      convertMutagen: () => {
+        const s = get()
+        if (s.mutagen < MUTAGEN_PER_CAPSULE) return false
+        set({
+          mutagen: s.mutagen - MUTAGEN_PER_CAPSULE,
+          capsules: s.capsules + 1,
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Мутации: ${MUTAGEN_PER_CAPSULE} мутагена превращены в генную капсулу.`,
+          }),
+        })
+        return true
+      },
+
+      /* ── Прыщи от игнора: выдавить пятно № index (один тап — один прыщ) ── */
+      popPimple: ({ dayKey, total, index }) => {
+        const s = get()
+        const prev = s.pimplePop.dayKey === dayKey ? s.pimplePop.popped : []
+        if (prev.includes(index)) return { popped: prev, doneAll: false }
+        const popped = [...prev, index]
+        const patch = { pimplePop: { dayKey, popped } }
+        let doneAll = false
+        // выдавил все — раз в день +1 ген «за чистоту»
+        if (total > 0 && popped.length >= total && s.pimpleBonusDay !== dayKey) {
+          patch.pimpleBonusDay = dayKey
+          patch.genes = s.genes + 1
+          patch.log = pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: 'Все прыщи выдавлены — организм сияет от чистоты (+1 ген).',
+          })
+          doneAll = true
+        }
+        set(patch)
+        return { popped, doneAll }
+      },
+
+      /* ── Аудит организма: штамп медосмотра за день (+1 ген раз в день).
+           Повторные осмотры в тот же день — только ради свежих шуток ── */
+      runAudit: ({ dayKey, score }) => {
+        const s = get()
+        const patch = { auditDays: { ...(s.auditDays || {}), [dayKey]: score } }
+        let awarded = false
+        if (s.auditBonusDay !== dayKey) {
+          patch.auditBonusDay = dayKey
+          patch.genes = s.genes + 1
+          patch.log = pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Медосмотр: ${score}/100. Доктор Топтыгин доволен (+1 ген).`,
+          })
+          awarded = true
+        }
+        set(patch)
+        return { awarded }
+      },
+
       /* ── Экспедиция: отправить организм в поход (idle, реальное время) ── */
       startExpedition: (key) => {
         const s = get()
@@ -278,8 +343,10 @@ export const useOrganismGameStore = create(
           evoStage: 0, evoBranch: '', createdAt: mondayKeyOf(),
           stableDays: 0, stableLastKey: null, mutationUnlocked: false,
           raidWeekStart: mondayKeyOf(), raidDays: {}, raidKilled: false, raidRewarded: false,
-          comboDays: {}, goodDays: {}, streak: 0, streakLastKey: null,
+          goodDays: {}, streak: 0, streakLastKey: null,
           items: [], opened: 0, log: [], expedition: null,
+          pimplePop: { dayKey: null, popped: [] }, pimpleBonusDay: null,
+          auditDays: {}, auditBonusDay: null,
         }),
     }),
     {
@@ -290,9 +357,11 @@ export const useOrganismGameStore = create(
         evoStage: s.evoStage, evoBranch: s.evoBranch, createdAt: s.createdAt,
         stableDays: s.stableDays, stableLastKey: s.stableLastKey, mutationUnlocked: s.mutationUnlocked,
         raidWeekStart: s.raidWeekStart, raidDays: s.raidDays, raidKilled: s.raidKilled, raidRewarded: s.raidRewarded,
-        comboDays: s.comboDays, goodDays: s.goodDays, streak: s.streak, streakLastKey: s.streakLastKey,
+        goodDays: s.goodDays, streak: s.streak, streakLastKey: s.streakLastKey,
         items: s.items, opened: s.opened, log: s.log,
         expedition: s.expedition,
+        pimplePop: s.pimplePop, pimpleBonusDay: s.pimpleBonusDay,
+        auditDays: s.auditDays, auditBonusDay: s.auditBonusDay,
       }),
     }
   )

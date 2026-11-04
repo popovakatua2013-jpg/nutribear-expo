@@ -27,11 +27,11 @@ export function GoalPicker() {
     const g = GOALS.find((x) => x.id === id)
     let description = `Дневная норма — ${formatNum(getDailyTarget(id))} ккал`
     // Мягкая подсказка: при похудении с лишним весом стоит поставить
-    // и цель по весу (во вкладке ИМТ) — без навязчивости
+    // и цель по весу (во вкладке Тело) — без навязчивости
     if (id === 'lose') {
       const { weightKg, heightCm, goalWeightKg } = useProfileStore.getState()
       if (goalWeightKg == null && weightKg > healthyRange(heightCm).max) {
-        description += ' · поставьте и цель по весу во вкладке ИМТ'
+        description += ' · поставьте и цель по весу во вкладке Тело'
       }
     }
     toast({

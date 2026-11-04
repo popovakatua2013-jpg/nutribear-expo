@@ -8,7 +8,7 @@ import { DEFAULT_GOAL } from '@/lib/data/goals'
 import { makeId } from '@/lib/format'
 import { bjuForPortion } from '@/lib/data/bju'
 import { rescaleEntry } from '@/lib/data/diary'
-import { dayKeyOf } from './useHistoryStore'
+import { dayKeyOf, useHistoryStore } from './useHistoryStore'
 import { useShopStore } from './useShopStore'
 import { EARN } from '@/lib/data/shop'
 
@@ -19,6 +19,23 @@ const nowTime = () =>
 // Локальная дата (как в истории отчётов) — раньше была UTC,
 // и ночные записи до 3 утра уходили «во вчера»
 const todayKey = dayKeyOf
+
+// Досчитать калории дня в дневной истории (по журналу приёмов): архив
+// туда пишется только в полночь, поэтому запись «за вчера» без этого
+// досчёта не изменила бы сводку дня/календарь/отчёты до следующей ночи.
+// Math.max — не уронить уже архивированное значение меньшим (журнал
+// может не знать о чём-то, что учла архивация).
+function syncHistoryKcal(day) {
+  try {
+    const sum = useFoodStore
+      .getState()
+      .history.reduce((n, h) => (h.day === day ? n + (Number(h.kcal) || 0) : n), 0)
+    const prev = useHistoryStore.getState().days[day] || {}
+    useHistoryStore.getState().record(day, {
+      kcal: Math.max(prev.kcal || 0, Math.round(sum)),
+    })
+  } catch {}
+}
 
 export const useFoodStore = create(
   persist(
@@ -33,14 +50,32 @@ export const useFoodStore = create(
 
       // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю).
       // mk — маркер «по продукту известны витамины/минералы» (продукты базы).
+      // dayOff — «за какой день»: 0 = сегодня, 1 = вчера (приём после полуночи).
+      // Вчера — запись идёт только в журнал со вчерашним днём: дневник
+      // «entries» — это живой сегодня, чужие записи ему ни к чему. Заодно
+      // досчитываем вчерашние калории в дневную историю, иначе календарь,
+      // сводка дня и отчёты покажут старую сумму до следующей полуночи.
       // Возвращает созданную запись — тостам удобно предлагать «Отменить»
-      addEntry: (mealId, { food, grams, kcal, desc }) => {
+      addEntry: (mealId, { food, grams, kcal, desc }, dayOff = 0) => {
         const time = nowTime()
         const bju = bjuForPortion(food, grams)
         const entry = {
           id: makeId(), foodId: food.id, name: food.name, emoji: food.emoji,
           grams, kcal, ...bju, mk: food.mk, time,
           desc: String(desc || '').trim(),
+        }
+        if (dayOff) {
+          const d = new Date()
+          d.setDate(d.getDate() - dayOff)
+          const day = dayKeyOf(d)
+          set((state) => ({
+            history: [
+              { ...entry, day, mealId },
+              ...state.history,
+            ].slice(0, 900),
+          }))
+          syncHistoryKcal(day)
+          return { ...entry, day }
         }
         set((state) => ({
           entries: {

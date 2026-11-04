@@ -1,8 +1,10 @@
 // Карточка «Калькулятор ИМТ» в стиле макета: фиолетовый чип-иконка,
 // подзаголовок, пилюли пола с символами ♀/♂, три поля (возраст, рост,
 // вес), градиентная кнопка «Рассчитать» и неоновый силуэт справа.
-// Расчёт по полным данным пользователя — пол, возраст, рост, вес и
-// уровень активности. Кнопка сохраняет данные в профиль и раскрывает
+// По умолчанию карточка СВЁРНУТА (запрос пользователя): видна только
+// шапка с шевроном — тап раскрывает поля; состояние живёт до перезагрузки
+// экрана. Расчёт по полным данным пользователя — пол, возраст, рост, вес
+// и уровень активности. Кнопка сохраняет данные в профиль и раскрывает
 // подробные результаты (норма веса, обмен, суточная норма, жир).
 //
 // Формулы: ИМТ — ВОЗ; базовый обмен — Миффлин — Сан Жеор;
@@ -10,7 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
-import { Calculator } from 'lucide-react-native'
+import { Calculator, ChevronDown, ChevronUp } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
@@ -51,6 +53,8 @@ export function BmiCalculator() {
   const [weight, setWeight] = useState(String(profileWeight))
   const [activityId, setActivityId] = useState(profileActivity)
   const [showResult, setShowResult] = useState(false)
+  // Свёрнут по умолчанию: тап по шапке раскрывает поля калькулятора
+  const [open, setOpen] = useState(false)
 
   // Один раз подтягиваем биоданные из завершённого онбординга, если профиль
   // их ещё не получал (старые пользователи без sex/age в хранилище)
@@ -132,8 +136,15 @@ export function BmiCalculator() {
 
   return (
     <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border p-4" style={CARD_STYLE}>
-      {/* Шапка: чип-иконка + заголовок + подзаголовок */}
-      <View className="flex-row items-center gap-2.5">
+      {/* Шапка: чип-иконка + заголовок + подзаголовок + шеврон.
+          По умолчанию свёрнут — тап по шапке раскрывает/скрывает поля */}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={open ? 'Свернуть калькулятор ИМТ' : 'Развернуть калькулятор ИМТ'}
+        className="flex-row items-center gap-2.5 active:opacity-80"
+      >
         <View
           className="h-9 w-9 items-center justify-center rounded-xl border"
           style={{ backgroundColor: 'rgba(139,92,246,0.22)', borderColor: 'rgba(139,92,246,0.35)' }}
@@ -148,9 +159,18 @@ export function BmiCalculator() {
             Узнай свой индекс массы тела
           </Text>
         </View>
-      </View>
+        <View className="shrink-0 rounded-full bg-white/[0.06] p-1.5">
+          {open ? (
+            <ChevronUp size={16} color="#C4B5FD" />
+          ) : (
+            <ChevronDown size={16} color="#C4B5FD" />
+          )}
+        </View>
+      </Pressable>
 
-      {/* Пол, данные, кнопка — на всю ширину (силуэт теперь в блоке выше) */}
+      {/* Пол, данные, кнопка — на всю ширину (силуэт теперь в блоке выше);
+          показываются только в развёрнутом состоянии */}
+      {open && (
       <View className="mt-3">
         {/* Пол */}
           <View className="flex-row gap-2">
@@ -203,6 +223,7 @@ export function BmiCalculator() {
             </LinearGradient>
           </Pressable>
       </View>
+      )}
 
       {/* Подробные результаты — раскрываются кнопкой «Рассчитать» */}
       {showResult && valid && (

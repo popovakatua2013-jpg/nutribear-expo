@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { fmtDecimal, shortDate } from '@/lib/data/bmi'
+import { fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/goal'
 import { formatNum, pluralDays } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
@@ -66,7 +66,7 @@ export function GoalCelebration() {
     ? supportSwitchPlan({ goalId, hasBio, sex, age, heightCm, weightKg, activityId })
     : null
 
-  // Открыть вкладку ИМТ сразу с окном записи веса
+  // Открыть вкладку Тело сразу с окном записи веса
   function openWeightModal() {
     router.navigate('/bmi')
     requestOpenWeightModal()
@@ -189,7 +189,7 @@ export function GoalCelebration() {
             </Text>
             <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
               Вес {fmtDecimal(weightKg)} кг
-              {goalReachedAt ? ` · достигнута ${shortDate(new Date(goalReachedAt))}` : ''}
+              {goalReachedAt ? ` · достигнута ${shortDateNum(new Date(goalReachedAt))}` : ''}
             </Text>
           </View>
         </View>
@@ -232,13 +232,13 @@ export function GoalCelebration() {
           <Pressable
             onPress={openWeightModal}
             accessibilityRole="button"
-            accessibilityLabel="Записать вес во вкладке ИМТ"
+            accessibilityLabel="Записать вес во вкладке Тело"
             className="mt-1.5 active:opacity-70"
           >
             <Text className="font-sans text-[11px] leading-snug text-[#d9b96a]">
               {Number.isFinite(lastWeighDays)
                 ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
-                : '📅 Записать вес во вкладке ИМТ — взвешивание раз в неделю держит стрик честным →'}
+                : '📅 Записать вес во вкладке Тело — взвешивание раз в неделю держит стрик честным →'}
             </Text>
           </Pressable>
         )}
@@ -247,7 +247,7 @@ export function GoalCelebration() {
   }
 
   // Цель когда-то была достигнута, но вес снова ушёл — зовём вернуться:
-  // тап открывает вкладку ИМТ сразу с окном записи веса
+  // тап открывает вкладку Тело сразу с окном записи веса
   if (goalReachedAt) {
     const diff = Math.round((weightKg - goalWeightKg) * 10) / 10
     return (
@@ -266,7 +266,7 @@ export function GoalCelebration() {
           </Text>
           <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
             Цель {fmtDecimal(goalWeightKg)} кг была достигнута{' '}
-            {shortDate(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
+            {shortDateNum(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
             {fmtDecimal(Math.abs(diff))} кг
           </Text>
         </View>
@@ -274,6 +274,6 @@ export function GoalCelebration() {
     )
   }
 
-  // Цель есть, но до неё ещё идти — прогресс виден на плашке во вкладке ИМТ
+  // Цель есть, но до неё ещё идти — прогресс виден на плашке во вкладке Тело
   return null
 }

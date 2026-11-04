@@ -71,7 +71,7 @@ export function BodyStep({ onNext, onBack }) {
           placeholder={imperial ? '150' : '70'}
         />
         <Text className="px-1 font-sans text-[11px] leading-relaxed text-bear-dim">
-          Обхват талии и % жира можно добавить позже в разделе «ИМТ» — это
+          Обхват талии и % жира можно добавить позже в разделе «Тело» — это
           уточнит картину, но не обязательно для старта.
         </Text>
       </View>

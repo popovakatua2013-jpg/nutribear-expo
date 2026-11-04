@@ -1,14 +1,14 @@
-// Шапка карточки «Приёмы пищи»: фиолетовый значок, заголовок и
-// фиолетовая пилюля «+ Добавить» (как в референсе) — добавляет блюдо
-// в первый приём без записей. Ниже — только серые иконки-кнопки
-// без подписей: «Повторить день» (выбор дня и копирование его еды
-// в сегодня), «История» и «Порции»; справа — ссылка «Все».
-// Подписи убраны по обратной связи: они делали ряд широким, «Все»
-// переносилось на вторую строку и блоки съезжали.
+// Шапка карточки «Приёмы пищи»: фиолетовый значок и заголовок.
+// Кнопки «+ Добавить» больше нет — добавление по тапу на плитку
+// приёма (завтрак/обед/ужин/перекус), дубли не нужны. Ниже — только
+// серые иконки-кнопки без подписей: «Повторить день» (выбор дня и
+// копирование его еды в сегодня), «История» и «Порции»; справа —
+// ссылка «Все». Подписи убраны по обратной связи: они делали ряд
+// широким, «Все» переносилось на вторую строку и блоки съезжали.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Copy, History, UtensilsCrossed, ChevronRight, Hand, Plus } from 'lucide-react-native'
+import { Copy, History, UtensilsCrossed, ChevronRight, Hand } from 'lucide-react-native'
 import { PortionsModal } from './PortionsModal'
 import { RepeatDayModal } from './RepeatDayModal'
 
@@ -27,7 +27,7 @@ function IconButton({ onPress, label, Icon }) {
   )
 }
 
-export function PlanHeader({ onViewAll, onHistory, onAdd }) {
+export function PlanHeader({ onViewAll, onHistory }) {
   const [portionsOpen, setPortionsOpen] = useState(false)
   const [repeatOpen, setRepeatOpen] = useState(false)
 
@@ -36,7 +36,7 @@ export function PlanHeader({ onViewAll, onHistory, onAdd }) {
 
   return (
     <View className="mb-3">
-      {/* заголовок + фиолетовая пилюля «+ Добавить» */}
+      {/* заголовок; добавление — тап по плитке приёма ниже */}
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
           <UtensilsCrossed size={18} color="#A78BFA" />
@@ -44,18 +44,6 @@ export function PlanHeader({ onViewAll, onHistory, onAdd }) {
             Приёмы пищи
           </Text>
         </View>
-
-        {onAdd && (
-          <Pressable
-            onPress={onAdd}
-            accessibilityRole="button"
-            accessibilityLabel="Добавить блюдо в первый пустой приём пищи"
-            className="shrink-0 flex-row items-center gap-1 rounded-full border border-[#7B6CF6]/40 bg-[#7B6CF6]/10 px-3 py-1.5 active:opacity-70"
-          >
-            <Plus size={13} color="#A78BFA" strokeWidth={2.5} />
-            <Text className="font-semibold text-[12px] text-[#A78BFA]">Добавить</Text>
-          </Pressable>
-        )}
       </View>
 
       {/* служебная строка: серые иконки слева, «Все» справа — всегда один ряд */}

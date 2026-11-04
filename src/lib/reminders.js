@@ -20,6 +20,7 @@ import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal } from '@/lib/navEvents'
@@ -138,10 +139,16 @@ export async function scheduleMorningSummary() {
     // «Вчера» относительно утра срабатывания — день перед fire
     const yst = new Date(fire)
     yst.setDate(yst.getDate() - 1)
-    const t = summaryTotalsFor(dayKeyOf(yst))
+    const yKey = dayKeyOf(yst)
+    const t = summaryTotalsFor(yKey)
+    // Аудит организма вчера не проводился — Доктор Топтыгин мягко напоминает
+    const auditMissed = useOrganismGameStore.getState().auditDays?.[yKey] == null
+    const tail = auditMissed ? 'Доктор Топтыгин ждёт вас на осмотр 🩺' : 'Хорошего дня! 🐻'
     const body = t
-      ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. Хорошего дня! 🐻`
-      : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
+      ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. ${tail}`
+      : auditMissed
+        ? 'Новый день! Доктор Топтыгин ждёт вас на осмотр 🩺🐻'
+        : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
 
     await Notifications.cancelScheduledNotificationAsync('morning-summary')
     await Notifications.scheduleNotificationAsync({
@@ -292,6 +299,10 @@ function handleNotificationTap(data) {
       // И сразу окно записи веса — тапом по уведомлению пользователь
       // собрался взвешиваться, не заставляем искать кнопку «+»
       requestOpenWeightModal()
+    } else if (kind === 'day') {
+      // Утренняя сводка: если в ней упоминался доктор — вела в аудит.
+      // Открываем вкладку «Организм» — там Доктор Топтыгин и живёт
+      router.navigate('/organism')
     }
   } catch (e) {
     console.warn('Не удалось открыть экран по тапу:', e)

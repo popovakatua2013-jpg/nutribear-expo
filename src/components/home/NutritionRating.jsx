@@ -7,6 +7,8 @@
 // простое объяснение состава оценки и как её поднять.
 // Расчёты — src/lib/data/nutrition.js; данные дня — дневник (entries),
 // месяца — журнал приёмов (history) со средними за день с записями.
+// Норма клетчатки — своя из целей «Съедено за сегодня» (если задана),
+// иначе 25 г/день (ВОЗ): и в балле, и в подписи строки.
 
 import { useRef, useState } from 'react'
 import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react-native'
@@ -24,6 +26,7 @@ import {
   monthNutrition,
 } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useGoalsStore } from '@/store/useGoalsStore'
 
 const MAX = 1.25
 const MONTHS = [
@@ -64,6 +67,10 @@ function MetricRow({ label, value, norm, score }) {
 export function NutritionRating() {
   const entries = useFoodStore((s) => s.entries)
   const history = useFoodStore((s) => s.history)
+  const macroNorms = useGoalsStore((s) => s.goals.macroNorms)
+  // Своя норма клетчатки (как в «Съедено за сегодня»): > 0 — своя,
+  // иначе nutritionRating считает по 25 г/день (ВОЗ)
+  const fiberNorm = macroNorms?.fib > 0 ? macroNorms.fib : FIBER_NORM
   const [mode, setMode] = useState('day') // 'day' | 'month'
   const [expanded, setExpanded] = useState(false)
   // Пояснение «что даёт балл»: тап по крупной цифре или по ссылке
@@ -93,7 +100,10 @@ export function NutritionRating() {
   const mRows = monthRows(history)
   const n = mode === 'day' ? sumNutrition(dayRows) : monthNutrition(mRows)
   const hasData = mode === 'day' ? dayRows.length > 0 : n.days > 0
-  const r = nutritionRating(hasData ? n : { ...n, rows: 0, mk: 0, kcal: 0, fib: 0 })
+  const r = nutritionRating(
+    hasData ? n : { ...n, rows: 0, mk: 0, kcal: 0, fib: 0 },
+    { fiberNorm }
+  )
   const { label, emoji } = ratingLabel(r.overall)
 
   const noFiber = hasData && n.kcal > 0 && n.fib <= 0
@@ -112,7 +122,7 @@ export function NutritionRating() {
         : `Витамины и минералы учтены по продуктам базы — покрытие записей ≈ ${Math.round(share * 100)}%`
 
   const rows = [
-    { key: 'fiber', label: 'Клетчатка', value: `${round1(r.fiber.value)} г`, norm: `норма ${FIBER_NORM} г/день`, score: r.fiber.score },
+    { key: 'fiber', label: 'Клетчатка', value: `${round1(r.fiber.value)} г`, norm: `норма ${r.fiber.norm} г/день`, score: r.fiber.score },
     { key: 'sugar', label: 'Сахар', value: `${round1(r.sugar.value)} г`, norm: `лучше до ${SUGAR_LIMIT} г/день`, score: r.sugar.score },
     { key: 'protein', label: 'Белки', value: `${r.protein.value}%`, norm: 'норма 15–30% ккал', score: r.protein.score },
     { key: 'fat', label: 'Жиры', value: `${r.fat.value}%`, norm: 'норма 20–35% ккал', score: r.fat.score },
@@ -209,7 +219,7 @@ export function NutritionRating() {
                 Балл 0–100 — насколько сбалансирован рацион за период
               </Text>
               <Text className="mt-1 font-sans text-[11px] leading-[15px] text-bear-sub">
-                Половина оценки — клетчатка (норма 25 г) и сахар (лучше до 50 г).
+                Половина оценки — клетчатка (норма {r.fiber.norm} г) и сахар (лучше до 50 г).
                 Ещё четверть — баланс белков, жиров и углеводов. Остальное —
                 витамины и минералы из базы продуктов. 80+ — «Отлично», 60–79 —
                 «Хорошо», 40–59 — «Средне», ниже — «Слабо».

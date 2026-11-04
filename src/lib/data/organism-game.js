@@ -62,6 +62,25 @@ export const BOSSES = [
 // Награда за павшего босса
 export const RAID_REWARD = { genes: 15, crystals: 5 }
 
+// Регенерация босса: за каждый день недели без моего вклада он лечится;
+// стаканы воды (щиты) гасят лечение по 6 HP за стакан
+export const BOSS_HEAL_PER_SKIP = 30
+export const SHIELD_ABSORB_PER_GLASS = 6
+
+// Итоговые HP босса с учётом регенерации и щитов:
+// пропущенные дни лечат босса, вода не даст ему отлежаться
+export function raidBattleHp(bossHp, myDmg, packDmg, skips, shield) {
+  const heal = Math.max(0, skips || 0) * BOSS_HEAL_PER_SKIP
+  const absorb = Math.min((shield || 0) * SHIELD_ABSORB_PER_GLASS, heal)
+  return Math.max(0, Math.round(bossHp - (myDmg || 0) - (packDmg || 0) + heal - absorb))
+}
+
+// Сколько HP босс вылечил и сколько из этого погасили щиты — для строки в карточке
+export function raidHealAbsorb(skips, shield) {
+  const heal = Math.max(0, skips || 0) * BOSS_HEAL_PER_SKIP
+  return { heal, absorb: Math.min((shield || 0) * SHIELD_ABSORB_PER_GLASS, heal) }
+}
+
 // Понедельник текущей недели (ключ «ГГГГ-ММ-ДД»)
 export function mondayKeyOf(date = new Date()) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -116,9 +135,12 @@ export function myWeekTotals(raidDays, weekKey) {
   return { dmg, shield, crit }
 }
 
-// Урон за день из реальных данных: еда = удар, тренировка = крит (бонус к урону)
+// Урон за день из реальных данных: еда = удар, тренировка = крит —
+// удваивает урон еды за этот день (и даёт +15 за каждую)
 export function dayRaidDamage(kcal, workouts) {
-  return Math.round((kcal || 0) / 40) + (workouts || 0) * 15
+  const base = Math.round((kcal || 0) / 40)
+  const crit = (workouts || 0) > 0 ? base : 0
+  return base + crit + (workouts || 0) * 15
 }
 
 // ── Генные капсулы ──────────────────────────────────────────────────────────
@@ -134,6 +156,8 @@ export const DROPS = [
 export const ARTIFACTS = ['Мшистый тотем', 'Кристалл родника', 'Уголь пустоши', 'Иней высокогорья']
 export const AURAS = ['Аура: Лаймовый шторм', 'Аура: Полярное сияние', 'Аура: Уголь и мята']
 export const DUP_MUTAGEN = 3 // дубликат превращается в мутаген
+// Мутации: накопленный мутаген (дубликаты + стабильность) меняется на капсулы
+export const MUTAGEN_PER_CAPSULE = 9
 
 // Прокрутка капсулы: возвращает дроп по честным весам
 export function rollDrop(rand = Math.random()) {
@@ -234,6 +258,30 @@ export function genesLabel(n) {
 export function crystalsLabel(n) {
   return `${n} ${plural(n, 'кристалл', 'кристалла', 'кристаллов')}`
 }
+
+// Метка дня для журнала: «сегодня», «вчера» или «3 ноя»
+const MONTHS_SHORT = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+export function journalDayLabel(ts, now = Date.now()) {
+  const d = new Date(ts)
+  const n = new Date(now)
+  const dayKey = (x) => `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`
+  if (dayKey(d) === dayKey(n)) return 'сегодня'
+  const y = new Date(n)
+  y.setDate(y.getDate() - 1)
+  if (dayKey(d) === dayKey(y)) return 'вчера'
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
+}
+
+// Прыщи от игнора: детерминированные позиции на арене (доли ширины/высоты),
+// ниже зоны реплики справа сверху. Индекс пятна — его «личность» на день.
+export const PIMPLE_SPOTS = [
+  { x: 0.30, y: 0.34 },
+  { x: 0.68, y: 0.30 },
+  { x: 0.18, y: 0.52 },
+  { x: 0.76, y: 0.55 },
+  { x: 0.34, y: 0.72 },
+  { x: 0.60, y: 0.80 },
+]
 
 // «3 ч 12 м» / «45 м» — остаток пути для таймера
 export function fmtRemaining(ms) {

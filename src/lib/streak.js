@@ -31,12 +31,3 @@ export function streakOf(days, today = new Date()) {
   }
   return streak
 }
-
-// 1 день / 2 дня / 5 дней — русские склонения для чипа
-export function daysLabel(n) {
-  const m10 = n % 10
-  const m100 = n % 100
-  if (m10 === 1 && m100 !== 11) return 'день'
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'дня'
-  return 'дней'
-}

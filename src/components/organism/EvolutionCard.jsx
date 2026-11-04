@@ -12,6 +12,7 @@ import {
   GENOME_MAX,
   formName,
   genomeAvg70,
+  journalDayLabel,
   nextEvolution,
   tendencyOf,
 } from '@/lib/data/organism-game'
@@ -125,7 +126,9 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
         {/* ветви */}
         <View className="flex-row gap-2">
           {chips.map((c, i) => {
-            const reached = evoStage > i + 1 || (evoStage === 4)
+            // чип горит, когда стадия достигнута (включая текущую),
+            // следующая — обведена лаймом
+            const reached = evoStage >= i + 1
             const isNext = next && next.to === i + 1
             return (
               <View
@@ -156,7 +159,7 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
           </Dot>
           {log.slice(0, 3).map((e) => (
             <Dot key={e.id} color={GAME.emerald}>
-              {e.text}
+              {journalDayLabel(e.ts)} · {e.text}
             </Dot>
           ))}
         </View>

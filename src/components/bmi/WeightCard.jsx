@@ -14,7 +14,7 @@ import {
   allWeights,
   healthyRange,
   fmtDecimal,
-  shortDate,
+  shortDateNum,
 } from '@/lib/data/bmi'
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
@@ -208,7 +208,7 @@ export function WeightCard() {
           {goalReached ? (
             <Text className="font-bold text-[12px] text-emerald-400">
               {goalReachedAt
-                ? `🎉 Достигнута ${shortDate(new Date(goalReachedAt))}`
+                ? `🎉 Достигнута ${shortDateNum(new Date(goalReachedAt))}`
                 : '🎉 Цель достигнута!'}
             </Text>
           ) : (
