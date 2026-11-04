@@ -1,9 +1,10 @@
-// Карточки «Отчётов»: шаги, калории, вода, сожжено (+ опыт) —
-// итог за период и изменение в % к прошлому такому же периоду —
+// Карточки «Отчётов»: шаги, калории, вода, сожжено — итог за период,
+// изменение в % к прошлому такому же периоду и рекорд («Лучший день») —
 // плюс отдельная карточка «Вес»: последнее взвешивание и изменение
 // за период в кг (зелёным — движение к здоровому диапазону).
-// Тап по карточке «Вес» открывает вкладку ИМТ и докручивает
-// до графика «Динамика веса».
+// Тап по карточке показателя выбирает его для календаря-теплокарты
+// ниже (выбранная подсвечена рамкой в цвет метрики). Тап по карточке
+// «Вес» открывает вкладку ИМТ и докручивает до графика «Динамика веса».
 // Показатели и форматы берутся из общего реестра lib/data/metrics.js.
 
 import { useMemo } from 'react'
@@ -25,17 +26,30 @@ function prevLabel(days) {
   return `к предыдущим ${days} дням`
 }
 
-function ReportCard({ m, cur, prev, days, best = 0 }) {
+function ReportCard({ m, cur, prev, days, best = 0, selected = false, onPress = () => {} }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
 
   return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${m.label}: ${m.fmt(cur[m.key])}${selected ? ', показатель для календаря выбран' : ', выбрать для календаря'}`}
+      className="flex-1 active:opacity-90"
+      style={{ borderRadius: 16 }}
+    >
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[`${m.color}14`, '#121B33']}
-      style={{ flex: 1, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', padding: 16 }}
+      colors={[`${m.color}${selected ? '2e' : '14'}`, '#121B33']}
+      style={{
+        flex: 1,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: selected ? m.color : 'rgba(255,255,255,0.05)',
+        padding: 16,
+      }}
     >
       <View className="flex-row items-start gap-3">
         <View
@@ -68,10 +82,11 @@ function ReportCard({ m, cur, prev, days, best = 0 }) {
         </Text>
       ) : null}
     </LinearGradient>
+    </Pressable>
   )
 }
 
-export function ReportCards({ today, days, rows = [] }) {
+export function ReportCards({ today, days, rows = [], metricId = 'steps', onSelectMetric = () => {} }) {
   // periodTotals обходит до 180 дней истории — считаем только при
   // смене периода/данных, а не на каждом рендере экрана
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
@@ -98,11 +113,24 @@ export function ReportCards({ today, days, rows = [] }) {
             m.key === 'weight' ? (
               <WeightReportCard key={m.key} days={days} />
             ) : (
-              <ReportCard key={m.key} m={m} cur={cur} prev={prev} days={days} best={bestDay(rows, m.key)} />
+              <ReportCard
+                key={m.key}
+                m={m}
+                cur={cur}
+                prev={prev}
+                days={days}
+                best={bestDay(rows, m.key)}
+                selected={metricId === m.key}
+                onPress={() => onSelectMetric(m.key)}
+              />
             )
           )}
         </View>
       ))}
+      {/* Подсказка: тап по карточке управляет календарём ниже */}
+      <Text className="px-1 pt-0.5 font-sans text-[10.5px] text-bear-dim">
+        Тап по карточке выбирает показатель для календаря ниже
+      </Text>
     </View>
   )
 }

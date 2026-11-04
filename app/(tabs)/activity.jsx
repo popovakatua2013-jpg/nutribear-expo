@@ -1,11 +1,10 @@
 // Экран «Активность»: календарь (перенесён с главной), баннер с мишкой,
-// закономерности (перенесены с главной), общая сводка, тренировки и отчёты.
+// закономерности (перенесены с главной), тренировки и отчёты.
 // Карточки показателей (шаги, калории, вода, активность) перенесены на главную.
 // Все показатели дня автоматически пишутся в историю (useHistoryStore) —
 // поэтому графики и отчёты видят реальные данные за прошедшие дни.
-// Период 7/30/90 выбирается один раз в «Общей сводке» и управляет
-// и графиком, и «Отчётами» — раньше одинаковые переключатели
-// дублировались в двух блоках.
+// Период (7/30/90) и показатель выбираются в «Отчётах»: период —
+// пилюлями в шапке секции, показатель — тапом по карточке-итогу.
 
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
@@ -14,7 +13,6 @@ import { Footprints } from 'lucide-react-native'
 import { HomeCalendar } from '@/components/home/HomeCalendar'
 import { HomeInsights } from '@/components/home/HomeInsights'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
-import { SummarySection } from '@/components/activity/SummarySection'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
@@ -22,12 +20,13 @@ import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
-import { RANGES, WATER_GLASS, xpForDay } from '@/lib/data/activity'
+import { RANGES, xpForDay } from '@/lib/data/activity'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
-  // Один период и один показатель для «Общей сводки» и «Отчётов»:
-  // теплокарта календаря показывает тот же показатель, что и график
+  // Один период и один показатель для всей вкладки: период — пилюли
+  // в шапке «Отчётов», показатель — тап по карточке-итогу (общий
+  // с календарём-теплокартой)
   const [rangeId, setRangeId] = useState('7d')
   const [metricId, setMetricId] = useState('steps')
   const days = RANGES.find((r) => r.id === rangeId)?.days || 7
@@ -87,20 +86,19 @@ export default function ActivityScreen() {
         {/* Закономерности: мишка подмечает связи в данных (перенесено с главной) */}
         <HomeInsights />
 
-        <SummarySection
+        <ExerciseSection />
+
+        <ReportsSection
           today={today}
+          days={days}
           rangeId={rangeId}
           onRangeChange={setRangeId}
           metricId={metricId}
           onMetricChange={setMetricId}
         />
 
-        <ExerciseSection />
-
-        <ReportsSection today={today} days={days} metricId={metricId} />
-
         <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
-          Шаги, вода и тренировки попадают в сводку и отчёты.
+          Шаги, вода и тренировки попадают в отчёты.
           {'\n'}
           Прошлые дни накапливаются сами, пока вы пользуетесь приложением.
         </Text>
