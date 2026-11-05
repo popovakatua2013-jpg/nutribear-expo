@@ -53,10 +53,13 @@
 
 - 🕐 useFastingStore — заготовка стора голодания, нигде не подключена:
   удалить или доделать фичу.
-- 🕐 Деплой ИИ-прокси перед релизом в магазин: `npx wrangler secret put
-  AI_KEY`, `npx wrangler secret put NB_SECRET`, `npx wrangler deploy`;
-  в .env прописать EXPO_PUBLIC_AI_PROXY_URL и EXPO_PUBLIC_AI_PROXY_SECRET,
-  убрать EXPO_PUBLIC_AI_KEY из EAS-сборки.
+- 🔧 Деплой ИИ-прокси перед релизом в магазин: готов скрипт одной
+  команды `.\deploy-proxy.ps1` (логин → ключ из .env в секрет →
+  NB_SECRET генерируется и прописывается в .env → `wrangler deploy` →
+  адрес прокси сам пишется в .env; см. КОМАНДЫ.md п.7 и
+  server/README.md). Осталось: запустить скрипт у Кати (нужен её вход
+  в Cloudflare) и после релизной сборки убрать EXPO_PUBLIC_AI_KEY
+  из EAS-переменных.
 
 ## 06.11.2026 — идеи игрфикации организма (на выбор Кати)
 
