@@ -17,7 +17,7 @@
 **1. Вход в Cloudflare** (один раз; откроется браузер):
 
 ```powershell
-cd C:\Users\Администратор\Desktop\nutribear-expo-main\nutribear-app\server
+cd C:\Users\Администратор\Desktop\nutribear-expo\server
 npx wrangler login
 ```
 
