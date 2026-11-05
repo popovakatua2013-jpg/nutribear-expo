@@ -91,12 +91,6 @@ export default function ActivityScreen() {
           rangeId={rangeId}
           onRangeChange={setRangeId}
         />
-
-        <Text className="text-center font-sans text-[15px] leading-relaxed text-bear-dim">
-          Показатели дня пишутся в историю сами — отчёты видят шаги, воду,
-          еду и тренировки, где бы они ни были записаны (тренировки теперь
-          на «Главной»).
-        </Text>
       </ScrollView>
     </View>
   )

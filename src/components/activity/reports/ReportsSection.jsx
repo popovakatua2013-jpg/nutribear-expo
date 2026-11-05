@@ -58,9 +58,6 @@ export function ReportsSection({
           <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
             Отчёты
           </Text>
-          <Text className="mt-0.5 font-sans text-[15px] leading-snug text-bear-sub">
-            Итоги, дисциплина, календарь и нутриенты из дневника за период
-          </Text>
         </View>
         <Pressable
           onPress={() => setShareOpen(true)}

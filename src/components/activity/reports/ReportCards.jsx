@@ -128,10 +128,6 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} 
           )}
         </View>
       ))}
-      {/* Подсказка: тап по карточке открывает окно истории показателя */}
-      <Text className="px-1 pt-0.5 font-sans text-[15px] text-bear-dim">
-        Тап по карточке открывает историю: среднее за день, график, лучшие дни
-      </Text>
     </View>
   )
 }
