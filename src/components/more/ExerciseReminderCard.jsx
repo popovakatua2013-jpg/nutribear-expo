@@ -11,8 +11,13 @@ import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { TimeField } from './MealRemindersCard'
 
+// Запасной блок, если в состоянии ещё нет пинка о тренировке
+// (например, состояние восстановлено из старой копии): вместо падения
+// показываем выключенный переключатель со временем по умолчанию.
+const EX_FALLBACK = { enabled: false, time: '18:00' }
+
 export function ExerciseReminderCard() {
-  const exercise = useActivityStore((s) => s.reminder.exercise)
+  const exercise = useActivityStore((s) => s.reminder?.exercise) || EX_FALLBACK
   const setReminder = useActivityStore((s) => s.setReminder)
   const { toast } = useToast()
 

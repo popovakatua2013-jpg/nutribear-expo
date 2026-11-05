@@ -8,8 +8,13 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
 
-const per100 = (total, grams) =>
-  Math.round(((Number(total) || 0) / grams) * 1000) / 10
+const per100 = (total, grams) => {
+  const g = Number(grams)
+  // grams <= 0 или мусор: делить нельзя — иначе получится Infinity,
+  // который JSON.stringify превращает в null и ломает КБЖУ рецепта
+  if (!(g > 0)) return 0
+  return Math.round(((Number(total) || 0) / g) * 1000) / 10
+}
 
 // Число порций: целое 1–24, иначе 1
 const servingsOf = (v) => {

@@ -48,9 +48,16 @@ function archiveOutgoingDay(key, food, act) {
 
 // Вернуть true, если произошёл переход на новый день (что-то очистилось)
 export function checkDayRollover() {
-  // Сторы ещё не дочитали данные с телефона — рано что-то решать
+  // Сторы ещё не дочитали данные с телефона — рано что-то решать.
+  // История и тренировки тоже обязательны: archiveOutgoingDay ПИШЕТ
+  // в history и читает exercise. Если они ещё догружаются, запись
+  // уйдёт во «временное» состояние и будет затёрта при догрузке
+  // (вчерашние ккал/шаги исчезнут из графиков), а сгоревшее уйдёт
+  // в архив без тренировок дня.
   if (!useFoodStore.persist.hasHydrated()) return false
   if (!useActivityStore.persist.hasHydrated()) return false
+  if (!useHistoryStore.persist.hasHydrated()) return false
+  if (!useExerciseStore.persist.hasHydrated()) return false
 
   const key = dayKeyOf()
   const food = useFoodStore.getState()
@@ -76,6 +83,8 @@ export function startRolloverWatcher() {
   // После того как сторы дочитали данные с телефона
   const offFood = useFoodStore.persist.onFinishHydration(() => checkDayRollover())
   const offAct = useActivityStore.persist.onFinishHydration(() => checkDayRollover())
+  const offHist = useHistoryStore.persist.onFinishHydration(() => checkDayRollover())
+  const offEx = useExerciseStore.persist.onFinishHydration(() => checkDayRollover())
 
   // Вернулись в приложение из фона (утром, после сна телефона)
   const sub = AppState.addEventListener('change', (state) => {
@@ -88,6 +97,8 @@ export function startRolloverWatcher() {
   return () => {
     offFood()
     offAct()
+    offHist()
+    offEx()
     sub.remove()
     clearInterval(timer)
   }

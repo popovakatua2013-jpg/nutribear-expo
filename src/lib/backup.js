@@ -24,6 +24,10 @@ import { restorePhotos } from '@/lib/photos'
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
 const MEALS_DEFAULT = { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' }
 const WEIGH_DEFAULT = { enabled: false, weekday: 5, time: '09:00' }
+// Время пинка о тренировке по умолчанию (совпадает с useActivityStore)
+const EXERCISE_DEFAULT = { enabled: false, time: '18:00' }
+// Допустимые категории ИМТ (совпадают с useProfileStore.lastBmiCat)
+const BMI_CATS = new Set(['low', 'norm', 'over', 'obese1', 'obese2'])
 // id уровней активности (совпадают с ACTIVITY_LEVELS онбординга)
 const ACTIVITY_IDS = new Set(['sedentary', 'light', 'moderate', 'high', 'athlete'])
 
@@ -70,7 +74,21 @@ export async function applyBackup(data) {
       lastAt: 0,
       meals: { ...MEALS_DEFAULT, ...obj(rem.meals) },
       weigh: { ...WEIGH_DEFAULT, ...obj(rem.weigh) },
+      // Пинок о тренировке: блок появился позже остального (v5), и при
+      // восстановлении он терялся — после переноса на новый телефон
+      // переключатель «Тренировка» вёл себя как выключенный, а его
+      // включение падало на отсутствующем времени
+      exercise: {
+        enabled: Boolean(rem.exercise?.enabled),
+        time: /^\d{1,2}:\d{2}$/.test(String(rem.exercise?.time || ''))
+          ? String(rem.exercise.time)
+          : EXERCISE_DEFAULT.time,
+      },
     },
+    // Тумблеры шагомера и Health Connect: экспортируются, но не
+    // восстанавливались — после переноса шагомер молча выключен
+    pedometerEnabled: Boolean(act.pedometerEnabled),
+    healthConnectEnabled: Boolean(act.healthConnectEnabled),
     dayKey: act.dayKey || dayKeyOf(),
   })
 
@@ -92,6 +110,11 @@ export async function applyBackup(data) {
     goalReachedAt:
       typeof prof.goalReachedAt === 'string' && prof.goalReachedAt ? prof.goalReachedAt : null,
     weights: arr(prof.weights),
+    // Замеры тела и пользовательские замеры: экспортировались, но при
+    // восстановлении терялись — таблица «Тело» после переноса пустая
+    measurements: obj(prof.measurements),
+    customMeasurements: arr(prof.customMeasurements),
+    lastBmiCat: BMI_CATS.has(prof.lastBmiCat) ? prof.lastBmiCat : null,
   })
 
   // ── Цели (мержим поверх текущих, чтобы новые поля не потерялись) ─
@@ -151,6 +174,10 @@ export async function applyBackup(data) {
     raidKilled: Boolean(og.raidKilled),
     raidRewarded: Boolean(og.raidRewarded),
     goodDays: obj(og.goodDays),
+    // Осмотры организма: история оценок по дням и день, когда бонус
+    // за осмотр уже получен — без них «перенос» сбрасывал аудит
+    auditDays: obj(og.auditDays),
+    auditBonusDay: typeof og.auditBonusDay === 'string' ? og.auditBonusDay : null,
     streak: Math.max(0, Math.round(num(og.streak))),
     streakLastKey: typeof og.streakLastKey === 'string' ? og.streakLastKey : null,
     items: arr(og.items),
