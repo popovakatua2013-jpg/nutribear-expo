@@ -1,17 +1,15 @@
-// Окно «Вода» по макету пользователя: hero-карточка «Выпито сегодня»
-// (крупная цифра, цель, полоса прогресса + кольцо «% цели»), пилюли
-// напоминаний, «Динамика за 7 дней» — линия с золотым пунктиром цели
-// и плашкой значения над последней точкой, «Быстро добавить» —
-// горизонтальные плитки ёмкостей 2×2, внизу пара карточек:
-// «Последние 7 дней» (среднее, Δ к прошлой неделе, мини-бары) и
-// маскот-поддержка капельки. Записи за сегодня по умолчанию свёрнуты,
-// тап по записи — правка мл/времени прямо в строке, корзина — удаление.
+// Окно «Вода»: hero-карточка «Выпито сегодня» (крупная цифра, цель,
+// полоса прогресса + кольцо «% цели»), пилюли напоминаний, «Быстро
+// добавить» — плитки ёмкостей 2×2, сразу под ними записи за сегодня
+// (развёрнуты по умолчанию; тап по записи — правка мл/времени прямо
+// в строке, корзина — удаление), внизу «Последние 7 дней» — среднее,
+// Δ к прошлой неделе и мини-бары. Дубль-график «Динамика за 7 дней»
+// и плашка-поддержка («Хороший темп!») удалены по запросу пользователя.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import {
-  ChartColumn,
   Check,
   ChevronDown,
   ChevronUp,
@@ -31,7 +29,6 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
-import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { ProgressBar } from '../ui/ProgressBar'
 import { BodyChip } from '../ui/BodyChip'
 import { fontFamilies } from './ring-font'
@@ -123,7 +120,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [editingId, setEditingId] = useState(null) // запись журнала на изменении
   const [editMl, setEditMl] = useState('')
   const [editTime, setEditTime] = useState('')
-  const [logOpen, setLogOpen] = useState(false) // записи за сегодня по умолчанию свёрнуты
+  const [logOpen, setLogOpen] = useState(true) // записи за сегодня сразу на виду
 
   // Окно закрыто — черновик правки записи сбрасывается: повторное
   // открытие показывает журнал, а не застаревшую строку в режиме правки
@@ -132,12 +129,15 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
       setEditingId(null)
       setEditMl('')
       setEditTime('')
+      // При следующем открытии записи снова на виду — не заставляем
+      // искать их в конце списка
+      setLogOpen(true)
     }
   }, [open])
 
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
 
-  // Последние 7 дней (из дневной истории) — линия динамики и мини-бары
+  // Последние 7 дней (из дневной истории) — среднее и мини-бары
   const week = useMemo(() => {
     const labels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
     const out = []
@@ -166,16 +166,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
     return Math.round(sum / 7)
   }, [historyDays])
   const delta = prevAvg > 0 ? Math.round(((weekAvg - prevAvg) / prevAvg) * 100) : null
-
-  // Поддержка капельки — по проценту от цели
-  const pep =
-    pct >= 100
-      ? { title: 'Цель выполнена!', sub: 'Норма выпита — так держать! 💙' }
-      : pct >= 60
-        ? { title: 'Отличный результат!', sub: 'Продолжайте в том же духе 💙' }
-        : pct >= 25
-          ? { title: 'Хороший темп!', sub: 'Ещё немного до цели 💪' }
-          : { title: 'Начало положено!', sub: 'Каждый стакан — шаг к цели 💧' }
 
   // Ёмкости по 2 в ряд (на узком экране 4 в ряд не читаются)
   const vesselRows = vessels.reduce((rows, v) => {
@@ -284,27 +274,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   </View>
                 )}
 
-                {/* Динамика за 7 дней: линия + золотой пунктир цели */}
-                <View className="mt-3 rounded-2xl border border-bear-line bg-bear-card2/70 px-3 pb-1 pt-2.5">
-                  <View className="flex-row items-center gap-1.5">
-                    <ChartColumn size={15} color="#7DD3FC" />
-                    <Text className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text">
-                      Динамика за 7 дней
-                    </Text>
-                    <View className="rounded-full bg-white/5 px-2 py-0.5">
-                      <Text className="font-sans text-[12.5px] text-bear-sub">мл</Text>
-                    </View>
-                  </View>
-                  <SvgAreaChart
-                    data={week}
-                    color="#38BDF8"
-                    height={150}
-                    goalLine={goalMl > 0 ? goalMl : null}
-                    lastBadge
-                    yFmt={(v) => formatNum(v)}
-                  />
-                </View>
-
                 {/* Быстро добавить: ёмкости по 2 в ряд, карандашик — правка */}
                 <View className="mt-3 flex-row items-center gap-1.5">
                   <CirclePlus size={16} color="#7DD3FC" />
@@ -322,96 +291,9 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   ))}
                 </View>
 
-                {/* Низ: статистика недели + поддержка капельки */}
-                <View className="mt-3 flex-row items-stretch gap-2">
-                  <View className="min-w-0 flex-1 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5">
-                    <View className="flex-row items-center gap-1.5">
-                      <Trophy size={15} color="#FBBF24" />
-                      <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[13px] text-bear-sub">
-                        Последние 7 дней
-                      </Text>
-                    </View>
-                    <View className="mt-1.5 flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
-                        {formatNum(weekAvg)}
-                      </Text>
-                      <Text className="font-sans text-[13px] text-bear-sub">мл/день</Text>
-                      {delta != null && Math.abs(delta) >= 1 && (
-                        <View
-                          className="rounded-md px-1.5 py-0.5"
-                          style={{
-                            backgroundColor:
-                              delta > 0 ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-                          }}
-                        >
-                          <Text
-                            className="font-semibold text-[12.5px]"
-                            style={{ color: delta > 0 ? '#34D399' : '#F87171' }}
-                          >
-                            {delta > 0 ? '↑' : '↓'} {delta > 0 ? '+' : '−'}
-                            {Math.abs(delta)}%
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View className="mt-2 flex-row items-end gap-1" style={{ height: 40 }}>
-                      {week.map((d) => (
-                        <View
-                          key={d.key}
-                          accessibilityLabel={
-                            d.today
-                              ? `Сегодня: ${formatNum(d.value)} мл`
-                              : `${d.label}: ${formatNum(d.value)} мл`
-                          }
-                          className="flex-1 items-center justify-end"
-                          style={{ height: '100%' }}
-                        >
-                          <View
-                            className="w-full rounded-t-[3px]"
-                            style={{
-                              height: `${Math.max(8, Math.round((d.value / weekMax) * 100))}%`,
-                              backgroundColor: '#38BDF8',
-                              opacity: d.today ? 1 : 0.4,
-                            }}
-                          />
-                        </View>
-                      ))}
-                    </View>
-                    <View className="mt-1 flex-row gap-1">
-                      {week.map((d) => (
-                        <Text
-                          key={d.key}
-                          className={`flex-1 text-center font-sans text-[11px] ${
-                            d.today ? 'font-semibold text-bear-bright' : 'text-bear-dim'
-                          }`}
-                        >
-                          {d.label}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                  <View className="min-w-0 flex-1 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard p-3">
-                    <View className="flex-row items-center gap-2">
-                      <Text
-                        style={{ fontSize: 30, lineHeight: 36 }}
-                        accessibilityLabel="Маскот: капля воды"
-                      >
-                        💧
-                      </Text>
-                      <View className="min-w-0 flex-1">
-                        <Text className="font-bold text-[15.5px] leading-tight text-bear-text">
-                          {pep.title}
-                        </Text>
-                        <Text maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub">
-                          {pep.sub}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Журнал за сегодня: по умолчанию свёрнут; тап по шапке —
-                    развернуть, тап по записи — правка в строке, корзина — удалить */}
+                {/* Журнал за сегодня: развёрнут по умолчанию и стоит сразу
+                    после «Быстро добавить» — записи всегда на виду; тап по
+                    шапке — свернуть, тап по записи — правка в строке */}
                 <Pressable
                   onPress={() => setLogOpen((v) => !v)}
                   accessibilityRole="button"
@@ -526,6 +408,76 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     })}
                     </View>
                   ))}
+
+                {/* Последние 7 дней: среднее за неделю, Δ к прошлой неделе
+                    и мини-бары по дням — единственный график недели
+                    (дубль «Динамика за 7 дней» убран по запросу) */}
+                <View className="mt-3 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5">
+                  <View className="flex-row items-center gap-1.5">
+                    <Trophy size={15} color="#FBBF24" />
+                    <Text className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text">
+                      Последние 7 дней
+                    </Text>
+                  </View>
+                  <View className="mt-1.5 flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+                      {formatNum(weekAvg)}
+                    </Text>
+                    <Text className="font-sans text-[13px] text-bear-sub">мл/день</Text>
+                    {delta != null && Math.abs(delta) >= 1 && (
+                      <View
+                        className="rounded-md px-1.5 py-0.5"
+                        style={{
+                          backgroundColor:
+                            delta > 0 ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
+                        }}
+                      >
+                        <Text
+                          className="font-semibold text-[12.5px]"
+                          style={{ color: delta > 0 ? '#34D399' : '#F87171' }}
+                        >
+                          {delta > 0 ? '↑' : '↓'} {delta > 0 ? '+' : '−'}
+                          {Math.abs(delta)}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View className="mt-2 flex-row items-end gap-1" style={{ height: 44 }}>
+                    {week.map((d) => (
+                      <View
+                        key={d.key}
+                        accessibilityLabel={
+                          d.today
+                            ? `Сегодня: ${formatNum(d.value)} мл`
+                            : `${d.label}: ${formatNum(d.value)} мл`
+                        }
+                        className="flex-1 items-center justify-end"
+                        style={{ height: '100%' }}
+                      >
+                        <View
+                          className="w-full rounded-t-[4px]"
+                          style={{
+                            height: `${Math.max(8, Math.round((d.value / weekMax) * 100))}%`,
+                            backgroundColor: '#38BDF8',
+                            opacity: d.today ? 1 : 0.4,
+                          }}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  <View className="mt-1 flex-row gap-1">
+                    {week.map((d) => (
+                      <Text
+                        key={d.key}
+                        className={`flex-1 text-center font-sans text-[11px] ${
+                          d.today ? 'font-semibold text-bear-bright' : 'text-bear-dim'
+                        }`}
+                      >
+                        {d.label}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
               </View>
             </ScrollView>
           </LinearGradient>
