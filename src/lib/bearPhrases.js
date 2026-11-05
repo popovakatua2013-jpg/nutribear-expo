@@ -42,10 +42,10 @@ const POOLS = {
     'Записано раньше медведя успел. Респект 🐻👍',
   ],
   firm: [
-    'Куда пропал-а? Уже булочки жуёшь? 🥐🐻',
-    '{meal} второй день мимо. Сдался? А я в тебя всё ещё верю!',
+    'Куда пропал{m:|а}? Уже булочки жуёшь? 🥐🐻',
+    '{meal} второй день мимо. {m:Сдался|Сдалась}? А я в тебя всё ещё верю!',
     'Дневник пустой и грустит. Без драм — просто вернись и поешь нормально 🐻',
-    'Исчез в закат — и прямиком к булочкам? Вернись, я всё простил 🐻',
+    '{m:Исчез|Исчезла} в закат — и прямиком к булочкам? Вернись, я всё простил 🐻',
     '{meal} сам себя не съест. Пора показать булочкам, кто здесь главный 🥐',
   ],
   tease: [
@@ -68,7 +68,7 @@ const POOLS = {
 
 const TITLES = {
   praise: '🐻 Оперативно!',
-  firm: '🐻 Куда пропал-а?',
+  firm: '🐻 Куда пропал{m:|а}?',
   tease: '🐻 А {meal}-то?',
   cheer: '🐻 Серия жива!',
   soft: { breakfast: '🌅 Завтрак', lunch: '☀️ Обед', dinner: '🌙 Ужин' },
@@ -97,10 +97,16 @@ export function pickTone({ loggedToday = false, missedToday = false, missedStrea
 }
 
 // Готовый текст уведомления: { title, body }
-export function mealPokeMessage({ mealId = 'lunch', tone = 'soft', streak = 0, random = Math.random }) {
+// gender — 'm' | 'f' (пол пользователя из профиля). Токен {m:муж|жен}
+// подставляет вариант по полу: «Куда пропал{m:|а}?» → «Куда пропал?» /
+// «Куда пропала?», «{m:Сдался|Сдалась}?», «{m:Исчез|Исчезла} в закат».
+// По умолчанию мужской род — совместимость со старым поведением.
+export function mealPokeMessage({ mealId = 'lunch', tone = 'soft', streak = 0, gender = 'm', random = Math.random }) {
   const label = MEAL_LABEL[mealId] || 'приём пищи'
+  const fem = gender === 'f'
   const fill = (s) =>
     String(s)
+      .replace(/\{m:([^|}]*)\|([^}]*)\}/g, fem ? '$2' : '$1')
       .replaceAll('{meal}', label)
       .replaceAll('{streak}', streak > 0 ? pluralRu(streak, ['день', 'дня', 'дней']) : '')
 

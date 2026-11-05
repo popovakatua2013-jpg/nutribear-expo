@@ -21,6 +21,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
+import { useProfileStore } from '@/store/useProfileStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal } from '@/lib/navEvents'
@@ -197,7 +198,9 @@ function mealPokeText(mealId, meals) {
     goodStreak: st.goodStreak,
     style: meals?.style === 'soft' ? 'soft' : 'bear',
   })
-  return mealPokeMessage({ mealId, tone })
+  // Пол из профиля: фразы подстраиваются («Куда пропал?» / «Куда пропала?»)
+  const sex = useProfileStore.getState().sex
+  return mealPokeMessage({ mealId, tone, gender: sex === 'female' ? 'f' : 'm' })
 }
 
 // Запланировать 3 ежедневных напоминания (вызывается, когда разрешение

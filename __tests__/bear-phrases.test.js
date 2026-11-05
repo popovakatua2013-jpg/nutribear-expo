@@ -94,9 +94,10 @@ describe('mealPokeMessage', () => {
   test('firm: заголовок с характером, {meal} подставляется', () => {
     // random=0.2 → вторая фраза пула («{meal} второй день мимо…»)
     const m = mealPokeMessage({ mealId: 'dinner', tone: 'firm', random: () => 0.2 })
-    expect(m.title).toBe('🐻 Куда пропал-а?')
+    expect(m.title).toBe('🐻 Куда пропал?')
     expect(m.body).toContain('ужин')
     expect(m.body).not.toContain('{meal}')
+    expect(m.body).not.toContain('{m:')
   })
 
   test('tease: заголовок называет приём', () => {
@@ -111,6 +112,36 @@ describe('mealPokeMessage', () => {
     expect(m.body).not.toContain('{streak}')
     const m2 = mealPokeMessage({ mealId: 'lunch', tone: 'cheer', streak: 2, random: POOL0 })
     expect(m2.body).toContain('2 дня')
+  })
+})
+
+describe('mealPokeMessage: пол пользователя', () => {
+  test('мужчина: «Куда пропал?», «Сдался?»', () => {
+    const m = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'm', random: POOL0 })
+    expect(m.title).toBe('🐻 Куда пропал?')
+    const m1 = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'm', random: () => 0.2 })
+    expect(m1.body).toContain('Сдался?')
+  })
+
+  test('женщина: «Куда пропала?», «Сдалась?»', () => {
+    const m = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'f', random: POOL0 })
+    expect(m.title).toBe('🐻 Куда пропала?')
+    const m1 = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'f', random: () => 0.2 })
+    expect(m1.body).toContain('Сдалась?')
+    expect(m1.body).not.toContain('Сдался')
+  })
+
+  test('«Исчез в закат» / «Исчезла в закат» (pool[3])', () => {
+    const male = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'm', random: () => 0.65 })
+    const female = mealPokeMessage({ mealId: 'lunch', tone: 'firm', gender: 'f', random: () => 0.65 })
+    expect(male.body).toContain('Исчез в закат')
+    expect(female.body).toContain('Исчезла в закат')
+  })
+
+  test('по умолчанию — мужской род (совместимость со старым поведением)', () => {
+    const m = mealPokeMessage({ mealId: 'lunch', tone: 'firm', random: POOL0 })
+    expect(m.title).toBe('🐻 Куда пропал?')
+    expect(m.title).not.toContain('-а')
   })
 })
 
