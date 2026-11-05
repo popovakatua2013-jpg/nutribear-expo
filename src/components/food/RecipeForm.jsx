@@ -1,4 +1,6 @@
-// Форма создания своего рецепта: название, общий выход (г), число порций,
+// Форма создания своего рецепта: название, состав продуктов с граммовками
+// (по нему кнопка «Посчитать КБЖУ» сама оценивает калории и БЖУ всего
+// выхода — бесплатно, без ИИ-запроса), общий выход (г), число порций,
 // калорийность и БЖУ всего веса, фото блюда (по желанию). БЖУ
 // необязательно — если не указать, они будут оценены по калорийности.
 // На выходе — значения на 100 г для дневника; порция по умолчанию
@@ -6,10 +8,12 @@
 
 import { useState } from 'react'
 import { Image, Pressable, Text, TextInput, View } from 'react-native'
-import { ImagePlus, Trash2, X } from 'lucide-react-native'
+import { ImagePlus, Trash2, Wand2, X } from 'lucide-react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 import { saveRecipePhoto, deletePhotoFile } from '@/lib/photos'
+import { estimateFromDescription } from '@/lib/food-ai'
+import { toRecipeTotals, recipeItemsLine } from '@/lib/data/recipe-est'
 import { useToast } from '../ui/Toast'
 
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
@@ -42,6 +46,8 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   // photo: null — «сниму фото при сохранении» (старое удалится), uri — новое
   const [photo, setPhoto] = useState(initial?.photo || null)
   const [photoBusy, setPhotoBusy] = useState(false)
+  // Состав — продукты с граммовками; по нему считаем КБЖУ всего выхода
+  const [desc, setDesc] = useState('')
 
   const g = num(grams)
   const sv = Math.max(1, Math.min(24, Math.round(Number(servings.replace(',', '.')) || 1)))
@@ -82,6 +88,38 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   async function dropPhoto() {
     if (photo) await deletePhotoFile(photo)
     setPhoto(null)
+  }
+
+  // «Посчитать КБЖУ по составу»: разбираем текст состава на ингредиенты
+  // (локальная база продуктов, бесплатно), пересчитываем на весь выход и
+  // подставляем в поля. Выход (г) трогаем, только если он ещё не введён.
+  function estimateByComposition() {
+    if (!desc.trim()) {
+      toast({
+        title: '🪄 Нужен состав',
+        description: 'Напишите продукты с граммовками — например: свинина 300 грамм, картошка 500 грамм',
+      })
+      return
+    }
+    const est = estimateFromDescription(desc)
+    const totals = toRecipeTotals(est)
+    if (!totals) {
+      toast({
+        title: '🪄 Состав не распознан',
+        description: 'Пишите так: «лук 50 грамм» или «300 грамм свинины» — известные нам продукты посчитаются сами',
+      })
+      return
+    }
+    if (!grams) setGrams(String(totals.weight))
+    setKcal(String(totals.kcal))
+    setP(String(totals.p))
+    setF(String(totals.f))
+    setC(String(totals.c))
+    const line = recipeItemsLine(est.items)
+    toast({
+      title: `🪄 Считаем по составу${line ? `: ${line}` : ''}`,
+      description: `≈ ${totals.kcal} ккал на весь вес продуктов${grams ? '' : `, выход ≈ ${totals.weight} г`} — поправьте, если нужно`,
+    })
   }
 
   function handleSave() {
@@ -174,6 +212,34 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           </Pressable>
         </View>
       )}
+
+      {/* Состав продуктов с граммовками — по нему считаем КБЖУ */}
+      <View className="mt-2">
+        <TextInput
+          value={desc}
+          onChangeText={setDesc}
+          maxLength={300}
+          multiline
+          accessibilityLabel="Состав рецепта"
+          placeholder="Состав: свинина 300 грамм, картошка 500 грамм…"
+          placeholderTextColor="#8B96B8"
+          className={`${field} min-h-[64px]`}
+        />
+        <Pressable
+          onPress={estimateByComposition}
+          accessibilityRole="button"
+          accessibilityLabel="Посчитать калории и БЖУ по составу"
+          className="mt-1.5 flex-row items-center gap-1.5 self-start px-1 py-0.5 active:opacity-70"
+        >
+          <Wand2 size={14} color="#7DD3FC" />
+          <Text className="font-semibold text-[12px] text-[#7DD3FC]">
+            Посчитать КБЖУ по составу
+          </Text>
+        </Pressable>
+        <Text className="mt-1 px-1 font-sans text-[10px] leading-[14px] text-bear-dim">
+          Известные продукты посчитаем сами — калории и БЖУ встанут в поля ниже
+        </Text>
+      </View>
 
       {/* Общий выход + число порций */}
       <View className="mt-2 flex-row gap-2">

@@ -46,7 +46,7 @@ export const EXTRA_FOODS = [
 
   // Овощи и фрукты
   { id: 'cucumber', emoji: '🥒', name: 'Огурец', kcal: 15, p: 0.7, f: 0.1, c: 3, fib: 0.5, sug: 1.7, defaultGrams: 120, tags: ['lunch', 'dinner', 'snack'] },
-  { id: 'tomato', emoji: '🍅', name: 'Помидор', kcal: 20, p: 1, f: 0.2, c: 4, fib: 0.9, sug: 2.6, defaultGrams: 130, tags: ['lunch', 'dinner', 'snack'] },
+  { id: 'tomato', emoji: '🍅', name: 'Помидор (томат)', kcal: 20, p: 1, f: 0.2, c: 4, fib: 0.9, sug: 2.6, defaultGrams: 130, tags: ['lunch', 'dinner', 'snack'] },
   { id: 'carrot', emoji: '🥕', name: 'Морковь', kcal: 35, p: 1.3, f: 0.1, c: 8, fib: 2.8, sug: 4.7, defaultGrams: 100, tags: ['snack', 'lunch'] },
   { id: 'corn', emoji: '🌽', name: 'Кукуруза консервированная', kcal: 96, p: 3.2, f: 1.3, c: 19, fib: 2.4, sug: 4.5, defaultGrams: 80, tags: ['snack', 'lunch'] },
   { id: 'pear', emoji: '🍐', name: 'Груша', kcal: 57, p: 0.4, f: 0.1, c: 13.8, fib: 3.1, sug: 9.8, defaultGrams: 150, tags: ['snack'] },
