@@ -12,7 +12,7 @@ import { ImagePlus, Trash2, Wand2, X } from 'lucide-react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 import { saveRecipePhoto, deletePhotoFile } from '@/lib/photos'
-import { estimateFromDescription } from '@/lib/food-ai'
+import { estimateFromDescription, estimateCompositionByAi } from '@/lib/food-ai'
 import { toRecipeTotals, recipeItemsLine } from '@/lib/data/recipe-est'
 import { useToast } from '../ui/Toast'
 
@@ -48,6 +48,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   const [photoBusy, setPhotoBusy] = useState(false)
   // Состав — продукты с граммовками; по нему считаем КБЖУ всего выхода
   const [desc, setDesc] = useState('')
+  const [estBusy, setEstBusy] = useState(false) // идёт расчёт (ИИ)
 
   const g = num(grams)
   const sv = Math.max(1, Math.min(24, Math.round(Number(servings.replace(',', '.')) || 1)))
@@ -90,10 +91,24 @@ export function RecipeForm({ onDone, initial, onCancel }) {
     setPhoto(null)
   }
 
-  // «Посчитать КБЖУ по составу»: разбираем текст состава на ингредиенты
-  // (локальная база продуктов, бесплатно), пересчитываем на весь выход и
-  // подставляем в поля. Выход (г) трогаем, только если он ещё не введён.
-  function estimateByComposition() {
+  // «Посчитать КБЖУ по составу»: сначала бесплатный локальный разбор
+  // состава по базе продуктов; если база не узнала ни одного продукта —
+  // платный ИИ (ключ из .env), оценка которого кэшируется навсегда.
+  // Выход (г) трогаем, только если он ещё не введён.
+  function fillTotals(totals, line) {
+    if (!grams) setGrams(String(totals.weight))
+    setKcal(String(totals.kcal))
+    setP(String(totals.p))
+    setF(String(totals.f))
+    setC(String(totals.c))
+    toast({
+      title: `🪄 Считаем по составу${line ? `: ${line}` : ''}`,
+      description: `≈ ${totals.kcal} ккал на весь вес продуктов${grams ? '' : `, выход ≈ ${totals.weight} г`} — поправьте, если нужно`,
+    })
+  }
+
+  async function estimateByComposition() {
+    if (estBusy) return
     if (!desc.trim()) {
       toast({
         title: '🪄 Нужен состав',
@@ -101,25 +116,30 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       })
       return
     }
+    // 1) Бесплатно: локальная база продуктов и ингредиентов
     const est = estimateFromDescription(desc)
     const totals = toRecipeTotals(est)
-    if (!totals) {
-      toast({
-        title: '🪄 Состав не распознан',
-        description: 'Пишите так: «лук 50 грамм» или «300 грамм свинины» — известные нам продукты посчитаются сами',
-      })
+    if (totals) {
+      fillTotals(totals, recipeItemsLine(est.items))
       return
     }
-    if (!grams) setGrams(String(totals.weight))
-    setKcal(String(totals.kcal))
-    setP(String(totals.p))
-    setF(String(totals.f))
-    setC(String(totals.c))
-    const line = recipeItemsLine(est.items)
-    toast({
-      title: `🪄 Считаем по составу${line ? `: ${line}` : ''}`,
-      description: `≈ ${totals.kcal} ккал на весь вес продуктов${grams ? '' : `, выход ≈ ${totals.weight} г`} — поправьте, если нужно`,
-    })
+    // 2) Платно, но с вечным кэшем: ИИ оценивает незнакомый состав
+    setEstBusy(true)
+    try {
+      const ai = await estimateCompositionByAi(desc)
+      setKcal(String(ai.kcal))
+      setP(String(ai.p))
+      setF(String(ai.f))
+      setC(String(ai.c))
+      toast({
+        title: '🪄 ИИ оценил состав',
+        description: `≈ ${ai.kcal} ккал на весь набор${grams ? '' : ' — впишите общий выход, г'} — поправьте, если нужно`,
+      })
+    } catch (e) {
+      toast({ title: '🪄 Посчитать не получилось', description: String(e?.message || e) })
+    } finally {
+      setEstBusy(false)
+    }
   }
 
   function handleSave() {
@@ -227,17 +247,18 @@ export function RecipeForm({ onDone, initial, onCancel }) {
         />
         <Pressable
           onPress={estimateByComposition}
+          disabled={estBusy}
           accessibilityRole="button"
           accessibilityLabel="Посчитать калории и БЖУ по составу"
           className="mt-1.5 flex-row items-center gap-1.5 self-start px-1 py-0.5 active:opacity-70"
         >
           <Wand2 size={14} color="#7DD3FC" />
           <Text className="font-semibold text-[12px] text-[#7DD3FC]">
-            Посчитать КБЖУ по составу
+            {estBusy ? 'Считаем…' : 'Посчитать КБЖУ по составу'}
           </Text>
         </Pressable>
         <Text className="mt-1 px-1 font-sans text-[10px] leading-[14px] text-bear-dim">
-          Известные продукты посчитаем сами — калории и БЖУ встанут в поля ниже
+          Сначала считаем сами по базе продуктов, незнакомый состав оценит ИИ
         </Text>
       </View>
 

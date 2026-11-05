@@ -859,6 +859,63 @@ export async function estimateByName(name, timeoutMs = 25000) {
   })
 }
 
+// ── Состав рецепта → КБЖУ всего набора (форма рецептов) ────────
+// Локальный разбор состава (estimateFromDescription) бесплатен — форма
+// пробует сначала его. Если база не узнала ни одного продукта, форма
+// вызывает ИИ: он оценивает калории и БЖУ ВСЕГО перечисленного набора
+// («свинина 300 грамм, картошка 500 грамм, сливки 100 мл»). Результат
+// кэшируется на телефоне навсегда — повторный расчёт того же состава
+// бесплатен. Платный запрос уходит только если результат не в кэше.
+export async function estimateCompositionByAi(text, timeoutMs = 45000) {
+  const t = String(text || '').trim()
+  if (!t)
+    throw new Error('Впишите состав — например: свинина 300 грамм, картошка 500 грамм')
+
+  // Кэш: тот же состав — та же оценка (бесплатно всегда)
+  const key = 'rec:' + strHash(t.toLowerCase())
+  const cached = cacheGet(key)
+  if (cached) return cached
+
+  return once(key, async () => {
+    const data = await postJson(
+      '/chat/completions',
+      {
+        model: AI_CONFIG.model,
+        temperature: 0.2,
+        max_tokens: 120,
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты — нутрициолог NutriBear. Отвечай ТОЛЬКО валидным JSON, без пояснений.',
+          },
+          {
+            role: 'user',
+            content:
+              `Состав блюда: ${t}\n` +
+              'Оцени пищевую ценность ВСЕГО перечисленного набора продуктов — ' +
+              'сумму по указанным граммовкам (не на 100 г). Ответь строго JSON-объектом:\n' +
+              '{"kcal":число,"p":число,"f":число,"c":число}\n' +
+              'kcal — килокалории всего набора, p — белки (г), f — жиры (г), c — углеводы (г) всего набора.',
+          },
+        ],
+      },
+      timeoutMs
+    )
+
+    const parsed = parseAiJson(data?.choices?.[0]?.message?.content)
+    const out = {
+      kcal: Math.round(num(parsed?.kcal ?? parsed?.kcal100, 20000)),
+      p: Math.round(num(parsed?.p ?? parsed?.protein, 2000)),
+      f: Math.round(num(parsed?.f ?? parsed?.fat, 2000)),
+      c: Math.round(num(parsed?.c ?? parsed?.carbs, 2000)),
+    }
+    if (!out.kcal)
+      throw new Error('ИИ не смог оценить состав — напишите продукты с граммовками: «лук 50 грамм»')
+    cachePut(key, out)
+    return out
+  })
+}
+
 // ── Голос: запись (base64) → речь → блюдо ──────────────────────
 // ВАЖНО ПРО ДЕНЬГИ: распознавание записи стоит за КАЖДУЮ МИНУТУ аудио
 // (whisper-1 — 1,55 ₽/мин, gpt-4o-mini-transcribe — 0,77 ₽/мин).
