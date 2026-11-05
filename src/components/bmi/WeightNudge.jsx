@@ -23,11 +23,18 @@ export function WeightNudge() {
   if (!(days > nudgeDays)) return null
 
   return (
+    // Поверхность — та же фиолетовая (bodyCard + bodyLine), что у
+    // блока «Динамика веса» под полоской: напоминание не выбивается
     <Pressable
       onPress={() => DeviceEventEmitter.emit('nutribear/open-weight')}
       accessibilityRole="button"
       accessibilityLabel={`Вес не записывался ${days} ${pluralDays(days)} — записать вес`}
-      className="flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-bear-card px-3.5 py-2.5 active:opacity-80"
+      className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 active:opacity-80"
+      style={{
+        backgroundColor: 'rgba(29,18,64,0.82)',
+        borderColor: 'rgba(168,85,247,0.30)',
+        borderWidth: 1,
+      }}
     >
       <Image
         source={BEAR}

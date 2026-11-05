@@ -23,6 +23,14 @@ import { useToast } from '../ui/Toast'
 
 const MAX = 1.25
 
+// Поверхность — та же фиолетовая (bodyCard + bodyLine), что у остальных
+// блоков «Тела»: карточка больше не выбивается navy-фоном
+const CARD = {
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
+  borderWidth: 1,
+}
+
 // Сколько секунд кнопка удаления ждёт второй тап, прежде чем сброситься
 const DELETE_CONFIRM_MS = 2600
 
@@ -133,7 +141,8 @@ export function ProgressPhotos() {
   return (
     <View
       accessibilityLabel="Фото прогресса"
-      className="rounded-3xl border border-white/5 bg-bear-card p-5"
+      className="rounded-3xl p-5"
+      style={CARD}
     >
       <View className="flex-row items-center justify-between gap-2">
         {/* Заголовок — тап разворачивает/сворачивает ленту (когда есть фото) */}

@@ -7,9 +7,9 @@
 // целью и кнопкой «Задать цель», справа — карточка с пилюлей
 // «Изменение: N кг», зелёным графиком с днями и внутренней строкой-
 // поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi).
-// Журнал измерений больше не живёт отдельной секцией под блоком
+// Журнал веса больше не живёт отдельной секцией под блоком
 // (решение пользователя): тап по графику в правой карточке открывает
-// окно журнала — список измерений (тап по записи — изменить,
+// окно журнала — список взвешиваний (тап по записи — изменить,
 // корзина — удалить). Записей нет — в окне мишка «Запишите первый вес»
 // с кнопкой записи (рекомендация пользователя); запись сегодняшнего
 // дня подсвечена («Сегодня» фиолетовым, как «сегодня» в истории
@@ -421,17 +421,19 @@ export function WeightCard() {
             </View>
           </View>
 
-          {/* График открывает журнал измерений (решение пользователя:
+          {/* График открывает журнал веса (решение пользователя:
               журнал больше не отдельная секция под блоком — тап по линии
               графика открывает окно журнала). Под графиком — подсказка
-              с числом записей; пустой журнал открывает окно с мишкой */}
+              с числом записей; пустой журнал открывает окно с мишкой.
+              «Журнал веса», а не «измерений»: замеры сантиметром живут
+              в «Измерениях тела», здесь — только взвешивания */}
           <Pressable
             onPress={() => setJournalOpen(true)}
             accessibilityRole="button"
             accessibilityLabel={
               weights.length > 0
-                ? `График веса — открыть журнал измерений, записей: ${weights.length}`
-                : 'График веса — открыть журнал измерений'
+                ? `График веса — открыть журнал веса, записей: ${weights.length}`
+                : 'График веса — открыть журнал веса'
             }
             className="active:opacity-70"
           >
@@ -439,7 +441,7 @@ export function WeightCard() {
             <View className="mt-1 flex-row items-center justify-center gap-1">
               <NotebookText size={10} color="#8DABFF" />
               <Text className="font-sans text-[9.5px] font-semibold text-[#8DABFF]">
-                {weights.length > 0 ? `Журнал измерений · ${weights.length}` : 'Журнал измерений'}
+                {weights.length > 0 ? `Журнал веса · ${weights.length}` : 'Журнал веса'}
               </Text>
             </View>
           </Pressable>
@@ -469,8 +471,11 @@ export function WeightCard() {
               >
                 {strip.title}
               </Text>
+              {/* Без numberOfLines: фразы вроде «Отличная работа!
+                  Продолжайте в том же духе.» на узких экранах не влезали
+                  в две строки и обрезались многоточием — текст должен
+                  читаться целиком (фразы короткие, в 2–3 строки) */}
               <Text
-                numberOfLines={2}
                 maxFontSizeMultiplier={1.25}
                 className="font-sans text-[9.5px] leading-snug text-bear-sub"
               >
@@ -498,7 +503,7 @@ export function WeightCard() {
         onSave={handleSave}
       />
 
-      {/* Журнал измерений: окно поверх секции — открывается тапом по
+      {/* Журнал веса: окно поверх секции — открывается тапом по
           графику. Тап по записи — окно изменения (открывается поверх,
           оно ниже по JSX), корзина — удалить; запись сегодняшнего дня
           подсвечена. Пустой журнал — мишка и кнопка записи веса */}
@@ -512,10 +517,10 @@ export function WeightCard() {
         <View className="flex-1 items-center justify-center bg-black/60 px-6">
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[15px] text-bear-text">Журнал измерений</Text>
+              <Text className="font-bold text-[15px] text-bear-text">Журнал веса</Text>
               <Pressable
                 onPress={() => setJournalOpen(false)}
-                accessibilityLabel="Закрыть журнал измерений"
+                accessibilityLabel="Закрыть журнал веса"
                 className="p-1"
               >
                 <X size={20} color="#A5AECB" />
@@ -523,7 +528,7 @@ export function WeightCard() {
             </View>
 
             {weights.length === 0 ? (
-              <View className="items-center py-5" accessibilityLabel="Журнал измерений пуст">
+              <View className="items-center py-5" accessibilityLabel="Журнал веса пуст">
                 <Text className="text-[36px]">🐻</Text>
                 <Text className="mt-2 font-bold text-[13.5px] text-bear-text">
                   Журнал пока пуст
@@ -532,7 +537,7 @@ export function WeightCard() {
                   maxFontSizeMultiplier={1.25}
                   className="mt-1 text-center font-sans text-[11px] leading-snug text-bear-sub"
                 >
-                  Запишите первый вес — и здесь появится история измерений
+                  Запишите первый вес — и здесь появится история взвешиваний
                 </Text>
                 <Pressable
                   onPress={() => {
