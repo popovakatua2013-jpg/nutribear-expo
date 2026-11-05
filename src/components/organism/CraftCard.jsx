@@ -2,9 +2,8 @@
 // в именной артефакт с пассивным бонусом. 9 мутагена = ровно 3 дубликата.
 // Выбор за игроком: обменять мутаген на капсулу или скрафтить артефакт.
 
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { FlaskConical } from 'lucide-react-native'
-import { Pressable } from 'react-native'
 import { GameCard, GameHeader, RightPill, Panel, GAME } from './GameUi'
 import { CRAFT_COST, CRAFTS } from '@/lib/data/organism-game'
 
