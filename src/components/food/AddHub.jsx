@@ -25,7 +25,7 @@ import { FoodList } from './FoodList'
 import { BaseMode } from './BaseMode'
 import { FOODS } from '@/lib/data/foods'
 import { toBuildItem } from '@/lib/data/to-item'
-import { useRecipesStore } from '@/store/useRecipesStore'
+import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -73,23 +73,28 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
     onPick(item)
   }
 
-  // Быстрый поиск: свои рецепты + свои продукты + вся база (без фильтра по приёму)
+  // Быстрый поиск: свои рецепты + свои продукты + вся база (без фильтра по приёму).
+  // У рецепта — граммовка одной порции (выход, делённый на число порций)
   const results = useMemo(() => {
     if (!q) return null
     const rec = recipes
       .filter((r) => r.name.toLowerCase().includes(q))
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-        kcal100: r.kcal100,
-        emoji: '🍴',
-        p: r.p100,
-        f: r.f100,
-        c: r.c100,
-        source: 'recipe',
-        defaultGrams: r.grams,
-        sub: 'свой рецепт',
-      }))
+      .map((r) => {
+        const sv = Math.max(1, Math.round(r.servings || 1))
+        return {
+          id: r.id,
+          name: r.name,
+          photo: r.photo,
+          kcal100: r.kcal100,
+          emoji: '🍴',
+          p: r.p100,
+          f: r.f100,
+          c: r.c100,
+          source: 'recipe',
+          defaultGrams: gramsPerServing(r) || r.grams,
+          sub: sv > 1 ? `свой рецепт · ${sv} порции по ${gramsPerServing(r)} г` : 'свой рецепт',
+        }
+      })
     const mine = userFoods
       .filter((f) => f.name.toLowerCase().includes(q))
       .map((f) => ({
@@ -230,8 +235,9 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — сразу над плитками, компактная */}
-      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+      {/* строка поиска — «тетрадная»: тонкая линейка снизу вместо широкой
+          плашки, ниже и компактнее */}
+      <View className="flex-row items-end gap-2 border-b border-white/15 px-1 pb-1.5">
         <Search size={15} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
@@ -239,16 +245,16 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 font-sans text-[13.5px] text-bear-text"
+          className="min-w-0 flex-1 pb-0 font-sans text-[13px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
             onPress={() => setQuery('')}
             accessibilityRole="button"
             accessibilityLabel="Очистить поиск"
-            className="p-0.5 active:opacity-60"
+            className="pb-0.5 active:opacity-60"
           >
-            <X size={15} color="#8B96B8" />
+            <X size={14} color="#8B96B8" />
           </Pressable>
         )}
       </View>

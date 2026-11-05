@@ -21,6 +21,8 @@ export const useUiPrefsStore = create(
       // перезапуск; возвращается кнопкой «К рекомендациям» из окна
       // «Что означает твой ИМТ»
       bmiAdviceHidden: false,
+      // Обучающая подсказка на вкладке «Организм» закрыта крестиком
+      orgHintDone: false,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -34,6 +36,8 @@ export const useUiPrefsStore = create(
         set({ weightGoalCelebrationDismissed: key }),
 
       setBmiAdviceHidden: (value) => set({ bmiAdviceHidden: !!value }),
+
+      setOrgHintDone: (value) => set({ orgHintDone: !!value }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',

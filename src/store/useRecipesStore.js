@@ -1,5 +1,7 @@
-// Свои рецепты пользователя: название + вес + калорийность + БЖУ (по желанию).
-// Из рецепта можно добавлять блюдо в любой приём пищи. AsyncStorage.
+// Свои рецепты пользователя: название + общий выход (г) + число порций +
+// калорийность + БЖУ (по желанию) + фото блюда. Из рецепта можно добавлять
+// блюдо в любой приём пищи — порция по умолчанию равна выходу, делённому
+// на число порций. AsyncStorage.
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -9,20 +11,38 @@ import { makeId } from '@/lib/format'
 const per100 = (total, grams) =>
   Math.round(((Number(total) || 0) / grams) * 1000) / 10
 
+// Число порций: целое 1–24, иначе 1
+const servingsOf = (v) => {
+  const n = Math.round(Number(v) || 1)
+  return Math.max(1, Math.min(24, n))
+}
+
+// Граммовка одной порции: выход, делённый на порции (0, если вес битый)
+export function gramsPerServing(r) {
+  const servings = servingsOf(r && r.servings)
+  if (!r || !r.grams) return 0
+  return Math.max(1, Math.round(r.grams / servings))
+}
+
 export const useRecipesStore = create(
   persist(
     (set) => ({
-      items: [], // [{id, name, grams, kcal100, p100?, f100?, c100?, createdAt}]
+      // [{id, name, grams, servings?, photo?, kcal100, p100?, f100?, c100?, createdAt}]
+      items: [],
 
-      // grams — вес порции/блюда, totalKcal — калорийность всего веса,
-      // totalP/totalF/totalC — белки/жиры/углеводы всего веса (необязательно)
-      add: ({ name, grams, totalKcal, totalP, totalF, totalC }) =>
+      // grams — общий выход блюда (г), totalKcal — калорийность всего веса,
+      // totalP/totalF/totalC — белки/жиры/углеводы всего веса (необязательно),
+      // servings — на сколько порций приготовлено (по умолчанию 1),
+      // photo — uri снимка блюда (необязательно)
+      add: ({ name, grams, totalKcal, totalP, totalF, totalC, servings, photo }) =>
         set((state) => ({
           items: [
             {
               id: `recipe-${makeId()}`,
               name,
               grams,
+              servings: servingsOf(servings),
+              photo: photo || undefined,
               kcal100: Math.max(1, per100(totalKcal, grams)),
               p100: totalP ? per100(totalP, grams) : undefined,
               f100: totalF ? per100(totalF, grams) : undefined,
@@ -36,8 +56,9 @@ export const useRecipesStore = create(
       remove: (id) =>
         set((state) => ({ items: state.items.filter((r) => r.id !== id) })),
 
-      // Изменить рецепт (данные — на весь вес, как при создании).
-      // КБЖУ на 100 г пересчитывается заново.
+      // Изменить рецепт (данные — на весь выход, как при создании).
+      // КБЖУ на 100 г пересчитывается заново; photo: undefined — не трогаем,
+      // null — снять фото.
       update: (id, data) =>
         set((state) => ({
           items: state.items.map((r) =>
@@ -46,6 +67,8 @@ export const useRecipesStore = create(
                   ...r,
                   name: data.name,
                   grams: data.grams,
+                  servings: servingsOf(data.servings),
+                  photo: data.photo === undefined ? r.photo : data.photo || undefined,
                   kcal100: Math.max(1, per100(data.totalKcal, data.grams)),
                   p100: data.totalP ? per100(data.totalP, data.grams) : undefined,
                   f100: data.totalF ? per100(data.totalF, data.grams) : undefined,

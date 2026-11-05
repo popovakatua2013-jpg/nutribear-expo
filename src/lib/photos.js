@@ -40,6 +40,28 @@ export async function deletePhotoFile(uri) {
   } catch {}
 }
 
+// ── Фото рецептов ───────────────────────────────────────────────────
+// Отдельная папка (не трогается при «Стереть все данные» вместе с
+// фото прогресса — у рецептов свой жизненный цикл). Снимок ужимается
+// до 540 px: показывается в списке маленькой плиткой.
+const RECIPE_DIR = `${FileSystem.documentDirectory}recipe-photos`
+
+export async function saveRecipePhoto(sourceUri) {
+  const info = await FileSystem.getInfoAsync(RECIPE_DIR)
+  if (!info.exists) await FileSystem.makeDirectoryAsync(RECIPE_DIR, { intermediates: true })
+  const small = await manipulateAsync(
+    sourceUri,
+    [{ resize: { width: 540 } }],
+    { compress: 0.7, format: SaveFormat.JPEG }
+  )
+  const dest = `${RECIPE_DIR}/recipe-${Date.now()}-${Math.round(Math.random() * 1e6)}.jpg`
+  await FileSystem.copyAsync({ from: small.uri, to: dest })
+  try {
+    await FileSystem.deleteAsync(small.uri, { idempotent: true })
+  } catch {}
+  return dest
+}
+
 // Полная зачистка папки фото (кнопка «Стереть все данные»)
 export async function wipePhotoDir() {
   try {

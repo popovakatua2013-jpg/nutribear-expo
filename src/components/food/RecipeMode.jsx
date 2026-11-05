@@ -6,7 +6,7 @@ import { Pressable, Text, View } from 'react-native'
 import { ChefHat, Pencil, Plus, Trash2 } from 'lucide-react-native'
 import { RecipeForm } from './RecipeForm'
 import { FoodList } from './FoodList'
-import { useRecipesStore } from '@/store/useRecipesStore'
+import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 
 export function RecipeMode({ onPick }) {
   const items = useRecipesStore((s) => s.items)
@@ -55,18 +55,25 @@ export function RecipeMode({ onPick }) {
 
       <FoodList
         scroll={false}
-        items={items.map((r) => ({
-          id: r.id,
-          name: r.name,
-          kcal100: r.kcal100,
-          emoji: '🍴',
-          p: r.p100,
-          f: r.f100,
-          c: r.c100,
-          source: 'recipe',
-          defaultGrams: r.grams,
-          sub: 'свой рецепт',
-        }))}
+        items={items.map((r) => {
+          const sv = Math.max(1, Math.round(r.servings || 1))
+          return {
+            id: r.id,
+            name: r.name,
+            photo: r.photo,
+            kcal100: r.kcal100,
+            emoji: '🍴',
+            p: r.p100,
+            f: r.f100,
+            c: r.c100,
+            source: 'recipe',
+            defaultGrams: gramsPerServing(r) || r.grams,
+            sub:
+              sv > 1
+                ? `свой рецепт · ${sv} порции по ${gramsPerServing(r)} г`
+                : 'свой рецепт',
+          }
+        })}
         emptyText="Рецептов пока нет — создайте первый!"
         onPick={onPick}
       />
@@ -85,7 +92,7 @@ export function RecipeMode({ onPick }) {
                 className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-60"
               >
                 <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[11px] text-bear-dim">
-                  {`${r.name} · ${r.grams} г`}
+                  {`${r.name} · ${r.grams} г${Math.round(r.servings || 1) > 1 ? ` · ${Math.round(r.servings || 1)} порции` : ''}`}
                 </Text>
                 <Pencil size={12} color="#8B96B8" />
               </Pressable>

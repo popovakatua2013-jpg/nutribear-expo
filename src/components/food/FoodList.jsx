@@ -1,7 +1,7 @@
-// Список продуктов из любого источника: строка с эмодзи, названием,
-// калорийностью на 100 г и подписью (бренд / источник)
+// Список продуктов из любого источника: строка с эмодзи (или фото блюда),
+// названием, калорийностью на 100 г и подписью (бренд / источник)
 
-import { FlatList, Pressable, Text, View } from 'react-native'
+import { FlatList, Image, Pressable, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
 
 export function FoodList({ items, emptyText, onPick, scroll = true }) {
@@ -19,9 +19,17 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
       accessibilityRole="button"
       className="flex-row items-center gap-3 rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-[#1A2647]"
     >
-      <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bear-card">
-        <Text className="text-[17px]">{item.emoji || '🍽️'}</Text>
-      </View>
+      {item.photo ? (
+        <Image
+          source={{ uri: item.photo }}
+          className="h-9 w-9 shrink-0 rounded-xl"
+          accessibilityLabel={`Фото: ${item.name}`}
+        />
+      ) : (
+        <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bear-card">
+          <Text className="text-[17px]">{item.emoji || '🍽️'}</Text>
+        </View>
+      )}
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="font-semibold text-[13px] text-bear-text">
           {item.name}

@@ -22,7 +22,8 @@ export function BaseMode({ mealId, onPick }) {
 
   const q = query.trim().toLowerCase()
 
-  // Свои продукты — в списке всегда (без фильтра по приёму пищи)
+  // Свои продукты: показываются отдельной секцией под поиском, но и в
+  // общий поиск по базе они тоже попадают (в результатах поиска — «мой продукт»)
   const mine = useMemo(
     () =>
       userFoods
@@ -57,9 +58,9 @@ export function BaseMode({ mealId, onPick }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Поиск + кнопка «свой продукт» */}
-      <View className="flex-row items-center gap-2">
-        <View className="min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
+      {/* Поиск «тетрадная строка» + кнопка «свой продукт» */}
+      <View className="flex-row items-end gap-2">
+        <View className="min-w-0 flex-1 flex-row items-center gap-2 border-b border-white/15 px-1 pb-1.5">
           <Search size={16} color="#8B96B8" />
           <TextInput
             accessibilityLabel="Поиск блюда"
@@ -67,66 +68,84 @@ export function BaseMode({ mealId, onPick }) {
             placeholderTextColor="#8B96B8"
             value={query}
             onChangeText={setQuery}
-            className="min-w-0 flex-1 font-sans text-sm text-bear-text"
+            className="min-w-0 flex-1 font-sans text-[13px] text-bear-text"
           />
         </View>
         <Pressable
           onPress={() => setFormOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Добавить свой продукт"
-          className="h-[42px] w-[42px] shrink-0 items-center justify-center rounded-2xl active:opacity-80"
+          className="h-[36px] w-[42px] shrink-0 items-center justify-center rounded-xl active:opacity-80"
           style={{ backgroundColor: '#7B6CF6' }}
         >
           <Plus size={18} color="#FFFFFF" />
         </Pressable>
       </View>
 
+      {/* Свои продукты — сразу под поиском, чтобы их было видно: тап по строке
+          добавляет продукт в приём, карандаш — изменяет, корзина — удаляет */}
+      {mine.length > 0 && (
+        <View className="mt-3">
+          <View className="flex-row items-center gap-1.5 px-1">
+            <Star size={12} color="#FBBF24" />
+            <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+              {`Мои продукты · ${mine.length}`}
+            </Text>
+          </View>
+          <View className="mt-1.5 gap-1">
+            {mine.map((f) => (
+              <View
+                key={f.id}
+                className="flex-row items-center gap-2 rounded-2xl bg-[#FBBF24]/[0.06] px-3 py-2"
+              >
+                <Pressable
+                  onPress={() => onPick(f)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
+                  className="min-w-0 flex-1 flex-row items-center gap-2"
+                >
+                  <Text className="text-[15px]">{f.emoji}</Text>
+                  <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[12.5px] text-bear-text">
+                    {f.name}
+                  </Text>
+                  <Text className="shrink-0 font-sans text-[10.5px] text-bear-sub">
+                    {f.kcal100} ккал/100 г
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setEditItem(f)}
+                  accessibilityLabel={`Изменить продукт «${f.name}»`}
+                  accessibilityRole="button"
+                  hitSlop={6}
+                  className="rounded p-1"
+                >
+                  <Pencil size={13} color="#8B96B8" />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    removeUserFood(f.id)
+                    toast({ title: '🗑 Продукт удалён', description: f.name })
+                  }}
+                  accessibilityLabel={`Удалить продукт «${f.name}»`}
+                  accessibilityRole="button"
+                  hitSlop={6}
+                  className="rounded p-1"
+                >
+                  <Trash2 size={14} color="#98A2C2" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       <View className="mt-3 min-h-0 flex-1">
         <FoodList
-          items={[...mine, ...local]}
+          items={local}
           emptyText="Ничего не нашлось 🤷 Добавьте свой продукт кнопкой +"
           onPick={onPick}
         />
       </View>
-
-      {/* Управление своими продуктами */}
-      {userFoods.length > 0 && (
-        <View className="mt-2 gap-1 border-t border-white/5 pt-2">
-          <View className="flex-row items-center gap-1.5 px-1">
-            <Star size={12} color="#FBBF24" />
-            <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
-              {`Мои продукты · ${userFoods.length}`}
-            </Text>
-          </View>
-          {userFoods.map((f) => (
-            <View key={f.id} className="flex-row items-center gap-2 px-1 py-0.5">
-              <Text className="text-[13px]">{f.emoji}</Text>
-              <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[11px] text-bear-sub">
-                {`${f.name} · ${f.kcal} ккал/100 г`}
-              </Text>
-              <Pressable
-                onPress={() => setEditItem(f)}
-                accessibilityLabel={`Изменить продукт «${f.name}»`}
-                accessibilityRole="button"
-                className="rounded p-1"
-              >
-                <Pencil size={12} color="#8B96B8" />
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  removeUserFood(f.id)
-                  toast({ title: '🗑 Продукт удалён', description: f.name })
-                }}
-                accessibilityLabel={`Удалить продукт «${f.name}»`}
-                accessibilityRole="button"
-                className="rounded p-1"
-              >
-                <Trash2 size={13} color="#8B96B8" />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      )}
 
       {/* Форма своего продукта (создание / изменение) */}
       {(formOpen || editItem) && (

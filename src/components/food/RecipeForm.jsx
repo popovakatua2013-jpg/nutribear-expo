@@ -1,11 +1,15 @@
-// Форма создания своего рецепта: название, вес, калорийность и БЖУ всего веса.
-// БЖУ необязательно — если не указать, они будут оценены по калорийности.
-// На выходе — значения на 100 г для дневника.
+// Форма создания своего рецепта: название, общий выход (г), число порций,
+// калорийность и БЖУ всего веса, фото блюда (по желанию). БЖУ
+// необязательно — если не указать, они будут оценены по калорийности.
+// На выходе — значения на 100 г для дневника; порция по умолчанию
+// при добавлении в приём пищи равна выходу, делённому на число порций.
 
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
-import { X } from 'lucide-react-native'
-import { useRecipesStore } from '@/store/useRecipesStore'
+import { Image, Pressable, Text, TextInput, View } from 'react-native'
+import { ImagePlus, Trash2, X } from 'lucide-react-native'
+import * as ImagePicker from 'expo-image-picker'
+import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
+import { saveRecipePhoto, deletePhotoFile } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
 
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
@@ -22,6 +26,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   const editing = Boolean(initial && initial.id)
   const [name, setName] = useState(initial ? initial.name : '')
   const [grams, setGrams] = useState(initial ? String(initial.grams) : '')
+  const [servings, setServings] = useState(initial ? String(initial.servings || 1) : '1')
   const [kcal, setKcal] = useState(
     initial ? String(Math.round((initial.kcal100 * initial.grams) / 100)) : ''
   )
@@ -34,11 +39,50 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   const [c, setC] = useState(
     initial && initial.c100 ? String(Math.round((initial.c100 * initial.grams) / 100)) : ''
   )
+  // photo: null — «сниму фото при сохранении» (старое удалится), uri — новое
+  const [photo, setPhoto] = useState(initial?.photo || null)
+  const [photoBusy, setPhotoBusy] = useState(false)
 
   const g = num(grams)
+  const sv = Math.max(1, Math.min(24, Math.round(Number(servings.replace(',', '.')) || 1)))
   const total = num(kcal)
   const per100 = grams && kcal ? Math.round((total / g) * 100) : null
+  const perServing = grams && kcal ? Math.round(total / sv) : null
   const ready = name.trim() && grams && kcal
+
+  async function pickPhoto() {
+    if (photoBusy) return
+    setPhotoBusy(true)
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (!perm?.granted) {
+        toast({
+          title: '📷 Нужно разрешение',
+          description: 'Разрешите доступ к фото в настройках телефона',
+        })
+        return
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+        exif: false,
+      })
+      if (!res.canceled && res.assets?.[0]?.uri) {
+        const uri = await saveRecipePhoto(res.assets[0].uri)
+        if (photo) await deletePhotoFile(photo) // прежний файл больше не нужен
+        setPhoto(uri)
+      }
+    } catch {
+      toast({ title: '📷 Фото не получилось', description: 'Попробуйте другой снимок' })
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  async function dropPhoto() {
+    if (photo) await deletePhotoFile(photo)
+    setPhoto(null)
+  }
 
   function handleSave() {
     if (!ready) return
@@ -46,22 +90,25 @@ export function RecipeForm({ onDone, initial, onCancel }) {
     const data = {
       name: name.trim(),
       grams: g,
+      servings: sv,
+      photo, // uri нового фото | null — «без фото» | прежний uri
       totalKcal: total,
       totalP: p.trim() ? num(p) : 0,
       totalF: f.trim() ? num(f) : 0,
       totalC: c.trim() ? num(c) : 0,
     }
+    const where = `· ${sv === 1 ? '1 порция' : `${sv} порции по ${Math.round(g / sv)} г`}`
     if (editing) {
       update(initial.id, data)
       toast({
         title: `🍴 Рецепт «${data.name}» изменён`,
-        description: `${g} г · ${total} ккал (${per100} ккал / 100 г)`,
+        description: `${g} г · ${total} ккал (${per100} ккал / 100 г) ${where}`,
       })
     } else {
       add(data)
       toast({
         title: `🍴 Рецепт «${data.name}» сохранён`,
-        description: `${g} г · ${total} ккал (${per100} ккал / 100 г)`,
+        description: `${g} г · ${total} ккал (${per100} ккал / 100 г) ${where}`,
       })
     }
     onDone()
@@ -85,28 +132,76 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           </Pressable>
         )}
       </View>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder="Название рецепта"
-        placeholderTextColor="#8B96B8"
-        accessibilityLabel="Название рецепта"
-        className={field}
-      />
+
+      {/* Название + фото блюда */}
+      <View className="flex-row gap-2">
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Название рецепта"
+          placeholderTextColor="#8B96B8"
+          accessibilityLabel="Название рецепта"
+          className={`${field} min-w-0 flex-1`}
+        />
+        <Pressable
+          onPress={pickPhoto}
+          disabled={photoBusy}
+          accessibilityRole="button"
+          accessibilityLabel="Прикрепить фото блюда"
+          className="h-[42px] w-[42px] shrink-0 items-center justify-center rounded-2xl active:opacity-80"
+          style={{ backgroundColor: '#5B7FFF' }}
+        >
+          {photo ? (
+            <Image source={{ uri: photo }} className="h-full w-full rounded-2xl" />
+          ) : (
+            <ImagePlus size={18} color="#FFFFFF" />
+          )}
+        </Pressable>
+      </View>
+      {photo && (
+        <View className="mt-1.5 flex-row items-center gap-2 px-1">
+          <Text className="min-w-0 flex-1 font-sans text-[10px] text-bear-dim">
+            Фото прикреплено — появится рядом с рецептом в списке
+          </Text>
+          <Pressable
+            onPress={dropPhoto}
+            accessibilityRole="button"
+            accessibilityLabel="Убрать фото"
+            className="flex-row items-center gap-1 rounded p-1"
+          >
+            <Trash2 size={12} color="#98A2C2" />
+            <Text className="font-sans text-[10px] text-bear-sub">убрать</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Общий выход + число порций */}
       <View className="mt-2 flex-row gap-2">
         <TextInput
           value={grams}
           onChangeText={setGrams}
-          placeholder="Вес, г"
+          placeholder="Общий выход, г"
           placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
-          accessibilityLabel="Вес, граммы"
+          accessibilityLabel="Общий выход, граммы"
+          className={`${field} flex-[2]`}
+        />
+        <TextInput
+          value={servings}
+          onChangeText={setServings}
+          placeholder="Порций"
+          placeholderTextColor="#8B96B8"
+          keyboardType="number-pad"
+          maxLength={2}
+          accessibilityLabel="Число порций"
           className={`${field} flex-1`}
         />
+      </View>
+      <View className="mt-2 flex-row gap-2">
         <TextInput
           value={kcal}
           onChangeText={setKcal}
-          placeholder="Ккал всего"
+          placeholder="Ккал на весь выход"
           placeholderTextColor="#8B96B8"
           keyboardType="decimal-pad"
           accessibilityLabel="Калорийность всего"
@@ -145,7 +240,9 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       <View className="mt-3 flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
           <Text className="font-sans text-[11px] text-bear-sub">
-            {per100 ? `≈ ${per100} ккал / 100 г` : 'Укажите вес и калории'}
+            {per100
+              ? `≈ ${per100} ккал / 100 г${sv > 1 ? ` · ${perServing} ккал / порция (${gramsPerServing({ grams: g, servings: sv })} г)` : ''}`
+              : 'Укажите выход и калории'}
           </Text>
           <Text className="font-sans text-[10px] text-bear-dim">
             БЖУ — по желанию, иначе оценим по калориям

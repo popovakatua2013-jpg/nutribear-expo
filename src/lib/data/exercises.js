@@ -3,6 +3,8 @@
 
 export const EXERCISES = [
   { id: 'walk', emoji: '🚶', name: 'Ходьба', met: 3.5 },
+  { id: 'walk-fast', emoji: '🚶', name: 'Ходьба быстрая', met: 5.0 },
+  { id: 'jog', emoji: '🏃', name: 'Бег трусцой', met: 7.0 },
   { id: 'run', emoji: '🏃', name: 'Бег', met: 9.8 },
   { id: 'bike', emoji: '🚴', name: 'Велосипед', met: 7.5 },
   { id: 'swim', emoji: '🏊', name: 'Плавание', met: 8.0 },

@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronDown, Stethoscope } from 'lucide-react-native'
+import { ChevronDown, Info, Stethoscope, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
 import { AuditCard } from '@/components/organism/AuditCard'
@@ -161,6 +161,9 @@ export default function OrganismScreen() {
   // Прыщи от игнора: сегодня ни стакана воды и/или ни одной записи еды.
   // Считаем сколько должно быть пятен, вычитаем уже выдавленные (по индексам)
   const haptics = useUiPrefsStore((s) => s.haptics)
+  // Обучающая подсказка «как работает организм» — закрывается крестиком
+  const orgHintDone = useUiPrefsStore((s) => s.orgHintDone)
+  const setOrgHintDone = useUiPrefsStore((s) => s.setOrgHintDone)
   // Premium: фразы прыщей и полнота аудита зависят от подписки
   const pro = useProStore((s) => s.pro)
   const pimpleTotal = useMemo(() => {
@@ -246,6 +249,36 @@ export default function OrganismScreen() {
         <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
           Организм
         </Text>
+
+        {/* Обучающая подсказка: объясняет, как организм отражает день.
+            Закрывается крестиком (запоминается) — больше не навязывается */}
+        {!orgHintDone && (
+          <View
+            className="flex-row items-start gap-2.5 rounded-2xl px-3.5 py-3"
+            style={{
+              backgroundColor: 'rgba(168,85,247,0.08)',
+              borderWidth: 1,
+              borderColor: 'rgba(168,85,247,0.22)',
+            }}
+          >
+            <Info size={16} color="#C084FC" style={{ marginTop: 1 }} />
+            <Text className="min-w-0 flex-1 font-sans text-[12px] leading-snug" style={{ color: '#E9D5FF' }}>
+              Это живой двойник твоего дня: вода наполняет гидратацию, дневник
+              питания даёт белок и энергию, шаги и тренировки — активность.
+              Гладь его, выдавливай прыщи, если игнорируешь день, и ходи к
+              доктору на осмотр — он подскажет, что чинить.
+            </Text>
+            <Pressable
+              onPress={() => setOrgHintDone(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Закрыть подсказку"
+              hitSlop={8}
+              className="-mt-0.5 -mr-1 p-1 active:opacity-60"
+            >
+              <X size={14} color="#C084FC" />
+            </Pressable>
+          </View>
+        )}
 
         <OrganismStage
           state={org.state}

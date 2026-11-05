@@ -3,6 +3,7 @@
 
 import { EXTRA_FOODS } from './foods-extra'
 import { MORE_FOODS } from './foods-more'
+import { REQUESTED_FOODS } from './foods-requests'
 import { MICROS } from './micros'
 
 const BASE_FOODS = [
@@ -56,12 +57,16 @@ const BASE_FOODS = [
 ]
 
 // Полная база: основные продукты + расширенный набор + второй набор
-// (макароны, белый хлеб, булочки, суши и др.). Витамины/минералы
-// (fe/ca/k/mg/vitc/vita) подмешиваются из micros.js — их использует
-// рейтинг питания.
-export const FOODS = [...BASE_FOODS, ...EXTRA_FOODS, ...MORE_FOODS].map((f) =>
-  MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f
-)
+// (макароны, белый хлеб, булочки, суши и др.) + набор по запросам
+// (молочка разной жирности, торты, зелень, капуста и т.д.).
+// Витамины/минералы (fe/ca/k/mg/vitc/vita) подмешиваются из micros.js —
+// их использует рейтинг питания.
+export const FOODS = [
+  ...BASE_FOODS,
+  ...EXTRA_FOODS,
+  ...MORE_FOODS,
+  ...REQUESTED_FOODS,
+].map((f) => (MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f))
 
 // Быстрый выбор граммовки в модалке добавления
 export const QUICK_GRAMS = [50, 100, 150, 200, 250]

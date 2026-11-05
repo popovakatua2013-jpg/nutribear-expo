@@ -365,9 +365,11 @@ export function ExerciseSection({ flat = false }) {
             onPress={repeatDay}
             accessibilityRole="button"
             accessibilityLabel={`Повторить тренировки за ${repDay.day}`}
-            className="shrink-0 rounded-full bg-[#7B6CF6]/15 px-3 py-1.5 active:opacity-70"
+            hitSlop={6}
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-full active:opacity-70"
+            style={{ backgroundColor: 'rgba(123,108,246,0.15)' }}
           >
-            <Text className="font-bold text-[11.5px] text-[#A78BFA]">Повторить</Text>
+            <RotateCcw size={14} color="#A78BFA" />
           </Pressable>
         </View>
       )}
