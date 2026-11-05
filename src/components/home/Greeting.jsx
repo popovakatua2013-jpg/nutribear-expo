@@ -56,14 +56,14 @@ export function Greeting({ consumed = 0, target = 0 }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.25}
-          className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text"
+          className="font-extrabold text-[22px] leading-tight tracking-tight text-bear-text"
         >
           {greetingByHour(now.getHours())}! 👋
         </Text>
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.25}
-          className="mt-0.5 font-sans text-[14px] leading-snug text-bear-dim"
+          className="mt-0.5 font-sans text-[16px] leading-snug text-bear-dim"
         >
           {statusLine(consumed, target)}
         </Text>
@@ -77,13 +77,13 @@ export function Greeting({ consumed = 0, target = 0 }) {
             className="flex-row items-center gap-1 rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-2 py-1.5"
           >
             <WifiOff size={15} color="#FBBF24" strokeWidth={2.5} />
-            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[13px] text-[#FBBF24]">
+            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[15px] text-[#FBBF24]">
               Офлайн
             </Text>
           </View>
         )}
         <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-          <Text maxFontSizeMultiplier={1.25} className="font-medium text-[13px] text-bear-soft">
+          <Text maxFontSizeMultiplier={1.25} className="font-medium text-[15px] text-bear-soft">
             {dateLabel}
           </Text>
         </View>

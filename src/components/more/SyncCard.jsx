@@ -155,8 +155,8 @@ export function SyncCard() {
             className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3"
           >
             <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[15.5px] text-bear-text">{r.label}</Text>
-              <Text className="font-sans text-[13px] text-bear-sub2">{r.hint}</Text>
+              <Text className="font-bold text-[17.5px] text-bear-text">{r.label}</Text>
+              <Text className="font-sans text-[15px] text-bear-sub2">{r.hint}</Text>
             </View>
             <Switch
               value={sync[r.key]}
@@ -173,9 +173,9 @@ export function SyncCard() {
             <View className="min-w-0 flex-1">
               <View className="flex-row items-center gap-1.5">
                 <HeartPulse size={18} color="#F0ABFC" />
-                <Text className="font-bold text-[15.5px] text-bear-text">Health Connect</Text>
+                <Text className="font-bold text-[17.5px] text-bear-text">Health Connect</Text>
               </View>
-              <Text className="font-sans text-[13px] text-bear-sub2">
+              <Text className="font-sans text-[15px] text-bear-sub2">
                 {healthConnectEnabled
                   ? 'шаги с системы: фон + история телефона и часов'
                   : 'шаги телефона и часов — даже при закрытом приложении'}
@@ -195,9 +195,9 @@ export function SyncCard() {
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center gap-1.5">
               <Footprints size={18} color="#EEF2FB" />
-              <Text className="font-bold text-[15.5px] text-bear-text">Встроенный шагомер</Text>
+              <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
             </View>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-sans text-[15px] text-bear-sub2">
               {pedometerEnabled
                 ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
                 : 'считает шаги сам, плюс ручные добавления'}
@@ -213,7 +213,7 @@ export function SyncCard() {
         </View>
       </View>
 
-      <Text className="mt-3 px-1 font-sans text-[13px] leading-relaxed text-bear-dim">
+      <Text className="mt-3 px-1 font-sans text-[15px] leading-relaxed text-bear-dim">
         {Platform.OS === 'web'
           ? 'Веб-версия работает офлайн: данные не покидают устройство. Шагомер доступен в приложении на телефоне.'
           : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона: шаги засчитываются, пока приложение запущено. Health Connect, если подключён, даёт шаги с историей — система собирает их даже при закрытом приложении, включая шаги с часов и браслетов.'}{' '}

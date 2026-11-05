@@ -22,10 +22,10 @@ const WD = ['воскресенье', 'понедельник', 'вторник'
 function Row({ icon, label, value, tone }) {
   return (
     <View className="flex-row items-center justify-between border-b border-white/5 py-2.5">
-      <Text className="font-medium text-[15.5px] text-bear-sub">
+      <Text className="font-medium text-[17.5px] text-bear-sub">
         {icon} {label}
       </Text>
-      <Text className={`font-bold text-[15.5px] ${tone || 'text-bear-text'}`}>{value}</Text>
+      <Text className={`font-bold text-[17.5px] ${tone || 'text-bear-text'}`}>{value}</Text>
     </View>
   )
 }
@@ -56,8 +56,8 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-1">
-              <Text className="font-bold text-[18px] text-bear-text">{title}</Text>
-              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+              <Text className="font-bold text-[20px] text-bear-text">{title}</Text>
+              <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                 Сводка дня: еда, шаги, вода, тренировки — всё, что записано в этот день
               </Text>
             </View>
@@ -74,7 +74,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
           <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
             <View className="px-5 pb-4 pt-1">
               {empty ? (
-                <Text className="py-6 text-center font-sans text-[15.5px] leading-relaxed text-bear-sub">
+                <Text className="py-6 text-center font-sans text-[17.5px] leading-relaxed text-bear-sub">
                   Записей в этот день нет.{'\n'}
                   Как только что-то добавите — здесь появится сводка.
                 </Text>
@@ -121,7 +121,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               accessibilityLabel="Закрыть сводку дня"
               className="items-center rounded-2xl bg-white/10 py-3 active:opacity-70"
             >
-              <Text className="font-bold text-[15.5px] text-bear-text">Закрыть</Text>
+              <Text className="font-bold text-[17.5px] text-bear-text">Закрыть</Text>
             </Pressable>
           </View>
         </View>

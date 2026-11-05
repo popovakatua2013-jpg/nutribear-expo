@@ -33,7 +33,7 @@ export function VesselCard({ vessel, onDrink }) {
           value={label}
           onChangeText={setLabel}
           maxLength={14}
-          className="rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[13px] text-bear-text"
+          className="rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
         />
         <View className="mt-1 flex-row items-center gap-1">
           <TextInput
@@ -42,9 +42,9 @@ export function VesselCard({ vessel, onDrink }) {
             onChangeText={setMl}
             keyboardType="number-pad"
             maxLength={4}
-            className="min-w-0 flex-1 rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[13px] text-bear-text"
+            className="min-w-0 flex-1 rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
           />
-          <Text className="font-sans text-[12.5px] text-bear-sub">мл</Text>
+          <Text className="font-sans text-[14.5px] text-bear-sub">мл</Text>
         </View>
         <Pressable
           onPress={save}
@@ -69,10 +69,10 @@ export function VesselCard({ vessel, onDrink }) {
       >
         <Icon size={22} color="#7DD3FC" />
         <View className="min-w-0 flex-1 pr-4">
-          <Text numberOfLines={1} className="font-semibold text-[14.5px] text-bear-text">
+          <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
             {vessel.label}
           </Text>
-          <Text className="font-sans text-[12.5px] text-bear-sub2">+{vessel.ml} мл</Text>
+          <Text className="font-sans text-[14.5px] text-bear-sub2">+{vessel.ml} мл</Text>
         </View>
       </Pressable>
       <Pressable

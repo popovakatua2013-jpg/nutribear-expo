@@ -159,10 +159,10 @@ export function BmiCalculator() {
           <Calculator size={19} color="#C4B5FD" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[18.5px] tracking-tight text-white">
+          <Text className="font-bold text-[20.5px] tracking-tight text-white">
             Калькулятор ИМТ
           </Text>
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-dim">
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-dim">
             Узнай свой индекс массы тела
           </Text>
         </View>
@@ -196,14 +196,14 @@ export function BmiCalculator() {
                   {active ? (
                     <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#6D5AE6', '#8B5CF6']}>
                       <View className="flex-row items-center justify-center gap-1.5 py-2.5">
-                        <Text className="text-[15.5px]">{glyph}</Text>
-                        <Text className="font-bold text-[15px] text-white">{label}</Text>
+                        <Text className="text-[17.5px]">{glyph}</Text>
+                        <Text className="font-bold text-[17px] text-white">{label}</Text>
                       </View>
                     </LinearGradient>
                   ) : (
                     <View className="flex-row items-center justify-center gap-1.5 bg-white/[0.05] py-2.5">
-                      <Text className="text-[15.5px] text-bear-sub">{glyph}</Text>
-                      <Text className="font-medium text-[15px] text-bear-sub">{label}</Text>
+                      <Text className="text-[17.5px] text-bear-sub">{glyph}</Text>
+                      <Text className="font-medium text-[17px] text-bear-sub">{label}</Text>
                     </View>
                   )}
                 </Pressable>
@@ -227,7 +227,7 @@ export function BmiCalculator() {
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6']}>
               <View className="flex-row items-center justify-center gap-2 py-3.5">
                 <Calculator size={18} color="#FFFFFF" />
-                <Text className="font-bold text-[17px] text-white">Рассчитать</Text>
+                <Text className="font-bold text-[19px] text-white">Рассчитать</Text>
               </View>
             </LinearGradient>
           </Pressable>
@@ -240,12 +240,12 @@ export function BmiCalculator() {
       {open && showResult && valid && (
         <View className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <View className="flex-row items-center justify-between gap-2">
-            <Text className="font-medium text-[14px] text-bear-sub">Ваш ИМТ</Text>
-            <Text className="font-semibold text-[14px]" style={{ color: cat.color }}>
+            <Text className="font-medium text-[16px] text-bear-sub">Ваш ИМТ</Text>
+            <Text className="font-semibold text-[16px]" style={{ color: cat.color }}>
               {cat.label} · {cat.range}
             </Text>
           </View>
-          <Text maxFontSizeMultiplier={1.15} className="mt-1 font-extrabold text-[30px] leading-tight tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} className="mt-1 font-extrabold text-[32px] leading-tight tracking-tight text-white">
             {fmtDecimal(bmi)}
           </Text>
 
@@ -263,16 +263,16 @@ export function BmiCalculator() {
           {/* Жир в организме: строка и цифры в цвете уровня жира —
               норма зелёным, предожирение оранжевым, ожирение красным */}
           <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5">
-            <Text className="font-medium text-[14.5px]" style={{ color: fatLevel.color }}>
+            <Text className="font-medium text-[16.5px]" style={{ color: fatLevel.color }}>
               Жир в организме (оценка)
             </Text>
-            <Text className="font-bold text-[15.5px]" style={{ color: fatLevel.color }}>
+            <Text className="font-bold text-[17.5px]" style={{ color: fatLevel.color }}>
               ≈ {fmtDecimal(fatPct)} %
             </Text>
           </View>
 
           {/* Уровень активности — участвует в суточной норме */}
-          <Text className="mt-3 font-medium text-[14px] text-bear-sub">Уровень активности</Text>
+          <Text className="mt-3 font-medium text-[16px] text-bear-sub">Уровень активности</Text>
           <View className="mt-1.5 flex-row flex-wrap gap-2">
             {TDEE_LEVELS.map((l) => {
               const active = activityId === l.id
@@ -288,11 +288,11 @@ export function BmiCalculator() {
                 >
                   {active ? (
                     <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={CHIP_GRAD}>
-                      <Text className="px-3.5 py-2 font-semibold text-[14.5px] text-white">{l.label}</Text>
+                      <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-white">{l.label}</Text>
                     </LinearGradient>
                   ) : (
                     <View className="bg-white/5">
-                      <Text className="px-3.5 py-2 font-medium text-[14.5px] text-bear-sub">{l.label}</Text>
+                      <Text className="px-3.5 py-2 font-medium text-[16.5px] text-bear-sub">{l.label}</Text>
                     </View>
                   )}
                 </Pressable>
@@ -315,7 +315,7 @@ const CARD_STYLE = {
 function NumField({ label, value, onChange, decimal }) {
   return (
     <View className="min-w-0 flex-1">
-      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[13px] text-bear-sub">
+      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[15px] text-bear-sub">
         {label}
       </Text>
       <TextInput
@@ -326,7 +326,7 @@ function NumField({ label, value, onChange, decimal }) {
         placeholder="—"
         placeholderTextColor="#8B96B8"
         accessibilityLabel={label}
-        className="mt-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2.5 font-semibold text-[17px] text-white"
+        className="mt-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2.5 font-semibold text-[19px] text-white"
       />
     </View>
   )
@@ -335,10 +335,10 @@ function NumField({ label, value, onChange, decimal }) {
 function Stat({ label, value, accent }) {
   return (
     <View className="min-w-0 flex-1 rounded-xl bg-white/[0.03] px-3 py-2.5">
-      <Text className="font-medium text-[13px] text-bear-sub2">{label}</Text>
+      <Text className="font-medium text-[15px] text-bear-sub2">{label}</Text>
       <Text
         maxFontSizeMultiplier={1.2}
-        className="mt-0.5 font-bold text-[17px]"
+        className="mt-0.5 font-bold text-[19px]"
         style={{ color: accent ? '#6C8CFF' : '#EEF2FB' }}
       >
         {value}

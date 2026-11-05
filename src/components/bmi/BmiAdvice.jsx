@@ -36,7 +36,7 @@ export function BmiAdvice({ bmi, onDetails }) {
       {/* Шапка: звезда-контур + заголовок + кнопка-лотос (подробные советы) */}
       <View className="flex-row items-center gap-2">
         <Star size={23} color="#C4B5FD" fill="rgba(196,181,253,0.18)" strokeWidth={2} />
-        <Text className="min-w-0 flex-1 font-bold text-[19px] tracking-tight text-white">
+        <Text className="min-w-0 flex-1 font-bold text-[21px] tracking-tight text-white">
           Рекомендации
         </Text>
         <Pressable
@@ -68,7 +68,7 @@ export function BmiAdvice({ bmi, onDetails }) {
         <Text
           accessibilityLabel={rec.main}
           maxFontSizeMultiplier={1.3}
-          className="min-w-0 flex-1 font-sans text-[15.5px] leading-relaxed text-[#E4DBFF]"
+          className="min-w-0 flex-1 font-sans text-[17.5px] leading-relaxed text-[#E4DBFF]"
         >
           {rec.main}
         </Text>
@@ -87,7 +87,7 @@ export function BmiAdvice({ bmi, onDetails }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="shrink-0 font-medium text-[13px] text-bear-sub"
+          className="shrink-0 font-medium text-[15px] text-bear-sub"
         >
           Идеальный диапазон ИМТ
         </Text>
@@ -119,7 +119,7 @@ export function BmiAdvice({ bmi, onDetails }) {
             }}
           />
         </View>
-        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[14.5px] text-white">
+        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[16.5px] text-white">
           18.5 – 24.9
         </Text>
       </View>

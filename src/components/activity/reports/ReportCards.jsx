@@ -59,12 +59,12 @@ function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
           <m.Icon size={22} color={m.color} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-sans text-[15px] text-bear-soft">{m.label}</Text>
+          <Text className="font-sans text-[17px] text-bear-soft">{m.label}</Text>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.15}
             adjustsFontSizeToFit
-            className="mt-0.5 font-extrabold text-[22px] tracking-tight text-bear-text"
+            className="mt-0.5 font-extrabold text-[24px] tracking-tight text-bear-text"
           >
             {m.fmt(cur[m.key])}
           </Text>
@@ -72,14 +72,14 @@ function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
       </View>
       <View className="mt-2.5 flex-row items-center gap-1">
         <Arrow size={16} color={tone} />
-        <Text className="font-medium text-[13px]" style={{ color: tone }}>
+        <Text className="font-medium text-[15px]" style={{ color: tone }}>
           {Math.abs(pct)}% {prevLabel(days)}
         </Text>
       </View>
       {/* Рекорд периода — только у показателей «чем больше, тем лучше»;
         у калорий есть больше всех — не достижение */}
       {!m.invert && best > 0 ? (
-        <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-1.5 font-sans text-[13px] text-bear-dim">
+        <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-1.5 font-sans text-[15px] text-bear-dim">
           {`Лучший день: ${m.fmt(best)}`}
         </Text>
       ) : null}
@@ -129,7 +129,7 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} 
         </View>
       ))}
       {/* Подсказка: тап по карточке открывает окно истории показателя */}
-      <Text className="px-1 pt-0.5 font-sans text-[13px] text-bear-dim">
+      <Text className="px-1 pt-0.5 font-sans text-[15px] text-bear-dim">
         Тап по карточке открывает историю: среднее за день, график, лучшие дни
       </Text>
     </View>
@@ -187,18 +187,18 @@ function WeightReportCard({ days }) {
         </View>
         <View className="min-w-0 flex-1">
           <View className="flex-row items-center gap-1">
-            <Text className="shrink-0 font-sans text-[15px] text-bear-soft">Вес</Text>
+            <Text className="shrink-0 font-sans text-[17px] text-bear-soft">Вес</Text>
             {/* Подсказка: карточка тапабельна — ведёт к графику веса */}
             <ChevronRight size={15} color="#8B96B8" />
           </View>
-          <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[22px] tracking-tight text-bear-text">
+          <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[24px] tracking-tight text-bear-text">
             {lastW ? `${fmtDecimal(lastW.kg)} кг` : '—'}
           </Text>
         </View>
       </View>
       <View className="mt-2.5 flex-row items-center gap-1">
         {delta != null && delta !== 0 && <Arrow size={16} color={tone} />}
-        <Text className="font-medium text-[13px]" style={{ color: tone }}>
+        <Text className="font-medium text-[15px]" style={{ color: tone }}>
           {delta == null
             ? `нет измерений за ${days} ${pluralDays(days)}`
             : delta === 0

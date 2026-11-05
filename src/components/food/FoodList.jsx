@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react-native'
 export function FoodList({ items, emptyText, onPick, scroll = true }) {
   if (!items.length) {
     return (
-      <Text className="py-8 text-center font-sans text-[17px] text-bear-sub">
+      <Text className="py-8 text-center font-sans text-[19px] text-bear-sub">
         {emptyText}
       </Text>
     )
@@ -17,30 +17,36 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
     <Pressable
       onPress={() => onPick(item)}
       accessibilityRole="button"
-      className="flex-row items-center gap-3 rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-[#1A2647]"
+      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] pr-3 active:bg-[#1A2647]"
     >
+      {/* Картинка на весь блок: фото/эмодзи во всю высоту строки,
+          впритык к левому краю (по запросу пользователя) */}
       {item.photo ? (
         <Image
           source={{ uri: item.photo }}
-          className="h-9 w-9 shrink-0 rounded-xl"
+          style={{ width: 52, height: 56 }}
+          className="shrink-0"
+          resizeMode="cover"
           accessibilityLabel={`Фото: ${item.name}`}
         />
       ) : (
-        <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bear-card">
-          <Text className="text-[20px]">{item.emoji || '🍽️'}</Text>
+        <View className="h-14 w-[52px] shrink-0 items-center justify-center bg-bear-card">
+          <Text className="text-[26px]">{item.emoji || '🍽️'}</Text>
         </View>
       )}
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-semibold text-[15.5px] text-bear-text">
+      <View className="min-w-0 flex-1 justify-center gap-0.5 py-1 pl-2.5">
+        <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
           {item.name}
         </Text>
-        <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub">
+        <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
           {item.kcal100
             ? `${item.kcal100} ккал / 100 г${item.sub ? ` · ${item.sub}` : ''}`
             : 'калорийность уточните'}
         </Text>
       </View>
-      <Plus size={18} color="#8B96B8" />
+      <View className="self-center">
+        <Plus size={18} color="#8B96B8" />
+      </View>
     </Pressable>
   )
 
@@ -59,7 +65,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
       data={items}
       keyExtractor={(item, i) => `${item.source}-${item.name}-${i}`}
       keyboardShouldPersistTaps="handled"
-      ItemSeparatorComponent={() => <View style={{ height: 6 }} />}
+      ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
       contentContainerStyle={{ paddingVertical: 4 }}
       renderItem={body}
     />

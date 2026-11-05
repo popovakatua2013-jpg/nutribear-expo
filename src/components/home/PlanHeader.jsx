@@ -42,7 +42,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
           <BodyChip icon={<UtensilsCrossed size={17} />} />
-          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
             Приёмы пищи
           </Text>
         </View>
@@ -64,7 +64,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
             hitSlop={4}
             className="flex-row items-center gap-0.5 px-1 py-1.5"
           >
-            <Text className="font-medium text-[14.5px] text-[#6C8CFF]">Все</Text>
+            <Text className="font-medium text-[16.5px] text-[#6C8CFF]">Все</Text>
             <ChevronRight size={16} color="#6C8CFF" />
           </Pressable>
         )}

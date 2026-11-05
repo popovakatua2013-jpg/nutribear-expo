@@ -56,10 +56,10 @@ function SystemRow({ s, pro, onLocked }) {
           <Lock size={17} color="#C4B5FD" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-semibold text-[15.5px]" style={{ color: '#C4B5FD' }}>
+          <Text className="font-semibold text-[17.5px]" style={{ color: '#C4B5FD' }}>
             {s.emoji} {s.name} · Premium
           </Text>
-          <Text className="font-sans text-[14px] leading-snug" style={{ color: GAME.dim2 }}>
+          <Text className="font-sans text-[16px] leading-snug" style={{ color: GAME.dim2 }}>
             Диагноз, шутка и рекомендация — внутри
           </Text>
         </View>
@@ -72,33 +72,33 @@ function SystemRow({ s, pro, onLocked }) {
   return (
     <View className="rounded-xl px-3 py-3" style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
       <View className="flex-row items-center justify-between gap-2">
-        <Text className="font-semibold text-[15.5px]" style={{ color: GAME.text }}>
+        <Text className="font-semibold text-[17.5px]" style={{ color: GAME.text }}>
           {s.emoji} {s.name}
         </Text>
         <View className="flex-row items-center gap-1.5">
           {s.rare && (
             <View className="flex-row items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(196,181,253,0.14)' }}>
               <Sparkles size={14} color="#C4B5FD" />
-              <Text className="font-bold text-[13px]" style={{ color: '#C4B5FD' }}>
+              <Text className="font-bold text-[15px]" style={{ color: '#C4B5FD' }}>
                 редкий
               </Text>
             </View>
           )}
           <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${meta.color}1A`, borderWidth: 1, borderColor: `${meta.color}55` }}>
-            <Text className="font-bold text-[13px]" style={{ color: meta.color }}>
+            <Text className="font-bold text-[15px]" style={{ color: meta.color }}>
               {meta.label}
             </Text>
           </View>
         </View>
       </View>
-      <Text className="mt-1 font-medium text-[15px] leading-snug" style={{ color: GAME.dim }}>
+      <Text className="mt-1 font-medium text-[17px] leading-snug" style={{ color: GAME.dim }}>
         «{s.phrase}»
       </Text>
       <View className="mt-1.5 flex-row items-start gap-1.5">
         <View style={{ marginTop: 2 }}>
           <ArrowRight size={15} color={GAME.emerald} />
         </View>
-        <Text className="flex-1 font-sans text-[14.5px] leading-snug" style={{ color: GAME.emerald }}>
+        <Text className="flex-1 font-sans text-[16.5px] leading-snug" style={{ color: GAME.emerald }}>
           {s.tip}
         </Text>
       </View>
@@ -117,11 +117,11 @@ function ScoreChip({ score, weekday, today }) {
         borderColor: today ? 'rgba(163,230,53,0.45)' : 'transparent',
       }}
     >
-      <Text className="font-extrabold text-[14.5px]" style={{ color: scoreColor(score) }}>
+      <Text className="font-extrabold text-[16.5px]" style={{ color: scoreColor(score) }}>
         {score}
       </Text>
       {!!weekday && (
-        <Text className="font-sans text-[12.5px]" style={{ color: today ? GAME.lime : GAME.dim2 }}>
+        <Text className="font-sans text-[14.5px]" style={{ color: today ? GAME.lime : GAME.dim2 }}>
           {weekday}
         </Text>
       )}
@@ -246,15 +246,15 @@ export function AuditCard({
       {!report && !scanning && (
         <Panel style={{ marginTop: 12 }}>
           <Caps>что проверяем</Caps>
-          <Text className="mt-1.5 font-semibold text-[15.5px] leading-snug" style={{ color: GAME.text }}>
+          <Text className="mt-1.5 font-semibold text-[17.5px] leading-snug" style={{ color: GAME.text }}>
             🧴 Кожа · 🍲 Желудок · ❤️ Сердце и ноги
           </Text>
-          <Text className="mt-1.5 font-sans text-[14px] leading-snug" style={{ color: GAME.dim }}>
+          <Text className="mt-1.5 font-sans text-[16px] leading-snug" style={{ color: GAME.dim }}>
             В Premium — ещё 💪 Мышцы, 🧠 Нервы и 🛡️ Иммунитет, редкие диагнозы
             и история аудитов за неделю
           </Text>
           {pro && jubilee && (
-            <Text className="mt-2 font-medium text-[14.5px] leading-snug" style={{ color: GAME.lime }}>
+            <Text className="mt-2 font-medium text-[16.5px] leading-snug" style={{ color: GAME.lime }}>
               Юбилей серии: {seriesToday} осмотров подряд — редкий диагноз гарантирован ✨
             </Text>
           )}
@@ -265,7 +265,7 @@ export function AuditCard({
             accessibilityRole="button"
             accessibilityLabel="Провести аудит организма"
           >
-            <Text className="font-extrabold text-[18px]" style={{ color: '#12200F' }}>
+            <Text className="font-extrabold text-[20px]" style={{ color: '#12200F' }}>
               Провести аудит
             </Text>
           </Pressable>
@@ -276,10 +276,10 @@ export function AuditCard({
       {scanning && (
         <Panel style={{ marginTop: 12 }}>
           <View className="flex-row items-center justify-between">
-            <Text className="font-semibold text-[15.5px]" style={{ color: GAME.text }}>
+            <Text className="font-semibold text-[17.5px]" style={{ color: GAME.text }}>
               {stageText}
             </Text>
-            <Text className="font-sans text-[13px]" style={{ color: GAME.dim2 }}>
+            <Text className="font-sans text-[15px]" style={{ color: GAME.dim2 }}>
               не щекотно
             </Text>
           </View>
@@ -296,14 +296,14 @@ export function AuditCard({
         <>
           <Panel style={{ marginTop: 12 }}>
             <View className="flex-row items-center gap-2.5">
-              <Text className="font-extrabold text-[30px] tracking-tight" style={{ color: scoreColor(report.score) }}>
+              <Text className="font-extrabold text-[32px] tracking-tight" style={{ color: scoreColor(report.score) }}>
                 {report.score}
               </Text>
               <View className="min-w-0 flex-1">
                 <View className="flex-row items-center gap-2">
                   <Caps color={overallMeta.color}>заключение доктора</Caps>
                 </View>
-                <Text className="mt-0.5 font-medium text-[15px] leading-snug" style={{ color: GAME.text }}>
+                <Text className="mt-0.5 font-medium text-[17px] leading-snug" style={{ color: GAME.text }}>
                   {report.conclusion}
                 </Text>
               </View>
@@ -324,7 +324,7 @@ export function AuditCard({
                 style={{ backgroundColor: 'rgba(250,204,21,0.08)', borderWidth: 1, borderColor: 'rgba(250,204,21,0.25)' }}
               >
                 <Sparkles size={16} color={GAME.yellow} />
-                <Text className="flex-1 font-medium text-[14.5px] leading-snug" style={{ color: '#FDE68A' }}>
+                <Text className="flex-1 font-medium text-[16.5px] leading-snug" style={{ color: '#FDE68A' }}>
                   Показатели изменились — осмотр устарел. Проверь ещё раз, будет новая шутка
                 </Text>
               </View>
@@ -335,7 +335,7 @@ export function AuditCard({
                 style={{ backgroundColor: 'rgba(163,230,53,0.08)', borderWidth: 1, borderColor: 'rgba(163,230,53,0.25)' }}
               >
                 <Sparkles size={16} color={GAME.lime} />
-                <Text className="flex-1 font-medium text-[14.5px] leading-snug" style={{ color: GAME.lime }}>
+                <Text className="flex-1 font-medium text-[16.5px] leading-snug" style={{ color: GAME.lime }}>
                   Юбилей серии: {seriesToday} осмотров подряд — редкий диагноз гарантирован ✨
                 </Text>
               </View>
@@ -354,7 +354,7 @@ export function AuditCard({
             <Panel style={{ marginTop: 10 }}>
               <Caps>аудиты недели</Caps>
               {history.length === 0 ? (
-                <Text className="mt-2 font-sans text-[14px]" style={{ color: GAME.dim2 }}>
+                <Text className="mt-2 font-sans text-[16px]" style={{ color: GAME.dim2 }}>
                   Пока пусто — осмотры появятся здесь
                 </Text>
               ) : (
@@ -365,12 +365,12 @@ export function AuditCard({
                     ))}
                   </View>
                   {auditSeries > 0 && (
-                    <Text className="mt-2 font-sans text-[14px]" style={{ color: GAME.dim }}>
+                    <Text className="mt-2 font-sans text-[16px]" style={{ color: GAME.dim }}>
                       Серия осмотров: {auditSeries} {pluralDays(auditSeries)} подряд 🩺
                     </Text>
                   )}
                   {avgScore != null && (
-                    <Text className="mt-1 font-sans text-[14px]" style={{ color: GAME.dim }}>
+                    <Text className="mt-1 font-sans text-[16px]" style={{ color: GAME.dim }}>
                       Средний балл за неделю: {avgScore}
                     </Text>
                   )}
@@ -386,7 +386,7 @@ export function AuditCard({
               style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(196,181,253,0.18)' }}
             >
               <Lock size={16} color="#C4B5FD" />
-              <Text className="flex-1 font-medium text-[14.5px]" style={{ color: '#C4B5FD' }}>
+              <Text className="flex-1 font-medium text-[16.5px]" style={{ color: '#C4B5FD' }}>
                 История аудитов за неделю — в Premium
               </Text>
               <ChevronRight size={16} color="#C4B5FD" />
@@ -395,7 +395,7 @@ export function AuditCard({
 
           {/* футер: штамп дня + перепроведение */}
           <View className="mt-3 flex-row items-center justify-between px-1">
-            <Text className="flex-1 font-sans text-[13px] leading-snug" style={{ color: GAME.dim2 }}>
+            <Text className="flex-1 font-sans text-[15px] leading-snug" style={{ color: GAME.dim2 }}>
               {awarded
                 ? '+1 ген за медосмотр — начислено'
                 : doneToday
@@ -410,7 +410,7 @@ export function AuditCard({
               style={{ backgroundColor: 'rgba(163,230,53,0.1)' }}
             >
               <RefreshCw size={15} color={GAME.lime} />
-              <Text className="font-bold text-[14.5px]" style={{ color: GAME.lime }}>
+              <Text className="font-bold text-[16.5px]" style={{ color: GAME.lime }}>
                 Ещё раз
               </Text>
             </Pressable>

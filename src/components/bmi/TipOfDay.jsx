@@ -32,10 +32,10 @@ export function TipOfDay() {
           <Lightbulb size={18} color="#8DABFF" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[15.5px] text-bear-text">Совет дня</Text>
+          <Text className="font-bold text-[17.5px] text-bear-text">Совет дня</Text>
           <Text
             maxFontSizeMultiplier={1.25}
-            className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub"
+            className="mt-0.5 font-sans text-[15px] leading-snug text-bear-sub"
           >
             {tipOfDay()}
           </Text>

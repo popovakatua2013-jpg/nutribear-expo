@@ -91,7 +91,7 @@ export function DataPortability() {
       title="Приватность и данные"
       summary="экспорт · восстановление"
     >
-      <Text className="font-sans text-[13px] leading-relaxed text-bear-sub2">
+      <Text className="font-sans text-[15px] leading-relaxed text-bear-sub2">
         Ваши данные о здоровье — особая категория. Они хранятся только на
         устройстве и не передаются в сеть. Вы можете в любой момент
         выгрузить их, перенести на другой телефон или удалить безвозвратно
@@ -107,10 +107,10 @@ export function DataPortability() {
       >
         <FileDown size={20} color="#38bdf8" />
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[15.5px] text-bear-text">
+          <Text className="font-bold text-[17.5px] text-bear-text">
             Сохранить копию (JSON)
           </Text>
-          <Text className="font-sans text-[13px] text-bear-sub2">
+          <Text className="font-sans text-[15px] text-bear-sub2">
             дневник, вода, вес, рецепты, свои продукты, комбо, фото
           </Text>
         </View>
@@ -124,10 +124,10 @@ export function DataPortability() {
       >
         <FileUp size={20} color="#a78bfa" />
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[15.5px] text-bear-text">
+          <Text className="font-bold text-[17.5px] text-bear-text">
             Восстановить из копии
           </Text>
-          <Text className="font-sans text-[13px] text-bear-sub2">
+          <Text className="font-sans text-[15px] text-bear-sub2">
             выбрать JSON-файл — например, на новом телефоне
           </Text>
         </View>

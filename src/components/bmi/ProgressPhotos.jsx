@@ -159,7 +159,7 @@ export function ProgressPhotos() {
           }
           className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
         >
-          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
             Фото прогресса
           </Text>
           {items.length > 0 &&
@@ -212,13 +212,13 @@ export function ProgressPhotos() {
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
-            className="min-w-0 flex-1 font-sans text-[14px] text-bear-sub2"
+            className="min-w-0 flex-1 font-sans text-[16px] text-bear-sub2"
           >
             {items.length === 1
               ? `1 фото скрыто · снято ${shortDay(newest.date)}`
               : `${items.length} фото скрыто · последнее ${shortDay(newest.date)}`}
           </Text>
-          <Text className="shrink-0 font-semibold text-[13px] text-[#8DABFF]">Показать</Text>
+          <Text className="shrink-0 font-semibold text-[15px] text-[#8DABFF]">Показать</Text>
         </Pressable>
       ) : items.length > 0 ? (
         <>
@@ -232,7 +232,7 @@ export function ProgressPhotos() {
               style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
               resizeMode="cover"
             />
-            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[13px] text-bear-soft">
+            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[15px] text-bear-soft">
               До · {shortDay(oldest.date)}
             </Text>
           </View>
@@ -243,7 +243,7 @@ export function ProgressPhotos() {
               style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
               resizeMode="cover"
             />
-            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[13px] text-[#8DABFF]">
+            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[15px] text-[#8DABFF]">
               Сейчас · {shortDay(newest.date)}
             </Text>
           </View>
@@ -266,7 +266,7 @@ export function ProgressPhotos() {
           </View>
         </>
       ) : (
-        <Text maxFontSizeMultiplier={MAX} className="mt-2 font-sans text-[14px] leading-snug text-bear-sub2">
+        <Text maxFontSizeMultiplier={MAX} className="mt-2 font-sans text-[16px] leading-snug text-bear-sub2">
           Снимайте фигуру раз в пару недель в одном и том же ракурсе —
           здесь появится сравнение «до/после». Фото остаются только на
           вашем устройстве и не видны, пока вы сами их не откроете.
@@ -277,7 +277,7 @@ export function ProgressPhotos() {
       <Modal visible={Boolean(preview)} transparent animationType="fade" onRequestClose={() => setPreview(null)}>
         <View className="flex-1 bg-black/90 px-5 pt-12 pb-8">
           <View className="flex-row items-center justify-between">
-            <Text className="font-semibold text-[15.5px] text-white/80">
+            <Text className="font-semibold text-[17.5px] text-white/80">
               {preview ? `Фото · ${shortDay(preview.date)}` : ''}
             </Text>
             <Pressable
@@ -308,7 +308,7 @@ export function ProgressPhotos() {
             }`}
           >
             <Trash2 size={19} color="#fb7185" />
-            <Text className="font-bold text-[15.5px] text-rose-300">
+            <Text className="font-bold text-[17.5px] text-rose-300">
               {confirmDel ? 'Точно удалить? Нажмите ещё раз' : 'Удалить фото'}
             </Text>
           </Pressable>

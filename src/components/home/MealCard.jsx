@@ -70,11 +70,11 @@ export function MealCard({ meal, consumed, onAdd }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="font-semibold text-[15.5px] leading-tight text-bear-text"
+          className="font-semibold text-[17.5px] leading-tight text-bear-text"
         >
           {meal.short || meal.name}
         </Text>
-        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[13px] text-bear-dim">
+        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[15px] text-bear-dim">
           {formatNum(consumed)} ккал
         </Text>
       </View>

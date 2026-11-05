@@ -36,7 +36,7 @@ export function MotivationBanner() {
 
       <View className="absolute inset-0 flex-row items-center px-5 py-6">
         <View className="max-w-[250px] flex-row items-end">
-          <Text className="font-extrabold text-[20px] leading-snug text-white">
+          <Text className="font-extrabold text-[22px] leading-snug text-white">
             {QUOTE}
           </Text>
           <View className="ml-1.5 mb-0.5">

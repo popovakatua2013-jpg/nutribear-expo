@@ -34,7 +34,7 @@ export function ProgressChart({ steps }) {
         className="min-w-0 flex-1 items-center justify-center"
         style={{ height: H }}
       >
-        <Text className="text-center font-sans text-[13px] leading-relaxed text-bear-dim">
+        <Text className="text-center font-sans text-[15px] leading-relaxed text-bear-dim">
           Пока нет данных за неделю.{'\n'}Добавляйте шаги кнопкой «+» на главной
         </Text>
       </View>

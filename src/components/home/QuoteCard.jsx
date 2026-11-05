@@ -15,7 +15,7 @@ export function QuoteCard() {
       accessibilityLabel="Мотивация"
       className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
     >
-      <Text className="p-5 font-extrabold text-[19px] leading-snug tracking-tight text-bear-text">
+      <Text className="p-5 font-extrabold text-[21px] leading-snug tracking-tight text-bear-text">
         Маленькие шаги приводят к большим результатам 💚
       </Text>
 

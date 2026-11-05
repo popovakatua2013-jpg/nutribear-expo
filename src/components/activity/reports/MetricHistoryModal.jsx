@@ -133,10 +133,10 @@ export function MetricHistoryModal({
             <View className="flex-row items-center gap-2.5 border-b border-bear-line px-5 pb-3 pt-4">
               <BodyChip icon={<metric.Icon size={17} />} />
               <View className="min-w-0 flex-1">
-                <Text className="font-bold text-[18px] tracking-tight text-bear-text">
+                <Text className="font-bold text-[20px] tracking-tight text-bear-text">
                   {`${metric.label} · история`}
                 </Text>
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub">
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[15px] leading-snug text-bear-sub">
                   {`Динамика ${metric.gen} за ${days} ${pluralDays(days)}`}
                 </Text>
               </View>
@@ -169,15 +169,15 @@ export function MetricHistoryModal({
                       accessibilityLabel={`В среднем за день: ${metric.fmt(avg)}`}
                       className="rounded-2xl border border-bear-bodyLine bg-white/[0.04] p-4"
                     >
-                      <Text className="font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
+                      <Text className="font-sans text-[15px] font-semibold uppercase tracking-wide text-bear-sub">
                         В среднем за день
                       </Text>
-                      <Text className="mt-1 font-extrabold text-[24px] leading-tight tracking-tight text-bear-text">
+                      <Text className="mt-1 font-extrabold text-[26px] leading-tight tracking-tight text-bear-text">
                         {metric.fmt(avg)}
                       </Text>
                       <View className="mt-1 flex-row items-center gap-1">
                         {pct !== 0 && <Arrow size={15} color={tone} />}
-                        <Text className="font-medium text-[13px]" style={{ color: tone }}>
+                        <Text className="font-medium text-[15px]" style={{ color: tone }}>
                           {`${pct > 0 ? '+' : ''}${pct}% ${prevLabel(days)}`}
                         </Text>
                       </View>
@@ -189,7 +189,7 @@ export function MetricHistoryModal({
                         клетки тоньше 3px — день там выбирается точками
                         теплокарты и «Лучшие дни» */}
                     <View>
-                      <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
+                      <Text className="mb-1.5 px-1 font-sans text-[15px] font-semibold uppercase tracking-wide text-bear-sub">
                         {`По дням · ${days} дн.`}
                       </Text>
                       <View
@@ -217,7 +217,7 @@ export function MetricHistoryModal({
                               {isMax && (
                                 <Text
                                   numberOfLines={1}
-                                  className="mb-0.5 text-center font-sans text-[11px] font-bold"
+                                  className="mb-0.5 text-center font-sans text-[13px] font-bold"
                                   style={{ color: metric.color }}
                                 >
                                   {metric.fmt(v)}
@@ -246,7 +246,7 @@ export function MetricHistoryModal({
                           <Text
                             key={row.key}
                             numberOfLines={1}
-                            className={`flex-1 text-center font-sans text-[11px] ${
+                            className={`flex-1 text-center font-sans text-[13px] ${
                               row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
                             }`}
                           >
@@ -259,7 +259,7 @@ export function MetricHistoryModal({
                     {/* Лучшие дни + теплокарта по дням недели */}
                     <View className="flex-row gap-4">
                       <View className="min-w-0 flex-1">
-                        <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
+                        <Text className="mb-1.5 px-1 font-sans text-[15px] font-semibold uppercase tracking-wide text-bear-sub">
                           Лучшие дни
                         </Text>
                         {top.map(({ row, value }, i) => (
@@ -280,16 +280,16 @@ export function MetricHistoryModal({
                                 justifyContent: 'center',
                               }}
                             >
-                              <Text className="font-bold text-[13px]" style={{ color: metric.color }}>
+                              <Text className="font-bold text-[15px]" style={{ color: metric.color }}>
                                 {i + 1}
                               </Text>
                             </View>
-                            <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[13px] text-bear-sub">
+                            <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[15px] text-bear-sub">
                               {row.label}
                             </Text>
                             <Text
                               numberOfLines={1}
-                              className={`shrink-0 font-semibold text-[14px] ${row.key === todayKey ? 'text-bear-text' : 'text-bear-soft'}`}
+                              className={`shrink-0 font-semibold text-[16px] ${row.key === todayKey ? 'text-bear-text' : 'text-bear-soft'}`}
                             >
                               {metric.fmt(value)}
                             </Text>
@@ -298,7 +298,7 @@ export function MetricHistoryModal({
                       </View>
 
                       <View className="shrink-0">
-                        <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
+                        <Text className="mb-1.5 px-1 font-sans text-[15px] font-semibold uppercase tracking-wide text-bear-sub">
                           По дням недели
                         </Text>
                         <View style={{ width: 7 * DOT + 6 * GAP }}>
@@ -306,7 +306,7 @@ export function MetricHistoryModal({
                             {WD.map((w) => (
                               <Text
                                 key={w}
-                                className="text-center font-sans text-[11px] text-bear-dim"
+                                className="text-center font-sans text-[13px] text-bear-dim"
                                 style={{ width: DOT }}
                               >
                                 {w}
@@ -356,7 +356,7 @@ export function MetricHistoryModal({
                               backgroundColor: levelColor(metric, level),
                             }}
                           />
-                          <Text className="font-sans text-[12.5px] text-bear-dim">{label}</Text>
+                          <Text className="font-sans text-[14.5px] text-bear-dim">{label}</Text>
                         </View>
                       ))}
                     </View>
@@ -367,13 +367,13 @@ export function MetricHistoryModal({
                     accessibilityLabel={`${metric.label}: за период нет записей`}
                     className="items-center justify-center px-4 py-7"
                   >
-                    <Text className="text-[30px]">🐻</Text>
-                    <Text maxFontSizeMultiplier={1.2} className="mt-2 font-bold text-[16px] text-bear-text">
+                    <Text className="text-[32px]">🐻</Text>
+                    <Text maxFontSizeMultiplier={1.2} className="mt-2 font-bold text-[18px] text-bear-text">
                       Нет записей
                     </Text>
                     <Text
                       maxFontSizeMultiplier={1.25}
-                      className="mt-1 text-center font-sans text-[13px] leading-snug text-bear-sub"
+                      className="mt-1 text-center font-sans text-[15px] leading-snug text-bear-sub"
                     >
                       За выбранный период дневник ничего не фиксировал — запишите шаги, воду, еду
                       или тренировку, и здесь появится история
@@ -392,7 +392,7 @@ export function MetricHistoryModal({
                 accessibilityLabel="Закрыть историю показателя"
                 className="items-center rounded-2xl bg-white/10 py-3 active:opacity-70"
               >
-                <Text className="font-bold text-[15.5px] text-bear-text">Закрыть</Text>
+                <Text className="font-bold text-[17.5px] text-bear-text">Закрыть</Text>
               </Pressable>
             </View>
           </View>

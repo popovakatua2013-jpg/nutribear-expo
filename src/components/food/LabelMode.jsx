@@ -61,7 +61,7 @@ export function LabelMode({ onPick }) {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
-      <Text className="px-1 font-sans text-[14.5px] leading-[17px] text-bear-sub">
+      <Text className="px-1 font-sans text-[16.5px] leading-[19px] text-bear-sub">
         Сфотографируйте таблицу пищевой ценности с упаковки — калории и БЖУ на 100 г
         подставятся сами. Распознанные значения можно поправить перед добавлением.
       </Text>
@@ -81,8 +81,8 @@ export function LabelMode({ onPick }) {
               <Camera size={19} color="#FFFFFF" />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[15.5px] text-bear-text">Снять этикетку</Text>
-              <Text className="font-sans text-[13px] text-bear-sub">Камера — таблицу крупным планом</Text>
+              <Text className="font-bold text-[17.5px] text-bear-text">Снять этикетку</Text>
+              <Text className="font-sans text-[15px] text-bear-sub">Камера — таблицу крупным планом</Text>
             </View>
           </Pressable>
           <Pressable
@@ -98,8 +98,8 @@ export function LabelMode({ onPick }) {
               <Images size={19} color="#FFFFFF" />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[15.5px] text-bear-text">Из галереи</Text>
-              <Text className="font-sans text-[13px] text-bear-sub">Уже снятое фото упаковки</Text>
+              <Text className="font-bold text-[17.5px] text-bear-text">Из галереи</Text>
+              <Text className="font-sans text-[15px] text-bear-sub">Уже снятое фото упаковки</Text>
             </View>
           </Pressable>
         </View>
@@ -124,13 +124,13 @@ export function LabelMode({ onPick }) {
       {busy && (
         <View className="mt-4 flex-row items-center justify-center gap-2">
           <ActivityIndicator color="#38BDF8" />
-          <Text className="font-sans text-[15px] text-bear-sub">Читаем этикетку…</Text>
+          <Text className="font-sans text-[17px] text-bear-sub">Читаем этикетку…</Text>
         </View>
       )}
 
       {error ? (
         <View className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-          <Text className="font-sans text-[14.5px] leading-[17px] text-bear-text">{error}</Text>
+          <Text className="font-sans text-[16.5px] leading-[19px] text-bear-text">{error}</Text>
           <Pressable
             onPress={() => recognize(photo)}
             accessibilityRole="button"
@@ -138,7 +138,7 @@ export function LabelMode({ onPick }) {
             className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
           >
             <RefreshCcw size={15} color="#AEB9D9" />
-            <Text className="font-semibold text-[14.5px] text-bear-soft">Попробовать ещё раз</Text>
+            <Text className="font-semibold text-[16.5px] text-bear-soft">Попробовать ещё раз</Text>
           </Pressable>
         </View>
       ) : null}

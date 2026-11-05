@@ -246,7 +246,7 @@ export default function OrganismScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="font-extrabold text-[22px] tracking-tight text-bear-text">
+        <Text className="font-extrabold text-[24px] tracking-tight text-bear-text">
           Организм
         </Text>
 
@@ -262,7 +262,7 @@ export default function OrganismScreen() {
             }}
           >
             <Info size={18} color="#C084FC" style={{ marginTop: 1 }} />
-            <Text className="min-w-0 flex-1 font-sans text-[14.5px] leading-snug" style={{ color: '#E9D5FF' }}>
+            <Text className="min-w-0 flex-1 font-sans text-[16.5px] leading-snug" style={{ color: '#E9D5FF' }}>
               Это живой двойник твоего дня: вода наполняет гидратацию, дневник
               питания даёт белок и энергию, шаги и тренировки — активность.
               Гладь его, выдавливай прыщи, если игнорируешь день, и ходи к
@@ -306,7 +306,7 @@ export default function OrganismScreen() {
             }}
           >
             <Stethoscope size={18} color="#FACC15" />
-            <Text className="flex-1 font-medium text-[14.5px] leading-snug" style={{ color: '#FDE68A' }}>
+            <Text className="flex-1 font-medium text-[16.5px] leading-snug" style={{ color: '#FDE68A' }}>
               Организм в упадке. Доктор Топтыгин подскажет, что чинить
             </Text>
             <ChevronDown size={18} color="#FDE68A" />
@@ -372,7 +372,7 @@ export default function OrganismScreen() {
 
         <CollectionCard items={game.items} opened={game.opened} />
 
-        <Text className="text-center font-sans text-[13px]" style={{ color: 'rgba(127,168,144,0.7)' }}>
+        <Text className="text-center font-sans text-[15px]" style={{ color: 'rgba(127,168,144,0.7)' }}>
           Демо-экономика · без pay-to-win · ресурсы только из дневника
         </Text>
       </ScrollView>

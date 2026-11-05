@@ -29,23 +29,23 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
             accessibilityLabel={`Изменить порцию «${entry.name}»`}
             className="flex-row items-center gap-1 active:opacity-70"
           >
-            <Text className="shrink-0 text-[14.5px]">{entry.emoji}</Text>
+            <Text className="shrink-0 text-[16.5px]">{entry.emoji}</Text>
             <View className="min-w-0 flex-1">
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.25}
-                className="font-medium text-[13px] text-bear-bright"
+                className="font-medium text-[15px] text-bear-bright"
               >
                 {entry.name}
               </Text>
-              <Text maxFontSizeMultiplier={1.25} className="font-sans text-[13px] text-bear-sub2">
+              <Text maxFontSizeMultiplier={1.25} className="font-sans text-[15px] text-bear-sub2">
                 {`${entry.grams}\u00A0г · ${formatNum(entry.kcal)}`}
               </Text>
               {entry.desc ? (
                 <Text
                   numberOfLines={2}
                   maxFontSizeMultiplier={1.25}
-                  className="font-sans text-[13px] leading-[15px] text-bear-sub"
+                  className="font-sans text-[15px] leading-[17px] text-bear-sub"
                 >
                   {entry.desc}
                 </Text>
@@ -66,7 +66,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
               </Pressable>
             </View>
           </Pressable>
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[12.5px] text-bear-dim">
+          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
             {`${bjuLine(entry)}${entry.time ? `\u00A0· ${entry.time}` : ''}`}
           </Text>
         </View>
@@ -81,7 +81,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
         >
           <Text
             maxFontSizeMultiplier={1.25}
-            className="font-sans text-[13px] font-medium text-[#8DABFF]"
+            className="font-sans text-[15px] font-medium text-[#8DABFF]"
           >
             {`Ещё ${hidden} ${dishesWord(hidden)} · открыть все приёмы`}
           </Text>

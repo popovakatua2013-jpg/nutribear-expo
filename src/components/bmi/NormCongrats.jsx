@@ -131,10 +131,10 @@ export function NormCongrats({ open, onClose, bmi }) {
             resizeMode="contain"
             style={{ width: 128, height: 128 }}
           />
-          <Text maxFontSizeMultiplier={1.2} className="mt-1 font-extrabold text-[24px] text-bear-text">
+          <Text maxFontSizeMultiplier={1.2} className="mt-1 font-extrabold text-[26px] text-bear-text">
             {name ? `${name}, ты в норме! 🎉` : 'Ты в норме! 🎉'}
           </Text>
-          <Text className="mt-1.5 text-center font-sans text-[15.5px] leading-relaxed text-bear-soft">
+          <Text className="mt-1.5 text-center font-sans text-[17.5px] leading-relaxed text-bear-soft">
             Твой ИМТ теперь {fmtDecimal(bmi)} — он вошёл в здоровый диапазон 18.5–24.9. Это
             настоящий результат: медвежонок тобой гордится! 🐻💜
           </Text>
@@ -146,7 +146,7 @@ export function NormCongrats({ open, onClose, bmi }) {
               accessibilityLabel="Закрыть поздравление"
               className="min-w-0 flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
             >
-              <Text className="font-bold text-[17px] text-white">Ура! 🎉</Text>
+              <Text className="font-bold text-[19px] text-white">Ура! 🎉</Text>
             </Pressable>
             <Pressable
               onPress={shareResult}

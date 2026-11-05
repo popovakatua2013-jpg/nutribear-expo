@@ -27,13 +27,13 @@ export function PaywallStep({ onNext, onBack }) {
         <View className="gap-2.5">
           <Pressable onPress={onNext} className="overflow-hidden rounded-2xl">
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-              <Text className="py-3.5 text-center font-bold text-[18px] text-white">
+              <Text className="py-3.5 text-center font-bold text-[20px] text-white">
                 Начать бесплатно
               </Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={onNext} className="py-2.5">
-            <Text className="text-center font-semibold text-[15.5px] text-bear-sub2">
+            <Text className="text-center font-semibold text-[17.5px] text-bear-sub2">
               Пропустить
             </Text>
           </Pressable>
@@ -45,7 +45,7 @@ export function PaywallStep({ onNext, onBack }) {
           {FEATURES.map((f) => (
             <View key={f} className="flex-row items-center gap-2">
               <Check size={18} color="#4ade80" />
-              <Text className="min-w-0 flex-1 font-sans text-[15.5px] text-[#aab4d4]">{f}</Text>
+              <Text className="min-w-0 flex-1 font-sans text-[17.5px] text-[#aab4d4]">{f}</Text>
             </View>
           ))}
         </View>
@@ -63,24 +63,24 @@ export function PaywallStep({ onNext, onBack }) {
               >
                 <View className="min-w-0 flex-1">
                   <View className="flex-row items-center">
-                    <Text className="font-bold text-[17px] text-bear-text">{p.title}</Text>
+                    <Text className="font-bold text-[19px] text-bear-text">{p.title}</Text>
                     {p.best ? (
                       <View className="ml-2 rounded-full bg-amber-400/15 px-2 py-0.5">
-                        <Text className="font-bold text-[13px] text-amber-300">Выгодно</Text>
+                        <Text className="font-bold text-[15px] text-amber-300">Выгодно</Text>
                       </View>
                     ) : null}
                   </View>
                   {p.note ? (
-                    <Text className="font-sans text-[13px] text-bear-sub2">{p.note}</Text>
+                    <Text className="font-sans text-[15px] text-bear-sub2">{p.note}</Text>
                   ) : null}
                 </View>
-                <Text className="font-extrabold text-[18px] text-bear-text">{p.price}</Text>
+                <Text className="font-extrabold text-[20px] text-bear-text">{p.price}</Text>
               </Pressable>
             )
           })}
         </View>
 
-        <Text className="text-center font-sans text-[13px] text-bear-dim">
+        <Text className="text-center font-sans text-[15px] text-bear-dim">
           Сейчас все функции открыты бесплатно — оплата появится в обновлениях
         </Text>
       </View>

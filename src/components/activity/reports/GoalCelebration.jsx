@@ -202,16 +202,16 @@ export function GoalCelebration() {
             <PartyPopper size={22} color="#fbbf24" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[17px] leading-snug text-[#fbbf24]">
+            <Text className="font-bold text-[19px] leading-snug text-[#fbbf24]">
               Цель по весу достигнута!
             </Text>
-            <Text className="mt-0.5 font-sans text-[14px] leading-snug text-bear-sub">
+            <Text className="mt-0.5 font-sans text-[16px] leading-snug text-bear-sub">
               Вес {fmtDecimal(weightKg)} кг
               {goalReachedAt ? ` · достигнута ${shortDateNum(new Date(goalReachedAt))}` : ''}
             </Text>
           </View>
         </View>
-        <Text className="mt-2.5 font-sans text-[14px] leading-snug text-bear-sub">
+        <Text className="mt-2.5 font-sans text-[16px] leading-snug text-bear-sub">
           {heldDays >= 1
             ? `🏅 Результат держится: ${heldDays} ${pluralDays(heldDays)}. `
             : '🏅 Результат взят — с этого дня держим его. '}
@@ -227,7 +227,7 @@ export function GoalCelebration() {
             className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#fbbf24]/15 py-2.5 active:opacity-80"
           >
             <Scale size={17} color="#fbbf24" />
-            <Text className="font-semibold text-[15px] text-[#fbbf24]">
+            <Text className="font-semibold text-[17px] text-[#fbbf24]">
               {`Перейти на поддержку · ${formatNum(plan.kcal)} ккал`}
             </Text>
           </Pressable>
@@ -243,7 +243,7 @@ export function GoalCelebration() {
           }`}
         >
           <Share2 size={16} color="#fbbf24" />
-          <Text className="font-semibold text-[15px] text-[#fbbf24]">Поделиться</Text>
+          <Text className="font-semibold text-[17px] text-[#fbbf24]">Поделиться</Text>
         </Pressable>
 
         {overdue && (
@@ -253,7 +253,7 @@ export function GoalCelebration() {
             accessibilityLabel="Записать вес во вкладке Тело"
             className="mt-1.5 active:opacity-70"
           >
-            <Text className="font-sans text-[13px] leading-snug text-[#d9b96a]">
+            <Text className="font-sans text-[15px] leading-snug text-[#d9b96a]">
               {Number.isFinite(lastWeighDays)
                 ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
                 : '📅 Записать вес во вкладке Тело — взвешивание раз в неделю держит стрик честным →'}
@@ -279,10 +279,10 @@ export function GoalCelebration() {
           <Target size={22} color="#8DABFF" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[17px] leading-snug text-bear-text">
+          <Text className="font-bold text-[19px] leading-snug text-bear-text">
             Возвращаемся к результату
           </Text>
-          <Text className="mt-0.5 font-sans text-[14px] leading-snug text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[16px] leading-snug text-bear-sub">
             Цель {fmtDecimal(goalWeightKg)} кг была достигнута{' '}
             {shortDateNum(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
             {fmtDecimal(Math.abs(diff))} кг

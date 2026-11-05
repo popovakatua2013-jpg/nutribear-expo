@@ -43,14 +43,14 @@ export function WeightNudge() {
         style={{ width: 34, height: 34 }}
       />
       <View className="min-w-0 flex-1">
-        <Text className="font-semibold text-[15px] leading-snug text-bear-text">
+        <Text className="font-semibold text-[17px] leading-snug text-bear-text">
           Медвежонок соскучился по весам 🐻
         </Text>
-        <Text className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub">
+        <Text className="mt-0.5 font-sans text-[15px] leading-snug text-bear-sub">
           Последнее взвешивание было {days} {pluralDays(days)} назад — раз в неделю самое точное
         </Text>
       </View>
-      <Text className="shrink-0 font-bold text-[14.5px] text-[#8DABFF]">Записать →</Text>
+      <Text className="shrink-0 font-bold text-[16.5px] text-[#8DABFF]">Записать →</Text>
     </Pressable>
   )
 }

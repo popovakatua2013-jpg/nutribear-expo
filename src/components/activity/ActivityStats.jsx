@@ -91,13 +91,13 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
       </View>
 
       {/* текст — на всю ширину карточки, ничего не обрезается */}
-      <FitLine className="mt-2 font-medium text-[13px] text-bear-soft">
+      <FitLine className="mt-2 font-medium text-[15px] text-bear-soft">
         {label}
       </FitLine>
-      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text">
+      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[22px] leading-tight tracking-tight text-bear-text">
         {value}
       </FitLine>
-      <FitLine className="mt-0.5 font-sans text-[12.5px] text-bear-sub2">
+      <FitLine className="mt-0.5 font-sans text-[14.5px] text-bear-sub2">
         {sub}
       </FitLine>
       {/* итоговая строка — есть у всех карточек, поэтому ряды одной высоты */}
@@ -116,7 +116,7 @@ function Foot({ tone = 'muted', children }) {
           : tone === 'sky' ? 'text-sky-300'
             : 'text-bear-sub2'
   return (
-    <FitLine className={`mt-0.5 font-bold text-[13px] ${color}`}>
+    <FitLine className={`mt-0.5 font-bold text-[15px] ${color}`}>
       {children}
     </FitLine>
   )
@@ -149,7 +149,7 @@ export function ActivityStats({
   const minutesFoot = (
     <View className="mt-0.5 flex-row items-center justify-between">
       <FitLine
-        className={`flex-1 font-bold text-[13px] ${
+        className={`flex-1 font-bold text-[15px] ${
           minutesGoal > 0
             ? minutes >= minutesGoal ? 'text-emerald-300' : 'text-violet-300'
             : 'text-bear-sub2'

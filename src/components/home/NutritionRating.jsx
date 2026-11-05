@@ -42,10 +42,10 @@ function MetricRow({ label, value, norm, score }) {
   return (
     <View>
       <View className="flex-row items-baseline justify-between gap-2">
-        <Text maxFontSizeMultiplier={MAX} className="font-medium text-[15px] text-bear-soft">
+        <Text maxFontSizeMultiplier={MAX} className="font-medium text-[17px] text-bear-soft">
           {label}
         </Text>
-        <Text maxFontSizeMultiplier={MAX} className="font-sans text-[13px] text-bear-dim">
+        <Text maxFontSizeMultiplier={MAX} className="font-sans text-[15px] text-bear-dim">
           {norm}
         </Text>
       </View>
@@ -55,7 +55,7 @@ function MetricRow({ label, value, norm, score }) {
         </View>
         <Text
           maxFontSizeMultiplier={MAX}
-          className={`w-14 text-right font-bold text-[14.5px] ${
+          className={`w-14 text-right font-bold text-[16.5px] ${
             score >= 70 ? 'text-emerald-300' : score >= 45 ? 'text-amber-300' : 'text-bear-soft'
           }`}
         >
@@ -147,7 +147,7 @@ export function NutritionRating() {
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2">
           <BodyChip icon={<Leaf size={17} />} />
-          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
             Рейтинг питания
           </Text>
         </View>
@@ -168,7 +168,7 @@ export function NutritionRating() {
             >
               <Text
                 maxFontSizeMultiplier={MAX}
-                className={`font-semibold text-[13px] ${mode === id ? 'text-white' : 'text-bear-sub'}`}
+                className={`font-semibold text-[15px] ${mode === id ? 'text-white' : 'text-bear-sub'}`}
               >
                 {lb}
               </Text>
@@ -188,25 +188,25 @@ export function NutritionRating() {
               accessibilityState={{ selected: expanded }}
               className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-line bg-white/[0.04] active:opacity-70"
             >
-              <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[26px] tracking-tight text-bear-text">
+              <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[28px] tracking-tight text-bear-text">
                 {r.overall}
               </Text>
             </Pressable>
             <View className="min-w-0 flex-1">
-              <Text maxFontSizeMultiplier={MAX} className="font-bold text-[18px] text-bear-text">
+              <Text maxFontSizeMultiplier={MAX} className="font-bold text-[20px] text-bear-text">
                 {emoji} {label}
-                <Text maxFontSizeMultiplier={MAX} className="font-medium text-[14.5px] text-bear-sub">
+                <Text maxFontSizeMultiplier={MAX} className="font-medium text-[16.5px] text-bear-sub">
                   {'  '}{formatNum(Math.round(n.kcal))} ккал{mode === 'month' ? '/день' : ''}
                 </Text>
               </Text>
-              <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[13px] leading-snug text-bear-dim">
+              <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[15px] leading-snug text-bear-dim">
                 {caption}
                 {noFiber ? ' · без клетчатки балл не выше «Средне»' : ''}
               </Text>
               {!explain && (
                 <Text
                   onPress={() => setExplain(true)}
-                  className="mt-0.5 font-semibold text-[13px] text-[#8DABFF]"
+                  className="mt-0.5 font-semibold text-[15px] text-[#8DABFF]"
                 >
                   Что даёт этот балл?
                 </Text>
@@ -217,16 +217,16 @@ export function NutritionRating() {
           {/* Пояснение: из чего складывается балл и как его поднять */}
           {explain && (
             <View className="mt-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5 py-3">
-              <Text className="font-semibold text-[14.5px] text-bear-text">
+              <Text className="font-semibold text-[16.5px] text-bear-text">
                 Балл 0–100 — насколько сбалансирован рацион за период
               </Text>
-              <Text className="mt-1 font-sans text-[13px] leading-[15px] text-bear-sub">
+              <Text className="mt-1 font-sans text-[15px] leading-[17px] text-bear-sub">
                 Половина оценки — клетчатка (норма {r.fiber.norm} г) и сахар (лучше до 50 г).
                 Ещё четверть — баланс белков, жиров и углеводов. Остальное —
                 витамины и минералы из базы продуктов. 80+ — «Отлично», 60–79 —
                 «Хорошо», 40–59 — «Средне», ниже — «Слабо».
               </Text>
-              <Text className="mt-1.5 font-sans text-[13px] leading-[15px] text-bear-sub">
+              <Text className="mt-1.5 font-sans text-[15px] leading-[17px] text-bear-sub">
                 Поднимают балл: овощи, ягоды и цельнозерновые (клетчатка),
                 меньше сладкого, разнообразное меню и блюда из базы — они
                 несут данные о витаминах. Это ориентир, а не запрет: балл
@@ -234,7 +234,7 @@ export function NutritionRating() {
               </Text>
               <Text
                 onPress={() => setExplain(false)}
-                className="mt-1.5 self-end font-semibold text-[13px] text-[#8DABFF]"
+                className="mt-1.5 self-end font-semibold text-[15px] text-[#8DABFF]"
               >
                 Понятно, скрыть
               </Text>
@@ -262,20 +262,20 @@ export function NutritionRating() {
               ) : (
                 <ChevronDown size={16} color="#AEB9D9" />
               )}
-              <Text className="font-semibold text-[14.5px] text-bear-sub">
+              <Text className="font-semibold text-[16.5px] text-bear-sub">
                 {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}
               </Text>
             </Pressable>
 
             {expanded && microNote ? (
-              <Text className="mt-2 font-sans text-[13px] leading-[16px] text-bear-dim">
+              <Text className="mt-2 font-sans text-[15px] leading-[18px] text-bear-dim">
                 {microNote}
               </Text>
             ) : null}
           </View>
         </>
       ) : (
-        <Text className="mt-3 font-sans text-[14.5px] leading-relaxed text-bear-dim">
+        <Text className="mt-3 font-sans text-[16.5px] leading-relaxed text-bear-dim">
           {mode === 'day'
             ? 'Добавьте блюда в дневник — и мишка оценит рацион по клетчатке, сахару и балансу БЖУ 🐻'
             : `За ${monthName} записей ещё нет — переключитесь на «День» или добавьте блюда 🐻`}

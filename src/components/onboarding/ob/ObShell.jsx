@@ -40,11 +40,11 @@ export function ObShell({
         )}
         <View className="min-w-0 flex-1">
           {sub ? (
-            <Text className="font-bold text-[13px] uppercase tracking-[0.14em] text-[#6c8cff]">
+            <Text className="font-bold text-[15px] uppercase tracking-[0.14em] text-[#6c8cff]">
               {sub}
             </Text>
           ) : null}
-          <Text numberOfLines={1} className="font-extrabold text-[24px] tracking-tight text-bear-text">
+          <Text numberOfLines={1} className="font-extrabold text-[26px] tracking-tight text-bear-text">
             {title}
           </Text>
         </View>
@@ -70,7 +70,7 @@ export function ObShell({
               className={`overflow-hidden rounded-2xl ${nextDisabled ? 'opacity-40' : ''}`}
             >
               <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                <Text className="py-3.5 text-center font-bold text-[18px] text-white">
+                <Text className="py-3.5 text-center font-bold text-[20px] text-white">
                   {nextLabel}
                 </Text>
               </LinearGradient>

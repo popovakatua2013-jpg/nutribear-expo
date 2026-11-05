@@ -41,10 +41,10 @@ export function GameHeader({ icon: Icon, iconColor, iconBg, title, subtitle, rig
           <Icon size={23} color={iconColor} />
         </View>
         <View className="flex-1 pt-0.5">
-          <Text className="font-extrabold text-[18px] tracking-tight" style={{ color: GAME.text }}>
+          <Text className="font-extrabold text-[20px] tracking-tight" style={{ color: GAME.text }}>
             {title}
           </Text>
-          <Text className="mt-0.5 font-sans text-[14px] leading-snug" style={{ color: GAME.dim }}>
+          <Text className="mt-0.5 font-sans text-[16px] leading-snug" style={{ color: GAME.dim }}>
             {subtitle}
           </Text>
         </View>
@@ -62,7 +62,7 @@ export function RightPill({ icon: Icon, text, color = GAME.lime }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1, borderColor: GAME.line }}
     >
       {Icon && <Icon size={15} color={color} />}
-      <Text className="font-bold text-[14.5px]" style={{ color }}>
+      <Text className="font-bold text-[16.5px]" style={{ color }}>
         {text}
       </Text>
     </View>
@@ -84,7 +84,7 @@ export function Panel({ children, style }) {
 // Метка капсом (ТЕКУЩАЯ ФОРМА, ВАШ УРОН…)
 export function Caps({ children, color = GAME.dim2, style }) {
   return (
-    <Text className="font-bold text-[13px] tracking-[0.08em]" style={{ color, ...style }}>
+    <Text className="font-bold text-[15px] tracking-[0.08em]" style={{ color, ...style }}>
       {children}
     </Text>
   )
@@ -106,7 +106,7 @@ export function Dot({ children, color = GAME.emerald }) {
   return (
     <View className="flex-row items-start gap-2.5 rounded-xl px-3 py-2.5" style={{ backgroundColor: GAME.panel }}>
       <View className="mt-1.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-      <Text className="flex-1 font-sans text-[14.5px] leading-snug" style={{ color: GAME.dim }}>
+      <Text className="flex-1 font-sans text-[16.5px] leading-snug" style={{ color: GAME.dim }}>
         {children}
       </Text>
     </View>

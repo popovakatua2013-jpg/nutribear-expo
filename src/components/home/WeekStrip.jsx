@@ -69,11 +69,11 @@ export function WeekStrip({
           >
             {/* «Пн 27» в одну строку, как запись в тетради */}
             <View className="flex-row items-baseline">
-              <Text className="font-medium text-[12.5px]" style={{ color: '#8B96B8' }}>
+              <Text className="font-medium text-[14.5px]" style={{ color: '#8B96B8' }}>
                 {WEEKDAYS[i]}
               </Text>
               <Text
-                className="ml-[3px] font-bold text-[14.5px] leading-[16px]"
+                className="ml-[3px] font-bold text-[16.5px] leading-[18px]"
                 style={{ color: numColor }}
               >
                 {d.getDate()}

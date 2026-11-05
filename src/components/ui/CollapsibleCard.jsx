@@ -50,7 +50,7 @@ export function CollapsibleCard({
           {icon ? <BodyChip icon={icon} /> : null}
           <Text
             numberOfLines={1}
-            className="min-w-0 flex-1 font-bold text-[18px] tracking-tight text-bear-text"
+            className="min-w-0 flex-1 font-bold text-[20px] tracking-tight text-bear-text"
           >
             {title}
           </Text>
@@ -58,7 +58,7 @@ export function CollapsibleCard({
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.2}
-              className="shrink-0 font-semibold text-[14px] text-bear-dim"
+              className="shrink-0 font-semibold text-[16px] text-bear-dim"
             >
               {summary}
             </Text>

@@ -39,7 +39,7 @@ export function RecipeMode({ onPick }) {
       <View className="mb-3 flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-1.5 px-1">
           <ChefHat size={16} color="#6C8CFF" />
-          <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-link">
+          <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-link">
             Мои рецепты
           </Text>
         </View>
@@ -49,7 +49,7 @@ export function RecipeMode({ onPick }) {
           className="flex-row items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 active:bg-white/10"
         >
           <Plus size={16} color="#AEB9D9" />
-          <Text className="font-semibold text-[13px] text-bear-soft">Новый</Text>
+          <Text className="font-semibold text-[15px] text-bear-soft">Новый</Text>
         </Pressable>
       </View>
 
@@ -91,7 +91,7 @@ export function RecipeMode({ onPick }) {
                 accessibilityLabel={`Изменить рецепт «${r.name}»`}
                 className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-60"
               >
-                <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[13px] text-bear-dim">
+                <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[15px] text-bear-dim">
                   {`${r.name} · ${r.grams} г${Math.round(r.servings || 1) > 1 ? ` · ${Math.round(r.servings || 1)} порции` : ''}`}
                 </Text>
                 <Pencil size={14} color="#8B96B8" />
@@ -106,7 +106,7 @@ export function RecipeMode({ onPick }) {
               </Pressable>
             </View>
           ))}
-          <Text className="px-1 font-sans text-[13px] text-bear-dim">
+          <Text className="px-1 font-sans text-[15px] text-bear-dim">
             Нажмите на рецепт, чтобы изменить его
           </Text>
         </View>

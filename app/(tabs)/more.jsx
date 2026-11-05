@@ -40,10 +40,10 @@ export default function MoreScreen() {
         <View className="flex-row items-center gap-3">
           <BodyChip icon={<Settings size={21} />} size={42} />
           <View className="min-w-0 flex-1">
-            <Text className="font-extrabold text-[22px] tracking-tight text-bear-text">
+            <Text className="font-extrabold text-[24px] tracking-tight text-bear-text">
               Ещё
             </Text>
-            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[14px] text-bear-dim">
+            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[16px] text-bear-dim">
               Профиль, цель питания и данные
             </Text>
           </View>

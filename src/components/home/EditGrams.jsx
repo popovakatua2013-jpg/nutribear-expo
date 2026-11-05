@@ -32,10 +32,10 @@ export function EditGrams({ visible, onClose, mealId, entry, mealName }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable className="flex-1 justify-center bg-black/60 px-5" onPress={onClose}>
         <Pressable className="rounded-3xl border border-white/10 bg-bear-pop p-5">
-          <Text className="font-bold text-[18px] text-bear-text">
+          <Text className="font-bold text-[20px] text-bear-text">
             {entry.emoji} {entry.name}
           </Text>
-          <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
             Приём: {mealName} · было {entry.grams} г
           </Text>
 
@@ -45,12 +45,12 @@ export function EditGrams({ visible, onClose, mealId, entry, mealName }) {
 
           <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">
             <View className="flex-row items-center justify-between">
-              <Text className="font-sans text-[14px] text-bear-soft">Итого калорий</Text>
-              <Text className="font-extrabold text-[20px] text-white">
+              <Text className="font-sans text-[16px] text-bear-soft">Итого калорий</Text>
+              <Text className="font-extrabold text-[22px] text-white">
                 ≈ {formatNum(previewKcal)} ккал
               </Text>
             </View>
-            <Text className="mt-1 text-right font-sans text-[13px] text-bear-sub">
+            <Text className="mt-1 text-right font-sans text-[15px] text-bear-sub">
               {bjuLine(previewBju)}
             </Text>
           </View>
@@ -60,7 +60,7 @@ export function EditGrams({ visible, onClose, mealId, entry, mealName }) {
             className="mt-4 rounded-2xl py-3.5 active:opacity-80"
             style={{ backgroundColor: '#7B6CF6' }}
           >
-            <Text className="text-center font-bold text-[17px] text-white">Сохранить</Text>
+            <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
           </Pressable>
         </Pressable>
       </Pressable>

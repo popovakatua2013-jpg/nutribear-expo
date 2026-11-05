@@ -231,7 +231,7 @@ export function WeightCard() {
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
           <ChartLine size={20} color="#7DD3FC" />
         </View>
-        <Text className="min-w-0 flex-1 font-bold text-[20px] tracking-tight text-bear-text">
+        <Text className="min-w-0 flex-1 font-bold text-[22px] tracking-tight text-bear-text">
           Динамика веса
         </Text>
 
@@ -262,7 +262,7 @@ export function WeightCard() {
             className="flex-row items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-[7px] active:opacity-70"
           >
             <Calendar size={15} color="#A78BFA" />
-            <Text className="font-semibold text-[13px] text-[#D6DCF2]">
+            <Text className="font-semibold text-[15px] text-[#D6DCF2]">
               {PERIODS.find((p) => p.id === period)?.label}
             </Text>
             {menuOpen ? (
@@ -291,7 +291,7 @@ export function WeightCard() {
                     className="flex-row items-center justify-between px-3 py-2 active:opacity-60"
                   >
                     <Text
-                      className={`font-semibold text-[14.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+                      className={`font-semibold text-[16.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
                     >
                       {p.label}
                     </Text>
@@ -323,15 +323,15 @@ export function WeightCard() {
             accessibilityLabel="Записать вес"
             className="active:opacity-70"
           >
-            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-sub">
+            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
               Текущий вес
             </Text>
             <Text
               maxFontSizeMultiplier={1.15}
-              className="mt-1.5 font-extrabold text-[25px] leading-none tracking-tight text-bear-text"
+              className="mt-1.5 font-extrabold text-[27px] leading-none tracking-tight text-bear-text"
             >
               {fmtDecimal(weightKg)}
-              <Text className="font-semibold text-[14.5px] text-bear-sub2"> кг</Text>
+              <Text className="font-semibold text-[16.5px] text-bear-sub2"> кг</Text>
             </Text>
           </Pressable>
 
@@ -346,8 +346,8 @@ export function WeightCard() {
             accessibilityLabel={`Рост ${heightCm} сантиметров — изменить`}
             className="mt-1.5 flex-row items-center gap-1 self-start active:opacity-70"
           >
-            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-sub">Рост</Text>
-            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[14px] text-bear-text">
+            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">Рост</Text>
+            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16px] text-bear-text">
               {heightCm} см
             </Text>
             <Pencil size={15} color="#8DABFF" />
@@ -363,7 +363,7 @@ export function WeightCard() {
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.2}
-              className="font-semibold text-[13px]"
+              className="font-semibold text-[15px]"
               style={{ color: toneColor }}
             >
               {periodDelta === 0
@@ -371,19 +371,19 @@ export function WeightCard() {
                 : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
             </Text>
           </View>
-          <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] text-bear-dim">
+          <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
             {DELTA_CAPTION[period]}
           </Text>
 
           <View className="my-2.5 h-px bg-white/[0.06]" />
 
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-sub">
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
             Цель
           </Text>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-bold text-[15.5px] text-bear-text"
+            className="mt-0.5 font-bold text-[17.5px] text-bear-text"
           >
             {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
           </Text>
@@ -395,7 +395,7 @@ export function WeightCard() {
             className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] py-2 active:opacity-70"
           >
             <Target size={14} color="#8DABFF" />
-            <Text className="font-bold text-[13px] text-[#8DABFF]">
+            <Text className="font-bold text-[15px] text-[#8DABFF]">
               {goalWeightKg != null ? 'Изменить' : 'Задать цель'}
             </Text>
           </Pressable>
@@ -419,7 +419,7 @@ export function WeightCard() {
                   backgroundColor: toneColor,
                 }}
               />
-              <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[13px] text-bear-sub">
+              <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-bear-sub">
                 {`Изменение: ${
                   periodDelta === 0
                     ? '0 кг'
@@ -448,7 +448,7 @@ export function WeightCard() {
             <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
             <View className="mt-1 flex-row items-center justify-center gap-1">
               <NotebookText size={14} color="#8DABFF" />
-              <Text className="font-sans text-[12.5px] font-semibold text-[#8DABFF]">
+              <Text className="font-sans text-[14.5px] font-semibold text-[#8DABFF]">
                 {weights.length > 0 ? `Журнал веса · ${weights.length}` : 'Журнал веса'}
               </Text>
             </View>
@@ -475,7 +475,7 @@ export function WeightCard() {
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="font-bold text-[14px] text-bear-text"
+                className="font-bold text-[16px] text-bear-text"
               >
                 {strip.title}
               </Text>
@@ -485,7 +485,7 @@ export function WeightCard() {
                   читаться целиком (фразы короткие, в 2–3 строки) */}
               <Text
                 maxFontSizeMultiplier={1.25}
-                className="font-sans text-[12.5px] leading-snug text-bear-sub"
+                className="font-sans text-[14.5px] leading-snug text-bear-sub"
               >
                 {strip.text}
               </Text>
@@ -525,7 +525,7 @@ export function WeightCard() {
         <View className="flex-1 items-center justify-center bg-black/60 px-6">
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[18px] text-bear-text">Журнал веса</Text>
+              <Text className="font-bold text-[20px] text-bear-text">Журнал веса</Text>
               <Pressable
                 onPress={() => setJournalOpen(false)}
                 accessibilityRole="button"
@@ -538,13 +538,13 @@ export function WeightCard() {
 
             {weights.length === 0 ? (
               <View className="items-center py-5" accessibilityLabel="Журнал веса пуст">
-                <Text className="text-[36px]">🐻</Text>
-                <Text className="mt-2 font-bold text-[16px] text-bear-text">
+                <Text className="text-[38px]">🐻</Text>
+                <Text className="mt-2 font-bold text-[18px] text-bear-text">
                   Журнал пока пуст
                 </Text>
                 <Text
                   maxFontSizeMultiplier={1.25}
-                  className="mt-1 text-center font-sans text-[13px] leading-snug text-bear-sub"
+                  className="mt-1 text-center font-sans text-[15px] leading-snug text-bear-sub"
                 >
                   Запишите первый вес — и здесь появится история взвешиваний
                 </Text>
@@ -557,12 +557,12 @@ export function WeightCard() {
                   accessibilityLabel="Записать вес"
                   className="mt-4 w-full items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
                 >
-                  <Text className="font-bold text-[15.5px] text-white">Записать вес</Text>
+                  <Text className="font-bold text-[17.5px] text-white">Записать вес</Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                <Text className="mt-1 font-sans text-[13px] text-bear-sub">
+                <Text className="mt-1 font-sans text-[15px] text-bear-sub">
                   {`Записей: ${weights.length} · тап по записи — изменить`}
                 </Text>
 
@@ -587,7 +587,7 @@ export function WeightCard() {
                           }}
                         >
                           <Text
-                            className={`shrink-0 font-sans text-[13px] ${
+                            className={`shrink-0 font-sans text-[15px] ${
                               isToday ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
                             }`}
                           >
@@ -595,7 +595,7 @@ export function WeightCard() {
                           </Text>
                           <Text
                             numberOfLines={1}
-                            className="min-w-0 flex-1 text-right font-semibold text-[15px] text-bear-text"
+                            className="min-w-0 flex-1 text-right font-semibold text-[17px] text-bear-text"
                           >
                             {fmtDecimal(w.kg)} кг
                           </Text>
@@ -626,16 +626,16 @@ export function WeightCard() {
         >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[18px] text-bear-text">Изменить вес</Text>
+              <Text className="font-bold text-[20px] text-bear-text">Изменить вес</Text>
               <Pressable onPress={() => setEditing(null)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
                 <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[13px] text-bear-sub">
+            <Text className="mt-1 font-sans text-[15px] text-bear-sub">
               Измерение от {editing ? shortDay(editing.date) : ''}
             </Text>
 
-            <Text className="mt-4 font-medium text-[14px] text-bear-sub">Вес, кг</Text>
+            <Text className="mt-4 font-medium text-[16px] text-bear-sub">Вес, кг</Text>
             <TextInput
               value={kgText}
               onChangeText={setKgText}
@@ -643,7 +643,7 @@ export function WeightCard() {
               maxLength={6}
               textAlign="center"
               accessibilityLabel="Новый вес измерения в килограммах"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[17px] text-white"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
             />
 
             {/* Кнопки: крестик закрытия — в шапке, здесь только «Сохранить» */}
@@ -654,7 +654,7 @@ export function WeightCard() {
                 accessibilityLabel="Сохранить новый вес"
                 className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
               >
-                <Text className="font-bold text-[15.5px] text-white">Сохранить</Text>
+                <Text className="font-bold text-[17.5px] text-white">Сохранить</Text>
               </Pressable>
             </View>
           </View>
@@ -669,16 +669,16 @@ export function WeightCard() {
         >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[18px] text-bear-text">Изменить рост</Text>
+              <Text className="font-bold text-[20px] text-bear-text">Изменить рост</Text>
               <Pressable onPress={() => setHeightOpen(false)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
                 <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[13px] text-bear-sub">
+            <Text className="mt-1 font-sans text-[15px] text-bear-sub">
               ИМТ и норма калорий пересчитаются сами
             </Text>
 
-            <Text className="mt-4 font-medium text-[14px] text-bear-sub">Рост, см</Text>
+            <Text className="mt-4 font-medium text-[16px] text-bear-sub">Рост, см</Text>
             <TextInput
               value={heightText}
               onChangeText={setHeightText}
@@ -686,7 +686,7 @@ export function WeightCard() {
               maxLength={3}
               textAlign="center"
               accessibilityLabel="Рост в сантиметрах"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[17px] text-white"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
             />
 
             <View className="mt-5 flex-row">
@@ -696,7 +696,7 @@ export function WeightCard() {
                 accessibilityLabel="Сохранить рост"
                 className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
               >
-                <Text className="font-bold text-[15.5px] text-white">Сохранить</Text>
+                <Text className="font-bold text-[17.5px] text-white">Сохранить</Text>
               </Pressable>
             </View>
           </View>

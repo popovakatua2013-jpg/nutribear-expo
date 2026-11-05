@@ -120,8 +120,8 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
     <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
-          <Text className="font-bold text-[18px] text-bear-text">Записать вес</Text>
-          <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+          <Text className="font-bold text-[20px] text-bear-text">Записать вес</Text>
+          <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
             Обновите текущий вес — ИМТ пересчитается сам
           </Text>
         </View>
@@ -132,20 +132,20 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
 
       {/* Поля прокручиваются, кнопка закреплена внизу окна */}
       <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
-        <Text className="mt-4 font-medium text-[14px] text-bear-sub">Вес, кг</Text>
+        <Text className="mt-4 font-medium text-[16px] text-bear-sub">Вес, кг</Text>
         <TextInput
           value={kg}
           onChangeText={setKg}
           keyboardType="decimal-pad"
           textAlign="center"
           accessibilityLabel="Вес в килограммах"
-          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[17px] text-white"
+          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
         />
 
         <View className="mt-3 flex-row items-center justify-between">
-          <Text className="font-medium text-[14px] text-bear-sub">Цель, кг (необязательно)</Text>
+          <Text className="font-medium text-[16px] text-bear-sub">Цель, кг (необязательно)</Text>
           {goalWeight != null && goal.trim() === '' && (
-            <Text className="font-sans text-[13px] text-bear-dim">пусто — цель будет убрана</Text>
+            <Text className="font-sans text-[15px] text-bear-dim">пусто — цель будет убрана</Text>
           )}
         </View>
         <TextInput
@@ -156,13 +156,13 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           placeholder="—"
           placeholderTextColor="#8B96B8"
           accessibilityLabel="Целевой вес в килограммах"
-          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[17px] text-white"
+          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
         />
 
         {/* Подсказка: здоровый диапазон для роста и цель в один тап */}
         {suggestRange && goal.trim() === '' && (
           <View className="mt-2 mb-2 flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2">
-            <Text className="min-w-0 flex-1 font-sans text-[13px] leading-snug text-bear-sub2">
+            <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
               Норма при росте {Math.round(hRaw)} см: {suggestRange.min}–{suggestRange.max} кг
             </Text>
             <Pressable
@@ -171,7 +171,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
               accessibilityLabel={`Подставить цель около ${suggestKg} килограммов`}
               className="ml-2 rounded-full bg-white/10 px-2.5 py-1.5 active:opacity-70"
             >
-              <Text className="font-semibold text-[13px] text-[#8DABFF]">≈ {suggestKg} кг</Text>
+              <Text className="font-semibold text-[15px] text-[#8DABFF]">≈ {suggestKg} кг</Text>
             </Pressable>
           </View>
         )}
@@ -185,7 +185,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         className={`mt-3 overflow-hidden rounded-2xl ${!valid || !goalValid ? 'opacity-50' : ''}`}
       >
         <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-          <Text className="py-3.5 text-center font-bold text-[17px] text-white">Сохранить</Text>
+          <Text className="py-3.5 text-center font-bold text-[19px] text-white">Сохранить</Text>
         </LinearGradient>
       </Pressable>
     </View>

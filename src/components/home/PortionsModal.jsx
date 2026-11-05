@@ -18,10 +18,10 @@ export function PortionsModal({ visible, onClose }) {
         >
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
-              <Text className="font-bold text-[18px] text-bear-text">
+              <Text className="font-bold text-[20px] text-bear-text">
                 ✋ Гид по порциям
               </Text>
-              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+              <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                 Ориентиры без весов: размер порции — как ваша рука
               </Text>
             </View>
@@ -46,13 +46,13 @@ export function PortionsModal({ visible, onClose }) {
                   key={p.title}
                   className="flex-row items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5"
                 >
-                  <Text className="text-[26px] leading-[26px]">{p.emoji}</Text>
+                  <Text className="text-[28px] leading-[28px]">{p.emoji}</Text>
                   <View className="min-w-0 flex-1">
-                    <Text className="font-bold text-[15.5px] text-bear-text">{p.title}</Text>
-                    <Text className="mt-0.5 font-sans text-[13px] leading-relaxed text-bear-sub2">
+                    <Text className="font-bold text-[17.5px] text-bear-text">{p.title}</Text>
+                    <Text className="mt-0.5 font-sans text-[15px] leading-relaxed text-bear-sub2">
                       {p.text}
                     </Text>
-                    <Text className="mt-1 font-semibold text-[13px] text-[#8DABFF]">
+                    <Text className="mt-1 font-semibold text-[15px] text-[#8DABFF]">
                       {p.grams}
                     </Text>
                   </View>

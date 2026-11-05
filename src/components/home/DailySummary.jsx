@@ -75,7 +75,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="font-sans text-[13px] leading-tight text-bear-sub"
+          className="font-sans text-[15px] leading-tight text-bear-sub"
         >
           {label}
         </Text>
@@ -84,7 +84,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           maxFontSizeMultiplier={MAX}
-          className="font-bold text-[14.5px] leading-tight text-bear-text"
+          className="font-bold text-[16.5px] leading-tight text-bear-text"
         >
           {`${formatNum(Math.round(value))} / ${formatNum(target)} г`}
         </Text>
@@ -193,17 +193,17 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             adjustsFontSizeToFit
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
-            className="text-center font-extrabold text-[19px] leading-tight text-bear-text"
+            className="text-center font-extrabold text-[21px] leading-tight text-bear-text"
             style={{ width: RING - 16 }}
           >
             {formatNum(Math.round(num))}
           </Text>
-          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[11px] leading-tight text-bear-dim">
+          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[13px] leading-tight text-bear-dim">
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
           </Text>
         </View>
       </View>
-      <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[12.5px] text-bear-sub">
+      <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[14.5px] text-bear-sub">
         {caption}
       </Text>
     </View>
@@ -319,7 +319,7 @@ export function DailySummary({
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
           <BodyChip icon={<Utensils size={17} />} />
-          <Text maxFontSizeMultiplier={MAX} className="font-bold text-[18px] tracking-tight text-bear-text">
+          <Text maxFontSizeMultiplier={MAX} className="font-bold text-[20px] tracking-tight text-bear-text">
             Съедено за сегодня
           </Text>
         </View>
@@ -330,7 +330,7 @@ export function DailySummary({
             style={{ backgroundColor: 'rgba(251,146,60,0.13)' }}
           >
             <Flame size={14} color="#fb923c" />
-            <Text maxFontSizeMultiplier={MAX} className="font-bold text-[13px] text-[#fdba74]">
+            <Text maxFontSizeMultiplier={MAX} className="font-bold text-[15px] text-[#fdba74]">
               {`${streak} ${pluralDays(streak)}`}
             </Text>
           </View>
@@ -373,7 +373,7 @@ export function DailySummary({
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
                 maxFontSizeMultiplier={MAX}
-                className="font-semibold text-[13px]"
+                className="font-semibold text-[15px]"
                 style={{ color: pillTone.text }}
               >
                 {over > 0
@@ -427,7 +427,7 @@ export function DailySummary({
           adjustsFontSizeToFit
           minimumFontScale={0.85}
           maxFontSizeMultiplier={MAX}
-          className="min-w-0 flex-1 font-semibold text-[13px] text-bear-sub"
+          className="min-w-0 flex-1 font-semibold text-[15px] text-bear-sub"
         >
           {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
         </Text>
@@ -488,7 +488,7 @@ export function DailySummary({
               accessibilityLabel="Нормы нутриентов"
             >
               <View className="flex-row items-center justify-between">
-                <Text className="font-bold text-[18px] text-bear-text">🥗 Нормы нутриентов</Text>
+                <Text className="font-bold text-[20px] text-bear-text">🥗 Нормы нутриентов</Text>
                 <Pressable
                   onPress={() => setNormsOpen(false)}
                   accessibilityLabel="Закрыть"
@@ -497,7 +497,7 @@ export function DailySummary({
                   <X hitSlop={10} size={22} color="#A5AECB" />
                 </Pressable>
               </View>
-              <Text className="mt-1 font-sans text-[13px] leading-relaxed text-bear-sub">
+              <Text className="mt-1 font-sans text-[15px] leading-relaxed text-bear-sub">
                 Граммы в день. Пустое поле — считать от цели по калориям
                 (тарелка 20/30/50 %, клетчатка 25 г)
               </Text>
@@ -540,7 +540,7 @@ export function DailySummary({
                 className="mt-4 rounded-2xl py-3 active:opacity-80"
                 style={{ backgroundColor: '#7B6CF6' }}
               >
-                <Text className="text-center font-bold text-[17px] text-white">Сохранить</Text>
+                <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -557,7 +557,7 @@ function NormInput({ label, value, onChange, placeholder, color }) {
     <View className="min-w-0 flex-1">
       <View className="mb-1.5 flex-row items-center gap-1">
         <View className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-        <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub2">
+        <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub2">
           {label}
         </Text>
       </View>
@@ -569,7 +569,7 @@ function NormInput({ label, value, onChange, placeholder, color }) {
         placeholder={placeholder}
         placeholderTextColor="#8B96B8"
         accessibilityLabel={label}
-        className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center font-bold text-[17px] text-bear-text"
+        className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center font-bold text-[19px] text-bear-text"
       />
     </View>
   )

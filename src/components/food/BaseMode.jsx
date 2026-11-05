@@ -68,7 +68,7 @@ export function BaseMode({ mealId, onPick }) {
             placeholderTextColor="#8B96B8"
             value={query}
             onChangeText={setQuery}
-            className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text"
+            className="min-w-0 flex-1 font-sans text-[17.5px] text-bear-text"
           />
         </View>
         <Pressable
@@ -88,7 +88,7 @@ export function BaseMode({ mealId, onPick }) {
         <View className="mt-3">
           <View className="flex-row items-center gap-1.5 px-1">
             <Star size={14} color="#FBBF24" />
-            <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-sub">
+            <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-sub">
               {`Мои продукты · ${mine.length}`}
             </Text>
           </View>
@@ -96,7 +96,7 @@ export function BaseMode({ mealId, onPick }) {
             {mine.map((f) => (
               <View
                 key={f.id}
-                className="flex-row items-center gap-2 rounded-2xl bg-[#FBBF24]/[0.06] px-3 py-2"
+                className="flex-row items-center gap-2 rounded-2xl bg-[#FBBF24]/[0.06] px-3 py-1.5"
               >
                 <Pressable
                   onPress={() => onPick(f)}
@@ -104,11 +104,11 @@ export function BaseMode({ mealId, onPick }) {
                   accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
                   className="min-w-0 flex-1 flex-row items-center gap-2"
                 >
-                  <Text className="text-[18px]">{f.emoji}</Text>
-                  <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
+                  <Text className="text-[20px]">{f.emoji}</Text>
+                  <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[17px] text-bear-text">
                     {f.name}
                   </Text>
-                  <Text className="shrink-0 font-sans text-[13px] text-bear-sub">
+                  <Text className="shrink-0 font-sans text-[15px] text-bear-sub">
                     {f.kcal100} ккал/100 г
                   </Text>
                 </Pressable>

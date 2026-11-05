@@ -142,9 +142,9 @@ export function RepeatDayModal({ visible, onClose }) {
             <View className="min-w-0 flex-1 pr-2">
               <View className="flex-row items-center gap-2">
                 <CalendarDays size={19} color="#6C8CFF" />
-                <Text className="font-bold text-[18px] text-bear-text">Повторить день</Text>
+                <Text className="font-bold text-[20px] text-bear-text">Повторить день</Text>
               </View>
-              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+              <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                 Выбери день — его еда скопируется в сегодня
               </Text>
             </View>
@@ -161,7 +161,7 @@ export function RepeatDayModal({ visible, onClose }) {
           {/* Список дней: новые сверху */}
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {days.length === 0 ? (
-              <Text className="py-10 text-center font-sans text-[14.5px] text-bear-sub">
+              <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">
                 Пока нет записей — повторять нечего 🐻
               </Text>
             ) : (
@@ -189,12 +189,12 @@ export function RepeatDayModal({ visible, onClose }) {
                       <View className="min-w-0 flex-1">
                         <Text
                           numberOfLines={1}
-                          className={`font-bold text-[15px] ${isPicked ? 'text-bear-bright' : 'text-bear-text'}`}
+                          className={`font-bold text-[17px] ${isPicked ? 'text-bear-bright' : 'text-bear-text'}`}
                         >
                           {dayTitle(d.key)}
                           {isToday ? ' · сегодня' : ''}
                         </Text>
-                        <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub2">
+                        <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub2">
                           {`${d.count} записей · ≈${formatNum(Math.round(d.kcal))} ккал`}
                         </Text>
                       </View>
@@ -219,7 +219,7 @@ export function RepeatDayModal({ visible, onClose }) {
             >
               <Copy size={17} color={picked ? '#FFFFFF' : '#8B96B8'} />
               <Text
-                className={`font-bold text-[15.5px] ${picked ? 'text-white' : 'text-bear-sub2'}`}
+                className={`font-bold text-[17.5px] ${picked ? 'text-white' : 'text-bear-sub2'}`}
               >
                 {picked
                   ? `Скопировать в сегодня (${dayTitle(picked)})`

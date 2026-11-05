@@ -27,7 +27,7 @@ export function HapticsCard() {
         />
       }
     >
-      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[16px] leading-snug text-bear-sub">
         {haptics
           ? 'Лёгкий вибро-отклик на нажатия — например, при тапе по кольцу ИМТ.'
           : 'Приложение не будет вибрировать на нажатия.'}

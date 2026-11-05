@@ -30,10 +30,10 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
         style={{ backgroundColor: 'rgba(58,12,20,0.5)', borderWidth: 1, borderColor: 'rgba(248,113,113,0.22)' }}
       >
         <View className="flex-row items-baseline justify-between gap-2">
-          <Text className="font-extrabold text-[18.5px]" style={{ color: GAME.pink }}>
+          <Text className="font-extrabold text-[20.5px]" style={{ color: GAME.pink }}>
             {dead ? `${boss.emoji} ${boss.name}` : boss.name}
           </Text>
-          <Text className="font-extrabold text-[16px]" style={{ color: GAME.pink }}>
+          <Text className="font-extrabold text-[18px]" style={{ color: GAME.pink }}>
             {Math.max(0, hp)} <Text style={{ color: GAME.dim2 }}>/ {maxHp} HP</Text>
           </Text>
         </View>
@@ -45,7 +45,7 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
 
         {/* регенерация за пропущенные дни и то, что погасили щиты */}
         {heal > 0 && (
-          <Text className="mt-1.5 font-sans text-[13px]" style={{ color: GAME.dim2 }}>
+          <Text className="mt-1.5 font-sans text-[15px]" style={{ color: GAME.dim2 }}>
             босс подлечился +{heal} HP{absorb > 0 ? ` · щиты погасили ${absorb}` : ''}
           </Text>
         )}
@@ -70,13 +70,13 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
           className="mt-3 rounded-2xl px-3.5 py-3"
           style={{ backgroundColor: 'rgba(52,211,153,0.1)', borderWidth: 1, borderColor: 'rgba(52,211,153,0.35)' }}
         >
-          <Text className="font-bold text-[15.5px]" style={{ color: GAME.emerald }}>
+          <Text className="font-bold text-[17.5px]" style={{ color: GAME.emerald }}>
             {rewarded ? 'Босс павший! Награда стаи получена: +15 генов, +5 кристаллов.' : 'Босс павший! Ждём нового в следующую неделю.'}
           </Text>
         </View>
       )}
 
-      <Text className="mt-3 font-sans text-[14.5px] leading-relaxed" style={{ color: GAME.dim }}>
+      <Text className="mt-3 font-sans text-[16.5px] leading-relaxed" style={{ color: GAME.dim }}>
         Механика честная: за каждый день недели без еды босс лечится +30 HP,
         но стаканы воды гасят лечение (−6 HP за стакан), а день с тренировкой
         бьёт критом — урон еды удваивается. Вклад показан нейтрально —
@@ -91,7 +91,7 @@ function Stat({ label, value, accent }) {
     <View className="flex-1 rounded-xl px-2 py-2.5" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
       <Caps style={{ textAlign: 'center' }}>{label}</Caps>
       <Text
-        className="mt-1 text-center font-extrabold text-[21px]"
+        className="mt-1 text-center font-extrabold text-[23px]"
         style={{ color: accent ? GAME.emerald : GAME.text }}
       >
         {value}
@@ -107,7 +107,7 @@ function Chip({ icon: Icon, color, text }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.25)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}
     >
       <Icon size={15} color={color} />
-      <Text className="font-medium text-[13px] leading-tight" style={{ color: GAME.dim }}>
+      <Text className="font-medium text-[15px] leading-tight" style={{ color: GAME.dim }}>
         {text}
       </Text>
     </View>

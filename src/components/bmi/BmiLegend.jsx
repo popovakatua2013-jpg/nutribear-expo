@@ -54,7 +54,7 @@ export function BmiLegend({ bmi, onRowPress }) {
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.1}
-              className={`min-w-0 flex-1 text-[14px] leading-tight ${
+              className={`min-w-0 flex-1 text-[16px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-semibold text-[#E7E3F8]'
               }`}
             >
@@ -63,7 +63,7 @@ export function BmiLegend({ bmi, onRowPress }) {
             <Text
               maxFontSizeMultiplier={1.1}
               numberOfLines={1}
-              className={`shrink-0 text-[14.5px] leading-tight ${
+              className={`shrink-0 text-[16.5px] leading-tight ${
                 isActive ? 'font-bold text-white' : 'font-sans text-[#CBC4E8]'
               }`}
             >

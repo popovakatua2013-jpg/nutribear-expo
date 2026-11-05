@@ -71,7 +71,7 @@ export function PermissionsStep({ onBack }) {
       footer={
         <Pressable onPress={done} className="overflow-hidden rounded-2xl" accessibilityLabel="Начать">
           <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-            <Text className="py-3.5 text-center font-bold text-[18px] text-white">Начать</Text>
+            <Text className="py-3.5 text-center font-bold text-[20px] text-white">Начать</Text>
           </LinearGradient>
         </Pressable>
       }
@@ -80,14 +80,14 @@ export function PermissionsStep({ onBack }) {
         <View className={row}>
           <Bell size={22} color="#fbbf24" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[15.5px] text-bear-text">Push-напоминания</Text>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-bold text-[17.5px] text-bear-text">Push-напоминания</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
               «Пора залогировать обед?» и вода по интервалу
             </Text>
           </View>
           <Text
             onPress={askPush}
-            className={`rounded-full px-3.5 py-2 font-bold text-[14.5px] ${
+            className={`rounded-full px-3.5 py-2 font-bold text-[16.5px] ${
               permissions.push === 'granted'
                 ? 'bg-[#4ade80]/15 text-[#4ade80]'
                 : 'bg-[#4D7CFE] text-white'
@@ -100,8 +100,8 @@ export function PermissionsStep({ onBack }) {
         <View className={row}>
           <Watch size={22} color="#38bdf8" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[15.5px] text-bear-text">Google Fit / Apple Health</Text>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-bold text-[17.5px] text-bear-text">Google Fit / Apple Health</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
               Синхронизируйте шаги — активность дня всегда под рукой
             </Text>
           </View>
@@ -110,7 +110,7 @@ export function PermissionsStep({ onBack }) {
         <View className="gap-2.5 rounded-2xl border border-white/5 bg-bear-card/60 p-4">
           {[['gfit', 'Google Fit'], ['ahealth', 'Apple Health']].map(([k, label]) => (
             <View key={k} className="flex-row items-center justify-between">
-              <Text className="font-sans text-[15.5px] text-[#aab4d4]">{label}</Text>
+              <Text className="font-sans text-[17.5px] text-[#aab4d4]">{label}</Text>
               <Switch
                 value={sync[k]}
                 onValueChange={() => toggleSync(k)}
@@ -123,7 +123,7 @@ export function PermissionsStep({ onBack }) {
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-1.5">
               <Footprints size={18} color="#EEF2FB" />
-              <Text className="font-sans text-[15.5px] text-[#aab4d4]">Встроенный шагомер</Text>
+              <Text className="font-sans text-[17.5px] text-[#aab4d4]">Встроенный шагомер</Text>
             </View>
             <Switch
               value={pedometerEnabled}
@@ -138,8 +138,8 @@ export function PermissionsStep({ onBack }) {
         <View className={row}>
           <Camera size={22} color="#a78bfa" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[15.5px] text-bear-text">Камера</Text>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-bold text-[17.5px] text-bear-text">Камера</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
               Спросим при первом сканировании штрихкода, не раньше
             </Text>
           </View>

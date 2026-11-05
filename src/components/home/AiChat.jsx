@@ -197,10 +197,10 @@ export function AiChat() {
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-white/5 px-5 pb-3.5 pt-4">
             <View className="flex-1">
-              <Text className="font-extrabold text-[19px] text-bear-text">
+              <Text className="font-extrabold text-[21px] text-bear-text">
                 ИИ-помощник
               </Text>
-              <Text className="mt-0.5 text-[13px] text-[#8a94b3]">
+              <Text className="mt-0.5 text-[15px] text-[#8a94b3]">
                 Нутрициолог NutriBear — отвечает сразу
               </Text>
             </View>
@@ -229,7 +229,7 @@ export function AiChat() {
               className="mx-4 mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.05] px-3.5 py-2"
             >
               <WifiOff size={16} color="#8B96B8" />
-              <Text className="flex-1 font-sans text-[14px] text-[#8a94b3]">
+              <Text className="flex-1 font-sans text-[16px] text-[#8a94b3]">
                 Нет сети — ИИ отключён. Отвечает офлайн-помощник по вашему дневнику
               </Text>
             </View>
@@ -260,7 +260,7 @@ export function AiChat() {
                   >
                     <MessageText
                       content={item.content}
-                      className="text-[17px] leading-[20px] text-white"
+                      className="text-[19px] leading-[22px] text-white"
                     />
                   </LinearGradient>
                 ) : (
@@ -273,7 +273,7 @@ export function AiChat() {
                   >
                     <MessageText
                       content={item.content}
-                      className="text-[17px] leading-[20px] text-[#dbe3f8]"
+                      className="text-[19px] leading-[22px] text-[#dbe3f8]"
                     />
                   </View>
                 )}
@@ -281,7 +281,7 @@ export function AiChat() {
             )}
             ListFooterComponent={
               busy ? (
-                <Text className="px-1 pt-1 text-[13px] text-[#5c668a]">
+                <Text className="px-1 pt-1 text-[15px] text-[#5c668a]">
                   Печатает…
                 </Text>
               ) : null
@@ -299,7 +299,7 @@ export function AiChat() {
               placeholderTextColor="#8B96B8"
               accessibilityLabel="Сообщение ИИ-помощнику"
               multiline
-              className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] text-bear-text"
+              className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
             <Pressable
               onPress={send}

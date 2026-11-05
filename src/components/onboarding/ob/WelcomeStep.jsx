@@ -30,17 +30,17 @@ export function WelcomeStep({ onNext }) {
           <Image source={BEAR} style={{ width: 126, height: 126 }} resizeMode="contain" />
         </View>
 
-        <Text className="mt-1 text-center font-extrabold text-[24px] leading-[30px] tracking-tight text-bear-text">
+        <Text className="mt-1 text-center font-extrabold text-[26px] leading-[32px] tracking-tight text-bear-text">
           Похудей, поддерживай{'\n'}
           <Text className="text-[#A78BFA]">или набирай вес</Text>
         </Text>
-        <Text className="mx-auto mt-2 max-w-[280px] text-center font-sans text-[15.5px] leading-relaxed text-[#aab4d4]">
+        <Text className="mx-auto mt-2 max-w-[280px] text-center font-sans text-[17.5px] leading-relaxed text-[#aab4d4]">
           Персональный план питания и тренировок под твои цели
         </Text>
 
         {/* Карточка «Твоя цель» с тремя чипами */}
         <View className="mt-5 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
-          <Text className="font-bold text-[15.5px] text-bear-sub2">Твоя цель</Text>
+          <Text className="font-bold text-[17.5px] text-bear-sub2">Твоя цель</Text>
           <View className="mt-3 flex-row gap-2.5">
             {CHIPS.map((c) => (
               <GoalChip
@@ -75,10 +75,10 @@ function GoalChip({ chip, active, onPress }) {
             <Check size={15} color="#FFFFFF" strokeWidth={3.2} />
           </View>
         ) : null}
-        <Text className="text-[24px]">{chip.emoji}</Text>
+        <Text className="text-[26px]">{chip.emoji}</Text>
         <Text
           numberOfLines={2}
-          className={`mt-1.5 text-center font-bold text-[13px] leading-[16px] ${
+          className={`mt-1.5 text-center font-bold text-[15px] leading-[18px] ${
             active ? 'text-white' : 'text-bear-sub'
           }`}
         >

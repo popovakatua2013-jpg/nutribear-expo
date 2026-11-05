@@ -34,8 +34,8 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-1">
-              <Text className="font-bold text-[18px] text-bear-text">Правовая информация</Text>
-              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
+              <Text className="font-bold text-[20px] text-bear-text">Правовая информация</Text>
+              <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                 Редакция от {OPERATOR.effective}
               </Text>
             </View>
@@ -49,7 +49,7 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
             {TABS.map((t) => {
               const active = t.id === tabId
               const pill = (
-                <Text className={`px-3 py-1.5 font-semibold text-[14.5px] ${active ? 'text-white' : 'text-bear-dim'}`}>
+                <Text className={`px-3 py-1.5 font-semibold text-[16.5px] ${active ? 'text-white' : 'text-bear-dim'}`}>
                   {t.label}
                 </Text>
               )
@@ -76,9 +76,9 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 12 }}>
             {tab.sections.map((s) => (
               <View key={s.title} className="mb-4">
-                <Text className="font-bold text-[16px] text-bear-text">{s.title}</Text>
+                <Text className="font-bold text-[18px] text-bear-text">{s.title}</Text>
                 {s.paragraphs.map((p, i) => (
-                  <Text key={i} className="mt-1.5 font-sans text-[14.5px] leading-relaxed text-bear-sub">
+                  <Text key={i} className="mt-1.5 font-sans text-[16.5px] leading-relaxed text-bear-sub">
                     {p}
                   </Text>
                 ))}
@@ -95,7 +95,7 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
               className="flex-row items-center justify-center gap-2 rounded-2xl bg-white/5 py-3 active:opacity-80"
             >
               <Mail size={17} color="#8DABFF" />
-              <Text className="font-semibold text-[15px] text-[#8DABFF]">
+              <Text className="font-semibold text-[17px] text-[#8DABFF]">
                 Поддержка: {OPERATOR.email}
               </Text>
             </Pressable>

@@ -27,7 +27,7 @@ export function ProgressCard({ d, onGoAll }) {
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2">
           <Footprints size={20} color="#4ade80" />
-          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
             Прогресс
           </Text>
         </View>
@@ -38,7 +38,7 @@ export function ProgressCard({ d, onGoAll }) {
           className="flex-row items-center gap-1"
         >
           <Maximize2 size={14} color="#98A2C2" />
-          <Text className="font-medium text-[14.5px] text-bear-sub2">Все</Text>
+          <Text className="font-medium text-[16.5px] text-bear-sub2">Все</Text>
         </Pressable>
       </View>
 
@@ -46,8 +46,8 @@ export function ProgressCard({ d, onGoAll }) {
         <ProgressRing parts={parts} percent={d.stepsPct || 0} />
 
         <View className="shrink-0">
-          <Text className="font-sans text-[15.5px] text-bear-sub2">До цели</Text>
-          <Text className="mt-0.5 font-bold text-[19px] leading-tight text-bear-text">
+          <Text className="font-sans text-[17.5px] text-bear-sub2">До цели</Text>
+          <Text className="mt-0.5 font-bold text-[21px] leading-tight text-bear-text">
             {formatNum(remain)} шагов
           </Text>
           <View className="mt-2 flex-row items-center">

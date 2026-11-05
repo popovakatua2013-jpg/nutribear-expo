@@ -21,7 +21,7 @@ export function WeighNudgeCard() {
       icon={<BellRing size={20} color="#FCD34D" />}
       title="Напоминание мишки"
     >
-      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[16px] leading-snug text-bear-sub">
         Если вес не записывался дольше выбранного срока, во вкладке «Тело» над динамикой
         веса появится мягкое напоминание. Никаких уведомлений — только полоска в приложении.
       </Text>
@@ -38,7 +38,7 @@ export function WeighNudgeCard() {
               className={`flex-1 items-center rounded-xl py-2 active:opacity-70 ${active ? '' : 'bg-white/5'}`}
               style={active ? { backgroundColor: '#7B6CF6' } : null}
             >
-              <Text className={`font-bold text-[15.5px] ${active ? 'text-white' : 'text-bear-sub'}`}>
+              <Text className={`font-bold text-[17.5px] ${active ? 'text-white' : 'text-bear-sub'}`}>
                 {`${n} дней`}
               </Text>
             </Pressable>
@@ -46,7 +46,7 @@ export function WeighNudgeCard() {
         })}
       </View>
 
-      <Text className="mt-2 font-sans text-[13px] text-bear-dim">
+      <Text className="mt-2 font-sans text-[15px] text-bear-dim">
         Сейчас: напомним, если вес не записывался {days} дней
       </Text>
     </CollapsibleCard>

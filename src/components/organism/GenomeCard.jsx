@@ -39,18 +39,18 @@ export function GenomeCard({ org, stats }) {
   return (
     <View className="rounded-3xl border border-bear-line bg-bear-card p-4">
       <View className="flex-row items-center justify-between">
-        <Text className="font-extrabold text-[18px] text-bear-text">Геном</Text>
-        <Text className="font-sans text-[13px] text-bear-dim">сегодня</Text>
+        <Text className="font-extrabold text-[20px] text-bear-text">Геном</Text>
+        <Text className="font-sans text-[15px] text-bear-dim">сегодня</Text>
       </View>
 
       <View className="mt-3 gap-3.5">
         {ROWS.map((r) => (
           <View key={r.key}>
             <View className="flex-row items-baseline justify-between">
-              <Text className="font-semibold text-[15.5px] text-bear-bright">
+              <Text className="font-semibold text-[17.5px] text-bear-bright">
                 {r.emoji} {r.label}
               </Text>
-              <Text className="font-sans text-[13px] text-bear-sub2">{values[r.key]}</Text>
+              <Text className="font-sans text-[15px] text-bear-sub2">{values[r.key]}</Text>
             </View>
             <Bar pct={axes[r.key]} color={r.color} />
           </View>
@@ -59,7 +59,7 @@ export function GenomeCard({ org, stats }) {
 
       {/* подсказка: что улучшить первым */}
       <View className="mt-3.5 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
-        <Text className="font-medium text-[14.5px] leading-snug text-bear-soft">{hint}</Text>
+        <Text className="font-medium text-[16.5px] leading-snug text-bear-soft">{hint}</Text>
       </View>
     </View>
   )

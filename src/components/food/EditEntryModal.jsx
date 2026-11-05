@@ -117,8 +117,8 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
             <View className="min-w-0 flex-row items-center gap-2 pr-2">
               <Pencil size={20} color="#6C8CFF" />
               <View className="min-w-0 flex-1">
-                <Text className="font-bold text-[18px] text-bear-text">Изменить запись</Text>
-                <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub">
+                <Text className="font-bold text-[20px] text-bear-text">Изменить запись</Text>
+                <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
                   {`${entry.emoji} ${entry.name} · «${mealName}» · ${entry.time || 'без времени'}`}
                 </Text>
               </View>
@@ -133,7 +133,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
             keyboardShouldPersistTaps="handled"
           >
             {/* Название */}
-            <Text className="font-sans text-[13px] font-semibold uppercase text-bear-sub">
+            <Text className="font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Название
             </Text>
             <TextInput
@@ -141,11 +141,11 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               onChangeText={setName}
               maxLength={60}
               accessibilityLabel="Название блюда"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
 
             {/* Описание — своими словами */}
-            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Описание (необязательно)
             </Text>
             <TextInput
@@ -156,11 +156,11 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               accessibilityLabel="Описание блюда"
               placeholder="Например: борщ на свином бульоне, со сметаной"
               placeholderTextColor="#8B96B8"
-              className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] leading-[19px] text-bear-text"
+              className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
             {/* Вес порции */}
-            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Вес порции
             </Text>
             <View className="mt-1.5 flex-row items-center gap-2">
@@ -170,9 +170,9 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                 keyboardType="number-pad"
                 maxLength={4}
                 accessibilityLabel="Вес порции в граммах"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
               />
-              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">г</Text>
+              <Text className="shrink-0 font-sans text-[19px] text-bear-sub">г</Text>
             </View>
             <View className="mt-2 flex-row flex-wrap gap-1.5">
               {QUICK_GRAMS.map((v) => (
@@ -184,7 +184,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                   style={gramsN === v ? { backgroundColor: '#7B6CF6' } : null}
                 >
                   <Text
-                    className={`font-semibold text-[14px] ${gramsN === v ? 'text-white' : 'text-bear-sub'}`}
+                    className={`font-semibold text-[16px] ${gramsN === v ? 'text-white' : 'text-bear-sub'}`}
                   >
                     {`${v} г`}
                   </Text>
@@ -193,7 +193,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
             </View>
 
             {/* Итого за порцию: калории */}
-            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Итого за порцию
             </Text>
             <View className="mt-1.5 flex-row items-center gap-2">
@@ -206,9 +206,9 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                 keyboardType="number-pad"
                 maxLength={5}
                 accessibilityLabel="Калории за порцию"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
               />
-              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">ккал</Text>
+              <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
             </View>
 
             {/* Итого за порцию: БЖУ */}
@@ -228,16 +228,16 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     accessibilityLabel={`${fld.label} за порцию`}
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
+                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[15px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
               ))}
             </View>
 
-            <Text className="mt-2 text-[13px] leading-[16px] text-bear-sub">
+            <Text className="mt-2 text-[15px] leading-[18px] text-bear-sub">
               Меняете вес — калории и БЖУ пересчитаются сами. Впишете своё значение —
               оно останется как есть.
             </Text>
@@ -248,7 +248,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               className="mt-4 rounded-2xl py-3 active:opacity-80"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <Text className="text-center font-bold text-[17px] text-white">Сохранить</Text>
+              <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
             </Pressable>
           </ScrollView>
         </View>

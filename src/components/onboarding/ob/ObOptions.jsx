@@ -20,13 +20,13 @@ export function OptionGrid({ options, value, onChange, columns = 1 }) {
             const active = value === o.id
             const body = (
               <>
-                {o.emoji ? <Text className="text-[26px]">{o.emoji}</Text> : null}
+                {o.emoji ? <Text className="text-[28px]">{o.emoji}</Text> : null}
                 <View className="min-w-0 flex-1">
-                  <Text className={`font-bold text-[17px] ${active ? 'text-white' : 'text-bear-text'}`}>
+                  <Text className={`font-bold text-[19px] ${active ? 'text-white' : 'text-bear-text'}`}>
                     {o.label}
                   </Text>
                   {o.hint ? (
-                    <Text className={`font-sans text-[13px] ${active ? 'text-white/75' : 'text-bear-sub2'}`}>
+                    <Text className={`font-sans text-[15px] ${active ? 'text-white/75' : 'text-bear-sub2'}`}>
                       {o.hint}
                     </Text>
                   ) : null}
@@ -65,7 +65,7 @@ export function PillRow({ options, value, onChange, label }) {
   return (
     <View>
       {label ? (
-        <Text className="mb-2 font-semibold text-[14.5px] text-bear-sub2">{label}</Text>
+        <Text className="mb-2 font-semibold text-[16.5px] text-bear-sub2">{label}</Text>
       ) : null}
       <View className="flex-row flex-wrap gap-2">
         {options.map((o) => {
@@ -76,11 +76,11 @@ export function PillRow({ options, value, onChange, label }) {
             <Pressable key={String(v)} onPress={() => onChange(v)} className="overflow-hidden rounded-full">
               {active ? (
                 <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={GRAD}>
-                  <Text className="px-3.5 py-2 font-semibold text-[14.5px] text-white">{text}</Text>
+                  <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-white">{text}</Text>
                 </LinearGradient>
               ) : (
                 <View className="bg-white/5">
-                  <Text className="px-3.5 py-2 font-semibold text-[14.5px] text-bear-soft">{text}</Text>
+                  <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-bear-soft">{text}</Text>
                 </View>
               )}
             </Pressable>
@@ -105,8 +105,8 @@ export function ChipMulti({ options, values, onToggle }) {
               on ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10' : 'border-white/5 bg-white/[0.03]'
             }`}
           >
-            {o.emoji ? <Text className="text-[15.5px]">{o.emoji}</Text> : null}
-            <Text className={`font-semibold text-[14.5px] ${on ? 'text-white' : 'text-bear-soft'}`}>
+            {o.emoji ? <Text className="text-[17.5px]">{o.emoji}</Text> : null}
+            <Text className={`font-semibold text-[16.5px] ${on ? 'text-white' : 'text-bear-soft'}`}>
               {o.label}
             </Text>
           </Pressable>

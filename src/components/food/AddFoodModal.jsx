@@ -3,6 +3,7 @@
 // Тело монтируется с key = mealId — состояние поиска сбрасывается само.
 // Рядом с вкладками приёмов — выбор дня «Сегодня / Вчера» (как у
 // тренировок): приём после полуночи уходит во вчера, а не в чужой день.
+// Подсказка под заголовком удалена по запросу — плитки говорят сами за себя.
 
 import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
@@ -65,11 +66,8 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
               <View className="border-b border-bear-line px-5 pb-3 pt-4">
                 <View className="flex-row items-center justify-between">
                   <View className="min-w-0 flex-1 pr-2">
-                    <Text className="font-bold text-[18px] text-bear-text">
+                    <Text className="font-bold text-[20px] text-bear-text">
                       Добавить приём пищи
-                    </Text>
-                    <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
-                      Поиск, сканер штрих-кода, фото, голос, этикетка, рецепты
                     </Text>
                   </View>
                   <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
@@ -82,7 +80,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                     приёма после полуночи, а еда вчерашняя. Действует на все
                     способы ниже, на экране порции выбор можно поменять */}
                 <View className="mt-2.5 flex-row items-center gap-2">
-                  <Text className="font-sans text-[13px] text-bear-sub">За какой день?</Text>
+                  <Text className="font-sans text-[15px] text-bear-sub">За какой день?</Text>
                   <Pills
                     items={[
                       { id: 0, label: 'Сегодня' },
@@ -105,7 +103,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                     className="mb-3 flex-row items-center gap-1 self-start"
                   >
                     <ChevronLeft size={18} color="#A5AECB" />
-                    <Text className="font-semibold text-[14.5px] text-bear-sub">
+                    <Text className="font-semibold text-[16.5px] text-bear-sub">
                       Все способы
                     </Text>
                   </Pressable>

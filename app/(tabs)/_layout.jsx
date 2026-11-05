@@ -51,11 +51,11 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: '#0C1327',
           borderTopColor: 'rgba(255,255,255,0.06)',
-          height: 64 + insets.bottom,
-          paddingBottom: 8 + insets.bottom,
+          height: 68 + insets.bottom,
+          paddingBottom: 7 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+        tabBarLabelStyle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >

@@ -46,7 +46,7 @@ function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
       style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }}
     >
       {icon}
-      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[13px] text-[#D6DCF2]">
+      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-[#D6DCF2]">
         {label}
       </Text>
       {chevron}
@@ -178,7 +178,7 @@ export default function BmiScreen() {
             >
               <View className="flex-row items-center gap-1">
                 <Scale size={15} color="#FFFFFF" />
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[13px] text-white">
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[15px] text-white">
                   ИМТ и состав тела
                 </Text>
               </View>
@@ -231,7 +231,7 @@ export default function BmiScreen() {
                     <Text
                       maxFontSizeMultiplier={1.1}
                       numberOfLines={1}
-                      className="font-bold text-[13px] text-[#7DD3FC]"
+                      className="font-bold text-[15px] text-[#7DD3FC]"
                     >
                       {`В норме ${normWeeks} нед.`}
                     </Text>

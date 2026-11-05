@@ -17,7 +17,7 @@ export function MealTabs({ meals, mealId, onChange }) {
             style={active ? { backgroundColor: '#7B6CF6' } : null}
           >
             <Text
-              className={`font-semibold text-[13px] ${active ? 'text-white' : 'text-bear-sub'}`}
+              className={`font-semibold text-[15px] ${active ? 'text-white' : 'text-bear-sub'}`}
             >
               {m.name}
             </Text>

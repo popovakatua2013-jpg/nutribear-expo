@@ -109,8 +109,8 @@ export function DataActions() {
         >
           <Sunrise size={20} color="#fbbf24" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[15.5px] text-bear-text">Начать новый день</Text>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
               {kcal > 0
                 ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
                 : 'Обнулит дневник, воду и шаги'}
@@ -124,8 +124,8 @@ export function DataActions() {
         >
           <Trash2 size={20} color="#fb7185" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[15.5px] text-rose-300">Стереть все данные</Text>
-            <Text className="font-sans text-[13px] text-bear-sub2">
+            <Text className="font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
               Полное удаление по GDPR: профиль, дневник, онбординг
             </Text>
           </View>
