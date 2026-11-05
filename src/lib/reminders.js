@@ -33,7 +33,7 @@ import {
   waterPokeMessage,
   weighPokeMessage,
   gonePokeBody,
-  workoutPokeBody,
+  workoutPokeMessage,
 } from '@/lib/bearPhrases'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
@@ -204,7 +204,7 @@ export async function scheduleMorningSummary() {
 
 // ── Медвежьи пинки: адаптивные напоминания о приёмах ────────────────────
 // Текст выбирается при планировании по реальному поведению: пропускает
-// приёмы — медведь подкалывает («Куда пропал-а? Уже булочки жуёшь?»),
+// приёмы — медведь подкалывает («Куда пропал? / Куда пропала?»),
 // держит серию — хвалит. Триггер ежедневный (надёжно, даже если
 // приложение не открывали), а проверка «записан ли приём» происходит
 // в момент срабатывания в setNotificationHandler — записан: молчим.
@@ -215,23 +215,85 @@ function mealPokeText(mealId, meals) {
   const passed =
     now.getHours() > t.hour ||
     (now.getHours() === t.hour && now.getMinutes() >= t.minute)
-  const tone = pickTone({
+  let tone = pickTone({
     loggedToday: st.loggedToday,
     missedToday: passed && !st.loggedToday,
     missedStreak: st.missedStreak,
     goodStreak: st.goodStreak,
     style: meals?.style || 'bear',
   })
+  // Похвалу («Уже записано — оперативно!») нельзя показывать из
+  // ежедневного пинка: к его срабатыванию приём либо уже записан (пинок
+  // молчит), либо ещё нет — и похвала прозвучала бы ложью. Похвала живёт
+  // отдельно — мгновенным пушем при ранней записи (maybePraiseNow),
+  // здесь вместо неё — гордость за серию или мягкий тон
+  if (tone === 'praise') tone = st.goodStreak >= 3 ? 'cheer' : 'soft'
   // Пол и имя из профиля: фразы подстраиваются («Куда пропал?» /
   // «Куда пропала?», «Катя, булочки?»)
   const { name, sex } = useProfileStore.getState()
   return mealPokeMessage({
     mealId,
     tone,
+    // Серия — для cheer-фраз: «5 дней подряд», иначе выходило «,  подряд»
+    streak: st.goodStreak,
     gender: sex === 'female' ? 'f' : 'm',
     name,
     style: meals?.style || 'bear',
   })
+}
+
+// ── Мгновенная похвала за оперативность ──────────────────────────────
+// Приём записан РАНЬШЕ своего напоминания — мишка аплодирует сразу
+// (one-shot через пару секунд, раз в день на приём). Правила:
+//  • одиночная запись — массовое копирование дня («Повторить день»)
+//    не оперативность, за неё не хвалим;
+//  • стиль не «Мягко» — чип обещает спокойные напоминания «как раньше»;
+//  • только встроенные приёмы с настроенным временем — для остальных
+//    непонятно, что значит «раньше».
+const MEAL_KEYS = ['breakfast', 'lunch', 'dinner']
+const praisedAt = {} // mealId → dayKey последней похвалы
+
+async function maybePraiseNow(state, prev) {
+  if (Platform.OS === 'web' || !Notifications) return
+  const meals = useActivityStore.getState().reminder?.meals
+  if (!meals?.enabled || meals.style === 'soft') return
+  const today = dayKeyOf()
+  const prevIds = new Set((prev?.history || []).map((e) => e?.id))
+  const added = (state.history || []).filter((e) => e && e.day === today && !prevIds.has(e.id))
+  if (added.length !== 1) return
+  const entry = added[0]
+  if (!MEAL_KEYS.includes(entry.mealId) || praisedAt[entry.mealId] === today) return
+  const t = parseTime(meals[entry.mealId])
+  if (!t) return
+  const now = new Date()
+  const beforeReminder =
+    now.getHours() < t.hour || (now.getHours() === t.hour && now.getMinutes() < t.minute)
+  if (!beforeReminder) return // после своего времени — это уже не «оперативно»
+  praisedAt[entry.mealId] = today
+  const { name, sex } = useProfileStore.getState()
+  const msg = mealPokeMessage({
+    mealId: entry.mealId,
+    tone: 'praise',
+    gender: sex === 'female' ? 'f' : 'm',
+    name,
+    style: 'bear',
+  })
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: `meal-praise-${entry.mealId}`,
+      content: {
+        title: msg.title,
+        body: msg.body,
+        sound: 'default',
+        data: { kind: 'meal-praise', mealId: entry.mealId },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(Date.now() + 2000),
+        channelId: 'meals',
+      },
+    })
+  } catch {}
 }
 
 // Запланировать 3 ежедневных напоминания (вызывается, когда разрешение
@@ -371,17 +433,19 @@ export async function rescheduleReminders() {
   }
 
   // Тренировка: ежедневно в выбранное время. Занятие уже записано —
-  // обработчик молчит в момент срабатывания (как с приёмами пищи)
+  // обработчик молчит в момент срабатывания (как с приёмами пищи).
+  // Стиль «Мягко» — спокойный текст без мемов, как у воды и весов
   const exercise = reminder?.exercise
   if (exercise?.enabled) {
     const t = parseTime(exercise.time)
     if (t) {
+      const workoutMsg = workoutPokeMessage({ style: reminder?.meals?.style || 'bear' })
       try {
         await Notifications.scheduleNotificationAsync({
           identifier: 'workout-daily',
           content: {
-            title: '🏋️ Тренировка ждёт',
-            body: workoutPokeBody(),
+            title: workoutMsg.title,
+            body: workoutMsg.body,
             sound: 'default',
             data: { kind: 'exercise' },
           },
@@ -407,7 +471,7 @@ export async function rescheduleReminders() {
 function handleNotificationTap(data) {
   const kind = data?.kind
   try {
-    if (kind === 'water' || kind === 'meal') {
+    if (kind === 'water' || kind === 'meal' || kind === 'meal-praise') {
       // Окна живут на главной — сначала показываем её
       router.navigate('/')
       if (kind === 'water') {
@@ -453,37 +517,34 @@ export function startReminderAgent() {
     })
   } catch {}
 
-  // Вернулись в приложение — перепланируем утреннюю сводку: возможно,
-  // сменился день, и «вчера» для следующего срабатывания стало другим
+  // Вернулись в приложение — перепланируем всё: пинки пересчитываются
+  // на свежих данных дневника, а фразы воды/весов/тренировки ротируются
+  // («ротация при каждом перепланировании») — иначе одна и та же фраза
+  // воды повторялась бы днями, пока не поменяются настройки
   const appSub = AppState.addEventListener('change', (st) => {
-    if (st === 'active') {
-      scheduleMorningSummary()
-      // Медвежьи пинки пересчитываются на свежих данных дневника
-      rescheduleMeals()
-    }
+    if (st === 'active') rescheduleReminders()
   })
 
   // Любое изменение настроек напоминаний — перепланировать
   const unsub = useActivityStore.subscribe((s, prev) => {
     if (s.reminder !== prev.reminder) rescheduleReminders()
-    // Переход на новый день: сводка на ближайшее утро должна показать
-    // только что завершившийся день (его итоги уже в истории)
-    else if (s.dayKey !== prev.dayKey) {
-      scheduleMorningSummary()
-      rescheduleMeals()
-    }
+    // Переход на новый день: утренняя сводка должна показать только что
+    // завершившийся день, а фразы серий — смениться на свежие
+    else if (s.dayKey !== prev.dayKey) rescheduleReminders()
   })
 
   // Правка дневника (записали/удалили приём) — перепланируем пинки:
-  // медведь должен знать, что приём уже не пропущен (debounce 1,5 с)
-  const foodUnsub = useFoodStore.subscribe(() => {
+  // медведь должен знать, что приём уже не пропущен (debounce 1,5 с),
+  // и похвалить за оперативность, если запись пришла раньше напоминания
+  const foodUnsub = useFoodStore.subscribe((s, prev) => {
     queueRescheduleMeals()
+    maybePraiseNow(s, prev)
   })
 
-  // Сменилось имя в профиле — пинки перетекстовываются под новое имя
-  // («Катя, булочки?» ↔ без имени) на ближайшем перепланировании
+  // Сменилось имя или пол в профиле — пинки перетекстовываются
+  // («Катя, куда пропала?» ↔ «Куда пропал?» / без имени)
   const profUnsub = useProfileStore.subscribe((s, prev) => {
-    if (s.name !== prev.name) queueRescheduleMeals()
+    if (s.name !== prev.name || s.sex !== prev.sex) queueRescheduleMeals()
   })
 
   return () => {

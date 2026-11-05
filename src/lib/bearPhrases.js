@@ -99,7 +99,8 @@ export function pickPhrase(pool, random = Math.random) {
 //  missedToday  — время приёма уже прошло, а записи нет
 //  missedStreak — сколько дней подряд ДО вчера этот приём пропускали
 //  goodStreak   — сколько дней подряд ДО вчера приём записывали
-//  style        — 'bear' (с характером) | 'soft' (мягко)
+//  style        — 'bear' (с характером) | 'spicy' (с перцем — влияет на
+//                 пул фраз в mealPokeMessage) | 'soft' (мягко)
 export function pickTone({ loggedToday = false, missedToday = false, missedStreak = 0, goodStreak = 0, style = 'bear' }) {
   if (style === 'soft') return 'soft'
   if (loggedToday) return 'praise'
@@ -182,7 +183,7 @@ export const WEIGH_PHRASES = [
 // 👻 «Пропал из приложения» — утренняя сводка, когда вчера не было ни записи
 export const GONE_PHRASES = [
   'Мы поставили твой график на подоконник — вдруг вернёшься 🌱',
-  'Вернись, мы всё простили. Даже то, что ты ушёл без прощания',
+  'Вернись, мы всё простили. Даже внезапное исчезновение без прощания',
   'Статистика развесила листовки: «Пропал человек. Приметы: мотивация, лёгкая забывчивость»',
   'Калории звонили. Мы сказали, что тебя нет. Им не понравилось',
   'Твоя серия держится из последних сил. Крепись, она старается',
@@ -247,9 +248,14 @@ export function gonePokeBody({ style = 'bear', random = Math.random } = {}) {
   return pickPhrase(GONE_PHRASES, random)
 }
 
-// Пинок о тренировке — фразы серии всегда живые (мемные по замыслу)
-export function workoutPokeBody({ random = Math.random } = {}) {
-  return pickPhrase(WORKOUT_PHRASES, random)
+// Пинок о тренировке. style: soft — спокойный текст без мемов (чип
+// «Мягко» обещает «относится ко всем пинкам: еда, вода, весы,
+// тренировка»), bear/spicy — фразы серии всегда живые (мемные по замыслу)
+export function workoutPokeMessage({ style = 'bear', random = Math.random } = {}) {
+  if (style === 'soft') {
+    return { title: '🏋️ Пора на тренировку', body: 'Время занятия — проведи тренировку и запиши её в дневник 🐻' }
+  }
+  return { title: '🏋️ Тренировка ждёт', body: pickPhrase(WORKOUT_PHRASES, random) }
 }
 
 // Статистика приёма по журналу: серия записей и серия пропусков до вчера.

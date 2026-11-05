@@ -15,7 +15,7 @@ import {
   waterPokeMessage,
   weighPokeMessage,
   gonePokeBody,
-  workoutPokeBody,
+  workoutPokeMessage,
 } from '@/lib/bearPhrases'
 
 const POOL0 = () => 0 // random-стаб: всегда первая фраза пула
@@ -247,18 +247,29 @@ describe('вторая серия: вода, весы, «пропал», тре�
   test('«пропал»: soft → null, bear → фраза из пула', () => {
     expect(gonePokeBody({ style: 'soft' })).toBeNull()
     expect(gonePokeBody({ style: 'bear', random: POOL0 })).toBe(GONE_PHRASES[0])
+    // spicy использует тот же живой пул
+    expect(gonePokeBody({ style: 'spicy', random: POOL0 })).toBe(GONE_PHRASES[0])
   })
 
-  test('тренировка: детерминированный выбор фразы', () => {
-    expect(workoutPokeBody({ random: POOL0 })).toBe(WORKOUT_PHRASES[0])
-    expect(workoutPokeBody({ random: () => 0.999 })).toBe(WORKOUT_PHRASES[WORKOUT_PHRASES.length - 1])
+  test('тренировка: soft — спокойный текст, bear/spicy — живой пул', () => {
+    const soft = workoutPokeMessage({ style: 'soft' })
+    expect(soft.title).toBe('🏋️ Пора на тренировку')
+    expect(soft.body).toContain('запиши')
+    expect(WORKOUT_PHRASES).not.toContain(soft.body)
+    const bear = workoutPokeMessage({ style: 'bear', random: POOL0 })
+    expect(bear.title).toBe('🏋️ Тренировка ждёт')
+    expect(bear.body).toBe(WORKOUT_PHRASES[0])
+    const spicy = workoutPokeMessage({ style: 'spicy', random: () => 0.999 })
+    expect(spicy.body).toBe(WORKOUT_PHRASES[WORKOUT_PHRASES.length - 1])
   })
 
   test('тренировка: формулировки без рода (правило серии)', () => {
-    // без «ты забыл/забыла» — только нейтральные обороты
+    // без «ты забыл/забыла», «ты ушёл/ушла» — только нейтральные обороты:
+    // фразу читают и мужчины, и женщины
     for (const p of [...WORKOUT_PHRASES, ...GONE_PHRASES]) {
       expect(p).not.toMatch(/забыл[аа]?\b/)
       expect(p).not.toMatch(/пропал[аа]?[,.]/)
+      expect(p).not.toMatch(/ты (ушёл|ушла|сделал|сделала|сдался|сдалась)\b/)
     }
   })
 })
