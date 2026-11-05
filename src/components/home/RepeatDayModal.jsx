@@ -152,9 +152,9 @@ export function RepeatDayModal({ visible, onClose }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 
@@ -194,7 +194,7 @@ export function RepeatDayModal({ visible, onClose }) {
                           {dayTitle(d.key)}
                           {isToday ? ' · сегодня' : ''}
                         </Text>
-                        <Text numberOfLines={1} className="font-sans text-[12.5px] text-bear-sub2">
+                        <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub2">
                           {`${d.count} записей · ≈${formatNum(Math.round(d.kcal))} ккал`}
                         </Text>
                       </View>

@@ -96,7 +96,7 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
                   цена: {next ? next.cost : '—'}
                 </Text>
               </View>
-              <Text className="mt-0.5 font-sans text-[12px]" style={{ color: GAME.dim2 }}>
+              <Text className="mt-0.5 font-sans text-[13px]" style={{ color: GAME.dim2 }}>
                 генов: {genes}
               </Text>
             </View>
@@ -140,7 +140,7 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
                   borderColor: isNext ? 'rgba(163,230,53,0.45)' : 'rgba(255,255,255,0.05)',
                 }}
               >
-                <Text className="font-semibold text-[12.5px] leading-tight" style={{ color: reached ? GAME.emerald : GAME.dim }}>
+                <Text className="font-semibold text-[13px] leading-tight" style={{ color: reached ? GAME.emerald : GAME.dim }}>
                   {c}
                 </Text>
               </View>

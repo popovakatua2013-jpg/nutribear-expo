@@ -24,16 +24,31 @@ const todayKey = dayKeyOf
 // туда пишется только в полночь, поэтому запись «за вчера» без этого
 // досчёта не изменила бы сводку дня/календарь/отчёты до следующей ночи.
 // Math.max — не уронить уже архивированное значение меньшим (журнал
-// может не знать о чём-то, что учла архивация).
-function syncHistoryKcal(day) {
+// может не знать о чём-то, что учла архивация). allowLower — правка/
+// удаление записи: считаем только на догидрированных сторах, чтобы
+// неполные данные не занизили день, и разрешаем честное понижение
+function syncHistoryKcal(day, allowLower = false) {
   try {
+    if (allowLower) {
+      if (!useFoodStore.persist.hasHydrated()) return
+      if (!useHistoryStore.persist.hasHydrated()) return
+    }
     const sum = useFoodStore
       .getState()
       .history.reduce((n, h) => (h.day === day ? n + (Number(h.kcal) || 0) : n), 0)
     const prev = useHistoryStore.getState().days[day] || {}
+    const next = Math.round(sum)
     useHistoryStore.getState().record(day, {
-      kcal: Math.max(prev.kcal || 0, Math.round(sum)),
+      kcal: allowLower ? next : Math.max(prev.kcal || 0, next),
     })
+  } catch {}
+}
+
+// День, к которому относится запись журнала (для пересчёта после правки)
+function syncHistoryKcalOfEntry(entryId) {
+  try {
+    const row = useFoodStore.getState().history.find((h) => h.id === entryId)
+    if (row?.day) syncHistoryKcal(row.day, true)
   } catch {}
 }
 
@@ -93,18 +108,20 @@ export const useFoodStore = create(
       },
 
       // Изменить граммовку записи: ккал и БЖУ пересчитываются пропорционально
-      updateEntryGrams: (mealId, entryId, newGrams) =>
+      updateEntryGrams: (mealId, entryId, newGrams) => {
         set((state) => ({
           entries: {
             ...state.entries,
             [mealId]: (state.entries[mealId] || []).map((e) => rescaleEntry(e, entryId, newGrams)),
           },
           history: state.history.map((h) => rescaleEntry(h, entryId, newGrams)),
-        })),
+        }))
+        syncHistoryKcalOfEntry(entryId)
+      },
 
       // Полная правка уже добавленной записи (название, вес, ккал, БЖУ) —
       // значения абсолютные «за порцию», меняются и в дневнике, и в истории
-      updateEntry: (mealId, entryId, patch) =>
+      updateEntry: (mealId, entryId, patch) => {
         set((state) => {
           const apply = (e) => (e.id === entryId ? { ...e, ...patch } : e)
           return {
@@ -114,9 +131,13 @@ export const useFoodStore = create(
             },
             history: state.history.map(apply),
           }
-        }),
+        })
+        syncHistoryKcalOfEntry(entryId)
+      },
 
-      removeEntry: (mealId, entryId) =>
+      removeEntry: (mealId, entryId) => {
+        // День удаляемой записи — до set: из журнала она уже уйдёт
+        const day = useFoodStore.getState().history.find((h) => h.id === entryId)?.day
         set((state) => ({
           entries: {
             ...state.entries,
@@ -126,7 +147,11 @@ export const useFoodStore = create(
           // ошибочная запись уходит и из журнала — иначе она продолжает
           // учитываться в месячном рейтинге и копировании вчерашнего дня
           history: state.history.filter((h) => h.id !== entryId),
-        })),
+        }))
+        // Честно понизить калории дня в истории — раньше счётчик дня
+        // оставался завышенным до полуночи
+        if (day) syncHistoryKcal(day, true)
+      },
 
       // Ещё один перекус пользователя («Перекус 2», «Перекус 3»…)
       addCustomMeal: () =>
@@ -165,6 +190,8 @@ export const useFoodStore = create(
     }),
     {
       name: 'nutribear-diary-v1',
+      version: 1,
+      migrate: (state) => state,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         goal: state.goal,

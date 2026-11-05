@@ -1,9 +1,9 @@
 // Применение плана онбординга к существующим сторам:
 // норма калорий, вода, шаги, профиль и цель питания.
 
-import { useFoodStore } from '@/store/useFoodStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { WATER_BY_ANSWER, STEPS_BY_ANSWER } from './onboarding-options'
 import { TDEE_LEVELS } from './bmi'
 
@@ -12,8 +12,9 @@ export function applyOnboarding(answers, plan) {
   const a = answers
   const goals = useGoalsStore.getState().goals
 
+  // Норма калорий придёт ниже через applyGoalChoice — вместе с id цели,
+  // чтобы пара «id пресета + ккал» не рассинхронилась
   useGoalsStore.getState().setGoals({
-    kcal: plan.targetKcal,
     waterMl: WATER_BY_ANSWER[a.waterDay] || goals.waterMl,
     steps: STEPS_BY_ANSWER[a.stepsDay] || goals.steps,
     minutes: Math.max(30, Math.round((STEPS_BY_ANSWER[a.stepsDay] || goals.steps) / 100)),
@@ -41,8 +42,10 @@ export function applyOnboarding(answers, plan) {
   if (TDEE_LEVELS.some((l) => l.id === a.activity)) bioPatch.activityId = a.activity
   useProfileStore.getState().setProfile(bioPatch)
 
-  // Цель питания: id совпадают с пресетами (lose / maintain / gain)
-  if (a.goalId) useFoodStore.getState().setGoal(a.goalId)
+  // Цель питания: id и норма калорий меняются всегда вместе. Цель могли
+  // пропустить — тогда просто личная норма калорий без смены пресета
+  if (a.goalId) applyGoalChoice(a.goalId, plan.targetKcal)
+  else useGoalsStore.getState().setGoals({ kcal: plan.targetKcal })
 
   // Доп. слоты перекусов («Перекус 2, 3…») больше не создаются: все
   // перекусы живут в одной карточке «Перекус/Полдник» (4 приёма пищи)

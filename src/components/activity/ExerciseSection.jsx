@@ -333,13 +333,13 @@ export function ExerciseSection({ flat = false }) {
               accessibilityRole="button"
               accessibilityLabel="Более старый день"
               hitSlop={6}
-              className={`h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx >= repeatDays.length - 1 ? 'opacity-30' : ''}`}
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx >= repeatDays.length - 1 ? 'opacity-30' : ''}`}
             >
               <ChevronLeft size={17} color="#AEB9D9" />
             </Pressable>
           )}
           <View className="min-w-0 flex-1">
-            <Text className="font-sans text-[12.5px] text-bear-sub2">{`${repDay.day} было`}</Text>
+            <Text className="font-sans text-[13px] text-bear-sub2">{`${repDay.day} было`}</Text>
             <Text numberOfLines={1} className="font-bold text-[15px] text-bear-text">
               {repDay.list
                 .slice(0, 2)
@@ -356,7 +356,7 @@ export function ExerciseSection({ flat = false }) {
               accessibilityRole="button"
               accessibilityLabel="Более свежий день"
               hitSlop={6}
-              className={`h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx <= 0 ? 'opacity-30' : ''}`}
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${repIdx <= 0 ? 'opacity-30' : ''}`}
             >
               <ChevronRight size={17} color="#AEB9D9" />
             </Pressable>
@@ -366,7 +366,7 @@ export function ExerciseSection({ flat = false }) {
             accessibilityRole="button"
             accessibilityLabel={`Повторить тренировки за ${repDay.day}`}
             hitSlop={6}
-            className="h-8 w-8 shrink-0 items-center justify-center rounded-full active:opacity-70"
+            className="h-9 w-9 shrink-0 items-center justify-center rounded-full active:opacity-70"
             style={{ backgroundColor: 'rgba(123,108,246,0.15)' }}
           >
             <RotateCcw size={16} color="#A78BFA" />
@@ -396,13 +396,13 @@ export function ExerciseSection({ flat = false }) {
                 </Text>
               </View>
               <View className="shrink-0 flex-row items-center gap-1">
-                <View className="h-8 w-8 items-center justify-center rounded-full bg-white/5">
+                <View className="h-9 w-9 items-center justify-center rounded-full bg-white/5">
                   <Pencil size={15} color="#A5AECB" />
                 </View>
                 <Pressable
                   onPress={() => remove(e)}
                   accessibilityLabel={`Удалить ${e.name}`}
-                  className="h-8 w-8 items-center justify-center rounded-full bg-white/5"
+                  className="h-9 w-9 items-center justify-center rounded-full bg-white/5"
                 >
                   <Trash2 size={16} color="#98A2C2" />
                 </Pressable>
@@ -435,7 +435,7 @@ export function ExerciseSection({ flat = false }) {
                 </Text>
               </View>
               <Pressable onPress={closeModal} accessibilityLabel="Закрыть" className="p-1">
-                <X size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
 
@@ -521,7 +521,7 @@ export function ExerciseSection({ flat = false }) {
                           </Text>
                         </View>
                         {kcalMet && (
-                          <Text className="font-sans text-[12.5px] text-bear-dim">
+                          <Text className="font-sans text-[13px] text-bear-dim">
                             {`≈ MET ${Math.round(kcalMet * 10) / 10} · как ${
                               closestExercise(kcalMet).emoji
                             } ${closestExercise(kcalMet).name.toLowerCase()}`}
@@ -564,7 +564,7 @@ export function ExerciseSection({ flat = false }) {
                       accessibilityLabel="День тренировки"
                     />
                     {editing && dayOff ? (
-                      <Text className="mt-1 font-sans text-[12.5px] text-bear-dim">
+                      <Text className="mt-1 font-sans text-[13px] text-bear-dim">
                         Сохраните — запись перенесётся за вчера
                       </Text>
                     ) : null}
@@ -647,7 +647,7 @@ export function ExerciseSection({ flat = false }) {
                               <Text className="font-bold text-[14px] text-bear-text">Готово</Text>
                             </Pressable>
                           </View>
-                          <Text className="font-sans text-[12.5px] leading-relaxed text-bear-dim">
+                          <Text className="font-sans text-[13px] leading-relaxed text-bear-dim">
                             Точнее формулы: цифра с тренажёра, пульсометра или смарт-часов.
                           </Text>
                         </View>
@@ -665,7 +665,7 @@ export function ExerciseSection({ flat = false }) {
                           <Pressable
                             onPress={startKcalEdit}
                             accessibilityLabel="Исправить калории вручную"
-                            className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5"
+                            className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5"
                           >
                             <Pencil size={15} color="#A5AECB" />
                           </Pressable>
@@ -728,7 +728,7 @@ export function ExerciseSection({ flat = false }) {
                   </Pressable>
                   {/* Чего не хватает до добавления — под приглушённой кнопкой */}
                   {!ex || !minutes ? (
-                    <Text maxFontSizeMultiplier={1.2} className="text-center font-sans text-[12.5px] text-bear-dim">
+                    <Text maxFontSizeMultiplier={1.2} className="text-center font-sans text-[13px] text-bear-dim">
                       {!ex && !minutes
                         ? 'Выберите активность и длительность'
                         : !ex
@@ -764,7 +764,7 @@ function ExButton({ e, exId, setExId }) {
         <Text numberOfLines={1} className="font-bold text-[14px] text-bear-text">
           {e.name}
         </Text>
-        <Text numberOfLines={1} className="font-sans text-[11.5px] text-bear-sub2">
+        <Text numberOfLines={1} className="font-sans text-[12.5px] text-bear-sub2">
           {`MET ${e.met}${isCustom ? ' · моё' : ''}`}
         </Text>
       </View>

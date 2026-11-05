@@ -124,7 +124,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               </View>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -180,7 +180,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                   key={v}
                   onPress={() => changeGrams(String(v))}
                   accessibilityRole="button"
-                  className={`rounded-full px-3 py-1 ${gramsN === v ? '' : 'bg-white/5'}`}
+                  className={`rounded-full px-3 py-1.5 ${gramsN === v ? '' : 'bg-white/5'}`}
                   style={gramsN === v ? { backgroundColor: '#7B6CF6' } : null}
                 >
                   <Text
@@ -230,7 +230,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                     accessibilityLabel={`${fld.label} за порцию`}
                     className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>

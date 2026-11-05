@@ -129,7 +129,7 @@ export function BarcodeMode({ onPick }) {
             <Text className="font-semibold text-[15px] text-bear-text">
               {busy ? 'Ищем продукт в базе…' : 'Наведите на штрих-код упаковки'}
             </Text>
-            <Text className="font-sans text-[12.5px] text-bear-sub">
+            <Text className="font-sans text-[13px] text-bear-sub">
               Открытая база Open Food Facts · точные КБЖУ с упаковки
             </Text>
           </View>

@@ -68,7 +68,7 @@ export function ExpeditionCard({ expedition, onStart, onCollect }) {
       {/* вернулся: забрать добычу */}
       {back && (
         <Panel style={{ marginTop: 12, borderColor: 'rgba(163,230,53,0.35)' }}>
-          <Text className="font-extrabold text-[17.5px]" style={{ color: GAME.lime }}>
+          <Text className="font-extrabold text-[18px]" style={{ color: GAME.lime }}>
             Организм вернулся!
           </Text>
           <Text className="mt-1 font-sans text-[15px] leading-snug" style={{ color: GAME.dim }}>
@@ -80,7 +80,7 @@ export function ExpeditionCard({ expedition, onStart, onCollect }) {
             className="mt-3.5 items-center rounded-2xl py-3.5"
             style={{ backgroundColor: GAME.lime }}
           >
-            <Text className="font-extrabold text-[17.5px]" style={{ color: '#12200F' }}>
+            <Text className="font-extrabold text-[18px]" style={{ color: '#12200F' }}>
               Забрать добычу
             </Text>
           </Pressable>

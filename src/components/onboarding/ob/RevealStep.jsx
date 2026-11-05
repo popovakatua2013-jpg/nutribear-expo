@@ -140,7 +140,7 @@ export function RevealStep({ onNext, onBack }) {
             </View>
           ) : null}
 
-          <Text className="px-1 font-sans text-[12px] leading-relaxed text-bear-dim">
+          <Text className="px-1 font-sans text-[13px] leading-relaxed text-bear-dim">
             {DISCLAIMER}
           </Text>
         </View>
@@ -156,7 +156,7 @@ function Stat({ emoji, value, caption }) {
       <Text className="mt-1 font-extrabold text-[22px] leading-none text-bear-text">
         {value}
       </Text>
-      <Text className="mt-1 text-center font-sans text-[11.5px] leading-[12px] text-bear-sub2">
+      <Text className="mt-1 text-center font-sans text-[12.5px] leading-[14px] text-bear-sub2">
         {caption}
       </Text>
     </View>

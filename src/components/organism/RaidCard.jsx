@@ -45,7 +45,7 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
 
         {/* регенерация за пропущенные дни и то, что погасили щиты */}
         {heal > 0 && (
-          <Text className="mt-1.5 font-sans text-[12.5px]" style={{ color: GAME.dim2 }}>
+          <Text className="mt-1.5 font-sans text-[13px]" style={{ color: GAME.dim2 }}>
             босс подлечился +{heal} HP{absorb > 0 ? ` · щиты погасили ${absorb}` : ''}
           </Text>
         )}
@@ -107,7 +107,7 @@ function Chip({ icon: Icon, color, text }) {
       style={{ backgroundColor: 'rgba(0,0,0,0.25)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}
     >
       <Icon size={15} color={color} />
-      <Text className="font-medium text-[12.5px] leading-tight" style={{ color: GAME.dim }}>
+      <Text className="font-medium text-[13px] leading-tight" style={{ color: GAME.dim }}>
         {text}
       </Text>
     </View>

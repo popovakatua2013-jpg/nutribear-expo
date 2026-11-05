@@ -140,7 +140,7 @@ export function ReminderIntervals() {
               placeholderTextColor="#8B96B8"
               className="w-9 text-center font-semibold text-[14px] text-white"
             />
-            <Text className="font-sans text-[12px] text-bear-sub">мин</Text>
+            <Text className="font-sans text-[13px] text-bear-sub">мин</Text>
             <Pressable
               onPress={() => closeEdit(applyCustom())}
               accessibilityRole="button"
@@ -156,7 +156,7 @@ export function ReminderIntervals() {
               accessibilityLabel="Отменить ввод интервала"
               className="rounded-full bg-white/10 p-1 active:opacity-70"
             >
-              <X size={15} color="#A5AECB" />
+              <X hitSlop={10} size={15} color="#A5AECB" />
             </Pressable>
           </View>
         ) : (
@@ -166,7 +166,7 @@ export function ReminderIntervals() {
             accessibilityRole="button"
             accessibilityLabel="Изменить: свой интервал напоминаний"
             hitSlop={4}
-            className="h-7 w-7 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
           >
             <Pencil size={14} color="#8B96B8" />
           </Pressable>

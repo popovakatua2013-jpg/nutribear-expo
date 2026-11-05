@@ -13,7 +13,13 @@
 //
 //  Настройка (после деплоя):
 //   npx wrangler secret put AI_KEY      — ключ ИИ (sk-…)
+//   npx wrangler secret put NB_SECRET   — общий секрет приложения
+//     (необязательно, но НАСТОЯТЕЛЬНО: без него POST может слать кто угодно,
+//      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET)
 //   [vars] в wrangler.toml              — AI_UPSTREAM, AI_MODEL
+//                                         AI_ALLOWED_MODELS — белый список
+//                                         моделей через запятую (по умолчанию
+//                                         gpt-4o-mini, whisper-1, gpt-4o)
 //
 //  Деплой одной командой: npx wrangler deploy  (инструкция — README.md)
 // ═══════════════════════════════════════════════════════════════
@@ -21,8 +27,27 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-NB-Secret',
   'Access-Control-Max-Age': '86400',
+}
+
+// Белый список моделей для passthrough: клиент больше не выбирает
+// произвольную модель (раньше мог уйти в дорогую и слить баланс).
+// Расширяется переменной AI_ALLOWED_MODELS («model1,model2»)
+const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
+
+// Простейший rate limit в памяти изолята: 30 POST-запросов в минуту
+// на IP. Изоляты перезапускаются, лимит не идеален — но наивный
+// дренаж баланса ключа останавливает
+const hits = new Map()
+const RATE_LIMIT = 30
+function rateLimited(ip) {
+  const now = Date.now()
+  const win = (hits.get(ip) || []).filter((t) => now - t < 60000)
+  win.push(now)
+  hits.set(ip, win)
+  if (hits.size > 5000) hits.clear() // страховка от роста карты
+  return win.length > RATE_LIMIT
 }
 
 // Системный промпт чата NutriBear (можно заменить переменной AI_SYSTEM)
@@ -63,6 +88,19 @@ export default {
       )
     }
 
+    // Общий секрет приложения: если задан, POST без заголовка
+    // x-nb-secret отклоняется — воркер нельзя найти и использовать
+    // в обход приложения
+    if (env.NB_SECRET && request.headers.get('x-nb-secret') !== env.NB_SECRET) {
+      return json({ error: 'Требуется секрет приложения' }, 401)
+    }
+
+    // Rate limit на IP (см. RATE_LIMIT выше)
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown'
+    if (rateLimited(ip)) {
+      return json({ error: 'Слишком много запросов, попробуйте позже' }, 429)
+    }
+
     // ── 1. Чат NutriBear: { messages } → { reply } ────────────────
     if (path === '/chat') {
       try {
@@ -92,15 +130,41 @@ export default {
       }
     }
 
-    // ── 2/3. OpenAI-протокол как есть (фото еды, голос) ───────────
+    // ── 2/3. OpenAI-протокол (фото еды, голос) — с проверками ─────
     if (path === '/chat/completions' || path === '/audio/transcriptions') {
-      const headers = new Headers(request.headers)
-      headers.delete('host')
-      headers.set('Authorization', `Bearer ${key}`)
+      // Заголовки собираем ЯВНО: клиентские больше не пересылаются
+      // as-is (раньше проходили любые — включая чужую Authorization)
+      const fwd = new Headers({
+        'Content-Type': request.headers.get('content-type') || 'application/json',
+        Authorization: `Bearer ${key}`,
+      })
+
+      let body = request.body
+      if (path === '/chat/completions') {
+        // Белый список моделей: модель приходит в JSON-теле
+        const text = await request.text()
+        let parsed = {}
+        try {
+          parsed = JSON.parse(text || '{}')
+        } catch {}
+        const allowed = String(env.AI_ALLOWED_MODELS || DEFAULT_ALLOWED_MODELS.join(','))
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+        if (model && !allowed.includes(model)) allowed.push(model)
+        if (!allowed.includes(String(parsed.model || ''))) {
+          return json(
+            { error: `Модель «${parsed.model}» не разрешена. Разрешены: ${allowed.join(', ')}` },
+            400
+          )
+        }
+        body = text // буферизованное тело — поток уже прочитан
+      }
+
       const res = await fetch(`${upstream}${path}`, {
         method: 'POST',
-        headers,
-        body: request.body, // поток: json или multipart — без разницы
+        headers: fwd,
+        body, // json-текст или multipart-поток
       })
       const out = new Headers(res.headers)
       Object.entries(CORS).forEach(([k, v]) => out.set(k, v))

@@ -254,7 +254,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             accessibilityLabel="Очистить поиск"
             className="pb-0.5 active:opacity-60"
           >
-            <X size={16} color="#8B96B8" />
+            <X hitSlop={10} size={16} color="#8B96B8" />
           </Pressable>
         )}
       </View>
@@ -316,7 +316,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                     >
                       {c.name}
                     </Text>
-                    <Text className="font-sans text-[12px] text-bear-sub">{c.items.length}</Text>
+                    <Text className="font-sans text-[13px] text-bear-sub">{c.items.length}</Text>
                   </Pressable>
                 ))}
                 {mealEntries.length > 0 && (
@@ -362,7 +362,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                     >
                       {row.name}
                     </Text>
-                    <Text className="font-sans text-[12px] text-bear-dim">
+                    <Text className="font-sans text-[13px] text-bear-dim">
                       {row.grams > 0 ? `${row.grams} г` : `${Math.round(row.kcal)} ккал`}
                     </Text>
                   </Pressable>
@@ -432,7 +432,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             className="mt-2 flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.04] px-3 py-2 active:bg-white/10"
           >
             <View
-              className="h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-lg"
               style={{ backgroundColor: '#7B6CF6' }}
             >
               <LayoutGrid size={15} color="#FFFFFF" />
@@ -458,7 +458,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
               <View className="flex-row items-center gap-2">
                 <View
-                  className="h-7 w-7 items-center justify-center rounded-lg"
+                  className="h-9 w-9 items-center justify-center rounded-lg"
                   style={{ backgroundColor: '#7B6CF6' }}
                 >
                   <LayoutGrid size={16} color="#FFFFFF" />
@@ -470,7 +470,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 accessibilityLabel="Закрыть базу продуктов"
                 className="p-1"
               >
-                <X size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
             <View className="min-h-0 flex-1 px-5 pb-4 pt-3">
@@ -493,7 +493,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <View
-                  className="h-7 w-7 items-center justify-center rounded-lg"
+                  className="h-9 w-9 items-center justify-center rounded-lg"
                   style={{ backgroundColor: '#F59E0B' }}
                 >
                   <Zap size={16} color="#FFFFFF" />
@@ -505,7 +505,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 accessibilityLabel="Закрыть быструю запись"
                 className="p-1"
               >
-                <X size={20} color="#A5AECB" />
+                <X hitSlop={10} size={20} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[13px] text-bear-sub">
@@ -575,7 +575,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X size={20} color="#A5AECB" />
+                <X hitSlop={10} size={20} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[13px] text-bear-sub">

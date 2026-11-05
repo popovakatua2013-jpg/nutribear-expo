@@ -66,7 +66,7 @@ export function PaywallStep({ onNext, onBack }) {
                     <Text className="font-bold text-[17px] text-bear-text">{p.title}</Text>
                     {p.best ? (
                       <View className="ml-2 rounded-full bg-amber-400/15 px-2 py-0.5">
-                        <Text className="font-bold text-[12px] text-amber-300">Выгодно</Text>
+                        <Text className="font-bold text-[13px] text-amber-300">Выгодно</Text>
                       </View>
                     ) : null}
                   </View>
@@ -80,7 +80,7 @@ export function PaywallStep({ onNext, onBack }) {
           })}
         </View>
 
-        <Text className="text-center font-sans text-[12px] text-bear-dim">
+        <Text className="text-center font-sans text-[13px] text-bear-dim">
           Сейчас все функции открыты бесплатно — оплата появится в обновлениях
         </Text>
       </View>

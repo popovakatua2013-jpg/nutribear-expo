@@ -44,12 +44,12 @@ export function CollectionCard({ items, opened }) {
               />
               <Text
                 numberOfLines={2}
-                className="mt-1.5 text-center font-semibold text-[12.5px] leading-tight"
+                className="mt-1.5 text-center font-semibold text-[13px] leading-tight"
                 style={{ color: has ? GAME.text : GAME.dim2 }}
               >
                 {has ? it.name : '???'}
               </Text>
-              <Text className="mt-0.5 font-sans text-[11px]" style={{ color: has ? it.color : GAME.dim2 }}>
+              <Text className="mt-0.5 font-sans text-[12.5px]" style={{ color: has ? it.color : GAME.dim2 }}>
                 {it.kind}
               </Text>
             </View>

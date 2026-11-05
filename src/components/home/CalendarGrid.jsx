@@ -13,7 +13,7 @@ export function WeekdayRow() {
     <View className="flex-row" accessibilityElementsHidden>
       {WEEKDAYS.map((w) => (
         <View key={w} className="flex-1 items-center">
-          <Text className="font-medium text-[12px] text-bear-dim">{w}</Text>
+          <Text className="font-medium text-[13px] text-bear-dim">{w}</Text>
         </View>
       ))}
     </View>
@@ -71,7 +71,7 @@ export function DaysGrid({
                 onPress={() => onSelectDay && onSelectDay(key)}
                 accessibilityLabel={`Сводка за ${day} число`}
                 accessibilityRole={tappable ? 'button' : undefined}
-                className="h-7 w-7 items-center justify-center rounded-lg"
+                className="h-9 w-9 items-center justify-center rounded-lg"
                 style={{ backgroundColor: isToday ? '#7B6CF6' : BG[status] || 'transparent' }}
               >
                 <Text

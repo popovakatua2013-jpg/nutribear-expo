@@ -22,7 +22,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
   return (
     <View className="mt-2 gap-1">
       {visible.map((entry) => (
-        <View key={entry.id} className="rounded-lg bg-white/5 px-1.5 py-1">
+        <View key={entry.id} className="rounded-lg bg-white/5 px-1.5 py-1.5">
           <Pressable
             onPress={() => setEdit(entry)}
             accessibilityRole="button"
@@ -38,14 +38,14 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
               >
                 {entry.name}
               </Text>
-              <Text maxFontSizeMultiplier={1.25} className="font-sans text-[12px] text-bear-sub2">
+              <Text maxFontSizeMultiplier={1.25} className="font-sans text-[13px] text-bear-sub2">
                 {`${entry.grams}\u00A0г · ${formatNum(entry.kcal)}`}
               </Text>
               {entry.desc ? (
                 <Text
                   numberOfLines={2}
                   maxFontSizeMultiplier={1.25}
-                  className="font-sans text-[12px] leading-[13px] text-bear-sub"
+                  className="font-sans text-[13px] leading-[15px] text-bear-sub"
                 >
                   {entry.desc}
                 </Text>
@@ -53,7 +53,7 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
             </View>
             <View className="shrink-0 flex-row items-center">
               <View className="p-0.5">
-                <Pencil size={13} color="#8B96B8" />
+                <Pencil size={15} color="#8B96B8" />
               </View>
               <Pressable
                 onPress={() => onRemove(entry.id)}
@@ -62,11 +62,11 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 className="p-0.5"
               >
-                <Trash2 size={13} color="#8B96B8" />
+                <Trash2 size={15} color="#8B96B8" />
               </Pressable>
             </View>
           </Pressable>
-          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[11.5px] text-bear-dim">
+          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[12.5px] text-bear-dim">
             {`${bjuLine(entry)}${entry.time ? `\u00A0· ${entry.time}` : ''}`}
           </Text>
         </View>
@@ -77,11 +77,11 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
           onPress={onShowAll}
           accessibilityRole="button"
           accessibilityLabel={`Открыть все приёмы пищи — там ещё ${hidden} ${dishesWord(hidden)}`}
-          className="flex-row items-center justify-center rounded-lg bg-white/5 py-1 active:opacity-70"
+          className="flex-row items-center justify-center rounded-lg bg-white/5 py-1.5 active:opacity-70"
         >
           <Text
             maxFontSizeMultiplier={1.25}
-            className="font-sans text-[12px] font-medium text-[#8DABFF]"
+            className="font-sans text-[13px] font-medium text-[#8DABFF]"
           >
             {`Ещё ${hidden} ${dishesWord(hidden)} · открыть все приёмы`}
           </Text>

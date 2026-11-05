@@ -85,7 +85,7 @@ export function UserFoodForm({ open, onClose, initial }) {
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-row items-center gap-2">
               <View
-                className="h-7 w-7 items-center justify-center rounded-lg"
+                className="h-9 w-9 items-center justify-center rounded-lg"
                 style={{ backgroundColor: '#7B6CF6' }}
               >
                 <Star size={16} color="#FFFFFF" />
@@ -95,7 +95,7 @@ export function UserFoodForm({ open, onClose, initial }) {
               </Text>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -177,7 +177,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     accessibilityLabel={fld.label}
                     className={field}
                   />
-                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -204,7 +204,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     accessibilityLabel={fld.label}
                     className={field}
                   />
-                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -238,7 +238,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                 {initial ? 'Сохранить' : 'Добавить в базу'}
               </Text>
             </Pressable>
-            <Text className="mt-2 text-center font-sans text-[12.5px] text-bear-sub">
+            <Text className="mt-2 text-center font-sans text-[13px] text-bear-sub">
               Продукт запомнится и будет в поиске и в базе продуктов
             </Text>
           </ScrollView>

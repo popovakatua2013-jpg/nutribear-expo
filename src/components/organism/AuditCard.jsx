@@ -52,7 +52,7 @@ function SystemRow({ s, pro, onLocked }) {
         className="flex-row items-center gap-2.5 rounded-xl px-3 py-3"
         style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(196,181,253,0.18)' }}
       >
-        <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: 'rgba(196,181,253,0.12)' }}>
+        <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: 'rgba(196,181,253,0.12)' }}>
           <Lock size={17} color="#C4B5FD" />
         </View>
         <View className="min-w-0 flex-1">
@@ -78,14 +78,14 @@ function SystemRow({ s, pro, onLocked }) {
         <View className="flex-row items-center gap-1.5">
           {s.rare && (
             <View className="flex-row items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(196,181,253,0.14)' }}>
-              <Sparkles size={12} color="#C4B5FD" />
-              <Text className="font-bold text-[12px]" style={{ color: '#C4B5FD' }}>
+              <Sparkles size={14} color="#C4B5FD" />
+              <Text className="font-bold text-[13px]" style={{ color: '#C4B5FD' }}>
                 редкий
               </Text>
             </View>
           )}
           <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${meta.color}1A`, borderWidth: 1, borderColor: `${meta.color}55` }}>
-            <Text className="font-bold text-[12px]" style={{ color: meta.color }}>
+            <Text className="font-bold text-[13px]" style={{ color: meta.color }}>
               {meta.label}
             </Text>
           </View>
@@ -110,7 +110,7 @@ function SystemRow({ s, pro, onLocked }) {
 function ScoreChip({ score, weekday, today }) {
   return (
     <View
-      className="min-w-[32px] items-center rounded-lg px-1.5 py-1"
+      className="min-w-[32px] items-center rounded-lg px-1.5 py-1.5"
       style={{
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderWidth: 1,
@@ -121,7 +121,7 @@ function ScoreChip({ score, weekday, today }) {
         {score}
       </Text>
       {!!weekday && (
-        <Text className="font-sans text-[11px]" style={{ color: today ? GAME.lime : GAME.dim2 }}>
+        <Text className="font-sans text-[12.5px]" style={{ color: today ? GAME.lime : GAME.dim2 }}>
           {weekday}
         </Text>
       )}
@@ -265,7 +265,7 @@ export function AuditCard({
             accessibilityRole="button"
             accessibilityLabel="Провести аудит организма"
           >
-            <Text className="font-extrabold text-[17.5px]" style={{ color: '#12200F' }}>
+            <Text className="font-extrabold text-[18px]" style={{ color: '#12200F' }}>
               Провести аудит
             </Text>
           </Pressable>

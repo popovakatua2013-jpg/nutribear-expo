@@ -40,7 +40,7 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
               </Text>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 

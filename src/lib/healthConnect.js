@@ -147,7 +147,9 @@ export async function hcStepsToday() {
   const now = new Date()
   const start = new Date(now)
   start.setHours(0, 0, 0, 0)
-  return hcStepsBetween(start.getTime(), now.getTime() + 1000)
+  // endTime строго «сейчас»: диапазон с запасом в будущее часть версий
+  // Health Connect отклоняет — шаги молча возвращались нулём
+  return hcStepsBetween(start.getTime(), now.getTime())
 }
 
 // Импорт истории: читает шаги HC за последние days ПРОШЛЫХ дней и

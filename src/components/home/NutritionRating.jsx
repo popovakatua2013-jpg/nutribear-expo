@@ -162,7 +162,7 @@ export function NutritionRating() {
               onPress={() => setMode(id)}
               accessibilityRole="button"
               accessibilityLabel={`Рейтинг за ${id === 'day' ? 'день' : 'месяц'}`}
-              className={`rounded-full px-3 py-1 ${
+              className={`rounded-full px-3 py-1.5 ${
                 mode === id ? 'bg-[#7B6CF6]' : 'active:opacity-70'
               }`}
             >
@@ -268,7 +268,7 @@ export function NutritionRating() {
             </Pressable>
 
             {expanded && microNote ? (
-              <Text className="mt-2 font-sans text-[12.5px] leading-[14px] text-bear-dim">
+              <Text className="mt-2 font-sans text-[13px] leading-[16px] text-bear-dim">
                 {microNote}
               </Text>
             ) : null}

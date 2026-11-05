@@ -11,8 +11,13 @@ export const useShopStore = create(
       coins: 0,
       owned: {}, // { itemId: timestamp покупки }
 
-      // Начислить монетки (за действие в приложении)
-      earn: (n) => set((s) => ({ coins: s.coins + n })),
+      // Начислить монетки (за действие в приложении). Санитизация:
+      // NaN/мусор → 0, отрицательное не уменьшает копилку, потолок —
+      // чтобы битые данные не переполнили хранилище
+      earn: (n) =>
+        set((s) => ({
+          coins: Math.min(999999, s.coins + Math.max(0, Math.round(Number(n)) || 0)),
+        })),
 
       // Купить товар. true — успех, false — не хватает монеток
       spend: (itemId, price) => {
@@ -27,6 +32,8 @@ export const useShopStore = create(
     }),
     {
       name: 'nutribear-shop-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ coins: s.coins, owned: s.owned }),
     }

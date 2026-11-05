@@ -40,7 +40,7 @@ export function ObShell({
         )}
         <View className="min-w-0 flex-1">
           {sub ? (
-            <Text className="font-bold text-[12px] uppercase tracking-[0.14em] text-[#6c8cff]">
+            <Text className="font-bold text-[13px] uppercase tracking-[0.14em] text-[#6c8cff]">
               {sub}
             </Text>
           ) : null}

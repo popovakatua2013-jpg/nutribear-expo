@@ -25,7 +25,7 @@ export default function MoreScreen() {
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
-      <SoftGlow id="glowMoreTR" w={190} h={160} peak={0.26} color="#7C3AED" style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowMoreTR" w={190} h={160} peak={0.3} color="#7C3AED" style={{ top: -26, right: -46 }} />
       <SoftGlow id="glowMoreL" w={120} h={150} peak={0.12} color="#4D7CFE" style={{ top: 60, left: -40 }} />
       <ScrollView
         contentContainerStyle={{

@@ -241,7 +241,7 @@ export default function HomeScreen() {
       <SoftGlow id="glowHomeL" w={120} h={150} peak={0.14} color="#4D7CFE" style={{ top: 60, left: -40 }} />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Приветствие: мишка, время суток, статус дневника и дата */}
@@ -387,7 +387,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color="#A5AECB" />
                 </Pressable>
               </View>
               <Text className="mt-1 font-sans text-[13px] text-bear-sub">
@@ -445,7 +445,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[13px] text-bear-sub">

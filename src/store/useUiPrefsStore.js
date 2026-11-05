@@ -41,6 +41,8 @@ export const useUiPrefsStore = create(
     }),
     {
       name: 'nutribear-ui-prefs-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

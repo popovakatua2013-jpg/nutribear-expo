@@ -5,6 +5,9 @@
 #  NOTE: English text on purpose - Windows PowerShell 5.1 breaks
 #  on Cyrillic when a .ps1 file is saved without BOM.
 # ================================================================
+Write-Host "0/4 Switching to the script folder..." -ForegroundColor Cyan
+Set-Location $PSScriptRoot
+
 Write-Host "1/4 Pulling latest code from GitHub..." -ForegroundColor Cyan
 git pull origin main
 if ($LASTEXITCODE -ne 0) { Write-Host "git pull FAILED - check internet. Build stopped." -ForegroundColor Red; exit 1 }

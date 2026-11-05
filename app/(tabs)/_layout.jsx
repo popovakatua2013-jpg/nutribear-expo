@@ -24,8 +24,8 @@ function TabIcon({ Icon, color, focused }) {
       className="items-center justify-center"
       style={{
         width: 46,
-        height: 27,
-        borderRadius: 14,
+        height: 30,
+        borderRadius: 15,
         backgroundColor: focused ? 'rgba(123,108,246,0.18)' : 'transparent',
         borderWidth: focused ? 1 : 0,
         borderColor: 'rgba(167,139,250,0.28)',
@@ -55,7 +55,7 @@ export default function TabsLayout() {
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+        tabBarLabelStyle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >

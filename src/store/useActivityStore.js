@@ -110,9 +110,11 @@ export const useActivityStore = create(
         }),
 
       addSteps: (n) => {
-        set((s) => ({ extraSteps: Math.min(50000, s.extraSteps + n) }))
+        // Санитизация: NaN/мусор → 0, минус не отнимает чужие шаги
+        const add = Math.max(0, Math.round(Number(n) || 0))
+        set((s) => ({ extraSteps: Math.min(50000, s.extraSteps + add) }))
         // +5 монеток за каждую 1 000 добавленных шагов — копилка организма
-        useShopStore.getState().earn(Math.round((n / 1000) * EARN.steps))
+        useShopStore.getState().earn(Math.round((add / 1000) * EARN.steps))
       },
 
       resetToday: () =>

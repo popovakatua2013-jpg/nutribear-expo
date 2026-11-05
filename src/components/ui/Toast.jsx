@@ -89,7 +89,7 @@ function ToastItem({ item, onDismiss }) {
           hitSlop={8}
           className="shrink-0 rounded-full bg-white/5 p-1 active:opacity-70"
         >
-          <X size={15} color="#8B96B8" />
+          <X hitSlop={10} size={15} color="#8B96B8" />
         </Pressable>
       </View>
     </Animated.View>

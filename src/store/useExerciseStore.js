@@ -14,6 +14,19 @@ import { KCAL_PER_STEP } from '@/lib/data/activity'
 // Ключ дня «ГГГГ-ММ-ДД» по локальным часам (единый с историей)
 export const todayKey = dayKeyOf
 
+// Лимит дней лога тренировок — как в дневной истории (MAX_DAYS):
+// без обрезки лог рос безгранично и тормозил запись стора
+const MAX_LOG_DAYS = 210
+
+// Оставить только последние MAX_LOG_DAYS дней (ключи «ГГГГ-ММ-ДД»)
+function pruneLogs(logs) {
+  const keys = Object.keys(logs).sort()
+  if (keys.length <= MAX_LOG_DAYS) return logs
+  const next = { ...logs }
+  for (const k of keys.slice(0, keys.length - MAX_LOG_DAYS)) delete next[k]
+  return next
+}
+
 export const useExerciseStore = create(
   persist(
     (set) => ({
@@ -25,13 +38,13 @@ export const useExerciseStore = create(
 
       addLog: (dayKey, entry) =>
         set((s) => ({
-          logs: {
+          logs: pruneLogs({
             ...s.logs,
             [dayKey]: [
               { id: makeId(), ...entry },
               ...(s.logs[dayKey] || []),
             ],
-          },
+          }),
         })),
 
       // Изменить запись тренировки (упражнение, минуты, ккал)
@@ -64,15 +77,22 @@ export const useExerciseStore = create(
     }),
     {
       name: 'nutribear-exercise-v1',
+      version: 1,
+      migrate: (state) => state,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ logs: s.logs, custom: s.custom }),
+      // После догрузки с телефона — обрезать старые дни, накопленные
+      // до появления лимита
+      onRehydrateStorage: () => (state) => {
+        if (state && state.logs) useExerciseStore.setState({ logs: pruneLogs(state.logs) })
+      },
     }
   )
 )
 
 // Сумма сожжённых калорий за день (только тренировки)
 export function dayBurned(logs, key) {
-  return (logs[key] || []).reduce((sum, e) => sum + (e.kcal || 0), 0)
+  return (logs[key] || []).reduce((sum, e) => sum + (Number(e.kcal) || 0), 0)
 }
 
 // Вся активность за день: тренировки + шаги (≈ 0.04 ккал на шаг —

@@ -101,6 +101,17 @@ export function parseTime(t) {
   return { hour, minute }
 }
 
+// Часовой пояс устройства для ежедневных/еженедельных триггеров:
+// без явного пояса после перевода часов (DST) или перелёта время
+// срабатывания может уплыть на час
+function deviceTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined
+  } catch {
+    return undefined
+  }
+}
+
 async function ensureChannels() {
   if (Platform.OS !== 'android' || !Notifications) return
   try {
@@ -297,7 +308,7 @@ async function maybePraiseNow(state, prev) {
 }
 
 // Запланировать 3 ежедневных напоминания (вызывается, когда разрешение
-// уже получено — из rescheduleReminders/rescheduleMeals)
+// уже получено — из rescheduleReminders/refreshDailyPokes)
 async function scheduleMeals(meals) {
   for (const key of ['breakfast', 'lunch', 'dinner']) {
     const t = parseTime(meals[key])
@@ -316,6 +327,7 @@ async function scheduleMeals(meals) {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: t.hour,
           minute: t.minute,
+          timezone: deviceTimeZone(),
           channelId: 'meals',
         },
       })
@@ -350,6 +362,71 @@ function queueRescheduleMeals() {
     mealTimer = null
     rescheduleMeals()
   }, 1500)
+}
+
+// Взвешивание: раз в неделю в выбранное время (общая для полного
+// перепланирования и обновления пинков)
+async function scheduleWeigh(reminder) {
+  const weigh = reminder?.weigh
+  if (!weigh?.enabled) return
+  const t = parseTime(weigh.time)
+  // weekday хранится как 0=Пн…6=Вс, у expo-notifications 1=Вс…7=Сб
+  const EXPO_WD = [2, 3, 4, 5, 6, 7, 1]
+  const wd = EXPO_WD[Math.min(6, Math.max(0, Math.round(weigh.weekday ?? 5)))]
+  if (!t) return
+  const weighMsg = weighPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'weigh-weekly',
+      content: {
+        title: weighMsg.title,
+        body: weighMsg.body,
+        sound: 'default',
+        data: { kind: 'weigh' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday: wd,
+        hour: t.hour,
+        minute: t.minute,
+        timezone: deviceTimeZone(),
+        channelId: 'weigh',
+      },
+    })
+  } catch (e) {
+    console.warn('Напоминание о взвешивании не запланировано:', e)
+  }
+}
+
+// Тренировка: ежедневно в выбранное время. Занятие уже записано —
+// обработчик молчит в момент срабатывания (как с приёмами пищи).
+// Стиль «Мягко» — спокойный текст без мемов, как у воды и весов
+async function scheduleWorkout(reminder) {
+  const exercise = reminder?.exercise
+  if (!exercise?.enabled) return
+  const t = parseTime(exercise.time)
+  if (!t) return
+  const workoutMsg = workoutPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'workout-daily',
+      content: {
+        title: workoutMsg.title,
+        body: workoutMsg.body,
+        sound: 'default',
+        data: { kind: 'exercise' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: t.hour,
+        minute: t.minute,
+        timezone: deviceTimeZone(),
+        channelId: 'workout',
+      },
+    })
+  } catch (e) {
+    console.warn('Напоминание о тренировке не запланировано:', e)
+  }
 }
 
 // Перепланировать все напоминания по текущим настройкам стора.
@@ -401,69 +478,42 @@ export async function rescheduleReminders() {
   if (meals?.enabled) await scheduleMeals(meals)
 
   // Взвешивание: раз в неделю в выбранное время
-  const weigh = reminder?.weigh
-  if (weigh?.enabled) {
-    const t = parseTime(weigh.time)
-    // weekday хранится как 0=Пн…6=Вс, у expo-notifications 1=Вс…7=Сб
-    const EXPO_WD = [2, 3, 4, 5, 6, 7, 1]
-    const wd = EXPO_WD[Math.min(6, Math.max(0, Math.round(weigh.weekday ?? 5)))]
-    if (t) {
-      const weighMsg = weighPokeMessage({ style: reminder?.meals?.style || 'bear' })
-      try {
-        await Notifications.scheduleNotificationAsync({
-          identifier: 'weigh-weekly',
-          content: {
-            title: weighMsg.title,
-            body: weighMsg.body,
-            sound: 'default',
-            data: { kind: 'weigh' },
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-            weekday: wd,
-            hour: t.hour,
-            minute: t.minute,
-            channelId: 'weigh',
-          },
-        })
-      } catch (e) {
-        console.warn('Напоминание о взвешивании не запланировано:', e)
-      }
-    }
-  }
+  await scheduleWeigh(reminder)
 
-  // Тренировка: ежедневно в выбранное время. Занятие уже записано —
-  // обработчик молчит в момент срабатывания (как с приёмами пищи).
-  // Стиль «Мягко» — спокойный текст без мемов, как у воды и весов
-  const exercise = reminder?.exercise
-  if (exercise?.enabled) {
-    const t = parseTime(exercise.time)
-    if (t) {
-      const workoutMsg = workoutPokeMessage({ style: reminder?.meals?.style || 'bear' })
-      try {
-        await Notifications.scheduleNotificationAsync({
-          identifier: 'workout-daily',
-          content: {
-            title: workoutMsg.title,
-            body: workoutMsg.body,
-            sound: 'default',
-            data: { kind: 'exercise' },
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: t.hour,
-            minute: t.minute,
-            channelId: 'workout',
-          },
-        })
-      } catch (e) {
-        console.warn('Напоминание о тренировке не запланировано:', e)
-      }
-    }
-  }
+  // Тренировка: ежедневно в выбранное время
+  await scheduleWorkout(reminder)
 
   // Утренняя сводка «Новый день» — не зависит от тумблеров напоминаний
   if (my !== seq) return
+  await scheduleMorningSummary()
+}
+
+// Обновить ежедневные/еженедельные пинки и утреннюю сводку, НЕ трогая
+// интервальный триггер воды: раньше на каждый возврат в приложение
+// звали полный cancelAll — отсчёт интервала воды начинался заново,
+// и напоминания приходили реже настроенного. Здесь отменяются только
+// пинки с известными identifier — интервал воды живёт дальше
+async function refreshDailyPokes() {
+  if (Platform.OS === 'web' || !Notifications) return
+  const my = ++seq
+  const granted = await requestNotifPermission()
+  if (my !== seq || !granted) return
+  try {
+    for (const id of [
+      'meal-breakfast',
+      'meal-lunch',
+      'meal-dinner',
+      'weigh-weekly',
+      'workout-daily',
+    ]) {
+      await Notifications.cancelScheduledNotificationAsync(id)
+    }
+  } catch {}
+  if (my !== seq) return
+  const { reminder } = useActivityStore.getState()
+  await scheduleMeals(reminder?.meals)
+  await scheduleWeigh(reminder)
+  await scheduleWorkout(reminder)
   await scheduleMorningSummary()
 }
 
@@ -517,12 +567,13 @@ export function startReminderAgent() {
     })
   } catch {}
 
-  // Вернулись в приложение — перепланируем всё: пинки пересчитываются
-  // на свежих данных дневника, а фразы воды/весов/тренировки ротируются
-  // («ротация при каждом перепланировании») — иначе одна и та же фраза
-  // воды повторялась бы днями, пока не поменяются настройки
+  // Вернулись в приложение — обновляем только пинки (приёмы, веса,
+  // тренировка) и утреннюю сводку: тексты пересчитываются на свежих
+  // данных дневника, фразы ротируются. Полное перепланирование (с
+  // перезапуском интервала воды) — только при смене настроек/дня,
+  // иначе каждое открытие приложения отодвигало напоминание о воде
   const appSub = AppState.addEventListener('change', (st) => {
-    if (st === 'active') rescheduleReminders()
+    if (st === 'active') refreshDailyPokes()
   })
 
   // Любое изменение настроек напоминаний — перепланировать

@@ -146,7 +146,7 @@ export default function BmiScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
-          gap: 14,
+          gap: 16,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
@@ -220,18 +220,18 @@ export default function BmiScreen() {
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`В норме ${normWeeks} недель — открыть историю ИМТ по неделям`}
-                    className="flex-row items-center gap-1 rounded-full px-2 py-[3px] active:opacity-70"
+                    className="flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-70"
                     style={{
                       backgroundColor: 'rgba(56,189,248,0.13)',
                       borderColor: 'rgba(56,189,248,0.30)',
                       borderWidth: 1,
                     }}
                   >
-                    <ShieldCheck size={13} color="#38BDF8" />
+                    <ShieldCheck size={15} color="#38BDF8" />
                     <Text
                       maxFontSizeMultiplier={1.1}
                       numberOfLines={1}
-                      className="font-bold text-[12px] text-[#7DD3FC]"
+                      className="font-bold text-[13px] text-[#7DD3FC]"
                     >
                       {`В норме ${normWeeks} нед.`}
                     </Text>

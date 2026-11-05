@@ -85,6 +85,8 @@ export const useRecipesStore = create(
     }),
     {
       name: 'nutribear-recipes-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ items: s.items }),
     }

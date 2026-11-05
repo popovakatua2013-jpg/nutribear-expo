@@ -186,7 +186,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             accessibilityLabel="Отменить изменение рецепта"
             className="p-1 active:opacity-70"
           >
-            <X size={20} color="#A5AECB" />
+            <X hitSlop={10} size={20} color="#A5AECB" />
           </Pressable>
         )}
       </View>
@@ -218,7 +218,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       </View>
       {photo && (
         <View className="mt-1.5 flex-row items-center gap-2 px-1">
-          <Text className="min-w-0 flex-1 font-sans text-[12px] text-bear-dim">
+          <Text className="min-w-0 flex-1 font-sans text-[13px] text-bear-dim">
             Фото прикреплено — появится рядом с рецептом в списке
           </Text>
           <Pressable
@@ -228,7 +228,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             className="flex-row items-center gap-1 rounded p-1"
           >
             <Trash2 size={14} color="#98A2C2" />
-            <Text className="font-sans text-[12px] text-bear-sub">убрать</Text>
+            <Text className="font-sans text-[13px] text-bear-sub">убрать</Text>
           </Pressable>
         </View>
       )}
@@ -257,7 +257,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             {estBusy ? 'Считаем…' : 'Посчитать КБЖУ по составу'}
           </Text>
         </Pressable>
-        <Text className="mt-1 px-1 font-sans text-[12px] leading-[14px] text-bear-dim">
+        <Text className="mt-1 px-1 font-sans text-[13px] leading-[16px] text-bear-dim">
           Сначала считаем сами по базе продуктов, незнакомый состав оценит ИИ
         </Text>
       </View>
@@ -331,7 +331,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
               ? `≈ ${per100} ккал / 100 г${sv > 1 ? ` · ${perServing} ккал / порция (${gramsPerServing({ grams: g, servings: sv })} г)` : ''}`
               : 'Укажите выход и калории'}
           </Text>
-          <Text className="font-sans text-[12px] text-bear-dim">
+          <Text className="font-sans text-[13px] text-bear-dim">
             БЖУ — по желанию, иначе оценим по калориям
           </Text>
         </View>

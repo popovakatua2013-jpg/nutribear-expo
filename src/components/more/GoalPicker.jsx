@@ -10,20 +10,19 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { GOALS, getDailyTarget } from '@/lib/data/goals'
+import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { healthyRange } from '@/lib/data/bmi'
 import { recommendedKcal } from '@/lib/goal'
 import { formatNum } from '@/lib/format'
 
 export function GoalPicker() {
   const goal = useFoodStore((s) => s.goal)
-  const setGoal = useFoodStore((s) => s.setGoal)
-  const applyPreset = useGoalsStore((s) => s.applyPreset)
   const { toast } = useToast()
 
   function pick(id) {
     if (id === goal) return
-    setGoal(id)
-    applyPreset(id)
+    // id пресета и норма калорий меняются всегда вместе (единая точка)
+    applyGoalChoice(id)
     const g = GOALS.find((x) => x.id === id)
     let description = `Дневная норма — ${formatNum(getDailyTarget(id))} ккал`
     // Мягкая подсказка: при похудении с лишним весом стоит поставить

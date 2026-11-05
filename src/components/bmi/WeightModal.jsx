@@ -126,7 +126,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           </Text>
         </View>
         <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-          <X size={22} color="#A5AECB" />
+          <X hitSlop={10} size={22} color="#A5AECB" />
         </Pressable>
       </View>
 
@@ -145,7 +145,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         <View className="mt-3 flex-row items-center justify-between">
           <Text className="font-medium text-[14px] text-bear-sub">Цель, кг (необязательно)</Text>
           {goalWeight != null && goal.trim() === '' && (
-            <Text className="font-sans text-[12px] text-bear-dim">пусто — цель будет убрана</Text>
+            <Text className="font-sans text-[13px] text-bear-dim">пусто — цель будет убрана</Text>
           )}
         </View>
         <TextInput
@@ -162,14 +162,14 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         {/* Подсказка: здоровый диапазон для роста и цель в один тап */}
         {suggestRange && goal.trim() === '' && (
           <View className="mt-2 mb-2 flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2">
-            <Text className="min-w-0 flex-1 font-sans text-[12.5px] leading-snug text-bear-sub2">
+            <Text className="min-w-0 flex-1 font-sans text-[13px] leading-snug text-bear-sub2">
               Норма при росте {Math.round(hRaw)} см: {suggestRange.min}–{suggestRange.max} кг
             </Text>
             <Pressable
               onPress={() => setGoal(String(suggestKg))}
               accessibilityRole="button"
               accessibilityLabel={`Подставить цель около ${suggestKg} килограммов`}
-              className="ml-2 rounded-full bg-white/10 px-2.5 py-1 active:opacity-70"
+              className="ml-2 rounded-full bg-white/10 px-2.5 py-1.5 active:opacity-70"
             >
               <Text className="font-semibold text-[13px] text-[#8DABFF]">≈ {suggestKg} кг</Text>
             </Pressable>

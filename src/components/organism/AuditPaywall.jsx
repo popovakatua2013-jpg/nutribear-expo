@@ -58,10 +58,10 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-8 w-8 items-center justify-center rounded-full"
+              className="h-9 w-9 items-center justify-center rounded-full"
               style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
             >
-              <X size={18} color={GAME.dim} />
+              <X hitSlop={10} size={18} color={GAME.dim} />
             </Pressable>
           </View>
 
@@ -102,7 +102,7 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
                       </Text>
                       {p.best ? (
                         <View className="ml-2 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(250,204,21,0.15)' }}>
-                          <Text className="font-bold text-[12px]" style={{ color: GAME.yellow }}>
+                          <Text className="font-bold text-[13px]" style={{ color: GAME.yellow }}>
                             Выгодно
                           </Text>
                         </View>
@@ -131,7 +131,7 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
             </LinearGradient>
           </Pressable>
 
-          <Text className="mt-2.5 text-center font-sans text-[12px] leading-snug" style={{ color: GAME.dim2 }}>
+          <Text className="mt-2.5 text-center font-sans text-[13px] leading-snug" style={{ color: GAME.dim2 }}>
             Демо-активация: настоящая оплата подключится после сборки приложения
           </Text>
         </View>

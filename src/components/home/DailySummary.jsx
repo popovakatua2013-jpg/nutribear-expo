@@ -75,7 +75,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="font-sans text-[12px] leading-tight text-bear-sub"
+          className="font-sans text-[13px] leading-tight text-bear-sub"
         >
           {label}
         </Text>
@@ -95,7 +95,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
 
 // Тонкий разделитель между ячейками нутриентов
 function VDivider() {
-  return <View className="mx-1 h-7 w-px shrink-0 bg-white/[0.08]" />
+  return <View className="mx-1 h-9 w-px shrink-0 bg-white/[0.08]" />
 }
 
 // Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
@@ -198,12 +198,12 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
           >
             {formatNum(Math.round(num))}
           </Text>
-          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px] leading-tight text-bear-dim">
+          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[11px] leading-tight text-bear-dim">
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
           </Text>
         </View>
       </View>
-      <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[11.5px] text-bear-sub">
+      <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[12.5px] text-bear-sub">
         {caption}
       </Text>
     </View>
@@ -319,14 +319,14 @@ export function DailySummary({
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
           <BodyChip icon={<Utensils size={17} />} />
-          <Text maxFontSizeMultiplier={MAX} className="font-bold text-[17.5px] tracking-tight text-bear-text">
+          <Text maxFontSizeMultiplier={MAX} className="font-bold text-[18px] tracking-tight text-bear-text">
             Съедено за сегодня
           </Text>
         </View>
         {streak > 0 ? (
           <View
             accessibilityLabel={`Стрик: ${streak} ${pluralDays(streak)} подряд`}
-            className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1"
+            className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1.5"
             style={{ backgroundColor: 'rgba(251,146,60,0.13)' }}
           >
             <Flame size={14} color="#fb923c" />
@@ -364,7 +364,7 @@ export function DailySummary({
           />
           <View className="min-w-0 flex-1 items-center">
             <View
-              className="flex-row items-center self-center gap-1 rounded-full px-2.5 py-1"
+              className="flex-row items-center self-center gap-1 rounded-full px-2.5 py-1.5"
               style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
             >
               <Flame size={14} color={pillTone.text} />
@@ -494,7 +494,7 @@ export function DailySummary({
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color="#A5AECB" />
                 </Pressable>
               </View>
               <Text className="mt-1 font-sans text-[13px] leading-relaxed text-bear-sub">

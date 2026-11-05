@@ -46,7 +46,7 @@ export function WeighNudgeCard() {
         })}
       </View>
 
-      <Text className="mt-2 font-sans text-[12.5px] text-bear-dim">
+      <Text className="mt-2 font-sans text-[13px] text-bear-dim">
         Сейчас: напомним, если вес не записывался {days} дней
       </Text>
     </CollapsibleCard>

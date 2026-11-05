@@ -79,7 +79,7 @@ function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
       {/* Рекорд периода — только у показателей «чем больше, тем лучше»;
         у калорий есть больше всех — не достижение */}
       {!m.invert && best > 0 ? (
-        <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-1.5 font-sans text-[12.5px] text-bear-dim">
+        <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-1.5 font-sans text-[13px] text-bear-dim">
           {`Лучший день: ${m.fmt(best)}`}
         </Text>
       ) : null}
@@ -129,7 +129,7 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} 
         </View>
       ))}
       {/* Подсказка: тап по карточке открывает окно истории показателя */}
-      <Text className="px-1 pt-0.5 font-sans text-[12.5px] text-bear-dim">
+      <Text className="px-1 pt-0.5 font-sans text-[13px] text-bear-dim">
         Тап по карточке открывает историю: среднее за день, график, лучшие дни
       </Text>
     </View>

@@ -84,7 +84,7 @@ export function Panel({ children, style }) {
 // Метка капсом (ТЕКУЩАЯ ФОРМА, ВАШ УРОН…)
 export function Caps({ children, color = GAME.dim2, style }) {
   return (
-    <Text className="font-bold text-[12.5px] tracking-[0.08em]" style={{ color, ...style }}>
+    <Text className="font-bold text-[13px] tracking-[0.08em]" style={{ color, ...style }}>
       {children}
     </Text>
   )

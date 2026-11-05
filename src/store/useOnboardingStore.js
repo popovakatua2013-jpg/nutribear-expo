@@ -75,6 +75,8 @@ export const useOnboardingStore = create(
     }),
     {
       name: 'nutribear-onboarding-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         status: s.status,

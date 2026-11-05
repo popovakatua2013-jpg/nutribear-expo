@@ -65,7 +65,7 @@ export default function ActivityScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
-          gap: 20,
+          gap: 16,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}

@@ -22,7 +22,7 @@ function IconButton({ onPress, label, Icon }) {
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={4}
-      className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+      className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
     >
       <Icon size={17} color="#AEB9D9" />
     </Pressable>
@@ -62,7 +62,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
             accessibilityRole="button"
             accessibilityLabel="Открыть все приёмы пищи"
             hitSlop={4}
-            className="flex-row items-center gap-0.5 px-1 py-1"
+            className="flex-row items-center gap-0.5 px-1 py-1.5"
           >
             <Text className="font-medium text-[14.5px] text-[#6C8CFF]">Все</Text>
             <ChevronRight size={16} color="#6C8CFF" />

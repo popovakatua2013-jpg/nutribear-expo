@@ -131,7 +131,7 @@ export function HistoryModal({ visible, onClose }) {
               onPress={exportCsv}
               accessibilityRole="button"
               accessibilityLabel="Экспорт дневника в файл"
-              className="mr-1 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
               <Download size={17} color="#AEB9D9" />
             </Pressable>
@@ -139,9 +139,9 @@ export function HistoryModal({ visible, onClose }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 
@@ -161,7 +161,7 @@ export function HistoryModal({ visible, onClose }) {
                     onPress={() => setMealFilter(f.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Фильтр: ${f.label}`}
-                    className={`rounded-full px-3 py-1 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-white/5'}`}
+                    className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-white/5'}`}
                   >
                     <Text
                       className={`font-semibold text-[13px] ${active ? 'text-[#8DABFF]' : 'text-bear-sub'}`}
@@ -192,12 +192,12 @@ export function HistoryModal({ visible, onClose }) {
                   hitSlop={8}
                   className="shrink-0 rounded-full bg-white/10 p-1 active:opacity-70"
                 >
-                  <X size={14} color="#AEB9D9" />
+                  <X hitSlop={10} size={14} color="#AEB9D9" />
                 </Pressable>
               )}
             </View>
             {query.trim().length > 0 && (
-              <Text className="mt-1.5 px-1 font-sans text-[12.5px] text-bear-sub">
+              <Text className="mt-1.5 px-1 font-sans text-[13px] text-bear-sub">
                 {foundCount > 0
                   ? `Найдено блюд: ${foundCount}`
                   : 'Ничего не нашлось — попробуйте другое название или фильтр'}
@@ -226,7 +226,7 @@ export function HistoryModal({ visible, onClose }) {
                             <Text numberOfLines={1} className="font-medium text-[14.5px] text-bear-bright">
                               {r.name}
                             </Text>
-                            <Text numberOfLines={1} className="font-sans text-[12px] text-bear-sub2">
+                            <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub2">
                               {`${r.mealName} · ${r.grams} г · ${formatNum(r.kcal)} ккал${
                                 r.time ? ` · ${r.time}` : ''
                               }`}
@@ -253,7 +253,7 @@ export function HistoryModal({ visible, onClose }) {
                                 accessibilityLabel={`Добавить «${r.name}» в «${m.name}»`}
                                 className="flex-1 items-center rounded-lg border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-1.5 active:bg-[#5B7FFF]/25"
                               >
-                                <Text numberOfLines={1} className="font-semibold text-[12.5px] text-[#8DABFF]">
+                                <Text numberOfLines={1} className="font-semibold text-[13px] text-[#8DABFF]">
                                   {m.id === 'snack' ? 'Перекус' : m.name}
                                 </Text>
                               </Pressable>

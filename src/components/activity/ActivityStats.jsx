@@ -82,7 +82,7 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
               accessibilityRole="button"
               accessibilityLabel={plusLabel}
               hitSlop={6}
-              className={`h-8 w-8 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
             >
               <Plus size={17} color={colors.tint} strokeWidth={2.5} />
             </Pressable>
@@ -91,13 +91,13 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
       </View>
 
       {/* текст — на всю ширину карточки, ничего не обрезается */}
-      <FitLine className="mt-2 font-medium text-[12px] text-bear-soft">
+      <FitLine className="mt-2 font-medium text-[13px] text-bear-soft">
         {label}
       </FitLine>
       <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text">
         {value}
       </FitLine>
-      <FitLine className="mt-0.5 font-sans text-[11.5px] text-bear-sub2">
+      <FitLine className="mt-0.5 font-sans text-[12.5px] text-bear-sub2">
         {sub}
       </FitLine>
       {/* итоговая строка — есть у всех карточек, поэтому ряды одной высоты */}
@@ -116,7 +116,7 @@ function Foot({ tone = 'muted', children }) {
           : tone === 'sky' ? 'text-sky-300'
             : 'text-bear-sub2'
   return (
-    <FitLine className={`mt-0.5 font-bold text-[12px] ${color}`}>
+    <FitLine className={`mt-0.5 font-bold text-[13px] ${color}`}>
       {children}
     </FitLine>
   )
@@ -149,7 +149,7 @@ export function ActivityStats({
   const minutesFoot = (
     <View className="mt-0.5 flex-row items-center justify-between">
       <FitLine
-        className={`flex-1 font-bold text-[12px] ${
+        className={`flex-1 font-bold text-[13px] ${
           minutesGoal > 0
             ? minutes >= minutesGoal ? 'text-emerald-300' : 'text-violet-300'
             : 'text-bear-sub2'

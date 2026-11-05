@@ -127,8 +127,8 @@ function WeeksSparkline({ rows }) {
         )}
       </View>
       <View className="flex-row items-center justify-between px-1.5 pb-1.5">
-        <Text className="font-sans text-[11.5px] text-bear-sub">{chrono[0].label}</Text>
-        <Text className="font-sans text-[11.5px] text-bear-sub">сегодня</Text>
+        <Text className="font-sans text-[12.5px] text-bear-sub">{chrono[0].label}</Text>
+        <Text className="font-sans text-[12.5px] text-bear-sub">сегодня</Text>
       </View>
     </View>
   )
@@ -199,7 +199,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               onPress={shareHistory}
               accessibilityRole="button"
               accessibilityLabel="Поделиться историей ИМТ по неделям"
-              className="mr-1 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
               <Share2 size={17} color="#AEB9D9" />
             </Pressable>
@@ -207,9 +207,9 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть историю ИМТ"
-              className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 
@@ -250,7 +250,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               ))}
             </View>
 
-            <Text className="mt-3 px-1 font-sans text-[12.5px] leading-snug text-bear-sub">
+            <Text className="mt-3 px-1 font-sans text-[13px] leading-snug text-bear-sub">
               🛡 Бейдж у кольца показывает стрик — недели подряд, когда ИМТ в «Норме».
               Держи вес — стрик растёт каждую неделю. Поделиться — иконка справа сверху.
             </Text>

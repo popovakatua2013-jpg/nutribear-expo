@@ -55,10 +55,10 @@ export function ReportsSection({
     <View accessibilityLabel="Отчёты" className="gap-3">
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
+          <Text className="font-extrabold text-[18px] tracking-tight text-bear-text">
             Отчёты
           </Text>
-          <Text className="mt-0.5 font-sans text-[12.5px] leading-snug text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub">
             Итоги, дисциплина, календарь и нутриенты из дневника за период
           </Text>
         </View>

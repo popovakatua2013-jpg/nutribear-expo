@@ -39,6 +39,8 @@ export const useGoalsStore = create(
     }),
     {
       name: 'nutribear-goals-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ goals: state.goals }),
       // Слияние по полям: новые цели (например, burnKcal) появляются

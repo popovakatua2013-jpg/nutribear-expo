@@ -30,7 +30,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         <Text numberOfLines={1} className="font-medium text-[14.5px] text-bear-bright">
           {entry.name}
         </Text>
-        <Text className="font-sans text-[12px] text-bear-sub2">
+        <Text className="font-sans text-[13px] text-bear-sub2">
           {`${entry.grams > 0 ? `${entry.grams} г · ` : ''}${formatNum(entry.kcal)} · ${bjuLine(entry)}${
             entry.time ? ` · ${entry.time}` : ''
           }`}
@@ -128,7 +128,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
               </Text>
             </View>
             <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -212,7 +212,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         onPress={() => onAddToMeal(meal.id)}
                         accessibilityRole="button"
                         accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-                        className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
                       >
                         <Plus size={16} color="#8DABFF" />
                       </Pressable>

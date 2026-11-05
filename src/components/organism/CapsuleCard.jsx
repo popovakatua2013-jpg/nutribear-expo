@@ -57,7 +57,7 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
               opacity: capsules > 0 ? 1 : 0.5,
             }}
           >
-            <Text className="font-extrabold text-[17.5px]" style={{ color: capsules > 0 ? '#231A02' : GAME.dim2 }}>
+            <Text className="font-extrabold text-[18px]" style={{ color: capsules > 0 ? '#231A02' : GAME.dim2 }}>
               Открыть капсулу
             </Text>
           </Pressable>

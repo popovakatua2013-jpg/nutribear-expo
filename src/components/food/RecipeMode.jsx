@@ -83,7 +83,7 @@ export function RecipeMode({ onPick }) {
           {items.map((r) => (
             <View
               key={r.id}
-              className="flex-row items-center justify-between gap-2 px-1 py-1"
+              className="flex-row items-center justify-between gap-2 px-1 py-1.5"
             >
               <Pressable
                 onPress={() => openEdit(r)}
@@ -106,7 +106,7 @@ export function RecipeMode({ onPick }) {
               </Pressable>
             </View>
           ))}
-          <Text className="px-1 font-sans text-[12px] text-bear-dim">
+          <Text className="px-1 font-sans text-[13px] text-bear-dim">
             Нажмите на рецепт, чтобы изменить его
           </Text>
         </View>

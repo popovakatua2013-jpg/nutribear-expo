@@ -9,6 +9,9 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+// Триал — 7 дней с момента активации
+const TRIAL_MS = 7 * 24 * 60 * 60 * 1000
+
 export const PRO_PLANS = [
   { id: 'trial', title: 'Триал 7 дней', price: 'Бесплатно', note: 'все функции Premium' },
   { id: 'month', title: 'Месяц', price: '299 ₽', note: '' },
@@ -24,10 +27,31 @@ export const useProStore = create(
 
       activate: (plan) => set({ pro: true, plan, activatedAt: Date.now() }),
       deactivate: () => set({ pro: false, plan: null, activatedAt: null }),
+
+      // Проверить срок триала при старте приложения: раньше «7 дней»
+      // включались навсегда — время активации хранилось, но нигде
+      // не проверялось. Месяц/год не трогаем (до RevenueCat они тоже
+      // бессрочные — проверка оплаты появится вместе с оплатой)
+      refresh: () =>
+        set((s) =>
+          s.pro && s.plan === 'trial' && s.activatedAt && Date.now() - s.activatedAt > TRIAL_MS
+            ? { pro: false, plan: null, activatedAt: null }
+            : {}
+        ),
     }),
     {
       name: 'nutribear-pro-v1',
+      version: 1,
+      migrate: (state) => state,
       storage: createJSONStorage(() => AsyncStorage),
+      // Срок триала проверяем сразу после догрузки: только здесь
+      // activatedAt приходит из хранилища, при простом вызове на старте
+      // стор ещё пуст и проверка прошла бы мимо
+      onRehydrateStorage: () => (state) => {
+        try {
+          state?.refresh?.()
+        } catch {}
+      },
     }
   )
 )

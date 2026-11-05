@@ -67,14 +67,14 @@ export function BearHero({ consumed = 0, target = 0, onAdd }) {
               colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
               className="absolute inset-0 rounded-full"
             />
-            <View className="h-7 w-7 items-center justify-center rounded-full bg-white/25">
+            <View className="h-9 w-9 items-center justify-center rounded-full bg-white/25">
               <Plus size={18} color="#fff" strokeWidth={2.5} />
             </View>
             <Text className="ml-2.5 font-semibold text-[18px] text-white">
               Добавить приём пищи
             </Text>
           </Pressable>
-          <Text className="mt-1 text-center font-sans text-[12px] text-bear-dim">
+          <Text className="mt-1 text-center font-sans text-[13px] text-bear-dim">
             {formatNum(consumed)} из {formatNum(target)} ккал за сегодня
           </Text>
         </View>

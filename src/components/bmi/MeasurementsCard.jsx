@@ -129,7 +129,7 @@ export function MeasurementsCard() {
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-sans text-[12.5px] text-bear-sub"
+            className="mt-0.5 font-sans text-[13px] text-bear-sub"
           >
             Сантиметром — тап по чипу или «Добавить»
           </Text>
@@ -177,7 +177,7 @@ export function MeasurementsCard() {
               style={CARD}
             >
               <View
-                className="h-8 w-8 items-center justify-center rounded-lg"
+                className="h-9 w-9 items-center justify-center rounded-lg"
                 style={{ backgroundColor: `${m.color}22` }}
               >
                 <Icon size={17} color={m.color} />
@@ -186,7 +186,7 @@ export function MeasurementsCard() {
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="mt-1.5 font-sans text-[12px] text-bear-sub"
+                className="mt-1.5 font-sans text-[13px] text-bear-sub"
               >
                 {m.label}
               </Text>
@@ -202,7 +202,7 @@ export function MeasurementsCard() {
                 className="mt-1.5 self-start rounded-full px-1.5 py-[2px]"
                 style={{ backgroundColor: `${tone}1f` }}
               >
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[11px]" style={{ color: tone }}>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[12.5px]" style={{ color: tone }}>
                   {d == null
                     ? last
                       ? `от ${shortDay(last.date)}`
@@ -221,13 +221,13 @@ export function MeasurementsCard() {
       <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>
         <ScoreGauge score={score} />
         <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[12.5px] text-bear-sub">
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-sub">
             Общий прогресс
           </Text>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-bold text-[17.5px] text-bear-text"
+            className="mt-0.5 font-bold text-[18px] text-bear-text"
           >
             {caption}
           </Text>
@@ -235,7 +235,7 @@ export function MeasurementsCard() {
           <Text
             numberOfLines={2}
             maxFontSizeMultiplier={1.25}
-            className="mt-1 font-sans text-[11.5px] leading-snug text-bear-dim"
+            className="mt-1 font-sans text-[12.5px] leading-snug text-bear-dim"
           >
             Вес к цели, динамика талии и регулярность замеров
           </Text>
@@ -258,19 +258,19 @@ export function MeasurementsCard() {
           className="flex-row items-center border-b border-white/[0.06] py-2.5 active:opacity-70"
         >
           <View className="min-w-0 flex-1 flex-row items-center gap-1">
-            <Text className="font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
+            <Text className="font-sans text-[12.5px] font-semibold uppercase tracking-wide text-bear-dim">
               Измерение
             </Text>
             {tableOpen ? (
-              <ChevronUp size={13} color="#8B96B8" />
+              <ChevronUp size={15} color="#8B96B8" />
             ) : (
-              <ChevronDown size={13} color="#8B96B8" />
+              <ChevronDown size={15} color="#8B96B8" />
             )}
           </View>
-          <Text className="w-[72px] text-right font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
+          <Text className="w-[72px] text-right font-sans text-[12.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Сегодня
           </Text>
-          <Text className="w-[84px] text-right font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
+          <Text className="w-[84px] text-right font-sans text-[12.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Изменение
           </Text>
         </Pressable>
@@ -304,7 +304,7 @@ export function MeasurementsCard() {
                 >
                   {m.label}
                 </Text>
-                {m.custom && <Info size={13} color="#8B96B8" />}
+                {m.custom && <Info size={15} color="#8B96B8" />}
               </View>
               <Text
                 maxFontSizeMultiplier={1.2}
@@ -313,11 +313,11 @@ export function MeasurementsCard() {
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
               <View className="w-[84px] flex-row items-center justify-end gap-0.5">
-                {d != null && d !== 0 && <Arrow size={13} color={tone} />}
+                {d != null && d !== 0 && <Arrow size={15} color={tone} />}
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.2}
-                  className="font-semibold text-[12.5px]"
+                  className="font-semibold text-[13px]"
                   style={{ color: tone }}
                 >
                   {d == null
@@ -473,7 +473,7 @@ function MeasurementsModal({ open, onClose }) {
                 </Text>
               </View>
               <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
-                <X size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
 
@@ -532,7 +532,7 @@ function MeasurementsModal({ open, onClose }) {
                       />
                     </View>
                     {bad && (
-                      <Text className="mt-0.5 font-sans text-[12px] text-rose-300">
+                      <Text className="mt-0.5 font-sans text-[13px] text-rose-300">
                         От {MIN_CM} до {MAX_CM} см, например 78,5
                       </Text>
                     )}

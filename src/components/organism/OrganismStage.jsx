@@ -231,7 +231,7 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet, genome
               · геном {genome}/70
             </Text>
           </View>
-          <Text className="font-sans text-[12.5px] text-emerald-200/50">нажми, чтобы погладить</Text>
+          <Text className="font-sans text-[13px] text-emerald-200/50">нажми, чтобы погладить</Text>
         </View>
 
         {/* арена */}

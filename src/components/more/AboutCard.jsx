@@ -29,7 +29,7 @@ export function AboutCard() {
         только на твоём устройстве.
       </Text>
       <View className="mx-auto mt-3 w-full max-w-[300px] border-t border-white/5 pt-3">
-        <Text className="text-center font-sans text-[12px] leading-relaxed text-bear-dim">
+        <Text className="text-center font-sans text-[13px] leading-relaxed text-bear-dim">
           {DISCLAIMER}
         </Text>
       </View>

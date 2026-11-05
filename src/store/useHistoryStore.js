@@ -31,7 +31,9 @@ export const useHistoryStore = create(
           const next = { ...(s.days[key] || EMPTY_DAY) }
           Object.keys(patch || {}).forEach((f) => {
             const v = Math.round(Number(patch[f]))
-            if (!Number.isNaN(v)) next[f] = Math.max(0, v)
+            // Number.isFinite, а не Number.isNaN: Infinity тоже мусор —
+            // JSON.stringify превратил бы его в null в хранилище
+            if (Number.isFinite(v)) next[f] = Math.max(0, v)
           })
           const days = { ...s.days, [key]: next }
           // чистим самые старые дни, если их стало слишком много
@@ -42,6 +44,8 @@ export const useHistoryStore = create(
     }),
     {
       name: 'nutribear-history-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ days: s.days }),
     }

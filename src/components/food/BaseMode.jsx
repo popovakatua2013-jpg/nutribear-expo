@@ -108,7 +108,7 @@ export function BaseMode({ mealId, onPick }) {
                   <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
                     {f.name}
                   </Text>
-                  <Text className="shrink-0 font-sans text-[12.5px] text-bear-sub">
+                  <Text className="shrink-0 font-sans text-[13px] text-bear-sub">
                     {f.kcal100} ккал/100 г
                   </Text>
                 </Pressable>

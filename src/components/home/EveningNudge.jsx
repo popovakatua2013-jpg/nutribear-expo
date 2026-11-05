@@ -95,7 +95,7 @@ export function EveningNudge({
         hitSlop={10}
         className="absolute right-2 top-2 rounded-full p-1.5 active:opacity-60"
       >
-        <X size={18} color="#A5AECB" />
+        <X hitSlop={10} size={18} color="#A5AECB" />
       </Pressable>
       <View className="flex-row items-start gap-3">
         <Text className="text-[26px]">{kind === 'water' ? '💧' : '🍽'}</Text>

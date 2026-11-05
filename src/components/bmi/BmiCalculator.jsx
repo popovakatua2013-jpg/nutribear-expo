@@ -315,7 +315,7 @@ const CARD_STYLE = {
 function NumField({ label, value, onChange, decimal }) {
   return (
     <View className="min-w-0 flex-1">
-      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[12.5px] text-bear-sub">
+      <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[13px] text-bear-sub">
         {label}
       </Text>
       <TextInput
@@ -335,7 +335,7 @@ function NumField({ label, value, onChange, decimal }) {
 function Stat({ label, value, accent }) {
   return (
     <View className="min-w-0 flex-1 rounded-xl bg-white/[0.03] px-3 py-2.5">
-      <Text className="font-medium text-[12px] text-bear-sub2">{label}</Text>
+      <Text className="font-medium text-[13px] text-bear-sub2">{label}</Text>
       <Text
         maxFontSizeMultiplier={1.2}
         className="mt-0.5 font-bold text-[17px]"

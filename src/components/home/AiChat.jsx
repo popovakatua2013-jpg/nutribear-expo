@@ -218,7 +218,7 @@ export function AiChat() {
               accessibilityLabel="Закрыть чат"
               className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={20} color="#AEB9D9" />
+              <X hitSlop={10} size={20} color="#AEB9D9" />
             </Pressable>
           </View>
 

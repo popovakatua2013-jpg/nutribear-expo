@@ -29,9 +29,9 @@ export function PortionsModal({ visible, onClose }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 

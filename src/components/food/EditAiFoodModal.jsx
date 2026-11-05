@@ -174,7 +174,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               </View>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -263,7 +263,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -300,13 +300,13 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     placeholderTextColor="#8B96B8"
                     className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[13px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
               ))}
             </View>
-            <Text className="mt-1.5 font-sans text-[12.5px] leading-[14px] text-bear-dim">
+            <Text className="mt-1.5 font-sans text-[13px] leading-[16px] text-bear-dim">
               Необязательно, но с ними рейтинг питания станет точнее
             </Text>
 

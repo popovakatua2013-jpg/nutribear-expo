@@ -49,6 +49,11 @@ export async function applyBackup(data) {
     throw new Error('Это копия другого приложения или повреждённый файл')
   }
 
+  // Фото пишем ПЕРВЫМИ, до каких-либо изменений в сторах: если снимки
+  // не записались (нет места, битый файл) — ошибка вылетает здесь,
+  // и восстановление не остаётся наполовину сделанным
+  await restorePhotos(data.photos)
+
   // ── Питание ────────────────────────────────────────────────────
   const food = obj(data.food)
   useFoodStore.setState({
@@ -207,9 +212,6 @@ export async function applyBackup(data) {
     haptics: ui.haptics === undefined ? true : Boolean(ui.haptics),
     weighNudgeDays: [5, 7, 10].includes(ui.weighNudgeDays) ? ui.weighNudgeDays : 7,
   })
-
-  // ── Фото прогресса: файлы снимков в папку приложения ─────────
-  await restorePhotos(data.photos)
 
   return true
 }

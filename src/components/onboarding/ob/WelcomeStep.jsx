@@ -72,13 +72,13 @@ function GoalChip({ chip, active, onPress }) {
       >
         {active ? (
           <View className="absolute right-1.5 top-1.5 h-[18px] w-[18px] items-center justify-center rounded-full bg-[#A45BFF]">
-            <Check size={13} color="#FFFFFF" strokeWidth={3.2} />
+            <Check size={15} color="#FFFFFF" strokeWidth={3.2} />
           </View>
         ) : null}
         <Text className="text-[24px]">{chip.emoji}</Text>
         <Text
           numberOfLines={2}
-          className={`mt-1.5 text-center font-bold text-[13px] leading-[14px] ${
+          className={`mt-1.5 text-center font-bold text-[13px] leading-[16px] ${
             active ? 'text-white' : 'text-bear-sub'
           }`}
         >

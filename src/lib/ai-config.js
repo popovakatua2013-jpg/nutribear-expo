@@ -40,4 +40,8 @@ export const AI_CONFIG = {
   // Сервер-прокси для релиза: если задан — запросы идут сюда без ключа,
   // ключ хранится только на сервере. См. «ПЕРЕД ВЫПУСКОМ В МАГАЗИН» выше.
   proxyUrl: process.env.EXPO_PUBLIC_AI_PROXY_URL || '',
+  // Общий секрет приложения для прокси: воркер проверяет заголовок
+  // X-NB-Secret, если на нём задан секрет (npx wrangler secret put NB_SECRET).
+  // Случайные находки воркера больше не могут качать баланс ключа
+  proxySecret: process.env.EXPO_PUBLIC_AI_PROXY_SECRET || '',
 }

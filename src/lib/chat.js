@@ -43,9 +43,12 @@ export async function askNutritionist(messages, timeoutMs = 8000) {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
+    const headers = { 'Content-Type': 'application/json' }
+    // Общий секрет прокси (если настроен на воркере — NB_SECRET)
+    if (AI_CONFIG.proxySecret) headers['X-NB-Secret'] = AI_CONFIG.proxySecret
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ messages }),
       signal: ctrl.signal,
     })

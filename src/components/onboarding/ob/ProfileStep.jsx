@@ -236,7 +236,7 @@ export function ProfileStep({ onNext, onBack }) {
               })
             }
           />
-          <Text className="mt-2 font-sans text-[12px] leading-relaxed text-bear-dim">
+          <Text className="mt-2 font-sans text-[13px] leading-relaxed text-bear-dim">
             Отметьте, если что-то относится к вам: при беременности и ГВ мишка не
             снижает калории. Необязательно.
           </Text>

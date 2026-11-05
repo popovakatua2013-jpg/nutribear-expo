@@ -62,6 +62,8 @@ export const useUserFoodsStore = create(
     }),
     {
       name: 'nutribear-user-foods-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

@@ -61,7 +61,7 @@ export function MealCard({ meal, consumed, onAdd }) {
               borderColor: '#0C1327',
             }}
           >
-            <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
+            <Check size={13} color="#FFFFFF" strokeWidth={3.5} />
           </View>
         )}
       </View>

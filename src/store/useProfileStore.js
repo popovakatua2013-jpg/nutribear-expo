@@ -52,12 +52,15 @@ export const useProfileStore = create(
       // Запомнить категорию ИМТ (для поздравления при переходе в «Норму»)
       setLastBmiCat: (cat) => set({ lastBmiCat: cat }),
 
-      // Новое измерение веса: в историю + текущий вес
+      // Новое измерение веса: в историю + текущий вес.
+      // Clamp как в updateWeight: мусор/NaN/вне диапазона не пролезает
       addWeight: (kg) => {
+        const safe = Math.round(Number(kg) * 10) / 10
+        if (!Number.isFinite(safe) || safe < 25 || safe > 300) return
         set((s) => ({
-          weightKg: kg,
+          weightKg: safe,
           weights: [
-            { id: makeId(), date: new Date().toISOString(), kg },
+            { id: makeId(), date: new Date().toISOString(), kg: safe },
             ...s.weights,
           ],
         }))
@@ -171,6 +174,8 @@ export const useProfileStore = create(
     }),
     {
       name: 'nutribear-profile-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         name: s.name,

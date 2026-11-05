@@ -15,8 +15,8 @@ import { PartyPopper, Scale, Share2, Target, X } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useFoodStore } from '@/store/useFoodStore'
-import { useGoalsStore } from '@/store/useGoalsStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/goal'
 import { formatNum, pluralDays } from '@/lib/format'
@@ -56,8 +56,6 @@ export function GoalCelebration() {
   const heightCm = useProfileStore((s) => s.heightCm)
   const activityId = useProfileStore((s) => s.activityId)
   const goalId = useFoodStore((s) => s.goal)
-  const setGoal = useFoodStore((s) => s.setGoal)
-  const setGoals = useGoalsStore((s) => s.setGoals)
   const { toast } = useToast()
   // Золотая карточка закрывается крестиком: ключ «дата|цель» — после
   // смены цели карточка покажется снова
@@ -81,8 +79,9 @@ export function GoalCelebration() {
   // Один тап: цель питания «Поддержка» + норма без дефицита
   function switchToMaintain() {
     if (!plan) return
-    setGoal('maintain')
-    setGoals({ kcal: plan.kcal })
+    // id цели и норма калорий меняются всегда вместе (единая точка);
+    // норма — личная, по Миффлину, а не сумма пресета
+    applyGoalChoice('maintain', plan.kcal)
     toast({
       title: '🎯 Цель питания — поддержка',
       description: plan.personal
@@ -195,7 +194,7 @@ export function GoalCelebration() {
           accessibilityLabel="Скрыть карточку «Цель по весу достигнута»"
           className="absolute right-1.5 top-1.5 p-1.5 active:opacity-70"
         >
-          <X size={18} color="#d9b96a" />
+          <X hitSlop={10} size={18} color="#d9b96a" />
         </Pressable>
 
         <View className="flex-row items-center gap-2.5">

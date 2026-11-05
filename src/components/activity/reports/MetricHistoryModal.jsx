@@ -136,7 +136,7 @@ export function MetricHistoryModal({
                 <Text className="font-bold text-[18px] tracking-tight text-bear-text">
                   {`${metric.label} · история`}
                 </Text>
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-snug text-bear-sub">
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub">
                   {`Динамика ${metric.gen} за ${days} ${pluralDays(days)}`}
                 </Text>
               </View>
@@ -146,7 +146,7 @@ export function MetricHistoryModal({
                 accessibilityLabel={`Закрыть историю: ${metric.label}`}
                 className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
               >
-                <X size={20} color="#A5AECB" />
+                <X hitSlop={10} size={20} color="#A5AECB" />
               </Pressable>
             </View>
 
@@ -169,7 +169,7 @@ export function MetricHistoryModal({
                       accessibilityLabel={`В среднем за день: ${metric.fmt(avg)}`}
                       className="rounded-2xl border border-bear-bodyLine bg-white/[0.04] p-4"
                     >
-                      <Text className="font-sans text-[12px] font-semibold uppercase tracking-wide text-bear-sub">
+                      <Text className="font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
                         В среднем за день
                       </Text>
                       <Text className="mt-1 font-extrabold text-[24px] leading-tight tracking-tight text-bear-text">
@@ -189,7 +189,7 @@ export function MetricHistoryModal({
                         клетки тоньше 3px — день там выбирается точками
                         теплокарты и «Лучшие дни» */}
                     <View>
-                      <Text className="mb-1.5 px-1 font-sans text-[12px] font-semibold uppercase tracking-wide text-bear-sub">
+                      <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
                         {`По дням · ${days} дн.`}
                       </Text>
                       <View
@@ -217,7 +217,7 @@ export function MetricHistoryModal({
                               {isMax && (
                                 <Text
                                   numberOfLines={1}
-                                  className="mb-0.5 text-center font-sans text-[10.5px] font-bold"
+                                  className="mb-0.5 text-center font-sans text-[11px] font-bold"
                                   style={{ color: metric.color }}
                                 >
                                   {metric.fmt(v)}
@@ -246,7 +246,7 @@ export function MetricHistoryModal({
                           <Text
                             key={row.key}
                             numberOfLines={1}
-                            className={`flex-1 text-center font-sans text-[10.5px] ${
+                            className={`flex-1 text-center font-sans text-[11px] ${
                               row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
                             }`}
                           >
@@ -259,7 +259,7 @@ export function MetricHistoryModal({
                     {/* Лучшие дни + теплокарта по дням недели */}
                     <View className="flex-row gap-4">
                       <View className="min-w-0 flex-1">
-                        <Text className="mb-1.5 px-1 font-sans text-[12px] font-semibold uppercase tracking-wide text-bear-sub">
+                        <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
                           Лучшие дни
                         </Text>
                         {top.map(({ row, value }, i) => (
@@ -280,7 +280,7 @@ export function MetricHistoryModal({
                                 justifyContent: 'center',
                               }}
                             >
-                              <Text className="font-bold text-[12px]" style={{ color: metric.color }}>
+                              <Text className="font-bold text-[13px]" style={{ color: metric.color }}>
                                 {i + 1}
                               </Text>
                             </View>
@@ -298,7 +298,7 @@ export function MetricHistoryModal({
                       </View>
 
                       <View className="shrink-0">
-                        <Text className="mb-1.5 px-1 font-sans text-[12px] font-semibold uppercase tracking-wide text-bear-sub">
+                        <Text className="mb-1.5 px-1 font-sans text-[13px] font-semibold uppercase tracking-wide text-bear-sub">
                           По дням недели
                         </Text>
                         <View style={{ width: 7 * DOT + 6 * GAP }}>
@@ -306,7 +306,7 @@ export function MetricHistoryModal({
                             {WD.map((w) => (
                               <Text
                                 key={w}
-                                className="text-center font-sans text-[10px] text-bear-dim"
+                                className="text-center font-sans text-[11px] text-bear-dim"
                                 style={{ width: DOT }}
                               >
                                 {w}
@@ -356,7 +356,7 @@ export function MetricHistoryModal({
                               backgroundColor: levelColor(metric, level),
                             }}
                           />
-                          <Text className="font-sans text-[11.5px] text-bear-dim">{label}</Text>
+                          <Text className="font-sans text-[12.5px] text-bear-dim">{label}</Text>
                         </View>
                       ))}
                     </View>

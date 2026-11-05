@@ -351,6 +351,8 @@ export const useOrganismGameStore = create(
     }),
     {
       name: 'nutribear-organism-game-v1',
+      version: 1,
+      migrate: (state) => state, // схема меняется — здесь появится миграция
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         genes: s.genes, crystals: s.crystals, mutagen: s.mutagen, capsules: s.capsules,

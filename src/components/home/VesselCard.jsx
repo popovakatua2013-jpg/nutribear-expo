@@ -33,7 +33,7 @@ export function VesselCard({ vessel, onDrink }) {
           value={label}
           onChangeText={setLabel}
           maxLength={14}
-          className="rounded-lg bg-white/5 px-1.5 py-1 font-semibold text-[13px] text-bear-text"
+          className="rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[13px] text-bear-text"
         />
         <View className="mt-1 flex-row items-center gap-1">
           <TextInput
@@ -42,15 +42,15 @@ export function VesselCard({ vessel, onDrink }) {
             onChangeText={setMl}
             keyboardType="number-pad"
             maxLength={4}
-            className="min-w-0 flex-1 rounded-lg bg-white/5 px-1.5 py-1 font-semibold text-[13px] text-bear-text"
+            className="min-w-0 flex-1 rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[13px] text-bear-text"
           />
-          <Text className="font-sans text-[11px] text-bear-sub">мл</Text>
+          <Text className="font-sans text-[12.5px] text-bear-sub">мл</Text>
         </View>
         <Pressable
           onPress={save}
           accessibilityRole="button"
           accessibilityLabel="Сохранить ёмкость"
-          className="mt-1.5 h-7 items-center justify-center rounded-lg"
+          className="mt-1.5 h-9 items-center justify-center rounded-lg"
           style={{ backgroundColor: '#7B6CF6' }}
         >
           <Check size={16} color="#fff" strokeWidth={2.5} />
@@ -72,7 +72,7 @@ export function VesselCard({ vessel, onDrink }) {
           <Text numberOfLines={1} className="font-semibold text-[14.5px] text-bear-text">
             {vessel.label}
           </Text>
-          <Text className="font-sans text-[11.5px] text-bear-sub2">+{vessel.ml} мл</Text>
+          <Text className="font-sans text-[12.5px] text-bear-sub2">+{vessel.ml} мл</Text>
         </View>
       </Pressable>
       <Pressable
@@ -81,7 +81,7 @@ export function VesselCard({ vessel, onDrink }) {
         accessibilityLabel={`Редактировать «${vessel.label}»`}
         className="absolute right-1 top-1 rounded-full bg-white/10 p-1"
       >
-        <Pencil size={11} color="#AEB9D9" />
+        <Pencil size={13} color="#AEB9D9" />
       </Pressable>
     </View>
   )

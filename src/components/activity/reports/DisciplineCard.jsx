@@ -43,7 +43,7 @@ export function DisciplineCard({ rows }) {
             Дисциплина
           </Text>
         </View>
-        <View className={`shrink-0 rounded-full px-2.5 py-1 ${tone.chip}`}>
+        <View className={`shrink-0 rounded-full px-2.5 py-1.5 ${tone.chip}`}>
           <Text className={`font-semibold text-[13px] ${tone.text}`}>
             вели дневник {recorded} из {days} дней
           </Text>
@@ -61,7 +61,7 @@ export function DisciplineCard({ rows }) {
           <View key={l.key} className="min-w-0 flex-1 rounded-2xl bg-white/[0.04] px-3 py-2.5">
             <View className="flex-row items-center gap-1.5">
               <View className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: l.color }} />
-              <Text numberOfLines={1} className="font-sans text-[12px] text-bear-sub">
+              <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub">
                 {l.label}
               </Text>
             </View>
@@ -69,14 +69,14 @@ export function DisciplineCard({ rows }) {
               {met[l.key]}
               <Text className="font-sans text-[13px] text-bear-dim">{` из ${days}`}</Text>
             </Text>
-            <Text numberOfLines={1} className="font-sans text-[11.5px] text-bear-dim">
+            <Text numberOfLines={1} className="font-sans text-[12.5px] text-bear-dim">
               {l.note}
             </Text>
           </View>
         ))}
       </View>
 
-      <Text className="mt-2.5 font-sans text-[12.5px] leading-snug text-bear-dim">
+      <Text className="mt-2.5 font-sans text-[13px] leading-snug text-bear-dim">
         {recorded === 0
           ? 'Записей за период пока нет — добавьте шаги, воду или еду, и здесь появится статистика'
           : 'День считается заполненным, когда есть любая запись; пустые дни средние показатели не топят'}

@@ -73,7 +73,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                     </Text>
                   </View>
                   <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-                    <X size={22} color="#A5AECB" />
+                    <X hitSlop={10} size={22} color="#A5AECB" />
                   </Pressable>
                 </View>
                 <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />

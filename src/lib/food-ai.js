@@ -545,11 +545,16 @@ function apiUrl(path) {
 }
 
 // Заголовки: Authorization добавляем только в прямом режиме с ключом.
-// В прокси-режиме приложение шлёт запросы анонимно — ключ подставляет сервер.
+// В прокси-режиме приложение шлёт запросы анонимно — ключ подставляет
+// сервер. Если на воркере задан общий секрет (NB_SECRET), прикладываем
+// его в X-NB-Secret — воркер отклоняет чужие запросы
 function authHeaders(extra = {}) {
   const headers = { ...extra }
   if (!AI_CONFIG.proxyUrl && AI_CONFIG.apiKey) {
     headers.Authorization = `Bearer ${AI_CONFIG.apiKey}`
+  }
+  if (AI_CONFIG.proxyUrl && AI_CONFIG.proxySecret) {
+    headers['X-NB-Secret'] = AI_CONFIG.proxySecret
   }
   return headers
 }

@@ -275,7 +275,7 @@ export default function OrganismScreen() {
               hitSlop={8}
               className="-mt-0.5 -mr-1 p-1 active:opacity-60"
             >
-              <X size={16} color="#C084FC" />
+              <X hitSlop={10} size={16} color="#C084FC" />
             </Pressable>
           </View>
         )}

@@ -285,7 +285,7 @@ export function ProgressPhotos() {
               accessibilityLabel="Закрыть фото"
               className="rounded-full bg-white/10 p-2"
             >
-              <X size={22} color="#FFFFFF" />
+              <X hitSlop={10} size={22} color="#FFFFFF" />
             </Pressable>
           </View>
           {preview ? (

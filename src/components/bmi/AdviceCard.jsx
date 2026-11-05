@@ -94,7 +94,7 @@ function MiniRing({ bmi, catColor, shortLabel }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="mt-[2px] font-semibold text-[9px] leading-none"
+          className="mt-[2px] font-semibold text-[11px] leading-none"
           style={{ color: catColor }}
         >
           {shortLabel}
@@ -136,7 +136,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               />
               <Text
                 maxFontSizeMultiplier={1.1}
-                className="mt-1 font-sans text-[10px] text-bear-dim"
+                className="mt-1 font-sans text-[11px] text-bear-dim"
               >
                 Твой ИМТ
               </Text>
@@ -147,7 +147,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               accessibilityLabel="Закрыть"
               className="ml-1 mt-0.5 p-1"
             >
-              <X size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color="#A5AECB" />
             </Pressable>
           </View>
 

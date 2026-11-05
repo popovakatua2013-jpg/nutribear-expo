@@ -54,9 +54,9 @@ export function BmiAdvice({ bmi, onDetails }) {
           accessibilityRole="button"
           accessibilityLabel="Скрыть блок рекомендаций"
           hitSlop={6}
-          className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] active:opacity-70"
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] active:opacity-70"
         >
-          <X size={17} color="#A5AECB" />
+          <X hitSlop={10} size={17} color="#A5AECB" />
         </Pressable>
       </View>
 
@@ -87,7 +87,7 @@ export function BmiAdvice({ bmi, onDetails }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="shrink-0 font-medium text-[12px] text-bear-sub"
+          className="shrink-0 font-medium text-[13px] text-bear-sub"
         >
           Идеальный диапазон ИМТ
         </Text>
