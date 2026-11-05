@@ -176,7 +176,10 @@ export function BmiDonut({ bmi }) {
         />
       </Svg>
 
-      <Text className="font-extrabold text-[36px] leading-none tracking-tight text-white">
+      <Text
+        maxFontSizeMultiplier={1.1}
+        className="font-extrabold text-[36px] leading-none tracking-tight text-white"
+      >
         {fmtDecimal(num)}
       </Text>
       <View

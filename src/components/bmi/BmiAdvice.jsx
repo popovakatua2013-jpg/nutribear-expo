@@ -13,9 +13,10 @@ import { Flower2, Heart, Star, X } from 'lucide-react-native'
 import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 
+// Та же поверхность, что у всех карточек вкладки (bodyCard + bodyLine)
 const CARD = {
-  backgroundColor: '#1D1240',
-  borderColor: 'rgba(168,85,247,0.28)',
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
   borderWidth: 1,
 }
 

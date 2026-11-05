@@ -189,7 +189,17 @@ describe('weightStrip — подпись-поддержка под график�
     expect(s.text).toContain('Не сдавайтесь')
   })
 
-  test('цели нет — нейтрально по направлению динамики', () => {
+  test('цели нет — по движению к норме, без слова «цель»', () => {
+    const toNorm = weightStrip({ delta: -0.8, towardGoal: null, towardNorm: true })
+    expect(toNorm.tone).toBe('good')
+    expect(toNorm.title).toBe('Вес движется к норме')
+    const away = weightStrip({ delta: -0.8, towardGoal: null, towardNorm: false })
+    expect(away.tone).toBe('bad')
+    expect(away.title).toBe('Вес уходит от нормы')
+    expect(away.text).not.toContain('цели')
+  })
+
+  test('цели и нормы нет — нейтрально по направлению динамики', () => {
     const down = weightStrip({ delta: -0.8, towardGoal: null })
     expect(down.tone).toBe('good')
     expect(down.title).toBe('Вес пошёл вниз')

@@ -14,7 +14,7 @@
 // что измерили; в окне — «+ Свой замер».
 
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -306,7 +306,10 @@ export function MeasurementsCard() {
                 </Text>
                 {m.custom && <Info size={11} color="#8B96B8" />}
               </View>
-              <Text className="w-[72px] text-right font-bold text-[12px] text-bear-text">
+              <Text
+                maxFontSizeMultiplier={1.2}
+                className="w-[72px] text-right font-bold text-[12px] text-bear-text"
+              >
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
               <View className="w-[84px] flex-row items-center justify-end gap-0.5">
@@ -455,7 +458,11 @@ function MeasurementsModal({ open, onClose }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
+      {/* Клавиатура не перекрывает поля и кнопку «Сохранить» (iOS) */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/60 px-3 pb-3"
+      >
         {open && (
           <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
@@ -465,7 +472,7 @@ function MeasurementsModal({ open, onClose }) {
                   Сантиметровая лента; заполните то, что измерили
                 </Text>
               </View>
-              <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
+              <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
                 <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
@@ -584,7 +591,7 @@ function MeasurementsModal({ open, onClose }) {
             </Pressable>
           </View>
         )}
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

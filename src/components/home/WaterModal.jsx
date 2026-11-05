@@ -7,7 +7,7 @@
 // маскот-поддержка капельки. Записи за сегодня по умолчанию свёрнуты,
 // тап по записи — правка мл/времени прямо в строке, корзина — удаление.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import {
@@ -125,6 +125,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [editTime, setEditTime] = useState('')
   const [logOpen, setLogOpen] = useState(false) // записи за сегодня по умолчанию свёрнуты
 
+  // Окно закрыто — черновик правки записи сбрасывается: повторное
+  // открытие показывает журнал, а не застаревшую строку в режиме правки
+  useEffect(() => {
+    if (!open) {
+      setEditingId(null)
+      setEditMl('')
+      setEditTime('')
+    }
+  }, [open])
+
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
 
   // Последние 7 дней (из дневной истории) — линия динамики и мини-бары
@@ -215,9 +225,14 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   }
 
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10">
+    <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      {/* Тап по затемнению закрывает окно, тап по самой шторке — нет */}
+      <Pressable
+        className="flex-1 justify-end bg-black/60 px-3 pb-3"
+        onPress={onClose}
+        accessibilityLabel="Закрыть окно"
+      >
+        <Pressable onPress={() => {}} className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10">
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
@@ -514,8 +529,8 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
               </View>
             </ScrollView>
           </LinearGradient>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   )
 }

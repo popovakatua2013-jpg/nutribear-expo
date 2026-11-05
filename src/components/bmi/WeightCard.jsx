@@ -19,7 +19,7 @@
 // стала легче.
 
 import { useEffect, useState } from 'react'
-import { Alert, DeviceEventEmitter, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Alert, DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   Activity,
   Calendar,
@@ -146,10 +146,12 @@ export function WeightCard() {
       ? goalDiff > 0.05 ? deltaAll < 0 : goalDiff < -0.05 ? deltaAll > 0 : true
       : null)
 
-  // Строка-поддержка: с целью — по движению к цели, без цели — по норме
+  // Строка-поддержка: с целью — по движению к цели, без цели — по
+  // движению к здоровой норме (текст без слова «цель», тон тот же)
   const strip = weightStrip({
     delta: periodDelta,
-    towardGoal: goalWeightKg != null ? towardGoal : periodDelta === 0 ? null : towardNorm,
+    towardGoal: goalWeightKg != null ? towardGoal : null,
+    towardNorm,
     goalReached,
   })
   const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
@@ -236,6 +238,7 @@ export function WeightCard() {
         {/* Записать вес: круглый «+» (модалка веса) */}
         <Pressable
           onPress={() => setOpen(true)}
+          accessibilityRole="button"
           accessibilityLabel="Записать вес"
           className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
         >
@@ -316,13 +319,17 @@ export function WeightCard() {
         <View className="w-[122px] shrink-0 rounded-2xl p-3.5" style={CARD}>
           <Pressable
             onPress={() => setOpen(true)}
+            accessibilityRole="button"
             accessibilityLabel="Записать вес"
             className="active:opacity-70"
           >
             <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
               Текущий вес
             </Text>
-            <Text className="mt-1.5 font-extrabold text-[25px] leading-none tracking-tight text-bear-text">
+            <Text
+              maxFontSizeMultiplier={1.15}
+              className="mt-1.5 font-extrabold text-[25px] leading-none tracking-tight text-bear-text"
+            >
               {fmtDecimal(weightKg)}
               <Text className="font-semibold text-[12px] text-bear-sub2"> кг</Text>
             </Text>
@@ -383,6 +390,7 @@ export function WeightCard() {
 
           <Pressable
             onPress={() => setOpen(true)}
+            accessibilityRole="button"
             accessibilityLabel={goalWeightKg != null ? 'Изменить цель по весу' : 'Задать цель по весу'}
             className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] py-2 active:opacity-70"
           >
@@ -520,6 +528,7 @@ export function WeightCard() {
               <Text className="font-bold text-[15px] text-bear-text">Журнал веса</Text>
               <Pressable
                 onPress={() => setJournalOpen(false)}
+                accessibilityRole="button"
                 accessibilityLabel="Закрыть журнал веса"
                 className="p-1"
               >
@@ -611,11 +620,14 @@ export function WeightCard() {
 
       {/* Окно изменения измерения */}
       <Modal visible={Boolean(editing)} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
-        <View className="flex-1 items-center justify-center bg-black/60 px-6">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1 items-center justify-center bg-black/60 px-6"
+        >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[15px] text-bear-text">Изменить вес</Text>
-              <Pressable onPress={() => setEditing(null)} accessibilityLabel="Закрыть" className="p-1">
+              <Pressable onPress={() => setEditing(null)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
                 <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
@@ -646,16 +658,19 @@ export function WeightCard() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Окно изменения роста (карандаш в карточке «Текущий вес») */}
       <Modal visible={heightOpen} transparent animationType="fade" onRequestClose={() => setHeightOpen(false)}>
-        <View className="flex-1 items-center justify-center bg-black/60 px-6">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1 items-center justify-center bg-black/60 px-6"
+        >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[15px] text-bear-text">Изменить рост</Text>
-              <Pressable onPress={() => setHeightOpen(false)} accessibilityLabel="Закрыть" className="p-1">
+              <Pressable onPress={() => setHeightOpen(false)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
                 <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
@@ -685,7 +700,7 @@ export function WeightCard() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )

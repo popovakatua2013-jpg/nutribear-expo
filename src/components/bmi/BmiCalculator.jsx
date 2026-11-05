@@ -187,6 +187,8 @@ export function BmiCalculator() {
                 <Pressable
                   key={id}
                   onPress={() => setSex(id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   accessibilityLabel={label}
                   className="min-w-0 flex-1 overflow-hidden rounded-full border"
                   style={{ borderColor: active ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,0.10)' }}
@@ -243,7 +245,7 @@ export function BmiCalculator() {
               {cat.label} · {cat.range}
             </Text>
           </View>
-          <Text className="mt-1 font-extrabold text-[30px] leading-tight tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} className="mt-1 font-extrabold text-[30px] leading-tight tracking-tight text-white">
             {fmtDecimal(bmi)}
           </Text>
 
@@ -278,6 +280,8 @@ export function BmiCalculator() {
                 <Pressable
                   key={l.id}
                   onPress={() => setActivityId(l.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   accessibilityLabel={l.label}
                   className="overflow-hidden rounded-full border"
                   style={{ borderColor: active ? ACTIVE_BORDER : 'rgba(255,255,255,0.10)' }}
@@ -301,9 +305,11 @@ export function BmiCalculator() {
   )
 }
 
+// Та же поверхность, что у остальных карточек вкладки (bodyCard +
+// bodyLine) — калькулятор больше не выбивается из единого стиля
 const CARD_STYLE = {
-  backgroundColor: '#181031',
-  borderColor: 'rgba(168,85,247,0.20)',
+  backgroundColor: 'rgba(29,18,64,0.82)',
+  borderColor: 'rgba(168,85,247,0.30)',
 }
 
 function NumField({ label, value, onChange, decimal }) {
@@ -331,6 +337,7 @@ function Stat({ label, value, accent }) {
     <View className="min-w-0 flex-1 rounded-xl bg-white/[0.03] px-3 py-2.5">
       <Text className="font-medium text-[10px] text-bear-sub2">{label}</Text>
       <Text
+        maxFontSizeMultiplier={1.2}
         className="mt-0.5 font-bold text-[14px]"
         style={{ color: accent ? '#6C8CFF' : '#EEF2FB' }}
       >

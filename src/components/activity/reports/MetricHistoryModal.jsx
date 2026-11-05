@@ -104,6 +104,10 @@ export function MetricHistoryModal({
   }, [days, today])
 
   const hasAny = rows.some(dayHasRecords)
+  // По конкретной метрике: если её не вели в периоде — показываем
+  // медвежонка вместо «фальшивой аналитики» из нулей (среднее 0,
+  // «0% к прошлому месяцу», пустые «Лучшие дни»)
+  const hasMetric = rows.some((r) => (r?.[metric.key] || 0) > 0)
   const avg = dailyAverage(rows, metric.key)
   const prevAvg = dailyAverage(prevRows, metric.key)
   const pct = changePct(avg, prevAvg)
@@ -132,7 +136,7 @@ export function MetricHistoryModal({
                 <Text className="font-bold text-[15px] tracking-tight text-bear-text">
                   {`${metric.label} · история`}
                 </Text>
-                <Text numberOfLines={1} className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
                   {`Динамика ${metric.gen} за ${days} ${pluralDays(days)}`}
                 </Text>
               </View>
@@ -156,7 +160,7 @@ export function MetricHistoryModal({
                   accessibilityLabel="Период истории"
                 />
 
-                {hasAny ? (
+                {hasAny && hasMetric ? (
                   <>
                     {/* «В среднем за день» + Δ% к прошлому периоду.
                         Среднее делится только на ведённые дни — простои

@@ -7,7 +7,7 @@
 // где бы ни были записаны: на «Главной» или в «Отчётах».
 // Период (7/30/90) выбирается пилюлями в шапке «Отчётов».
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Footprints } from 'lucide-react-native'
@@ -49,7 +49,12 @@ export default function ActivityScreen() {
     recordToday(dayKeyOf(), { steps, kcal, waterMl, burned, xp })
   }, [steps, kcal, waterMl, burned, xp, recordToday])
 
-  const today = { steps, kcal, waterMl, burned, xp }
+  // today идёт в useMemo «Отчётов» — без мемоизации новый объект на
+  // каждом рендере пересчитывал бы периоды истории на каждый тик
+  const today = useMemo(
+    () => ({ steps, kcal, waterMl, burned, xp }),
+    [steps, kcal, waterMl, burned, xp]
+  )
 
   return (
     <View className="flex-1 bg-bear-bg">

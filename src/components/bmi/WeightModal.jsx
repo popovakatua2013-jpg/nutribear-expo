@@ -9,7 +9,7 @@
 // на небольшом экране кнопка не прячется за краем.
 
 import { useState } from 'react'
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useToast } from '../ui/Toast'
@@ -24,7 +24,11 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 export function WeightModal({ open, onClose, height, weight, goalWeight, onSave }) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
+      {/* Клавиатура не перекрывает поля и закреплённую «Сохранить» (iOS) */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/60 px-3 pb-3"
+      >
         {open && (
           <WeightBody
             key={`${height}-${weight}-${goalWeight ?? 'x'}`}
@@ -35,7 +39,7 @@ export function WeightModal({ open, onClose, height, weight, goalWeight, onSave 
             onClose={onClose}
           />
         )}
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

@@ -271,10 +271,17 @@ export function kgToNextCategory(weightKg, heightCm) {
 // Подпись-поддержка под графиком веса («Ваш вес стабилен…», как на
 // макете). delta — изменение веса за выбранный период в кг,
 // towardGoal — движется ли вес к цели (true — к цели, false — от цели,
-// null/undefined — цели нет), goalReached — цель уже достигнута.
+// null/undefined — цели нет), towardNorm — движение к здоровой норме
+// (используется, когда цели нет: текст без слова «цель»),
+// goalReached — цель уже достигнута.
 // Тон: stable — всё спокойно (зелёный лайк), good — похвала,
 // bad — мягкая поддержка без оценщины
-export function weightStrip({ delta = 0, towardGoal = null, goalReached = false }) {
+export function weightStrip({
+  delta = 0,
+  towardGoal = null,
+  towardNorm = null,
+  goalReached = false,
+}) {
   if (goalReached) {
     return {
       tone: 'good',
@@ -303,7 +310,22 @@ export function weightStrip({ delta = 0, towardGoal = null, goalReached = false 
       text: 'Не сдавайтесь — регулярность важнее скорости!',
     }
   }
-  // Цели нет — нейтрально по направлению динамики
+  // Цели нет — говорим про норму, а не про «цель» (она не задана)
+  if (towardNorm === true) {
+    return {
+      tone: 'good',
+      title: 'Вес движется к норме',
+      text: 'Отличный темп — продолжайте в том же духе!',
+    }
+  }
+  if (towardNorm === false) {
+    return {
+      tone: 'bad',
+      title: 'Вес уходит от нормы',
+      text: 'Не сдавайтесь — регулярность важнее скорости!',
+    }
+  }
+  // Ни цели, ни нормы (запасной вариант) — нейтрально по динамике
   if (delta < 0) {
     return {
       tone: 'good',

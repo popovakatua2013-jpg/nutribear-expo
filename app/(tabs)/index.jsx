@@ -430,7 +430,11 @@ export default function HomeScreen() {
         statusBarTranslucent
         onRequestClose={() => setGoalEdit(null)}
       >
-        <View className="flex-1 items-center justify-center bg-black/60 px-8">
+        {/* Клавиатура не перекрывает поле и «Сохранить» (iOS) */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1 items-center justify-center bg-black/60 px-8"
+        >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[15px] text-bear-text">
@@ -471,7 +475,7 @@ export default function HomeScreen() {
               <Text className="text-center font-bold text-sm text-white">Сохранить</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )

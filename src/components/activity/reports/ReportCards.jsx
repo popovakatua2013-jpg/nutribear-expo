@@ -60,7 +60,12 @@ function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-sans text-[12.5px] text-bear-soft">{m.label}</Text>
-          <Text numberOfLines={1} className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text">
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.15}
+            adjustsFontSizeToFit
+            className="mt-0.5 font-extrabold text-[19px] tracking-tight text-bear-text"
+          >
             {m.fmt(cur[m.key])}
           </Text>
         </View>
@@ -74,7 +79,7 @@ function ReportCard({ m, cur, prev, days, best = 0, onPress = () => {} }) {
       {/* Рекорд периода — только у показателей «чем больше, тем лучше»;
         у калорий есть больше всех — не достижение */}
       {!m.invert && best > 0 ? (
-        <Text numberOfLines={1} className="mt-1.5 font-sans text-[10.5px] text-bear-dim">
+        <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-1.5 font-sans text-[10.5px] text-bear-dim">
           {`Лучший день: ${m.fmt(best)}`}
         </Text>
       ) : null}

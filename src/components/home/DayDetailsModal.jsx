@@ -10,6 +10,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { dayData, dayStatus } from '@/lib/data/calendar'
+import { dayKeyOf } from '@/store/useHistoryStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 
 const MONTHS = [
@@ -35,7 +36,13 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
   const auditDays = useOrganismGameStore((s) => s.auditDays || {})
   const d = dayData(history, dayKey, null)
   const status = dayStatus(d, goals.kcal)
-  const weight = (weights || []).find((w) => String(w.date || '').slice(0, 10) === dayKey)
+  // Взвешивания хранятся с ISO-датой (UTC): сравнение по локальному
+  // ключу дня — ночная запись (00:00–03:00) попадает в свой день,
+  // а не в предыдущий
+  const weight = (weights || []).find((w) => {
+    const t = new Date(w.date)
+    return !Number.isNaN(t.getTime()) && dayKeyOf(t) === dayKey
+  })
   const auditVal = d.audit != null ? d.audit : auditDays[dayKey]
   const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !weight && auditVal == null
 

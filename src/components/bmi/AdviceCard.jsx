@@ -143,6 +143,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
             </View>
             <Pressable
               onPress={onClose}
+              accessibilityRole="button"
               accessibilityLabel="Закрыть"
               className="ml-1 mt-0.5 p-1"
             >

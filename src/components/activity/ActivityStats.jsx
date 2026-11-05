@@ -26,6 +26,7 @@ import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ChevronDown, ChevronUp, Footprints, Dumbbell, Droplets, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { formatLiters } from '@/lib/data/reports'
 import { BurnRing } from '../ui/BurnRing'
 
 // однострочный текст, который при нехватке ширины сжимается, а не режется
@@ -204,7 +205,7 @@ export function ActivityStats({
       Icon: Droplets,
       label: 'Вода',
       value: `${waterPct}%`,
-      sub: `из ${formatNum(waterGoalMl / 1000)} л · ${formatNum(waterMl)} мл`,
+      sub: `из ${formatLiters(waterGoalMl)} · ${formatNum(waterMl)} мл`,
       foot: waterFoot,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',

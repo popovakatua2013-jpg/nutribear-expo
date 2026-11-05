@@ -59,13 +59,14 @@ export function EntryList({ entries, onRemove, onShowAll, mealId, mealName }) {
                 onPress={() => onRemove(entry.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`Удалить «${entry.name}» из «${mealName}»`}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 className="p-0.5"
               >
                 <Trash2 size={11} color="#8B96B8" />
               </Pressable>
             </View>
           </Pressable>
-          <Text numberOfLines={1} className="mt-0.5 font-sans text-[9.5px] text-bear-dim">
+          <Text numberOfLines={1} maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[9.5px] text-bear-dim">
             {`${bjuLine(entry)}${entry.time ? `\u00A0· ${entry.time}` : ''}`}
           </Text>
         </View>
