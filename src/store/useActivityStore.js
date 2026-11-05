@@ -55,12 +55,17 @@ export const useActivityStore = create(
       // систему раз в минуту, на Android ведёт живой счёт от подписки.
       pedometerEnabled: false,
       pedometerSteps: 0,
+      // Health Connect (Android): тумблер системного банка здоровья.
+      // Шаги оттуда агент публикует в pedometerSteps — держится максимум
+      // из двух источников (датчик против HC), см. src/lib/pedometer.js.
+      healthConnectEnabled: false,
       // Локальный день, к которому относятся вода и шаги
       dayKey: dayKeyOf(),
 
       setVessels: (vessels) => set({ vessels }),
       setReminder: (patch) => set((s) => ({ reminder: { ...s.reminder, ...patch } })),
       setPedometerEnabled: (v) => set({ pedometerEnabled: Boolean(v) }),
+      setHealthConnectEnabled: (v) => set({ healthConnectEnabled: Boolean(v) }),
 
       // Выпить воду: time можно передать вручную («ЧЧ:ММ»), иначе — сейчас
       addWater: (ml, time) => {
@@ -172,6 +177,7 @@ export const useActivityStore = create(
         reminder: state.reminder,
         pedometerEnabled: state.pedometerEnabled,
         pedometerSteps: state.pedometerSteps, // шаги дня переживают перезапуск приложения
+        healthConnectEnabled: state.healthConnectEnabled,
         dayKey: state.dayKey,
       }),
     }

@@ -1,14 +1,24 @@
-// Синхронизация: Google Fit, Apple Health и встроенный шагомер.
-// Шагомер настоящий: expo-sensors Pedometer читает системный счётчик
-// шагов (агент src/lib/pedometer.js опрашивает его раз в минуту).
+// Синхронизация: Google Fit, Apple Health, Health Connect и встроенный
+// шагомер. Шагомер настоящий: expo-sensors Pedometer читает системный
+// счётчик шагов (агент src/lib/pedometer.js опрашивает его раз в минуту).
+// Health Connect (Android) — системный «банк здоровья»: шаги собираются
+// в фоне даже при закрытом приложении, с историей и часами/браслетами.
 // Тумблеры внешних сервисов пока сохраняются локально.
 
 import { useState } from 'react'
 import { Platform, Switch, Text, View } from 'react-native'
-import { Watch, Footprints } from 'lucide-react-native'
+import { Watch, Footprints, HeartPulse } from 'lucide-react-native'
 import { Pedometer } from 'expo-sensors'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useActivityStore } from '@/store/useActivityStore'
+import {
+  hcAvailability,
+  hcOpenSettings,
+  hcRequestStepsPermission,
+  hcImportStepsHistory,
+  HC_UNAVAILABLE,
+  HC_UPDATE_REQUIRED,
+} from '@/lib/healthConnect'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 
@@ -28,6 +38,8 @@ export function SyncCard() {
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
   const pedometerSteps = useActivityStore((s) => s.pedometerSteps)
   const setPedometerEnabled = useActivityStore((s) => s.setPedometerEnabled)
+  const healthConnectEnabled = useActivityStore((s) => s.healthConnectEnabled)
+  const setHealthConnectEnabled = useActivityStore((s) => s.setHealthConnectEnabled)
   const { toast } = useToast()
   const [busy, setBusy] = useState(false)
 
@@ -71,13 +83,70 @@ export function SyncCard() {
     })
   }
 
+  // Подключение Health Connect: проверяем доступность, запрашиваем
+  // разрешение «Шаги» и сразу импортируем историю за прошлые дни.
+  // Системное окно разрешения показывает сам Health Connect.
+  async function toggleHealthConnect(v) {
+    if (busy) return
+    if (!v) {
+      setHealthConnectEnabled(false)
+      toast({ title: 'Health Connect отключён' })
+      return
+    }
+    setBusy(true)
+    try {
+      const avail = await hcAvailability()
+      if (avail === HC_UNAVAILABLE) {
+        toast({
+          title: '🩺 Health Connect не найден',
+          description:
+            'Установите приложение Health Connect из Google Play — в нём хранятся шаги телефона и часов',
+        })
+        return
+      }
+      if (avail === HC_UPDATE_REQUIRED) {
+        toast({
+          title: '🩺 Обновите Health Connect',
+          description: 'Открываем настройки — обновите приложение Health Connect и попробуйте снова',
+        })
+        await hcOpenSettings()
+        return
+      }
+      const ok = await hcRequestStepsPermission()
+      if (!ok) {
+        toast({
+          title: '🩺 Нужно разрешение',
+          description: 'Разрешите чтение шагов в окне Health Connect (данные не покидают телефон)',
+        })
+        return
+      }
+      setHealthConnectEnabled(true)
+      const imported = await hcImportStepsHistory({ days: 14 })
+      toast({
+        title: '🩺 Health Connect подключён',
+        description:
+          imported > 0
+            ? `Шаги с системы — в фоне и с историей. Импортировано дней: ${imported}`
+            : 'Шаги с системы — в фоне, даже когда приложение закрыто',
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <CollapsibleCard
       storageKey="sync"
       accessibilityLabel="Синхронизация"
       icon={<Watch size={18} color="#38bdf8" />}
       title="Синхронизация"
-      summary={pedometerEnabled ? 'Шагомер вкл' : undefined}
+      summary={
+        pedometerEnabled
+          ? 'Шагомер вкл'
+          : healthConnectEnabled
+            ? 'Health Connect'
+            : undefined
+      }
     >
       <View className="mt-1 gap-2">
         {ROWS.map((r) => (
@@ -98,6 +167,29 @@ export function SyncCard() {
             />
           </View>
         ))}
+
+        {Platform.OS === 'android' && (
+          <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+            <View className="min-w-0 flex-1">
+              <View className="flex-row items-center gap-1.5">
+                <HeartPulse size={16} color="#F0ABFC" />
+                <Text className="font-bold text-[13px] text-bear-text">Health Connect</Text>
+              </View>
+              <Text className="font-sans text-[11px] text-bear-sub2">
+                {healthConnectEnabled
+                  ? 'шаги с системы: фон + история телефона и часов'
+                  : 'шаги телефона и часов — даже при закрытом приложении'}
+              </Text>
+            </View>
+            <Switch
+              value={healthConnectEnabled}
+              onValueChange={toggleHealthConnect}
+              trackColor={SWITCH_COLORS}
+              thumbColor="#FFFFFF"
+              accessibilityLabel="Health Connect"
+            />
+          </View>
+        )}
 
         <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
           <View className="min-w-0 flex-1">
@@ -124,7 +216,7 @@ export function SyncCard() {
       <Text className="mt-3 px-1 font-sans text-[10px] leading-relaxed text-bear-dim">
         {Platform.OS === 'web'
           ? 'Веб-версия работает офлайн: данные не покидают устройство. Шагомер доступен в приложении на телефоне.'
-          : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона. Шаги с датчика засчитываются, пока приложение запущено, — за пределами приложения телефон их шагомеру не отдаёт.'}{' '}
+          : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона: шаги засчитываются, пока приложение запущено. Health Connect, если подключён, даёт шаги с историей — система собирает их даже при закрытом приложении, включая шаги с часов и браслетов.'}{' '}
         Подключение к внешним сервисам включит синхронизацию шагов, когда
         она станет доступна.
       </Text>
