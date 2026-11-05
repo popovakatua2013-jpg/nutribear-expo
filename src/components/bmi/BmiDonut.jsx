@@ -194,7 +194,7 @@ export function BmiDonut({ bmi }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="font-bold text-[10px] leading-none"
+          className="font-bold text-[12px] leading-none"
           style={{ color: cat.color }}
         >
           {SHORT_LABEL[cat.id] || cat.label}
@@ -204,7 +204,7 @@ export function BmiDonut({ bmi }) {
           className="h-[15px] w-[15px] items-center justify-center rounded-full"
           style={{ backgroundColor: cat.color }}
         >
-          <Check size={10} color="#0B1B12" strokeWidth={3.6} />
+          <Check size={12} color="#0B1B12" strokeWidth={3.6} />
         </View>
       </View>
     </View>

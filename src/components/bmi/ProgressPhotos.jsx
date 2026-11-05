@@ -159,14 +159,14 @@ export function ProgressPhotos() {
           }
           className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
         >
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
             Фото прогресса
           </Text>
           {items.length > 0 &&
             (expanded ? (
-              <ChevronDown size={16} color="#8B96B8" />
+              <ChevronDown size={18} color="#8B96B8" />
             ) : (
-              <ChevronRight size={16} color="#8B96B8" />
+              <ChevronRight size={18} color="#8B96B8" />
             ))}
         </Pressable>
         {/* Крупная цветная кнопка фотоаппарата — заметная, как главная
@@ -189,7 +189,7 @@ export function ProgressPhotos() {
             colors={['#A855F7', '#7C3AED']}
             style={[StyleSheet.absoluteFillObject, { borderRadius: 22 }]}
           />
-          <Camera size={21} color="#FFFFFF" strokeWidth={2.2} />
+          <Camera size={23} color="#FFFFFF" strokeWidth={2.2} />
         </Pressable>
       </View>
 
@@ -212,13 +212,13 @@ export function ProgressPhotos() {
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
-            className="min-w-0 flex-1 font-sans text-[11.5px] text-bear-sub2"
+            className="min-w-0 flex-1 font-sans text-[14px] text-bear-sub2"
           >
             {items.length === 1
               ? `1 фото скрыто · снято ${shortDay(newest.date)}`
               : `${items.length} фото скрыто · последнее ${shortDay(newest.date)}`}
           </Text>
-          <Text className="shrink-0 font-semibold text-[11px] text-[#8DABFF]">Показать</Text>
+          <Text className="shrink-0 font-semibold text-[13px] text-[#8DABFF]">Показать</Text>
         </Pressable>
       ) : items.length > 0 ? (
         <>
@@ -232,7 +232,7 @@ export function ProgressPhotos() {
               style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
               resizeMode="cover"
             />
-            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[11px] text-bear-soft">
+            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[13px] text-bear-soft">
               До · {shortDay(oldest.date)}
             </Text>
           </View>
@@ -243,7 +243,7 @@ export function ProgressPhotos() {
               style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
               resizeMode="cover"
             />
-            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[11px] text-[#8DABFF]">
+            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[13px] text-[#8DABFF]">
               Сейчас · {shortDay(newest.date)}
             </Text>
           </View>
@@ -266,7 +266,7 @@ export function ProgressPhotos() {
           </View>
         </>
       ) : (
-        <Text maxFontSizeMultiplier={MAX} className="mt-2 font-sans text-[11.5px] leading-snug text-bear-sub2">
+        <Text maxFontSizeMultiplier={MAX} className="mt-2 font-sans text-[14px] leading-snug text-bear-sub2">
           Снимайте фигуру раз в пару недель в одном и том же ракурсе —
           здесь появится сравнение «до/после». Фото остаются только на
           вашем устройстве и не видны, пока вы сами их не откроете.
@@ -277,7 +277,7 @@ export function ProgressPhotos() {
       <Modal visible={Boolean(preview)} transparent animationType="fade" onRequestClose={() => setPreview(null)}>
         <View className="flex-1 bg-black/90 px-5 pt-12 pb-8">
           <View className="flex-row items-center justify-between">
-            <Text className="font-semibold text-[13px] text-white/80">
+            <Text className="font-semibold text-[15.5px] text-white/80">
               {preview ? `Фото · ${shortDay(preview.date)}` : ''}
             </Text>
             <Pressable
@@ -285,7 +285,7 @@ export function ProgressPhotos() {
               accessibilityLabel="Закрыть фото"
               className="rounded-full bg-white/10 p-2"
             >
-              <X size={20} color="#FFFFFF" />
+              <X size={22} color="#FFFFFF" />
             </Pressable>
           </View>
           {preview ? (
@@ -307,8 +307,8 @@ export function ProgressPhotos() {
                 : 'border border-rose-400/30 bg-rose-400/10'
             }`}
           >
-            <Trash2 size={17} color="#fb7185" />
-            <Text className="font-bold text-[13px] text-rose-300">
+            <Trash2 size={19} color="#fb7185" />
+            <Text className="font-bold text-[15.5px] text-rose-300">
               {confirmDel ? 'Точно удалить? Нажмите ещё раз' : 'Удалить фото'}
             </Text>
           </Pressable>

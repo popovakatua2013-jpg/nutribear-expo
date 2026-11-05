@@ -50,7 +50,7 @@ export function BearHero({ consumed = 0, target = 0, onAdd }) {
           <Text className="text-center font-extrabold text-[26px] leading-tight tracking-tight text-bear-text">
             {text.title}
           </Text>
-          <Text className="mx-auto mt-2 max-w-[290px] text-center font-sans text-[13.5px] leading-relaxed text-[#93A0C2]">
+          <Text className="mx-auto mt-2 max-w-[290px] text-center font-sans text-[16px] leading-relaxed text-[#93A0C2]">
             {text.subtitle}
           </Text>
 
@@ -68,13 +68,13 @@ export function BearHero({ consumed = 0, target = 0, onAdd }) {
               className="absolute inset-0 rounded-full"
             />
             <View className="h-7 w-7 items-center justify-center rounded-full bg-white/25">
-              <Plus size={16} color="#fff" strokeWidth={2.5} />
+              <Plus size={18} color="#fff" strokeWidth={2.5} />
             </View>
-            <Text className="ml-2.5 font-semibold text-[15px] text-white">
+            <Text className="ml-2.5 font-semibold text-[18px] text-white">
               Добавить приём пищи
             </Text>
           </Pressable>
-          <Text className="mt-1 text-center font-sans text-[10px] text-bear-dim">
+          <Text className="mt-1 text-center font-sans text-[12px] text-bear-dim">
             {formatNum(consumed)} из {formatNum(target)} ккал за сегодня
           </Text>
         </View>

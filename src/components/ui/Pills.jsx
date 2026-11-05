@@ -11,7 +11,7 @@ const BRAND = ['#4D7CFE', '#8B5CF6', '#A45BFF']
 
 export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel }) {
   const pad =
-    size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-[11.5px]'
+    size === 'sm' ? 'px-2.5 py-1 text-[13px]' : 'px-3 py-1.5 text-[14px]'
 
   return (
     <View className="flex-row flex-wrap gap-1.5" accessibilityLabel={accessibilityLabel}>

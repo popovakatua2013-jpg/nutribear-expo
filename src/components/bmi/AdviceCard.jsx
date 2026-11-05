@@ -88,13 +88,13 @@ function MiniRing({ bmi, catColor, shortLabel }) {
         <Path d={arc} stroke="#FFFFFF" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
       </Svg>
       <View className="items-center">
-        <Text className="font-extrabold text-[14px] leading-none text-white">
+        <Text className="font-extrabold text-[17px] leading-none text-white">
           {fmtDecimal(bmi)}
         </Text>
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="mt-[2px] font-semibold text-[7px] leading-none"
+          className="mt-[2px] font-semibold text-[9px] leading-none"
           style={{ color: catColor }}
         >
           {shortLabel}
@@ -120,10 +120,10 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
         <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
           <View className="flex-row items-start px-5 pb-1 pt-5">
             <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[15px] text-bear-text">
+              <Text className="font-bold text-[18px] text-bear-text">
                 💡 Рекомендации
               </Text>
-              <Text className="mt-1 font-sans text-[13px] leading-relaxed text-bear-soft">
+              <Text className="mt-1 font-sans text-[15.5px] leading-relaxed text-bear-soft">
                 {rec.main}
               </Text>
             </View>
@@ -136,7 +136,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               />
               <Text
                 maxFontSizeMultiplier={1.1}
-                className="mt-1 font-sans text-[8px] text-bear-dim"
+                className="mt-1 font-sans text-[10px] text-bear-dim"
               >
                 Твой ИМТ
               </Text>
@@ -147,12 +147,12 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               accessibilityLabel="Закрыть"
               className="ml-1 mt-0.5 p-1"
             >
-              <X size={20} color="#A5AECB" />
+              <X size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}>
-            <Text className="mt-2 font-semibold text-xs" style={{ color: cat.color }}>
+            <Text className="mt-2 font-semibold text-[14px]" style={{ color: cat.color }}>
               {isOwn ? 'Ваша категория' : 'Категория'}: {cat.label} ({cat.range})
             </Text>
 
@@ -164,11 +164,11 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                   backgroundColor: nextKg.tone === 'ok' ? 'rgba(74,222,128,0.12)' : 'rgba(141,171,255,0.12)',
                 }}
               >
-                <Target size={12} color={nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF'} />
+                <Target size={14} color={nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF'} />
                 <Text
                   numberOfLines={2}
                   maxFontSizeMultiplier={1.1}
-                  className="min-w-0 flex-1 font-semibold text-[11.5px]"
+                  className="min-w-0 flex-1 font-semibold text-[14px]"
                   style={{ color: nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF' }}
                 >
                   {nextKg.text}
@@ -185,7 +185,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                     className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: cat.color }}
                   />
-                  <Text className="min-w-0 flex-1 font-sans text-[13px] text-bear-soft">
+                  <Text className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-soft">
                     {tip}
                   </Text>
                 </View>
@@ -206,10 +206,10 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                   borderWidth: 1,
                 }}
               >
-                <Text className="font-semibold text-[13px] text-[#D8B4FE]">
+                <Text className="font-semibold text-[15.5px] text-[#D8B4FE]">
                   К рекомендациям
                 </Text>
-                <ArrowDown size={14} color="#D8B4FE" />
+                <ArrowDown size={16} color="#D8B4FE" />
               </Pressable>
             )}
           </ScrollView>

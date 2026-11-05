@@ -44,7 +44,7 @@ export function MealCard({ meal, consumed, onAdd }) {
             className="items-center justify-center bg-white/5"
             style={{ width: THUMB, height: THUMB, borderRadius: THUMB / 2 }}
           >
-            <Text style={{ fontSize: 18 }}>{meal.emoji || '🍽️'}</Text>
+            <Text style={{ fontSize: 21 }}>{meal.emoji || '🍽️'}</Text>
           </View>
         )}
 
@@ -61,7 +61,7 @@ export function MealCard({ meal, consumed, onAdd }) {
               borderColor: '#0C1327',
             }}
           >
-            <Check size={9} color="#FFFFFF" strokeWidth={3.5} />
+            <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
           </View>
         )}
       </View>
@@ -70,11 +70,11 @@ export function MealCard({ meal, consumed, onAdd }) {
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={MAX}
-          className="font-semibold text-[13px] leading-tight text-bear-text"
+          className="font-semibold text-[15.5px] leading-tight text-bear-text"
         >
           {meal.short || meal.name}
         </Text>
-        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[11px] text-bear-dim">
+        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[13px] text-bear-dim">
           {formatNum(consumed)} ккал
         </Text>
       </View>

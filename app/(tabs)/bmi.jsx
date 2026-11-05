@@ -46,7 +46,7 @@ function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
       style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }}
     >
       {icon}
-      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[11px] text-[#D6DCF2]">
+      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[13px] text-[#D6DCF2]">
         {label}
       </Text>
       {chevron}
@@ -155,7 +155,7 @@ export default function BmiScreen() {
         <View accessibilityLabel="Разделы: ИМТ и динамика веса" className="flex-row items-center gap-1">
           <NavPill
             label="Динамика веса"
-            icon={<ChartColumn size={12} color="#A78BFA" />}
+            icon={<ChartColumn size={14} color="#A78BFA" />}
             onPress={scrollToWeight}
             accessibilityLabel="Перейти к динамике веса"
           />
@@ -177,8 +177,8 @@ export default function BmiScreen() {
               style={{ paddingHorizontal: 9, paddingVertical: 7 }}
             >
               <View className="flex-row items-center gap-1">
-                <Scale size={13} color="#FFFFFF" />
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[11px] text-white">
+                <Scale size={15} color="#FFFFFF" />
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[13px] text-white">
                   ИМТ и состав тела
                 </Text>
               </View>
@@ -186,7 +186,7 @@ export default function BmiScreen() {
           </View>
           <NavPill
             label="Подробнее"
-            chevron={<ChevronRight size={12} color="#A5AECB" />}
+            chevron={<ChevronRight size={14} color="#A5AECB" />}
             onPress={() => openDetails(null)}
             accessibilityLabel="Подробнее о категориях и рекомендациях"
           />
@@ -227,11 +227,11 @@ export default function BmiScreen() {
                       borderWidth: 1,
                     }}
                   >
-                    <ShieldCheck size={11} color="#38BDF8" />
+                    <ShieldCheck size={13} color="#38BDF8" />
                     <Text
                       maxFontSizeMultiplier={1.1}
                       numberOfLines={1}
-                      className="font-bold text-[10px] text-[#7DD3FC]"
+                      className="font-bold text-[12px] text-[#7DD3FC]"
                     >
                       {`В норме ${normWeeks} нед.`}
                     </Text>

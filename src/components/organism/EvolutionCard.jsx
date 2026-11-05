@@ -56,7 +56,7 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
           <View className="flex-row items-center justify-between gap-2">
             <View className="flex-1">
               <Caps>ТЕКУЩАЯ ФОРМА</Caps>
-              <Text className="mt-1 font-extrabold text-[21px] leading-tight" style={{ color: GAME.text }}>
+              <Text className="mt-1 font-extrabold text-[25px] leading-tight" style={{ color: GAME.text }}>
                 {form}
               </Text>
             </View>
@@ -64,8 +64,8 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
               className="flex-row items-center gap-1.5 rounded-full px-3 py-2"
               style={{ backgroundColor: 'rgba(0,0,0,0.3)', maxWidth: 150 }}
             >
-              <TrendingUp size={13} color={GAME.lime} />
-              <Text className="font-semibold text-[11.5px] leading-tight" style={{ color: GAME.text }}>
+              <TrendingUp size={15} color={GAME.lime} />
+              <Text className="font-semibold text-[14px] leading-tight" style={{ color: GAME.text }}>
                 склонность: {tend.name} ({tend.v})
               </Text>
             </View>
@@ -73,10 +73,10 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
 
           {/* средний геном */}
           <View className="mt-3.5 flex-row items-baseline justify-between">
-            <Text className="font-semibold text-[13px]" style={{ color: GAME.dim }}>
+            <Text className="font-semibold text-[15.5px]" style={{ color: GAME.dim }}>
               средний геном
             </Text>
-            <Text className="font-extrabold text-[14px]" style={{ color: GAME.text }}>
+            <Text className="font-extrabold text-[17px]" style={{ color: GAME.text }}>
               {avg} / {GENOME_MAX}
             </Text>
           </View>
@@ -91,12 +91,12 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
               style={{ backgroundColor: 'rgba(163,230,53,0.10)', borderWidth: 1, borderColor: 'rgba(163,230,53,0.3)' }}
             >
               <View className="flex-row items-center gap-1.5">
-                <Dna size={14} color={GAME.lime} />
-                <Text className="font-bold text-[13px] leading-tight" style={{ color: GAME.lime }}>
+                <Dna size={16} color={GAME.lime} />
+                <Text className="font-bold text-[15.5px] leading-tight" style={{ color: GAME.lime }}>
                   цена: {next ? next.cost : '—'}
                 </Text>
               </View>
-              <Text className="mt-0.5 font-sans text-[10px]" style={{ color: GAME.dim2 }}>
+              <Text className="mt-0.5 font-sans text-[12px]" style={{ color: GAME.dim2 }}>
                 генов: {genes}
               </Text>
             </View>
@@ -112,13 +112,13 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
               }}
               android_ripple={{ color: 'rgba(0,0,0,0.15)' }}
             >
-              <Text className="font-bold text-[14px]" style={{ color: canEvolve ? '#12200F' : GAME.dim2 }}>
+              <Text className="font-bold text-[17px]" style={{ color: canEvolve ? '#12200F' : GAME.dim2 }}>
                 Эволюционировать
               </Text>
             </Pressable>
           </View>
 
-          <Text className="mt-3 font-sans text-[12px] leading-snug" style={{ color: GAME.dim }}>
+          <Text className="mt-3 font-sans text-[14.5px] leading-snug" style={{ color: GAME.dim }}>
             {hint}
           </Text>
         </Panel>
@@ -140,7 +140,7 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
                   borderColor: isNext ? 'rgba(163,230,53,0.45)' : 'rgba(255,255,255,0.05)',
                 }}
               >
-                <Text className="font-semibold text-[10.5px] leading-tight" style={{ color: reached ? GAME.emerald : GAME.dim }}>
+                <Text className="font-semibold text-[12.5px] leading-tight" style={{ color: reached ? GAME.emerald : GAME.dim }}>
                   {c}
                 </Text>
               </View>

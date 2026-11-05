@@ -15,7 +15,7 @@ export function HapticsCard() {
     <CollapsibleCard
       storageKey="haptics"
       accessibilityLabel="Вибро-отклик"
-      icon={<Vibrate size={18} color="#C4B5FD" />}
+      icon={<Vibrate size={20} color="#C4B5FD" />}
       title="Вибрация"
       right={
         <Switch
@@ -27,7 +27,7 @@ export function HapticsCard() {
         />
       }
     >
-      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
         {haptics
           ? 'Лёгкий вибро-отклик на нажатия — например, при тапе по кольцу ИМТ.'
           : 'Приложение не будет вибрировать на нажатия.'}

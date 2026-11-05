@@ -38,13 +38,13 @@ export function GameHeader({ icon: Icon, iconColor, iconBg, title, subtitle, rig
     <View className="flex-row items-start justify-between gap-3">
       <View className="flex-1 flex-row items-start gap-3">
         <View className="h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: iconBg }}>
-          <Icon size={21} color={iconColor} />
+          <Icon size={23} color={iconColor} />
         </View>
         <View className="flex-1 pt-0.5">
-          <Text className="font-extrabold text-[15px] tracking-tight" style={{ color: GAME.text }}>
+          <Text className="font-extrabold text-[18px] tracking-tight" style={{ color: GAME.text }}>
             {title}
           </Text>
-          <Text className="mt-0.5 font-sans text-[11.5px] leading-snug" style={{ color: GAME.dim }}>
+          <Text className="mt-0.5 font-sans text-[14px] leading-snug" style={{ color: GAME.dim }}>
             {subtitle}
           </Text>
         </View>
@@ -61,8 +61,8 @@ export function RightPill({ icon: Icon, text, color = GAME.lime }) {
       className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
       style={{ backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1, borderColor: GAME.line }}
     >
-      {Icon && <Icon size={13} color={color} />}
-      <Text className="font-bold text-[12px]" style={{ color }}>
+      {Icon && <Icon size={15} color={color} />}
+      <Text className="font-bold text-[14.5px]" style={{ color }}>
         {text}
       </Text>
     </View>
@@ -84,7 +84,7 @@ export function Panel({ children, style }) {
 // Метка капсом (ТЕКУЩАЯ ФОРМА, ВАШ УРОН…)
 export function Caps({ children, color = GAME.dim2, style }) {
   return (
-    <Text className="font-bold text-[10.5px] tracking-[0.08em]" style={{ color, ...style }}>
+    <Text className="font-bold text-[12.5px] tracking-[0.08em]" style={{ color, ...style }}>
       {children}
     </Text>
   )
@@ -106,7 +106,7 @@ export function Dot({ children, color = GAME.emerald }) {
   return (
     <View className="flex-row items-start gap-2.5 rounded-xl px-3 py-2.5" style={{ backgroundColor: GAME.panel }}>
       <View className="mt-1.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-      <Text className="flex-1 font-sans text-[12px] leading-snug" style={{ color: GAME.dim }}>
+      <Text className="flex-1 font-sans text-[14.5px] leading-snug" style={{ color: GAME.dim }}>
         {children}
       </Text>
     </View>

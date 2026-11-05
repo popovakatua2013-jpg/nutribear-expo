@@ -108,21 +108,21 @@ export function ErrorBoundary({ error, retry }) {
     <View className="flex-1 bg-bear-bg" style={{ paddingTop: 72, paddingHorizontal: 20 }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Text style={{ fontSize: 46 }}>🐻</Text>
-        <Text className="mt-3 font-extrabold text-[21px] tracking-tight text-bear-text">
+        <Text className="mt-3 font-extrabold text-[25px] tracking-tight text-bear-text">
           Мишка споткнулся
         </Text>
-        <Text className="mt-1.5 font-sans text-[13px] leading-relaxed text-bear-sub2">
+        <Text className="mt-1.5 font-sans text-[15.5px] leading-relaxed text-bear-sub2">
           NutriBear не смог запуститься. Вот что можно сделать:
         </Text>
 
-        <Text maxFontSizeMultiplier={1.3} className="mt-4 font-bold text-[14px] text-bear-text">
+        <Text maxFontSizeMultiplier={1.3} className="mt-4 font-bold text-[17px] text-bear-text">
           {steps[0]}
         </Text>
         {steps.slice(1).map((s, i) => (
           <Text
             key={i}
             maxFontSizeMultiplier={1.3}
-            className="mt-1 font-sans text-[13px] leading-relaxed text-bear-sub2"
+            className="mt-1 font-sans text-[15.5px] leading-relaxed text-bear-sub2"
           >
             {s}
           </Text>
@@ -135,15 +135,15 @@ export function ErrorBoundary({ error, retry }) {
           className="mt-5 items-center rounded-2xl px-4 py-3.5 active:opacity-80"
           style={{ backgroundColor: '#4D7CFE' }}
         >
-          <Text className="font-bold text-[14px] text-white">Попробовать снова</Text>
+          <Text className="font-bold text-[17px] text-white">Попробовать снова</Text>
         </Pressable>
 
         <View className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3.5">
-          <Text selectable className="font-sans text-[11px] leading-snug text-bear-dim">
+          <Text selectable className="font-sans text-[13px] leading-snug text-bear-dim">
             {message}
           </Text>
         </View>
-        <Text className="mt-2 font-sans text-[11px] text-bear-dim">
+        <Text className="mt-2 font-sans text-[13px] text-bear-dim">
           Текст выше — технические детали. Пришлите его мне, и я починю быстрее.
         </Text>
         <View style={{ height: 48 }} />

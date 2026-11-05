@@ -13,7 +13,7 @@ export function WeekdayRow() {
     <View className="flex-row" accessibilityElementsHidden>
       {WEEKDAYS.map((w) => (
         <View key={w} className="flex-1 items-center">
-          <Text className="font-medium text-[10px] text-bear-dim">{w}</Text>
+          <Text className="font-medium text-[12px] text-bear-dim">{w}</Text>
         </View>
       ))}
     </View>
@@ -75,7 +75,7 @@ export function DaysGrid({
                 style={{ backgroundColor: isToday ? '#7B6CF6' : BG[status] || 'transparent' }}
               >
                 <Text
-                  className={`font-semibold text-[11.5px] ${
+                  className={`font-semibold text-[14px] ${
                     isToday
                       ? 'text-white'
                       : status

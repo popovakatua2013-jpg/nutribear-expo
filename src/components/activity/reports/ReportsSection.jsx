@@ -55,10 +55,10 @@ export function ReportsSection({
     <View accessibilityLabel="Отчёты" className="gap-3">
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[17px] tracking-tight text-bear-text">
+          <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
             Отчёты
           </Text>
-          <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[12.5px] leading-snug text-bear-sub">
             Итоги, дисциплина, календарь и нутриенты из дневника за период
           </Text>
         </View>
@@ -68,8 +68,8 @@ export function ReportsSection({
           accessibilityLabel="Поделиться итогами периода"
           className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 active:opacity-70"
         >
-          <Share2 size={13} color="#8DABFF" />
-          <Text className="font-semibold text-[11.5px] text-[#8DABFF]">Итоги</Text>
+          <Share2 size={15} color="#8DABFF" />
+          <Text className="font-semibold text-[14px] text-[#8DABFF]">Итоги</Text>
         </Pressable>
       </View>
 

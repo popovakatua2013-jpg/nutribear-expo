@@ -98,7 +98,7 @@ export function DataActions() {
     <CollapsibleCard
       storageKey="data-actions"
       accessibilityLabel="Данные"
-      icon={<Database size={18} color="#8DABFF" />}
+      icon={<Database size={20} color="#8DABFF" />}
       title="Данные"
       summary="новый день · стереть всё"
     >
@@ -107,10 +107,10 @@ export function DataActions() {
           onPress={newDay}
           className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
         >
-          <Sunrise size={18} color="#fbbf24" />
+          <Sunrise size={20} color="#fbbf24" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[13px] text-bear-text">Начать новый день</Text>
-            <Text className="font-sans text-[11px] text-bear-sub2">
+            <Text className="font-bold text-[15.5px] text-bear-text">Начать новый день</Text>
+            <Text className="font-sans text-[13px] text-bear-sub2">
               {kcal > 0
                 ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
                 : 'Обнулит дневник, воду и шаги'}
@@ -122,10 +122,10 @@ export function DataActions() {
           onPress={confirmWipe}
           className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
         >
-          <Trash2 size={18} color="#fb7185" />
+          <Trash2 size={20} color="#fb7185" />
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[13px] text-rose-300">Стереть все данные</Text>
-            <Text className="font-sans text-[11px] text-bear-sub2">
+            <Text className="font-bold text-[15.5px] text-rose-300">Стереть все данные</Text>
+            <Text className="font-sans text-[13px] text-bear-sub2">
               Полное удаление по GDPR: профиль, дневник, онбординг
             </Text>
           </View>

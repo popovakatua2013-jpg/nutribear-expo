@@ -75,7 +75,7 @@ export function GoalPicker() {
     <CollapsibleCard
       storageKey="goal"
       accessibilityLabel="Цель питания"
-      icon={<Target size={18} color="#c084fc" />}
+      icon={<Target size={20} color="#c084fc" />}
       title="Моя цель"
       summary={
         currentGoal
@@ -88,16 +88,16 @@ export function GoalPicker() {
           const active = goal === g.id
           const body = (
             <>
-              <Text className="text-xl">{g.emoji}</Text>
+              <Text className="text-[24px]">{g.emoji}</Text>
               <View className="min-w-0 flex-1">
-                <Text className={`font-bold text-[13px] ${active ? 'text-white' : 'text-bear-text'}`}>
+                <Text className={`font-bold text-[15.5px] ${active ? 'text-white' : 'text-bear-text'}`}>
                   {g.label}
                 </Text>
-                <Text className={`font-sans text-[11px] leading-snug ${active ? 'text-white/75' : 'text-bear-sub2'}`}>
+                <Text className={`font-sans text-[13px] leading-snug ${active ? 'text-white/75' : 'text-bear-sub2'}`}>
                   {g.hint}
                 </Text>
               </View>
-              <Text className={`font-bold text-[12px] ${active ? 'text-white' : 'text-bear-sub'}`}>
+              <Text className={`font-bold text-[14.5px] ${active ? 'text-white' : 'text-bear-sub'}`}>
                 {formatNum(getDailyTarget(g.id))} ккал
               </Text>
             </>

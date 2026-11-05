@@ -38,7 +38,7 @@ export function ExerciseReminderCard() {
     <CollapsibleCard
       storageKey="exercise-reminder"
       accessibilityLabel="Напоминание о тренировке"
-      icon={<Dumbbell size={18} color="#F97316" />}
+      icon={<Dumbbell size={20} color="#F97316" />}
       title="Тренировка"
       right={
         <Switch
@@ -50,7 +50,7 @@ export function ExerciseReminderCard() {
         />
       }
     >
-      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
         {exercise?.enabled
           ? 'Пинок придёт в выбранное время — если тренировка ещё не записана.'
           : 'Диван не победит: ежедневное напоминание о занятии.'}
@@ -59,8 +59,8 @@ export function ExerciseReminderCard() {
       {exercise?.enabled && (
         <View className="mt-3 gap-2">
           <View className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
-            <Text className="text-[15px]">⏰</Text>
-            <Text className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
+            <Text className="text-[18px]">⏰</Text>
+            <Text className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-text">
               Время пинка
             </Text>
             <TimeField

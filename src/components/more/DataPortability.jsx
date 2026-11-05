@@ -87,11 +87,11 @@ export function DataPortability() {
     <CollapsibleCard
       storageKey="data-portability"
       accessibilityLabel="Приватность"
-      icon={<ShieldCheck size={18} color="#4ade80" />}
+      icon={<ShieldCheck size={20} color="#4ade80" />}
       title="Приватность и данные"
       summary="экспорт · восстановление"
     >
-      <Text className="font-sans text-[11px] leading-relaxed text-bear-sub2">
+      <Text className="font-sans text-[13px] leading-relaxed text-bear-sub2">
         Ваши данные о здоровье — особая категория. Они хранятся только на
         устройстве и не передаются в сеть. Вы можете в любой момент
         выгрузить их, перенести на другой телефон или удалить безвозвратно
@@ -105,12 +105,12 @@ export function DataPortability() {
         accessibilityLabel="Сохранить копию данных в JSON-файл"
         className="mt-3 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
-        <FileDown size={18} color="#38bdf8" />
+        <FileDown size={20} color="#38bdf8" />
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[13px] text-bear-text">
+          <Text className="font-bold text-[15.5px] text-bear-text">
             Сохранить копию (JSON)
           </Text>
-          <Text className="font-sans text-[11px] text-bear-sub2">
+          <Text className="font-sans text-[13px] text-bear-sub2">
             дневник, вода, вес, рецепты, свои продукты, комбо, фото
           </Text>
         </View>
@@ -122,12 +122,12 @@ export function DataPortability() {
         accessibilityLabel="Восстановить данные из копии"
         className="mt-2 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
-        <FileUp size={18} color="#a78bfa" />
+        <FileUp size={20} color="#a78bfa" />
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[13px] text-bear-text">
+          <Text className="font-bold text-[15.5px] text-bear-text">
             Восстановить из копии
           </Text>
-          <Text className="font-sans text-[11px] text-bear-sub2">
+          <Text className="font-sans text-[13px] text-bear-sub2">
             выбрать JSON-файл — например, на новом телефоне
           </Text>
         </View>

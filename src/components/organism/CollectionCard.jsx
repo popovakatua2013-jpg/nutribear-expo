@@ -44,12 +44,12 @@ export function CollectionCard({ items, opened }) {
               />
               <Text
                 numberOfLines={2}
-                className="mt-1.5 text-center font-semibold text-[10.5px] leading-tight"
+                className="mt-1.5 text-center font-semibold text-[12.5px] leading-tight"
                 style={{ color: has ? GAME.text : GAME.dim2 }}
               >
                 {has ? it.name : '???'}
               </Text>
-              <Text className="mt-0.5 font-sans text-[9px]" style={{ color: has ? it.color : GAME.dim2 }}>
+              <Text className="mt-0.5 font-sans text-[11px]" style={{ color: has ? it.color : GAME.dim2 }}>
                 {it.kind}
               </Text>
             </View>
@@ -57,7 +57,7 @@ export function CollectionCard({ items, opened }) {
         })}
       </View>
 
-      <Text className="font-sans text-[11.5px] leading-relaxed" style={{ color: GAME.dim2 }}>
+      <Text className="font-sans text-[14px] leading-relaxed" style={{ color: GAME.dim2 }}>
         Капсулы дают ген и кристаллы, иногда — артефакт или ауру. Дубликат не
         пропадает: он превращается в мутаген и приближает новую капсулу.
       </Text>

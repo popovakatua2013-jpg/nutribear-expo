@@ -8,7 +8,7 @@ export function GramsPicker({ grams, onChange }) {
 
   return (
     <View>
-      <Text className="font-medium text-xs text-bear-sub">Сколько съедите (граммы)?</Text>
+      <Text className="font-medium text-[14px] text-bear-sub">Сколько съедите (граммы)?</Text>
       <View className="mt-2 flex-row items-center gap-2">
         <TextInput
           accessibilityLabel="Граммовка"
@@ -16,9 +16,9 @@ export function GramsPicker({ grams, onChange }) {
           maxLength={4}
           value={String(grams)}
           onChangeText={onChange}
-          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center font-bold text-xl text-bear-text"
+          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center font-bold text-[24px] text-bear-text"
         />
-        <Text className="font-sans text-lg text-bear-sub">г</Text>
+        <Text className="font-sans text-[21px] text-bear-sub">г</Text>
       </View>
       <View className="mt-2 flex-row flex-wrap gap-1.5">
         {QUICK_GRAMS.map((g) => (
@@ -34,7 +34,7 @@ function PressPill({ g, active, onChange }) {
     <Text
       onPress={() => onChange(String(g))}
       accessibilityRole="button"
-      className={`rounded-full px-3 py-1.5 font-semibold text-xs ${
+      className={`rounded-full px-3 py-1.5 font-semibold text-[14px] ${
         active ? 'text-white' : 'bg-white/5 text-bear-sub'
       }`}
       style={active ? { backgroundColor: '#7B6CF6' } : null}

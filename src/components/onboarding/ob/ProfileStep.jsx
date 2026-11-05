@@ -101,11 +101,11 @@ export function ProfileStep({ onNext, onBack }) {
             accessibilityLabel="Далее"
           >
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-              <Text className="py-3.5 text-center font-bold text-[15px] text-white">Далее</Text>
+              <Text className="py-3.5 text-center font-bold text-[18px] text-white">Далее</Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={onNext} className="py-2.5" accessibilityLabel="Пропустить">
-            <Text className="text-center font-semibold text-[13px] text-bear-sub2">
+            <Text className="text-center font-semibold text-[15.5px] text-bear-sub2">
               Пропустить
             </Text>
           </Pressable>
@@ -236,7 +236,7 @@ export function ProfileStep({ onNext, onBack }) {
               })
             }
           />
-          <Text className="mt-2 font-sans text-[10px] leading-relaxed text-bear-dim">
+          <Text className="mt-2 font-sans text-[12px] leading-relaxed text-bear-dim">
             Отметьте, если что-то относится к вам: при беременности и ГВ мишка не
             снижает калории. Необязательно.
           </Text>
@@ -253,7 +253,7 @@ export function ProfileStep({ onNext, onBack }) {
           </View>
         ) : null}
 
-        <Text className="px-1 font-sans text-[11px] leading-relaxed text-bear-dim">
+        <Text className="px-1 font-sans text-[13px] leading-relaxed text-bear-dim">
           {ok
             ? 'Готово — по этим данным мишка посчитает вашу норму калорий.'
             : 'Заполните возраст, рост и вес — или нажмите «Пропустить»: норма будет по среднему пресету, а точный расчёт можно сделать позже.'}
@@ -275,18 +275,18 @@ function Row({ icon: Icon, tint, label, value, open, onToggle, children }) {
         className="flex-row items-center gap-3 p-3.5"
       >
         <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5">
-          <Icon size={17} color={tint} />
+          <Icon size={19} color={tint} />
         </View>
-        <Text className="min-w-0 flex-1 font-bold text-[14px] text-bear-text" numberOfLines={1}>
+        <Text className="min-w-0 flex-1 font-bold text-[17px] text-bear-text" numberOfLines={1}>
           {label}
         </Text>
-        <Text className="shrink-0 font-semibold text-[13px] text-bear-sub" numberOfLines={1}>
+        <Text className="shrink-0 font-semibold text-[15.5px] text-bear-sub" numberOfLines={1}>
           {value}
         </Text>
         {open ? (
-          <ChevronUp size={16} color="#8B96B8" />
+          <ChevronUp size={18} color="#8B96B8" />
         ) : (
-          <ChevronDown size={16} color="#8B96B8" />
+          <ChevronDown size={18} color="#8B96B8" />
         )}
       </Pressable>
       {open ? <View className="px-3.5 pb-3.5">{children}</View> : null}
@@ -304,12 +304,12 @@ function NumInput({ value, onChange, suffix, placeholder, keyboardType = 'decima
         keyboardType={keyboardType}
         placeholder={placeholder}
         placeholderTextColor="#8B96B8"
-        className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-4 pr-14 font-sans text-[15px] text-white"
+        className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-4 pr-14 font-sans text-[18px] text-white"
       />
       {suffix ? (
         <Text
           pointerEvents="none"
-          className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-[12px] text-bear-sub2"
+          className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-[14.5px] text-bear-sub2"
         >
           {suffix}
         </Text>

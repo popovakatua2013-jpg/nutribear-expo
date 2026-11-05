@@ -35,8 +35,8 @@ export function BmiAdvice({ bmi, onDetails }) {
     <View accessibilityLabel="Рекомендации по индексу массы тела" className="rounded-[24px] p-4" style={CARD}>
       {/* Шапка: звезда-контур + заголовок + кнопка-лотос (подробные советы) */}
       <View className="flex-row items-center gap-2">
-        <Star size={21} color="#C4B5FD" fill="rgba(196,181,253,0.18)" strokeWidth={2} />
-        <Text className="min-w-0 flex-1 font-bold text-[16px] tracking-tight text-white">
+        <Star size={23} color="#C4B5FD" fill="rgba(196,181,253,0.18)" strokeWidth={2} />
+        <Text className="min-w-0 flex-1 font-bold text-[19px] tracking-tight text-white">
           Рекомендации
         </Text>
         <Pressable
@@ -46,7 +46,7 @@ export function BmiAdvice({ bmi, onDetails }) {
           className="h-[44px] w-[44px] items-center justify-center rounded-[14px] border active:opacity-70"
           style={{ backgroundColor: 'rgba(139,92,246,0.14)', borderColor: 'rgba(168,85,247,0.32)' }}
         >
-          <Flower2 size={21} color="#C4B5FD" />
+          <Flower2 size={23} color="#C4B5FD" />
         </Pressable>
         {/* Крестик: спрятать блок — решение запоминается */}
         <Pressable
@@ -56,19 +56,19 @@ export function BmiAdvice({ bmi, onDetails }) {
           hitSlop={6}
           className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] active:opacity-70"
         >
-          <X size={15} color="#A5AECB" />
+          <X size={17} color="#A5AECB" />
         </Pressable>
       </View>
 
       {/* Совет по категории */}
       <View className="mt-2 flex-row items-start gap-2">
         <View className="mt-[3px] shrink-0">
-          <Heart size={15} color="#A855F7" fill="#A855F7" />
+          <Heart size={17} color="#A855F7" fill="#A855F7" />
         </View>
         <Text
           accessibilityLabel={rec.main}
           maxFontSizeMultiplier={1.3}
-          className="min-w-0 flex-1 font-sans text-[13px] leading-relaxed text-[#E4DBFF]"
+          className="min-w-0 flex-1 font-sans text-[15.5px] leading-relaxed text-[#E4DBFF]"
         >
           {rec.main}
         </Text>
@@ -87,7 +87,7 @@ export function BmiAdvice({ bmi, onDetails }) {
         <Text
           maxFontSizeMultiplier={1.1}
           numberOfLines={1}
-          className="shrink-0 font-medium text-[10px] text-bear-sub"
+          className="shrink-0 font-medium text-[12px] text-bear-sub"
         >
           Идеальный диапазон ИМТ
         </Text>
@@ -119,7 +119,7 @@ export function BmiAdvice({ bmi, onDetails }) {
             }}
           />
         </View>
-        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[12px] text-white">
+        <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[14.5px] text-white">
           18.5 – 24.9
         </Text>
       </View>

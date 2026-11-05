@@ -78,14 +78,14 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
             accessibilityLabel="Назад"
             className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5"
           >
-            <ChevronLeft size={20} color="#AEB9D9" />
+            <ChevronLeft size={22} color="#AEB9D9" />
           </Pressable>
           <Text className="shrink-0 text-2xl">{food.emoji}</Text>
           <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="font-bold text-sm text-bear-text">
+            <Text numberOfLines={1} className="font-bold text-[17px] text-bear-text">
               {food.name}
             </Text>
-            <Text className="font-sans text-[11px] text-bear-sub">
+            <Text className="font-sans text-[13px] text-bear-sub">
               {`${food.kcal} ккал / 100 г · Б ${food.p} · Ж ${food.f} · У ${food.c}`}
             </Text>
           </View>
@@ -96,20 +96,20 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
               accessibilityLabel="Исправить распознанное блюдо"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
             >
-              <Pencil size={16} color="#AEB9D9" />
+              <Pencil size={18} color="#AEB9D9" />
             </Pressable>
           )}
         </View>
 
         {canEdit && (
-          <Text className="mt-2 text-[11px] leading-[16px] text-bear-sub">
+          <Text className="mt-2 text-[13px] leading-[16px] text-bear-sub">
             Распознал(и) неверно? Нажмите ✏️ — исправьте название, калории и БЖУ
             перед добавлением.
           </Text>
         )}
 
         {eff.desc ? (
-          <Text className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] leading-[17px] text-bear-sub">
+          <Text className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[14.5px] leading-[17px] text-bear-sub">
             📝 {eff.desc}
           </Text>
         ) : null}
@@ -120,12 +120,12 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
 
         <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">
           <View className="flex-row items-center justify-between">
-            <Text className="font-sans text-xs text-bear-soft">Итого калорий</Text>
-            <Text className="font-extrabold text-[17px] text-white">
-              ≈ {formatNum(previewKcal)} <Text className="font-medium text-xs text-bear-sub">ккал</Text>
+            <Text className="font-sans text-[14px] text-bear-soft">Итого калорий</Text>
+            <Text className="font-extrabold text-[20px] text-white">
+              ≈ {formatNum(previewKcal)} <Text className="font-medium text-[14px] text-bear-sub">ккал</Text>
             </Text>
           </View>
-          <Text className="mt-1 text-right font-sans text-[11px] text-bear-sub">
+          <Text className="mt-1 text-right font-sans text-[13px] text-bear-sub">
             {bjuLine(previewBju)}
           </Text>
         </View>
@@ -135,7 +135,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
         {/* За какой день: выбор из шапки виден и здесь — приём после
             полуночи уходит во вчера, поменять можно прямо перед добавлением */}
         <View className="mb-3 flex-row items-center justify-between">
-          <Text className="font-sans text-[11px] text-bear-sub">За какой день?</Text>
+          <Text className="font-sans text-[13px] text-bear-sub">За какой день?</Text>
           <Pills
             items={[
               { id: 0, label: 'Сегодня' },
@@ -152,7 +152,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
           className="rounded-2xl py-3.5 active:opacity-80"
           style={{ backgroundColor: '#7B6CF6' }}
         >
-          <Text className="text-center font-bold text-sm text-white">
+          <Text className="text-center font-bold text-[17px] text-white">
             {dayOff ? `Добавить за вчера в «${meal.name}»` : `Добавить в «${meal.name}»`}
           </Text>
         </Pressable>

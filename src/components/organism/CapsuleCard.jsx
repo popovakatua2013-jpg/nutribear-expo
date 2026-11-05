@@ -30,10 +30,10 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
       {/* комбо-шкала дня */}
       <Panel style={{ marginTop: 12 }}>
         <View className="flex-row items-start justify-between gap-3">
-          <Text className="flex-1 font-semibold text-[13px] leading-snug" style={{ color: GAME.dim }}>
+          <Text className="flex-1 font-semibold text-[15.5px] leading-snug" style={{ color: GAME.dim }}>
             комбо-шкала дня · за каждое событие дневника
           </Text>
-          <Text className="font-extrabold text-[14px]" style={{ color: GAME.text }}>
+          <Text className="font-extrabold text-[17px]" style={{ color: GAME.text }}>
             {combo} / {COMBO_GOAL}
           </Text>
         </View>
@@ -43,8 +43,8 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
 
         <View className="mt-3.5 flex-row items-center gap-3">
           <View className="w-[104px] flex-row items-start gap-1.5">
-            <Flame size={15} color="#FB923C" />
-            <Text className="font-bold text-[12.5px] leading-tight" style={{ color: '#FDBA74' }}>
+            <Flame size={17} color="#FB923C" />
+            <Text className="font-bold text-[15px] leading-tight" style={{ color: '#FDBA74' }}>
               стрик {streak} · капсула на {STREAK_FOR_CAPSULE}
             </Text>
           </View>
@@ -57,7 +57,7 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
               opacity: capsules > 0 ? 1 : 0.5,
             }}
           >
-            <Text className="font-extrabold text-[14.5px]" style={{ color: capsules > 0 ? '#231A02' : GAME.dim2 }}>
+            <Text className="font-extrabold text-[17.5px]" style={{ color: capsules > 0 ? '#231A02' : GAME.dim2 }}>
               Открыть капсулу
             </Text>
           </Pressable>
@@ -66,8 +66,8 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
 
       {/* мутации: мутаген из дубликатов и стабильности меняется на капсулы */}
       <View className="mt-3 flex-row items-center gap-2.5 rounded-xl px-3 py-2.5" style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(196,181,253,0.18)' }}>
-        <Dna size={15} color="#C4B5FD" />
-        <Text className="flex-1 font-bold text-[12.5px] leading-tight" style={{ color: '#C4B5FD' }}>
+        <Dna size={17} color="#C4B5FD" />
+        <Text className="flex-1 font-bold text-[15px] leading-tight" style={{ color: '#C4B5FD' }}>
           мутаген: {mutagen} · {MUTAGEN_PER_CAPSULE} → капсула
         </Text>
         <Pressable
@@ -82,7 +82,7 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
           }}
         >
           <Text
-            className="font-extrabold text-[12px]"
+            className="font-extrabold text-[14.5px]"
             style={{ color: mutagen >= MUTAGEN_PER_CAPSULE ? '#231A02' : GAME.dim2 }}
           >
             Обменять
@@ -99,10 +99,10 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
             style={{ backgroundColor: GAME.panel, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}
           >
             <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-            <Text className="flex-1 font-medium text-[13px]" style={{ color: GAME.text }}>
+            <Text className="flex-1 font-medium text-[15.5px]" style={{ color: GAME.text }}>
               {d.name} · <Text style={{ color: GAME.dim }}>{d.reward}</Text>
             </Text>
-            <Text className="font-extrabold text-[13.5px]" style={{ color: GAME.text }}>
+            <Text className="font-extrabold text-[16px]" style={{ color: GAME.text }}>
               {Math.round(d.p * 100)}%
             </Text>
           </View>
@@ -110,8 +110,8 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
       </View>
 
       <View className="mt-3 flex-row items-start gap-2 px-1">
-        <Sparkles size={14} color={GAME.lime} />
-        <Text className="flex-1 font-sans text-[12px] leading-relaxed" style={{ color: GAME.dim }}>
+        <Sparkles size={16} color={GAME.lime} />
+        <Text className="flex-1 font-sans text-[14.5px] leading-relaxed" style={{ color: GAME.dim }}>
           Дубликаты не пропадают — превращаются в мутаген, а мутаген меняется
           на капсулы. Редкая аура сезона — статус, который не купить.
         </Text>
@@ -129,14 +129,14 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
                 <View className="h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: `${result.drop.color}22` }}>
                   <View className="h-3 w-3 rounded-full" style={{ backgroundColor: result.drop.color }} />
                 </View>
-                <Text className="mt-3 font-extrabold text-[18px]" style={{ color: GAME.text }}>
+                <Text className="mt-3 font-extrabold text-[21px]" style={{ color: GAME.text }}>
                   {result.drop.name}
                 </Text>
-                <Text className="mt-1 font-bold text-[14px]" style={{ color: result.drop.color }}>
+                <Text className="mt-1 font-bold text-[17px]" style={{ color: result.drop.color }}>
                   {result.itemName || result.drop.reward}
                 </Text>
                 {result.itemName && (
-                  <Text className="mt-2 text-center font-medium text-[12.5px] leading-snug" style={{ color: GAME.dim }}>
+                  <Text className="mt-2 text-center font-medium text-[15px] leading-snug" style={{ color: GAME.dim }}>
                     {result.dup
                       ? `Дубликат коллекции — превращён в +${DUP_MUTAGEN} мутагена`
                       : 'Новый предмет в коллекции организма!'}
@@ -147,7 +147,7 @@ export function CapsuleCard({ combo, streak, capsules, mutagen = 0, onOpen, onCo
                   className="mt-4 w-full items-center rounded-2xl py-3"
                   style={{ backgroundColor: GAME.lime }}
                 >
-                  <Text className="font-extrabold text-[14px]" style={{ color: '#12200F' }}>
+                  <Text className="font-extrabold text-[17px]" style={{ color: '#12200F' }}>
                     Забрать
                   </Text>
                 </Pressable>

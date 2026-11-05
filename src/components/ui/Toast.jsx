@@ -61,9 +61,9 @@ function ToastItem({ item, onDismiss }) {
     >
       <View className="flex-row items-start gap-2 rounded-2xl border border-bear-line bg-[#1A2647] px-4 py-3 shadow-lg shadow-black/40">
         <View className="min-w-0 flex-1">
-          <Text className="font-semibold text-[13px] text-bear-text">{item.title}</Text>
+          <Text className="font-semibold text-[15.5px] text-bear-text">{item.title}</Text>
           {item.description ? (
-            <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">{item.description}</Text>
+            <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">{item.description}</Text>
           ) : null}
           {item.action ? (
             <Pressable
@@ -78,7 +78,7 @@ function ToastItem({ item, onDismiss }) {
               hitSlop={4}
               className="mt-2 self-start rounded-lg bg-[#5B7FFF]/25 px-3 py-1.5 active:opacity-70"
             >
-              <Text className="font-bold text-[11.5px] text-[#9DB4FF]">{item.action.label}</Text>
+              <Text className="font-bold text-[14px] text-[#9DB4FF]">{item.action.label}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -89,7 +89,7 @@ function ToastItem({ item, onDismiss }) {
           hitSlop={8}
           className="shrink-0 rounded-full bg-white/5 p-1 active:opacity-70"
         >
-          <X size={13} color="#8B96B8" />
+          <X size={15} color="#8B96B8" />
         </Pressable>
       </View>
     </Animated.View>

@@ -29,13 +29,13 @@ export function TipOfDay() {
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: 'rgba(77,124,254,0.16)' }}
         >
-          <Lightbulb size={16} color="#8DABFF" />
+          <Lightbulb size={18} color="#8DABFF" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[13px] text-bear-text">Совет дня</Text>
+          <Text className="font-bold text-[15.5px] text-bear-text">Совет дня</Text>
           <Text
             maxFontSizeMultiplier={1.25}
-            className="mt-0.5 font-sans text-[11px] leading-snug text-bear-sub"
+            className="mt-0.5 font-sans text-[13px] leading-snug text-bear-sub"
           >
             {tipOfDay()}
           </Text>

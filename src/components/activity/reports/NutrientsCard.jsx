@@ -31,20 +31,20 @@ function Stat({ label, color, value, sub, pct }) {
     <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.04] px-3 py-2.5">
       <View className="flex-row items-center gap-1.5">
         <View className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        <Text numberOfLines={1} className="font-sans text-[10px] text-bear-sub">
+        <Text numberOfLines={1} className="font-sans text-[12px] text-bear-sub">
           {label}
         </Text>
       </View>
-      <Text numberOfLines={1} className="mt-1 font-extrabold text-[15px] leading-tight text-bear-text">
+      <Text numberOfLines={1} className="mt-1 font-extrabold text-[18px] leading-tight text-bear-text">
         {value}
       </Text>
-      <Text numberOfLines={1} className="font-sans text-[9.5px] text-bear-dim">
+      <Text numberOfLines={1} className="font-sans text-[11.5px] text-bear-dim">
         {sub}
       </Text>
       {pct != null && Arrow ? (
         <View className="mt-1 flex-row items-center gap-0.5">
-          <Arrow size={11} color="#8B96B8" />
-          <Text className="font-sans text-[9.5px] text-bear-dim">
+          <Arrow size={13} color="#8B96B8" />
+          <Text className="font-sans text-[11.5px] text-bear-dim">
             {`${Math.abs(pct)}% к прошлому периоду`}
           </Text>
         </View>
@@ -66,23 +66,23 @@ export function NutrientsCard({ days }) {
     >
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
-          <BodyChip icon={<Wheat size={15} />} />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+          <BodyChip icon={<Wheat size={17} />} />
+          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
             Нутриенты
           </Text>
         </View>
         <View className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1">
-          <Text className="font-semibold text-[11px] text-bear-soft">
+          <Text className="font-semibold text-[13px] text-bear-soft">
             {`${cur.recorded} из ${days} дн. с едой`}
           </Text>
         </View>
       </View>
-      <Text className="mt-0.5 font-sans text-[10.5px] leading-snug text-bear-sub">
+      <Text className="mt-0.5 font-sans text-[12.5px] leading-snug text-bear-sub">
         Из журнала питания · в среднем за день с записями
       </Text>
 
       {cur.recorded === 0 ? (
-        <Text className="mt-3 font-sans text-[10.5px] leading-snug text-bear-dim">
+        <Text className="mt-3 font-sans text-[12.5px] leading-snug text-bear-dim">
           Записей еды за период нет — белки, жиры, углеводы и клетчатка появятся
           здесь, как только заполните дневник питания
         </Text>
@@ -117,7 +117,7 @@ export function NutrientsCard({ days }) {
             ))}
           </View>
           {days > 60 ? (
-            <Text className="mt-2.5 font-sans text-[10px] leading-snug text-bear-dim">
+            <Text className="mt-2.5 font-sans text-[12px] leading-snug text-bear-dim">
               Журнал питания хранит около 2 месяцев — самые старые дни
               90-дневного периода могут отсутствовать
             </Text>

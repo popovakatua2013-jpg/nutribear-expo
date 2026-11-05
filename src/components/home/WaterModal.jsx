@@ -242,13 +242,13 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
               {/* Шапка: чип-иконка + название, колокольчик напоминаний, крестик */}
               <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-2.5 pt-3.5">
                 <View className="flex-row items-center gap-2.5">
-                  <BodyChip icon={<Droplets />} size={32} />
-                  <Text className="font-bold text-[15px] text-bear-text">Вода</Text>
+                  <BodyChip icon={<Droplets />} size={34} />
+                  <Text className="font-bold text-[18px] text-bear-text">Вода</Text>
                 </View>
                 <View className="flex-row items-center gap-2">
                   <ReminderToggle />
                   <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-                    <X size={20} color="#A5AECB" />
+                    <X size={22} color="#A5AECB" />
                   </Pressable>
                 </View>
               </View>
@@ -257,14 +257,14 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                 {/* Hero: выпито сегодня, цель, полоса прогресса, кольцо «% цели» */}
                 <View className="flex-row items-center gap-3 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3.5 py-3">
                   <View className="min-w-0 flex-1">
-                    <Text className="font-sans text-[11px] text-bear-sub">Выпито сегодня</Text>
-                    <Text className="mt-0.5 font-extrabold text-[21px] tracking-tight text-bear-text">
+                    <Text className="font-sans text-[13px] text-bear-sub">Выпито сегодня</Text>
+                    <Text className="mt-0.5 font-extrabold text-[25px] tracking-tight text-bear-text">
                       {formatNum(ml)}{' '}
-                      <Text className="font-semibold text-[13px] text-bear-sub">мл</Text>
+                      <Text className="font-semibold text-[15.5px] text-bear-sub">мл</Text>
                     </Text>
                     <View className="mt-1 flex-row items-center gap-1">
-                      <Target size={11} color="#A5AECB" />
-                      <Text className="font-sans text-[10.5px] text-bear-sub">
+                      <Target size={13} color="#A5AECB" />
+                      <Text className="font-sans text-[12.5px] text-bear-sub">
                         Цель: {formatNum(goalMl)} мл
                       </Text>
                     </View>
@@ -272,7 +272,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                       <View className="min-w-0 flex-1">
                         <ProgressBar pct={pct} h={7} color="#38BDF8" />
                       </View>
-                      <Text className="font-semibold text-[11px] text-bear-text">{pct}%</Text>
+                      <Text className="font-semibold text-[13px] text-bear-text">{pct}%</Text>
                     </View>
                   </View>
                   <GoalRing pct={pct} />
@@ -287,12 +287,12 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                 {/* Динамика за 7 дней: линия + золотой пунктир цели */}
                 <View className="mt-3 rounded-2xl border border-bear-line bg-bear-card2/70 px-3 pb-1 pt-2.5">
                   <View className="flex-row items-center gap-1.5">
-                    <ChartColumn size={13} color="#7DD3FC" />
-                    <Text className="min-w-0 flex-1 font-semibold text-[12px] text-bear-text">
+                    <ChartColumn size={15} color="#7DD3FC" />
+                    <Text className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text">
                       Динамика за 7 дней
                     </Text>
                     <View className="rounded-full bg-white/5 px-2 py-0.5">
-                      <Text className="font-sans text-[9.5px] text-bear-sub">мл</Text>
+                      <Text className="font-sans text-[11.5px] text-bear-sub">мл</Text>
                     </View>
                   </View>
                   <SvgAreaChart
@@ -307,8 +307,8 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
 
                 {/* Быстро добавить: ёмкости по 2 в ряд, карандашик — правка */}
                 <View className="mt-3 flex-row items-center gap-1.5">
-                  <CirclePlus size={14} color="#7DD3FC" />
-                  <Text className="min-w-0 flex-1 font-semibold text-[12px] text-bear-text">
+                  <CirclePlus size={16} color="#7DD3FC" />
+                  <Text className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text">
                     Быстро добавить
                   </Text>
                 </View>
@@ -326,16 +326,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                 <View className="mt-3 flex-row items-stretch gap-2">
                   <View className="min-w-0 flex-1 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5">
                     <View className="flex-row items-center gap-1.5">
-                      <Trophy size={11} color="#FBBF24" />
-                      <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[10.5px] text-bear-sub">
+                      <Trophy size={13} color="#FBBF24" />
+                      <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[12.5px] text-bear-sub">
                         Последние 7 дней
                       </Text>
                     </View>
                     <View className="mt-1.5 flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <Text className="font-extrabold text-[16px] tracking-tight text-bear-text">
+                      <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
                         {formatNum(weekAvg)}
                       </Text>
-                      <Text className="font-sans text-[10px] text-bear-sub">мл/день</Text>
+                      <Text className="font-sans text-[12px] text-bear-sub">мл/день</Text>
                       {delta != null && Math.abs(delta) >= 1 && (
                         <View
                           className="rounded-md px-1.5 py-0.5"
@@ -345,7 +345,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           }}
                         >
                           <Text
-                            className="font-semibold text-[9.5px]"
+                            className="font-semibold text-[11.5px]"
                             style={{ color: delta > 0 ? '#34D399' : '#F87171' }}
                           >
                             {delta > 0 ? '↑' : '↓'} {delta > 0 ? '+' : '−'}
@@ -381,7 +381,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                       {week.map((d) => (
                         <Text
                           key={d.key}
-                          className={`flex-1 text-center font-sans text-[7.5px] ${
+                          className={`flex-1 text-center font-sans text-[9.5px] ${
                             d.today ? 'font-semibold text-bear-bright' : 'text-bear-dim'
                           }`}
                         >
@@ -399,10 +399,10 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                         💧
                       </Text>
                       <View className="min-w-0 flex-1">
-                        <Text className="font-bold text-[13px] leading-tight text-bear-text">
+                        <Text className="font-bold text-[15.5px] leading-tight text-bear-text">
                           {pep.title}
                         </Text>
-                        <Text maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[10px] leading-snug text-bear-sub">
+                        <Text maxFontSizeMultiplier={1.25} className="mt-0.5 font-sans text-[12px] leading-snug text-bear-sub">
                           {pep.sub}
                         </Text>
                       </View>
@@ -421,7 +421,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   className="mt-3 flex-row items-center justify-between active:opacity-80"
                 >
                   <View className="flex-row items-center gap-1.5">
-                    <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
+                    <Text className="font-sans text-[13px] font-semibold uppercase text-bear-sub">
                       Записи за сегодня
                     </Text>
                     {waterLog.length > 0 && (
@@ -429,21 +429,21 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                         className="rounded-full bg-white/10 px-1.5 py-0.5"
                         accessibilityLabel={`Всего записей: ${waterLog.length}`}
                       >
-                        <Text className="font-semibold text-[9.5px] text-bear-sub">
+                        <Text className="font-semibold text-[11.5px] text-bear-sub">
                           {waterLog.length}
                         </Text>
                       </View>
                     )}
                   </View>
                   {logOpen ? (
-                    <ChevronUp size={15} color="#8B96B8" />
+                    <ChevronUp size={17} color="#8B96B8" />
                   ) : (
-                    <ChevronDown size={15} color="#8B96B8" />
+                    <ChevronDown size={17} color="#8B96B8" />
                   )}
                 </Pressable>
                 {logOpen &&
                   (waterLog.length === 0 ? (
-                    <Text className="mt-1.5 font-sans text-[11px] text-bear-dim">
+                    <Text className="mt-1.5 font-sans text-[13px] text-bear-dim">
                       Пока ничего. Нажмите на ёмкость выше.
                     </Text>
                   ) : (
@@ -462,16 +462,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               keyboardType="number-pad"
                               maxLength={4}
                               accessibilityLabel="Объём в миллилитрах"
-                              className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1 text-center font-semibold text-[13px] text-bear-text"
+                              className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1 text-center font-semibold text-[15.5px] text-bear-text"
                             />
-                            <Text className="shrink-0 font-sans text-[10px] text-bear-sub">мл в</Text>
+                            <Text className="shrink-0 font-sans text-[12px] text-bear-sub">мл в</Text>
                             <TextInput
                               value={editTime}
                               onChangeText={setEditTime}
                               keyboardType="numbers-and-punctuation"
                               maxLength={5}
                               accessibilityLabel="Время в формате часы:минуты"
-                              className="w-[56px] shrink-0 rounded-lg bg-white/5 px-1 py-1 text-center font-semibold text-[13px] text-bear-text"
+                              className="w-[56px] shrink-0 rounded-lg bg-white/5 px-1 py-1 text-center font-semibold text-[15.5px] text-bear-text"
                             />
                             <Pressable
                               onPress={saveEdit}
@@ -480,7 +480,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               className="shrink-0 rounded-lg p-1.5 active:opacity-80"
                               style={{ backgroundColor: '#22C55E' }}
                             >
-                              <Check size={15} color="#fff" strokeWidth={2.5} />
+                              <Check size={17} color="#fff" strokeWidth={2.5} />
                             </Pressable>
                             <Pressable
                               onPress={cancelEdit}
@@ -488,7 +488,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               accessibilityLabel="Отменить изменение"
                               className="shrink-0 rounded-lg bg-white/10 p-1.5 active:opacity-80"
                             >
-                              <X size={15} color="#A5AECB" />
+                              <X size={17} color="#A5AECB" />
                             </Pressable>
                           </View>
                         )
@@ -501,16 +501,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           accessibilityLabel={`Изменить запись ${w.ml} мл`}
                           className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2 active:opacity-80"
                         >
-                          <Droplets size={14} color="#38BDF8" />
-                          <Text className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
+                          <Droplets size={16} color="#38BDF8" />
+                          <Text className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-text">
                             {formatNum(w.ml)} мл
                           </Text>
-                          <Text className="shrink-0 font-sans text-[12px] text-bear-sub">
+                          <Text className="shrink-0 font-sans text-[14.5px] text-bear-sub">
                             {w.time}
                           </Text>
                           <View className="shrink-0 flex-row items-center gap-0.5">
                             <View className="p-1">
-                              <Pencil size={13} color="#8B96B8" />
+                              <Pencil size={15} color="#8B96B8" />
                             </View>
                             <Pressable
                               onPress={() => removeEntry(w)}
@@ -518,7 +518,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               accessibilityLabel={`Удалить запись ${w.ml} мл`}
                               className="p-1"
                             >
-                              <Trash2 size={14} color="#8B96B8" />
+                              <Trash2 size={16} color="#8B96B8" />
                             </Pressable>
                           </View>
                         </Pressable>

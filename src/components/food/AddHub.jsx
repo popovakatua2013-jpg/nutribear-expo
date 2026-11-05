@@ -238,14 +238,14 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
       {/* строка поиска — «тетрадная»: тонкая линейка снизу вместо широкой
           плашки, ниже и компактнее */}
       <View className="flex-row items-end gap-2 border-b border-white/15 px-1 pb-1.5">
-        <Search size={15} color="#8B96B8" />
+        <Search size={17} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 pb-0 font-sans text-[13px] text-bear-text"
+          className="min-w-0 flex-1 pb-0 font-sans text-[15.5px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
@@ -254,7 +254,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             accessibilityLabel="Очистить поиск"
             className="pb-0.5 active:opacity-60"
           >
-            <X size={14} color="#8B96B8" />
+            <X size={16} color="#8B96B8" />
           </Pressable>
         )}
       </View>
@@ -275,8 +275,8 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             accessibilityLabel="Ручной поиск по всей базе продуктов"
             className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2.5 active:bg-white/10"
           >
-            <LayoutGrid size={14} color="#AEB9D9" />
-            <Text className="font-semibold text-[12px] text-bear-soft">
+            <LayoutGrid size={16} color="#AEB9D9" />
+            <Text className="font-semibold text-[14.5px] text-bear-soft">
               Ручной поиск · вся база продуктов
             </Text>
           </Pressable>
@@ -290,7 +290,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           {(combos.length > 0 || mealEntries.length > 0) && (
             <View className="mt-3">
               {combos.length > 0 && (
-                <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+                <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-sub">
                   Мои комбо
                 </Text>
               )}
@@ -309,14 +309,14 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                     accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
                     className="flex-row items-center gap-1.5 rounded-full border border-[#7B6CF6]/40 bg-[#7B6CF6]/15 px-3 py-1.5 active:bg-[#7B6CF6]/25"
                   >
-                    <Text className="text-[13px]">{c.emoji}</Text>
+                    <Text className="text-[15.5px]">{c.emoji}</Text>
                     <Text
                       numberOfLines={1}
-                      className="max-w-[120px] font-semibold text-[11.5px] text-bear-text"
+                      className="max-w-[120px] font-semibold text-[14px] text-bear-text"
                     >
                       {c.name}
                     </Text>
-                    <Text className="font-sans text-[10px] text-bear-sub">{c.items.length}</Text>
+                    <Text className="font-sans text-[12px] text-bear-sub">{c.items.length}</Text>
                   </Pressable>
                 ))}
                 {mealEntries.length > 0 && (
@@ -326,8 +326,8 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                     accessibilityLabel="Сохранить текущий приём как комбо"
                     className="flex-row items-center gap-1 rounded-full border border-dashed border-white/20 px-3 py-1.5 active:bg-white/10"
                   >
-                    <Plus size={12} color="#AEB9D9" />
-                    <Text className="font-semibold text-[11px] text-bear-soft">
+                    <Plus size={14} color="#AEB9D9" />
+                    <Text className="font-semibold text-[13px] text-bear-soft">
                       {combos.length > 0 ? 'Сохранить приём' : 'Сохранить приём как комбо'}
                     </Text>
                   </Pressable>
@@ -339,7 +339,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           {/* недавние и частые — добавление в один тап */}
           {recent.length > 0 && (
             <View className="mt-3">
-              <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+              <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-sub">
                 Недавние и частые
               </Text>
               <ScrollView
@@ -355,14 +355,14 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                     accessibilityLabel={`Добавить ${row.name} как в прошлый раз`}
                     className="flex-row items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 active:bg-white/10"
                   >
-                    <Text className="text-[13px]">{row.emoji || '🍽️'}</Text>
+                    <Text className="text-[15.5px]">{row.emoji || '🍽️'}</Text>
                     <Text
                       numberOfLines={1}
-                      className="max-w-[110px] font-semibold text-[11.5px] text-bear-text"
+                      className="max-w-[110px] font-semibold text-[14px] text-bear-text"
                     >
                       {row.name}
                     </Text>
-                    <Text className="font-sans text-[10px] text-bear-dim">
+                    <Text className="font-sans text-[12px] text-bear-dim">
                       {row.grams > 0 ? `${row.grams} г` : `${Math.round(row.kcal)} ккал`}
                     </Text>
                   </Pressable>
@@ -386,9 +386,9 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                   className="h-9 w-9 items-center justify-center rounded-xl"
                   style={{ backgroundColor: color }}
                 >
-                  <Icon size={17} color="#FFFFFF" />
+                  <Icon size={19} color="#FFFFFF" />
                 </View>
-                <Text className="absolute inset-x-3 bottom-2.5 font-bold text-[12px] text-bear-text">
+                <Text className="absolute inset-x-3 bottom-2.5 font-bold text-[14.5px] text-bear-text">
                   {label}
                 </Text>
               </Pressable>
@@ -404,8 +404,8 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 accessibilityLabel={`Повторить прошлый приём: ${lastMeal.list.length} блюд(а)`}
                 className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
               >
-                <RefreshCcw size={15} color="#AEB9D9" />
-                <Text numberOfLines={1} className="font-semibold text-[12px] text-bear-text">
+                <RefreshCcw size={17} color="#AEB9D9" />
+                <Text numberOfLines={1} className="font-semibold text-[14.5px] text-bear-text">
                   Прошлый раз
                 </Text>
               </Pressable>
@@ -416,8 +416,8 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               accessibilityLabel="Быстрая запись: только калории"
               className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
             >
-              <Zap size={15} color="#FBBF24" />
-              <Text numberOfLines={1} className="font-semibold text-[12px] text-bear-text">
+              <Zap size={17} color="#FBBF24" />
+              <Text numberOfLines={1} className="font-semibold text-[14.5px] text-bear-text">
                 Только калории
               </Text>
             </Pressable>
@@ -435,12 +435,12 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               className="h-7 w-7 shrink-0 items-center justify-center rounded-lg"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <LayoutGrid size={13} color="#FFFFFF" />
+              <LayoutGrid size={15} color="#FFFFFF" />
             </View>
-            <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[12.5px] text-bear-text">
+            <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
               База продуктов · ручной поиск
             </Text>
-            <ChevronRight size={15} color="#8B96B8" />
+            <ChevronRight size={17} color="#8B96B8" />
           </Pressable>
         </>
       )}
@@ -461,16 +461,16 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                   className="h-7 w-7 items-center justify-center rounded-lg"
                   style={{ backgroundColor: '#7B6CF6' }}
                 >
-                  <LayoutGrid size={14} color="#FFFFFF" />
+                  <LayoutGrid size={16} color="#FFFFFF" />
                 </View>
-                <Text className="font-bold text-[15px] text-bear-text">База продуктов</Text>
+                <Text className="font-bold text-[18px] text-bear-text">База продуктов</Text>
               </View>
               <Pressable
                 onPress={() => setBaseOpen(false)}
                 accessibilityLabel="Закрыть базу продуктов"
                 className="p-1"
               >
-                <X size={20} color="#A5AECB" />
+                <X size={22} color="#A5AECB" />
               </Pressable>
             </View>
             <View className="min-h-0 flex-1 px-5 pb-4 pt-3">
@@ -496,23 +496,23 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                   className="h-7 w-7 items-center justify-center rounded-lg"
                   style={{ backgroundColor: '#F59E0B' }}
                 >
-                  <Zap size={14} color="#FFFFFF" />
+                  <Zap size={16} color="#FFFFFF" />
                 </View>
-                <Text className="font-bold text-[15px] text-bear-text">Быстрая запись</Text>
+                <Text className="font-bold text-[18px] text-bear-text">Быстрая запись</Text>
               </View>
               <Pressable
                 onPress={() => setQuickOpen(false)}
                 accessibilityLabel="Закрыть быструю запись"
                 className="p-1"
               >
-                <X size={18} color="#A5AECB" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+            <Text className="mt-1 font-sans text-[13px] text-bear-sub">
               Когда некогда искать блюдо — запишите только калории
             </Text>
 
-            <Text className="mt-3 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Калории
             </Text>
             <View className="mt-1.5 flex-row items-center gap-2">
@@ -525,12 +525,12 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 placeholderTextColor="#8B96B8"
                 accessibilityLabel="Калории за порцию"
                 autoFocus
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
               />
-              <Text className="shrink-0 font-sans text-sm text-bear-sub">ккал</Text>
+              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">ккал</Text>
             </View>
 
-            <Text className="mt-3 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Название (необязательно)
             </Text>
             <TextInput
@@ -540,7 +540,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               placeholder="Перекус в офисе"
               placeholderTextColor="#8B96B8"
               accessibilityLabel="Название быстрой записи"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] text-bear-text"
             />
 
             <Pressable
@@ -550,7 +550,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               className="mt-4 rounded-2xl py-3 active:opacity-80"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <Text className="text-center font-bold text-sm text-white">
+              <Text className="text-center font-bold text-[17px] text-white">
                 Добавить в «{mealName}»
               </Text>
             </Pressable>
@@ -569,19 +569,19 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
         <View className="flex-1 items-center justify-center bg-black/60 px-8">
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[15px] text-bear-text">Сохранить как комбо</Text>
+              <Text className="font-bold text-[18px] text-bear-text">Сохранить как комбо</Text>
               <Pressable
                 onPress={() => setComboOpen(false)}
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X size={18} color="#A5AECB" />
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+            <Text className="mt-1 font-sans text-[13px] text-bear-sub">
               {`«${mealName}» · ${mealEntries.length} блюд(а) — набор можно будет добавить одним тапом`}
             </Text>
-            <Text className="mt-3 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Название комбо
             </Text>
             <TextInput
@@ -592,7 +592,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               placeholderTextColor="#8B96B8"
               accessibilityLabel="Название комбо"
               autoFocus
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] text-bear-text"
             />
             <Pressable
               onPress={saveCombo}
@@ -601,7 +601,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               className="mt-4 rounded-2xl py-3 active:opacity-80"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <Text className="text-center font-bold text-sm text-white">Сохранить комбо</Text>
+              <Text className="text-center font-bold text-[17px] text-white">Сохранить комбо</Text>
             </Pressable>
           </View>
         </View>

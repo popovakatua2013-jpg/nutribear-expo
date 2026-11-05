@@ -95,15 +95,15 @@ export function EveningNudge({
         hitSlop={10}
         className="absolute right-2 top-2 rounded-full p-1.5 active:opacity-60"
       >
-        <X size={16} color="#A5AECB" />
+        <X size={18} color="#A5AECB" />
       </Pressable>
       <View className="flex-row items-start gap-3">
-        <Text className="text-[22px]">{kind === 'water' ? '💧' : '🍽'}</Text>
+        <Text className="text-[26px]">{kind === 'water' ? '💧' : '🍽'}</Text>
         <View className="min-w-0 flex-1 pr-5">
-          <Text className="font-bold text-[14px] leading-snug text-bear-text">
+          <Text className="font-bold text-[17px] leading-snug text-bear-text">
             {kind === 'water' ? 'Вечер — догоняем норму воды' : 'Похоже, вы мало ели сегодня'}
           </Text>
-          <Text className="mt-0.5 font-sans text-[12px] leading-snug text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[14.5px] leading-snug text-bear-sub">
             {kind === 'water'
               ? `Осталось ${formatNum(waterLeft)} мл из ${formatNum(waterGoalMl)}. Стакан воды — и мишка доволен!`
               : `Записано ${formatNum(kcal || 0)} из ${formatNum(kcalGoal)} ккал. Если ещё не ужинали — самое время!`}
@@ -116,7 +116,7 @@ export function EveningNudge({
             }
             className="mt-2.5 self-start rounded-full bg-[#7B6CF6] px-4 py-2 active:opacity-80"
           >
-            <Text className="font-bold text-[12px] text-white">
+            <Text className="font-bold text-[14.5px] text-white">
               {kind === 'water' ? '+ Стакан воды' : 'Добавить ужин'}
             </Text>
           </Pressable>

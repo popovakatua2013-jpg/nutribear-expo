@@ -39,7 +39,7 @@ function WeeksSparkline({ rows }) {
   if (!valid.length) {
     return (
       <View className="rounded-2xl bg-white/[0.04] px-3 py-3">
-        <Text className="font-sans text-[11px] text-bear-sub">
+        <Text className="font-sans text-[13px] text-bear-sub">
           Запишите вес — и здесь появится динамика ИМТ по неделям 🐻
         </Text>
       </View>
@@ -127,8 +127,8 @@ function WeeksSparkline({ rows }) {
         )}
       </View>
       <View className="flex-row items-center justify-between px-1.5 pb-1.5">
-        <Text className="font-sans text-[9.5px] text-bear-sub">{chrono[0].label}</Text>
-        <Text className="font-sans text-[9.5px] text-bear-sub">сегодня</Text>
+        <Text className="font-sans text-[11.5px] text-bear-sub">{chrono[0].label}</Text>
+        <Text className="font-sans text-[11.5px] text-bear-sub">сегодня</Text>
       </View>
     </View>
   )
@@ -188,10 +188,10 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
           {/* Шапка */}
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
-              <Text className="font-bold text-[15px] text-bear-text">
+              <Text className="font-bold text-[18px] text-bear-text">
                 Как менялся твой ИМТ
               </Text>
-              <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
+              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
                 Снимок на конец каждой из последних {WEEKS} недель
               </Text>
             </View>
@@ -201,7 +201,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               accessibilityLabel="Поделиться историей ИМТ по неделям"
               className="mr-1 h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <Share2 size={15} color="#AEB9D9" />
+              <Share2 size={17} color="#AEB9D9" />
             </Pressable>
             <Pressable
               onPress={onClose}
@@ -209,7 +209,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               accessibilityLabel="Закрыть историю ИМТ"
               className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={16} color="#AEB9D9" />
+              <X size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 
@@ -223,7 +223,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
                   key={row.label}
                   className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2.5"
                 >
-                  <Text className="w-[42px] shrink-0 font-sans text-[11px] text-bear-dim">
+                  <Text className="w-[42px] shrink-0 font-sans text-[13px] text-bear-dim">
                     {row.label}
                   </Text>
                   {row.kg != null ? (
@@ -237,12 +237,12 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
                           shadowRadius: 5,
                         }}
                       />
-                      <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
+                      <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-text">
                         {`${fmtDecimal(row.bmi)} · ${SHORT[row.cat.id] || row.cat.label}`}
                       </Text>
                     </>
                   ) : (
-                    <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[12px] text-bear-sub">
+                    <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[14.5px] text-bear-sub">
                       Нет данных — до первой записи
                     </Text>
                   )}
@@ -250,7 +250,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               ))}
             </View>
 
-            <Text className="mt-3 px-1 font-sans text-[10.5px] leading-snug text-bear-sub">
+            <Text className="mt-3 px-1 font-sans text-[12.5px] leading-snug text-bear-sub">
               🛡 Бейдж у кольца показывает стрик — недели подряд, когда ИМТ в «Норме».
               Держи вес — стрик растёт каждую неделю. Поделиться — иконка справа сверху.
             </Text>

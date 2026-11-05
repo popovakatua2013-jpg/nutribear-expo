@@ -195,24 +195,24 @@ export function GoalCelebration() {
           accessibilityLabel="Скрыть карточку «Цель по весу достигнута»"
           className="absolute right-1.5 top-1.5 p-1.5 active:opacity-70"
         >
-          <X size={16} color="#d9b96a" />
+          <X size={18} color="#d9b96a" />
         </Pressable>
 
         <View className="flex-row items-center gap-2.5">
           <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fbbf24]/15">
-            <PartyPopper size={20} color="#fbbf24" />
+            <PartyPopper size={22} color="#fbbf24" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[14px] leading-snug text-[#fbbf24]">
+            <Text className="font-bold text-[17px] leading-snug text-[#fbbf24]">
               Цель по весу достигнута!
             </Text>
-            <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
+            <Text className="mt-0.5 font-sans text-[14px] leading-snug text-bear-sub">
               Вес {fmtDecimal(weightKg)} кг
               {goalReachedAt ? ` · достигнута ${shortDateNum(new Date(goalReachedAt))}` : ''}
             </Text>
           </View>
         </View>
-        <Text className="mt-2.5 font-sans text-[11.5px] leading-snug text-bear-sub">
+        <Text className="mt-2.5 font-sans text-[14px] leading-snug text-bear-sub">
           {heldDays >= 1
             ? `🏅 Результат держится: ${heldDays} ${pluralDays(heldDays)}. `
             : '🏅 Результат взят — с этого дня держим его. '}
@@ -227,8 +227,8 @@ export function GoalCelebration() {
             accessibilityLabel={`Перейти на поддержку, норма ${formatNum(plan.kcal)} килокалорий в день`}
             className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#fbbf24]/15 py-2.5 active:opacity-80"
           >
-            <Scale size={15} color="#fbbf24" />
-            <Text className="font-semibold text-[12.5px] text-[#fbbf24]">
+            <Scale size={17} color="#fbbf24" />
+            <Text className="font-semibold text-[15px] text-[#fbbf24]">
               {`Перейти на поддержку · ${formatNum(plan.kcal)} ккал`}
             </Text>
           </Pressable>
@@ -243,8 +243,8 @@ export function GoalCelebration() {
             plan ? 'mt-1.5' : 'mt-3'
           }`}
         >
-          <Share2 size={14} color="#fbbf24" />
-          <Text className="font-semibold text-[12.5px] text-[#fbbf24]">Поделиться</Text>
+          <Share2 size={16} color="#fbbf24" />
+          <Text className="font-semibold text-[15px] text-[#fbbf24]">Поделиться</Text>
         </Pressable>
 
         {overdue && (
@@ -254,7 +254,7 @@ export function GoalCelebration() {
             accessibilityLabel="Записать вес во вкладке Тело"
             className="mt-1.5 active:opacity-70"
           >
-            <Text className="font-sans text-[11px] leading-snug text-[#d9b96a]">
+            <Text className="font-sans text-[13px] leading-snug text-[#d9b96a]">
               {Number.isFinite(lastWeighDays)
                 ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
                 : '📅 Записать вес во вкладке Тело — взвешивание раз в неделю держит стрик честным →'}
@@ -277,13 +277,13 @@ export function GoalCelebration() {
         className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard p-4 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8DABFF]/15">
-          <Target size={20} color="#8DABFF" />
+          <Target size={22} color="#8DABFF" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[14px] leading-snug text-bear-text">
+          <Text className="font-bold text-[17px] leading-snug text-bear-text">
             Возвращаемся к результату
           </Text>
-          <Text className="mt-0.5 font-sans text-[11.5px] leading-snug text-bear-sub">
+          <Text className="mt-0.5 font-sans text-[14px] leading-snug text-bear-sub">
             Цель {fmtDecimal(goalWeightKg)} кг была достигнута{' '}
             {shortDateNum(new Date(goalReachedAt))} · до неё {diff > 0 ? '−' : '+'}
             {fmtDecimal(Math.abs(diff))} кг

@@ -10,7 +10,7 @@ import { useToast } from '../ui/Toast'
 import { fmtDecimal } from '@/lib/data/bmi'
 
 const FIELD =
-  'mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[14px] text-white'
+  'mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[17px] text-white'
 
 export function ProfileEditor() {
   const name = useProfileStore((s) => s.name)
@@ -63,11 +63,11 @@ export function ProfileEditor() {
     <CollapsibleCard
       storageKey="profile"
       accessibilityLabel="Профиль"
-      icon={<UserRound size={18} color="#7da2ff" />}
+      icon={<UserRound size={20} color="#7da2ff" />}
       title="Профиль"
       summary={`${name ? `${name} · ` : ''}${heightCm} см · ${fmtDecimal(weightKg)} кг`}
     >
-      <Text className="font-medium text-xs text-bear-sub">Имя</Text>
+      <Text className="font-medium text-[14px] text-bear-sub">Имя</Text>
       <TextInput
         value={current.name}
         onChangeText={(v) => patch({ name: v })}
@@ -77,7 +77,7 @@ export function ProfileEditor() {
       />
       <View className="mt-3 flex-row gap-3">
         <View className="flex-1">
-          <Text className="font-medium text-xs text-bear-sub">Рост, см</Text>
+          <Text className="font-medium text-[14px] text-bear-sub">Рост, см</Text>
           <TextInput
             value={current.heightCm}
             onChangeText={(v) => patch({ heightCm: v })}
@@ -86,7 +86,7 @@ export function ProfileEditor() {
           />
         </View>
         <View className="flex-1">
-          <Text className="font-medium text-xs text-bear-sub">Вес, кг</Text>
+          <Text className="font-medium text-[14px] text-bear-sub">Вес, кг</Text>
           <TextInput
             value={current.weightKg}
             onChangeText={(v) => patch({ weightKg: v })}
@@ -98,7 +98,7 @@ export function ProfileEditor() {
 
       <Pressable onPress={save} className="mt-4 overflow-hidden rounded-2xl">
         <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-          <Text className="py-3 text-center font-bold text-[13px] text-white">
+          <Text className="py-3 text-center font-bold text-[15.5px] text-white">
             Сохранить профиль
           </Text>
         </LinearGradient>

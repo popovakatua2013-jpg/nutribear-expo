@@ -81,7 +81,7 @@ function OneHeart({ o, i }) {
         { opacity, transform: [{ translateX: tx }, { translateY: ty }, { scale }, { rotate: `${(i - 3) * 14}deg` }] },
       ]}
     >
-      <Heart size={19} color="#fb7185" fill="#fb7185" fillOpacity={0.85} />
+      <Heart size={21} color="#fb7185" fill="#fb7185" fillOpacity={0.85} />
     </Animated.View>
   )
 }
@@ -133,7 +133,7 @@ function Pimple({ spot, haptics, onPop }) {
           position: 'absolute', top: -30, left: -4,
           opacity: bubbleOpacity, transform: [{ translateY: bubbleTy }],
         }}
-        className="font-extrabold text-[13px] text-rose-300"
+        className="font-extrabold text-[15.5px] text-rose-300"
       >
         Пок!
       </Animated.Text>
@@ -224,14 +224,14 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet, genome
             style={{ borderColor: `${meta.color}55`, backgroundColor: 'rgba(7,16,12,0.55)' }}
           >
             <View className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
-            <Text className="font-bold text-[12px]" style={{ color: meta.text }}>
+            <Text className="font-bold text-[14.5px]" style={{ color: meta.text }}>
               {meta.label}
             </Text>
-            <Text className="font-medium text-[12px] opacity-70" style={{ color: meta.text }}>
+            <Text className="font-medium text-[14.5px] opacity-70" style={{ color: meta.text }}>
               · геном {genome}/70
             </Text>
           </View>
-          <Text className="font-sans text-[10.5px] text-emerald-200/50">нажми, чтобы погладить</Text>
+          <Text className="font-sans text-[12.5px] text-emerald-200/50">нажми, чтобы погладить</Text>
         </View>
 
         {/* арена */}
@@ -240,7 +240,7 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet, genome
             {/* реплика */}
             {phrase && (
               <View className="absolute right-0 top-0 z-20 max-w-[220px] rounded-2xl rounded-br-sm border border-emerald-400/25 bg-[#0b1a12]/90 px-3 py-2 shadow-lg">
-                <Text className="font-medium text-[12.5px] leading-snug text-emerald-100">{phrase}</Text>
+                <Text className="font-medium text-[15px] leading-snug text-emerald-100">{phrase}</Text>
               </View>
             )}
 

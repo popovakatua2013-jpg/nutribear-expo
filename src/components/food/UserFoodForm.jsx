@@ -72,7 +72,7 @@ export function UserFoodForm({ open, onClose, initial }) {
     onClose()
   }
 
-  const field = 'min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text'
+  const field = 'min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text'
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -88,14 +88,14 @@ export function UserFoodForm({ open, onClose, initial }) {
                 className="h-7 w-7 items-center justify-center rounded-lg"
                 style={{ backgroundColor: '#7B6CF6' }}
               >
-                <Star size={14} color="#FFFFFF" />
+                <Star size={16} color="#FFFFFF" />
               </View>
-              <Text className="font-bold text-[15px] text-bear-text">
+              <Text className="font-bold text-[18px] text-bear-text">
                 {initial ? 'Изменить продукт' : 'Свой продукт'}
               </Text>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X size={20} color="#A5AECB" />
+              <X size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -104,7 +104,7 @@ export function UserFoodForm({ open, onClose, initial }) {
             keyboardShouldPersistTaps="handled"
           >
             {/* Название */}
-            <Text className="font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Название
             </Text>
             <TextInput
@@ -114,11 +114,11 @@ export function UserFoodForm({ open, onClose, initial }) {
               placeholder="Например: Сырники бабушки"
               placeholderTextColor="#8B96B8"
               accessibilityLabel="Название своего продукта"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[14px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17px] text-bear-text"
             />
 
             {/* Эмодзи */}
-            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Картинка
             </Text>
             <View className="mt-1.5 flex-row flex-wrap gap-1.5">
@@ -128,18 +128,18 @@ export function UserFoodForm({ open, onClose, initial }) {
                   onPress={() => setEmoji(e)}
                   accessibilityRole="button"
                   accessibilityLabel={`Выбрать картинку ${e}`}
-                  className={`h-10 w-10 items-center justify-center rounded-xl text-[18px] ${
+                  className={`h-10 w-10 items-center justify-center rounded-xl text-[21px] ${
                     emoji === e ? '' : 'bg-white/5'
                   }`}
                   style={emoji === e ? { backgroundColor: '#7B6CF6' } : null}
                 >
-                  <Text className="text-[18px]">{e}</Text>
+                  <Text className="text-[21px]">{e}</Text>
                 </Pressable>
               ))}
             </View>
 
             {/* Ккал */}
-            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Калории на 100 г
             </Text>
             <View className="mt-1.5 flex-row items-center gap-2">
@@ -153,11 +153,11 @@ export function UserFoodForm({ open, onClose, initial }) {
                 accessibilityLabel="Калории на 100 грамм"
                 className={field}
               />
-              <Text className="shrink-0 font-sans text-sm text-bear-sub">ккал</Text>
+              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">ккал</Text>
             </View>
 
             {/* БЖУ */}
-            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Белки / жиры / углеводы на 100 г (необязательно)
             </Text>
             <View className="mt-1.5 flex-row gap-2">
@@ -177,7 +177,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     accessibilityLabel={fld.label}
                     className={field}
                   />
-                  <Text className="mt-1 text-center font-sans text-[10px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -185,7 +185,7 @@ export function UserFoodForm({ open, onClose, initial }) {
             </View>
 
             {/* Клетчатка/сахар */}
-            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Клетчатка и сахар на 100 г (для рейтинга)
             </Text>
             <View className="mt-1.5 flex-row gap-2">
@@ -204,7 +204,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     accessibilityLabel={fld.label}
                     className={field}
                   />
-                  <Text className="mt-1 text-center font-sans text-[10px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[12px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -212,7 +212,7 @@ export function UserFoodForm({ open, onClose, initial }) {
             </View>
 
             {/* Порция */}
-            <Text className="mt-3.5 font-sans text-[11px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3.5 font-sans text-[13px] font-semibold uppercase text-bear-sub">
               Обычная порция
             </Text>
             <View className="mt-1.5 flex-row items-center gap-2">
@@ -224,7 +224,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                 accessibilityLabel="Обычная порция в граммах"
                 className={field}
               />
-              <Text className="shrink-0 font-sans text-sm text-bear-sub">г</Text>
+              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">г</Text>
             </View>
 
             <Pressable
@@ -234,11 +234,11 @@ export function UserFoodForm({ open, onClose, initial }) {
               className="mt-4 rounded-2xl py-3 active:opacity-80"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <Text className="text-center font-bold text-sm text-white">
+              <Text className="text-center font-bold text-[17px] text-white">
                 {initial ? 'Сохранить' : 'Добавить в базу'}
               </Text>
             </Pressable>
-            <Text className="mt-2 text-center font-sans text-[10.5px] text-bear-sub">
+            <Text className="mt-2 text-center font-sans text-[12.5px] text-bear-sub">
               Продукт запомнится и будет в поиске и в базе продуктов
             </Text>
           </ScrollView>

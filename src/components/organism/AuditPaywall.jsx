@@ -42,13 +42,13 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
                 className="h-10 w-10 items-center justify-center rounded-2xl"
                 style={{ backgroundColor: 'rgba(196,181,253,0.14)' }}
               >
-                <Shield size={20} color="#C4B5FD" />
+                <Shield size={22} color="#C4B5FD" />
               </View>
               <View className="min-w-0 flex-1">
-                <Text className="font-extrabold text-[17px] tracking-tight" style={{ color: GAME.text }}>
+                <Text className="font-extrabold text-[20px] tracking-tight" style={{ color: GAME.text }}>
                   Аудит Pro
                 </Text>
-                <Text className="font-sans text-[11.5px] leading-snug" style={{ color: GAME.dim }}>
+                <Text className="font-sans text-[14px] leading-snug" style={{ color: GAME.dim }}>
                   полный медосмотр от доктора Топтыгина
                 </Text>
               </View>
@@ -61,7 +61,7 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
               className="h-8 w-8 items-center justify-center rounded-full"
               style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
             >
-              <X size={16} color={GAME.dim} />
+              <X size={18} color={GAME.dim} />
             </Pressable>
           </View>
 
@@ -70,9 +70,9 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
             {FEATURES.map((f) => (
               <View key={f} className="flex-row items-start gap-2">
                 <View style={{ marginTop: 2 }}>
-                  <Check size={15} color={GAME.lime} />
+                  <Check size={17} color={GAME.lime} />
                 </View>
-                <Text className="flex-1 font-sans text-[12.5px] leading-snug" style={{ color: GAME.text }}>
+                <Text className="flex-1 font-sans text-[15px] leading-snug" style={{ color: GAME.text }}>
                   {f}
                 </Text>
               </View>
@@ -97,24 +97,24 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
                 >
                   <View className="min-w-0 flex-1">
                     <View className="flex-row items-center">
-                      <Text className="font-bold text-[14px]" style={{ color: GAME.text }}>
+                      <Text className="font-bold text-[17px]" style={{ color: GAME.text }}>
                         {p.title}
                       </Text>
                       {p.best ? (
                         <View className="ml-2 rounded-full px-2 py-0.5" style={{ backgroundColor: 'rgba(250,204,21,0.15)' }}>
-                          <Text className="font-bold text-[10px]" style={{ color: GAME.yellow }}>
+                          <Text className="font-bold text-[12px]" style={{ color: GAME.yellow }}>
                             Выгодно
                           </Text>
                         </View>
                       ) : null}
                     </View>
                     {p.note ? (
-                      <Text className="font-sans text-[11px]" style={{ color: GAME.dim }}>
+                      <Text className="font-sans text-[13px]" style={{ color: GAME.dim }}>
                         {p.note}
                       </Text>
                     ) : null}
                   </View>
-                  <Text className="font-extrabold text-[15px]" style={{ color: GAME.text }}>
+                  <Text className="font-extrabold text-[18px]" style={{ color: GAME.text }}>
                     {p.price}
                   </Text>
                 </Pressable>
@@ -125,13 +125,13 @@ export function AuditPaywall({ visible, onClose, onActivated }) {
           {/* кнопка активации */}
           <Pressable onPress={handleActivate} className="mt-4 overflow-hidden rounded-2xl">
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-              <Text className="py-3.5 text-center font-bold text-[15px] text-white">
+              <Text className="py-3.5 text-center font-bold text-[18px] text-white">
                 Начать бесплатно
               </Text>
             </LinearGradient>
           </Pressable>
 
-          <Text className="mt-2.5 text-center font-sans text-[10px] leading-snug" style={{ color: GAME.dim2 }}>
+          <Text className="mt-2.5 text-center font-sans text-[12px] leading-snug" style={{ color: GAME.dim2 }}>
             Демо-активация: настоящая оплата подключится после сборки приложения
           </Text>
         </View>

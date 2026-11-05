@@ -381,16 +381,16 @@ export default function HomeScreen() {
               accessibilityLabel="Записать шаги вручную"
             >
               <View className="flex-row items-center justify-between">
-                <Text className="font-bold text-[15px] text-bear-text">🚶 Записать шаги</Text>
+                <Text className="font-bold text-[18px] text-bear-text">🚶 Записать шаги</Text>
                 <Pressable
                   onPress={() => setStepsOpen(false)}
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X size={20} color="#A5AECB" />
+                  <X size={22} color="#A5AECB" />
                 </Pressable>
               </View>
-              <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+              <Text className="mt-1 font-sans text-[13px] text-bear-sub">
                 Добавим к сегодняшним шагам — {formatNum(extraSteps)} уже есть
               </Text>
               <View className="mt-3 flex-row items-center gap-2">
@@ -404,9 +404,9 @@ export default function HomeScreen() {
                   accessibilityLabel="Количество шагов"
                   autoFocus
                   onSubmitEditing={saveSteps}
-                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
                 />
-                <Text className="shrink-0 font-sans text-sm text-bear-sub">шагов</Text>
+                <Text className="shrink-0 font-sans text-[17px] text-bear-sub">шагов</Text>
               </View>
               <Pressable
                 onPress={saveSteps}
@@ -415,7 +415,7 @@ export default function HomeScreen() {
                 className="mt-4 rounded-2xl py-3 active:opacity-80"
                 style={{ backgroundColor: '#7B6CF6' }}
               >
-                <Text className="text-center font-bold text-sm text-white">Записать</Text>
+                <Text className="text-center font-bold text-[17px] text-white">Записать</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -437,7 +437,7 @@ export default function HomeScreen() {
         >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-[15px] text-bear-text">
+              <Text className="font-bold text-[18px] text-bear-text">
                 {goalEdit?.title}
               </Text>
               <Pressable
@@ -445,10 +445,10 @@ export default function HomeScreen() {
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X size={20} color="#A5AECB" />
+                <X size={22} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[11px] text-bear-sub">
+            <Text className="mt-1 font-sans text-[13px] text-bear-sub">
               {`Сейчас: ${formatNum(goals[goalEdit?.field || 'kcal'])} ${goalEdit?.unit || ''} в день`}
             </Text>
             <View className="mt-3 flex-row items-center gap-2">
@@ -461,9 +461,9 @@ export default function HomeScreen() {
                 placeholderTextColor="#8B96B8"
                 accessibilityLabel="Новое значение цели"
                 autoFocus
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[14px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[17px] text-bear-text"
               />
-              <Text className="shrink-0 font-sans text-sm text-bear-sub">{goalEdit?.unit}</Text>
+              <Text className="shrink-0 font-sans text-[17px] text-bear-sub">{goalEdit?.unit}</Text>
             </View>
             <Pressable
               onPress={saveGoal}
@@ -472,7 +472,7 @@ export default function HomeScreen() {
               className="mt-4 rounded-2xl py-3 active:opacity-80"
               style={{ backgroundColor: '#7B6CF6' }}
             >
-              <Text className="text-center font-bold text-sm text-white">Сохранить</Text>
+              <Text className="text-center font-bold text-[17px] text-white">Сохранить</Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>

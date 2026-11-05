@@ -19,7 +19,7 @@ import { useToast } from '../ui/Toast'
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
 
 const field =
-  'rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 font-sans text-sm text-bear-text'
+  'rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 font-sans text-[17px] text-bear-text'
 
 export function RecipeForm({ onDone, initial, onCancel }) {
   const add = useRecipesStore((s) => s.add)
@@ -176,7 +176,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
     <View className="rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/5 p-4">
       {/* Шапка: что делаем + крестик закрытия (только в режиме изменения) */}
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-link">
+        <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-link">
           {editing ? 'Изменение рецепта' : 'Новый рецепт'}
         </Text>
         {editing && (
@@ -186,7 +186,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             accessibilityLabel="Отменить изменение рецепта"
             className="p-1 active:opacity-70"
           >
-            <X size={18} color="#A5AECB" />
+            <X size={20} color="#A5AECB" />
           </Pressable>
         )}
       </View>
@@ -212,13 +212,13 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           {photo ? (
             <Image source={{ uri: photo }} className="h-full w-full rounded-2xl" />
           ) : (
-            <ImagePlus size={18} color="#FFFFFF" />
+            <ImagePlus size={20} color="#FFFFFF" />
           )}
         </Pressable>
       </View>
       {photo && (
         <View className="mt-1.5 flex-row items-center gap-2 px-1">
-          <Text className="min-w-0 flex-1 font-sans text-[10px] text-bear-dim">
+          <Text className="min-w-0 flex-1 font-sans text-[12px] text-bear-dim">
             Фото прикреплено — появится рядом с рецептом в списке
           </Text>
           <Pressable
@@ -227,8 +227,8 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             accessibilityLabel="Убрать фото"
             className="flex-row items-center gap-1 rounded p-1"
           >
-            <Trash2 size={12} color="#98A2C2" />
-            <Text className="font-sans text-[10px] text-bear-sub">убрать</Text>
+            <Trash2 size={14} color="#98A2C2" />
+            <Text className="font-sans text-[12px] text-bear-sub">убрать</Text>
           </Pressable>
         </View>
       )}
@@ -252,12 +252,12 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           accessibilityLabel="Посчитать калории и БЖУ по составу"
           className="mt-1.5 flex-row items-center gap-1.5 self-start px-1 py-0.5 active:opacity-70"
         >
-          <Wand2 size={14} color="#7DD3FC" />
-          <Text className="font-semibold text-[12px] text-[#7DD3FC]">
+          <Wand2 size={16} color="#7DD3FC" />
+          <Text className="font-semibold text-[14.5px] text-[#7DD3FC]">
             {estBusy ? 'Считаем…' : 'Посчитать КБЖУ по составу'}
           </Text>
         </Pressable>
-        <Text className="mt-1 px-1 font-sans text-[10px] leading-[14px] text-bear-dim">
+        <Text className="mt-1 px-1 font-sans text-[12px] leading-[14px] text-bear-dim">
           Сначала считаем сами по базе продуктов, незнакомый состав оценит ИИ
         </Text>
       </View>
@@ -326,12 +326,12 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       </View>
       <View className="mt-3 flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
-          <Text className="font-sans text-[11px] text-bear-sub">
+          <Text className="font-sans text-[13px] text-bear-sub">
             {per100
               ? `≈ ${per100} ккал / 100 г${sv > 1 ? ` · ${perServing} ккал / порция (${gramsPerServing({ grams: g, servings: sv })} г)` : ''}`
               : 'Укажите выход и калории'}
           </Text>
-          <Text className="font-sans text-[10px] text-bear-dim">
+          <Text className="font-sans text-[12px] text-bear-dim">
             БЖУ — по желанию, иначе оценим по калориям
           </Text>
         </View>
@@ -342,7 +342,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           className="rounded-full px-4 py-2 active:opacity-80"
           style={{ backgroundColor: ready ? '#7B6CF6' : '#4A4670' }}
         >
-          <Text className="font-bold text-xs text-white">
+          <Text className="font-bold text-[14px] text-white">
             {editing ? 'Сохранить изменения' : 'Сохранить рецепт'}
           </Text>
         </Pressable>

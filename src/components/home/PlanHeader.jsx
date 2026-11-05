@@ -24,7 +24,7 @@ function IconButton({ onPress, label, Icon }) {
       hitSlop={4}
       className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
     >
-      <Icon size={15} color="#AEB9D9" />
+      <Icon size={17} color="#AEB9D9" />
     </Pressable>
   )
 }
@@ -41,8 +41,8 @@ export function PlanHeader({ onViewAll, onHistory }) {
       {/* заголовок; добавление — тап по плитке приёма ниже */}
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
-          <BodyChip icon={<UtensilsCrossed size={15} />} />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+          <BodyChip icon={<UtensilsCrossed size={17} />} />
+          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
             Приёмы пищи
           </Text>
         </View>
@@ -64,8 +64,8 @@ export function PlanHeader({ onViewAll, onHistory }) {
             hitSlop={4}
             className="flex-row items-center gap-0.5 px-1 py-1"
           >
-            <Text className="font-medium text-[12px] text-[#6C8CFF]">Все</Text>
-            <ChevronRight size={14} color="#6C8CFF" />
+            <Text className="font-medium text-[14.5px] text-[#6C8CFF]">Все</Text>
+            <ChevronRight size={16} color="#6C8CFF" />
           </Pressable>
         )}
       </View>

@@ -61,14 +61,14 @@ export function BaseMode({ mealId, onPick }) {
       {/* Поиск «тетрадная строка» + кнопка «свой продукт» */}
       <View className="flex-row items-end gap-2">
         <View className="min-w-0 flex-1 flex-row items-center gap-2 border-b border-white/15 px-1 pb-1.5">
-          <Search size={16} color="#8B96B8" />
+          <Search size={18} color="#8B96B8" />
           <TextInput
             accessibilityLabel="Поиск блюда"
             placeholder="Найти блюдо…"
             placeholderTextColor="#8B96B8"
             value={query}
             onChangeText={setQuery}
-            className="min-w-0 flex-1 font-sans text-[13px] text-bear-text"
+            className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text"
           />
         </View>
         <Pressable
@@ -78,7 +78,7 @@ export function BaseMode({ mealId, onPick }) {
           className="h-[36px] w-[42px] shrink-0 items-center justify-center rounded-xl active:opacity-80"
           style={{ backgroundColor: '#7B6CF6' }}
         >
-          <Plus size={18} color="#FFFFFF" />
+          <Plus size={20} color="#FFFFFF" />
         </Pressable>
       </View>
 
@@ -87,8 +87,8 @@ export function BaseMode({ mealId, onPick }) {
       {mine.length > 0 && (
         <View className="mt-3">
           <View className="flex-row items-center gap-1.5 px-1">
-            <Star size={12} color="#FBBF24" />
-            <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-sub">
+            <Star size={14} color="#FBBF24" />
+            <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-sub">
               {`Мои продукты · ${mine.length}`}
             </Text>
           </View>
@@ -104,11 +104,11 @@ export function BaseMode({ mealId, onPick }) {
                   accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
                   className="min-w-0 flex-1 flex-row items-center gap-2"
                 >
-                  <Text className="text-[15px]">{f.emoji}</Text>
-                  <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[12.5px] text-bear-text">
+                  <Text className="text-[18px]">{f.emoji}</Text>
+                  <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
                     {f.name}
                   </Text>
-                  <Text className="shrink-0 font-sans text-[10.5px] text-bear-sub">
+                  <Text className="shrink-0 font-sans text-[12.5px] text-bear-sub">
                     {f.kcal100} ккал/100 г
                   </Text>
                 </Pressable>
@@ -119,7 +119,7 @@ export function BaseMode({ mealId, onPick }) {
                   hitSlop={6}
                   className="rounded p-1"
                 >
-                  <Pencil size={13} color="#8B96B8" />
+                  <Pencil size={15} color="#8B96B8" />
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -131,7 +131,7 @@ export function BaseMode({ mealId, onPick }) {
                   hitSlop={6}
                   className="rounded p-1"
                 >
-                  <Trash2 size={14} color="#98A2C2" />
+                  <Trash2 size={16} color="#98A2C2" />
                 </Pressable>
               </View>
             ))}

@@ -26,8 +26,8 @@ export function ProgressCard({ d, onGoAll }) {
     >
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2">
-          <Footprints size={18} color="#4ade80" />
-          <Text className="font-bold text-[15px] tracking-tight text-bear-text">
+          <Footprints size={20} color="#4ade80" />
+          <Text className="font-bold text-[18px] tracking-tight text-bear-text">
             Прогресс
           </Text>
         </View>
@@ -37,8 +37,8 @@ export function ProgressCard({ d, onGoAll }) {
           accessibilityRole="button"
           className="flex-row items-center gap-1"
         >
-          <Maximize2 size={12} color="#98A2C2" />
-          <Text className="font-medium text-[12px] text-bear-sub2">Все</Text>
+          <Maximize2 size={14} color="#98A2C2" />
+          <Text className="font-medium text-[14.5px] text-bear-sub2">Все</Text>
         </Pressable>
       </View>
 
@@ -46,13 +46,13 @@ export function ProgressCard({ d, onGoAll }) {
         <ProgressRing parts={parts} percent={d.stepsPct || 0} />
 
         <View className="shrink-0">
-          <Text className="font-sans text-[13px] text-bear-sub2">До цели</Text>
-          <Text className="mt-0.5 font-bold text-[16px] leading-tight text-bear-text">
+          <Text className="font-sans text-[15.5px] text-bear-sub2">До цели</Text>
+          <Text className="mt-0.5 font-bold text-[19px] leading-tight text-bear-text">
             {formatNum(remain)} шагов
           </Text>
           <View className="mt-2 flex-row items-center">
-            <Footprints size={16} color="#4ade80" />
-            <Footprints size={16} color="#4ade80" opacity={0.7} style={{ marginLeft: -6 }} />
+            <Footprints size={18} color="#4ade80" />
+            <Footprints size={18} color="#4ade80" opacity={0.7} style={{ marginLeft: -6 }} />
           </View>
         </View>
 

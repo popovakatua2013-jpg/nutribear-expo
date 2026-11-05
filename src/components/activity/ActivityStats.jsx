@@ -69,7 +69,7 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
           colors={colors.icon}
           style={{ width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Icon size={16} color="#FFFFFF" />
+          <Icon size={18} color="#FFFFFF" />
         </LinearGradient>
 
         {ring ? (
@@ -84,20 +84,20 @@ function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, on
               hitSlop={6}
               className={`h-8 w-8 shrink-0 items-center justify-center rounded-full border active:opacity-70 ${colors.btn}`}
             >
-              <Plus size={15} color={colors.tint} strokeWidth={2.5} />
+              <Plus size={17} color={colors.tint} strokeWidth={2.5} />
             </Pressable>
           )
         )}
       </View>
 
       {/* текст — на всю ширину карточки, ничего не обрезается */}
-      <FitLine className="mt-2 font-medium text-[10px] text-bear-soft">
+      <FitLine className="mt-2 font-medium text-[12px] text-bear-soft">
         {label}
       </FitLine>
-      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[17px] leading-tight tracking-tight text-bear-text">
+      <FitLine maxFontSizeMultiplier={1.2} className="font-extrabold text-[20px] leading-tight tracking-tight text-bear-text">
         {value}
       </FitLine>
-      <FitLine className="mt-0.5 font-sans text-[9.5px] text-bear-sub2">
+      <FitLine className="mt-0.5 font-sans text-[11.5px] text-bear-sub2">
         {sub}
       </FitLine>
       {/* итоговая строка — есть у всех карточек, поэтому ряды одной высоты */}
@@ -116,7 +116,7 @@ function Foot({ tone = 'muted', children }) {
           : tone === 'sky' ? 'text-sky-300'
             : 'text-bear-sub2'
   return (
-    <FitLine className={`mt-0.5 font-bold text-[10px] ${color}`}>
+    <FitLine className={`mt-0.5 font-bold text-[12px] ${color}`}>
       {children}
     </FitLine>
   )
@@ -149,7 +149,7 @@ export function ActivityStats({
   const minutesFoot = (
     <View className="mt-0.5 flex-row items-center justify-between">
       <FitLine
-        className={`flex-1 font-bold text-[10px] ${
+        className={`flex-1 font-bold text-[12px] ${
           minutesGoal > 0
             ? minutes >= minutesGoal ? 'text-emerald-300' : 'text-violet-300'
             : 'text-bear-sub2'
@@ -158,9 +158,9 @@ export function ActivityStats({
         {minutesGoal > 0 ? `${minutesPct}% от цели` : 'цель не задана'}
       </FitLine>
       {exOpen ? (
-        <ChevronUp size={12} color="#A78BFA" />
+        <ChevronUp size={14} color="#A78BFA" />
       ) : (
-        <ChevronDown size={12} color="#A78BFA" />
+        <ChevronDown size={14} color="#A78BFA" />
       )}
     </View>
   )

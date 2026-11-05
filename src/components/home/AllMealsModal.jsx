@@ -25,12 +25,12 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 
   return (
     <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-3 py-2">
-      <Text className="shrink-0 text-[13px]">{entry.emoji}</Text>
+      <Text className="shrink-0 text-[15.5px]">{entry.emoji}</Text>
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-medium text-[12px] text-bear-bright">
+        <Text numberOfLines={1} className="font-medium text-[14.5px] text-bear-bright">
           {entry.name}
         </Text>
-        <Text className="font-sans text-[10px] text-bear-sub2">
+        <Text className="font-sans text-[12px] text-bear-sub2">
           {`${entry.grams > 0 ? `${entry.grams} г · ` : ''}${formatNum(entry.kcal)} · ${bjuLine(entry)}${
             entry.time ? ` · ${entry.time}` : ''
           }`}
@@ -42,7 +42,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Pencil size={13} color="#8B96B8" />
+        <Pencil size={15} color="#8B96B8" />
       </Pressable>
       <Pressable
         onPress={() => removeEntry(mealId, entry.id)}
@@ -50,7 +50,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Trash2 size={13} color="#8B96B8" />
+        <Trash2 size={15} color="#8B96B8" />
       </Pressable>
     </View>
   )
@@ -118,17 +118,17 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
           {/* Заголовок */}
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
-              <Text className="font-bold text-[15px] text-bear-text">
+              <Text className="font-bold text-[18px] text-bear-text">
                 Все приёмы пищи
               </Text>
-              <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
+              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
                 {`За сегодня: ${formatNum(dayTotal)} / ${formatNum(dailyTarget)} ккал${
                   dayTotal > 0 ? ` · ${bjuLine(day)}` : ''
                 }`}
               </Text>
             </View>
             <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-              <X size={20} color="#A5AECB" />
+              <X size={22} color="#A5AECB" />
             </Pressable>
           </View>
 
@@ -175,20 +175,20 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       }
                       className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
                     >
-                      <Text className="min-w-0 flex-1 font-bold text-[13px] text-bear-text">
+                      <Text className="min-w-0 flex-1 font-bold text-[15.5px] text-bear-text">
                         {meal.emoji ? `${meal.emoji} ` : ''}
                         {meal.name}
                       </Text>
                       {openNow ? (
-                        <ChevronUp size={14} color="#98A2C2" />
+                        <ChevronUp size={16} color="#98A2C2" />
                       ) : (
-                        <ChevronDown size={14} color="#98A2C2" />
+                        <ChevronDown size={16} color="#98A2C2" />
                       )}
                     </Pressable>
 
                     {/* Свёрнуто — только количество внесённого в дневник;
                         развёрнуто — привычная строка с ориентиром по цели */}
-                    <Text className="shrink-0 font-sans text-[11px] text-bear-sub">
+                    <Text className="shrink-0 font-sans text-[13px] text-bear-sub">
                       {openNow
                         ? `${formatNum(consumed)} / ${formatNum(target)} ккал`
                         : totalDishes > 0
@@ -203,7 +203,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityRole="button"
                         className="rounded p-1 active:opacity-60"
                       >
-                        <Trash2 size={14} color="#f87171" />
+                        <Trash2 size={16} color="#f87171" />
                       </Pressable>
                     )}
                     {/* Быстрое добавление прямо из свёрнутой секции */}
@@ -214,7 +214,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
                         className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
                       >
-                        <Plus size={14} color="#8DABFF" />
+                        <Plus size={16} color="#8DABFF" />
                       </Pressable>
                     )}
                   </View>
@@ -246,7 +246,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       </View>
 
                       {!mealEntries.length && !extraCount && (
-                        <Text className="mt-2 font-sans text-[11px] text-bear-dim">
+                        <Text className="mt-2 font-sans text-[13px] text-bear-dim">
                           Пока ничего не добавлено
                         </Text>
                       )}
@@ -256,8 +256,8 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityRole="button"
                         className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
                       >
-                        <Plus size={14} color="#8DABFF" />
-                        <Text className="font-semibold text-xs text-[#8DABFF]">
+                        <Plus size={16} color="#8DABFF" />
+                        <Text className="font-semibold text-[14px] text-[#8DABFF]">
                           Добавить блюдо
                         </Text>
                       </Pressable>
@@ -269,8 +269,8 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                           accessibilityLabel="Добавить перекус"
                           className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
                         >
-                          <Plus size={13} color="#A5AECB" />
-                          <Text className="font-semibold text-[11px] text-bear-sub">
+                          <Plus size={15} color="#A5AECB" />
+                          <Text className="font-semibold text-[13px] text-bear-sub">
                             Добавить перекус
                           </Text>
                         </Pressable>

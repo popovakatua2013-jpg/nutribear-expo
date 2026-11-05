@@ -31,7 +31,7 @@ function TabIcon({ Icon, color, focused }) {
         borderColor: 'rgba(167,139,250,0.28)',
       }}
     >
-      <Icon size={20} color={color} />
+      <Icon size={22} color={color} />
     </View>
   )
 }
@@ -55,7 +55,7 @@ export default function TabsLayout() {
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+        tabBarLabelStyle: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >

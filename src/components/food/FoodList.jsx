@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react-native'
 export function FoodList({ items, emptyText, onPick, scroll = true }) {
   if (!items.length) {
     return (
-      <Text className="py-8 text-center font-sans text-sm text-bear-sub">
+      <Text className="py-8 text-center font-sans text-[17px] text-bear-sub">
         {emptyText}
       </Text>
     )
@@ -27,20 +27,20 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
         />
       ) : (
         <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bear-card">
-          <Text className="text-[17px]">{item.emoji || '🍽️'}</Text>
+          <Text className="text-[20px]">{item.emoji || '🍽️'}</Text>
         </View>
       )}
       <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-semibold text-[13px] text-bear-text">
+        <Text numberOfLines={1} className="font-semibold text-[15.5px] text-bear-text">
           {item.name}
         </Text>
-        <Text numberOfLines={1} className="font-sans text-[11px] text-bear-sub">
+        <Text numberOfLines={1} className="font-sans text-[13px] text-bear-sub">
           {item.kcal100
             ? `${item.kcal100} ккал / 100 г${item.sub ? ` · ${item.sub}` : ''}`
             : 'калорийность уточните'}
         </Text>
       </View>
-      <Plus size={16} color="#8B96B8" />
+      <Plus size={18} color="#8B96B8" />
     </Pressable>
   )
 

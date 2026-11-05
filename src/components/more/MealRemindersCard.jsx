@@ -52,7 +52,7 @@ export function TimeField({ value, onChange }) {
       maxLength={5}
       textAlign="center"
       accessibilityLabel="Время напоминания, часы и минуты"
-      className="w-[64px] rounded-xl border border-white/10 bg-white/5 py-1.5 font-semibold text-[13px] text-bear-text"
+      className="w-[64px] rounded-xl border border-white/10 bg-white/5 py-1.5 font-semibold text-[15.5px] text-bear-text"
     />
   )
 }
@@ -97,7 +97,7 @@ export function MealRemindersCard() {
     <CollapsibleCard
       storageKey="meal-reminders"
       accessibilityLabel="Напоминания о приёмах пищи"
-      icon={<UtensilsCrossed size={18} color="#F59E0B" />}
+      icon={<UtensilsCrossed size={20} color="#F59E0B" />}
       title="Напоминания о еде"
       right={
         <Switch
@@ -109,7 +109,7 @@ export function MealRemindersCard() {
         />
       }
     >
-      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
         {meals.enabled
           ? 'Уведомление придёт в выбранное время — даже если приложение закрыто.'
           : 'Подскажем, когда пора завтракать, обедать и ужинать.'}
@@ -133,7 +133,7 @@ export function MealRemindersCard() {
                   }`}
                 >
                   <Text
-                    className={`text-[12px] ${
+                    className={`text-[14.5px] ${
                       active ? 'font-semibold text-bear-text' : 'text-bear-sub'
                     }`}
                     numberOfLines={1}
@@ -144,7 +144,7 @@ export function MealRemindersCard() {
               )
             })}
           </View>
-          <Text className="font-sans text-[11px] leading-snug text-bear-sub">
+          <Text className="font-sans text-[13px] leading-snug text-bear-sub">
             {style === 'soft'
               ? 'Спокойные напоминания без шуток — как раньше. Относится ко всем пинкам: еда, вода, весы, тренировка.'
               : style === 'spicy'
@@ -160,8 +160,8 @@ export function MealRemindersCard() {
               key={r.key}
               className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.04] px-3.5 py-2.5"
             >
-              <Text className="text-[15px]">{r.emoji}</Text>
-              <Text className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
+              <Text className="text-[18px]">{r.emoji}</Text>
+              <Text className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-text">
                 {r.label}
               </Text>
               <TimeField

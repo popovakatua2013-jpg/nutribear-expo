@@ -38,8 +38,8 @@ export function RecipeMode({ onPick }) {
     <View>
       <View className="mb-3 flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-1.5 px-1">
-          <ChefHat size={14} color="#6C8CFF" />
-          <Text className="font-semibold text-[11px] uppercase tracking-wide text-bear-link">
+          <ChefHat size={16} color="#6C8CFF" />
+          <Text className="font-semibold text-[13px] uppercase tracking-wide text-bear-link">
             Мои рецепты
           </Text>
         </View>
@@ -48,8 +48,8 @@ export function RecipeMode({ onPick }) {
           accessibilityRole="button"
           className="flex-row items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 active:bg-white/10"
         >
-          <Plus size={14} color="#AEB9D9" />
-          <Text className="font-semibold text-[11px] text-bear-soft">Новый</Text>
+          <Plus size={16} color="#AEB9D9" />
+          <Text className="font-semibold text-[13px] text-bear-soft">Новый</Text>
         </Pressable>
       </View>
 
@@ -91,10 +91,10 @@ export function RecipeMode({ onPick }) {
                 accessibilityLabel={`Изменить рецепт «${r.name}»`}
                 className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-60"
               >
-                <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[11px] text-bear-dim">
+                <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[13px] text-bear-dim">
                   {`${r.name} · ${r.grams} г${Math.round(r.servings || 1) > 1 ? ` · ${Math.round(r.servings || 1)} порции` : ''}`}
                 </Text>
-                <Pencil size={12} color="#8B96B8" />
+                <Pencil size={14} color="#8B96B8" />
               </Pressable>
               <Pressable
                 onPress={() => remove(r.id)}
@@ -102,11 +102,11 @@ export function RecipeMode({ onPick }) {
                 accessibilityRole="button"
                 className="rounded p-1"
               >
-                <Trash2 size={14} color="#98A2C2" />
+                <Trash2 size={16} color="#98A2C2" />
               </Pressable>
             </View>
           ))}
-          <Text className="px-1 font-sans text-[10px] text-bear-dim">
+          <Text className="px-1 font-sans text-[12px] text-bear-dim">
             Нажмите на рецепт, чтобы изменить его
           </Text>
         </View>

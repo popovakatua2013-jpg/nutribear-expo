@@ -108,8 +108,8 @@ export function VoiceMode({ onPick }) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
       <View className="mb-3 flex-row items-center gap-2">
-        <Mic size={18} color="#7DD3FC" />
-        <Text className="font-bold text-[15px] text-bear-text">Голосовой ввод</Text>
+        <Mic size={20} color="#7DD3FC" />
+        <Text className="font-bold text-[18px] text-bear-text">Голосовой ввод</Text>
       </View>
 
       <View className="items-center rounded-2xl border border-white/10 bg-white/[0.03] py-6">
@@ -128,27 +128,27 @@ export function VoiceMode({ onPick }) {
           >
             <View className="h-[76px] w-[76px] items-center justify-center rounded-full">
               {recording ? (
-                <Square size={26} color="#FFFFFF" />
+                <Square size={28} color="#FFFFFF" />
               ) : (
-                <Mic size={30} color="#FFFFFF" />
+                <Mic size={32} color="#FFFFFF" />
               )}
             </View>
           </LinearGradient>
         </Pressable>
-        <Text className="mt-3 font-semibold text-[13px] text-bear-text">
+        <Text className="mt-3 font-semibold text-[15.5px] text-bear-text">
           {busy ? 'Распознаём…' : recording ? `Идёт запись · ${mmss}` : 'Нажмите и скажите'}
         </Text>
-        <Text className="mt-1 px-6 text-center text-[11px] text-bear-sub">
+        <Text className="mt-1 px-6 text-center text-[13px] text-bear-sub">
           Например: «Тарелка овсянки 250 граммов»
         </Text>
       </View>
 
       {heard ? (
-        <Text className="mt-3 text-[12px] text-bear-sub">Распознано: «{heard}»</Text>
+        <Text className="mt-3 text-[14.5px] text-bear-sub">Распознано: «{heard}»</Text>
       ) : null}
 
       {error ? (
-        <Text className="mt-3 text-[12px] leading-[17px] text-[#f87171]">{error}</Text>
+        <Text className="mt-3 text-[14.5px] leading-[17px] text-[#f87171]">{error}</Text>
       ) : null}
 
       {results.length > 0 && (
@@ -160,12 +160,12 @@ export function VoiceMode({ onPick }) {
               accessibilityRole="button"
               className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 active:bg-white/10"
             >
-              <Text className="text-xl">{it.emoji || '🍽'}</Text>
+              <Text className="text-[24px]">{it.emoji || '🍽'}</Text>
               <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="font-semibold text-[13.5px] text-bear-text">
+                <Text numberOfLines={1} className="font-semibold text-[16px] text-bear-text">
                   {it.name}
                 </Text>
-                <Text className="text-[11px] text-bear-sub">
+                <Text className="text-[13px] text-bear-sub">
                   {it.kcal100 ? `${it.kcal100} ккал / 100 г` : 'калорийность уточните'}
                   {it.source === 'off' ? ' · Open Food Facts' : ''}
                 </Text>
@@ -175,7 +175,7 @@ export function VoiceMode({ onPick }) {
         </View>
       )}
 
-      <Text className="mt-3 text-[11px] leading-[16px] text-bear-sub">
+      <Text className="mt-3 text-[13px] leading-[16px] text-bear-sub">
         Голос распознаёт нейросеть. Если кнопка не сработала — введите фразу текстом ниже.
       </Text>
       <TextInput
@@ -183,14 +183,14 @@ export function VoiceMode({ onPick }) {
         onChangeText={setPhrase}
         placeholder="Или введите фразу текстом…"
         placeholderTextColor="#8B96B8"
-        className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13px] text-bear-text"
+        className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[15.5px] text-bear-text"
       />
       <Pressable
         onPress={recognizeTyped}
         disabled={busy || !phrase.trim()}
         className={`mt-2 items-center rounded-2xl border border-white/10 bg-white/5 py-3 active:bg-white/10 ${busy || !phrase.trim() ? 'opacity-50' : ''}`}
       >
-        <Text className="font-semibold text-[13px] text-bear-text">
+        <Text className="font-semibold text-[15.5px] text-bear-text">
           Распознать текстом ↓
         </Text>
       </Pressable>

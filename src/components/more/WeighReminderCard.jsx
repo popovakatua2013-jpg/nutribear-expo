@@ -52,7 +52,7 @@ export function WeighReminderCard() {
     <CollapsibleCard
       storageKey="weigh-reminder"
       accessibilityLabel="Напоминание о взвешивании"
-      icon={<Scale size={18} color="#7DD3FC" />}
+      icon={<Scale size={20} color="#7DD3FC" />}
       title="Взвешивание"
       right={
         <Switch
@@ -64,7 +64,7 @@ export function WeighReminderCard() {
         />
       }
     >
-      <Text className="font-sans text-[11.5px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[14px] leading-snug text-bear-sub">
         {weigh.enabled
           ? 'Раз в неделю напомним встать на весы и записать вес.'
           : 'Раз в неделю — самое точное измерение динамики.'}
@@ -84,7 +84,7 @@ export function WeighReminderCard() {
                   className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? '' : 'bg-white/5'}`}
                   style={active ? { backgroundColor: '#7B6CF6' } : null}
                 >
-                  <Text className={`font-semibold text-xs ${active ? 'text-white' : 'text-bear-sub'}`}>
+                  <Text className={`font-semibold text-[14px] ${active ? 'text-white' : 'text-bear-sub'}`}>
                     {d}
                   </Text>
                 </Pressable>
@@ -92,8 +92,8 @@ export function WeighReminderCard() {
             })}
           </View>
           <View className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
-            <Text className="text-[15px]">⏰</Text>
-            <Text className="min-w-0 flex-1 font-semibold text-[13px] text-bear-text">
+            <Text className="text-[18px]">⏰</Text>
+            <Text className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-text">
               Время напоминания
             </Text>
             <TimeField

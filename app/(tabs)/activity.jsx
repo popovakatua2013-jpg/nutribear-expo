@@ -72,12 +72,12 @@ export default function ActivityScreen() {
       >
         {/* Шапка экрана: иконка-чип (стиль «Тела») + заголовок + подзаголовок */}
         <View className="flex-row items-center gap-3">
-          <BodyChip icon={<Footprints size={19} />} size={40} />
+          <BodyChip icon={<Footprints size={21} />} size={42} />
           <View className="min-w-0 flex-1">
-            <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+            <Text className="font-extrabold text-[22px] tracking-tight text-bear-text">
               Активность
             </Text>
-            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[11.5px] text-bear-dim">
+            <Text maxFontSizeMultiplier={1.25} className="font-sans text-[14px] text-bear-dim">
               Шаги, вода и тренировки
             </Text>
           </View>
@@ -92,7 +92,7 @@ export default function ActivityScreen() {
           onRangeChange={setRangeId}
         />
 
-        <Text className="text-center font-sans text-[11px] leading-relaxed text-bear-dim">
+        <Text className="text-center font-sans text-[13px] leading-relaxed text-bear-dim">
           Показатели дня пишутся в историю сами — отчёты видят шаги, воду,
           еду и тренировки, где бы они ни были записаны (тренировки теперь
           на «Главной»).

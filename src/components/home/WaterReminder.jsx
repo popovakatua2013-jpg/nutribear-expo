@@ -53,9 +53,9 @@ export function ReminderToggle() {
       className="p-1 active:opacity-70"
     >
       {reminder.enabled ? (
-        <Bell size={18} color="#7DD3FC" />
+        <Bell size={20} color="#7DD3FC" />
       ) : (
-        <BellOff size={18} color="#8B96B8" />
+        <BellOff size={20} color="#8B96B8" />
       )}
     </Pressable>
   )
@@ -92,7 +92,7 @@ export function ReminderIntervals() {
 
   return (
     <View>
-      <Text className="font-sans text-[11px] leading-snug text-bear-sub">
+      <Text className="font-sans text-[13px] leading-snug text-bear-sub">
         Уведомления придут, даже если приложение закрыто, но не побеспокоят,
         если норма уже выпита. Тихие часы: 23:00–8:00.
       </Text>
@@ -105,7 +105,7 @@ export function ReminderIntervals() {
               setEditing(false)
             }}
             accessibilityRole="button"
-            className={`rounded-full px-3 py-1.5 font-semibold text-xs ${
+            className={`rounded-full px-3 py-1.5 font-semibold text-[14px] ${
               reminder.everyMin === m && !editing ? 'text-white' : 'bg-white/5 text-bear-sub'
             }`}
             style={reminder.everyMin === m && !editing ? { backgroundColor: '#7B6CF6' } : null}
@@ -119,7 +119,7 @@ export function ReminderIntervals() {
             onPress={openEdit}
             accessibilityRole="button"
             accessibilityLabel={`Свой интервал: ${reminder.everyMin} минут, нажмите, чтобы изменить`}
-            className="rounded-full px-3 py-1.5 font-semibold text-xs text-white"
+            className="rounded-full px-3 py-1.5 font-semibold text-[14px] text-white"
             style={{ backgroundColor: '#7B6CF6' }}
           >
             {reminder.everyMin} мин
@@ -138,9 +138,9 @@ export function ReminderIntervals() {
               maxLength={3}
               placeholder="45"
               placeholderTextColor="#8B96B8"
-              className="w-9 text-center font-semibold text-xs text-white"
+              className="w-9 text-center font-semibold text-[14px] text-white"
             />
-            <Text className="font-sans text-[10px] text-bear-sub">мин</Text>
+            <Text className="font-sans text-[12px] text-bear-sub">мин</Text>
             <Pressable
               onPress={() => closeEdit(applyCustom())}
               accessibilityRole="button"
@@ -148,7 +148,7 @@ export function ReminderIntervals() {
               className="ml-0.5 rounded-full p-1 active:opacity-70"
               style={{ backgroundColor: '#22C55E' }}
             >
-              <Check size={13} color="#fff" strokeWidth={2.5} />
+              <Check size={15} color="#fff" strokeWidth={2.5} />
             </Pressable>
             <Pressable
               onPress={() => setEditing(false)}
@@ -156,7 +156,7 @@ export function ReminderIntervals() {
               accessibilityLabel="Отменить ввод интервала"
               className="rounded-full bg-white/10 p-1 active:opacity-70"
             >
-              <X size={13} color="#A5AECB" />
+              <X size={15} color="#A5AECB" />
             </Pressable>
           </View>
         ) : (
@@ -168,7 +168,7 @@ export function ReminderIntervals() {
             hitSlop={4}
             className="h-7 w-7 items-center justify-center rounded-full bg-white/5 active:opacity-70"
           >
-            <Pencil size={12} color="#8B96B8" />
+            <Pencil size={14} color="#8B96B8" />
           </Pressable>
         )}
       </View>

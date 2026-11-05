@@ -22,15 +22,15 @@ function Stat({ Icon, color, value, label }) {
   return (
     <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.06] px-3 py-2.5">
       <View className="flex-row items-center gap-1.5">
-        <Icon size={13} color={color} />
-        <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px] text-white/60">
+        <Icon size={15} color={color} />
+        <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px] text-white/60">
           {label}
         </Text>
       </View>
       <Text
         numberOfLines={1}
         maxFontSizeMultiplier={MAX}
-        className="mt-1 font-extrabold text-[16px] leading-tight text-white"
+        className="mt-1 font-extrabold text-[19px] leading-tight text-white"
       >
         {value}
       </Text>
@@ -81,18 +81,18 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                 <Image source={BEAR} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               </View>
               <View className="min-w-0 flex-1">
-                <Text className="font-extrabold text-[14px] leading-tight text-white">NutriBear</Text>
-                <Text className="font-sans text-[10px] text-white/50">дневник питания и активности</Text>
+                <Text className="font-extrabold text-[17px] leading-tight text-white">NutriBear</Text>
+                <Text className="font-sans text-[12px] text-white/50">дневник питания и активности</Text>
               </View>
               <View className="rounded-full bg-white/10 px-2.5 py-1">
-                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10px] text-white/70">
+                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12px] text-white/70">
                   {days} {pluralDays(days)}
                 </Text>
               </View>
             </View>
 
             {/* Заголовок периода */}
-            <Text maxFontSizeMultiplier={MAX} className="mt-4 font-extrabold text-[21px] leading-tight tracking-tight text-white">
+            <Text maxFontSizeMultiplier={MAX} className="mt-4 font-extrabold text-[25px] leading-tight tracking-tight text-white">
               {title} 🐻
             </Text>
 
@@ -110,7 +110,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                 в прошлый период были данные — иначе Δ бессмысленна */}
             {METRICS.some((m) => (prev?.[m.key] || 0) > 0) ? (
               <View className="mt-2.5 rounded-2xl bg-white/[0.05] px-3 py-2.5">
-                <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px] text-white/50">
+                <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px] text-white/50">
                   К прошлому периоду
                 </Text>
                 <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
@@ -120,8 +120,8 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                     const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
                     return (
                       <View key={m.key} className="flex-row items-center gap-1">
-                        {Arrow ? <Arrow size={11} color={tone} /> : null}
-                        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10.5px]" style={{ color: tone }}>
+                        {Arrow ? <Arrow size={13} color={tone} /> : null}
+                        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px]" style={{ color: tone }}>
                           {`${m.label.toLowerCase()} ${pct > 0 ? '+' : ''}${pct}%`}
                         </Text>
                       </View>
@@ -134,8 +134,8 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
             {/* Стрик */}
             {streak > 0 ? (
               <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
-                <Flame size={13} color="#fb923c" />
-                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#fdba74]">
+                <Flame size={15} color="#fb923c" />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#fdba74]">
                   {`${streak} ${pluralDays(streak)} подряд 🔥`}
                 </Text>
               </View>
@@ -144,15 +144,15 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
             {/* Дисциплина: сколько дней периода велся дневник */}
             {recorded != null ? (
               <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-[#4D7CFE]/15 px-3 py-1.5">
-                <BookOpen size={13} color="#8DABFF" />
-                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[11.5px] text-[#8DABFF]">
+                <BookOpen size={15} color="#8DABFF" />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#8DABFF]">
                   {`вели дневник ${recorded} из ${days} дней`}
                 </Text>
               </View>
             ) : null}
 
             {/* Подвал карточки */}
-            <Text className="mt-4 font-sans text-[9.5px] text-white/40">
+            <Text className="mt-4 font-sans text-[11.5px] text-white/40">
               Данные хранятся только на устройстве · NutriBear
             </Text>
           </LinearGradient>
@@ -168,8 +168,8 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
         >
           <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
             <View className="flex-row items-center justify-center gap-2 py-3.5">
-              <Share2 size={17} color="#FFFFFF" />
-              <Text className="font-bold text-[15px] text-white">
+              <Share2 size={19} color="#FFFFFF" />
+              <Text className="font-bold text-[18px] text-white">
                 {busy ? 'Готовим…' : 'Поделиться'}
               </Text>
             </View>
@@ -182,8 +182,8 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
           className="mt-1 w-full items-center py-3"
         >
           <View className="flex-row items-center gap-1.5">
-            <X size={15} color="#8B96B8" />
-            <Text className="font-semibold text-[13px] text-bear-sub">Закрыть</Text>
+            <X size={17} color="#8B96B8" />
+            <Text className="font-semibold text-[15.5px] text-bear-sub">Закрыть</Text>
           </View>
         </Pressable>
       </View>

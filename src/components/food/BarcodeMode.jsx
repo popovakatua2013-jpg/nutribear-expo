@@ -78,7 +78,7 @@ export function BarcodeMode({ onPick }) {
   if (!permission.granted) {
     return (
       <View className="flex-1 items-center justify-center gap-3 px-6">
-        <Text className="text-center font-sans text-[13px] leading-relaxed text-bear-sub">
+        <Text className="text-center font-sans text-[15.5px] leading-relaxed text-bear-sub">
           Нужен доступ к камере, чтобы сканировать штрих-коды{'\n'}(Настройки → Приложения → Expo Go)
         </Text>
         <Pressable
@@ -88,7 +88,7 @@ export function BarcodeMode({ onPick }) {
           className="rounded-2xl px-5 py-2.5"
           style={{ backgroundColor: '#7B6CF6' }}
         >
-          <Text className="font-bold text-sm text-white">Разрешить камеру</Text>
+          <Text className="font-bold text-[17px] text-white">Разрешить камеру</Text>
         </Pressable>
       </View>
     )
@@ -121,15 +121,15 @@ export function BarcodeMode({ onPick }) {
       <View className="absolute inset-x-4 bottom-4">
         {error ? (
           <View className="mb-2 rounded-2xl border border-white/10 bg-bear-pop px-4 py-3">
-            <Text className="font-sans text-[12px] leading-[17px] text-bear-text">{error}</Text>
+            <Text className="font-sans text-[14.5px] leading-[17px] text-bear-text">{error}</Text>
           </View>
         ) : null}
         <View className="flex-row items-center gap-2">
           <View className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-3">
-            <Text className="font-semibold text-[12.5px] text-bear-text">
+            <Text className="font-semibold text-[15px] text-bear-text">
               {busy ? 'Ищем продукт в базе…' : 'Наведите на штрих-код упаковки'}
             </Text>
-            <Text className="font-sans text-[10.5px] text-bear-sub">
+            <Text className="font-sans text-[12.5px] text-bear-sub">
               Открытая база Open Food Facts · точные КБЖУ с упаковки
             </Text>
           </View>
@@ -139,7 +139,7 @@ export function BarcodeMode({ onPick }) {
             accessibilityLabel={torch ? 'Выключить фонарик' : 'Включить фонарик'}
             className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
           >
-            {torch ? <Flashlight size={18} color="#FBBF24" /> : <FlashlightOff size={18} color="#AEB9D9" />}
+            {torch ? <Flashlight size={20} color="#FBBF24" /> : <FlashlightOff size={20} color="#AEB9D9" />}
           </Pressable>
         </View>
       </View>

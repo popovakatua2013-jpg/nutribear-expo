@@ -27,7 +27,7 @@ function VerdictPill({ verdict }) {
       className="rounded-full px-2 py-0.5"
       style={{ backgroundColor: `${meta.color}1A`, borderWidth: 1, borderColor: `${meta.color}55` }}
     >
-      <Text maxFontSizeMultiplier={MAX} className="font-bold text-[10px]" style={{ color: meta.color }}>
+      <Text maxFontSizeMultiplier={MAX} className="font-bold text-[12px]" style={{ color: meta.color }}>
         {meta.label}
       </Text>
     </View>
@@ -41,8 +41,8 @@ function SystemRow({ s, pro }) {
     return (
       <View className="rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(196,181,253,0.08)' }}>
         <View className="flex-row items-center gap-2">
-          <Lock size={12} color="#C4B5FD" />
-          <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12px]" style={{ color: '#C4B5FD' }}>
+          <Lock size={14} color="#C4B5FD" />
+          <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[14.5px]" style={{ color: '#C4B5FD' }}>
             {s.emoji} {s.name} · Premium
           </Text>
         </View>
@@ -52,14 +52,14 @@ function SystemRow({ s, pro }) {
   return (
     <View className="rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
       <View className="flex-row items-center justify-between gap-2">
-        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px]" style={{ color: '#E7F5EC' }}>
+        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[15px]" style={{ color: '#E7F5EC' }}>
           {s.emoji} {s.name}
           {s.rare ? ' ✨' : ''}
         </Text>
         <VerdictPill verdict={s.verdict} />
       </View>
       {!!s.phrase && (
-        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-medium text-[11px] leading-snug" style={{ color: '#7FA890' }}>
+        <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-medium text-[13px] leading-snug" style={{ color: '#7FA890' }}>
           «{s.phrase}»
         </Text>
       )}
@@ -120,16 +120,16 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
                 <Image source={BEAR} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               </View>
               <View className="min-w-0 flex-1">
-                <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[14px] leading-tight" style={{ color: '#E7F5EC' }}>
+                <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[17px] leading-tight" style={{ color: '#E7F5EC' }}>
                   NutriBear
                 </Text>
-                <Text maxFontSizeMultiplier={MAX} className="font-sans text-[10px]" style={{ color: '#7FA890' }}>
+                <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px]" style={{ color: '#7FA890' }}>
                   медосмотр доктора Топтыгина
                 </Text>
               </View>
               {!!dateLabel && (
                 <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1, borderColor: 'rgba(74,158,112,0.22)' }}>
-                  <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[10px]" style={{ color: '#7FA890' }}>
+                  <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12px]" style={{ color: '#7FA890' }}>
                     {dateLabel}
                   </Text>
                 </View>
@@ -142,7 +142,7 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
                 {score}
               </Text>
               <View className="min-w-0 flex-1">
-                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[10.5px] tracking-[0.08em]" style={{ color: '#64866F' }}>
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[12.5px] tracking-[0.08em]" style={{ color: '#64866F' }}>
                   АУДИТ ОРГАНИЗМА
                 </Text>
                 <View className="mt-1 self-start">
@@ -153,7 +153,7 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
 
             {/* Заключение */}
             {!!report?.conclusion && (
-              <Text maxFontSizeMultiplier={MAX} className="mt-2.5 font-medium text-[13px] leading-snug" style={{ color: '#E7F5EC' }}>
+              <Text maxFontSizeMultiplier={MAX} className="mt-2.5 font-medium text-[15.5px] leading-snug" style={{ color: '#E7F5EC' }}>
                 «{report.conclusion}»
               </Text>
             )}
@@ -166,7 +166,7 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
             </View>
 
             {/* Подвал */}
-            <Text maxFontSizeMultiplier={MAX} className="mt-3 font-sans text-[9.5px]" style={{ color: 'rgba(100,134,111,0.9)' }}>
+            <Text maxFontSizeMultiplier={MAX} className="mt-3 font-sans text-[11.5px]" style={{ color: 'rgba(100,134,111,0.9)' }}>
               Данные хранятся только на устройстве · NutriBear
             </Text>
           </LinearGradient>
@@ -182,8 +182,8 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
           style={{ backgroundColor: '#A3E635' }}
         >
           <View className="flex-row items-center gap-2">
-            <Share2 size={17} color="#12200F" />
-            <Text className="font-extrabold text-[15px]" style={{ color: '#12200F' }}>
+            <Share2 size={19} color="#12200F" />
+            <Text className="font-extrabold text-[18px]" style={{ color: '#12200F' }}>
               {busy ? 'Готовим…' : 'Поделиться'}
             </Text>
           </View>
@@ -194,8 +194,8 @@ export function AuditShareCard({ visible, onClose, report, pro = false, dateLabe
           accessibilityLabel="Закрыть карточку аудита"
           className="mt-1 w-full flex-row items-center justify-center gap-1.5 py-3"
         >
-          <X size={15} color="#7FA890" />
-          <Text className="font-semibold text-[13px]" style={{ color: '#7FA890' }}>
+          <X size={17} color="#7FA890" />
+          <Text className="font-semibold text-[15.5px]" style={{ color: '#7FA890' }}>
             Закрыть
           </Text>
         </Pressable>

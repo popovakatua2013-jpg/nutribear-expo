@@ -67,14 +67,14 @@ export function RevealStep({ onNext, onBack }) {
             />
           </Svg>
           <View className="absolute inset-0 items-center justify-center">
-            <Check size={34} color="#FFFFFF" strokeWidth={3} />
+            <Check size={36} color="#FFFFFF" strokeWidth={3} />
           </View>
         </View>
 
         <Text className="mt-3 font-extrabold text-[26px] tracking-tight text-bear-text">
           Отлично!
         </Text>
-        <Text className="mx-auto mt-1.5 max-w-[260px] text-center font-sans text-[13px] leading-relaxed text-[#aab4d4]">
+        <Text className="mx-auto mt-1.5 max-w-[260px] text-center font-sans text-[15.5px] leading-relaxed text-[#aab4d4]">
           Твой персональный план готов
         </Text>
       </View>
@@ -88,7 +88,7 @@ export function RevealStep({ onNext, onBack }) {
         <Stat emoji="💧" value={String(glasses)} caption="стаканы воды" />
       </View>
 
-      <Text className="mt-3 px-1 text-center font-sans text-[12px] leading-relaxed text-[#aab4d4]">
+      <Text className="mt-3 px-1 text-center font-sans text-[14.5px] leading-relaxed text-[#aab4d4]">
         {planDoneText(plan)}
       </Text>
 
@@ -98,29 +98,29 @@ export function RevealStep({ onNext, onBack }) {
         accessibilityLabel={open ? 'Скрыть план' : 'Показать план'}
         className="mt-3 flex-row items-center justify-between rounded-2xl border border-white/5 bg-bear-card/60 px-4 py-3"
       >
-        <Text className="font-bold text-[13px] text-bear-text">
+        <Text className="font-bold text-[15.5px] text-bear-text">
           {open ? 'Скрыть подробности' : 'Показать план'}
         </Text>
         {open ? (
-          <ChevronUp size={16} color="#8B96B8" />
+          <ChevronUp size={18} color="#8B96B8" />
         ) : (
-          <ChevronDown size={16} color="#8B96B8" />
+          <ChevronDown size={18} color="#8B96B8" />
         )}
       </Pressable>
 
       {open ? (
         <View className="mt-2.5 gap-3">
           <View className="rounded-2xl border border-white/5 bg-bear-card p-4">
-            <Text className="font-semibold text-[12px] text-bear-sub2">
+            <Text className="font-semibold text-[14.5px] text-bear-sub2">
               Целевые БЖУ на день
             </Text>
             <View className="mt-2 flex-row justify-between">
-              <Text className="font-bold text-[13px] text-bear-text">🥩 Б {plan.protein} г</Text>
-              <Text className="font-bold text-[13px] text-bear-text">🥑 Ж {plan.fat} г</Text>
-              <Text className="font-bold text-[13px] text-bear-text">🍞 У {plan.carbs} г</Text>
+              <Text className="font-bold text-[15.5px] text-bear-text">🥩 Б {plan.protein} г</Text>
+              <Text className="font-bold text-[15.5px] text-bear-text">🥑 Ж {plan.fat} г</Text>
+              <Text className="font-bold text-[15.5px] text-bear-text">🍞 У {plan.carbs} г</Text>
             </View>
             {plan.dailyDelta !== 0 ? (
-              <Text className="mt-1.5 font-sans text-[11px] text-bear-dim">
+              <Text className="mt-1.5 font-sans text-[13px] text-bear-dim">
                 {plan.deltaLabel} {formatNum(plan.dailyDelta)} ккал/день при темпе {plan.pace} кг/нед
               </Text>
             ) : null}
@@ -128,7 +128,7 @@ export function RevealStep({ onNext, onBack }) {
 
           {plan.projection ? (
             <View className="rounded-2xl border border-white/5 bg-bear-card p-4">
-              <Text className="font-semibold text-[12px] text-bear-sub2">Прогноз веса</Text>
+              <Text className="font-semibold text-[14.5px] text-bear-sub2">Прогноз веса</Text>
               <View className="mt-2">
                 <SvgLineChart
                   data={plan.projection}
@@ -140,7 +140,7 @@ export function RevealStep({ onNext, onBack }) {
             </View>
           ) : null}
 
-          <Text className="px-1 font-sans text-[10px] leading-relaxed text-bear-dim">
+          <Text className="px-1 font-sans text-[12px] leading-relaxed text-bear-dim">
             {DISCLAIMER}
           </Text>
         </View>
@@ -152,11 +152,11 @@ export function RevealStep({ onNext, onBack }) {
 function Stat({ emoji, value, caption }) {
   return (
     <View className="min-w-0 flex-1 items-center px-1">
-      <Text className="text-[20px]">{emoji}</Text>
-      <Text className="mt-1 font-extrabold text-[19px] leading-none text-bear-text">
+      <Text className="text-[24px]">{emoji}</Text>
+      <Text className="mt-1 font-extrabold text-[22px] leading-none text-bear-text">
         {value}
       </Text>
-      <Text className="mt-1 text-center font-sans text-[9.5px] leading-[12px] text-bear-sub2">
+      <Text className="mt-1 text-center font-sans text-[11.5px] leading-[12px] text-bear-sub2">
         {caption}
       </Text>
     </View>

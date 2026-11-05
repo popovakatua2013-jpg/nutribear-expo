@@ -120,16 +120,16 @@ export function MeasurementsCard() {
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
-          <Ruler size={18} color="#A78BFA" />
+          <Ruler size={20} color="#A78BFA" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[17px] tracking-tight text-bear-text">
+          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
             Измерения тела
           </Text>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-sans text-[10.5px] text-bear-sub"
+            className="mt-0.5 font-sans text-[12.5px] text-bear-sub"
           >
             Сантиметром — тап по чипу или «Добавить»
           </Text>
@@ -140,13 +140,13 @@ export function MeasurementsCard() {
           accessibilityLabel="Записать замеры"
           className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-[7px] active:opacity-70"
         >
-          <Text className="font-bold text-[11px] text-[#8DABFF]">+ Добавить</Text>
+          <Text className="font-bold text-[13px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
         {/* Шеврон состояния секции — по умолчанию свёрнута */}
         {secOpen ? (
-          <ChevronUp size={15} color="#A5AECB" />
+          <ChevronUp size={17} color="#A5AECB" />
         ) : (
-          <ChevronDown size={15} color="#A5AECB" />
+          <ChevronDown size={17} color="#A5AECB" />
         )}
       </Pressable>
 
@@ -180,20 +180,20 @@ export function MeasurementsCard() {
                 className="h-8 w-8 items-center justify-center rounded-lg"
                 style={{ backgroundColor: `${m.color}22` }}
               >
-                <Icon size={15} color={m.color} />
+                <Icon size={17} color={m.color} />
               </View>
 
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="mt-1.5 font-sans text-[10px] text-bear-sub"
+                className="mt-1.5 font-sans text-[12px] text-bear-sub"
               >
                 {m.label}
               </Text>
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
-                className="mt-0.5 font-extrabold text-[15px] tracking-tight text-bear-text"
+                className="mt-0.5 font-extrabold text-[18px] tracking-tight text-bear-text"
               >
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
@@ -202,7 +202,7 @@ export function MeasurementsCard() {
                 className="mt-1.5 self-start rounded-full px-1.5 py-[2px]"
                 style={{ backgroundColor: `${tone}1f` }}
               >
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[9px]" style={{ color: tone }}>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[11px]" style={{ color: tone }}>
                   {d == null
                     ? last
                       ? `от ${shortDay(last.date)}`
@@ -221,13 +221,13 @@ export function MeasurementsCard() {
       <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>
         <ScoreGauge score={score} />
         <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[10.5px] text-bear-sub">
+          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[12.5px] text-bear-sub">
             Общий прогресс
           </Text>
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-bold text-[14.5px] text-bear-text"
+            className="mt-0.5 font-bold text-[17.5px] text-bear-text"
           >
             {caption}
           </Text>
@@ -235,7 +235,7 @@ export function MeasurementsCard() {
           <Text
             numberOfLines={2}
             maxFontSizeMultiplier={1.25}
-            className="mt-1 font-sans text-[9.5px] leading-snug text-bear-dim"
+            className="mt-1 font-sans text-[11.5px] leading-snug text-bear-dim"
           >
             Вес к цели, динамика талии и регулярность замеров
           </Text>
@@ -258,19 +258,19 @@ export function MeasurementsCard() {
           className="flex-row items-center border-b border-white/[0.06] py-2.5 active:opacity-70"
         >
           <View className="min-w-0 flex-1 flex-row items-center gap-1">
-            <Text className="font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+            <Text className="font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
               Измерение
             </Text>
             {tableOpen ? (
-              <ChevronUp size={11} color="#8B96B8" />
+              <ChevronUp size={13} color="#8B96B8" />
             ) : (
-              <ChevronDown size={11} color="#8B96B8" />
+              <ChevronDown size={13} color="#8B96B8" />
             )}
           </View>
-          <Text className="w-[72px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+          <Text className="w-[72px] text-right font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Сегодня
           </Text>
-          <Text className="w-[84px] text-right font-sans text-[9.5px] font-semibold uppercase tracking-wide text-bear-dim">
+          <Text className="w-[84px] text-right font-sans text-[11.5px] font-semibold uppercase tracking-wide text-bear-dim">
             Изменение
           </Text>
         </Pressable>
@@ -300,24 +300,24 @@ export function MeasurementsCard() {
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-semibold text-[12px] text-bear-text"
+                  className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text"
                 >
                   {m.label}
                 </Text>
-                {m.custom && <Info size={11} color="#8B96B8" />}
+                {m.custom && <Info size={13} color="#8B96B8" />}
               </View>
               <Text
                 maxFontSizeMultiplier={1.2}
-                className="w-[72px] text-right font-bold text-[12px] text-bear-text"
+                className="w-[72px] text-right font-bold text-[14.5px] text-bear-text"
               >
                 {last ? `${fmtDecimal(last.cm)} см` : '—'}
               </Text>
               <View className="w-[84px] flex-row items-center justify-end gap-0.5">
-                {d != null && d !== 0 && <Arrow size={11} color={tone} />}
+                {d != null && d !== 0 && <Arrow size={13} color={tone} />}
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.2}
-                  className="font-semibold text-[10.5px]"
+                  className="font-semibold text-[12.5px]"
                   style={{ color: tone }}
                 >
                   {d == null
@@ -347,16 +347,16 @@ function Stars({ value }) {
   return (
     <View className="mt-1 flex-row items-center gap-0.5" accessibilityLabel={`Оценка: ${value} из 5 звёзд`}>
       {[0, 1, 2, 3, 4].map((i) => {
-        if (i < full) return <Star key={i} size={13} color="#FACC15" fill="#FACC15" />
+        if (i < full) return <Star key={i} size={15} color="#FACC15" fill="#FACC15" />
         if (i === full && half) {
           return (
             <View key={i} className="h-[13px] w-[13px] items-center justify-center">
-              <Star size={13} color={DIM} fill={DIM} style={{ position: 'absolute' }} />
-              <StarHalf size={13} color="#FACC15" fill="#FACC15" />
+              <Star size={15} color={DIM} fill={DIM} style={{ position: 'absolute' }} />
+              <StarHalf size={15} color="#FACC15" fill="#FACC15" />
             </View>
           )
         }
-        return <Star key={i} size={13} color={DIM} fill={DIM} />
+        return <Star key={i} size={15} color={DIM} fill={DIM} />
       })}
     </View>
   )
@@ -467,13 +467,13 @@ function MeasurementsModal({ open, onClose }) {
           <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <View className="min-w-0 flex-1">
-                <Text className="font-bold text-[15px] text-bear-text">Записать замеры</Text>
-                <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
+                <Text className="font-bold text-[18px] text-bear-text">Записать замеры</Text>
+                <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
                   Сантиметровая лента; заполните то, что измерили
                 </Text>
               </View>
               <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
-                <X size={20} color="#A5AECB" />
+                <X size={22} color="#A5AECB" />
               </Pressable>
             </View>
 
@@ -503,7 +503,7 @@ function MeasurementsModal({ open, onClose }) {
                       <Text
                         numberOfLines={1}
                         maxFontSizeMultiplier={1.2}
-                        className="min-w-0 flex-1 font-medium text-xs text-bear-sub"
+                        className="min-w-0 flex-1 font-medium text-[14px] text-bear-sub"
                       >
                         {m.label}
                       </Text>
@@ -514,7 +514,7 @@ function MeasurementsModal({ open, onClose }) {
                           accessibilityLabel={`Удалить свой замер ${m.label}`}
                           className="shrink-0 rounded p-1 active:opacity-60"
                         >
-                          <Trash2 size={14} color="#98A2C2" />
+                          <Trash2 size={16} color="#98A2C2" />
                         </Pressable>
                       )}
                       <TextInput
@@ -526,13 +526,13 @@ function MeasurementsModal({ open, onClose }) {
                         placeholderTextColor="#8B96B8"
                         textAlign="center"
                         accessibilityLabel={`${m.label} в сантиметрах`}
-                        className={`w-[96px] shrink-0 rounded-2xl border bg-white/5 px-3 py-2.5 font-semibold text-[13px] text-white ${
+                        className={`w-[96px] shrink-0 rounded-2xl border bg-white/5 px-3 py-2.5 font-semibold text-[15.5px] text-white ${
                           bad ? 'border-rose-400/60' : 'border-white/10'
                         }`}
                       />
                     </View>
                     {bad && (
-                      <Text className="mt-0.5 font-sans text-[10px] text-rose-300">
+                      <Text className="mt-0.5 font-sans text-[12px] text-rose-300">
                         От {MIN_CM} до {MAX_CM} см, например 78,5
                       </Text>
                     )}
@@ -545,7 +545,7 @@ function MeasurementsModal({ open, onClose }) {
                 className="mt-4 rounded-2xl border border-dashed border-white/15 p-3"
                 accessibilityLabel="Добавить свой замер"
               >
-                <Text className="font-semibold text-[11.5px] text-bear-soft">
+                <Text className="font-semibold text-[14px] text-bear-soft">
                   + Свой замер
                 </Text>
                 <View className="mt-2 flex-row gap-2">
@@ -558,7 +558,7 @@ function MeasurementsModal({ open, onClose }) {
                     returnKeyType="done"
                     onSubmitEditing={handleAddCustom}
                     accessibilityLabel="Название своего замера"
-                    className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-[13px] text-white"
+                    className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-[15.5px] text-white"
                   />
                   <Pressable
                     onPress={handleAddCustom}
@@ -566,7 +566,7 @@ function MeasurementsModal({ open, onClose }) {
                     accessibilityLabel="Добавить свой замер в список"
                     className="shrink-0 justify-center rounded-xl bg-white/10 px-3 active:opacity-70"
                   >
-                    <Text className="font-bold text-[12px] text-[#8DABFF]">Добавить</Text>
+                    <Text className="font-bold text-[14.5px] text-[#8DABFF]">Добавить</Text>
                   </Pressable>
                 </View>
               </View>
@@ -584,7 +584,7 @@ function MeasurementsModal({ open, onClose }) {
                 end={{ x: 1, y: 1 }}
                 colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
               >
-                <Text className="py-3.5 text-center font-bold text-sm text-white">
+                <Text className="py-3.5 text-center font-bold text-[17px] text-white">
                   Сохранить
                 </Text>
               </LinearGradient>

@@ -33,18 +33,18 @@ export function ObShell({
             accessibilityLabel="Назад"
             className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
           >
-            <ChevronLeft size={20} color="#AEB9D9" />
+            <ChevronLeft size={22} color="#AEB9D9" />
           </Pressable>
         ) : (
           <View className="h-10 w-10 shrink-0" />
         )}
         <View className="min-w-0 flex-1">
           {sub ? (
-            <Text className="font-bold text-[10px] uppercase tracking-[0.14em] text-[#6c8cff]">
+            <Text className="font-bold text-[12px] uppercase tracking-[0.14em] text-[#6c8cff]">
               {sub}
             </Text>
           ) : null}
-          <Text numberOfLines={1} className="font-extrabold text-[20px] tracking-tight text-bear-text">
+          <Text numberOfLines={1} className="font-extrabold text-[24px] tracking-tight text-bear-text">
             {title}
           </Text>
         </View>
@@ -70,7 +70,7 @@ export function ObShell({
               className={`overflow-hidden rounded-2xl ${nextDisabled ? 'opacity-40' : ''}`}
             >
               <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                <Text className="py-3.5 text-center font-bold text-[15px] text-white">
+                <Text className="py-3.5 text-center font-bold text-[18px] text-white">
                   {nextLabel}
                 </Text>
               </LinearGradient>

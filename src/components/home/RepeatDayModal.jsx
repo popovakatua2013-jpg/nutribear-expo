@@ -141,10 +141,10 @@ export function RepeatDayModal({ visible, onClose }) {
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
               <View className="flex-row items-center gap-2">
-                <CalendarDays size={17} color="#6C8CFF" />
-                <Text className="font-bold text-[15px] text-bear-text">Повторить день</Text>
+                <CalendarDays size={19} color="#6C8CFF" />
+                <Text className="font-bold text-[18px] text-bear-text">Повторить день</Text>
               </View>
-              <Text className="mt-0.5 font-sans text-[11px] text-bear-sub">
+              <Text className="mt-0.5 font-sans text-[13px] text-bear-sub">
                 Выбери день — его еда скопируется в сегодня
               </Text>
             </View>
@@ -154,14 +154,14 @@ export function RepeatDayModal({ visible, onClose }) {
               accessibilityLabel="Закрыть"
               className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X size={16} color="#AEB9D9" />
+              <X size={18} color="#AEB9D9" />
             </Pressable>
           </View>
 
           {/* Список дней: новые сверху */}
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {days.length === 0 ? (
-              <Text className="py-10 text-center font-sans text-[12px] text-bear-sub">
+              <Text className="py-10 text-center font-sans text-[14.5px] text-bear-sub">
                 Пока нет записей — повторять нечего 🐻
               </Text>
             ) : (
@@ -184,17 +184,17 @@ export function RepeatDayModal({ visible, onClose }) {
                           isPicked ? 'border-[#8DABFF] bg-[#5B7FFF]/30' : 'border-white/15'
                         }`}
                       >
-                        {isPicked && <Check size={12} color="#8DABFF" strokeWidth={3} />}
+                        {isPicked && <Check size={14} color="#8DABFF" strokeWidth={3} />}
                       </View>
                       <View className="min-w-0 flex-1">
                         <Text
                           numberOfLines={1}
-                          className={`font-bold text-[12.5px] ${isPicked ? 'text-bear-bright' : 'text-bear-text'}`}
+                          className={`font-bold text-[15px] ${isPicked ? 'text-bear-bright' : 'text-bear-text'}`}
                         >
                           {dayTitle(d.key)}
                           {isToday ? ' · сегодня' : ''}
                         </Text>
-                        <Text numberOfLines={1} className="font-sans text-[10.5px] text-bear-sub2">
+                        <Text numberOfLines={1} className="font-sans text-[12.5px] text-bear-sub2">
                           {`${d.count} записей · ≈${formatNum(Math.round(d.kcal))} ккал`}
                         </Text>
                       </View>
@@ -217,9 +217,9 @@ export function RepeatDayModal({ visible, onClose }) {
                 picked ? 'bg-[#5B7FFF] active:opacity-80' : 'bg-white/5'
               }`}
             >
-              <Copy size={15} color={picked ? '#FFFFFF' : '#8B96B8'} />
+              <Copy size={17} color={picked ? '#FFFFFF' : '#8B96B8'} />
               <Text
-                className={`font-bold text-[13px] ${picked ? 'text-white' : 'text-bear-sub2'}`}
+                className={`font-bold text-[15.5px] ${picked ? 'text-white' : 'text-bear-sub2'}`}
               >
                 {picked
                   ? `Скопировать в сегодня (${dayTitle(picked)})`
