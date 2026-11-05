@@ -204,12 +204,13 @@ export function expeditionOf(key) {
 }
 
 // Прогресс похода: done / remainingMs / fraction 0…1. Нет похода — null.
+// speed — множитель длительности от Компаса странника (0.9 = на 10% быстрее).
 // Скачок часов вперёд (startedAt в будущем) = «только ушёл», без читов.
-export function expeditionProgress(expedition, now = Date.now()) {
+export function expeditionProgress(expedition, now = Date.now(), speed = 1) {
   const e = expeditionOf(expedition && expedition.key)
   const startedAt = expedition && expedition.startedAt
   if (!e || !startedAt) return null
-  const durationMs = e.hours * 3600000
+  const durationMs = e.hours * 3600000 * Math.max(0.5, speed || 1)
   const elapsed = Math.max(0, now - startedAt)
   return {
     done: elapsed >= durationMs,
@@ -289,4 +290,172 @@ export function fmtRemaining(ms) {
   const h = Math.floor(min / 60)
   const m = min % 60
   return h > 0 ? `${h} ч ${m} м` : `${m} м`
+}
+
+// ── Ежедневные квесты ───────────────────────────────────────────────────────
+// Пул из 6 квестов, детерминированный выбор 3 на день (одинаковый за сутки).
+// Прогресс считается из живых метрик дня, награда — +2 гена за квест,
+// все три закрыты → +1 кристалл. Ничего наказующего: не выполнил — просто
+// завтра новые.
+
+export const QUESTS = [
+  { key: 'water', emoji: '💧', name: 'Наполни колодец', sub: '6 стаканов воды за день', metric: 'glasses', goal: 6 },
+  { key: 'steps', emoji: '👣', name: 'Дальний маршрут', sub: '8 000 шагов за день', metric: 'steps', goal: 8000 },
+  { key: 'workout', emoji: '💪', name: 'Тренировка дня', sub: 'любая тренировка', metric: 'workouts', goal: 1 },
+  { key: 'protein', emoji: '🥩', name: 'Белковый фундамент', sub: '50 г белка за день', metric: 'protein', goal: 50 },
+  { key: 'meals', emoji: '🍽️', name: 'Режим питания', sub: '3 записи в дневнике питания', metric: 'meals', goal: 3 },
+  { key: 'balance', emoji: '⚖️', name: 'Держишь баланс', sub: 'калории 80–115% от цели', metric: 'balance', goal: 1 },
+]
+
+export const QUEST_REWARD = { genes: 2, allBonusCrystals: 1 }
+
+// Детерминированный выбор 3 квестов на день (seed = хеш даты)
+export function questsForDay(dayKey) {
+  let h = 2166136261
+  for (let i = 0; i < dayKey.length; i++) {
+    h ^= dayKey.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  const pool = [...QUESTS]
+  const picked = []
+  let seed = h >>> 0
+  while (picked.length < 3 && pool.length) {
+    seed = (Math.imul(seed, 48271) + 11) >>> 0
+    picked.push(pool.splice(seed % pool.length, 1)[0])
+  }
+  return picked
+}
+
+// Прогресс квеста по живым метрикам дня → { cur, goal, done }
+export function questProgress(quest, m) {
+  const cur = Math.max(0, m?.[quest.metric] || 0)
+  return { cur: Math.min(cur, quest.goal), goal: quest.goal, done: cur >= quest.goal }
+}
+
+// ── Энциклопедия питания (коллекция «жителей») ─────────────────────────────
+// Первое закрытие цели дня открывает нового «жителя биома» с настоящим
+// фактом о пользе. Обучение через коллекционирование, без занудства.
+
+export const CODEX = [
+  { key: 'water', emoji: '💦', name: 'Капелька', fact: 'Вода участвует во всех обменных процессах — даже лёгкое обезвоживание снижает концентрацию и силы.' },
+  { key: 'steps', emoji: '🦶', name: 'Шагоход', fact: '8 000 шагов в день связывают с более низким риском сердечных заболеваний — показывают крупные исследования.' },
+  { key: 'workout', emoji: '🏋️', name: 'Силач-гриб', fact: 'Силовые тренировки укрепляют кости и поддерживают мышцы, которые после 30 лет теряются без нагрузки.' },
+  { key: 'protein', emoji: '🥚', name: 'Белковый ёжик', fact: 'Белок — строительный материал мышц и ферментов; он дольше переваривается и дольше оставляет сытость.' },
+  { key: 'meals', emoji: '🍲', name: 'Кастрюлька', fact: 'Регулярные приёмы пищи помогают держать ровный сахар в крови — меньше резкого голода и перееданий.' },
+  { key: 'balance', emoji: '⚖️', name: 'Весы-чудеса', fact: 'Умеренный дефицит или баланс калорий — единственный научно подтверждённый способ управления весом.' },
+  { key: 'streak3', emoji: '🔥', name: 'Огонёк', fact: 'Привычка закрепляется в среднем за 66 дней регулярного повторения — серия дней реально перестраивает мозг.' },
+]
+
+// +2 кристалла за каждого нового жителя
+export const CODEX_REWARD = 2
+
+// ── Карта мира: зоны экспедиций ─────────────────────────────────────────────
+// Зона открывается стадией эволюции: организм должен «дорасти» до маршрута.
+
+export const ZONES = [
+  { key: 'forest', name: 'Лес клетчатки', emoji: '🌿', need: 0, exped: 'walk', note: 'мягкие тропы для юного организма' },
+  { key: 'river', name: 'Река воды', emoji: '🏞️', need: 1, exped: 'hike', note: 'путь вдоль звонких родников' },
+  { key: 'mountain', name: 'Горы выносливости', emoji: '🏔️', need: 2, exped: 'quest', note: 'вершины, где растут гены' },
+]
+
+// ── Боссы-легенды (после престижа) ──────────────────────────────────────────
+export const LEGEND_BOSSES = [
+  { name: 'Прокрастинатор-Титан', hp: 2200, emoji: '💀' },
+  { name: 'Вечно-Голодный Сумрак', hp: 2500, emoji: '🌑' },
+  { name: 'Король Отговорок', hp: 2000, emoji: '👑' },
+]
+
+// Босс недели: обычная ротация, после престижа — легенды (HP ×1.6)
+export function bossForWeek(weekNo, prestigeCount = 0) {
+  if ((prestigeCount || 0) > 0) {
+    const b = LEGEND_BOSSES[(weekNo - 1) % LEGEND_BOSSES.length]
+    return { ...b, hp: Math.round(b.hp * 1.6), legend: true }
+  }
+  return BOSSES[(weekNo - 1) % BOSSES.length]
+}
+
+// ── Медали вклада в рейде (считаются из итогов недели, не хранятся) ─────────
+export function raidMedals(mine, myDays) {
+  const out = []
+  if ((mine?.shield || 0) >= 28) out.push({ emoji: '💧', name: 'Щитоносец', note: '28+ стаканов за неделю' })
+  if ((mine?.dmg || 0) >= 400) out.push({ emoji: '⚔️', name: 'Удар недели', note: '400+ урона' })
+  if ((mine?.crit || 0) >= 3) out.push({ emoji: '🎯', name: 'Крит-мастер', note: '3+ дня с тренировками' })
+  if ((myDays || 0) >= 5) out.push({ emoji: '📅', name: 'Без пропусков', note: '5+ дней вклада' })
+  return out
+}
+
+// ── Синтез артефактов: мутаген → именной артефакт с пассивным бонусом ───────
+// 9 мутагена = ровно 3 дубликата. Выбор: капсула или крафт — игрок решает.
+export const CRAFT_COST = 9
+
+export const CRAFTS = [
+  { key: 'abundance', emoji: '🌾', name: 'Тотем изобилия', bonus: 'bloom', bonusText: '+1 ген за каждый день расцвета' },
+  { key: 'stream', emoji: '💠', name: 'Кристалл потока', bonus: 'expedition', bonusText: '+2 кристалла за каждую экспедицию' },
+  { key: 'compass', emoji: '🧭', name: 'Компас странника', bonus: 'speed', bonusText: 'походы идут на 10% быстрее' },
+]
+
+export function craftOf(key) {
+  return CRAFTS.find((c) => c.key === key) || null
+}
+
+export function craftedHas(crafted, bonusKind) {
+  return (crafted || []).some((k) => craftOf(k)?.bonus === bonusKind)
+}
+
+// ── Скины аур: подсветка сцены от найденных аур ─────────────────────────────
+export const SKINS = {
+  'Аура: Лаймовый шторм': { glow: '#A3E635', ring: 'rgba(163,230,53,0.45)' },
+  'Аура: Полярное сияние': { glow: '#67E8F9', ring: 'rgba(103,232,249,0.45)' },
+  'Аура: Уголь и мята': { glow: '#FBBF24', ring: 'rgba(251,191,36,0.4)' },
+}
+
+export function skinOf(auraName) {
+  return (auraName && SKINS[auraName]) || null
+}
+
+// ── Главы сезонов: неделя = глава, победа = 5 дней расцвета ──────────────────
+export const CHAPTER_WIN_DAYS = 5
+
+export function chapterIntro(weekNo) {
+  const intros = [
+    'Стая собралась у костра: новая глава открывается — впереди семь дней пути.',
+    'Шаман стаи бросил кости: неделя обещает быть щедрой на гены.',
+    'Разведчики вернулись: тропы недели чисты, босс где-то рядом.',
+    'Заря над биомом: глава началась, геном ждёт событий.',
+  ]
+  return intros[(weekNo - 1) % intros.length]
+}
+
+// ── Утренние реакции организма (пузырь при открытии вкладки) ────────────────
+export function pickReaction({ state, streak, wave, expedition, bossHpPct, petLevel = 0, codexCount = 0 }) {
+  if (expedition) return 'Я в походе — но мыслями уже дома. Накорми меня хорошим днём!'
+  if (state === 'decline') return 'Утро тяжёлое… Начни со стакана воды, я поправлюсь.'
+  if (streak >= 3) return `Наша серия — ${streak} дней! Геном поёт от гордости.`
+  if (wave >= 3) return `Башня покоряется: волна ${wave}. Не останавливайся!`
+  if (bossHpPct != null && bossHpPct <= 25) return 'Босс шатается! Добей его сегодня — вся стая верит.'
+  if (petLevel >= 2) return 'Питомец подрос и просит good-day-кормёжку. Вода и еда — лучшее лакомство!'
+  if (codexCount >= 3) return `В энциклопедии уже ${codexCount} жителей. Соберём всех?`
+  if (state === 'bloom') return 'Сияю после вчерашнего! Погладь меня — заслужил.'
+  const morning = [
+    'Доброе утро! Чем наполнится мой день?',
+    'Проснулся бодрым. Вода и записи — и я расцвету!',
+    'Геном шепчет: сегодня хороший день для цели.',
+  ]
+  return morning[new Date().getDate() % morning.length]
+}
+
+// ── Дневник приключений: журнал в тональности летописи ──────────────────────
+const TALE_EMOJI = [
+  ['Эволюция', '🧬'], ['Рейд', '⚔️'], ['Экспедиция', '🧭'], ['поход', '🧭'],
+  ['Капсула', '🎁'], ['Медосмотр', '🩺'], ['прыщ', '✨'], ['Серия', '🔥'],
+  ['Мутации', '🧪'], ['Стабильность', '🛡️'], ['Глава', '📖'], ['Питомец', '🐾'],
+  ['житель', '📕'], ['Квест', '📜'], ['Башня', '🗼'], ['Синтез', '⚗️'],
+  ['НОВАЯ ИГРА', '👑'],
+]
+
+export function adventureTale(entry, createdAtMs) {
+  const day = createdAtMs ? Math.max(1, Math.floor((entry.ts - createdAtMs) / 86400000) + 1) : null
+  const hit = TALE_EMOJI.find(([word]) => entry.text.includes(word))
+  const prefix = day ? `День ${day}` : journalDayLabel(entry.ts)
+  return { dayLabel: prefix, emoji: hit ? hit[1] : '•', text: entry.text }
 }

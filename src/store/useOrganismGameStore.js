@@ -11,21 +11,37 @@ import { makeId } from '@/lib/format'
 import {
   ARTIFACTS,
   AURAS,
+  CHAPTER_WIN_DAYS,
+  CODEX,
+  CODEX_REWARD,
+  CRAFT_COST,
+  CRAFTS,
   DUP_MUTAGEN,
   MUTAGEN_PER_CAPSULE,
+  QUEST_REWARD,
   STREAK_FOR_CAPSULE,
   crystalsLabel,
+  craftOf,
+  craftedHas,
   expeditionOf,
   expeditionProgress,
   expeditionTale,
   genesLabel,
   mondayKeyOf,
+  questProgress,
+  questsForDay,
   rollDrop,
   yesterdayKeyOf,
 } from '@/lib/data/organism-game'
 
-// За «хороший» день организм делится генами (тяни оси событиями дневника)
+// За «хороший» день организм делится генами (тяни оси событиями дневника).
+// Питомец и синтез добавляют бонус сверху: уровень питомца — до +2,
+// Тотем изобилия — ещё +1.
 const GENES_BLOOM_DAY = 3
+
+// Бонус генов за расцвет от питомца: с 3-й кормёжки +1, с 6-й +2
+const petLevelOf = (fedDays) => Math.floor((fedDays || 0) / 3) + 1
+const petBloomBonus = (fedDays) => Math.min(2, Math.floor((fedDays || 0) / 3))
 const MUTATION_MUTAGEN = 5
 
 // Гигиена хранилища: не копим историю бесконечно (AsyncStorage не резиновый).
@@ -67,11 +83,59 @@ function prune(s) {
     if (k >= cut) auditDays[k] = v
     else changed = true
   }
+  // квесты: держим 14 дней (как goodDays)
+  const questClaims = {}
+  for (const [k, v] of Object.entries(s.questClaims || {})) {
+    if (k >= cut) questClaims[k] = v
+    else changed = true
+  }
+  // главы: последние 5 недель
+  const weeks = Object.keys(s.chapters || {}).sort()
+  let chapters = s.chapters || {}
+  if (weeks.length > 5) {
+    chapters = Object.fromEntries(weeks.slice(-5).map((w) => [w, s.chapters[w]]))
+    changed = true
+  }
   const log = s.log.length > LOG_MAX ? s.log.slice(0, LOG_MAX) : s.log
   if (log !== s.log) changed = true
   // разовая уборка comboDays у тех, кто обновился со старой версией
   if (s.comboDays && Object.keys(s.comboDays).length) changed = true
-  return changed ? { raidDays, goodDays, auditDays, log, comboDays: undefined } : {}
+  return changed ? { raidDays, goodDays, auditDays, questClaims, chapters, log, comboDays: undefined } : {}
+}
+
+// Закрытие главы недели: считаем дни расцвета этой недели из goodDays.
+// 5+ дней расцвета — глава пройдена: артефакт + 3 кристалла. Дубликат
+// артефакта — как обычно, в мутаген. Без победы — мягкий итог без штрафа.
+function settleChapterOf(state, weekKey, setFn) {
+  if (!weekKey || state.chapters?.[weekKey]) return
+  const best = Object.entries(state.goodDays || {}).filter(([k, v]) => v && k >= weekKey && k < nextWeekKeyOf(weekKey)).length
+  const patch = { chapterLastWeek: weekKey, chapters: { ...(state.chapters || {}), [weekKey]: { win: best >= CHAPTER_WIN_DAYS, best } } }
+  if (best >= CHAPTER_WIN_DAYS) {
+    const name = ARTIFACTS[Math.floor(Math.random() * ARTIFACTS.length)]
+    const dup = state.items.includes(name)
+    patch.crystals = (state.crystals || 0) + 3
+    if (dup) patch.mutagen = (state.mutagen || 0) + DUP_MUTAGEN
+    else patch.items = [...(state.items || []), name]
+    patch.log = pushLog(state.log || [], {
+      id: makeId(), ts: Date.now(),
+      text: `Глава закрыта победой: ${best} дней расцвета — ${dup ? `${name} (дубликат → +${DUP_MUTAGEN} мутагена)` : name} и +3 кристалла.`,
+    })
+  } else {
+    patch.log = pushLog(state.log || [], {
+      id: makeId(), ts: Date.now(),
+      text: `Глава закрыта: ${best} дней расцвета из ${CHAPTER_WIN_DAYS}. В новой главе получится.`,
+    })
+  }
+  setFn(patch)
+}
+
+// Понедельник следующей недели (для границ недели главы)
+function nextWeekKeyOf(weekKey) {
+  const [y, m, d] = weekKey.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + 7)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`
 }
 
 export const useOrganismGameStore = create(
@@ -120,19 +184,86 @@ export const useOrganismGameStore = create(
       auditDays: {}, // { '2026-11-03': 78 }
       auditBonusDay: null,
 
-      /* ── Ежедневная синхронизация: вызывается при открытии экрана ── */
-      syncDay: ({ dayKey, combo, state }) => {
+      // ── Новые игровые системы (v2) ──
+      questClaims: {}, // { dayKey: ['water','steps'] } — закрытые квесты дня
+      pet: { fedDays: 0, lastFedKey: null }, // питомец: кормёжка за хороший день
+      codex: [], // открытые жители энциклопедии (ключи CODEX)
+      crafted: [], // синтезированные артефакты (ключи CRAFTS)
+      tower: { wave: 0, lastKey: null }, // башня испытаний: волна дней
+      chapterLastWeek: null, // понедельник последней закрытой главы
+      chapters: {}, // { weekKey: { win, best } } — итоги закрытых глав
+      activeSkin: null, // наложенная аура (скин сцены)
+      prestigeCount: 0, // сколько раз достигнут Титан и начата новая игра+
+      lastReactKey: null, // день последней утренней реплики
+
+      /* ── Ежедневная синхронизация: вызывается при открытии экрана.
+           unlocks — впервые закрытые сегодня цели (ключи CODEX) ── */
+      syncDay: ({ dayKey, combo, state, unlocks = [] }) => {
         // гигиена: сперва подрезать накопившееся (раз в открытие экрана),
         // затем вся логика ниже работает с уже чистым состоянием
         const cleaned = prune(get())
         if (Object.keys(cleaned).length) set(cleaned)
-        const s = get()
-        if (!s.createdAt) set({ createdAt: mondayKeyOf() })
-        if (s.raidWeekStart !== mondayKeyOf()) {
-          // новая неделя рейда — новый босс, старая неделя закрыта
+        const s0 = get()
+        if (!s0.createdAt) set({ createdAt: mondayKeyOf() })
+        // смена недели: закрываем главу (итоги прошлой недели) + новый босс
+        if (s0.raidWeekStart !== mondayKeyOf()) {
+          settleChapterOf(s0, s0.raidWeekStart, (patchChapter) => set(patchChapter))
           set({ raidWeekStart: mondayKeyOf(), raidKilled: false, raidRewarded: false })
         }
+        const s = get()
         const patch = {}
+
+        // питомец: кормёжка за день с заполненной шкалой; каждые 3 кормёжки —
+        // уровень (+2 кристалла за рост)
+        const pet = s.pet || { fedDays: 0, lastFedKey: null }
+        if (combo >= 100 && pet.lastFedKey !== dayKey) {
+          const fedDays = pet.fedDays + 1
+          const grew = fedDays % 3 === 0
+          patch.pet = { fedDays, lastFedKey: dayKey }
+          if (grew) {
+            patch.crystals = s.crystals + 2
+            patch.log = pushLog(s.log, {
+              id: makeId(), ts: Date.now(),
+              text: `Питомец подрос до уровня ${petLevelOf(fedDays)} (+2 кристалла от радости).`,
+            })
+          }
+        }
+
+        // башня испытаний: хороший день — волна вверх (каждая 3-я — награда),
+        // плохой день после серии — мягкий откат на одну волну
+        if (combo >= 100 && s.tower.lastKey !== dayKey) {
+          const cont = s.tower.lastKey === yesterdayKeyOf(dayKey)
+          const wave = cont ? s.tower.wave + 1 : 1
+          patch.tower = { wave, lastKey: dayKey }
+          if (wave > 0 && wave % 3 === 0) {
+            patch.genes = (patch.genes ?? s.genes) + 2
+            patch.crystals = (patch.crystals ?? s.crystals) + 2
+            patch.log = pushLog(patch.log || s.log, {
+              id: makeId(), ts: Date.now(),
+              text: `Башня: волна ${wave} взята — +2 гена, +2 кристалла.`,
+            })
+          }
+        } else if (combo < 100 && s.tower.wave > 0 && s.tower.lastKey === yesterdayKeyOf(dayKey) && s.tower.lastKey !== dayKey) {
+          patch.tower = { wave: s.tower.wave - 1, lastKey: dayKey }
+          patch.log = pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: 'Башня: день выбился из ритма — спуск на одну волну (мягко).',
+          })
+        }
+
+        // энциклопедия: впервые закрытые цели открывают жителей (+2 кристалла);
+        // дубли в самом батче unlocks убираем, чтобы житель не открылся дважды
+        const fresh = [...new Set(unlocks || [])].filter(
+          (k) => CODEX.some((c) => c.key === k) && !s.codex.includes(k)
+        )
+        if (fresh.length) {
+          patch.codex = [...s.codex, ...fresh]
+          patch.crystals = (patch.crystals ?? s.crystals) + fresh.length * CODEX_REWARD
+          patch.log = pushLog(patch.log || s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Энциклопедия: новый${fresh.length > 1 ? 'е' : ''} житель${fresh.length > 1 ? 'и' : ''} биома (+${fresh.length * CODEX_REWARD} кристалла).`,
+          })
+        }
 
         // стрик: день с заполненной шкалой; стрик 7 → капсула
         if (combo >= 100 && s.streakLastKey !== dayKey) {
@@ -164,10 +295,19 @@ export const useOrganismGameStore = create(
           }
         }
 
-        // гены за расцвет (раз в день)
+        // гены за расцвет (раз в день): базовые + бонус питомца (уровень 3/6)
+        // + Тотем изобилия (синтез)
         if (state === 'bloom' && !s.goodDays[dayKey]) {
+          const fedToday = (patch.pet || s.pet || {}).fedDays || 0
+          const bonus = petBloomBonus(fedToday) + (craftedHas(s.crafted, 'bloom') ? 1 : 0)
           patch.goodDays = { ...s.goodDays, [dayKey]: true }
-          patch.genes = s.genes + GENES_BLOOM_DAY
+          patch.genes = (patch.genes ?? s.genes) + GENES_BLOOM_DAY + bonus
+          if (bonus > 0) {
+            patch.log = pushLog(patch.log || s.log, {
+              id: makeId(), ts: Date.now(),
+              text: `Расцвет дня: +${GENES_BLOOM_DAY + bonus} генов (бонус ${bonus} — союзники помогают).`,
+            })
+          }
         }
 
         if (Object.keys(patch).length) set(patch)
@@ -317,23 +457,101 @@ export const useOrganismGameStore = create(
         return true
       },
 
-      /* ── Экспедиция: забрать добычу, когда время вышло ── */
+      /* ── Экспедиция: забрать добычу, когда время вышло.
+           Кристалл потока: +2 кристалла; Компас: походы на 10% быстрее ── */
       collectExpedition: () => {
         const s = get()
-        const pr = expeditionProgress(s.expedition)
+        const speed = craftedHas(s.crafted, 'speed') ? 0.9 : 1
+        const pr = expeditionProgress(s.expedition, Date.now(), speed)
         if (!pr || !pr.done) return null
         const e = expeditionOf(s.expedition.key)
         const tale = expeditionTale(s.expedition.key)
+        const bonusCrystals = craftedHas(s.crafted, 'expedition') ? 2 : 0
         set({
           expedition: null,
           genes: s.genes + e.genes,
-          crystals: s.crystals + e.crystals,
+          crystals: s.crystals + e.crystals + bonusCrystals,
           log: pushLog(s.log, {
             id: makeId(), ts: Date.now(),
-            text: `Экспедиция «${e.name}»: +${genesLabel(e.genes)}, +${crystalsLabel(e.crystals)}. ${tale}`,
+            text: `Экспедиция «${e.name}»: +${genesLabel(e.genes)}, +${crystalsLabel(e.crystals + bonusCrystals)}. ${tale}`,
           }),
         })
-        return { name: e.name, genes: e.genes, crystals: e.crystals, tale }
+        return { name: e.name, genes: e.genes, crystals: e.crystals + bonusCrystals, tale }
+      },
+
+      /* ── Квест дня: забрать награду (+2 гена; все три — +1 кристалл).
+           Проверяем по живым метрикам — награду не получить обманом ── */
+      claimQuest: ({ dayKey, questKey, metrics }) => {
+        const s = get()
+        const quest = questsForDay(dayKey).find((q) => q.key === questKey)
+        if (!quest || !questProgress(quest, metrics).done) return false
+        const claimed = s.questClaims[dayKey] || []
+        if (claimed.includes(questKey)) return false
+        const claims = [...claimed, questKey]
+        const allDone = questsForDay(dayKey).every((q) => claims.includes(q.key))
+        set({
+          questClaims: { ...s.questClaims, [dayKey]: claims },
+          genes: s.genes + QUEST_REWARD.genes,
+          crystals: s.crystals + (allDone ? QUEST_REWARD.allBonusCrystals : 0),
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Квест «${quest.name}» закрыт: +${QUEST_REWARD.genes} гена${allDone ? ', плюс кристалл за все три' : ''}.`,
+          }),
+        })
+        return true
+      },
+
+      /* ── Скин: наложить найденную ауру на сцену ── */
+      setSkin: (auraName) => {
+        const s = get()
+        if (auraName && !s.items.includes(auraName)) return false
+        set({ activeSkin: auraName || null })
+        return true
+      },
+
+      /* ── Отметить утреннюю реплику показанной (раз в день) ── */
+      markReacted: (dayKey) => {
+        if (get().lastReactKey === dayKey) return
+        set({ lastReactKey: dayKey })
+      },
+
+      /* ── Синтез: мутаген → именной артефакт с пассивным бонусом.
+           Каждый рецепт — один раз; выбор «капсула или крафт» за игроком ── */
+      craftArtifact: (recipeKey) => {
+        const s = get()
+        const recipe = craftOf(recipeKey)
+        if (!recipe || s.mutagen < CRAFT_COST || s.crafted.includes(recipeKey)) return false
+        set({
+          mutagen: s.mutagen - CRAFT_COST,
+          crafted: [...s.crafted, recipeKey],
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `Синтез: ${recipe.emoji} ${recipe.name} готов (${recipe.bonusText}).`,
+          }),
+        })
+        return true
+      },
+
+      /* ── Престиж: после Титана — новая игра+. Формы и гены обнуляются,
+           коллекция, энциклопедия, питомец и синтез остаются; боссы-легенды
+           и золотой окрас сцены ── */
+      doPrestige: () => {
+        const s = get()
+        if (s.evoStage < 4) return false
+        set({
+          prestigeCount: s.prestigeCount + 1,
+          evoStage: 0,
+          evoBranch: '',
+          genes: 12 + (s.prestigeCount + 1) * 10,
+          stableDays: 0,
+          stableLastKey: null,
+          mutationUnlocked: false,
+          log: pushLog(s.log, {
+            id: makeId(), ts: Date.now(),
+            text: `НОВАЯ ИГРА+ №${s.prestigeCount + 1}: Титан достигнут, путь начат заново с бонусом. Легенды ждут!`,
+          }),
+        })
+        return true
       },
 
       /* ── Полный сброс (вместе с «Стереть все данные») ── */
@@ -347,12 +565,28 @@ export const useOrganismGameStore = create(
           items: [], opened: 0, log: [], expedition: null,
           pimplePop: { dayKey: null, popped: [] }, pimpleBonusDay: null,
           auditDays: {}, auditBonusDay: null,
+          questClaims: {}, pet: { fedDays: 0, lastFedKey: null }, codex: [], crafted: [],
+          tower: { wave: 0, lastKey: null }, chapterLastWeek: null, chapters: {},
+          activeSkin: null, prestigeCount: 0, lastReactKey: null,
         }),
     }),
     {
       name: 'nutribear-organism-game-v1',
-      version: 1,
-      migrate: (state) => state, // схема меняется — здесь появится миграция
+      version: 2,
+      // v2: новые игровые системы — недостающие поля добираются дефолтами
+      migrate: (state) => ({
+        ...state,
+        questClaims: state.questClaims || {},
+        pet: state.pet || { fedDays: 0, lastFedKey: null },
+        codex: state.codex || [],
+        crafted: state.crafted || [],
+        tower: state.tower || { wave: 0, lastKey: null },
+        chapterLastWeek: state.chapterLastWeek ?? null,
+        chapters: state.chapters || {},
+        activeSkin: state.activeSkin ?? null,
+        prestigeCount: state.prestigeCount || 0,
+        lastReactKey: state.lastReactKey ?? null,
+      }),
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         genes: s.genes, crystals: s.crystals, mutagen: s.mutagen, capsules: s.capsules,
@@ -364,6 +598,9 @@ export const useOrganismGameStore = create(
         expedition: s.expedition,
         pimplePop: s.pimplePop, pimpleBonusDay: s.pimpleBonusDay,
         auditDays: s.auditDays, auditBonusDay: s.auditBonusDay,
+        questClaims: s.questClaims, pet: s.pet, codex: s.codex, crafted: s.crafted,
+        tower: s.tower, chapterLastWeek: s.chapterLastWeek, chapters: s.chapters,
+        activeSkin: s.activeSkin, prestigeCount: s.prestigeCount, lastReactKey: s.lastReactKey,
       }),
     }
   )
@@ -376,4 +613,4 @@ export function weekNumberOf(createdAt) {
   return Math.max(1, Math.floor((now - start) / (7 * 86400000)) + 1)
 }
 
-export { dayKeyOf }
+export { dayKeyOf, petLevelOf }
