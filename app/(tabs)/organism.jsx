@@ -5,7 +5,7 @@
 // без pay-to-win).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronDown, Info, Stethoscope, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { OrganismStage } from '@/components/organism/OrganismStage'
@@ -16,6 +16,13 @@ import { ExpeditionCard } from '@/components/organism/ExpeditionCard'
 import { EvolutionCard } from '@/components/organism/EvolutionCard'
 import { RaidCard } from '@/components/organism/RaidCard'
 import { CapsuleCard } from '@/components/organism/CapsuleCard'
+import { QuestCard } from '@/components/organism/QuestCard'
+import { AdventureLog } from '@/components/organism/AdventureLog'
+import { ChapterCard } from '@/components/organism/ChapterCard'
+import { PetCard } from '@/components/organism/PetCard'
+import { CodexCard } from '@/components/organism/CodexCard'
+import { TowerCard } from '@/components/organism/TowerCard'
+import { CraftCard } from '@/components/organism/CraftCard'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -28,16 +35,20 @@ import { pickPimpleDonePhrase, pickPimplePopPhrase } from '@/lib/data/audit'
 import { bjuSum } from '@/lib/data/bju'
 import { computeOrganism } from '@/lib/data/organism'
 import {
-  BOSSES,
   PIMPLE_SPOTS,
+  bossForWeek,
+  craftedHas,
   dayCombo,
   dayRaidDamage,
   genomeAvg70,
   mondayKeyOf,
   myWeekTotals,
   packDamage,
+  pickReaction,
   raidBattleHp,
   raidHealAbsorb,
+  raidMedals,
+  skinOf,
   weekDayIdx,
 } from '@/lib/data/organism-game'
 import { CollectionCard } from '@/components/organism/CollectionCard'
@@ -118,11 +129,35 @@ export default function OrganismScreen() {
   const workouts = (exerciseLogs[dayKey] || []).length
   const combo = dayCombo(flatEntries.length, glasses, workouts)
 
-  // Ежедневная синхронизация: комбо, стрик, стабильность, гены за расцвет
+  // Метрики дня для квестов и энциклопедии (всё из живых данных)
+  const balanceOk = goals.kcal > 0 && kcal >= goals.kcal * 0.8 && kcal <= goals.kcal * 1.15
+  const questMetrics = {
+    glasses,
+    steps: stepsToday,
+    workouts,
+    protein: proteinG,
+    meals: flatEntries.length,
+    balance: balanceOk ? 1 : 0,
+  }
+  const unlocks = useMemo(
+    () => [
+      ...(goals.waterMl > 0 && glasses * 250 >= goals.waterMl ? ['water'] : []),
+      ...(goals.steps > 0 && stepsToday >= goals.steps ? ['steps'] : []),
+      ...(workouts >= 1 ? ['workout'] : []),
+      ...(proteinG >= 50 ? ['protein'] : []),
+      ...(flatEntries.length >= 3 ? ['meals'] : []),
+      ...(balanceOk ? ['balance'] : []),
+      ...(game.streak >= 3 ? ['streak3'] : []),
+    ],
+    [goals.waterMl, goals.steps, glasses, stepsToday, workouts, proteinG, flatEntries.length, balanceOk, game.streak]
+  )
+
+  // Ежедневная синхронизация: комбо, стрик, стабильность, гены за расцвет,
+  // кормёжка питомца, башня, энциклопедия, итоги главы
   useEffect(() => {
-    game.syncDay({ dayKey, combo, state: org.state })
+    game.syncDay({ dayKey, combo, state: org.state, unlocks })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayKey, combo, org.state])
+  }, [dayKey, combo, org.state, unlocks])
 
   // Рейд: мой вклад за сегодня (еда = удар, вода = щит, тренировка = крит)
   useEffect(() => {
@@ -131,10 +166,11 @@ export default function OrganismScreen() {
   }, [dayKey, kcal, workouts, glasses])
 
   // Расчёт рейда на текущую неделю: крит удваивает урон еды (день с
-  // тренировкой), пропущенные дни лечат босса, щиты (вода) гасят лечение
+  // тренировкой), пропущенные дни лечат босса, щиты (вода) гасят лечение.
+  // После престижа — боссы-легенды.
   const weekKey = mondayKeyOf()
   const weekNo = weekNumberOf(game.createdAt)
-  const boss = BOSSES[(weekNo - 1) % BOSSES.length]
+  const boss = bossForWeek(weekNo, game.prestigeCount)
   const mine = myWeekTotals(game.raidDays, weekKey)
   const pack = packDamage(weekKey, weekDayIdx())
   const elapsedDays = weekDayIdx() + 1
@@ -142,6 +178,11 @@ export default function OrganismScreen() {
   const skips = Math.max(0, elapsedDays - myDays)
   const raidHp = raidBattleHp(boss.hp, mine.dmg, pack, skips, mine.shield)
   const { heal, absorb } = raidHealAbsorb(skips, mine.shield)
+  const medals = raidMedals(mine, myDays)
+  // Скорость походов и скин сцены — от синтеза и аур
+  const speed = craftedHas(game.crafted, 'speed') ? 0.9 : 1
+  const skin = skinOf(game.activeSkin)
+  const gold = (game.prestigeCount || 0) > 0
 
   // Босс павший — зафиксировать награду (один раз в неделю)
   useEffect(() => {
@@ -199,6 +240,26 @@ export default function OrganismScreen() {
   const basePhrase = org.phrase
   const shownPhrase = phrase || basePhrase
 
+  // Утренняя реакция организма: раз в день при открытии вкладки
+  useEffect(() => {
+    if (game.lastReactKey === dayKey) return
+    game.markReacted(dayKey)
+    setPhrase(
+      pickReaction({
+        state: org.state,
+        streak: game.streak,
+        wave: game.tower.wave,
+        expedition: game.expedition,
+        bossHpPct: Math.round((raidHp / boss.hp) * 100),
+        petLevel: Math.floor((game.pet?.fedDays || 0) / 3) + 1,
+        codexCount: (game.codex || []).length,
+      })
+    )
+    phraseTimer.current = setTimeout(() => setPhrase(''), 4500)
+    return () => clearTimeout(phraseTimer.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayKey])
+
   /* ── Аудит организма: Доктор Топтыгин + пейволл Premium ── */
   const [paywallOpen, setPaywallOpen] = useState(false)
   const handleRunAudit = useCallback(({ dayKey: k, score }) => {
@@ -220,6 +281,57 @@ export default function OrganismScreen() {
     clearTimeout(phraseTimer.current)
     phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
   }, [org.state])
+
+  /* ── Новые игровые системы: квесты, крафт, скины, престиж ── */
+  const handleClaimQuest = useCallback(
+    (questKey) => {
+      const ok = game.claimQuest({ dayKey, questKey, metrics: questMetrics })
+      if (ok) {
+        setPhrase('📜 Квест закрыт! Организм делится генами')
+        clearTimeout(phraseTimer.current)
+        phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game.claimQuest, dayKey, questMetrics]
+  )
+
+  const handleCraft = useCallback(
+    (recipeKey) => {
+      const ok = game.craftArtifact(recipeKey)
+      if (ok) {
+        setPhrase('⚗️ Артефакт синтезирован — бонус уже работает!')
+        clearTimeout(phraseTimer.current)
+        phraseTimer.current = setTimeout(() => setPhrase(''), 3000)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [game.craftArtifact]
+  )
+
+  const handleSetSkin = useCallback((name) => game.setSkin(name), [])
+
+  const handlePrestige = useCallback(() => {
+    Alert.alert(
+      'Новая игра+?',
+      'Формы и гены начнут путь заново, но коллекция, энциклопедия, питомец, синтез и летопись останутся. Боссы-легенды ждут!',
+      [
+        { text: 'Пока нет', style: 'cancel' },
+        {
+          text: '👑 Начать',
+          onPress: () => {
+            const ok = game.doPrestige()
+            if (ok) {
+              setPhrase('👑 НОВАЯ ИГРА+ Задекларирована! Легенды уже шевелятся…')
+              clearTimeout(phraseTimer.current)
+              phraseTimer.current = setTimeout(() => setPhrase(''), 4500)
+            }
+          },
+        },
+      ]
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.doPrestige])
 
   // Организм в упадке и осмотр ещё не проведён — приглашение к доктору:
   // тап доскролливает до карточки аудита
@@ -290,7 +402,13 @@ export default function OrganismScreen() {
           pimples={pimples}
           onPopPimple={handlePopPimple}
           haptics={haptics}
+          skin={skin}
+          gold={gold}
         />
+
+        <QuestCard dayKey={dayKey} metrics={questMetrics} claims={game.questClaims[dayKey]} onClaim={handleClaimQuest} />
+
+        <PetCard pet={game.pet} dayKey={dayKey} />
 
         {/* Организм в упадке — зовём к доктору (тап скроллит к аудиту) */}
         {showAuditInvite && (
@@ -330,8 +448,18 @@ export default function OrganismScreen() {
 
         <GenomeCard org={org} stats={stats} />
 
+        <ChapterCard
+          weekNo={weekNo}
+          weekKey={weekKey}
+          goodDays={game.goodDays}
+          chapters={game.chapters}
+          chapterLastWeek={game.chapterLastWeek}
+        />
+
         <ExpeditionCard
           expedition={game.expedition}
+          evoStage={game.evoStage}
+          speed={speed}
           onStart={handleStartExpedition}
           onCollect={handleCollectExpedition}
         />
@@ -343,8 +471,9 @@ export default function OrganismScreen() {
           evoBranch={game.evoBranch}
           stableDays={game.stableDays}
           mutationUnlocked={game.mutationUnlocked}
-          log={game.log}
+          prestigeCount={game.prestigeCount}
           onEvolve={handleEvolve}
+          onPrestige={handlePrestige}
         />
 
         <RaidCard
@@ -359,6 +488,7 @@ export default function OrganismScreen() {
           rewarded={game.raidRewarded}
           heal={heal}
           absorb={absorb}
+          medals={medals}
         />
 
         <CapsuleCard
@@ -370,7 +500,20 @@ export default function OrganismScreen() {
           onConvert={handleConvertMutagen}
         />
 
-        <CollectionCard items={game.items} opened={game.opened} />
+        <CraftCard mutagen={game.mutagen} crafted={game.crafted} onCraft={handleCraft} />
+
+        <TowerCard tower={game.tower} />
+
+        <CollectionCard
+          items={game.items}
+          opened={game.opened}
+          activeSkin={game.activeSkin}
+          onSetSkin={handleSetSkin}
+        />
+
+        <CodexCard codex={game.codex} />
+
+        <AdventureLog log={game.log} createdAt={game.createdAt} />
 
         <Text className="text-center font-sans text-[15px]" style={{ color: 'rgba(127,168,144,0.7)' }}>
           Демо-экономика · без pay-to-win · ресурсы только из дневника

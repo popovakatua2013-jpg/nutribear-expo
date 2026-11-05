@@ -1,9 +1,10 @@
 // Эволюция: текущая форма, склонность (сильнейшая ось генома), средний
 // геном X/70, цена в генах и кнопка «Эволюционировать». Ветку выбирает
-// геном, а не магазин — как в веб-макете. Ниже — история организма.
+// геном, а не магазин — как в веб-макете. После Титана — престиж:
+// новая игра+ с бонусом (полная летопись — в «Дневнике приключений»).
 
 import { Pressable, Text, View } from 'react-native'
-import { Sparkles, TrendingUp, Dna } from 'lucide-react-native'
+import { Crown, Sparkles, TrendingUp, Dna } from 'lucide-react-native'
 import { GameCard, GameHeader, Panel, Caps, GradBar, Dot, GAME } from './GameUi'
 import {
   BRANCHES,
@@ -12,12 +13,11 @@ import {
   GENOME_MAX,
   formName,
   genomeAvg70,
-  journalDayLabel,
   nextEvolution,
   tendencyOf,
 } from '@/lib/data/organism-game'
 
-export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mutationUnlocked, log, onEvolve }) {
+export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mutationUnlocked, prestigeCount = 0, onEvolve, onPrestige }) {
   const axes = org.axes
   const avg = genomeAvg70(axes)
   const tend = tendencyOf(axes)
@@ -148,8 +148,8 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
           })}
         </View>
 
-        {/* история организма */}
-        <Caps style={{ marginTop: 2 }}>ИСТОРИЯ ОРГАНИЗМА</Caps>
+        {/* история организма — кратко; полная летопись в «Дневнике приключений» */}
+        <Caps style={{ marginTop: 2 }}>ПУТЬ ОРГАНИЗМА</Caps>
         <View className="gap-2">
           <Dot>Организм создан из первых записей дневника.</Dot>
           <Dot color={mutationUnlocked ? GAME.lime : GAME.dim2}>
@@ -157,12 +157,39 @@ export function EvolutionCard({ org, genes, evoStage, evoBranch, stableDays, mut
               ? 'Стабильность 7 дней — открыта первая мутация.'
               : `Стабильность ${Math.min(stableDays, 7)} / 7 дней — первая мутация скоро.`}
           </Dot>
-          {log.slice(0, 3).map((e) => (
-            <Dot key={e.id} color={GAME.emerald}>
-              {journalDayLabel(e.ts)} · {e.text}
-            </Dot>
-          ))}
         </View>
+
+        {/* престиж: после Титана — новая игра+ с бонусом и боссами-легендами */}
+        {evoStage >= 4 && (
+          <View
+            className="mt-3 rounded-2xl p-3.5"
+            style={{ backgroundColor: 'rgba(250,204,21,0.07)', borderWidth: 1, borderColor: 'rgba(250,204,21,0.35)' }}
+          >
+            <View className="flex-row items-center gap-2.5">
+              <Crown size={22} color={GAME.yellow} />
+              <View className="min-w-0 flex-1">
+                <Text className="font-extrabold text-[17.5px]" style={{ color: GAME.yellow }}>
+                  Новая игра+ {prestigeCount > 0 ? `· престиж ${prestigeCount}` : ''}
+                </Text>
+                <Text className="mt-0.5 font-sans text-[15.5px] leading-snug" style={{ color: GAME.dim }}>
+                  Путь начнётся заново, но коллекция, энциклопедия, питомец и синтез
+                  останутся. Бонус: +{10 * (prestigeCount + 1)} генов на старте и боссы-легенды в рейде.
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={onPrestige}
+              accessibilityRole="button"
+              accessibilityLabel="Начать новую игру с престижем"
+              className="mt-3 items-center rounded-2xl py-3"
+              style={{ backgroundColor: GAME.yellow }}
+            >
+              <Text className="font-extrabold text-[17.5px]" style={{ color: '#2A2000' }}>
+                👑 Начать новую игру+
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </GameCard>
   )

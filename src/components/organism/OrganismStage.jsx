@@ -163,7 +163,7 @@ function Pimple({ spot, haptics, onPop }) {
   )
 }
 
-export function OrganismStage({ state, hydration, protein, phrase, onPet, genome = 0, pimples = [], onPopPimple, haptics = true }) {
+export function OrganismStage({ state, hydration, protein, phrase, onPet, genome = 0, pimples = [], onPopPimple, haptics = true, skin = null, gold = false }) {
   const meta = STATE_META[state] || STATE_META.normal
   const [burst, setBurst] = useState(0)
   const timer = useRef(null)
@@ -202,7 +202,10 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet, genome
   }
 
   return (
-    <View className="overflow-hidden rounded-[18px]" style={{ borderWidth: 1, borderColor: 'rgba(74,158,112,0.22)' }}>
+    <View
+      className="overflow-hidden rounded-[18px]"
+      style={{ borderWidth: 1, borderColor: gold ? 'rgba(250,204,21,0.4)' : skin ? skin.ring : 'rgba(74,158,112,0.22)' }}
+    >
       {/* фон карточки .org-card: linear-gradient(160deg, …) */}
       <LinearGradient
         colors={['rgba(24,44,33,0.72)', 'rgba(11,23,17,0.9)']}
@@ -212,9 +215,9 @@ export function OrganismStage({ state, hydration, protein, phrase, onPet, genome
       >
         {/* мягкие световые пятна вместо blur-3xl из макета */}
         <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <SoftBlob size={260} left={-40} top={-70} color="#a3e635" opacity={0.1} />
-          <SoftBlob size={176} left={-48} top={110} color="#a3e635" opacity={0.1} />
-          <SoftBlob size={224} right={-56} bottom={40} color="#67e8f9" opacity={0.1} />
+          <SoftBlob size={260} left={-40} top={-70} color={gold ? '#facc15' : skin ? skin.glow : '#a3e635'} opacity={0.1} />
+          <SoftBlob size={176} left={-48} top={110} color={gold ? '#fde68a' : skin ? skin.glow : '#a3e635'} opacity={0.1} />
+          <SoftBlob size={224} right={-56} bottom={40} color={gold ? '#fbbf24' : skin ? skin.glow : '#67e8f9'} opacity={0.1} />
         </View>
 
         {/* бейдж состояния */}

@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { GameCard, GameHeader, RightPill, Caps, GAME } from './GameUi'
 import { PACK_SIZE } from '@/lib/data/organism-game'
 
-export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, killed, rewarded, heal = 0, absorb = 0 }) {
+export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, killed, rewarded, heal = 0, absorb = 0, medals = [] }) {
   const hpPct = Math.max(0, Math.min(100, (hp / maxHp) * 100))
   const dead = hp <= 0
 
@@ -19,15 +19,19 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
         icon={Skull}
         iconColor={GAME.red}
         iconBg="rgba(239,68,68,0.13)"
-        title="Рейд стаи"
-        subtitle={`недельная кооперативная цель · неделя ${weekNo}`}
+        title={boss.legend ? 'Легендарный рейд' : 'Рейд стаи'}
+        subtitle={
+          boss.legend
+            ? `босс-легенда · неделя ${weekNo} · награда та же, характер злее`
+            : `недельная кооперативная цель · неделя ${weekNo}`
+        }
         right={<RightPill icon={Users} text={String(PACK_SIZE)} color={GAME.emerald} />}
       />
 
       {/* босс */}
       <View
         className="mt-3 rounded-2xl p-3.5"
-        style={{ backgroundColor: 'rgba(58,12,20,0.5)', borderWidth: 1, borderColor: 'rgba(248,113,113,0.22)' }}
+        style={{ backgroundColor: 'rgba(58,12,20,0.5)', borderWidth: 1, borderColor: boss.legend ? 'rgba(250,204,21,0.4)' : 'rgba(248,113,113,0.22)' }}
       >
         <View className="flex-row items-baseline justify-between gap-2">
           <Text className="font-extrabold text-[20.5px]" style={{ color: GAME.pink }}>
@@ -73,6 +77,24 @@ export function RaidCard({ boss, hp, maxHp, weekNo, myDmg, myShield, packDmg, ki
           <Text className="font-bold text-[17.5px]" style={{ color: GAME.emerald }}>
             {rewarded ? 'Босс павший! Награда стаи получена: +15 генов, +5 кристаллов.' : 'Босс павший! Ждём нового в следующую неделю.'}
           </Text>
+        </View>
+      )}
+
+      {/* медали вклада: честные пороги от реальных итогов недели */}
+      {medals.length > 0 && (
+        <View className="mt-3 flex-row flex-wrap gap-1.5">
+          {medals.map((m) => (
+            <View
+              key={m.name}
+              className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+              style={{ backgroundColor: 'rgba(0,0,0,0.28)', borderWidth: 1, borderColor: 'rgba(250,204,21,0.35)' }}
+            >
+              <Text className="text-[15px]">{m.emoji}</Text>
+              <Text className="font-bold text-[15px]" style={{ color: GAME.yellow }}>
+                {m.name}
+              </Text>
+            </View>
+          ))}
         </View>
       )}
 
