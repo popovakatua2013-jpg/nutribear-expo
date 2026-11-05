@@ -9,6 +9,7 @@ import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { GoalPicker } from '@/components/more/GoalPicker'
 import { MealRemindersCard } from '@/components/more/MealRemindersCard'
 import { WeighReminderCard } from '@/components/more/WeighReminderCard'
+import { ExerciseReminderCard } from '@/components/more/ExerciseReminderCard'
 import { WeighNudgeCard } from '@/components/more/WeighNudgeCard'
 import { HapticsCard } from '@/components/more/HapticsCard'
 import { SyncCard } from '@/components/more/SyncCard'
@@ -52,6 +53,7 @@ export default function MoreScreen() {
         <GoalPicker />
         <MealRemindersCard />
         <WeighReminderCard />
+        <ExerciseReminderCard />
         <WeighNudgeCard />
         <HapticsCard />
         <SyncCard />

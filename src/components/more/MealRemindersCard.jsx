@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Pressable, Switch, Text, TextInput, View } from 'react-native'
 import { UtensilsCrossed } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
+import { useProfileStore } from '@/store/useProfileStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
@@ -59,10 +60,18 @@ export function TimeField({ value, onChange }) {
 export function MealRemindersCard() {
   const meals = useActivityStore((s) => s.reminder.meals)
   const setReminder = useActivityStore((s) => s.setReminder)
+  // Имя из профиля — в примере подкола: «Катя, булочки?»
+  const firstName = (useProfileStore((s) => s.name) || '').trim().split(/\s+/)[0]
   const { toast } = useToast()
 
-  // Стиль пинков: по умолчанию «с характером» (медведь подкалывает)
-  const isBear = meals.style !== 'soft'
+  // Стиль пинков: мягко / с характером (дефолт) / с перцем.
+  // Тон действует на все пинки медведя: еда, вода, весы, тренировка
+  const style = meals.style === 'soft' ? 'soft' : meals.style === 'spicy' ? 'spicy' : 'bear'
+  const STYLES = [
+    { key: 'soft', label: 'Мягко', a11y: 'Стиль напоминаний: мягко' },
+    { key: 'bear', label: 'С характером 🐻', a11y: 'Стиль напоминаний: с характером' },
+    { key: 'spicy', label: 'С перцем 🌶', a11y: 'Стиль напоминаний: с перцем' },
+  ]
 
   async function toggle(v) {
     if (v) {
@@ -108,47 +117,43 @@ export function MealRemindersCard() {
 
       {meals.enabled && (
         <View className="mt-3 gap-2">
-          {/* Стиль пинков: мягко или с характером */}
-          <View className="flex-row gap-2">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Стиль напоминаний: мягко"
-              accessibilityState={{ selected: !isBear }}
-              onPress={() => setReminder({ meals: { ...meals, style: 'soft' } })}
-              className={`flex-1 items-center rounded-xl border py-2 ${
-                !isBear ? 'border-[#7B6CF6] bg-[#7B6CF6]/20' : 'border-white/10 bg-white/5'
-              }`}
-            >
-              <Text
-                className={`text-[12.5px] ${
-                  !isBear ? 'font-semibold text-bear-text' : 'text-bear-sub'
-                }`}
-              >
-                Мягко
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Стиль напоминаний: с характером"
-              accessibilityState={{ selected: isBear }}
-              onPress={() => setReminder({ meals: { ...meals, style: 'bear' } })}
-              className={`flex-1 items-center rounded-xl border py-2 ${
-                isBear ? 'border-[#7B6CF6] bg-[#7B6CF6]/20' : 'border-white/10 bg-white/5'
-              }`}
-            >
-              <Text
-                className={`text-[12.5px] ${
-                  isBear ? 'font-semibold text-bear-text' : 'text-bear-sub'
-                }`}
-              >
-                С характером 🐻
-              </Text>
-            </Pressable>
+          {/* Стиль пинков: мягко / с характером / с перцем */}
+          <View className="flex-row gap-1.5">
+            {STYLES.map((st) => {
+              const active = style === st.key
+              return (
+                <Pressable
+                  key={st.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={st.a11y}
+                  accessibilityState={{ selected: active }}
+                  onPress={() => setReminder({ meals: { ...meals, style: st.key } })}
+                  className={`flex-1 items-center rounded-xl border py-2 ${
+                    active ? 'border-[#7B6CF6] bg-[#7B6CF6]/20' : 'border-white/10 bg-white/5'
+                  }`}
+                >
+                  <Text
+                    className={`text-[12px] ${
+                      active ? 'font-semibold text-bear-text' : 'text-bear-sub'
+                    }`}
+                    numberOfLines={1}
+                  >
+                    {st.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
           </View>
           <Text className="font-sans text-[11px] leading-snug text-bear-sub">
-            {isBear
-              ? 'Медведь видит пропуски и по-доброму подкалывает («Уже булочки жуёшь?»), а если приём уже записан — пинок не придёт.'
-              : 'Спокойные напоминания без шуток — как раньше.'}
+            {style === 'soft'
+              ? 'Спокойные напоминания без шуток — как раньше. Относится ко всем пинкам: еда, вода, весы, тренировка.'
+              : style === 'spicy'
+                ? `Медведь добавляет дерзкую серию с драмой и мемами (${
+                    firstName ? `«${firstName}, булочки?»` : '«Дневник объявил голодовку»'
+                  }). Только добрые — без обещаний результата и рекламы.`
+                : `Медведь видит пропуски и по-доброму подкалывает (${
+                    firstName ? `«${firstName}, булочки?»` : '«Уже булочки жуёшь?»'
+                  }). Если приём уже записан — пинок не придёт.`}
           </Text>
           {ROWS.map((r) => (
             <View

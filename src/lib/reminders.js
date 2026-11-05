@@ -22,10 +22,19 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useExerciseStore } from '@/store/useExerciseStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal } from '@/lib/navEvents'
-import { mealPokeMessage, mealStreaks, pickTone } from '@/lib/bearPhrases'
+import {
+  mealPokeMessage,
+  mealStreaks,
+  pickTone,
+  waterPokeMessage,
+  weighPokeMessage,
+  gonePokeBody,
+  workoutPokeBody,
+} from '@/lib/bearPhrases'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
 const QUIET_FROM = 8
@@ -54,6 +63,10 @@ Notifications?.setNotificationHandler({
       const today = dayKeyOf()
       const hist = useFoodStore.getState().history || []
       show = !hist.some((e) => e && e.day === today && e.mealId === mealId)
+    } else if (kind === 'exercise') {
+      // Пинок о тренировке: занятие уже записано сегодня — молчим
+      const logs = useExerciseStore.getState().logs || {}
+      show = !(logs[dayKeyOf()] || []).length
     }
     return {
       shouldShowBanner: show,
@@ -101,6 +114,10 @@ async function ensureChannels() {
     })
     await Notifications.setNotificationChannelAsync('weigh', {
       name: 'Напоминания о взвешивании',
+      importance: Notifications.AndroidImportance.HIGH,
+    })
+    await Notifications.setNotificationChannelAsync('workout', {
+      name: 'Напоминания о тренировках',
       importance: Notifications.AndroidImportance.HIGH,
     })
     await Notifications.setNotificationChannelAsync('day', {
@@ -151,12 +168,19 @@ export async function scheduleMorningSummary() {
     const t = summaryTotalsFor(yKey)
     // Аудит организма вчера не проводился — Доктор Топтыгин мягко напоминает
     const auditMissed = useOrganismGameStore.getState().auditDays?.[yKey] == null
+    // Вчера ни одной записи — фраза «пропал из приложения» (вторая серия);
+    // в мягком стиле остаётся стандартный текст «Новый день…»
+    const gone = t ? null : gonePokeBody({ style: useActivityStore.getState().reminder?.meals?.style || 'bear' })
     const tail = auditMissed ? 'Доктор Топтыгин ждёт вас на осмотр 🩺' : 'Хорошего дня! 🐻'
     const body = t
       ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. ${tail}`
-      : auditMissed
-        ? 'Новый день! Доктор Топтыгин ждёт вас на осмотр 🩺🐻'
-        : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
+      : gone
+        ? auditMissed
+          ? `${gone} И загляни к доктору Топтыгину 🩺`
+          : `${gone} 🐻`
+        : auditMissed
+          ? 'Новый день! Доктор Топтыгин ждёт вас на осмотр 🩺🐻'
+          : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
 
     await Notifications.cancelScheduledNotificationAsync('morning-summary')
     await Notifications.scheduleNotificationAsync({
@@ -196,11 +220,18 @@ function mealPokeText(mealId, meals) {
     missedToday: passed && !st.loggedToday,
     missedStreak: st.missedStreak,
     goodStreak: st.goodStreak,
-    style: meals?.style === 'soft' ? 'soft' : 'bear',
+    style: meals?.style || 'bear',
   })
-  // Пол из профиля: фразы подстраиваются («Куда пропал?» / «Куда пропала?»)
-  const sex = useProfileStore.getState().sex
-  return mealPokeMessage({ mealId, tone, gender: sex === 'female' ? 'f' : 'm' })
+  // Пол и имя из профиля: фразы подстраиваются («Куда пропал?» /
+  // «Куда пропала?», «Катя, булочки?»)
+  const { name, sex } = useProfileStore.getState()
+  return mealPokeMessage({
+    mealId,
+    tone,
+    gender: sex === 'female' ? 'f' : 'm',
+    name,
+    style: meals?.style || 'bear',
+  })
 }
 
 // Запланировать 3 ежедневных напоминания (вызывается, когда разрешение
@@ -279,12 +310,15 @@ export async function rescheduleReminders() {
   // Вода: повторяющийся интервал (5–720 минут, из окна «Вода»)
   if (reminder?.enabled) {
     const everyMin = Math.min(720, Math.max(5, Math.round(reminder.everyMin || 60)))
+    // Текст — ротация из второй серии при каждом перепланировании;
+    // стиль «Мягко» оставляет прежний спокойный текст
+    const waterMsg = waterPokeMessage({ style: reminder?.meals?.style || 'bear' })
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: 'water-loop',
         content: {
-          title: '💧 Пора выпить воды',
-          body: 'Сделайте пару глотков — мишка считает стаканы 🐻',
+          title: waterMsg.title,
+          body: waterMsg.body,
           sound: 'default',
           data: { kind: 'water' },
         },
@@ -312,12 +346,13 @@ export async function rescheduleReminders() {
     const EXPO_WD = [2, 3, 4, 5, 6, 7, 1]
     const wd = EXPO_WD[Math.min(6, Math.max(0, Math.round(weigh.weekday ?? 5)))]
     if (t) {
+      const weighMsg = weighPokeMessage({ style: reminder?.meals?.style || 'bear' })
       try {
         await Notifications.scheduleNotificationAsync({
           identifier: 'weigh-weekly',
           content: {
-            title: '⚖️ Время взвешивания',
-            body: 'Утро, натощак — самое точное время. Запишите вес в дневник 🐻',
+            title: weighMsg.title,
+            body: weighMsg.body,
             sound: 'default',
             data: { kind: 'weigh' },
           },
@@ -331,6 +366,34 @@ export async function rescheduleReminders() {
         })
       } catch (e) {
         console.warn('Напоминание о взвешивании не запланировано:', e)
+      }
+    }
+  }
+
+  // Тренировка: ежедневно в выбранное время. Занятие уже записано —
+  // обработчик молчит в момент срабатывания (как с приёмами пищи)
+  const exercise = reminder?.exercise
+  if (exercise?.enabled) {
+    const t = parseTime(exercise.time)
+    if (t) {
+      try {
+        await Notifications.scheduleNotificationAsync({
+          identifier: 'workout-daily',
+          content: {
+            title: '🏋️ Тренировка ждёт',
+            body: workoutPokeBody(),
+            sound: 'default',
+            data: { kind: 'exercise' },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: t.hour,
+            minute: t.minute,
+            channelId: 'workout',
+          },
+        })
+      } catch (e) {
+        console.warn('Напоминание о тренировке не запланировано:', e)
       }
     }
   }
@@ -359,6 +422,9 @@ function handleNotificationTap(data) {
       // И сразу окно записи веса — тапом по уведомлению пользователь
       // собрался взвешиваться, не заставляем искать кнопку «+»
       requestOpenWeightModal()
+    } else if (kind === 'exercise') {
+      // Тап по пинку о тренировке — сразу в дневник тренировок
+      router.navigate('/activity')
     } else if (kind === 'day') {
       // Утренняя сводка: если в ней упоминался доктор — вела в аудит.
       // Открываем вкладку «Организм» — там Доктор Топтыгин и живёт
@@ -414,6 +480,12 @@ export function startReminderAgent() {
     queueRescheduleMeals()
   })
 
+  // Сменилось имя в профиле — пинки перетекстовываются под новое имя
+  // («Катя, булочки?» ↔ без имени) на ближайшем перепланировании
+  const profUnsub = useProfileStore.subscribe((s, prev) => {
+    if (s.name !== prev.name) queueRescheduleMeals()
+  })
+
   return () => {
     if (respSub) respSub.remove()
     try {
@@ -422,6 +494,9 @@ export function startReminderAgent() {
     unsub()
     try {
       foodUnsub()
+    } catch {}
+    try {
+      profUnsub()
     } catch {}
     if (mealTimer) {
       clearTimeout(mealTimer)
