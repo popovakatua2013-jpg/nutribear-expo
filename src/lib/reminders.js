@@ -24,6 +24,7 @@ import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal } from '@/lib/navEvents'
+import { mealPokeMessage, mealStreaks, pickTone } from '@/lib/bearPhrases'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
 const QUIET_FROM = 8
@@ -46,6 +47,12 @@ Notifications?.setNotificationHandler({
         h >= QUIET_FROM &&
         h < QUIET_TO &&
         act.waterMl < Math.max(1, goals.waterMl || 0)
+    } else if (kind === 'meal') {
+      // Медвежий пинок: приём уже записан — молчим, дёргать не нужно
+      const mealId = n?.request?.content?.data?.mealId
+      const today = dayKeyOf()
+      const hist = useFoodStore.getState().history || []
+      show = !hist.some((e) => e && e.day === today && e.mealId === mealId)
     }
     return {
       shouldShowBanner: show,
@@ -170,6 +177,85 @@ export async function scheduleMorningSummary() {
   }
 }
 
+// ── Медвежьи пинки: адаптивные напоминания о приёмах ────────────────────
+// Текст выбирается при планировании по реальному поведению: пропускает
+// приёмы — медведь подкалывает («Куда пропал-а? Уже булочки жуёшь?»),
+// держит серию — хвалит. Триггер ежедневный (надёжно, даже если
+// приложение не открывали), а проверка «записан ли приём» происходит
+// в момент срабатывания в setNotificationHandler — записан: молчим.
+function mealPokeText(mealId, meals) {
+  const st = mealStreaks(useFoodStore.getState().history, mealId, dayKeyOf())
+  const t = parseTime(meals?.[mealId]) || { hour: 0, minute: 0 }
+  const now = new Date()
+  const passed =
+    now.getHours() > t.hour ||
+    (now.getHours() === t.hour && now.getMinutes() >= t.minute)
+  const tone = pickTone({
+    loggedToday: st.loggedToday,
+    missedToday: passed && !st.loggedToday,
+    missedStreak: st.missedStreak,
+    goodStreak: st.goodStreak,
+    style: meals?.style === 'soft' ? 'soft' : 'bear',
+  })
+  return mealPokeMessage({ mealId, tone })
+}
+
+// Запланировать 3 ежедневных напоминания (вызывается, когда разрешение
+// уже получено — из rescheduleReminders/rescheduleMeals)
+async function scheduleMeals(meals) {
+  for (const key of ['breakfast', 'lunch', 'dinner']) {
+    const t = parseTime(meals[key])
+    if (!t) continue
+    const { title, body } = mealPokeText(key, meals)
+    try {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `meal-${key}`,
+        content: {
+          title,
+          body,
+          sound: 'default',
+          data: { kind: 'meal', mealId: key },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: t.hour,
+          minute: t.minute,
+          channelId: 'meals',
+        },
+      })
+    } catch (e) {
+      console.warn(`Напоминание «${key}» не запланировано:`, e)
+    }
+  }
+}
+
+// Перепланировать ТОЛЬКО приёмы пищи (вода и взвешивание не трогаются):
+// зовём при каждой правке дневника и возврате в приложение — тексты
+// пинков всегда отражают свежее поведение. С небольшим debounce,
+// чтобы быстрые правки не заспамили планировщик.
+let mealSeq = 0
+let mealTimer = null
+export async function rescheduleMeals() {
+  if (Platform.OS === 'web' || !Notifications) return
+  const my = ++mealSeq
+  try {
+    for (const id of ['meal-breakfast', 'meal-lunch', 'meal-dinner']) {
+      await Notifications.cancelScheduledNotificationAsync(id)
+    }
+  } catch {}
+  if (my !== mealSeq) return
+  const meals = useActivityStore.getState().reminder?.meals
+  if (meals?.enabled) await scheduleMeals(meals)
+}
+
+function queueRescheduleMeals() {
+  if (mealTimer) return
+  mealTimer = setTimeout(() => {
+    mealTimer = null
+    rescheduleMeals()
+  }, 1500)
+}
+
 // Перепланировать все напоминания по текущим настройкам стора.
 // Сначала отменяем всё и планируем заново только включённое.
 let seq = 0
@@ -211,38 +297,9 @@ export async function rescheduleReminders() {
     }
   }
 
-  // Приёмы пищи: ежедневно в выбранное время
+  // Приёмы пищи: ежедневно в выбранное время, тексты — медвежьи пинки
   const meals = reminder?.meals
-  if (meals?.enabled) {
-    const plan = [
-      ['breakfast', '🌅 Завтрак', 'Самое время позавтракать — запишите приём в дневник 🐻'],
-      ['lunch', '☀️ Обед', 'Обеденный перерыв: не забудьте поесть и записать 🐻'],
-      ['dinner', '🌙 Ужин', 'Время ужина — внесите приём в дневник 🐻'],
-    ]
-    for (const [key, title, body] of plan) {
-      const t = parseTime(meals[key])
-      if (!t) continue
-      try {
-        await Notifications.scheduleNotificationAsync({
-          identifier: `meal-${key}`,
-          content: {
-            title,
-            body,
-            sound: 'default',
-            data: { kind: 'meal', mealId: key },
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: t.hour,
-            minute: t.minute,
-            channelId: 'meals',
-          },
-        })
-      } catch (e) {
-        console.warn(`Напоминание «${key}» не запланировано:`, e)
-      }
-    }
-  }
+  if (meals?.enabled) await scheduleMeals(meals)
 
   // Взвешивание: раз в неделю в выбранное время
   const weigh = reminder?.weigh
@@ -330,7 +387,11 @@ export function startReminderAgent() {
   // Вернулись в приложение — перепланируем утреннюю сводку: возможно,
   // сменился день, и «вчера» для следующего срабатывания стало другим
   const appSub = AppState.addEventListener('change', (st) => {
-    if (st === 'active') scheduleMorningSummary()
+    if (st === 'active') {
+      scheduleMorningSummary()
+      // Медвежьи пинки пересчитываются на свежих данных дневника
+      rescheduleMeals()
+    }
   })
 
   // Любое изменение настроек напоминаний — перепланировать
@@ -338,7 +399,16 @@ export function startReminderAgent() {
     if (s.reminder !== prev.reminder) rescheduleReminders()
     // Переход на новый день: сводка на ближайшее утро должна показать
     // только что завершившийся день (его итоги уже в истории)
-    else if (s.dayKey !== prev.dayKey) scheduleMorningSummary()
+    else if (s.dayKey !== prev.dayKey) {
+      scheduleMorningSummary()
+      rescheduleMeals()
+    }
+  })
+
+  // Правка дневника (записали/удалили приём) — перепланируем пинки:
+  // медведь должен знать, что приём уже не пропущен (debounce 1,5 с)
+  const foodUnsub = useFoodStore.subscribe(() => {
+    queueRescheduleMeals()
   })
 
   return () => {
@@ -347,6 +417,13 @@ export function startReminderAgent() {
       appSub.remove()
     } catch {}
     unsub()
+    try {
+      foodUnsub()
+    } catch {}
+    if (mealTimer) {
+      clearTimeout(mealTimer)
+      mealTimer = null
+    }
     started = false
   }
 }

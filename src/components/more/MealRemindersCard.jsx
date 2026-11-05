@@ -3,7 +3,7 @@
 // карточка только меняет настройки и запрашивает разрешение.
 
 import { useState } from 'react'
-import { Switch, Text, TextInput, View } from 'react-native'
+import { Pressable, Switch, Text, TextInput, View } from 'react-native'
 import { UtensilsCrossed } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
@@ -61,6 +61,9 @@ export function MealRemindersCard() {
   const setReminder = useActivityStore((s) => s.setReminder)
   const { toast } = useToast()
 
+  // Стиль пинков: по умолчанию «с характером» (медведь подкалывает)
+  const isBear = meals.style !== 'soft'
+
   async function toggle(v) {
     if (v) {
       const ok = await requestNotifPermission()
@@ -105,6 +108,48 @@ export function MealRemindersCard() {
 
       {meals.enabled && (
         <View className="mt-3 gap-2">
+          {/* Стиль пинков: мягко или с характером */}
+          <View className="flex-row gap-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Стиль напоминаний: мягко"
+              accessibilityState={{ selected: !isBear }}
+              onPress={() => setReminder({ meals: { ...meals, style: 'soft' } })}
+              className={`flex-1 items-center rounded-xl border py-2 ${
+                !isBear ? 'border-[#7B6CF6] bg-[#7B6CF6]/20' : 'border-white/10 bg-white/5'
+              }`}
+            >
+              <Text
+                className={`text-[12.5px] ${
+                  !isBear ? 'font-semibold text-bear-text' : 'text-bear-sub'
+                }`}
+              >
+                Мягко
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Стиль напоминаний: с характером"
+              accessibilityState={{ selected: isBear }}
+              onPress={() => setReminder({ meals: { ...meals, style: 'bear' } })}
+              className={`flex-1 items-center rounded-xl border py-2 ${
+                isBear ? 'border-[#7B6CF6] bg-[#7B6CF6]/20' : 'border-white/10 bg-white/5'
+              }`}
+            >
+              <Text
+                className={`text-[12.5px] ${
+                  isBear ? 'font-semibold text-bear-text' : 'text-bear-sub'
+                }`}
+              >
+                С характером 🐻
+              </Text>
+            </Pressable>
+          </View>
+          <Text className="font-sans text-[11px] leading-snug text-bear-sub">
+            {isBear
+              ? 'Медведь видит пропуски и по-доброму подкалывает («Куда пропал-а? Уже булочки жуёшь?»). А если приём уже записан — пинок не придёт.'
+              : 'Спокойные напоминания без шуток — как раньше.'}
+          </Text>
           {ROWS.map((r) => (
             <View
               key={r.key}

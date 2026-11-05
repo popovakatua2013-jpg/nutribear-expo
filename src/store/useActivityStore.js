@@ -46,7 +46,7 @@ export const useActivityStore = create(
         enabled: false,
         everyMin: 60,
         lastAt: 0,
-        meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00' },
+        meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00', style: 'bear' },
         weigh: { enabled: false, weekday: 5, time: '09:00' },
       },
       // Встроенный шагомер: тумблер и дневная сумма хранятся (сумма —
@@ -141,11 +141,12 @@ export const useActivityStore = create(
     }),
     {
       name: 'nutribear-activity-v1',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => AsyncStorage),
       // version 0→1: старый набор из 3 ёмкостей — добавляем «Кувшин 700».
       // version 1→2: напоминаниям о воде добавляем блок «meals» (приёмы пищи).
       // version 2→3: добавляем блок «weigh» (еженедельное взвешивание).
+      // version 3→4: приёмам пищи добавляем «style» — медвежьи пинки.
       migrate: (state, version) => {
         if (version < 1 && state && Array.isArray(state.vessels)) {
           const isOld =
@@ -165,6 +166,11 @@ export const useActivityStore = create(
         }
         if (version < 3 && state && state.reminder && !state.reminder.weigh) {
           state.reminder.weigh = { enabled: false, weekday: 5, time: '09:00' }
+        }
+        if (version < 4 && state && state.reminder?.meals && !state.reminder.meals.style) {
+          // Медвежьи пинки: старым пользователям включаем «с характером» —
+          // это же и дефолт для новых (отключается чипом «Мягко»)
+          state.reminder.meals.style = 'bear'
         }
         return state
       },
