@@ -1,10 +1,13 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
-// слева кольцо 84 px (чуть крупнее по отзыву Кати), внутри — съеденные
-// ккал («0 из 1800 ккал»); справа — кольцо 72 px «сожжено», вернули
-// по запросу Кати (сначала кольцо убирали — решили вернуть): красная
-// дуга #f87171, внутри число и «из N ккал», если цель задана.
-// Между ними — пилюля статуса
-// («Осталось / Перебор / Цель достигнута»). Кольцо анимируется как донат
+// слева и справа кольца ОДИНАКОВОГО диаметра 84 px (отзыв Кати:
+// кольца были разных размеров), внутри — съеденные ккал («0 из 1800
+// ккал») и сожжённые (красная дуга #f87171, число и «из N ккал», если
+// цель задана). Посередине — блок статуса в две строки: огонёк,
+// подпись и значение с «ккал» («Осталось N ккал» / «Перебор +N ккал» /
+// «Цель достигнута»). Ниже — блок «Итоги» с двумя строками:
+// «Съедено — N ккал» и «Сожжено — N ккал» (запрос Кати; раньше была
+// строка-уравнение). Вся карточка уже соседних (mx-3 — отзыв Кати:
+// «сделать весь блок уже»). Кольцо анимируется как донат
 // ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля, число
 // в центре отсчитывается вверх — и всё это повторяется при каждом
 // возврате на «Главную» (запрос пользователя).
@@ -16,11 +19,11 @@
 // вкладке «Дневник» (тап по карточке-итогу в «Отчётах» разворачивает
 // панель истории). Мини-чипы шагов/воды/минут
 // удалены — эти цифры
-// живут в трёх карточках над сводкой. Ниже — строка «Итог: съедено −
-// сожжено» с умным огоньком: зелёный — дефицит (итог в пределах цели),
-// жёлтый — небольшой перебор (до 100 ккал), красный — большой; цели нет —
-// зелёный (сравнивать не с чем). Без карандаша (правка цели сжигания
-// осталась на долгом тапе по кольцу),
+// живут в трёх карточках над сводкой. Умный огонёк в «Итогах»:
+// зелёный — дефицит (итог в пределах цели), жёлтый — небольшой
+// перебор (до 100 ккал), красный — большой; цели нет — зелёный
+// (сравнивать не с чем). Без карандаша в итогах (правка цели
+// сжигания осталась на долгом тапе по кольцу),
 // далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками
 // и разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
 // (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»);
@@ -93,7 +96,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           maxFontSizeMultiplier={MAX}
-          className="font-bold text-[16.5px] leading-tight text-bear-text"
+          className="font-bold text-[15.5px] leading-tight text-bear-text"
         >
           {`${formatNum(Math.round(value))} / ${formatNum(target)} г`}
         </Text>
@@ -108,16 +111,17 @@ function VDivider() {
   return <View className="mx-0.5 h-9 w-px shrink-0 bg-white/[0.08]" />
 }
 
-// Кольцо прогресса с числом внутри — съедено от цели калориями
-// (size=84) и сожжено от цели сжигания (size=72, numSize=21).
+// Кольцо прогресса с числом внутри — съедено от цели калориями и
+// сожжено от цели сжигания: диаметр и шрифт числа у обоих ОДИНАКОВЫЕ
+// (отзыв Кати: кольца были разных размеров).
 // Анимация как у доната ИМТ (BmiDonut):
 // дуга плавно «заливается» до текущего процента (Animated поверх
 // strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
 // число в центре отсчитывается вверх. runId приходит из DailySummary и
 // растёт при каждом возврате на вкладку «Главная» — заливка повторяется.
 function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23 }) {
-  // size — диаметр: у «съедено» 84, у «сожжено» 72 (кольцо вернули);
-  // толщина дуги и радиус считаются от диаметра, шрифт числа — свой
+  // size — диаметр (у обоих колец одинаковый 84); толщина дуги и радиус
+  // считаются от диаметра, шрифт числа — свой
   const sw = size === RING ? SW : Math.max(7, Math.round((SW * size) / RING))
   const r = (size - sw) / 2
   const c = 2 * Math.PI * r
@@ -341,7 +345,7 @@ export function DailySummary({
   return (
     <View
       accessibilityLabel="Сводка за день"
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4"
+      className="mx-3 rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4"
     >
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
@@ -364,11 +368,11 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено» (вернули
-          по запросу Кати). Долгий тап по левой половине — правка цели
-          по калориям, по кольцу «сожжено» — цели сжигания; обычный тап
-          ничего не открывает — история по дням во вкладке «Дневник» */}
-      <View className="mt-3 flex-row items-center gap-2.5">
+      {/* кольца «съедено» и «сожжено» одного размера + блок остатка
+          посередине (отзыв Кати). Долгий тап по левой половине — правка
+          цели по калориям, по кольцу «сожжено» — цели сжигания; обычный
+          тап ничего не открывает — история по дням во вкладке «Дневник» */}
+      <View className="mt-3 flex-row items-center gap-2">
         <Row
           onLongPress={onEditKcalGoal}
           delayLongPress={450}
@@ -378,7 +382,7 @@ export function DailySummary({
               ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Долгий тап — изменить цель по калориям`
               : undefined
           }
-          className="min-w-0 flex-1 flex-row items-center gap-2.5"
+          className="min-w-0 flex-1 flex-row items-center gap-2"
         >
           <KcalRing
             value={consumed}
@@ -390,24 +394,43 @@ export function DailySummary({
             accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
           />
           <View className="min-w-0 flex-1 items-center">
+            {/* блок статуса в две строки (по середине — отзыв Кати):
+                огонёк + подпись + значение с «ккал» */}
             <View
-              className="flex-row items-center self-center gap-1 rounded-full px-2.5 py-1.5"
+              accessibilityLabel={
+                over > 0
+                  ? `Перебор ${formatNum(over)} килокалорий сверх дневной цели`
+                  : done
+                    ? 'Цель по калориям достигнута'
+                    : `Осталось ${formatNum(remaining)} килокалорий до дневной цели`
+              }
+              className="w-full items-center rounded-2xl px-1 py-2"
               style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
             >
               <Flame size={14} color={pillTone.text} />
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.85}
+                minimumFontScale={0.8}
                 maxFontSizeMultiplier={MAX}
-                className="font-semibold text-[15px]"
+                className="mt-0.5 font-sans text-[11.5px] leading-tight"
+                style={{ color: pillTone.text }}
+              >
+                {over > 0 ? 'Перебор' : done ? 'Цель' : 'Осталось'}
+              </Text>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                maxFontSizeMultiplier={MAX}
+                className="font-bold text-[15px] leading-tight"
                 style={{ color: pillTone.text }}
               >
                 {over > 0
-                  ? `Перебор +${formatNum(over)}`
+                  ? `+${formatNum(over)} ккал`
                   : done
-                    ? 'Цель достигнута'
-                    : `Осталось ${formatNum(remaining)}`}
+                    ? 'достигнута'
+                    : `${formatNum(remaining)} ккал`}
               </Text>
             </View>
           </View>
@@ -424,44 +447,72 @@ export function DailySummary({
           }
           className="shrink-0 items-center"
         >
-          {/* сожжено — кольцо вернули по запросу Кати: красная дуга (#f87171),
-              внутри число и «из N ккал», под кольцом подпись «сожжено» */}
+          {/* сожжено — кольцо того же диаметра, что и «съедено» (отзыв
+              Кати про разные кольца): красная дуга (#f87171), внутри
+              число и «из N ккал», под кольцом подпись «сожжено» */}
           <KcalRing
             value={burned}
             goal={burnGoal > 0 ? burnGoal : null}
             caption="сожжено"
             pct={burnPct}
             color="#f87171"
-            size={72}
-            numSize={21}
             runId={runId}
             accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
           />
         </BurnZone>
       </View>
 
-      {/* итог дня с учётом активности: умный огонёк — зелёный при дефиците,
-          жёлтый/красный при переборе; без карандаша — правка цели сжигания
-          осталась долгим тапом по кольцу «сожжено». Строка без тапов:
-          история калорий по дням — в панели истории «Отчётов» */}
+      {/* «Итоги» — блок с двумя строками по запросу Кати:
+          «Съедено — N ккал» и «Сожжено — N ккал» (раньше была
+          строка-уравнение). Умный огонёк остался: зелёный при дефиците,
+          жёлтый/красный при переборе. Без тапов: история калорий по
+          дням — в панели истории «Отчётов» */}
       <View
         accessibilityLabel={
-          `Итог дня: съедено ${formatNum(consumed)} минус сожжено ${formatNum(burned)} равно ${formatNum(net)} килокалорий, ` +
+          `Итоги дня: съедено ${formatNum(consumed)} килокалорий, сожжено ${formatNum(burned)} килокалорий, ` +
           (overNet <= 0 ? 'в пределах цели' : `перебор ${formatNum(Math.round(overNet))} килокалорий`)
         }
-        className="mt-2.5 flex-row items-center gap-2 rounded-2xl px-3 py-2.5"
+        className="mt-2.5 rounded-2xl px-3 py-2.5"
         style={{ backgroundColor: netBg }}
       >
-        <Flame size={15} color={netTone} />
-        <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-          maxFontSizeMultiplier={MAX}
-          className="min-w-0 flex-1 font-semibold text-[15px] text-bear-sub"
-        >
-          {`Итог: съедено ${formatNum(consumed)} − сожжено ${formatNum(burned)} = ${formatNum(net)} ккал`}
-        </Text>
+        <View className="flex-row items-center gap-1.5">
+          <Flame size={15} color={netTone} />
+          <Text
+            maxFontSizeMultiplier={MAX}
+            className="font-bold text-[15px]"
+            style={{ color: netTone }}
+          >
+            Итоги
+          </Text>
+        </View>
+        <View className="mt-1.5 flex-row items-center justify-between">
+          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[14px] text-bear-sub">
+            Съедено
+          </Text>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+            maxFontSizeMultiplier={MAX}
+            className="min-w-0 shrink font-bold text-[15px] text-bear-text"
+          >
+            {`${formatNum(consumed)} ккал`}
+          </Text>
+        </View>
+        <View className="mt-0.5 flex-row items-center justify-between">
+          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[14px] text-bear-sub">
+            Сожжено
+          </Text>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+            maxFontSizeMultiplier={MAX}
+            className="min-w-0 shrink font-bold text-[15px] text-bear-text"
+          >
+            {`${formatNum(burned)} ккал`}
+          </Text>
+        </View>
       </View>
 
       {/* нутриенты одной строкой в заданном порядке:
