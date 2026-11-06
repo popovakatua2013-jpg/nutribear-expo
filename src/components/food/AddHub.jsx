@@ -1,8 +1,8 @@
-// Хаб способов добавления еды — оформлен по референс-скриншоту Кати:
-// скруглённое поле поиска, карточки «Мои комбо» и «Недавние и частые»
-// со строками (эмодзи, название, калории, кнопка «Добавить», шеврон —
-// карточки сворачиваются), пунктирная кнопка «Сохранить приём»,
-// внизу — 6 цветных плиток (сканер, фото, голос, галерея, этикетка,
+// Хаб способов добавления еды: компактная строка поиска, карточки
+// «Мои комбо» и «Недавние и частые» со строками (эмодзи, название,
+// калории, кнопка «Добавить», шеврон) — по умолчанию всегда свёрнуты
+// (отзыв Кати), пунктирная кнопка «Сохранить приём», внизу — один ряд
+// из 6 узких цветных плиток (сканер, фото, голос, галерея, этикетка,
 // рецепты). «Только калории» перенесено на главную (под секциями
 // дневника — запрос Кати), тут остались «Прошлый раз» и тонкая строка
 // «База продуктов» — отдельное окно со своими продуктами.
@@ -51,7 +51,7 @@ import { readdRow } from '@/lib/data/readd'
 import { dishesWord, formatNum } from '@/lib/format'
 import { useToast } from '../ui/Toast'
 
-// 6 плиток — сетка 3×2
+// 6 плиток — один компактный ряд (отзыв Кати: блоки 3×2 были крупными)
 const TILES = [
   { id: 'barcode', label: 'Сканер', Icon: Barcode, color: '#4D7CFE' },
   { id: 'scan', label: 'Фото', Icon: Camera, color: '#38BDF8' },
@@ -76,9 +76,11 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const [baseOpen, setBaseOpen] = useState(false)
   const [comboOpen, setComboOpen] = useState(false)
   const [comboName, setComboName] = useState('')
-  // Сворачивание карточек «Мои комбо» и «Недавние и частые»
-  const [combosOpen, setCombosOpen] = useState(true)
-  const [recentOpen, setRecentOpen] = useState(true)
+  // Сворачивание карточек «Мои комбо» и «Недавние и частые» — по умолчанию
+  // всегда свёрнуты (отзыв Кати): окно каждый раз открывается компактным,
+  // разворачиваются только по тапу; состояние сбрасывается при закрытии
+  const [combosOpen, setCombosOpen] = useState(false)
+  const [recentOpen, setRecentOpen] = useState(false)
 
   const mealName = getMeal(mealId).name
   const q = query.trim().toLowerCase()
@@ -225,16 +227,17 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — скруглённое поле с иконкой (как на референс-скриншоте) */}
-      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5">
-        <Search size={18} color="#8B96B8" />
+      {/* строка поиска — компактное поле: ниже и тоньше прежнего
+          (отзыв Кати: прежнее поле было слишком громоздким) */}
+      <View className="flex-row items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
+        <Search size={15} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 font-sans text-[16.5px] text-bear-text"
+          className="min-w-0 flex-1 font-sans text-[14.5px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
@@ -243,7 +246,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             accessibilityLabel="Очистить поиск"
             className="active:opacity-60"
           >
-            <X hitSlop={10} size={16} color="#8B96B8" />
+            <X hitSlop={10} size={15} color="#8B96B8" />
           </Pressable>
         )}
       </View>
@@ -262,10 +265,10 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Ручной поиск по всей базе продуктов"
-            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2.5 active:bg-white/10"
+            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
           >
-            <LayoutGrid size={16} color="#AEB9D9" />
-            <Text className="font-semibold text-[16.5px] text-bear-soft">
+            <LayoutGrid size={15} color="#AEB9D9" />
+            <Text className="font-semibold text-[14.5px] text-bear-soft">
               Ручной поиск · вся база продуктов
             </Text>
           </Pressable>
@@ -423,22 +426,30 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             </View>
           )}
 
-          {/* плитки способов: цвет заливает всю плитку — крупная иконка
-              по центру, подпись под ней (как на референс-скриншоте) */}
-          <View className="mt-3 flex-row flex-wrap gap-2">
+          {/* плитки способов — один компактный ряд из 6 узких плиток
+              (отзыв Кати: прежние крупные блоки 3×2 занимали пол-окна):
+              иконка по центру, подпись под ней с подгонкой размера,
+              чтобы «Этикетка» и «Галерея» не переносились */}
+          <View className="mt-3 flex-row gap-1.5">
             {TILES.map(({ id, label, Icon, color }) => (
               <Pressable
                 key={id}
                 onPress={() => onSelect(id)}
                 accessibilityRole="button"
                 accessibilityLabel={label}
-                className="h-[96px] overflow-hidden rounded-2xl active:opacity-90"
-                style={{ width: '31.5%', backgroundColor: color }}
+                className="h-[64px] min-w-0 flex-1 overflow-hidden rounded-xl active:opacity-90"
+                style={{ backgroundColor: color }}
               >
                 <View className="flex-1 items-center justify-center">
-                  <Icon size={32} color="#FFFFFF" strokeWidth={2.2} />
+                  <Icon size={21} color="#FFFFFF" strokeWidth={2} />
                 </View>
-                <Text className="pb-3 text-center font-bold text-[14.5px] text-white">
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                  maxFontSizeMultiplier={1.2}
+                  className="pb-1.5 text-center font-bold text-[11px] text-white"
+                >
                   {label}
                 </Text>
               </Pressable>
