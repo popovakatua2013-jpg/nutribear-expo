@@ -40,7 +40,6 @@ const DEFAULT_STATE = {
   account: { email: '', provider: '' }, // регистрация в конце (мок)
   permissions: { push: 'unknown', health: false, camera: 'unknown' },
   sync: { gfit: false, ahealth: false, pedometer: true },
-  openBreakfast: false, // активация: открыть «Добавить завтрак» один раз
 }
 
 export const useOnboardingStore = create(
@@ -64,11 +63,10 @@ export const useOnboardingStore = create(
       toggleSync: (key) =>
         set((s) => ({ sync: { ...s.sync, [key]: !s.sync[key] } })),
 
-      // Завершение онбординга (после активации)
+      // Завершение онбординга (после активации). Окно «Добавить приём
+      // пищи» после онбординга не открывается — сразу главная (отзыв
+      // Кати), поэтому одноразовый флаг openBreakfast удалён
       finish: (patch = {}) => set({ status: 'done', ...patch }),
-
-      // Одноразовый флаг «открыть добавление завтрака» прочитан
-      consumeOpenBreakfast: () => set({ openBreakfast: false }),
 
       // Полный сброс (GDPR-удаление данных) — онбординг начнётся заново
       reset: () => set({ ...DEFAULT_STATE }),
@@ -86,7 +84,6 @@ export const useOnboardingStore = create(
         account: s.account,
         permissions: s.permissions,
         sync: s.sync,
-        openBreakfast: s.openBreakfast,
       }),
     }
   )

@@ -13,6 +13,10 @@ export function SvgLineChart({
   data,
   series, // [{ key, color }]
   height = 210,
+  // Точки-кружки на линии: 'all' — на каждой точке, 'ends' — только
+  // на первой и последней (отзыв Кати: на прогнозе веса «сколько
+  // шагов — столько пунктиров» — точек было слишком много)
+  dots = 'all',
   yFmt = (v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : `${Math.round(v)}`),
 }) {
   const [w, setW] = useState(0)
@@ -80,15 +84,18 @@ export function SvgLineChart({
           )
         })}
         {series.map((s) =>
-          data.map((d, i) => (
-            <Circle
-              key={`${s.key}-${i}`}
-              cx={x(i)}
-              cy={y(d[s.key])}
-              r={3}
-              fill={s.color}
-            />
-          ))
+          data.map((d, i) => {
+            if (dots === 'ends' && i !== 0 && i !== data.length - 1) return null
+            return (
+              <Circle
+                key={`${s.key}-${i}`}
+                cx={x(i)}
+                cy={y(d[s.key])}
+                r={3}
+                fill={s.color}
+              />
+            )
+          })
         )}
         {data.map((d, i) =>
           i % skip === 0 || i === data.length - 1 ? (

@@ -48,7 +48,6 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
@@ -176,17 +175,8 @@ export default function HomeScreen() {
     })
   }
 
-  // Активация онбординга: «Добавить свой завтрак» — окно открытия блюда
-  const openBreakfast = useOnboardingStore((s) => s.openBreakfast)
-  const consumeOpenBreakfast = useOnboardingStore((s) => s.consumeOpenBreakfast)
-  useEffect(() => {
-    if (openBreakfast) {
-      consumeOpenBreakfast()
-      setMealId('breakfast')
-      setAddOpen(true)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Окно «Добавить приём пищи» после онбординга больше НЕ открывается
+  // само: после регистрации — сразу главная страница (отзыв Кати)
 
   // Уход с экрана закрывает модалки (иначе они висят над другими вкладками)
   useFocusEffect(

@@ -50,9 +50,13 @@ function sparkOf(rows, key) {
 
 // Мини-спарклайн без осей: мягкая линия с заливкой в цвет метрики
 // (spark-режим SvgAreaChart — без подписей, чистая линия как на референсе;
-// min-w-0 — страховка, чтобы график не распирал узкую колонку)
+// min-w-0 — страховка, чтобы график не распирал узкую колонку).
+// Линия рисуется ТОЛЬКО когда есть данные (отзыв Кати: после регистрации
+// в отчётах шли цветные линии-заглушки — плоские нули): минимум два дня
+// с ненулевыми значениями показателя, иначе карточка без графика
 function Spark({ data, color }) {
-  if (!data || data.length < 2) return null
+  const meaningful = data ? data.filter((d) => d.value > 0).length : 0
+  if (!data || meaningful < 2) return null
   return (
     <View className="mt-1 min-w-0">
       <SvgAreaChart spark dot={false} data={data} color={color} height={24} />

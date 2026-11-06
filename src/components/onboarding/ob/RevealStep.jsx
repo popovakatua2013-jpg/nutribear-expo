@@ -134,6 +134,7 @@ export function RevealStep({ onNext, onBack }) {
                   data={plan.projection}
                   series={[{ key: 'kg', color: '#a78bfa' }]}
                   height={140}
+                  dots="ends" /* точки только на краях: «Сейчас» и цель (отзыв Кати про пунктиры) */
                   yFmt={(v) => `${Math.round(v)}`}
                 />
               </View>

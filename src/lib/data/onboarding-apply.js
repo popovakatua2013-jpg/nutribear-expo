@@ -21,10 +21,16 @@ export function applyOnboarding(answers, plan) {
   })
 
   if (a.heightCm && a.weightKg) {
-    useProfileStore.getState().setProfile({
+    const profilePatch = {
       heightCm: a.heightCm,
       weightKg: a.weightKg,
-    })
+    }
+    // Цель по весу из анкеты — теперь видна на вкладке «Тело» (отзыв
+    // Кати: «цель по весу вводила в онбординге, но на вкладке Тело
+    // её нет»). Границы — как у веса в калькуляторе ИМТ
+    const tw = Number(a.targetWeightKg)
+    if (Number.isFinite(tw) && tw >= 35 && tw <= 250) profilePatch.goalWeightKg = tw
+    useProfileStore.getState().setProfile(profilePatch)
   }
 
   // Биоданные для калькулятора ИМТ: пол, возраст, уровень активности.

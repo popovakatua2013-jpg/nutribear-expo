@@ -96,6 +96,13 @@ export function MeasurementsCard() {
   // состояние локальное, свернуть можно тапом по шапке
   const [secOpen, setSecOpen] = useState(true)
   const items = useMemo(() => allItems(customs), [customs])
+  // Есть ли хоть один замер: пока нет — вместо таблицы прочерков «—»
+  // показываем чистое пустое состояние: после регистрации «Измерение
+  // тела» пусто по умолчанию (отзыв Кати)
+  const hasAny = useMemo(
+    () => Object.values(measurements).some((l) => Array.isArray(l) && l.length > 0),
+    [measurements]
+  )
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
   // регулярность замеров (формула в lib/data/bmi.js)
@@ -194,8 +201,12 @@ export function MeasurementsCard() {
 
       {secOpen && (
         <>
+      {hasAny ? (
+        <>
       {/* Таблица: «Параметр / Сейчас / Изменение / Динамика». Строка на
-          каждый замер; тап по строке — окно записи */}
+          каждый замер; тап по строке — окно записи. Пока замеров нет —
+          вместо таблицы прочерков «—» чистое пустое состояние (отзыв
+          Кати: после регистрации блок пуст по умолчанию) */}
       <View className="rounded-2xl p-3" style={CARD}>
         {/* Шапка колонок: короткие подписи мелким шрифтом — длинная
             «Текущее значение» наезжала на соседние колонки на 361dp */}
@@ -328,6 +339,15 @@ export function MeasurementsCard() {
           </Text>
         </View>
       </View>
+        </>
+      ) : (
+        <View className="rounded-2xl p-4" style={CARD}>
+          <Text className="font-bold text-[16.5px] text-bear-text">Замеров пока нет</Text>
+          <Text className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim">
+            Нажмите «+ Добавить», чтобы записать первые параметры, — и здесь появится таблица с динамикой
+          </Text>
+        </View>
+      )}
 
       {/* Общий прогресс: датчик + подпись + звёзды (85 → 4.5★, как на макете) */}
       <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>

@@ -89,11 +89,14 @@ export function calcPlan(answers) {
     plan.goalDate = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
   }
 
-  // Прогнозная кривая веса (линейная, для графика на «раскрытии» плана)
-  const n = plan.weeks ? Math.min(plan.weeks, 24) : 8
-  plan.projection = Array.from({ length: n + 1 }, (_, i) => ({
-    label: i === 0 ? 'Сейчас' : `${i} нед`,
-    kg: round1(cur + (target - cur) * (i / n)),
+  // Прогнозная кривая веса — ПО МЕСЯЦАМ (отзыв Кати: «показывать
+  // месяцы», а не «1 нед / 2 нед…»); точек немного — график чистый,
+  // без пунктиров на каждый шаг (точки рисуются только на краях —
+  // см. dots="ends" в RevealStep)
+  const months = plan.weeks ? Math.max(1, Math.min(12, Math.round(plan.weeks / 4.345))) : 2
+  plan.projection = Array.from({ length: months + 1 }, (_, i) => ({
+    label: i === 0 ? 'Сейчас' : `${i} мес`,
+    kg: round1(cur + (target - cur) * (i / months)),
   }))
   return plan
 }
