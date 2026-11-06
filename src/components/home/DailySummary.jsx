@@ -66,16 +66,22 @@ function macroTargets(kcal) {
 }
 
 // Ячейка нутриента: иконка слева, справа подпись и жирное значение
-// «0 / N г». Четыре такие ячейки стоят в одну строку с разделителями
+// «0 / N г». Четыре такие ячейки стоят в одну строку с разделителями.
+// Иконка 16px и подпись 14px с дожимом шрифта: на узком экране (361dp)
+// «Углеводы» и «Клетчатка» при 15px не влезали и резались до «Угле…» /
+// «Клет…» — теперь полное слово помещается, а adjustsFontSizeToFit
+// страхует на случай увеличенного системного шрифта
 function NutrientCell({ label, value, target, color, Icon }) {
   return (
-    <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
-      <Icon size={18} color={color} />
+    <View className="min-w-0 flex-1 flex-row items-center gap-1">
+      <Icon size={16} color={color} />
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
           maxFontSizeMultiplier={MAX}
-          className="font-sans text-[15px] leading-tight text-bear-sub"
+          className="font-sans text-[14px] leading-tight text-bear-sub"
         >
           {label}
         </Text>
@@ -93,9 +99,10 @@ function NutrientCell({ label, value, target, color, Icon }) {
   )
 }
 
-// Тонкий разделитель между ячейками нутриентов
+// Тонкий разделитель между ячейками нутриентов (узкие поля —
+// экономим строке место ради полных слов «Углеводы» и «Клетчатка»)
 function VDivider() {
-  return <View className="mx-1 h-9 w-px shrink-0 bg-white/[0.08]" />
+  return <View className="mx-0.5 h-9 w-px shrink-0 bg-white/[0.08]" />
 }
 
 // Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
@@ -198,7 +205,17 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
           >
             {formatNum(Math.round(num))}
           </Text>
-          <Text maxFontSizeMultiplier={MAX} className="font-sans text-[13px] leading-tight text-bear-dim">
+          {/* Подпись цели — жёстко ограничена шириной кольца и разрешает
+              перенос: «из 1 200 ккал» без ограничения вылезало за круг
+              на узких экранах; теперь максимум 2 строки внутри кольца,
+              форматные пробелы внутри числа неразрывные, перенос идёт
+              между «из» / числом / «ккал» — всегда аккуратно */}
+          <Text
+            numberOfLines={2}
+            maxFontSizeMultiplier={MAX}
+            className="text-center font-sans text-[11.5px] leading-[13px] text-bear-dim"
+            style={{ width: RING - 10 }}
+          >
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
           </Text>
         </View>

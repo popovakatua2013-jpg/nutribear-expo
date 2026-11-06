@@ -12,6 +12,7 @@ import { Pressable, Text, View } from 'react-native'
 import { Share2 } from 'lucide-react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
+import { WeightTrendCard } from './WeightTrendCard'
 import { DisciplineCard } from './DisciplineCard'
 import { MetricHistoryModal } from './MetricHistoryModal'
 import { NutrientsCard } from './NutrientsCard'
@@ -102,6 +103,9 @@ export function ReportsSection({
         rows={rows}
         onSelectMetric={handleSelectMetric}
       />
+
+      {/* График веса — своя карточка с переключателем 7/30/90, как на референсе */}
+      <WeightTrendCard />
 
       <NutrientsCard days={days} />
 
