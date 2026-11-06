@@ -126,11 +126,15 @@ export function BarcodeMode({ onPick }) {
         ) : null}
         <View className="flex-row items-center gap-2">
           {/* Подсказка про открытую базу убрана по отзыву: вторая строка
-              ломала выравнивание плашки рядом с кнопкой фонарика */}
+              ломала выравнивание плашки рядом с кнопкой фонарика.
+              Размер 13px, а не 17px: на узких экранах (361dp) «Наведите на
+              штрих-код упаковки» в одну строку 17px не влезало и обрезалось
+              до «Наведите на штрих-код уп…»; 2 строки разрешены как страховка
+              на случай увеличенного системного шрифта — текст не режется никогда */}
           <View className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-3">
             <Text
-              numberOfLines={1}
-              className="font-semibold text-[17px] text-bear-text"
+              numberOfLines={2}
+              className="font-semibold text-[13px] leading-[17px] text-bear-text"
             >
               {busy ? 'Ищем продукт в базе…' : 'Наведите на штрих-код упаковки'}
             </Text>
