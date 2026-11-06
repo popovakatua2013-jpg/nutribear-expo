@@ -64,7 +64,8 @@ export function RecipeMode({ onPick }) {
           f: r.f100,
           c: r.c100,
           source: 'recipe',
-          defaultGrams: r.grams,
+          // Порция по умолчанию — весь готовый объём (если задан готовый вес)
+          defaultGrams: r.cookedGrams || r.grams,
           sub: 'свой рецепт',
         }))}
         emptyText="Рецептов пока нет — создайте первый!"
@@ -85,7 +86,7 @@ export function RecipeMode({ onPick }) {
                 className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-60"
               >
                 <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[11px] text-bear-dim">
-                  {`${r.name} · ${r.grams} г`}
+                  {`${r.name} · ${r.grams} г${r.cookedGrams ? ` → ${r.cookedGrams} г готового` : ''}`}
                 </Text>
                 <Pencil size={12} color="#8B96B8" />
               </Pressable>

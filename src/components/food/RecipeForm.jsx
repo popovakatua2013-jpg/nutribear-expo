@@ -1,6 +1,7 @@
-// Форма создания своего рецепта: название, вес, калорийность и БЖУ всего веса.
+// Форма создания своего рецепта: название, вес ингредиентов, готовый вес
+// (опционально — после варки/жарки), калорийность и БЖУ всего веса.
 // БЖУ необязательно — если не указать, они будут оценены по калорийности.
-// На выходе — значения на 100 г для дневника.
+// На выходе — значения на 100 г для дневника (от готового веса, если задан).
 
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
@@ -23,7 +24,17 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   const [name, setName] = useState(initial ? initial.name : '')
   const [grams, setGrams] = useState(initial ? String(initial.grams) : '')
   const [kcal, setKcal] = useState(
-    initial ? String(Math.round((initial.kcal100 * initial.grams) / 100)) : ''
+    initial
+      ? String(
+          initial.totalKcal > 0
+            ? Math.round(initial.totalKcal)
+            : Math.round((initial.kcal100 * (initial.cookedGrams || initial.grams)) / 100)
+        )
+      : ''
+  )
+  // Готовый вес (после варки/жарки) — опционально: пустая строка = не задан
+  const [cooked, setCooked] = useState(
+    initial && initial.cookedGrams ? String(initial.cookedGrams) : ''
   )
   const [p, setP] = useState(
     initial && initial.p100 ? String(Math.round((initial.p100 * initial.grams) / 100)) : ''
@@ -37,7 +48,10 @@ export function RecipeForm({ onDone, initial, onCancel }) {
 
   const g = num(grams)
   const total = num(kcal)
-  const per100 = grams && kcal ? Math.round((total / g) * 100) : null
+  // Готовый вес задан — ккал/100 г считаем от готового блюда
+  const cookedNum = Math.max(0, Math.round(Number(String(cooked).replace(',', '.')) || 0))
+  const effGrams = cookedNum > 0 ? cookedNum : g
+  const per100 = grams && kcal ? Math.round((total / effGrams) * 100) : null
   const ready = name.trim() && grams && kcal
 
   function handleSave() {
@@ -46,22 +60,26 @@ export function RecipeForm({ onDone, initial, onCancel }) {
     const data = {
       name: name.trim(),
       grams: g,
+      cookedGrams: cookedNum,
       totalKcal: total,
       totalP: p.trim() ? num(p) : 0,
       totalF: f.trim() ? num(f) : 0,
       totalC: c.trim() ? num(c) : 0,
     }
+    const weightLine =
+      cookedNum > 0 ? `${g} г → ${cookedNum} г готового` : `${g} г`
+    const kcalLine = `≈${per100} ккал / 100 г${cookedNum > 0 ? ' готового' : ''}`
     if (editing) {
       update(initial.id, data)
       toast({
         title: `🍴 Рецепт «${data.name}» изменён`,
-        description: `${g} г · ${total} ккал (${per100} ккал / 100 г)`,
+        description: `${weightLine} · ${total} ккал (${kcalLine})`,
       })
     } else {
       add(data)
       toast({
         title: `🍴 Рецепт «${data.name}» сохранён`,
-        description: `${g} г · ${total} ккал (${per100} ккал / 100 г)`,
+        description: `${weightLine} · ${total} ккал (${kcalLine})`,
       })
     }
     onDone()
@@ -143,10 +161,25 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           className={`${field} flex-1`}
         />
       </View>
+      {/* Готовый вес: опционально, но именно он делает порции честными */}
+      <TextInput
+        value={cooked}
+        onChangeText={setCooked}
+        placeholder="Готовый вес, г — необязательно"
+        placeholderTextColor="#8B96B8"
+        keyboardType="decimal-pad"
+        accessibilityLabel="Готовый вес блюда, граммы"
+        className={`${field} mt-2`}
+      />
+      <Text className="mt-1.5 font-sans text-[10px] leading-[14px] text-bear-dim">
+        Вес блюда после варки/жарки: крупа разваривается, суп упаривается.
+        Если указать — ккал и БЖУ на 100 г посчитаются от готового блюда,
+        и порции будут честными.
+      </Text>
       <View className="mt-3 flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
           <Text className="font-sans text-[11px] text-bear-sub">
-            {per100 ? `≈ ${per100} ккал / 100 г` : 'Укажите вес и калории'}
+            {per100 ? `≈ ${per100} ккал / 100 г${cookedNum > 0 ? ' готового' : ''}` : 'Укажите вес и калории'}
           </Text>
           <Text className="font-sans text-[10px] text-bear-dim">
             БЖУ — по желанию, иначе оценим по калориям
