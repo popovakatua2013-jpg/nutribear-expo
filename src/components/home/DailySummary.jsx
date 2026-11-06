@@ -3,9 +3,13 @@
 // кольца были разных размеров), внутри — съеденные ккал («0 из 1800
 // ккал») и сожжённые (зелёная дуга #34D399 — отзыв Кати: красное
 // кольцо смотрелось тревожно, теперь число и «из N ккал», если
-// цель задана). Посередине — блок статуса в две строки: огонёк,
-// подпись и значение с «ккал» («Осталось N ккал» / «Перебор +N ккал» /
-// «Цель достигнута»). Ниже — блок «Итоги» с двумя строками:
+// цель задана). Посередине — узкая карточка статуса в две строки:
+// огонёк, подпись и значение с «ккал» («Осталось N ккал» /
+// «Перебор +N ккал» / «Цель достигнута») — по содержимому, не на всю
+// ширину, и точно по центру между кольцами: и по горизонтали, и по
+// вертикали (центр карточки = центр кругов; отзыв Кати: раньше
+// карточка растягивалась между кольцами и висела ниже их центров).
+// Ниже — блок «Итоги» с двумя строками:
 // «Съедено — N ккал» и «Сожжено — N ккал» (запрос Кати; раньше была
 // строка-уравнение). Вся карточка уже соседних (mx-3 — отзыв Кати:
 // «сделать весь блок уже»). Кольцо анимируется как донат
@@ -370,11 +374,16 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольца «съедено» и «сожжено» одного размера + блок остатка
-          посередине (отзыв Кати). Тап по левой половине — правка цели
-          по калориям, по кольцу «сожжено» — цели сжигания (короткий
-          тап вместо долгого); история по дням — во вкладке «Дневник» */}
-      <View className="mt-3 flex-row items-center gap-2">
+      {/* кольца «съедено» и «сожжено» одного размера + узкая карточка
+          статуса точно посередине между ними (отзыв Кати). items-start
+          на строке выравнивает всё по верхнему краю: круг занимает
+          верхние 84 px колонки кольца, контейнер карточки той же высоты
+          (RING) — поэтому центр карточки всегда совпадает с центрами
+          кругов, даже если подписи под кольцами крупнее. Тап по левому
+          кольцу или карточке — правка цели по калориям, по кольцу
+          «сожжено» — цели сжигания (короткий тап вместо долгого);
+          история по дням — во вкладке «Дневник» */}
+      <View className="mt-3 flex-row items-start gap-2">
         <Row
           onPress={onEditKcalGoal}
           accessibilityRole={onEditKcalGoal ? 'button' : undefined}
@@ -383,7 +392,7 @@ export function DailySummary({
               ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Нажмите, чтобы изменить цель по калориям`
               : undefined
           }
-          className="min-w-0 flex-1 flex-row items-center gap-2"
+          className="shrink-0 items-center"
         >
           <KcalRing
             value={consumed}
@@ -394,9 +403,26 @@ export function DailySummary({
             runId={runId}
             accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
           />
-          <View className="min-w-0 flex-1 items-center">
-            {/* блок статуса в две строки (по середине — отзыв Кати):
-                огонёк + подпись + значение с «ккал» */}
+        </Row>
+
+        {/* Карточка-остаток: контейнер занимает всё пространство между
+            кольцами, высота — с кольцо (84 px), карточка внутри — по
+            содержимому (px-3, без w-full — отзыв Кати «сделай узкой»)
+            и по центру; max-w-full страхует от вылезания при крупном
+            системном шрифте (adjustsFontSizeToFit дожмёт текст) */}
+        <View className="min-w-0 flex-1 items-center justify-center" style={{ height: RING }}>
+          <Row
+            onPress={onEditKcalGoal}
+            accessibilityRole={onEditKcalGoal ? 'button' : undefined}
+            accessibilityLabel={
+              onEditKcalGoal
+                ? `Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий. Нажмите, чтобы изменить цель по калориям`
+                : undefined
+            }
+            className="max-w-full"
+          >
+            {/* блок статуса в две строки: огонёк + подпись + значение
+                с «ккал» */}
             <View
               accessibilityLabel={
                 over > 0
@@ -405,7 +431,7 @@ export function DailySummary({
                     ? 'Цель по калориям достигнута'
                     : `Осталось ${formatNum(remaining)} килокалорий до дневной цели`
               }
-              className="w-full items-center rounded-2xl px-1 py-2"
+              className="max-w-full items-center rounded-2xl px-3 py-2"
               style={{ borderWidth: 1, borderColor: pillTone.border, backgroundColor: pillTone.bg }}
             >
               <Flame size={14} color={pillTone.text} />
@@ -434,8 +460,8 @@ export function DailySummary({
                     : `${formatNum(remaining)} ккал`}
               </Text>
             </View>
-          </View>
-        </Row>
+          </Row>
+        </View>
 
         <BurnZone
           onPress={onEditBurnGoal}
