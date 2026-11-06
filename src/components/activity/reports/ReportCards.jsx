@@ -74,18 +74,26 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
       className="min-w-0 flex-1 active:opacity-90"
       style={{ borderRadius: 16 }}
     >
+      {/* фон — абсолютный градиент во всю высоту Pressable (растянут
+          рядом карточек). НЕ height:'100%' — в ряду с авто-высотой Yoga
+          считал 100% от высоты вьюпорта, и карточки растягивались
+          на весь экран (скрин «ужаса» из отзыва) */}
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         colors={[`${m.color}14`, '#1A123A']}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           borderRadius: 16,
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
-          padding: 10,
-          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
-      >
+      />
+      <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
             style={{
@@ -141,7 +149,7 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
           </Text>
         )}
         <Spark data={spark} color={m.color} />
-      </LinearGradient>
+      </View>
     </Pressable>
   )
 }
@@ -151,18 +159,24 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
 function SleepCard({ days }) {
   return (
     <View className="min-w-0 flex-1" style={{ borderRadius: 16 }}>
+      {/* фон — абсолютный градиент (см. комментарий в ReportCard:
+          height:'100%' растягивал карточку до высоты вьюпорта) */}
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         colors={['#c084fc14', '#1A123A']}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           borderRadius: 16,
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
-          padding: 10,
-          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
-      >
+      />
+      <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
             style={{
@@ -194,7 +208,7 @@ function SleepCard({ days }) {
         >
           {`нет измерений за ${days} ${pluralDays(days)}`}
         </Text>
-      </LinearGradient>
+      </View>
     </View>
   )
 }
@@ -243,13 +257,17 @@ function WeightReportCard({ days }) {
         end={{ x: 1, y: 1 }}
         colors={['#a78bfa14', '#1A123A']}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           borderRadius: 16,
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
-          padding: 10,
-          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
-      >
+      />
+      <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
             style={{
@@ -295,7 +313,7 @@ function WeightReportCard({ days }) {
           </Text>
         </View>
         <Spark data={spark} color="#a78bfa" />
-      </LinearGradient>
+      </View>
     </Pressable>
   )
 }

@@ -86,10 +86,10 @@ export function WeightCard() {
   const setProfile = useProfileStore((s) => s.setProfile)
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
-  // Секция свёрнута по умолчанию (решение пользователя: «Динамика веса»
-  // и «Измерения тела» на «Теле» всегда закрыты, тап по шапке открывает).
-  // Не храним в сторe — при каждом запуске снова свёрнуто
-  const [secOpen, setSecOpen] = useState(false)
+  // Секция развёрнута по умолчанию (отзыв Кати: сворачивание «Динамики
+  // веса» и «Измерений тела» по умолчанию мешало — данные не видны
+  // сразу). Не храним в сторe — состояние локальное
+  const [secOpen, setSecOpen] = useState(true)
   const [period, setPeriod] = useState('week')
   const [menuOpen, setMenuOpen] = useState(false)
   const [journalOpen, setJournalOpen] = useState(false)
@@ -303,7 +303,7 @@ export function WeightCard() {
           )}
         </View>
 
-        {/* Шеврон состояния секции — секция по умолчанию свёрнута */}
+        {/* Шеврон состояния секции — секция по умолчанию развёрнута */}
         {secOpen ? (
           <ChevronUp size={17} color="#A5AECB" />
         ) : (

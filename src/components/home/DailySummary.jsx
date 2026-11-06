@@ -1,12 +1,14 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
-// слева кольцо 72 px, внутри — съеденные ккал («0 из 1800 ккал»),
-// справа такое же кольцо с сожжёнными за день ккал, между ними —
-// пилюля статуса («Осталось / Перебор / Цель достигнута»). Оба кольца
-// анимируются как донат ИМТ (BmiDonut): при открытии вкладки дуга
-// «заливается» от нуля, число в центре отсчитывается вверх — и всё
-// это повторяется при каждом возврате на «Главную» (запрос пользователя).
-// Долгий тап по левой половине — изменить цель по калориям, по правому
-// кольцу — цель «сжечь за день» (карточка «Калории» с
+// слева кольцо 84 px (чуть крупнее по отзыву Кати), внутри — съеденные
+// ккал («0 из 1800 ккал»); справа — БЕЗ кольца (отзыв: кольцо «сожжено»
+// лишнее): крупное число сожжённых ккал и подпись «сожжено», под ним
+// «из N ккал», если цель задана. Между ними — пилюля статуса
+// («Осталось / Перебор / Цель достигнута»). Кольцо анимируется как донат
+// ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля, число
+// в центре отсчитывается вверх — и всё это повторяется при каждом
+// возврате на «Главную» (запрос пользователя).
+// Долгий тап по левой половине — изменить цель по калориям, по блоку
+// «сожжено» — цель «сжечь за день» (карточка «Калории» с
 // главной убрана как дубликат, её единственная уникальная функция
 // переехала сюда). Обычный тап нигде не открывает историю: по решению
 // пользователя «Главная» — только сегодня, история по дням живёт во
@@ -50,8 +52,8 @@ import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
 
 const MAX = 1.25
-const RING = 72
-const SW = 8
+const RING = 84
+const SW = 9
 const R = (RING - SW) / 2
 const C = 2 * Math.PI * R
 
@@ -105,8 +107,8 @@ function VDivider() {
   return <View className="mx-0.5 h-9 w-px shrink-0 bg-white/[0.08]" />
 }
 
-// Кольцо прогресса с числом внутри: слева — съедено от цели калориями,
-// справа — сожжено за день. Анимация как у доната ИМТ (BmiDonut):
+// Кольцо прогресса с числом внутри — съедено от цели калориями.
+// Анимация как у доната ИМТ (BmiDonut):
 // дуга плавно «заливается» до текущего процента (Animated поверх
 // strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
 // число в центре отсчитывается вверх. runId приходит из DailySummary и
@@ -200,7 +202,7 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             adjustsFontSizeToFit
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
-            className="text-center font-extrabold text-[21px] leading-tight text-bear-text"
+            className="text-center font-extrabold text-[23px] leading-tight text-bear-text"
             style={{ width: RING - 16 }}
           >
             {formatNum(Math.round(num))}
@@ -213,7 +215,7 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
           <Text
             numberOfLines={2}
             maxFontSizeMultiplier={MAX}
-            className="text-center font-sans text-[11.5px] leading-[13px] text-bear-dim"
+            className="text-center font-sans text-[12px] leading-[14px] text-bear-dim"
             style={{ width: RING - 10 }}
           >
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
@@ -289,7 +291,6 @@ export function DailySummary({
     toast({ title: '🎯 Нормы нутриентов обновлены', description: 'Пустое поле — считаем от цели по калориям' })
   }
 
-  const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const net = consumed - burned // итог дня с учётом активности
 
   // Умный огонёк «Итога»: перебор считаем по запросу — «съедено больше
@@ -354,10 +355,10 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено». Долгий тап
-          по левой половине — правка цели по калориям, по правому кольцу —
-          цели сжигания; обычный тап ничего не открывает — история по дням
-          во вкладке «Дневник» */}
+      {/* кольцо «съедено» + пилюля остатка + надпись «сожжено» (без
+          кольца — отзыв Кати). Долгий тап по левой половине — правка цели
+          по калориям, по блоку «сожжено» — цели сжигания; обычный тап
+          ничего не открывает — история по дням во вкладке «Дневник» */}
       <View className="mt-3 flex-row items-center gap-2.5">
         <Row
           onLongPress={onEditKcalGoal}
@@ -412,17 +413,26 @@ export function DailySummary({
               ? `Сожжено за сегодня ${formatNum(burned)} килокалорий. Долгий тап — изменить цель сжигания`
               : undefined
           }
-          className="shrink-0"
+          className="shrink-0 items-center"
         >
-          <KcalRing
-            value={burned}
-            goal={burnGoal > 0 ? burnGoal : null}
-            caption="сожжено"
-            pct={burnPct}
-            color="#f87171"
-            runId={runId}
-            accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
-          />
+          {/* сожжено — без кольца (отзыв Кати): число и подпись, снизу
+              цель, если задана */}
+          <Text
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX}
+            className="text-center font-extrabold text-[23px] leading-tight text-bear-text"
+          >
+            {formatNum(burned)}
+          </Text>
+          <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[14.5px] text-bear-sub">
+            сожжено
+          </Text>
+          {burnGoal > 0 && (
+            <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[12px] leading-[14px] text-bear-dim">
+              {`из ${formatNum(burnGoal)} ккал`}
+            </Text>
+          )}
         </BurnZone>
       </View>
 

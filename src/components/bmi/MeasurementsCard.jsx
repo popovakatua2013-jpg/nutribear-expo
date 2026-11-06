@@ -1,21 +1,25 @@
 // Карточка «Измерения тела» на вкладке «Тело» — оформление по макету
 // пользователя: шапка-секция (иконка + заголовок + подзаголовок + кнопка
-// «+ Добавить») — по решению пользователя секция по умолчанию СВЁРНУТА,
-// тап по шапке разворачивает/сворачивает. Внутри — ТАБЛИЦА как на
-// референсе: колонки «Параметр / Текущее значение / Изменение /
-// Динамика», строка на каждый замер (неоновая иконка, значение,
-// пилюля дельты ▲▼ и мини-линия тренда), в конце — строка «Вес» из
-// журнала взвешиваний и футер «Последнее обновление: …». Тап по строке
-// открывает окно записи: значения подставлены последними, меняем то,
-// что измерили; в окне — «+ Свой замер». Ниже — карточка «Общий
-// прогресс» (датчик ScoreGauge, подпись и звёзды — bodyProgressScore).
-// Поверхность карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
+// «+ Добавить») — по отзыву Кати секция по умолчанию РАЗВЁРНУТА (сворачивание
+// мешало — данные не видны сразу), тап по шапке разворачивает/сворачивает.
+// Внутри — ТАБЛИЦА: колонки «Параметр / Сейчас / Изменение / Динамика»
+// (подписи короче и мельче — прежняя «Текущее значение» 11px наезжала
+// на соседние колонки на узком экране), строка на каждый замер
+// (неоновая иконка, значение, пилюля дельты ▲▼ и мини-линия тренда)
+// и футер «Последнее обновление: …». Строка «Вес» из таблицы убрана
+// по отзыву: вес живёт в «Динамике веса» выше, дубль не нужен. Тап по
+// строке открывает окно записи: значения подставлены последними,
+// отмечаем галочками, что измерили, меняем то, что нужно; в окне —
+// «+ Свой замер». Ниже — карточка «Общий прогресс» (датчик ScoreGauge,
+// подпись и звёзды — bodyProgressScore). Поверхность карточек —
+// фиолетовая, одинаковая с ИМТ-блоком выше.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   ChevronDown,
   ChevronUp,
   Donut,
@@ -23,7 +27,6 @@ import {
   Hourglass,
   Info,
   Ruler,
-  Scale,
   Shirt,
   Star,
   StarHalf,
@@ -89,9 +92,9 @@ export function MeasurementsCard() {
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const weights = useProfileStore((s) => s.weights)
   const [open, setOpen] = useState(false)
-  // Секция свёрнута по умолчанию (как «Динамика веса») — не храним
-  // в сторe: при каждом запуске снова свёрнуто
-  const [secOpen, setSecOpen] = useState(false)
+  // Секция развёрнута по умолчанию (отзыв Кати) — не храним в сторe:
+  // состояние локальное, свернуть можно тапом по шапке
+  const [secOpen, setSecOpen] = useState(true)
   const items = useMemo(() => allItems(customs), [customs])
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
@@ -104,35 +107,13 @@ export function MeasurementsCard() {
     measurements,
   })
 
-  // Строки таблицы: замеры (см) + строка «Вес» из журнала взвешиваний.
-  // Дельта — к предыдущему измерению; тон — «минус хорошо» для талии/
-  // живота (см. deltaTone) и для веса к цели; тренд — последние точки
-  // по возрастанию даты
-  const weightRow = useMemo(() => {
-    const last = weights[0] || null
-    const prev = weights[1] || null
-    const d = last && prev ? Math.round((last.kg - prev.kg) * 10) / 10 : null
-    let tone = '#8B96B8'
-    if (d != null && d !== 0 && goalWeightKg > 0) {
-      const toward = (d < 0 && last.kg > goalWeightKg) || (d > 0 && last.kg < goalWeightKg)
-      tone = toward ? '#34D399' : '#FB7185'
-    }
-    return {
-      key: 'weight',
-      label: 'Вес',
-      color: '#a78bfa',
-      Icon: Scale,
-      unit: 'кг',
-      value: last ? `${fmtDecimal(last.kg)} кг` : '—',
-      d,
-      tone,
-      trend: weights.slice(0, 8).slice().reverse().map((w) => ({ label: '', value: w.kg })),
-    }
-  }, [weights, goalWeightKg])
-
+  // Строки таблицы: замеры в сантиметрах. Дельта — к предыдущему
+  // измерению; тон — «минус хорошо» для талии/живота (см. deltaTone);
+  // тренд — последние точки по возрастанию даты. Строку «Вес» из
+  // таблицы убрали по отзыву — вес виден в «Динамике веса» выше
   const tableRows = useMemo(
-    () => [
-      ...items.map((m) => {
+    () =>
+      items.map((m) => {
         const list = measurements[m.key] || []
         const last = list[0] || null
         const prev = list[1] || null
@@ -150,18 +131,15 @@ export function MeasurementsCard() {
           trend: list.slice(0, 8).slice().reverse().map((e) => ({ label: '', value: e.cm })),
         }
       }),
-      weightRow,
-    ],
-    [items, measurements, weightRow]
+    [items, measurements]
   )
 
-  // Последнее обновление: самая свежая дата среди замеров и взвешиваний
+  // Последнее обновление: самая свежая дата среди замеров
   const lastUpdated = useMemo(() => {
     const times = []
     Object.values(measurements).forEach((list) => {
       if (list[0] && list[0].date) times.push(new Date(list[0].date).getTime())
     })
-    if (weights[0] && weights[0].date) times.push(new Date(weights[0].date).getTime())
     if (!times.length) return null
     return new Intl.DateTimeFormat('ru-RU', {
       day: '2-digit',
@@ -170,7 +148,7 @@ export function MeasurementsCard() {
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(Math.max(...times)))
-  }, [measurements, weights])
+  }, [measurements])
 
   return (
     <View accessibilityLabel="Замеры тела" className="gap-2.5">
@@ -206,7 +184,7 @@ export function MeasurementsCard() {
         >
           <Text className="font-bold text-[15px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
-        {/* Шеврон состояния секции — по умолчанию свёрнута */}
+        {/* Шеврон состояния секции — по умолчанию развёрнута */}
         {secOpen ? (
           <ChevronUp size={17} color="#A5AECB" />
         ) : (
@@ -216,22 +194,38 @@ export function MeasurementsCard() {
 
       {secOpen && (
         <>
-      {/* Таблица как на референсе: «Параметр / Текущее значение /
-          Изменение / Динамика». Строка на каждый замер + строка «Вес»
-          из журнала взвешиваний; тап по строке — окно записи */}
+      {/* Таблица: «Параметр / Сейчас / Изменение / Динамика». Строка на
+          каждый замер; тап по строке — окно записи */}
       <View className="rounded-2xl p-3" style={CARD}>
-        {/* Шапка колонок */}
+        {/* Шапка колонок: короткие подписи мелким шрифтом — длинная
+            «Текущее значение» наезжала на соседние колонки на 361dp */}
         <View className="flex-row items-end border-b border-white/[0.08] pb-2">
-          <Text className="min-w-0 flex-1 font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.05}
+            className="min-w-0 flex-1 font-sans text-[10.5px] uppercase tracking-wide text-bear-dim"
+          >
             Параметр
           </Text>
-          <Text className="w-[74px] text-right font-sans text-[11px] uppercase leading-[13px] tracking-wide text-bear-dim">
-            Текущее{'\n'}значение
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.05}
+            className="w-[70px] text-right font-sans text-[10.5px] uppercase leading-[13px] tracking-wide text-bear-dim"
+          >
+            Сейчас
           </Text>
-          <Text className="w-[74px] text-right font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.05}
+            className="w-[72px] text-right font-sans text-[10.5px] uppercase tracking-wide text-bear-dim"
+          >
             Изменение
           </Text>
-          <Text className="w-[58px] text-right font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.05}
+            className="w-[56px] text-right font-sans text-[10.5px] uppercase tracking-wide text-bear-dim"
+          >
             Динамика
           </Text>
         </View>
@@ -263,12 +257,14 @@ export function MeasurementsCard() {
             </View>
             <Text
               numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
               maxFontSizeMultiplier={1.2}
-              className="w-[74px] text-right font-bold text-[15.5px] text-bear-text"
+              className="w-[70px] text-right font-bold text-[15.5px] text-bear-text"
             >
               {r.value}
             </Text>
-            <View className="w-[74px] flex-row items-center justify-end">
+            <View className="w-[72px] flex-row items-center justify-end">
               {r.d != null && r.d !== 0 ? (
                 <View
                   className="flex-row items-center gap-0.5 rounded-full px-1.5 py-[2px]"
@@ -294,7 +290,7 @@ export function MeasurementsCard() {
                 </Text>
               )}
             </View>
-            <View className="w-[58px] items-end">
+            <View className="w-[56px] items-end">
               {r.trend.length >= 2 ? (
                 <SvgAreaChart
                   spark
@@ -394,6 +390,9 @@ function MeasurementsModal({ open, onClose }) {
   const items = useMemo(() => allItems(customs), [customs])
   // Значения полей { [key]: string }; собираем при каждом открытии
   const [vals, setVals] = useState({})
+  // Отметки «какие замеры делали» { [key]: bool }: нет в карте — включён
+  // по умолчанию; снятая галочка — значение поля не сохранится
+  const [picked, setPicked] = useState({})
   const [newName, setNewName] = useState('')
 
   useEffect(() => {
@@ -404,11 +403,15 @@ function MeasurementsModal({ open, onClose }) {
       init[m.key] = last ? String(last.cm) : ''
     })
     setVals(init)
+    setPicked({})
     setNewName('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  // Ошибки проверяем только у отмеченных галочкой: снятая галочка —
+  // поле игнорируется целиком
   const hasBad = items.some((m) => {
+    if (picked[m.key] === false) return false
     const txt = String(vals[m.key] ?? '').trim()
     if (txt === '') return false
     const n = parseNum(txt)
@@ -451,6 +454,8 @@ function MeasurementsModal({ open, onClose }) {
     if (hasBad) return
     const savedNames = []
     items.forEach((m) => {
+      // Галочка снята — этот замер в этот раз не записываем
+      if (picked[m.key] === false) return
       const txt = String(vals[m.key] ?? '').trim()
       if (txt === '') return
       const n = parseNum(txt)
@@ -462,7 +467,11 @@ function MeasurementsModal({ open, onClose }) {
     })
 
     if (!savedNames.length) {
-      toast({ title: '📏 Ничего не изменилось', description: 'Значения совпадают с последними' })
+      const anyPicked = items.some((m) => picked[m.key] !== false)
+      toast({
+        title: '📏 Ничего не изменилось',
+        description: anyPicked ? 'Значения совпадают с последними' : 'Галочки сняты — записывать нечего',
+      })
     } else {
       const head = savedNames.slice(0, 3).join(', ')
       const rest = savedNames.length > 3 ? ` и ещё ${savedNames.length - 3}` : ''
@@ -487,7 +496,7 @@ function MeasurementsModal({ open, onClose }) {
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">Записать замеры</Text>
                 <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
-                  Сантиметровая лента; заполните то, что измерили
+                  Сантиметровая лента; отметьте галочками, что измерили
                 </Text>
               </View>
               <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
@@ -510,6 +519,26 @@ function MeasurementsModal({ open, onClose }) {
                 return (
                   <View key={m.key} className="mt-2.5">
                     <View className="flex-row items-center gap-2">
+                      {/* галочка «этот замер делали»: снята — поле
+                          игнорируется при сохранении */}
+                      <Pressable
+                        onPress={() =>
+                          setPicked((s) => ({ ...s, [m.key]: s[m.key] === false }))
+                        }
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: picked[m.key] !== false }}
+                        accessibilityLabel={`Замер «${m.label}»`}
+                        hitSlop={4}
+                        className={`h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border active:opacity-70 ${
+                          picked[m.key] === false
+                            ? 'border-white/20 bg-transparent'
+                            : 'border-[#7B6CF6] bg-[#7B6CF6]'
+                        }`}
+                      >
+                        {picked[m.key] !== false && (
+                          <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                        )}
+                      </Pressable>
                       <View
                         style={{
                           width: 8,
