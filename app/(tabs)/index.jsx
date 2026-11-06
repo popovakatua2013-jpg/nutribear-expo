@@ -135,15 +135,7 @@ export default function HomeScreen() {
     })
   }
 
-  function handleAddSteps() {
-    addSteps(1000)
-    toast({
-      title: '🚶 +1 000 шагов!',
-      description: 'Маленькие шаги приводят к большим результатам',
-    })
-  }
-
-  // Ручной ввод шагов с плитки «Шаги»: пишем в ту же копилку, что и «+»
+  // Ручной ввод шагов с плитки «Шаги» (тап по карточке): пишем в ту же копилку
   function saveSteps() {
     const n = Math.round(Number(String(stepsVal).replace(/\s/g, '').replace(',', '.')) || 0)
     if (!Number.isFinite(n) || n < 1 || n > 50000) {
@@ -244,8 +236,9 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Приветствие: мишка, время суток, статус дневника и дата */}
-        <Greeting consumed={consumed} target={goals.kcal} />
+        {/* Приветствие: мишка, время суток и дата. Строку статуса
+            («осталось N ккал») убрали — дубль блока «Осталось» в сводке */}
+        <Greeting />
 
         {/* Дневник питания под шапкой: секции приёмов с блюдами,
             счётчиком и рекомендованными ккал (правка/удаление — внутри) */}
@@ -277,10 +270,10 @@ export default function HomeScreen() {
         />
 
         {/* Блок «Активность» — единый контейнер после сводки: ряд плиток
-            за сегодня (шаги, вода, активность с кольцом сжигания) и
-            тренировки, которые по тапу на «Активность» раскрываются прямо
-            здесь. Карточку «Калории» убрали — её данные уже в сводке
-            выше. Долгий тап по плиткам — правка целей; история по дням —
+            за сегодня (шаги, вода, активность) и тренировки, которые по
+            тапу на «Активность» раскрываются прямо здесь. Кнопки «+» на
+            плитках убраны — тап по плитке и есть добавить/открыть.
+            Долгий тап по плиткам — правка целей; история по дням —
             во вкладке «Дневник» */}
         <View className="rounded-3xl border border-bear-bodyLine bg-white/[0.02] p-3">
           <ActivityStats
@@ -297,8 +290,6 @@ export default function HomeScreen() {
             onEditBurnGoal={() =>
               openGoalEdit({ field: 'burnKcal', title: 'Цель «сжечь за день»', unit: 'ккал', min: 50, max: 5000 })
             }
-            onAddSteps={handleAddSteps}
-            onAddWater={handleAddWater}
             onOpenWater={() => setWaterOpen(true)}
             onEditWaterGoal={() =>
               openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })

@@ -1,11 +1,12 @@
 // Компактная приветственная шапка главной: круглый аватар с мишкой,
-// приветствие по времени суток («Доброе утро!»), живой статус дневника
-// («До нормы осталось N ккал») и чип с сегодняшней датой.
-// Намеренно маленькая (~56 px) — мишка встречает, но не съедает экран.
+// приветствие по времени суток («Доброе утро») и чип с сегодняшней
+// датой. Строку статуса под приветствием («До нормы осталось N ккал»)
+// убрали по отзыву Кати — она дублировала блок «Осталось N ккал»
+// в сводке «Съедено за сегодня». Намеренно маленькая (~44 px) —
+// мишка встречает, но не съедает экран.
 
 import { Image, Text, View } from 'react-native'
 import { WifiOff } from 'lucide-react-native'
-import { formatNum } from '@/lib/format'
 import { useIsOnline } from '@/lib/useIsOnline'
 
 const BEAR = require('../../../assets/images/bear.webp')
@@ -20,26 +21,7 @@ function greetingByHour(h) {
   return 'Добрый вечер'
 }
 
-// Короткий статус по прогрессу дня.
-// Тон без «похвалы за недобор» (анти-паттерн конкурентов): съесть
-// сильно меньше нормы — не достижение, поэтому нейтрально констатируем
-// остаток, а вечером EveningNudge мягко предложит поесть
-function statusLine(consumed, target) {
-  if (consumed <= 0) return 'Дневник пока пуст — добавьте первое блюдо 🍽'
-  const pct = target > 0 ? (consumed / target) * 100 : 0
-  if (pct < 50) {
-    const left = Math.max(0, Math.round(target - consumed))
-    return `Записано ${formatNum(consumed)} ккал · до нормы ${formatNum(left)}`
-  }
-  if (pct < 100) {
-    const left = Math.max(0, Math.round(target - consumed))
-    return `До нормы осталось ${formatNum(left)} ккал`
-  }
-  if (pct <= 115) return 'Норма выполнена — отличная работа! 🎉'
-  return 'Небольшой перебор — завтра получится!'
-}
-
-export function Greeting({ consumed = 0, target = 0 }) {
+export function Greeting() {
   const now = new Date()
   const online = useIsOnline()
   const dateLabel = `${WEEKDAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`
@@ -65,13 +47,6 @@ export function Greeting({ consumed = 0, target = 0 }) {
           className="font-extrabold text-[22px] leading-tight tracking-tight text-bear-text"
         >
           {greetingByHour(now.getHours())}! 👋
-        </Text>
-        <Text
-          numberOfLines={1}
-          maxFontSizeMultiplier={1.25}
-          className="mt-0.5 font-sans text-[16px] leading-snug text-bear-dim"
-        >
-          {statusLine(consumed, target)}
         </Text>
       </View>
 
