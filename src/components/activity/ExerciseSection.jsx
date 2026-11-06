@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Info, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
+import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Flame, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
@@ -489,12 +489,12 @@ export function ExerciseSection({ flat = false }) {
         <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
           <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
             {/* Шапка: гантель как на референсе, закрытие — в квадратной кнопке */}
-            <View className="flex-row items-center gap-3 border-b border-bear-line px-5 pb-3 pt-4">
+            <View className="flex-row items-center gap-3 border-b border-bear-line px-4 pb-3 pt-3.5">
               <View
-                className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
                 style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
               >
-                <Dumbbell size={22} color="#A78BFA" />
+                <Dumbbell size={20} color="#A78BFA" />
               </View>
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">
@@ -527,7 +527,7 @@ export function ExerciseSection({ flat = false }) {
             <ScrollView
               showsVerticalScrollIndicator={false}
               style={{ flexShrink: 1 }}
-              contentContainerStyle={{ padding: 20, paddingBottom: 16 }}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14 }}
             >
               {creating ? (
                 /* Форма своей тренировки: название + иконка + интенсивность */
@@ -672,25 +672,28 @@ export function ExerciseSection({ flat = false }) {
                 </View>
               ) : (
                 <>
-                  {/* День записи: для новой — куда записать (после полуночи
-                      по умолчанию «Вчера»), при изменении — где лежит;
-                      выбор «Вчера» при изменении переносит запись туда */}
+                  {/* День записи: подпись и пилюли в одной строке — окно
+                      компактнее (отзыв Кати). Для новой — куда записать
+                      (после полуночи по умолчанию «Вчера»), при изменении
+                      выбор «Вчера» переносит запись в предыдущий день */}
                   <View>
-                    <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">
-                      {editing ? 'День записи' : 'За какой день?'}
-                    </Text>
-                    <Pills
-                      items={[
-                        { id: 0, label: 'Сегодня' },
-                        { id: 1, label: 'Вчера' },
-                      ]}
-                      value={dayOff}
-                      onChange={setDayOff}
-                      size="md"
-                      accessibilityLabel="День тренировки"
-                    />
+                    <View className="flex-row flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                      <Text className="font-sans text-[15px] text-bear-sub2">
+                        {editing ? 'День записи:' : 'За какой день?'}
+                      </Text>
+                      <Pills
+                        items={[
+                          { id: 0, label: 'Сегодня' },
+                          { id: 1, label: 'Вчера' },
+                        ]}
+                        value={dayOff}
+                        onChange={setDayOff}
+                        size="sm"
+                        accessibilityLabel="День тренировки"
+                      />
+                    </View>
                     {editing && dayOff ? (
-                      <Text className="mt-1 font-sans text-[15px] text-bear-dim">
+                      <Text className="mt-1.5 font-sans text-[14.5px] text-bear-dim">
                         Сохраните — запись перенесётся за вчера
                       </Text>
                     ) : null}
@@ -719,20 +722,22 @@ export function ExerciseSection({ flat = false }) {
                       onPress={startCreate}
                       accessibilityRole="button"
                       accessibilityLabel="Создать свою тренировку"
-                      className="mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/15 py-3 active:opacity-70"
+                      className="mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/15 py-2.5 active:opacity-70"
                       style={{ borderStyle: 'dashed' }}
                     >
-                      <Plus size={18} color="#A5AECB" />
-                      <Text className="font-bold text-[19px] text-bear-soft">
+                      <Plus size={17} color="#A5AECB" />
+                      <Text className="font-bold text-[17.5px] text-bear-soft">
                         Своя тренировка
                       </Text>
                     </Pressable>
                   </View>
 
-                  {/* Длительность — видна сразу, как на референсе: не нужно
-                      сначала выбирать активность, чтобы добраться до минут.
-                      Слева чипы минут (выбранный — фиолетовый с галочкой),
-                      справа «Рекомендуемое время» — тап подставляет его */}
+                  {/* Длительность и итог рядом: слева чипы минут, справа —
+                      огонёк «сожжено» с карандашом (ручная правка калорий).
+                      Старый блок с календарём «Рекомендуемое время» убран —
+                      он дублировал чип минут; рекомендуемая длительность
+                      теперь маленькой подсказкой под чипами и исчезает,
+                      как только выбрана (отзыв Кати) */}
                   <View className="mt-3 flex-row items-stretch gap-2.5">
                     <View className="min-w-0 flex-1 flex-row flex-wrap content-start gap-1.5">
                       {QUICK_MINUTES.map((m) => {
@@ -758,40 +763,68 @@ export function ExerciseSection({ flat = false }) {
                           </Pressable>
                         )
                       })}
+                      {/* Рекомендуемая длительность — маленькой подсказкой:
+                          тап подставляет её, после выбора подсказка исчезает */}
+                      {ex?.typ && minutes !== ex.typ ? (
+                        <Pressable
+                          onPress={() => setMinutes(ex.typ)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Рекомендуемое время ${ex.typ} минут — поставить`}
+                          className="flex-row items-center gap-1 rounded-full bg-white/5 px-2.5 py-1.5 active:opacity-70"
+                        >
+                          <Calendar size={13} color="#8B96B8" />
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.1}
+                            className="font-sans text-[13px] text-bear-sub2"
+                          >
+                            {`рекомендуем ${ex.typ} мин`}
+                          </Text>
+                        </Pressable>
+                      ) : null}
                     </View>
                     <View className="w-px self-stretch bg-white/10" />
-                    {ex?.typ ? (
-                      <Pressable
-                        onPress={() => setMinutes(ex.typ)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Рекомендуемое время ${ex.typ} минут — поставить`}
-                        className="w-[92px] shrink-0 items-center justify-center active:opacity-70"
-                      >
-                        <Calendar size={19} color="#A5AECB" />
-                        <Text className="mt-0.5 font-bold text-[17px] text-bear-text">
-                          {ex.typ} мин
-                        </Text>
+                    {/* Итог тренировки: огонёк + сожжённые калории +
+                        карандаш ручной правки (цифра с тренажёра или часов) */}
+                    <View
+                      className={`w-[104px] shrink-0 items-center justify-center rounded-2xl px-1 py-2 ${
+                        kcalShow > 0 ? 'bg-[#f87171]/[0.06]' : 'bg-white/[0.03]'
+                      }`}
+                    >
+                      <View className="w-full flex-row items-center justify-center gap-1">
+                        <Flame size={16} color="#f87171" />
                         <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.75}
                           maxFontSizeMultiplier={1.2}
-                          className="mt-0.5 text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
+                          className={`min-w-0 flex-1 text-right font-bold text-[16px] ${
+                            kcalShow > 0 ? 'text-[#f87171]' : 'text-bear-sub2'
+                          }`}
                         >
-                          Рекомендуемое{'\n'}время
-                        </Text>
-                      </Pressable>
-                    ) : (
-                      <View className="w-[92px] shrink-0 items-center justify-center">
-                        <Calendar size={19} color="#A5AECB" />
-                        <Text className="mt-0.5 font-bold text-[17px] text-bear-text">
-                          {minutes ? `${minutes} мин` : '—'}
-                        </Text>
-                        <Text
-                          maxFontSizeMultiplier={1.2}
-                          className="mt-0.5 text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
-                        >
-                          Длительность
+                          {kcalShow > 0 ? `${formatNum(kcalShow)} ккал` : '—'}
                         </Text>
                       </View>
-                    )}
+                      <Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                        maxFontSizeMultiplier={1.2}
+                        className="mt-0.5 w-full text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
+                      >
+                        {kcalManual != null ? 'Сожжено · вручную' : 'Сожжено'}
+                      </Text>
+                      <Pressable
+                        onPress={startKcalEdit}
+                        disabled={!ex || !minutes || kcalEditing}
+                        accessibilityLabel="Исправить калории вручную"
+                        className={`mt-1.5 h-9 w-9 items-center justify-center rounded-full active:opacity-70 ${
+                          kcalManual != null ? 'bg-[#7B6CF6]/25' : 'bg-white/5'
+                        } ${!ex || !minutes || kcalEditing ? 'opacity-40' : ''}`}
+                      >
+                        <Pencil size={15} color="#A5AECB" />
+                      </Pressable>
+                    </View>
                   </View>
 
                   {/* Своя длительность: если в быстрых кнопках нужного
@@ -811,14 +844,15 @@ export function ExerciseSection({ flat = false }) {
                       className="w-20 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
                     />
                     <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
-                      минут — впишите свои, если в кнопках нужного нет
+                      минут — впишите свою, если нужной нет
                     </Text>
                   </View>
 
-                  {/* Итог тренировки одной плашкой, как на референсе:
-                      🔥 сожжено | MET — X; карандаш — ручная правка калорий
-                      (появляется, когда выбраны активность и длительность) */}
-                  {kcalEditing ? (
+                  {/* Ручная правка калорий — открывается карандашом у огонька
+                      «сожжено» (цифра с тренажёра или часов точнее формулы).
+                      Отдельная плашка «Сожжено | MET» больше не дублируется
+                      под чипами — итог теперь стоит справа от чипов минут */}
+                  {kcalEditing && (
                     <View className="mt-2.5 gap-2">
                       <Text className="font-sans text-[15px] text-bear-sub2">
                         Сожжено за эту тренировку, ккал
@@ -855,43 +889,6 @@ export function ExerciseSection({ flat = false }) {
                       <Text className="font-sans text-[15px] leading-relaxed text-bear-dim">
                         Точнее формулы: цифра с тренажёра, пульсометра или смарт-часов.
                       </Text>
-                    </View>
-                  ) : (
-                    <View className="mt-2.5 flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.03] px-3.5 py-2.5">
-                      <Text
-                        numberOfLines={1}
-                        className="min-w-0 flex-1 font-sans text-[16px] text-bear-sub2"
-                      >
-                        🔥 Сожжено:{' '}
-                        {kcalShow > 0 ? (
-                          <Text className="font-bold text-[17px] text-[#f87171]">
-                            {formatNum(kcalShow)} ккал
-                          </Text>
-                        ) : (
-                          <Text className="font-bold text-[17px] text-bear-sub2">—</Text>
-                        )}
-                      </Text>
-                      {ex ? (
-                        <>
-                          <View className="h-5 w-px shrink-0 bg-white/10" />
-                          <View className="shrink-0 flex-row items-center gap-1">
-                            <Info size={15} color="#A5AECB" />
-                            <Text className="font-sans text-[15px] text-bear-sub2">
-                              MET — {ex.met}
-                            </Text>
-                          </View>
-                        </>
-                      ) : null}
-                      <Pressable
-                        onPress={startKcalEdit}
-                        disabled={!ex || !minutes}
-                        accessibilityLabel="Исправить калории вручную"
-                        className={`h-9 w-9 shrink-0 items-center justify-center rounded-full active:opacity-70 ${
-                          kcalManual != null ? 'bg-[#7B6CF6]/25' : 'bg-white/5'
-                        } ${!ex || !minutes ? 'opacity-40' : ''}`}
-                      >
-                        <Pencil size={15} color="#A5AECB" />
-                      </Pressable>
                     </View>
                   )}
 
@@ -931,7 +928,7 @@ export function ExerciseSection({ flat = false }) {
                 длительность — кнопка видна, но приглушена, а под ней
                 подсказка, чего не хватает. */}
             <View
-              className="gap-1.5 border-t border-bear-line px-5 pt-3"
+              className="gap-1.5 border-t border-bear-line px-4 pt-2.5"
               style={{ paddingBottom: Math.max(16, insets.bottom + 12) }}
             >
               {creating ? (
@@ -956,7 +953,7 @@ export function ExerciseSection({ flat = false }) {
                     className={`overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
                   >
                     <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                      <Text className="w-full py-3.5 text-center font-bold text-[19px] text-white">
+                      <Text className="w-full py-3 text-center font-bold text-[18px] text-white">
                         {editing ? 'Сохранить' : 'Добавить тренировку'}
                       </Text>
                     </LinearGradient>
@@ -991,7 +988,7 @@ function ExButton({ e, exId, setExId }) {
       onPress={() => setExId(e.id)}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      className={`relative min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border-2 px-2.5 py-2.5 ${
+      className={`relative min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border-2 px-2.5 py-2 ${
         active ? 'border-[#7B6CF6] bg-[#7B6CF6]/10' : 'border-white/10 bg-white/[0.03]'
       }`}
     >
