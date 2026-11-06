@@ -12,7 +12,9 @@
 // поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi;
 // текст строится по движению веса за ВЫБРАННЫЙ ПЕРИОД относительно
 // направления цели — поправела при цели «похудеть» — «вес уходит от
-// цели», а не похвала). Значение «Текущий вес» подсвечивается по
+// цели», а не похвала; стоит на месте при недостигнутой цели — честное
+// «вес стоит на месте» с остатком пути и советом, без похвалы —
+// отзыв Кати). Значение «Текущий вес» подсвечивается по
 // калькулятору ИМТ и цели (перебор — красный, норма — зелёный, сушка —
 // янтарный, поддержка — голубой, набор — фиолетовый — отзыв Кати).
 // Журнал веса больше не живёт отдельной секцией под блоком
@@ -170,12 +172,19 @@ export function WeightCard() {
         : null
 
   // Строка-поддержка: с целью — по движению к цели за период, без цели —
-  // по движению к здоровой норме (текст без слова «цель», тон тот же)
+  // по движению к здоровой норме. Если вес стоит на месте, а цель ещё
+  // НЕ достигнута, — без похвалы (отзыв Кати: недобор веса, цель
+  // «набрать», а подсказка была «отличная работа!»): честно говорим,
+  // сколько осталось до цели и что делать — набору — добавить калорий,
+  // похудению — слегка снизить калорийность
   const strip = weightStrip({
     delta: periodDelta,
     towardGoal: goalWeightKg != null ? periodTowardGoal : null,
     towardNorm,
     goalReached,
+    goalPendingKg:
+      goalWeightKg != null && !goalReached ? Math.abs(goalDiff) : null,
+    gaining: wantUp,
   })
   const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
 
@@ -517,7 +526,8 @@ export function WeightCard() {
             </View>
           </Pressable>
 
-          {/* Строка-поддержка: «Ваш вес стабилен…» с лайком */}
+          {/* Строка-поддержка: «Ваш вес стабилен…» с лайком; при
+              недостигнутой цели и стоячем весе — янтарный тон без похвалы */}
           <View
             accessibilityLabel={`${strip.title}. ${strip.text}`}
             className="mt-0.5 flex-row items-center gap-2 rounded-xl bg-white/[0.04] p-2.5"
@@ -526,12 +536,18 @@ export function WeightCard() {
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
               style={{
                 backgroundColor:
-                  strip.tone === 'bad' ? 'rgba(251,191,36,0.14)' : 'rgba(56,189,248,0.14)',
+                  strip.tone === 'bad' || strip.tone === 'push'
+                    ? 'rgba(251,191,36,0.14)'
+                    : 'rgba(56,189,248,0.14)',
               }}
             >
               <Activity
                 size={16}
-                color={strip.tone === 'bad' ? '#FBBF24' : '#38BDF8'}
+                color={
+                  strip.tone === 'bad' || strip.tone === 'push'
+                    ? '#FBBF24'
+                    : '#38BDF8'
+                }
               />
             </View>
             <View className="min-w-0 flex-1">
@@ -557,6 +573,8 @@ export function WeightCard() {
             </View>
             {strip.tone === 'bad' ? (
               <ThumbsDown size={22} color="#FBBF24" />
+            ) : strip.tone === 'push' ? (
+              <ThumbsUp size={22} color="#FBBF24" />
             ) : (
               <ThumbsUp size={22} color="#4ADE80" />
             )}

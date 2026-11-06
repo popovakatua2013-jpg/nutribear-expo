@@ -177,6 +177,22 @@ describe('weightStrip — подпись-поддержка под график�
     expect(s.text).toContain('в том же духе')
   })
 
+  test('стабильный вес при недостигнутой цели — без похвалы (отзыв Кати)', () => {
+    // Недобор веса, цель «набрать»: стабильность — не «отличная работа»,
+    // а честное «вес стоит на месте» с остатком пути и советом
+    const s = weightStrip({ delta: 0, goalPendingKg: 40, gaining: true })
+    expect(s.tone).toBe('push')
+    expect(s.title).toBe('Вес стоит на месте')
+    expect(s.text).toContain('40')
+    expect(s.text).toContain('Добавьте калорий')
+    expect(s.text).not.toContain('Отличная работа')
+    // Цель «похудеть», вес стоит — совет про калорийность, не похвала
+    const losing = weightStrip({ delta: 0, goalPendingKg: 12.5, gaining: false })
+    expect(losing.tone).toBe('push')
+    expect(losing.text).toContain('12.5')
+    expect(losing.text).toContain('снизьте калорийность')
+  })
+
   test('движение к цели — похвала (и на сброс, и на набор)', () => {
     expect(weightStrip({ delta: -1.2, towardGoal: true }).tone).toBe('good')
     expect(weightStrip({ delta: 1.2, towardGoal: true }).tone).toBe('good')

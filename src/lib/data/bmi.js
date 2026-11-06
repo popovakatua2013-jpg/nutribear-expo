@@ -273,14 +273,19 @@ export function kgToNextCategory(weightKg, heightCm) {
 // towardGoal — движется ли вес к цели (true — к цели, false — от цели,
 // null/undefined — цели нет), towardNorm — движение к здоровой норме
 // (используется, когда цели нет: текст без слова «цель»),
-// goalReached — цель уже достигнута.
+// goalReached — цель уже достигнута; goalPendingKg — сколько кг осталось
+// до недостигнутой цели (для честной подсказки, когда вес стоит),
+// gaining — цель «набрать» (совет в стабильной фазе).
 // Тон: stable — всё спокойно (зелёный лайк), good — похвала,
+// push — стоит на месте, но до цели далеко (янтарный, без похвалы),
 // bad — мягкая поддержка без оценщины
 export function weightStrip({
   delta = 0,
   towardGoal = null,
   towardNorm = null,
   goalReached = false,
+  goalPendingKg = null,
+  gaining = false,
 }) {
   if (goalReached) {
     return {
@@ -290,6 +295,18 @@ export function weightStrip({
     }
   }
   if (delta === 0) {
+    // Вес стоит на месте, а цель ещё НЕ достигнута, — хвалить нельзя
+    // (отзыв Кати: недобор веса, цель «набрать», а приложение хвалило
+    // за стабильность). Честно: сколько осталось и что делать дальше
+    if (goalPendingKg != null) {
+      return {
+        tone: 'push',
+        title: 'Вес стоит на месте',
+        text: gaining
+          ? `До цели ещё ${fmtDecimal(goalPendingKg)} кг. Добавьте калорий — и вес снова сдвинется!`
+          : `До цели ещё ${fmtDecimal(goalPendingKg)} кг. Чуть снизьте калорийность — и вес снова сдвинется!`,
+      }
+    }
     return {
       tone: 'stable',
       title: 'Ваш вес стабилен',

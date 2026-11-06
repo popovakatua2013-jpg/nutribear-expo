@@ -236,9 +236,14 @@ export function BmiCalculator() {
 
       {/* Подробные результаты — раскрываются кнопкой «Рассчитать»;
           живут внутри развёрнутой карточки: шапка сворачивает и их,
-          иначе после ввода данных калькулятор нельзя закрыть */}
+          иначе после ввода данных калькулятор нельзя закрыть.
+          Аудит — на ВСЮ ширину карточки (отзыв Кати: блоки разной
+          ширины): раньше панель результатов была внутренней карточкой
+          в карточке и была уже, чем карточки «Динамики веса», на два
+          паддинга. Теперь секция отделена линией и по ширине совпадает
+          с остальными блоками вкладки */}
       {open && showResult && valid && (
-        <View className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <View className="-mx-4 mt-3 border-t border-white/10 px-4 pt-3">
           <View className="flex-row items-center justify-between gap-2">
             <Text className="font-medium text-[16px] text-bear-sub">Ваш ИМТ</Text>
             <Text className="font-semibold text-[16px]" style={{ color: cat.color }}>
