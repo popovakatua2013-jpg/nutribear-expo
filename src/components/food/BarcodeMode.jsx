@@ -125,12 +125,14 @@ export function BarcodeMode({ onPick }) {
           </View>
         ) : null}
         <View className="flex-row items-center gap-2">
+          {/* Подсказка про открытую базу убрана по отзыву: вторая строка
+              ломала выравнивание плашки рядом с кнопкой фонарика */}
           <View className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-3">
-            <Text className="font-semibold text-[17px] text-bear-text">
+            <Text
+              numberOfLines={1}
+              className="font-semibold text-[17px] text-bear-text"
+            >
               {busy ? 'Ищем продукт в базе…' : 'Наведите на штрих-код упаковки'}
-            </Text>
-            <Text className="font-sans text-[15px] text-bear-sub">
-              Открытая база Open Food Facts · точные КБЖУ с упаковки
             </Text>
           </View>
           <Pressable
