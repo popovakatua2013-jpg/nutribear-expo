@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, X } from 'lucide-react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MealTabs } from './MealTabs'
 import { AddHub } from './AddHub'
 import { BaseMode } from './BaseMode'
@@ -21,6 +22,7 @@ import { Pills } from '../ui/Pills'
 import { MEALS } from '@/lib/data/meals'
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
+  const insets = useSafeAreaInsets()
   // Дополнительные слоты «Перекус 2, 3…» больше не показываем —
   // все перекусы живут в одной карточке «Перекус/Полдник»
   const meals = MEALS
@@ -47,7 +49,10 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
-      <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
+      <View
+        className="flex-1 justify-end bg-black/60 px-3"
+        style={{ paddingBottom: 12 + insets.bottom }}
+      >
         <View className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
           {picked ? (
             <SelectedFood

@@ -4,7 +4,8 @@
 
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronLeft, Pencil } from 'lucide-react-native'
+import { ChevronLeft, Pencil, X } from 'lucide-react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { kcalForPortion } from '@/lib/data/foods'
 import { buildFood } from '@/lib/data/pick'
 import { bjuForPortion, bjuLine } from '@/lib/data/bju'
@@ -21,6 +22,7 @@ import { EditAiFoodModal } from './EditAiFoodModal'
 const EDITABLE_SOURCES = ['ai', 'off', 'base', 'user', 'label']
 
 export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, onBack, onClose }) {
+  const insets = useSafeAreaInsets()
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const [grams, setGrams] = useState(String(item.defaultGrams || 100))
@@ -69,23 +71,23 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
   }
 
   return (
-    <View className="max-h-[85%]">
-      <ScrollView contentContainerClassName="px-5 pt-4 pb-2" showsVerticalScrollIndicator={false}>
+    <View className="flex-1">
+      <ScrollView contentContainerClassName="px-5 pt-4 pb-4" showsVerticalScrollIndicator={false}>
         <View className="flex-row items-center gap-3">
           <Pressable
             onPress={onBack}
             accessibilityRole="button"
-            accessibilityLabel="Назад"
+            accessibilityLabel="Назад к списку"
             className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5"
           >
             <ChevronLeft size={22} color="#AEB9D9" />
           </Pressable>
           <Text className="shrink-0 text-2xl">{food.emoji}</Text>
           <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="font-bold text-[19px] text-bear-text">
+            <Text numberOfLines={1} className="font-bold text-[21px] text-bear-text">
               {food.name}
             </Text>
-            <Text className="font-sans text-[15px] text-bear-sub">
+            <Text className="font-sans text-[16.5px] leading-snug text-bear-sub">
               {`${food.kcal} ккал / 100 г · Б ${food.p} · Ж ${food.f} · У ${food.c}`}
             </Text>
           </View>
@@ -99,6 +101,14 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
               <Pencil size={18} color="#AEB9D9" />
             </Pressable>
           )}
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Закрыть"
+            className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+          >
+            <X size={20} color="#AEB9D9" />
+          </Pressable>
         </View>
 
         {canEdit && (
@@ -131,7 +141,10 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
         </View>
       </ScrollView>
 
-      <View className="border-t border-bear-line p-5 pt-3.5">
+      <View
+        className="border-t border-bear-line p-5 pt-3.5"
+        style={{ paddingBottom: 20 + insets.bottom }}
+      >
         {/* За какой день: выбор из шапки виден и здесь — приём после
             полуночи уходит во вчера, поменять можно прямо перед добавлением */}
         <View className="mb-3 flex-row items-center justify-between">

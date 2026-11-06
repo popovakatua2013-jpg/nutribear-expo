@@ -8,17 +8,17 @@ export function GramsPicker({ grams, onChange }) {
 
   return (
     <View>
-      <Text className="font-medium text-[16px] text-bear-sub">Сколько съедите (граммы)?</Text>
-      <View className="mt-2 flex-row items-center gap-2">
+      <Text className="font-medium text-[16.5px] text-bear-sub">Сколько съедите (граммы)?</Text>
+      <View className="mt-1.5 flex-row items-center gap-2">
         <TextInput
           accessibilityLabel="Граммовка"
           keyboardType="number-pad"
           maxLength={4}
           value={String(grams)}
           onChangeText={onChange}
-          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center font-bold text-[26px] text-bear-text"
+          className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-center font-bold text-[24px] text-bear-text"
         />
-        <Text className="font-sans text-[23px] text-bear-sub">г</Text>
+        <Text className="font-sans text-[22px] text-bear-sub">г</Text>
       </View>
       <View className="mt-2 flex-row flex-wrap gap-1.5">
         {QUICK_GRAMS.map((g) => (

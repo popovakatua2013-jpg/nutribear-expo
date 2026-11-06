@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native'
 import { Pencil, Wand2, X } from 'lucide-react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { estimateBju, bjuForPortion, bjuLine } from '@/lib/data/bju'
 import { formatNum } from '@/lib/format'
 import { estimateByName, estimateFromDescription } from '@/lib/food-ai'
@@ -33,6 +34,7 @@ function parseNum(text, fallback, min, max) {
 }
 
 export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
+  const insets = useSafeAreaInsets()
   const [name, setName] = useState(item?.name ?? '')
   const [kcal, setKcal] = useState(
     item?.kcal100 != null ? String(item.kcal100) : ''
@@ -157,12 +159,14 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 justify-end bg-black/60 px-3 pb-3"
+        className="flex-1 justify-end bg-black/60 px-3"
+        style={{ paddingBottom: 12 + insets.bottom }}
       >
         <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
-          {/* Шапка */}
-          <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
-            <View className="min-w-0 flex-row items-center gap-2 pr-2">
+          {/* Шапка: левый блок flex-1 — длинный подзаголовок сжимается,
+              а не выталкивает крестик за край окна */}
+          <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-3 pt-4">
+            <View className="min-w-0 flex-1 flex-row items-center gap-2 pr-2">
               <Pencil size={20} color="#6C8CFF" />
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">
@@ -173,17 +177,21 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 </Text>
               </View>
             </View>
-            <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X hitSlop={10} size={22} color="#A5AECB" />
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel="Закрыть"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+            >
+              <X hitSlop={10} size={20} color="#A5AECB" />
             </Pressable>
           </View>
 
           <ScrollView
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 20 }}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
           >
             {/* Название */}
-            <Text className="font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            <Text className="font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Название
             </Text>
             <TextInput
@@ -193,7 +201,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Название блюда"
               placeholder="Название блюда"
               placeholderTextColor="#8B96B8"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] text-bear-text"
             />
 
             {/* Автоподстановка КБЖУ по названию: история дневника → ИИ */}
@@ -214,7 +222,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
             ) : null}
 
             {/* Описание — своими словами (попадёт в дневник) */}
-            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Описание (необязательно)
             </Text>
             <TextInput
@@ -225,30 +233,30 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Описание блюда"
               placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
               placeholderTextColor="#8B96B8"
-              className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
+              className="mt-1 min-h-[60px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
             />
 
             {/* Калории на 100 г */}
-            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Калории на 100 г
             </Text>
-            <View className="mt-1.5 flex-row items-center gap-2">
+            <View className="mt-1 flex-row items-center gap-2">
               <TextInput
                 value={kcal}
                 onChangeText={setKcal}
                 keyboardType="number-pad"
                 maxLength={5}
                 accessibilityLabel="Калории на 100 грамм"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
             </View>
 
             {/* БЖУ на 100 г */}
-            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Белки · жиры · углеводы на 100 г
             </Text>
-            <View className="mt-1.5 flex-row gap-2">
+            <View className="mt-1 flex-row gap-2">
               {[
                 { label: 'Б, г', value: p, set: setP },
                 { label: 'Ж, г', value: f, set: setF },
@@ -261,9 +269,9 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     accessibilityLabel={`${fld.label} на 100 грамм`}
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                    className="rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[15px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>
@@ -281,10 +289,10 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
             </Pressable>
 
             {/* Клетчатка и сахар на 100 г — для рейтинга питания */}
-            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Клетчатка · сахар на 100 г (для рейтинга)
             </Text>
-            <View className="mt-1.5 flex-row gap-2">
+            <View className="mt-1 flex-row gap-2">
               {[
                 { label: 'клетчатка, г', value: fib, set: setFib },
                 { label: 'сахар, г', value: sug, set: setSug },
@@ -298,9 +306,9 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     placeholder="0"
                     placeholderTextColor="#8B96B8"
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                    className="rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
                   />
-                  <Text className="mt-1 text-center font-sans text-[15px] text-bear-sub">
+                  <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}
                   </Text>
                 </View>

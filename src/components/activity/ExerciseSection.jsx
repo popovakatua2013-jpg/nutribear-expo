@@ -12,8 +12,9 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { ChevronLeft, ChevronRight, Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { useExerciseStore, todayKey, dayBurned, syncHistoryBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -72,9 +73,11 @@ export function ExerciseSection({ flat = false }) {
   const removeLog = useExerciseStore((s) => s.removeLog)
   const custom = useExerciseStore((s) => s.custom)
   const addCustom = useExerciseStore((s) => s.addCustom)
+  const updateCustom = useExerciseStore((s) => s.updateCustom)
   const removeCustom = useExerciseStore((s) => s.removeCustom)
   const weightKg = useProfileStore((s) => s.weightKg)
   const { toast } = useToast()
+  const insets = useSafeAreaInsets()
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null) // запись на изменение
@@ -95,6 +98,13 @@ export function ExerciseSection({ flat = false }) {
   const [newLevel, setNewLevel] = useState('mid')
   const [newMode, setNewMode] = useState('level') // level | kcal
   const [newKcal30, setNewKcal30] = useState('')
+  // Свёрнутые блоки формы: иконка и уровень — одна строка с текущим
+  // выбором, список раскрывается только по тапу (сетка иконок и уровней
+  // больше не занимает пол-окна)
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const [levelOpen, setLevelOpen] = useState(false)
+  // Правка запомненной тренировки: id своей тренировки в форме
+  const [editingCustomId, setEditingCustomId] = useState(null)
 
   // Ключ дня — в состоянии и обновляется при каждом возврате на вкладку:
   // если приложение оставалось открытым через полночь, список «Сегодня»
@@ -150,6 +160,44 @@ export function ExerciseSection({ flat = false }) {
   function closeModal() {
     setOpen(false)
     setEditing(null)
+    setCreating(false)
+    setEditingCustomId(null)
+  }
+
+  // Открыть форму своей тренировки с чистого листа (и сбросить
+  // развёрнутые списки — иконка/уровень всегда начинаются свёрнутыми)
+  function startCreate() {
+    setCreating(true)
+    setEditingCustomId(null)
+    setNewName('')
+    setNewEmoji('🔥')
+    setNewLevel('mid')
+    setNewMode('level')
+    setNewKcal30('')
+    setEmojiOpen(false)
+    setLevelOpen(false)
+  }
+
+  // Изменить запомненную тренировку: подставляем её данные в форму.
+  // Хранится только MET, поэтому режим интенсивности подбираем обратным
+  // пересчётом: точное совпадение с уровнем — «По уровню», иначе — ккал за 30 мин
+  function startEditCustom() {
+    if (!ex || !ex.id.startsWith('custom-')) return
+    setCreating(true)
+    setEditingCustomId(ex.id)
+    setNewName(ex.name)
+    setNewEmoji(ex.emoji)
+    const level = INTENSITY_LEVELS.find((l) => l.met === ex.met)
+    if (level) {
+      setNewMode('level')
+      setNewLevel(level.id)
+      setNewKcal30('')
+    } else {
+      setNewMode('kcal')
+      setNewKcal30(String(Math.max(20, Math.round(ex.met * 0.525 * weightKg) || 20)))
+    }
+    setEmojiOpen(false)
+    setLevelOpen(false)
   }
 
   const ex = allExercises.find((e) => e.id === exId)
@@ -241,7 +289,8 @@ export function ExerciseSection({ flat = false }) {
     toast({ title: '🗑 Удалено', description: `${entry.name} убрана из дневника` })
   }
 
-  // Создать свою тренировку — сохраняется навсегда, попадает в каталог
+  // Создать/сохранить свою тренировку — хранится навсегда, в каталоге.
+  // При правке id не меняется — записи дневника остаются привязаны к ней
   function saveCustom() {
     const name = newName.trim()
     if (!name) {
@@ -263,6 +312,21 @@ export function ExerciseSection({ flat = false }) {
     } else {
       met = intensityMet(newLevel)
     }
+    if (editingCustomId) {
+      updateCustom(editingCustomId, { name, emoji: newEmoji, met })
+      setExId(editingCustomId)
+      setCreating(false)
+      setEditingCustomId(null)
+      setNewName('')
+      setNewEmoji('🔥')
+      setNewLevel('mid')
+      setNewMode('level')
+      setNewKcal30('')
+      setEmojiOpen(false)
+      setLevelOpen(false)
+      toast({ title: '✏️ Изменено', description: `«${name}» обновлена` })
+      return
+    }
     const exObj = { id: `custom-${makeId()}`, name, emoji: newEmoji, met }
     addCustom(exObj)
     setExId(exObj.id)
@@ -272,6 +336,8 @@ export function ExerciseSection({ flat = false }) {
     setNewLevel('mid')
     setNewMode('level')
     setNewKcal30('')
+    setEmojiOpen(false)
+    setLevelOpen(false)
     toast({
       title: `${exObj.emoji} «${name}» запомнена`,
       description: 'Теперь она всегда в списке тренировок',
@@ -426,11 +492,19 @@ export function ExerciseSection({ flat = false }) {
             <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
               <View className="flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">
-                  {creating ? 'Своя тренировка' : editing ? 'Изменить тренировку' : 'Новая тренировка'}
+                  {creating
+                    ? editingCustomId
+                      ? 'Изменить тренировку'
+                      : 'Своя тренировка'
+                    : editing
+                      ? 'Изменить тренировку'
+                      : 'Новая тренировка'}
                 </Text>
                 <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                   {creating
-                    ? 'Запомним её — будет всегда в списке'
+                    ? editingCustomId
+                      ? 'Поменяйте что нужно — она останется в списке'
+                      : 'Запомним её — будет всегда в списке'
                     : `Расчёт по формуле MET для веса ${weightKg} кг`}
                 </Text>
               </View>
@@ -448,7 +522,7 @@ export function ExerciseSection({ flat = false }) {
                 /* Форма своей тренировки: название + иконка + интенсивность */
                 <View className="gap-3.5">
                   <View>
-                    <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">Название</Text>
+                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">Название</Text>
                     <TextInput
                       value={newName}
                       onChangeText={setNewName}
@@ -456,33 +530,53 @@ export function ExerciseSection({ flat = false }) {
                       placeholder="Например: Бокс, скакалка, падел"
                       placeholderTextColor="#8B96B8"
                       accessibilityLabel="Название своей тренировки"
-                      className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 font-sans text-[17.5px] text-bear-text"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 font-sans text-[19px] text-bear-text"
                     />
                   </View>
 
+                  {/* Иконка — свёрнута: одна строка с текущим выбором,
+                      сетка раскрывается только по тапу */}
                   <View>
-                    <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">Иконка</Text>
-                    <View className="flex-row flex-wrap gap-1.5">
-                      {CUSTOM_EMOJIS.map((em) => (
-                        <Pressable
-                          key={em}
-                          onPress={() => setNewEmoji(em)}
-                          accessibilityLabel={`Иконка ${em}`}
-                          accessibilityRole="button"
-                          className={`h-9 w-9 items-center justify-center rounded-xl border ${
-                            newEmoji === em
-                              ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10'
-                              : 'border-white/5 bg-white/[0.03]'
-                          }`}
-                        >
-                          <Text className="text-[22px]">{em}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
+                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">Иконка</Text>
+                    <Pressable
+                      onPress={() => setEmojiOpen((v) => !v)}
+                      accessibilityRole="button"
+                      accessibilityLabel={emojiOpen ? 'Скрыть выбор иконки' : 'Выбрать иконку'}
+                      className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2 active:opacity-70"
+                    >
+                      <Text className="text-[24px]">{newEmoji}</Text>
+                      <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-soft">
+                        {emojiOpen ? 'Свернуть' : 'Выбрать иконку'}
+                      </Text>
+                      {emojiOpen ? (
+                        <ChevronUp size={18} color="#A5AECB" />
+                      ) : (
+                        <ChevronDown size={18} color="#A5AECB" />
+                      )}
+                    </Pressable>
+                    {emojiOpen && (
+                      <View className="mt-2 flex-row flex-wrap gap-1.5">
+                        {CUSTOM_EMOJIS.map((em) => (
+                          <Pressable
+                            key={em}
+                            onPress={() => setNewEmoji(em)}
+                            accessibilityLabel={`Иконка ${em}`}
+                            accessibilityRole="button"
+                            className={`h-9 w-9 items-center justify-center rounded-xl border ${
+                              newEmoji === em
+                                ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10'
+                                : 'border-white/5 bg-white/[0.03]'
+                            }`}
+                          >
+                            <Text className="text-[22px]">{em}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
                   </View>
 
                   <View>
-                    <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">
+                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">
                       Интенсивность
                     </Text>
                     {/* Способ: уровни (проще) или калории за 30 минут (точнее) */}
@@ -494,14 +588,35 @@ export function ExerciseSection({ flat = false }) {
                       accessibilityLabel="Способ задания интенсивности"
                     />
                     {newMode === 'level' ? (
+                      /* Уровень — тоже свёрнут: строка с выбранным уровнем,
+                         список раскрывается по тапу */
                       <View className="mt-2">
-                        <Pills
-                          items={INTENSITY_LEVELS}
-                          value={newLevel}
-                          onChange={setNewLevel}
-                          size="md"
-                          accessibilityLabel="Интенсивность"
-                        />
+                        <Pressable
+                          onPress={() => setLevelOpen((v) => !v)}
+                          accessibilityRole="button"
+                          accessibilityLabel={levelOpen ? 'Скрыть уровни' : 'Выбрать уровень'}
+                          className="flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 active:opacity-70"
+                        >
+                          <Text className="font-semibold text-[16.5px] text-bear-text">
+                            {INTENSITY_LEVELS.find((l) => l.id === newLevel)?.label || 'Средняя'}
+                          </Text>
+                          {levelOpen ? (
+                            <ChevronUp size={18} color="#A5AECB" />
+                          ) : (
+                            <ChevronDown size={18} color="#A5AECB" />
+                          )}
+                        </Pressable>
+                        {levelOpen && (
+                          <View className="mt-2">
+                            <Pills
+                              items={INTENSITY_LEVELS}
+                              value={newLevel}
+                              onChange={setNewLevel}
+                              size="md"
+                              accessibilityLabel="Интенсивность"
+                            />
+                          </View>
+                        )}
                       </View>
                     ) : (
                       <View className="mt-2 gap-1.5">
@@ -589,7 +704,7 @@ export function ExerciseSection({ flat = false }) {
 
                     {/* Своя тренировка: создаётся один раз, запоминается */}
                     <Pressable
-                      onPress={() => setCreating(true)}
+                      onPress={startCreate}
                       accessibilityRole="button"
                       accessibilityLabel="Создать свою тренировку"
                       className="mt-0.5 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/15 py-2 active:opacity-70"
@@ -611,6 +726,27 @@ export function ExerciseSection({ flat = false }) {
                         size="md"
                         accessibilityLabel="Минуты"
                       />
+
+                      {/* Своя длительность: если в быстрых кнопках нужного
+                          нет — вписываем своё число минут */}
+                      <View className="flex-row items-center gap-2">
+                        <TextInput
+                          value={minutes == null ? '' : String(minutes)}
+                          onChangeText={(t) => {
+                            const n = Math.round(Number(t) || 0)
+                            setMinutes(n ? Math.min(600, n) : null)
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={3}
+                          placeholder="—"
+                          placeholderTextColor="#8B96B8"
+                          accessibilityLabel="Своя длительность в минутах"
+                          className="w-20 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
+                        />
+                        <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
+                          минут — впишите свои, если в кнопках нужного нет
+                        </Text>
+                      </View>
 
                       {kcalEditing ? (
                         /* Ручной ввод сожжённых калорий */
@@ -674,19 +810,28 @@ export function ExerciseSection({ flat = false }) {
                     </View>
                   )}
 
-                  {/* Своя тренировка выбрана — можно удалить её из списка */}
+                  {/* Своя тренировка выбрана — её можно изменить или удалить */}
                   {ex && ex.id.startsWith('custom-') && (
-                    <Pressable
-                      onPress={forgetCustom}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Удалить ${ex.name} из моих тренировок`}
-                      className="mt-2 flex-row items-center justify-center gap-1.5 active:opacity-70"
-                    >
-                      <Trash2 size={14} color="#98A2C2" />
-                      <Text className="font-sans text-[15px] text-bear-sub2">
-                        Удалить «{ex.name}» из моих тренировок
-                      </Text>
-                    </Pressable>
+                    <View className="mt-2 flex-row items-center justify-center gap-6">
+                      <Pressable
+                        onPress={startEditCustom}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Изменить ${ex.name}`}
+                        className="flex-row items-center gap-1.5 active:opacity-70"
+                      >
+                        <Pencil size={14} color="#A5AECB" />
+                        <Text className="font-sans text-[15px] text-bear-sub2">Изменить</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={forgetCustom}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Удалить ${ex.name} из моих тренировок`}
+                        className="flex-row items-center gap-1.5 active:opacity-70"
+                      >
+                        <Trash2 size={14} color="#98A2C2" />
+                        <Text className="font-sans text-[15px] text-bear-sub2">Удалить</Text>
+                      </Pressable>
+                    </View>
                   )}
                 </>
               )}
@@ -700,7 +845,10 @@ export function ExerciseSection({ flat = false }) {
                 только каталог активностей. Пока не выбраны активность и
                 длительность — кнопка видна, но приглушена, а под ней
                 подсказка, чего не хватает. */}
-            <View className="gap-1.5 border-t border-bear-line px-5 pb-4 pt-3">
+            <View
+              className="gap-1.5 border-t border-bear-line px-5 pt-3"
+              style={{ paddingBottom: Math.max(16, insets.bottom + 12) }}
+            >
               {creating ? (
                 <Pressable
                   onPress={saveCustom}
@@ -709,7 +857,9 @@ export function ExerciseSection({ flat = false }) {
                   className="items-center rounded-2xl py-3 active:opacity-80"
                   style={{ backgroundColor: '#7B6CF6' }}
                 >
-                  <Text className="font-bold text-[17px] text-white">Запомнить</Text>
+                  <Text className="font-bold text-[17px] text-white">
+                    {editingCustomId ? 'Сохранить' : 'Запомнить'}
+                  </Text>
                 </Pressable>
               ) : (
                 <>
