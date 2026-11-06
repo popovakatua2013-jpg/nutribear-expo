@@ -1,8 +1,9 @@
 // Сводка «Съедено за сегодня» — компактная версия референса:
 // слева кольцо 84 px (чуть крупнее по отзыву Кати), внутри — съеденные
-// ккал («0 из 1800 ккал»); справа — БЕЗ кольца (отзыв: кольцо «сожжено»
-// лишнее): крупное число сожжённых ккал и подпись «сожжено», под ним
-// «из N ккал», если цель задана. Между ними — пилюля статуса
+// ккал («0 из 1800 ккал»); справа — кольцо 72 px «сожжено», вернули
+// по запросу Кати (сначала кольцо убирали — решили вернуть): красная
+// дуга #f87171, внутри число и «из N ккал», если цель задана.
+// Между ними — пилюля статуса
 // («Осталось / Перебор / Цель достигнута»). Кольцо анимируется как донат
 // ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля, число
 // в центре отсчитывается вверх — и всё это повторяется при каждом
@@ -107,13 +108,19 @@ function VDivider() {
   return <View className="mx-0.5 h-9 w-px shrink-0 bg-white/[0.08]" />
 }
 
-// Кольцо прогресса с числом внутри — съедено от цели калориями.
+// Кольцо прогресса с числом внутри — съедено от цели калориями
+// (size=84) и сожжено от цели сжигания (size=72, numSize=21).
 // Анимация как у доната ИМТ (BmiDonut):
 // дуга плавно «заливается» до текущего процента (Animated поверх
 // strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
 // число в центре отсчитывается вверх. runId приходит из DailySummary и
 // растёт при каждом возврате на вкладку «Главная» — заливка повторяется.
-function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId }) {
+function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23 }) {
+  // size — диаметр: у «съедено» 84, у «сожжено» 72 (кольцо вернули);
+  // толщина дуги и радиус считаются от диаметра, шрифт числа — свой
+  const sw = size === RING ? SW : Math.max(7, Math.round((SW * size) / RING))
+  const r = (size - sw) / 2
+  const c = 2 * Math.PI * r
   // Прогресс 0…1 — по нему длина дуги и смещение узора;
   // при 0% прогресс-круг не рисуем вовсе (иначе на Android
   // остаётся точка скруглённого конца на 12 часах)
@@ -162,17 +169,17 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
     // arcVal идёт 0…frac (текущая доля кольца): смещение C — дуга пустая,
     // C·(1−frac) — залита ровно на frac окружности
     inputRange: [0, 1],
-    outputRange: [C, 0],
+    outputRange: [c, 0],
   })
 
   return (
-    <View className="items-center" style={{ width: RING }}>
+    <View className="items-center" style={{ width: size }}>
       <View
         accessibilityRole="progressbar"
         accessibilityLabel={accessibilityLabel}
-        style={{ width: RING, height: RING }}
+        style={{ width: size, height: size }}
       >
-        <Svg width={RING} height={RING}>
+        <Svg width={size} height={size}>
           {gradient && (
             <Defs>
               <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
@@ -181,19 +188,19 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
               </LinearGradient>
             </Defs>
           )}
-          <Circle cx={RING / 2} cy={RING / 2} r={R} stroke="rgba(255,255,255,0.07)" strokeWidth={SW} fill="none" />
+          <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.07)" strokeWidth={sw} fill="none" />
           {pct > 0 && (
             <AnimatedCircle
-              cx={RING / 2}
-              cy={RING / 2}
-              r={R}
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
               stroke={color || 'url(#ringGrad)'}
-              strokeWidth={SW}
+              strokeWidth={sw}
               fill="none"
               strokeLinecap="round"
-              strokeDasharray={`${C} ${C}`}
+              strokeDasharray={`${c} ${c}`}
               strokeDashoffset={dashOffset}
-              transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
             />
           )}
         </Svg>
@@ -202,8 +209,8 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             adjustsFontSizeToFit
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
-            className="text-center font-extrabold text-[23px] leading-tight text-bear-text"
-            style={{ width: RING - 16 }}
+            className="text-center font-extrabold leading-tight text-bear-text"
+            style={{ width: size - 16, fontSize: numSize }}
           >
             {formatNum(Math.round(num))}
           </Text>
@@ -216,7 +223,7 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             numberOfLines={2}
             maxFontSizeMultiplier={MAX}
             className="text-center font-sans text-[12px] leading-[14px] text-bear-dim"
-            style={{ width: RING - 10 }}
+            style={{ width: size - 10 }}
           >
             {goal != null ? `из ${formatNum(goal)} ккал` : 'ккал'}
           </Text>
@@ -245,6 +252,8 @@ export function DailySummary({
   const setGoals = useGoalsStore((s) => s.setGoals)
   const { toast } = useToast()
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
+  // Доля сожжённых ккал от цели «сжечь за день» — для кольца «сожжено»
+  const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
   const remaining = Math.max(0, target - consumed)
   const over = Math.max(0, consumed - target)
   const done = consumed > 0 && remaining === 0 && over === 0
@@ -355,9 +364,9 @@ export function DailySummary({
         ) : null}
       </View>
 
-      {/* кольцо «съедено» + пилюля остатка + надпись «сожжено» (без
-          кольца — отзыв Кати). Долгий тап по левой половине — правка цели
-          по калориям, по блоку «сожжено» — цели сжигания; обычный тап
+      {/* кольцо «съедено» + пилюля остатка + кольцо «сожжено» (вернули
+          по запросу Кати). Долгий тап по левой половине — правка цели
+          по калориям, по кольцу «сожжено» — цели сжигания; обычный тап
           ничего не открывает — история по дням во вкладке «Дневник» */}
       <View className="mt-3 flex-row items-center gap-2.5">
         <Row
@@ -415,24 +424,19 @@ export function DailySummary({
           }
           className="shrink-0 items-center"
         >
-          {/* сожжено — без кольца (отзыв Кати): число и подпись, снизу
-              цель, если задана */}
-          <Text
-            adjustsFontSizeToFit
-            numberOfLines={1}
-            maxFontSizeMultiplier={MAX}
-            className="text-center font-extrabold text-[23px] leading-tight text-bear-text"
-          >
-            {formatNum(burned)}
-          </Text>
-          <Text maxFontSizeMultiplier={MAX} className="mt-1 font-sans text-[14.5px] text-bear-sub">
-            сожжено
-          </Text>
-          {burnGoal > 0 && (
-            <Text maxFontSizeMultiplier={MAX} className="mt-0.5 font-sans text-[12px] leading-[14px] text-bear-dim">
-              {`из ${formatNum(burnGoal)} ккал`}
-            </Text>
-          )}
+          {/* сожжено — кольцо вернули по запросу Кати: красная дуга (#f87171),
+              внутри число и «из N ккал», под кольцом подпись «сожжено» */}
+          <KcalRing
+            value={burned}
+            goal={burnGoal > 0 ? burnGoal : null}
+            caption="сожжено"
+            pct={burnPct}
+            color="#f87171"
+            size={72}
+            numSize={21}
+            runId={runId}
+            accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
+          />
         </BurnZone>
       </View>
 
