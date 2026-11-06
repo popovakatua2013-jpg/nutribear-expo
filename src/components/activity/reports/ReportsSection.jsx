@@ -16,6 +16,7 @@ import { DisciplineCard } from './DisciplineCard'
 import { MetricHistoryModal } from './MetricHistoryModal'
 import { NutrientsCard } from './NutrientsCard'
 import { WeeklyShareCard } from './WeeklyShareCard'
+import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
 import { periodTotals } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
@@ -29,6 +30,7 @@ export function ReportsSection({
   onRangeChange = () => {},
 }) {
   const [shareOpen, setShareOpen] = useState(false)
+  const [dayShareOpen, setDayShareOpen] = useState(false)
   // Окно истории: какой показатель открыт (null — закрыто).
   // Панель, разворачивавшаяся под карточками, заменена окном
   const [historyMetric, setHistoryMetric] = useState(null)
@@ -68,6 +70,17 @@ export function ReportsSection({
           <Share2 size={15} color="#8DABFF" />
           <Text className="font-semibold text-[16px] text-[#8DABFF]">Итоги</Text>
         </Pressable>
+        {/* «День» — слепок сегодняшнего дня картинкой: вместо серии
+            скриншотов тренеру (отзыв из Google Play) */}
+        <Pressable
+          onPress={() => setDayShareOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Поделиться итогами дня"
+          className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 active:opacity-70"
+        >
+          <Share2 size={15} color="#F9A8D4" />
+          <Text className="font-semibold text-[16px] text-[#F9A8D4]">День</Text>
+        </Pressable>
       </View>
 
       {/* Период — единственный переключатель на вкладке: управляет
@@ -101,6 +114,8 @@ export function ReportsSection({
         streak={streak}
         days={days}
       />
+
+      <DayShareCard open={dayShareOpen} onClose={() => setDayShareOpen(false)} />
 
       {/* Окно истории показателя: монтируется только открытым — каждый
           раз стартует с периода секции и живёт своим переключателем;

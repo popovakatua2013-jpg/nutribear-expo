@@ -18,6 +18,7 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useShopStore } from '@/store/useShopStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useCycleStore, normLength, normBleed } from '@/store/useCycleStore'
 import { expeditionOf } from '@/lib/data/organism-game'
 import { restorePhotos } from '@/lib/photos'
 
@@ -211,6 +212,24 @@ export async function applyBackup(data) {
     expanded: obj(ui.expanded),
     haptics: ui.haptics === undefined ? true : Boolean(ui.haptics),
     weighNudgeDays: [5, 7, 10].includes(ui.weighNudgeDays) ? ui.weighNudgeDays : 7,
+  })
+
+  // ── Трекер цикла: настройки и история. Дата начала — валидный
+  //    ключ не в будущем; история — до 12 записей { start } ──
+  const cy = obj(data.cycle)
+  const cyStart =
+    typeof cy.lastStart === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(cy.lastStart)
+      ? cy.lastStart
+      : null
+  const cyHistory = arr(cy.history)
+    .filter((r) => r && typeof r.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.start))
+    .slice(0, 12)
+  useCycleStore.setState({
+    enabled: Boolean(cy.enabled) && Boolean(cyStart),
+    lastStart: cyStart,
+    length: normLength(cy.length),
+    bleed: normBleed(cy.bleed),
+    history: cyHistory,
   })
 
   return true

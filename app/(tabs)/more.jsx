@@ -13,6 +13,7 @@ import { ExerciseReminderCard } from '@/components/more/ExerciseReminderCard'
 import { WeighNudgeCard } from '@/components/more/WeighNudgeCard'
 import { HapticsCard } from '@/components/more/HapticsCard'
 import { SyncCard } from '@/components/more/SyncCard'
+import { CycleCard } from '@/components/more/CycleCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { AboutCard } from '@/components/more/AboutCard'
@@ -57,6 +58,7 @@ export default function MoreScreen() {
         <WeighNudgeCard />
         <HapticsCard />
         <SyncCard />
+        <CycleCard />
         <DataPortability />
         <DataActions />
         <AboutCard />

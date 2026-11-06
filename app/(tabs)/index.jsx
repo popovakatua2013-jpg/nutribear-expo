@@ -28,6 +28,7 @@ import { DailySummary } from '@/components/home/DailySummary'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { Greeting } from '@/components/home/Greeting'
 import { EveningNudge } from '@/components/home/EveningNudge'
+import { CycleBadge } from '@/components/home/CycleBadge'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
 import { NutritionRating } from '@/components/home/NutritionRating'
 import { QuoteCard } from '@/components/home/QuoteCard'
@@ -253,6 +254,9 @@ export default function HomeScreen() {
           onRemove={removeEntry}
           onViewAll={() => setAllOpen(true)}
         />
+
+        {/* Мягкий бейдж фазы цикла — только если трекер включён в «Ещё» */}
+        <CycleBadge />
 
         {/* Съедено за сегодня — сводка под планом питания: кольца «съедено»
             и «сожжено», пилюля остатка и итог дня; долгий тап по половинам —

@@ -1,4 +1,4 @@
-// Синхронизация: Google Fit, Apple Health, Health Connect и встроенный
+// Шаги и здоровье: Google Fit, Apple Health, Health Connect и встроенный
 // шагомер. Шагомер настоящий: expo-sensors Pedometer читает системный
 // счётчик шагов (агент src/lib/pedometer.js опрашивает его раз в минуту).
 // Health Connect (Android) — системный «банк здоровья»: шаги собираются
@@ -137,9 +137,9 @@ export function SyncCard() {
   return (
     <CollapsibleCard
       storageKey="sync"
-      accessibilityLabel="Синхронизация"
+      accessibilityLabel="Шаги и здоровье"
       icon={<Watch size={20} color="#38bdf8" />}
-      title="Синхронизация"
+      title="Шаги и здоровье"
       summary={
         pedometerEnabled
           ? 'Шагомер вкл'

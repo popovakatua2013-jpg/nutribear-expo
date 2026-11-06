@@ -20,6 +20,7 @@ import { useHistoryStore } from '@/store/useHistoryStore'
 import { useShopStore } from '@/store/useShopStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useCycleStore } from '@/store/useCycleStore'
 import { collectPhotosForBackup } from '@/lib/photos'
 
 // Снимок всех данных приложения (персональные данные здоровья —
@@ -54,6 +55,9 @@ export async function collectAll() {
     organismGame: useOrganismGameStore.getState(),
     // Мелкие настройки: вибро-отклик, порог напоминания о взвешивании
     uiPrefs: useUiPrefsStore.getState(),
+    // Трекер цикла: настройки и история — только локальные данные,
+    // переносим вместе с остальными, чтобы не вводить заново
+    cycle: useCycleStore.getState(),
   }
 }
 

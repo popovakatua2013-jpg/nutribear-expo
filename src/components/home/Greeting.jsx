@@ -20,11 +20,17 @@ function greetingByHour(h) {
   return 'Добрый вечер'
 }
 
-// Короткий статус по прогрессу дня — младший брат текста из BearHero
+// Короткий статус по прогрессу дня — младший брат текста из BearHero.
+// Тон без «похвалы за недобор» (анти-паттерн конкурентов): съесть
+// сильно меньше нормы — не достижение, поэтому нейтрально констатируем
+// остаток, а вечером EveningNudge мягко предложит поесть
 function statusLine(consumed, target) {
   if (consumed <= 0) return 'Дневник пока пуст — добавьте первое блюдо 🍽'
   const pct = target > 0 ? (consumed / target) * 100 : 0
-  if (pct < 50) return `Отличное начало — ${formatNum(consumed)} ккал 💪`
+  if (pct < 50) {
+    const left = Math.max(0, Math.round(target - consumed))
+    return `Записано ${formatNum(consumed)} ккал · до нормы ${formatNum(left)}`
+  }
   if (pct < 100) {
     const left = Math.max(0, Math.round(target - consumed))
     return `До нормы осталось ${formatNum(left)} ккал`
