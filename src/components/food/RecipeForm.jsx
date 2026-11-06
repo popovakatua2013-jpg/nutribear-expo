@@ -284,6 +284,10 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           className={`${field} flex-1`}
         />
       </View>
+      <Text className="mt-1 px-1 font-sans text-[15px] leading-[18px] text-bear-dim">
+        Выход — вес готового блюда после варки/жарки: крупа разваривается,
+        суп упаривается. Калории считаем от готового веса — порции честные.
+      </Text>
       <View className="mt-2 flex-row gap-2">
         <TextInput
           value={kcal}

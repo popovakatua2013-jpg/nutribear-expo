@@ -19,7 +19,7 @@ export const PACE_OPTIONS = [
 
 // 5 классических уровней активности (множители TDEE)
 export const ACTIVITY_LEVELS = [
-  { id: 'sedentary', mult: 1.2, label: 'Сидячая работа', hint: 'мало движения, нет тренировок' },
+  { id: 'sedentary', mult: 1.2, label: 'Сидячая работа или учёба', hint: 'мало движения, нет тренировок' },
   { id: 'light', mult: 1.375, label: 'Лёгкая активность', hint: 'прогулки, 1–3 тренировки в неделю' },
   { id: 'moderate', mult: 1.55, label: 'Средняя', hint: '3–5 тренировок в неделю' },
   { id: 'high', mult: 1.725, label: 'Высокая', hint: '6–7 тренировок в неделю' },
