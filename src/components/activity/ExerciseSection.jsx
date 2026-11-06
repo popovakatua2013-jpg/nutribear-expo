@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
+import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Info, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
@@ -488,9 +488,15 @@ export function ExerciseSection({ flat = false }) {
       <Modal visible={open} transparent animationType="fade" onRequestClose={closeModal}>
         <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
           <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
-            {/* Шапка */}
-            <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
-              <View className="flex-1">
+            {/* Шапка: гантель как на референсе, закрытие — в квадратной кнопке */}
+            <View className="flex-row items-center gap-3 border-b border-bear-line px-5 pb-3 pt-4">
+              <View
+                className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
+              >
+                <Dumbbell size={22} color="#A78BFA" />
+              </View>
+              <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">
                   {creating
                     ? editingCustomId
@@ -508,8 +514,13 @@ export function ExerciseSection({ flat = false }) {
                     : `Расчёт по формуле MET для веса ${weightKg} кг`}
                 </Text>
               </View>
-              <Pressable onPress={closeModal} accessibilityLabel="Закрыть" className="p-1">
-                <X hitSlop={10} size={22} color="#A5AECB" />
+              <Pressable
+                onPress={closeModal}
+                accessibilityLabel="Закрыть"
+                hitSlop={6}
+                className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 active:opacity-70"
+              >
+                <X size={20} color="#A5AECB" />
               </Pressable>
             </View>
 
@@ -688,13 +699,13 @@ export function ExerciseSection({ flat = false }) {
                   {/* Каталог упражнений + свои: сетка 2 колонки.
                       Плитки компактные — на небольшом экране каталог
                       почти целиком влезает без прокрутки */}
-                  <View className="gap-1.5">
+                  <View className="gap-2">
                     {allExercises.reduce((rows, e, i) => {
                       if (i % 2 === 0) rows.push([])
                       rows[rows.length - 1].push(e)
                       return rows
                     }, []).map((row) => (
-                      <View key={row[0].id} className="flex-row gap-1.5">
+                      <View key={row[0].id} className="flex-row gap-2">
                         {row.map((e) => (
                           <ExButton key={e.id} e={e} exId={exId} setExId={setExId} />
                         ))}
@@ -702,111 +713,185 @@ export function ExerciseSection({ flat = false }) {
                       </View>
                     ))}
 
-                    {/* Своя тренировка: создаётся один раз, запоминается */}
+                    {/* Своя тренировка: создаётся один раз, запоминается.
+                        Крупный текст — по просьбе: строка читается сразу */}
                     <Pressable
                       onPress={startCreate}
                       accessibilityRole="button"
                       accessibilityLabel="Создать свою тренировку"
-                      className="mt-0.5 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/15 py-2 active:opacity-70"
+                      className="mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/15 py-3 active:opacity-70"
                       style={{ borderStyle: 'dashed' }}
                     >
-                      <Plus size={15} color="#A5AECB" />
-                      <Text className="font-bold text-[16px] text-bear-soft">
+                      <Plus size={18} color="#A5AECB" />
+                      <Text className="font-bold text-[19px] text-bear-soft">
                         Своя тренировка
                       </Text>
                     </Pressable>
                   </View>
 
-                  {ex && (
-                    <View className="mt-3 gap-2.5 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5">
-                      <Pills
-                        items={QUICK_MINUTES.map((m) => ({ id: m, label: `${m} мин` }))}
-                        value={minutes}
-                        onChange={setMinutes}
-                        size="md"
-                        accessibilityLabel="Минуты"
-                      />
-
-                      {/* Своя длительность: если в быстрых кнопках нужного
-                          нет — вписываем своё число минут */}
-                      <View className="flex-row items-center gap-2">
-                        <TextInput
-                          value={minutes == null ? '' : String(minutes)}
-                          onChangeText={(t) => {
-                            const n = Math.round(Number(t) || 0)
-                            setMinutes(n ? Math.min(600, n) : null)
-                          }}
-                          keyboardType="number-pad"
-                          maxLength={3}
-                          placeholder="—"
-                          placeholderTextColor="#8B96B8"
-                          accessibilityLabel="Своя длительность в минутах"
-                          className="w-20 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
-                        />
-                        <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
-                          минут — впишите свои, если в кнопках нужного нет
+                  {/* Длительность — видна сразу, как на референсе: не нужно
+                      сначала выбирать активность, чтобы добраться до минут.
+                      Слева чипы минут (выбранный — фиолетовый с галочкой),
+                      справа «Рекомендуемое время» — тап подставляет его */}
+                  <View className="mt-3 flex-row items-stretch gap-2.5">
+                    <View className="min-w-0 flex-1 flex-row flex-wrap content-start gap-1.5">
+                      {QUICK_MINUTES.map((m) => {
+                        const active = minutes === m
+                        return (
+                          <Pressable
+                            key={m}
+                            onPress={() => setMinutes(m)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`${m} минут`}
+                            accessibilityState={{ selected: active }}
+                            className={`flex-row items-center justify-center gap-1 rounded-2xl px-3 py-2.5 active:opacity-80 ${
+                              active ? '' : 'bg-white/5'
+                            }`}
+                            style={active ? { backgroundColor: '#7B6CF6' } : null}
+                          >
+                            <Text
+                              className={`font-bold text-[15.5px] ${active ? 'text-white' : 'text-bear-soft'}`}
+                            >
+                              {m} мин
+                            </Text>
+                            {active && <Check size={15} color="#FFFFFF" />}
+                          </Pressable>
+                        )
+                      })}
+                    </View>
+                    <View className="w-px self-stretch bg-white/10" />
+                    {ex?.typ ? (
+                      <Pressable
+                        onPress={() => setMinutes(ex.typ)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Рекомендуемое время ${ex.typ} минут — поставить`}
+                        className="w-[92px] shrink-0 items-center justify-center active:opacity-70"
+                      >
+                        <Calendar size={19} color="#A5AECB" />
+                        <Text className="mt-0.5 font-bold text-[17px] text-bear-text">
+                          {ex.typ} мин
+                        </Text>
+                        <Text
+                          maxFontSizeMultiplier={1.2}
+                          className="mt-0.5 text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
+                        >
+                          Рекомендуемое{'\n'}время
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <View className="w-[92px] shrink-0 items-center justify-center">
+                        <Calendar size={19} color="#A5AECB" />
+                        <Text className="mt-0.5 font-bold text-[17px] text-bear-text">
+                          {minutes ? `${minutes} мин` : '—'}
+                        </Text>
+                        <Text
+                          maxFontSizeMultiplier={1.2}
+                          className="mt-0.5 text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
+                        >
+                          Длительность
                         </Text>
                       </View>
+                    )}
+                  </View>
 
-                      {kcalEditing ? (
-                        /* Ручной ввод сожжённых калорий */
-                        <View className="gap-2">
-                          <Text className="font-sans text-[15px] text-bear-sub2">
-                            Сожжено за эту тренировку, ккал
+                  {/* Своя длительность: если в быстрых кнопках нужного
+                      нет — вписываем своё число минут */}
+                  <View className="mt-2 flex-row items-center gap-2">
+                    <TextInput
+                      value={minutes == null ? '' : String(minutes)}
+                      onChangeText={(t) => {
+                        const n = Math.round(Number(t) || 0)
+                        setMinutes(n ? Math.min(600, n) : null)
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      placeholder="—"
+                      placeholderTextColor="#8B96B8"
+                      accessibilityLabel="Своя длительность в минутах"
+                      className="w-20 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
+                    />
+                    <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
+                      минут — впишите свои, если в кнопках нужного нет
+                    </Text>
+                  </View>
+
+                  {/* Итог тренировки одной плашкой, как на референсе:
+                      🔥 сожжено | MET — X; карандаш — ручная правка калорий
+                      (появляется, когда выбраны активность и длительность) */}
+                  {kcalEditing ? (
+                    <View className="mt-2.5 gap-2">
+                      <Text className="font-sans text-[15px] text-bear-sub2">
+                        Сожжено за эту тренировку, ккал
+                      </Text>
+                      <View className="flex-row items-center gap-2">
+                        <TextInput
+                          value={kcalDraft}
+                          onChangeText={setKcalDraft}
+                          keyboardType="number-pad"
+                          maxLength={5}
+                          autoFocus
+                          accessibilityLabel="Сожжённые калории вручную"
+                          className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
+                        />
+                        <Text className="shrink-0 font-sans text-[16.5px] text-bear-sub">ккал</Text>
+                      </View>
+                      <View className="flex-row gap-2">
+                        <Pressable
+                          onPress={resetKcal}
+                          accessibilityLabel="Вернуть расчёт по формуле"
+                          className="flex-row flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:opacity-70"
+                        >
+                          <RotateCcw size={14} color="#A5AECB" />
+                          <Text className="font-bold text-[16px] text-bear-soft">По формуле</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={applyKcal}
+                          accessibilityLabel="Применить значение"
+                          className="flex-1 items-center rounded-xl bg-white/10 py-2 active:opacity-70"
+                        >
+                          <Text className="font-bold text-[16px] text-bear-text">Готово</Text>
+                        </Pressable>
+                      </View>
+                      <Text className="font-sans text-[15px] leading-relaxed text-bear-dim">
+                        Точнее формулы: цифра с тренажёра, пульсометра или смарт-часов.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="mt-2.5 flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.03] px-3.5 py-2.5">
+                      <Text
+                        numberOfLines={1}
+                        className="min-w-0 flex-1 font-sans text-[16px] text-bear-sub2"
+                      >
+                        🔥 Сожжено:{' '}
+                        {kcalShow > 0 ? (
+                          <Text className="font-bold text-[17px] text-[#f87171]">
+                            {formatNum(kcalShow)} ккал
                           </Text>
-                          <View className="flex-row items-center gap-2">
-                            <TextInput
-                              value={kcalDraft}
-                              onChangeText={setKcalDraft}
-                              keyboardType="number-pad"
-                              maxLength={5}
-                              autoFocus
-                              accessibilityLabel="Сожжённые калории вручную"
-                              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
-                            />
-                            <Text className="shrink-0 font-sans text-[16.5px] text-bear-sub">ккал</Text>
-                          </View>
-                          <View className="flex-row gap-2">
-                            <Pressable
-                              onPress={resetKcal}
-                              accessibilityLabel="Вернуть расчёт по формуле"
-                              className="flex-row flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:opacity-70"
-                            >
-                              <RotateCcw size={14} color="#A5AECB" />
-                              <Text className="font-bold text-[16px] text-bear-soft">По формуле</Text>
-                            </Pressable>
-                            <Pressable
-                              onPress={applyKcal}
-                              accessibilityLabel="Применить значение"
-                              className="flex-1 items-center rounded-xl bg-white/10 py-2 active:opacity-70"
-                            >
-                              <Text className="font-bold text-[16px] text-bear-text">Готово</Text>
-                            </Pressable>
-                          </View>
-                          <Text className="font-sans text-[15px] leading-relaxed text-bear-dim">
-                            Точнее формулы: цифра с тренажёра, пульсометра или смарт-часов.
-                          </Text>
-                        </View>
-                      ) : (
-                        <View className="flex-row items-center justify-between">
-                          <Text className="min-w-0 flex-1 font-sans text-[16.5px] text-bear-sub2">
-                            Сожжено:{' '}
-                            <Text className="font-bold text-[#f87171]">
-                              {formatNum(kcalShow)} ккал
+                        ) : (
+                          <Text className="font-bold text-[17px] text-bear-sub2">—</Text>
+                        )}
+                      </Text>
+                      {ex ? (
+                        <>
+                          <View className="h-5 w-px shrink-0 bg-white/10" />
+                          <View className="shrink-0 flex-row items-center gap-1">
+                            <Info size={15} color="#A5AECB" />
+                            <Text className="font-sans text-[15px] text-bear-sub2">
+                              MET — {ex.met}
                             </Text>
-                            {kcalManual != null && (
-                              <Text className="text-bear-dim"> · вручную</Text>
-                            )}
-                          </Text>
-                          <Pressable
-                            onPress={startKcalEdit}
-                            accessibilityLabel="Исправить калории вручную"
-                            className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5"
-                          >
-                            <Pencil size={15} color="#A5AECB" />
-                          </Pressable>
-                        </View>
-                      )}
+                          </View>
+                        </>
+                      ) : null}
+                      <Pressable
+                        onPress={startKcalEdit}
+                        disabled={!ex || !minutes}
+                        accessibilityLabel="Исправить калории вручную"
+                        className={`h-9 w-9 shrink-0 items-center justify-center rounded-full active:opacity-70 ${
+                          kcalManual != null ? 'bg-[#7B6CF6]/25' : 'bg-white/5'
+                        } ${!ex || !minutes ? 'opacity-40' : ''}`}
+                      >
+                        <Pencil size={15} color="#A5AECB" />
+                      </Pressable>
                     </View>
                   )}
 
@@ -896,28 +981,38 @@ export function ExerciseSection({ flat = false }) {
   )
 }
 
-// Плитка каталога: компактная (меньше внутренние отступы и иконка),
-// чтобы на небольшом экране список активностей почти целиком
-// влезал без прокрутки
+// Плитка каталога: как на референсе — выбранная подсвечена фиолетовой
+// рамкой с галочкой-бейджем в углу, у остальных мягкая серая граница
 function ExButton({ e, exId, setExId }) {
   const active = exId === e.id
   const isCustom = e.id.startsWith('custom-')
   return (
     <Pressable
       onPress={() => setExId(e.id)}
-      className={`min-w-0 flex-1 flex-row items-center gap-1.5 rounded-2xl border px-2.5 py-2 ${
-        active ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10' : 'border-white/5 bg-white/[0.03]'
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      className={`relative min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border-2 px-2.5 py-2.5 ${
+        active ? 'border-[#7B6CF6] bg-[#7B6CF6]/10' : 'border-white/10 bg-white/[0.03]'
       }`}
     >
-      <Text className="text-[22px]">{e.emoji}</Text>
+      <Text className="text-[24px]">{e.emoji}</Text>
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="font-bold text-[16px] text-bear-text">
           {e.name}
         </Text>
-        <Text numberOfLines={1} className="font-sans text-[14.5px] text-bear-sub2">
+        <Text numberOfLines={1} className="font-sans text-[14px] text-bear-sub2">
           {`MET ${e.met}${isCustom ? ' · моё' : ''}`}
         </Text>
       </View>
+      {active && (
+        <View
+          pointerEvents="none"
+          className="absolute right-1.5 top-1.5 h-5 w-5 items-center justify-center rounded-full"
+          style={{ backgroundColor: '#7B6CF6' }}
+        >
+          <Check size={13} color="#FFFFFF" />
+        </View>
+      )}
     </Pressable>
   )
 }

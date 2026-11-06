@@ -1,19 +1,21 @@
 // Каталог упражнений (MET — metabolic equivalent of task).
 // Сожжённые ккал = MET × 3.5 × вес(кг) / 200 × минуты.
+// typ — типичная длительность, мин: для блока «Рекомендуемое время»
+// в окне тренировки (тап подставляет её в чипы минут).
 
 export const EXERCISES = [
-  { id: 'walk', emoji: '🚶', name: 'Ходьба', met: 3.5 },
-  { id: 'walk-fast', emoji: '🚶', name: 'Ходьба быстрая', met: 5.0 },
-  { id: 'jog', emoji: '🏃', name: 'Бег трусцой', met: 7.0 },
-  { id: 'run', emoji: '🏃', name: 'Бег', met: 9.8 },
-  { id: 'bike', emoji: '🚴', name: 'Велосипед', met: 7.5 },
-  { id: 'swim', emoji: '🏊', name: 'Плавание', met: 8.0 },
-  { id: 'strength', emoji: '🏋️', name: 'Силовая тренировка', met: 5.0 },
-  { id: 'yoga', emoji: '🧘', name: 'Йога', met: 3.0 },
-  { id: 'football', emoji: '⚽', name: 'Футбол', met: 8.5 },
-  { id: 'tennis', emoji: '🎾', name: 'Теннис', met: 7.3 },
-  { id: 'dance', emoji: '💃', name: 'Танцы', met: 6.0 },
-  { id: 'elliptical', emoji: '🌀', name: 'Эллипсоид', met: 5.5 },
+  { id: 'walk', emoji: '🚶', name: 'Ходьба', met: 3.5, typ: 30 },
+  { id: 'walk-fast', emoji: '🚶', name: 'Ходьба быстрая', met: 5.0, typ: 30 },
+  { id: 'jog', emoji: '🏃', name: 'Бег трусцой', met: 7.0, typ: 30 },
+  { id: 'run', emoji: '🏃', name: 'Бег', met: 9.8, typ: 45 },
+  { id: 'bike', emoji: '🚴', name: 'Велосипед', met: 7.5, typ: 45 },
+  { id: 'swim', emoji: '🏊', name: 'Плавание', met: 8.0, typ: 30 },
+  { id: 'strength', emoji: '🏋️', name: 'Силовая тренировка', met: 5.0, typ: 45 },
+  { id: 'yoga', emoji: '🧘', name: 'Йога', met: 3.0, typ: 60 },
+  { id: 'football', emoji: '⚽', name: 'Футбол', met: 8.5, typ: 60 },
+  { id: 'tennis', emoji: '🎾', name: 'Теннис', met: 7.3, typ: 60 },
+  { id: 'dance', emoji: '💃', name: 'Танцы', met: 6.0, typ: 45 },
+  { id: 'elliptical', emoji: '🌀', name: 'Эллипсоид', met: 5.5, typ: 30 },
 ]
 
 export const QUICK_MINUTES = [15, 30, 45, 60, 90]
