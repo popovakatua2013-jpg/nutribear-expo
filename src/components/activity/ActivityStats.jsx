@@ -102,9 +102,13 @@ function StatCard({ colors, Icon, LabelIcon, label, value, sub, foot, onPress, o
         {sub}
       </FitLine>
 
-      {/* подпись с маленькой иконкой — как на макете */}
+      {/* подпись с маленькой иконкой — как на макете. LabelIcon обязателен
+          у каждой карточки — страховка ниже не даёт отсутствующей иконке
+          уронить весь экран (краш «displayName of undefined») */}
       <View className="mt-2 w-full flex-row items-center justify-center gap-1">
-        <LabelIcon size={12} color={colors.tint} strokeWidth={2.2} />
+        {LabelIcon ? (
+          <LabelIcon size={12} color={colors.tint} strokeWidth={2.2} />
+        ) : null}
         <FitLine
           maxFontSizeMultiplier={1.15}
           className="min-w-0 shrink text-center font-semibold text-[12.5px] text-bear-soft"
@@ -214,6 +218,7 @@ export function ActivityStats({
         tint: '#34D399',
       },
       Icon: Footprints,
+      LabelIcon: Footprints, // маленькая иконка в подписи — как на макете
       label: 'Шаги сегодня',
       value: formatNum(steps),
       sub: `/ ${formatNum(stepsGoal)}`,
@@ -227,6 +232,7 @@ export function ActivityStats({
         tint: '#38BDF8',
       },
       Icon: Droplets,
+      LabelIcon: Droplets, // маленькая иконка в подписи — как на макете
       label: 'Вода',
       value: `${waterPct}%`,
       sub: `из ${formatLiters(waterGoalMl)} · ${formatNum(waterMl)} мл`,
