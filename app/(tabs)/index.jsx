@@ -61,7 +61,8 @@ export default function HomeScreen() {
   // Ручной ввод шагов (тап по карточке «Шаги»)
   const [stepsOpen, setStepsOpen] = useState(false)
   const [stepsVal, setStepsVal] = useState('')
-  // Долгий тап по карточке «Вода»/«Активность»/кольцам — быстрый редактор цели
+  // Долгий тап по карточкам «Вода»/«Активность» и тап по кольцам сводки —
+  // быстрый редактор цели
   const [goalEdit, setGoalEdit] = useState(null) // {field, title, unit, min, max}
   const [goalVal, setGoalVal] = useState('')
 
@@ -251,7 +252,7 @@ export default function HomeScreen() {
         <CycleBadge />
 
         {/* Съедено за сегодня — сводка под планом питания: кольца «съедено»
-            и «сожжено», пилюля остатка и итог дня; долгий тап по половинам —
+            и «сожжено», пилюля остатка и итог дня; тап по половинам —
             правка соответствующей цели. История по дням — во вкладке
             «Дневник» (тап по карточке-итогу в «Отчётах») */}
         <DailySummary

@@ -299,6 +299,14 @@ export function MeasurementsCard() {
                   dot
                   height={24}
                 />
+              ) : r.trend.length === 1 ? (
+                // Одна запись — линии ещё нет, но поле не пустое:
+                // точка в цвете замера; линия появится со второй записью
+                // (отзыв Кати: колонка «Динамика» не должна пустовать)
+                <View
+                  accessibilityLabel="Одно измерение — динамика появится со второй записью"
+                  style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: r.color }}
+                />
               ) : (
                 <Text className="font-sans text-[12px] text-bear-dim">—</Text>
               )}
@@ -377,7 +385,11 @@ function Stars({ value }) {
 }
 
 // Окно записи замеров: поля предзаполнены последними значениями —
-// меняем то, что измерили; «Сохранить» пишет только изменённые поля.
+// меняем то, что измерили. «Сохранить» пишет только поля, которые
+// вводили вручную (нетронутые предзаполненные не создают фейковых
+// записей), но ПОВТОР того же значения тоже записывается — это честное
+// измерение: без второй точки в колонке «Динамика» всегда пустовало
+// и линия не рисовалась (отзыв Кати).
 // Внизу — создание своего замера (появляется в списке сразу).
 function MeasurementsModal({ open, onClose }) {
   const { toast } = useToast()
@@ -393,6 +405,10 @@ function MeasurementsModal({ open, onClose }) {
   // Отметки «какие замеры делали» { [key]: bool }: нет в карте — включён
   // по умолчанию; снятая галочка — значение поля не сохранится
   const [picked, setPicked] = useState({})
+  // Отметки «поле вводили вручную» { [key]: bool }: предзаполненные
+  // значения не записываются, а вписанное руками — записывается даже
+  // если совпадает с прошлым (нужно для линии «Динамики», отзыв Кати)
+  const [touched, setTouched] = useState({})
   const [newName, setNewName] = useState('')
 
   useEffect(() => {
@@ -404,6 +420,7 @@ function MeasurementsModal({ open, onClose }) {
     })
     setVals(init)
     setPicked({})
+    setTouched({})
     setNewName('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
@@ -460,17 +477,25 @@ function MeasurementsModal({ open, onClose }) {
       if (txt === '') return
       const n = parseNum(txt)
       if (!Number.isFinite(n) || n < MIN_CM || n > MAX_CM) return
-      const last = (measurements[m.key] || [])[0]
-      // Значение совпадает с последним — новую запись не создаём
-      if (last && Math.round(n * 10) / 10 === last.cm) return
+      // Пишем только то, что вводили руками — нетронутые предзаполненные
+      // поля не создают записей. Повтор того же значения сохраняется:
+      // точек в истории становится больше — «Динамика» рисуется
+      if (!touched[m.key]) return
       if (addMeasurement(m.key, n)) savedNames.push(m.label)
     })
 
     if (!savedNames.length) {
-      const anyPicked = items.some((m) => picked[m.key] !== false)
+      const anyTyped = items.some(
+        (m) =>
+          touched[m.key] &&
+          picked[m.key] !== false &&
+          String(vals[m.key] ?? '').trim() !== ''
+      )
       toast({
         title: '📏 Ничего не изменилось',
-        description: anyPicked ? 'Значения совпадают с последними' : 'Галочки сняты — записывать нечего',
+        description: anyTyped
+          ? 'Значения совпадают с последними'
+          : 'Впишите значения — они запишутся в динамику',
       })
     } else {
       const head = savedNames.slice(0, 3).join(', ')
@@ -566,7 +591,11 @@ function MeasurementsModal({ open, onClose }) {
                       )}
                       <TextInput
                         value={txt}
-                        onChangeText={(v) => setVals((s) => ({ ...s, [m.key]: v }))}
+                        onChangeText={(v) => {
+                          // Ручной ввод — поле попадёт в сохранение
+                          setTouched((s) => ({ ...s, [m.key]: true }))
+                          setVals((s) => ({ ...s, [m.key]: v }))
+                        }}
                         keyboardType="decimal-pad"
                         maxLength={6}
                         placeholder="—"

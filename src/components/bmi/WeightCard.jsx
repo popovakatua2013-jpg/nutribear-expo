@@ -4,9 +4,17 @@
 // СВЁРНУТА: тап по шапке разворачивает/сворачивает содержимое. Ниже ряд:
 // слева узкая карточка «Текущий вес» с ростом под весом (карандаш — окно
 // изменения роста: поле роста из окна записи веса убрано как дубль),
-// целью и кнопкой «Задать цель», справа — карточка с пилюлей
-// «Изменение: N кг», зелёным графиком с днями и внутренней строкой-
-// поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi).
+// целью и кнопкой «Задать цель», под ней — заметная кнопка записи веса
+// «+ Записать вес» (перенесена из шапки по отзыву Кати — плюс крупнее
+// и заметнее), справа — карточка с пилюлей
+// «Изменение: N кг», графиком (линия красная/зелёная по цели — отзыв
+// Кати) с днями и внутренней строкой-
+// поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi;
+// текст строится по движению веса за ВЫБРАННЫЙ ПЕРИОД относительно
+// направления цели — поправела при цели «похудеть» — «вес уходит от
+// цели», а не похвала). Значение «Текущий вес» подсвечивается по
+// калькулятору ИМТ и цели (перебор — красный, норма — зелёный, сушка —
+// янтарный, поддержка — голубой, набор — фиолетовый — отзыв Кати).
 // Журнал веса больше не живёт отдельной секцией под блоком
 // (решение пользователя): тап по графику в правой карточке открывает
 // окно журнала — список взвешиваний (тап по записи — изменить,
@@ -39,6 +47,7 @@ import {
   X,
 } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useFoodStore } from '@/store/useFoodStore'
 import { goalRewardAfterSave } from '@/lib/goal'
 import { consumeOpenWeightModal } from '@/lib/navEvents'
 import {
@@ -46,6 +55,7 @@ import {
   monthWeights,
   allWeights,
   healthyRange,
+  calcBmi,
   fmtDecimal,
   shortDateNum,
   weightStrip,
@@ -77,6 +87,10 @@ const shortDay = (iso) =>
 export function WeightCard() {
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
+  // Цель питания («Моя цель» в «Ещё»): lose — сушка/похудеть,
+  // maintain — поддержка, gain — набор. Влияет на подсветку
+  // «Текущего веса» (отзыв Кати)
+  const foodGoal = useFoodStore((s) => s.goal)
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const goalReachedAt = useProfileStore((s) => s.goalReachedAt)
   const weights = useProfileStore((s) => s.weights)
@@ -138,23 +152,57 @@ export function WeightCard() {
     goalWeightKg != null ? Math.round((weightKg - goalWeightKg) * 10) / 10 : 0
   const goalReached = goalWeightKg != null && Math.abs(goalDiff) < 0.05
 
-  // Движение к цели по направлению общего хода с первого измерения
-  const oldest = weights.length > 0 ? weights[weights.length - 1] : null
-  const deltaAll = oldest ? Math.round((weightKg - oldest.kg) * 10) / 10 : null
-  const towardGoal =
-    goalReached || (goalWeightKg != null && deltaAll != null
-      ? goalDiff > 0.05 ? deltaAll < 0 : goalDiff < -0.05 ? deltaAll > 0 : true
-      : null)
+  // Направление цели: «похудеть» — цель ниже текущего веса, «набрать» — выше
+  const wantDown = goalWeightKg != null && goalWeightKg < weightKg - 0.05
+  const wantUp = goalWeightKg != null && goalWeightKg > weightKg + 0.05
 
-  // Строка-поддержка: с целью — по движению к цели, без цели — по
-  // движению к здоровой норме (текст без слова «цель», тон тот же)
+  // Движение к цели за ВЫБРАННЫЙ ПЕРИОД, а не за всю историю (отзыв
+  // Кати: «моя цель похудеть — я ввожу вес больше, а он пишет
+  // „отличная работа!“» — раньше ход считался от самой первой записи,
+  // и недельная прибавка хвалилась). Поправела за период — «вес уходит
+  // от цели», сбросила — «движется к цели», стоит на месте — «стабилен»
+  const periodTowardGoal = goalReached
+    ? true
+    : wantDown
+      ? periodDelta < -0.05 ? true : periodDelta > 0.05 ? false : null
+      : wantUp
+        ? periodDelta > 0.05 ? true : periodDelta < -0.05 ? false : null
+        : null
+
+  // Строка-поддержка: с целью — по движению к цели за период, без цели —
+  // по движению к здоровой норме (текст без слова «цель», тон тот же)
   const strip = weightStrip({
     delta: periodDelta,
-    towardGoal: goalWeightKg != null ? towardGoal : null,
+    towardGoal: goalWeightKg != null ? periodTowardGoal : null,
     towardNorm,
     goalReached,
   })
   const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
+
+  // Цвет линии графика (отзыв Кати: «в зависимости от цели — линия
+  // красная/зелёная»): красная — за период вес уходит от цели (или,
+  // без цели, от здоровой нормы), зелёная — к цели/норме или на месте
+  const away =
+    goalWeightKg != null ? periodTowardGoal === false : towardNorm === false
+  const lineColor = away ? '#fb7185' : '#4ade80'
+
+  // Подсветка «Текущего веса» (отзыв Кати): по калькулятору ИМТ перебор —
+  // красный, недостаток веса — жёлтый; в норме цвет уточняет цель
+  // питания: сушка (похудеть) — янтарный, поддержка — голубой,
+  // набор — фиолетовый, без цели — зелёный
+  const bmiNow = calcBmi(weightKg, heightCm)
+  const weightTone =
+    bmiNow >= 25
+      ? '#FB7185'
+      : bmiNow > 0 && bmiNow < 18.5
+        ? '#FACC15'
+        : foodGoal === 'lose'
+          ? '#FBBF24'
+          : foodGoal === 'maintain'
+            ? '#38BDF8'
+            : foodGoal === 'gain'
+              ? '#A78BFA'
+              : '#4ADE80'
 
   // Ключ сегодняшнего дня (локальная дата) — запись сегодняшнего
   // взвешивания в журнале подсвечивается словом «Сегодня»
@@ -234,16 +282,6 @@ export function WeightCard() {
         <Text className="min-w-0 flex-1 font-bold text-[22px] tracking-tight text-bear-text">
           Динамика веса
         </Text>
-
-        {/* Записать вес: круглый «+» (модалка веса) */}
-        <Pressable
-          onPress={() => setOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Записать вес"
-          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
-        >
-          <Plus size={17} color="#A78BFA" />
-        </Pressable>
 
         {/* Период графика: пилюля с дропдауном, как на макете */}
         <View>
@@ -326,9 +364,13 @@ export function WeightCard() {
             <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
               Текущий вес
             </Text>
+            {/* Значение подсвечено по калькулятору ИМТ и цели (отзыв
+                Кати): перебор — красный, норма без цели — зелёный,
+                сушка — янтарный, поддержка — голубой, набор — фиолетовый */}
             <Text
               maxFontSizeMultiplier={1.15}
-              className="mt-1.5 font-extrabold text-[27px] leading-none tracking-tight text-bear-text"
+              className="mt-1.5 font-extrabold text-[27px] leading-none tracking-tight"
+              style={{ color: weightTone }}
             >
               {fmtDecimal(weightKg)}
               <Text className="font-semibold text-[16.5px] text-bear-sub2"> кг</Text>
@@ -399,6 +441,27 @@ export function WeightCard() {
               {goalWeightKg != null ? 'Изменить' : 'Задать цель'}
             </Text>
           </Pressable>
+
+          {/* Записать вес: заметный «+» под «Изменить» — перенесён из шапки
+              секции по отзыву Кати (плюс стал крупнее и заметнее); тап
+              открывает то же окно записи веса, что и тап по значению веса */}
+          <Pressable
+            onPress={() => setOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Записать вес"
+            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#A78BFA]/40 bg-[#A78BFA]/15 py-2 active:opacity-70"
+          >
+            <Plus size={21} color="#C4B5FD" strokeWidth={2.75} />
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              maxFontSizeMultiplier={1.2}
+              className="min-w-0 flex-1 text-center font-bold text-[14.5px] text-[#C4B5FD]"
+            >
+              Записать вес
+            </Text>
+          </Pressable>
         </View>
 
         {/* График + строка-поддержка */}
@@ -445,7 +508,7 @@ export function WeightCard() {
             }
             className="active:opacity-70"
           >
-            <WeightChart data={data} goalKg={goalWeightKg} lastBadge height={128} />
+            <WeightChart data={data} goalKg={goalWeightKg} color={lineColor} lastBadge height={128} />
             <View className="mt-1 flex-row items-center justify-center gap-1">
               <NotebookText size={14} color="#8DABFF" />
               <Text className="font-sans text-[14.5px] font-semibold text-[#8DABFF]">
@@ -472,8 +535,10 @@ export function WeightCard() {
               />
             </View>
             <View className="min-w-0 flex-1">
+              {/* Без numberOfLines: заголовок «Ваш вес стабилен…» на узких
+                  экранах и при увеличенном системном шрифте обрезался
+                  многоточием до «Ваш вес…» (отзыв Кати) — пусть переносится */}
               <Text
-                numberOfLines={1}
                 maxFontSizeMultiplier={1.2}
                 className="font-bold text-[16px] text-bear-text"
               >
