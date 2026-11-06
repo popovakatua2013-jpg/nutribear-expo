@@ -21,8 +21,9 @@ import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, MoonStar, Scale } from 'lucide-react-native'
-import { changePct, deltaTone, periodTotals, prevLabel } from '@/lib/data/reports'
+import { changePct, deltaTone, discipline, periodTotals, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
+import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
@@ -48,17 +49,18 @@ function sparkOf(rows, key) {
 }
 
 // Мини-спарклайн без осей: мягкая линия с заливкой в цвет метрики
-// (spark-режим SvgAreaChart — без подписей, чистая линия как на референсе)
+// (spark-режим SvgAreaChart — без подписей, чистая линия как на референсе;
+// min-w-0 — страховка, чтобы график не распирал узкую колонку)
 function Spark({ data, color }) {
   if (!data || data.length < 2) return null
   return (
-    <View className="mt-1">
+    <View className="mt-1 min-w-0">
       <SvgAreaChart spark dot={false} data={data} color={color} height={24} />
     </View>
   )
 }
 
-function ReportCard({ m, cur, prev, days, rows, onPress = () => {} }) {
+function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => {} }) {
   const pct = changePct(cur[m.key], prev[m.key])
   const tone = deltaTone(pct, m.invert)
   const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
@@ -81,6 +83,7 @@ function ReportCard({ m, cur, prev, days, rows, onPress = () => {} }) {
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
           padding: 10,
+          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
       >
         <View className="flex-row items-center gap-1.5">
@@ -123,6 +126,20 @@ function ReportCard({ m, cur, prev, days, rows, onPress = () => {} }) {
             {`${Math.abs(pct)}% ${prevLabel(days)}`}
           </Text>
         </View>
+        {/* Сколько дней периода цель достигнута — перенесено из карточки
+            «Дисциплина» (отзыв Кати): в карточке показателя это уместнее,
+            чем дубли плиток. Для калорий цель — «в рамках», не перебрать.
+            goalMet = null (цель не задана) — строки нет */}
+        {goalMet != null && (
+          <Text
+            numberOfLines={2}
+            maxFontSizeMultiplier={1.2}
+            className="mt-0.5 font-medium text-[10.5px] leading-[13px]"
+            style={{ color: goalMet > 0 ? '#4ade80' : '#8B96B8' }}
+          >
+            {`${m.key === 'kcal' ? 'В рамках цели' : 'Цель достигнута'} в ${goalMet} из ${days} ${pluralDays(days)}`}
+          </Text>
+        )}
         <Spark data={spark} color={m.color} />
       </LinearGradient>
     </Pressable>
@@ -143,6 +160,7 @@ function SleepCard({ days }) {
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
           padding: 10,
+          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
       >
         <View className="flex-row items-center gap-1.5">
@@ -229,6 +247,7 @@ function WeightReportCard({ days }) {
           borderWidth: 1,
           borderColor: 'rgba(168,85,247,0.30)',
           padding: 10,
+          height: '100%', // фон во всю высоту ряда — карточки не «торчат» друг за друга
         }}
       >
         <View className="flex-row items-center gap-1.5">
@@ -282,10 +301,18 @@ function WeightReportCard({ days }) {
 }
 
 export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} }) {
+  const goals = useGoalsStore((s) => s.goals)
   // periodTotals обходит до 180 дней истории — считаем только при
   // смене периода/данных, а не на каждом рендере экрана
   const cur = useMemo(() => periodTotals(days, 0, today), [days, today])
   const prev = useMemo(() => periodTotals(days, days), [days])
+  // Сколько дней периода цель достигнута по шагам/воде/калориям —
+  // та же функция, что считала плитки «Дисциплины» (теперь данные
+  // живут прямо в карточках показателей)
+  const goalMet = useMemo(
+    () => discipline(rows, goals).met,
+    [rows, goals]
+  )
 
   // Ряды по три: «Шаги/Калории/Вода» и «Сон/Вес/Сожжено» — как на референсе
   const cardRows = useMemo(() => {
@@ -313,6 +340,7 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} 
                 prev={prev}
                 days={days}
                 rows={rows}
+                goalMet={goalMet[m.key] ?? null}
                 onPress={() => onSelectMetric(m.key)}
               />
             )
