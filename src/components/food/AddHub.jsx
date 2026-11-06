@@ -5,7 +5,17 @@
 // отдельное окно со своими продуктами.
 
 import { useMemo, useState } from 'react'
-import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import {
   Barcode,
   Camera,
@@ -446,7 +456,11 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
         statusBarTranslucent
         onRequestClose={() => setBaseOpen(false)}
       >
-        <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
+        {/* Клавиатура не съедает список: панель поднимается над ней целиком */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-end bg-black/60 px-3 pb-3"
+        >
           <View className="h-[88%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
             <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
               <View className="flex-row items-center gap-2">
@@ -470,7 +484,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               <BaseMode mealId={mealId} onPick={pick} />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* быстрая запись: только калории */}
@@ -481,7 +495,10 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
         statusBarTranslucent
         onRequestClose={() => setQuickOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/60 px-8">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 items-center justify-center bg-black/60 px-8"
+        >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
@@ -548,7 +565,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               </Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* сохранение текущего приёма как комбо */}
@@ -559,7 +576,10 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
         statusBarTranslucent
         onRequestClose={() => setComboOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/60 px-8">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 items-center justify-center bg-black/60 px-8"
+        >
           <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Сохранить как комбо</Text>
@@ -597,7 +617,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               <Text className="text-center font-bold text-[19px] text-white">Сохранить комбо</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )

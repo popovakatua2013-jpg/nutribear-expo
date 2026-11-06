@@ -158,7 +158,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-end bg-black/60 px-3"
         style={{ paddingBottom: 12 + insets.bottom }}
       >

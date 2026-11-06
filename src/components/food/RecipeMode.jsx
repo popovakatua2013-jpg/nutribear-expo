@@ -1,10 +1,12 @@
 // Режим «Рецепты»: список своих рецептов + создание нового.
-// Рецепт добавляется в приём пищи как обычное блюдо.
+// Тап по рецепту — карточка просмотра (все цифры до записи), запись —
+// кнопкой в ней (по отзыву: раньше тап сразу записывал в приём пищи).
 
 import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ChefHat, Pencil, Plus, Trash2 } from 'lucide-react-native'
 import { RecipeForm } from './RecipeForm'
+import { RecipeDetails } from './RecipeDetails'
 import { FoodList } from './FoodList'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 
@@ -13,6 +15,29 @@ export function RecipeMode({ onPick }) {
   const remove = useRecipesStore((s) => s.remove)
   const [creating, setCreating] = useState(!items.length)
   const [editing, setEditing] = useState(null) // рецепт на изменении
+  const [viewing, setViewing] = useState(null) // рецепт в карточке просмотра
+
+  // Единое превращение рецепта в «еду» для дневника — используется
+  // и в списке, и в кнопке «Записать» карточки просмотра
+  function toItem(r) {
+    const sv = Math.max(1, Math.round(r.servings || 1))
+    return {
+      id: r.id,
+      name: r.name,
+      photo: r.photo,
+      kcal100: r.kcal100,
+      emoji: '🍴',
+      p: r.p100,
+      f: r.f100,
+      c: r.c100,
+      source: 'recipe',
+      defaultGrams: gramsPerServing(r) || r.grams,
+      sub:
+        sv > 1
+          ? `свой рецепт · ${sv} порции по ${gramsPerServing(r)} г`
+          : 'свой рецепт',
+    }
+  }
 
   function closeForm() {
     setCreating(false)
@@ -24,12 +49,38 @@ export function RecipeMode({ onPick }) {
     setCreating(true)
   }
 
+  function logRecipe(r) {
+    setViewing(null)
+    onPick(toItem(r))
+  }
+
   if (creating) {
     return (
-      <RecipeForm
-        onDone={closeForm}
-        initial={editing || undefined}
-        onCancel={editing ? closeForm : undefined}
+      <ScrollView
+        className="min-h-0 flex-1"
+        contentContainerClassName="pb-2"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <RecipeForm
+          onDone={closeForm}
+          initial={editing || undefined}
+          onCancel={editing ? closeForm : undefined}
+        />
+      </ScrollView>
+    )
+  }
+
+  if (viewing) {
+    return (
+      <RecipeDetails
+        recipe={viewing}
+        onClose={() => setViewing(null)}
+        onLog={() => logRecipe(viewing)}
+        onEdit={() => {
+          setViewing(null)
+          openEdit(viewing)
+        }}
       />
     )
   }
@@ -55,27 +106,12 @@ export function RecipeMode({ onPick }) {
 
       <FoodList
         scroll={false}
-        items={items.map((r) => {
-          const sv = Math.max(1, Math.round(r.servings || 1))
-          return {
-            id: r.id,
-            name: r.name,
-            photo: r.photo,
-            kcal100: r.kcal100,
-            emoji: '🍴',
-            p: r.p100,
-            f: r.f100,
-            c: r.c100,
-            source: 'recipe',
-            defaultGrams: gramsPerServing(r) || r.grams,
-            sub:
-              sv > 1
-                ? `свой рецепт · ${sv} порции по ${gramsPerServing(r)} г`
-                : 'свой рецепт',
-          }
-        })}
+        items={items.map(toItem)}
         emptyText="Рецептов пока нет — создайте первый!"
-        onPick={onPick}
+        onPick={(item) => {
+          const r = items.find((x) => x.id === item.id)
+          if (r) setViewing(r) // сначала смотрим, записываем — из карточки
+        }}
       />
 
       {items.length > 0 && (
@@ -107,7 +143,7 @@ export function RecipeMode({ onPick }) {
             </View>
           ))}
           <Text className="px-1 font-sans text-[15px] text-bear-dim">
-            Нажмите на рецепт, чтобы изменить его
+            Тап по рецепту — посмотреть и записать · ✏️ — изменить
           </Text>
         </View>
       )}

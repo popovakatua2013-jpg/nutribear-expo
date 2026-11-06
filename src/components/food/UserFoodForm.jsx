@@ -77,7 +77,7 @@ export function UserFoodForm({ open, onClose, initial }) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
       >
         <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">

@@ -6,7 +6,7 @@
 // Подсказка под заголовком удалена по запросу — плитки говорят сами за себя.
 
 import { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MealTabs } from './MealTabs'
@@ -49,7 +49,10 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
-      <View
+      {/* Клавиатура больше не накрывает окно: контейнер сжимается на высоту
+          клавиатуры (как в ИИ-чате), вся панель остаётся видна над ней */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-end bg-black/60 px-3"
         style={{ paddingBottom: 12 + insets.bottom }}
       >
@@ -127,7 +130,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
             </>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }
