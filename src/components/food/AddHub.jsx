@@ -1,7 +1,9 @@
-// Хаб способов добавления еды: строка поиска над плитками (сканер
-// штрих-кода, фото, голос, галерея, этикетка, рецепты), чипы
-// «Недавние и частые» и «Мои комбо» — блюдо/набор в один тап,
-// кнопки «Прошлый раз» и «Только калории». «База продуктов» —
+// Хаб способов добавления еды — оформлен по референс-скриншоту Кати:
+// скруглённое поле поиска, карточки «Мои комбо» и «Недавние и частые»
+// со строками (эмодзи, название, калории, кнопка «Добавить», шеврон —
+// карточки сворачиваются), пунктирная кнопка «Сохранить приём»,
+// внизу — 6 цветных плиток (сканер, фото, голос, галерея, этикетка,
+// рецепты). Плюс «Прошлый раз», «Только калории» и «База продуктов» —
 // отдельное окно со своими продуктами.
 
 import { useMemo, useState } from 'react'
@@ -20,7 +22,10 @@ import {
   Barcode,
   Camera,
   ChefHat,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
+  Clock,
   Images,
   LayoutGrid,
   Mic,
@@ -28,6 +33,7 @@ import {
   RefreshCcw,
   ScanSearch,
   Search,
+  UtensilsCrossed,
   X,
   Zap,
 } from 'lucide-react-native'
@@ -42,7 +48,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { getMeal } from '@/lib/data/meals'
 import { readdRow } from '@/lib/data/readd'
-import { formatNum } from '@/lib/format'
+import { dishesWord, formatNum } from '@/lib/format'
 import { useToast } from '../ui/Toast'
 
 // 6 плиток — сетка 3×2
@@ -73,6 +79,9 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const [qKcal, setQKcal] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
   const [comboName, setComboName] = useState('')
+  // Сворачивание карточек «Мои комбо» и «Недавние и частые»
+  const [combosOpen, setCombosOpen] = useState(true)
+  const [recentOpen, setRecentOpen] = useState(true)
 
   const mealName = getMeal(mealId).name
   const q = query.trim().toLowerCase()
@@ -245,24 +254,23 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — «тетрадная»: тонкая линейка снизу вместо широкой
-          плашки, ниже и компактнее */}
-      <View className="flex-row items-end gap-2 border-b border-white/15 px-1 pb-1.5">
-        <Search size={17} color="#8B96B8" />
+      {/* строка поиска — скруглённое поле с иконкой (как на референс-скриншоте) */}
+      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5">
+        <Search size={18} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 pb-0 font-sans text-[17.5px] text-bear-text"
+          className="min-w-0 flex-1 font-sans text-[16.5px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
             onPress={() => setQuery('')}
             accessibilityRole="button"
             accessibilityLabel="Очистить поиск"
-            className="pb-0.5 active:opacity-60"
+            className="active:opacity-60"
           >
             <X hitSlop={10} size={16} color="#8B96B8" />
           </Pressable>
@@ -292,97 +300,160 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           </Pressable>
         </>
       ) : (
-        <>
-          {/* комбо: сохранённые наборы блюд + сохранение текущего приёма.
-              Блок не показывается, когда нечего показывать: без сохранённых
-              комбо остаётся только компактный чип «Сохранить приём»
-              (без шапки «Мои комбо»), а при пустом приёме — ничего */}
-          {(combos.length > 0 || mealEntries.length > 0) && (
-            <View className="mt-3">
-              {combos.length > 0 && (
-                <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-sub">
+        <ScrollView
+          className="mt-3 min-h-0 flex-1"
+          contentContainerStyle={{ paddingBottom: 6 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Мои комбо: сохранённые наборы блюд — вертикальная карточка
+              со строками (как на референс-скриншоте): эмодзи, название,
+              «ккал · N блюд», кнопка «Добавить»; тап — добавить набор,
+              долгий тап — удалить комбо. Карточку прячем, когда комбо нет */}
+          {combos.length > 0 && (
+            <View className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04]">
+              <Pressable
+                onPress={() => setCombosOpen((s) => !s)}
+                accessibilityRole="button"
+                accessibilityLabel={combosOpen ? 'Свернуть мои комбо' : 'Развернуть мои комбо'}
+                className="flex-row items-center gap-2 px-3.5 py-3 active:opacity-80"
+              >
+                <UtensilsCrossed size={17} color="#A78BFA" />
+                <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
                   Мои комбо
                 </Text>
-              )}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 6, paddingTop: 7, paddingBottom: 2 }}
-              >
-                {combos.map((c) => (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => addCombo(c)}
-                    onLongPress={() => confirmDeleteCombo(c)}
-                    delayLongPress={400}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
-                    className="flex-row items-center gap-1.5 rounded-full border border-[#7B6CF6]/40 bg-[#7B6CF6]/15 px-3 py-1.5 active:bg-[#7B6CF6]/25"
-                  >
-                    <Text className="text-[17.5px]">{c.emoji}</Text>
-                    <Text
-                      numberOfLines={1}
-                      className="max-w-[120px] font-semibold text-[16px] text-bear-text"
-                    >
-                      {c.name}
-                    </Text>
-                    <Text className="font-sans text-[15px] text-bear-sub">{c.items.length}</Text>
-                  </Pressable>
-                ))}
-                {mealEntries.length > 0 && (
-                  <Pressable
-                    onPress={() => setComboOpen(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Сохранить текущий приём как комбо"
-                    className="flex-row items-center gap-1 rounded-full border border-dashed border-white/20 px-3 py-1.5 active:bg-white/10"
-                  >
-                    <Plus size={14} color="#AEB9D9" />
-                    <Text className="font-semibold text-[15px] text-bear-soft">
-                      {combos.length > 0 ? 'Сохранить приём' : 'Сохранить приём как комбо'}
-                    </Text>
-                  </Pressable>
+                {combosOpen ? (
+                  <ChevronUp size={16} color="#8B96B8" />
+                ) : (
+                  <ChevronDown size={16} color="#8B96B8" />
                 )}
-              </ScrollView>
+              </Pressable>
+              {combosOpen && (
+                <View className="gap-0.5 px-2 pb-2">
+                  {combos.map((c) => {
+                    const total = c.items.reduce((s, e) => s + e.kcal, 0)
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => addCombo(c)}
+                        onLongPress={() => confirmDeleteCombo(c)}
+                        delayLongPress={400}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
+                        className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
+                      >
+                        <Text className="shrink-0 text-[19px]">{c.emoji}</Text>
+                        <View className="min-w-0 flex-1">
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.2}
+                            className="font-semibold text-[15.5px] text-bear-text"
+                          >
+                            {c.name}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.2}
+                            className="font-sans text-[13px] text-bear-sub2"
+                          >
+                            {`${formatNum(total)} ккал · ${c.items.length} ${dishesWord(c.items.length)}`}
+                          </Text>
+                        </View>
+                        <View className="shrink-0 rounded-full border border-[#7B6CF6]/60 px-3 py-1">
+                          <Text className="font-semibold text-[13.5px] text-[#C4B5FD]">
+                            Добавить
+                          </Text>
+                        </View>
+                        <ChevronRight size={15} color="#8B96B8" />
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              )}
             </View>
           )}
 
-          {/* недавние и частые — добавление в один тап */}
-          {recent.length > 0 && (
-            <View className="mt-3">
-              <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-sub">
-                Недавние и частые
+          {/* Сохранить текущий приём как комбо — пунктирная кнопка на всю
+              ширину (как на референс-скриншоте) */}
+          {mealEntries.length > 0 && (
+            <Pressable
+              onPress={() => setComboOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Сохранить текущий приём как комбо"
+              className={`flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#7B6CF6]/50 py-2.5 active:bg-[#7B6CF6]/10 ${
+                combos.length > 0 ? 'mt-2.5' : ''
+              }`}
+            >
+              <Plus size={16} color="#C4B5FD" />
+              <Text className="font-semibold text-[15.5px] text-[#C4B5FD]">
+                Сохранить приём
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 6, paddingTop: 7, paddingBottom: 2 }}
+            </Pressable>
+          )}
+
+          {/* Недавние и частые: карточка со строками — блюдо в один тап,
+              как на референс-скриншоте */}
+          {recent.length > 0 && (
+            <View
+              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+                combos.length > 0 || mealEntries.length > 0 ? 'mt-2.5' : ''
+              }`}
+            >
+              <Pressable
+                onPress={() => setRecentOpen((s) => !s)}
+                accessibilityRole="button"
+                accessibilityLabel={recentOpen ? 'Свернуть недавние и частые' : 'Развернуть недавние и частые'}
+                className="flex-row items-center gap-2 px-3.5 py-3 active:opacity-80"
               >
-                {recent.map(({ row }) => (
-                  <Pressable
-                    key={row.id}
-                    onPress={() => addFromRow(row)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Добавить ${row.name} как в прошлый раз`}
-                    className="flex-row items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 active:bg-white/10"
-                  >
-                    <Text className="text-[17.5px]">{row.emoji || '🍽️'}</Text>
-                    <Text
-                      numberOfLines={1}
-                      className="max-w-[110px] font-semibold text-[16px] text-bear-text"
+                <Clock size={17} color="#A78BFA" />
+                <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
+                  Недавние и частые
+                </Text>
+                {recentOpen ? (
+                  <ChevronUp size={16} color="#8B96B8" />
+                ) : (
+                  <ChevronDown size={16} color="#8B96B8" />
+                )}
+              </Pressable>
+              {recentOpen && (
+                <View className="gap-0.5 px-2 pb-2">
+                  {recent.map(({ row }) => (
+                    <Pressable
+                      key={row.id}
+                      onPress={() => addFromRow(row)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Добавить ${row.name} как в прошлый раз`}
+                      className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
                     >
-                      {row.name}
-                    </Text>
-                    <Text className="font-sans text-[15px] text-bear-dim">
-                      {row.grams > 0 ? `${row.grams} г` : `${Math.round(row.kcal)} ккал`}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+                      <Text className="shrink-0 text-[19px]">{row.emoji || '🍽️'}</Text>
+                      <View className="min-w-0 flex-1">
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.2}
+                          className="font-semibold text-[15.5px] text-bear-text"
+                        >
+                          {row.name}
+                        </Text>
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.2}
+                          className="font-sans text-[13px] text-bear-sub2"
+                        >
+                          {`${row.grams > 0 ? `${row.grams} г · ` : ''}${formatNum(row.kcal)} ккал`}
+                        </Text>
+                      </View>
+                      <View className="shrink-0 rounded-full bg-[#7B6CF6]/80 px-3 py-1">
+                        <Text className="font-semibold text-[13.5px] text-white">Добавить</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
-          {/* плитки способов: картинка на весь блок — цвет заливает всю
-              плитку, крупная иконка по центру, подпись на тёмной ленте */}
+          {/* плитки способов: цвет заливает всю плитку — крупная иконка
+              по центру, подпись под ней (как на референс-скриншоте) */}
           <View className="mt-3 flex-row flex-wrap gap-2">
             {TILES.map(({ id, label, Icon, color }) => (
               <Pressable
@@ -393,12 +464,12 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                 className="h-[96px] overflow-hidden rounded-2xl active:opacity-90"
                 style={{ width: '31.5%', backgroundColor: color }}
               >
-                <View className="flex-1 items-center justify-center pb-4">
-                  <Icon size={38} color="#FFFFFF" strokeWidth={2.2} />
+                <View className="flex-1 items-center justify-center">
+                  <Icon size={32} color="#FFFFFF" strokeWidth={2.2} />
                 </View>
-                <View className="absolute inset-x-0 bottom-0 items-center bg-black/30 py-1">
-                  <Text className="font-bold text-[15.5px] text-white">{label}</Text>
-                </View>
+                <Text className="pb-3 text-center font-bold text-[14.5px] text-white">
+                  {label}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -445,7 +516,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             </Text>
             <ChevronRight size={15} color="#8B96B8" />
           </Pressable>
-        </>
+        </ScrollView>
       )}
 
       {/* отдельное окно базы продуктов */}

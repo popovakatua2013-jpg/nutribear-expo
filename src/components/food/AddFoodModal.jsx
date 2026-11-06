@@ -1,13 +1,14 @@
 // Модалка добавления блюда: выбор приёма пищи и способа добавления.
-// В хабе — строка поиска над плитками и отдельное окно базы продуктов.
+// В хабе — скруглённое поле поиска и отдельное окно базы продуктов.
 // Тело монтируется с key = mealId — состояние поиска сбрасывается само.
-// Рядом с вкладками приёмов — выбор дня «Сегодня / Вчера» (как у
-// тренировок): приём после полуночи уходит во вчера, а не в чужой день.
-// Подсказка под заголовком удалена по запросу — плитки говорят сами за себя.
+// Под вкладками приёмов — две пилюли с иконками «Сегодня / Вчера»
+// (как на референс-скриншоте): приём после полуночи уходит во вчера,
+// а не в чужой день. Подсказка под заголовком удалена по запросу —
+// плитки говорят сами за себя.
 
 import { useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronLeft, X } from 'lucide-react-native'
+import { Calendar, ChevronDown, ChevronLeft, Clock, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MealTabs } from './MealTabs'
 import { AddHub } from './AddHub'
@@ -18,8 +19,32 @@ import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
-import { Pills } from '../ui/Pills'
 import { MEALS } from '@/lib/data/meals'
+
+// Пилюля выбора дня с иконкой и шевроном — как на референс-скриншоте:
+// календарь «Сегодня», часы «Вчера»; активная подсвечена фиолетовым
+function DayPill({ active, icon: Icon, label, onPress }) {
+  const tint = active ? '#C4B5FD' : '#8B96B8'
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={`Записать за: ${label}`}
+      className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
+        active ? 'border-[#7B6CF6]/70 bg-[#7B6CF6]/20' : 'border-white/10 bg-white/[0.04]'
+      }`}
+    >
+      <Icon size={15} color={tint} />
+      <Text
+        className={`font-semibold text-[14.5px] ${active ? 'text-bear-text' : 'text-bear-sub'}`}
+      >
+        {label}
+      </Text>
+      <ChevronDown size={14} color={tint} />
+    </Pressable>
+  )
+}
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
   const insets = useSafeAreaInsets()
@@ -84,20 +109,22 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                 </View>
                 <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />
 
-                {/* За какой день записываем — как у тренировок: тап по плитке
-                    приёма после полуночи, а еда вчерашняя. Действует на все
-                    способы ниже, на экране порции выбор можно поменять */}
+                {/* За какой день записываем: две пилюли с иконками (календарь
+                    «Сегодня», часы «Вчера») — как на референс-скриншоте.
+                    Действует на все способы ниже, на экране порции выбор
+                    можно поменять */}
                 <View className="mt-2.5 flex-row items-center gap-2">
-                  <Text className="font-sans text-[15px] text-bear-sub">За какой день?</Text>
-                  <Pills
-                    items={[
-                      { id: 0, label: 'Сегодня' },
-                      { id: 1, label: 'Вчера' },
-                    ]}
-                    value={dayOff}
-                    onChange={setDayOff}
-                    size="sm"
-                    accessibilityLabel="День приёма пищи"
+                  <DayPill
+                    active={dayOff === 0}
+                    icon={Calendar}
+                    label="Сегодня"
+                    onPress={() => setDayOff(0)}
+                  />
+                  <DayPill
+                    active={dayOff === 1}
+                    icon={Clock}
+                    label="Вчера"
+                    onPress={() => setDayOff(1)}
                   />
                 </View>
               </View>
