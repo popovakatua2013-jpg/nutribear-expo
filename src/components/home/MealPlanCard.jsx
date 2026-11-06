@@ -392,12 +392,8 @@ export function MealPlanCard({ onAdd, onViewAll }) {
                 <X hitSlop={10} size={20} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[15px] text-bear-sub">
-              Когда некогда искать блюдо — запишите только калории
-            </Text>
-
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
-              Приём пищи
+              Куда записать?
             </Text>
             <MealTabs meals={MEALS} mealId={qMealId} onChange={setQMealId} />
 
