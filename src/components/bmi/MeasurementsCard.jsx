@@ -1,23 +1,21 @@
 // Карточка «Измерения тела» на вкладке «Тело» — оформление по макету
 // пользователя: шапка-секция (иконка + заголовок + подзаголовок + кнопка
 // «+ Добавить») — по решению пользователя секция по умолчанию СВЁРНУТА,
-// тап по шапке разворачивает/сворачивает. Внутри: ряд плиток замеров
-// (цветная иконка, последний замер и Δ к предыдущему, свои замеры —
-// рядом), карточка «Общий прогресс» (полукруглый датчик ScoreGauge,
-// подпись и звёзды — оценка bodyProgressScore из lib/data/bmi) и
-// таблица «Измерение / Сегодня / Изменение». Таблица по решению
-// пользователя ВСЕГДА свёрнута: шапка таблицы — тап-переключатель с
-// шевроном, при каждом открытии секции снова свёрнута (не храним).
-// Поверхность карточек —
-// фиолетовая, одинаковая с ИМТ-блоком выше. Тап по плитке или строке
+// тап по шапке разворачивает/сворачивает. Внутри — ТАБЛИЦА как на
+// референсе: колонки «Параметр / Текущее значение / Изменение /
+// Динамика», строка на каждый замер (неоновая иконка, значение,
+// пилюля дельты ▲▼ и мини-линия тренда), в конце — строка «Вес» из
+// журнала взвешиваний и футер «Последнее обновление: …». Тап по строке
 // открывает окно записи: значения подставлены последними, меняем то,
-// что измерили; в окне — «+ Свой замер».
+// что измерили; в окне — «+ Свой замер». Ниже — карточка «Общий
+// прогресс» (датчик ScoreGauge, подпись и звёзды — bodyProgressScore).
+// Поверхность карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
-  ArrowDownRight,
-  ArrowUpRight,
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   ChevronUp,
   Donut,
@@ -25,6 +23,7 @@ import {
   Hourglass,
   Info,
   Ruler,
+  Scale,
   Shirt,
   Star,
   StarHalf,
@@ -36,6 +35,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
 import { bodyProgressScore, fmtDecimal } from '@/lib/data/bmi'
 import { ScoreGauge } from './ScoreGauge'
+import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { useToast } from '../ui/Toast'
 
 const CUSTOM_COLOR = '#4ADE80'
@@ -92,10 +92,6 @@ export function MeasurementsCard() {
   // Секция свёрнута по умолчанию (как «Динамика веса») — не храним
   // в сторe: при каждом запуске снова свёрнуто
   const [secOpen, setSecOpen] = useState(false)
-  // Таблица «Измерение / Сегодня / Изменение» — всегда свёрнута
-  // (решение пользователя): шапка таблицы раскрывает строки, состояние
-  // не храним — при каждом открытии секции снова свёрнута
-  const [tableOpen, setTableOpen] = useState(false)
   const items = useMemo(() => allItems(customs), [customs])
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
@@ -107,6 +103,74 @@ export function MeasurementsCard() {
     heightCm,
     measurements,
   })
+
+  // Строки таблицы: замеры (см) + строка «Вес» из журнала взвешиваний.
+  // Дельта — к предыдущему измерению; тон — «минус хорошо» для талии/
+  // живота (см. deltaTone) и для веса к цели; тренд — последние точки
+  // по возрастанию даты
+  const weightRow = useMemo(() => {
+    const last = weights[0] || null
+    const prev = weights[1] || null
+    const d = last && prev ? Math.round((last.kg - prev.kg) * 10) / 10 : null
+    let tone = '#8B96B8'
+    if (d != null && d !== 0 && goalWeightKg > 0) {
+      const toward = (d < 0 && last.kg > goalWeightKg) || (d > 0 && last.kg < goalWeightKg)
+      tone = toward ? '#34D399' : '#FB7185'
+    }
+    return {
+      key: 'weight',
+      label: 'Вес',
+      color: '#a78bfa',
+      Icon: Scale,
+      unit: 'кг',
+      value: last ? `${fmtDecimal(last.kg)} кг` : '—',
+      d,
+      tone,
+      trend: weights.slice(0, 8).slice().reverse().map((w) => ({ label: '', value: w.kg })),
+    }
+  }, [weights, goalWeightKg])
+
+  const tableRows = useMemo(
+    () => [
+      ...items.map((m) => {
+        const list = measurements[m.key] || []
+        const last = list[0] || null
+        const prev = list[1] || null
+        const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
+        const tone = deltaTone(m, d)
+        return {
+          key: m.key,
+          label: m.label,
+          color: m.color,
+          Icon: m.custom ? Ruler : MEAS_ICONS[m.key] || Ruler,
+          unit: 'см',
+          value: last ? `${fmtDecimal(last.cm)} см` : '—',
+          d,
+          tone,
+          trend: list.slice(0, 8).slice().reverse().map((e) => ({ label: '', value: e.cm })),
+        }
+      }),
+      weightRow,
+    ],
+    [items, measurements, weightRow]
+  )
+
+  // Последнее обновление: самая свежая дата среди замеров и взвешиваний
+  const lastUpdated = useMemo(() => {
+    const times = []
+    Object.values(measurements).forEach((list) => {
+      if (list[0] && list[0].date) times.push(new Date(list[0].date).getTime())
+    })
+    if (weights[0] && weights[0].date) times.push(new Date(weights[0].date).getTime())
+    if (!times.length) return null
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(Math.max(...times)))
+  }, [measurements, weights])
 
   return (
     <View accessibilityLabel="Замеры тела" className="gap-2.5">
@@ -131,7 +195,7 @@ export function MeasurementsCard() {
             maxFontSizeMultiplier={1.2}
             className="mt-0.5 font-sans text-[15px] text-bear-sub"
           >
-            Сантиметром — тап по чипу или «Добавить»
+            Следите за изменениями вашего тела
           </Text>
         </View>
         <Pressable
@@ -152,70 +216,114 @@ export function MeasurementsCard() {
 
       {secOpen && (
         <>
-      {/* Плитки замеров: последний замер + Δ к предыдущему; ряд
-          прокручивается, если замеров больше, чем влезает */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingRight: 4 }}
-      >
-        {items.map((m) => {
-          const list = measurements[m.key] || []
-          const last = list[0] || null
-          const prev = list[1] || null
-          const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
-          const tone = deltaTone(m, d)
-          const Icon = m.custom ? Ruler : MEAS_ICONS[m.key] || Ruler
+      {/* Таблица как на референсе: «Параметр / Текущее значение /
+          Изменение / Динамика». Строка на каждый замер + строка «Вес»
+          из журнала взвешиваний; тап по строке — окно записи */}
+      <View className="rounded-2xl p-3" style={CARD}>
+        {/* Шапка колонок */}
+        <View className="flex-row items-end border-b border-white/[0.08] pb-2">
+          <Text className="min-w-0 flex-1 font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+            Параметр
+          </Text>
+          <Text className="w-[74px] text-right font-sans text-[11px] uppercase leading-[13px] tracking-wide text-bear-dim">
+            Текущее{'\n'}значение
+          </Text>
+          <Text className="w-[74px] text-right font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+            Изменение
+          </Text>
+          <Text className="w-[58px] text-right font-sans text-[11px] uppercase tracking-wide text-bear-dim">
+            Динамика
+          </Text>
+        </View>
 
-          return (
-            <Pressable
-              key={m.key}
-              onPress={() => setOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
-              className="w-[112px] shrink-0 rounded-2xl p-3 active:opacity-70"
-              style={CARD}
+        {tableRows.map((r, i) => (
+          <Pressable
+            key={r.key}
+            onPress={() => setOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`${r.label}: ${r.value}. Тап — записать замеры`}
+            className={`flex-row items-center py-2.5 active:opacity-70 ${
+              i < tableRows.length - 1 ? 'border-b border-white/[0.05]' : ''
+            }`}
+          >
+            <View className="min-w-0 flex-1 flex-row items-center gap-2">
+              <View
+                className="items-center justify-center"
+                style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: `${r.color}22` }}
+              >
+                <r.Icon size={14} color={r.color} />
+              </View>
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text"
+              >
+                {r.label}
+              </Text>
+            </View>
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+              className="w-[74px] text-right font-bold text-[15.5px] text-bear-text"
             >
-              <View
-                className="h-9 w-9 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${m.color}22` }}
-              >
-                <Icon size={17} color={m.color} />
-              </View>
-
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.2}
-                className="mt-1.5 font-sans text-[15px] text-bear-sub"
-              >
-                {m.label}
-              </Text>
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.2}
-                className="mt-0.5 font-extrabold text-[20px] tracking-tight text-bear-text"
-              >
-                {last ? `${fmtDecimal(last.cm)} см` : '—'}
-              </Text>
-
-              <View
-                className="mt-1.5 self-start rounded-full px-1.5 py-[2px]"
-                style={{ backgroundColor: `${tone}1f` }}
-              >
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[14.5px]" style={{ color: tone }}>
-                  {d == null
-                    ? last
-                      ? `от ${shortDay(last.date)}`
-                      : 'нет данных'
-                    : d === 0
-                      ? 'без измен.'
-                      : `${d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(d))} см`}
+              {r.value}
+            </Text>
+            <View className="w-[74px] flex-row items-center justify-end">
+              {r.d != null && r.d !== 0 ? (
+                <View
+                  className="flex-row items-center gap-0.5 rounded-full px-1.5 py-[2px]"
+                  style={{ backgroundColor: `${r.tone}1f` }}
+                >
+                  {r.d > 0 ? (
+                    <ArrowUp size={10} color={r.tone} />
+                  ) : (
+                    <ArrowDown size={10} color={r.tone} />
+                  )}
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
+                    className="font-bold text-[11.5px]"
+                    style={{ color: r.tone }}
+                  >
+                    {`${r.d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(r.d))} ${r.unit}`}
+                  </Text>
+                </View>
+              ) : (
+                <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[11.5px]" style={{ color: r.tone }}>
+                  {r.d === 0 ? '0' : '—'}
                 </Text>
-              </View>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
+              )}
+            </View>
+            <View className="w-[58px] items-end">
+              {r.trend.length >= 2 ? (
+                <SvgAreaChart
+                  spark
+                  data={r.trend}
+                  color={r.tone === '#8B96B8' ? r.color : r.tone}
+                  dot
+                  height={24}
+                />
+              ) : (
+                <Text className="font-sans text-[12px] text-bear-dim">—</Text>
+              )}
+            </View>
+          </Pressable>
+        ))}
+
+        {/* Футер: когда что-то измерялось последний раз */}
+        <View className="mt-1.5 flex-row items-center gap-1.5 border-t border-white/[0.07] pt-2">
+          <Info size={13} color="#8B96B8" />
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="min-w-0 flex-1 font-sans text-[12.5px] text-bear-dim"
+          >
+            {lastUpdated
+              ? `Последнее обновление: ${lastUpdated}`
+              : 'Пока нет замеров — нажмите «+ Добавить»'}
+          </Text>
+        </View>
+      </View>
 
       {/* Общий прогресс: датчик + подпись + звёзды (85 → 4.5★, как на макете) */}
       <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>
@@ -240,96 +348,6 @@ export function MeasurementsCard() {
             Вес к цели, динамика талии и регулярность замеров
           </Text>
         </View>
-      </View>
-
-      {/* Таблица «Измерение / Сегодня / Изменение» — всегда свёрнута:
-          шапка — тап-переключатель (шеврон у колонки «Измерение»),
-          тап разворачивает строки; тап по строке — окно записи */}
-      <View className="rounded-2xl px-4 py-2" style={CARD}>
-        <Pressable
-          onPress={() => setTableOpen((v) => !v)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: tableOpen }}
-          accessibilityLabel={
-            tableOpen
-              ? 'Свернуть таблицу замеров'
-              : 'Таблица замеров: измерение, сегодня, изменение — открыть'
-          }
-          className="flex-row items-center border-b border-white/[0.06] py-2.5 active:opacity-70"
-        >
-          <View className="min-w-0 flex-1 flex-row items-center gap-1">
-            <Text className="font-sans text-[14.5px] font-semibold uppercase tracking-wide text-bear-dim">
-              Измерение
-            </Text>
-            {tableOpen ? (
-              <ChevronUp size={15} color="#8B96B8" />
-            ) : (
-              <ChevronDown size={15} color="#8B96B8" />
-            )}
-          </View>
-          <Text className="w-[72px] text-right font-sans text-[14.5px] font-semibold uppercase tracking-wide text-bear-dim">
-            Сегодня
-          </Text>
-          <Text className="w-[84px] text-right font-sans text-[14.5px] font-semibold uppercase tracking-wide text-bear-dim">
-            Изменение
-          </Text>
-        </Pressable>
-        {tableOpen &&
-          items.map((m, i) => {
-          const list = measurements[m.key] || []
-          const last = list[0] || null
-          const prev = list[1] || null
-          const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
-          const tone = deltaTone(m, d)
-          const Arrow = d > 0 ? ArrowUpRight : ArrowDownRight
-
-          return (
-            <Pressable
-              key={m.key}
-              onPress={() => setOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`${m.label}: ${last ? `${fmtDecimal(last.cm)} сантиметров` : 'нет замеров'} — записать замеры`}
-              className={`flex-row items-center py-2.5 active:opacity-70 ${
-                i < items.length - 1 ? 'border-b border-white/[0.05]' : ''
-              }`}
-            >
-              <View className="min-w-0 flex-1 flex-row items-center gap-2">
-                <View
-                  style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: m.color }}
-                />
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
-                  className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text"
-                >
-                  {m.label}
-                </Text>
-                {m.custom && <Info size={15} color="#8B96B8" />}
-              </View>
-              <Text
-                maxFontSizeMultiplier={1.2}
-                className="w-[72px] text-right font-bold text-[16.5px] text-bear-text"
-              >
-                {last ? `${fmtDecimal(last.cm)} см` : '—'}
-              </Text>
-              <View className="w-[84px] flex-row items-center justify-end gap-0.5">
-                {d != null && d !== 0 && <Arrow size={15} color={tone} />}
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
-                  className="font-semibold text-[15px]"
-                  style={{ color: tone }}
-                >
-                  {d == null
-                    ? '—'
-                    : d === 0
-                      ? 'без изм.'
-                      : `${d > 0 ? '+' : '−'}${fmtDecimal(Math.abs(d))} см`}
-                </Text>
-              </View>
-            </Pressable>
-          )
-        })}
       </View>
         </>
       )}

@@ -39,12 +39,14 @@ export function SvgAreaChart({
   activeIndex = null, // подсветка выбранной точки: вертикальная линия + крупная точка
   bare = false, // без сетки и подписей оси Y (оси не нужны — есть плашка значения)
   lastBadge = false, // плашка значения над последней точкой, как на макете ИМТ
+  spark = false, // мини-спарклайн в карточке: без каких-либо подписей,
+  // плотные поля и тонкая линия — линии тренда в карточках 3×2 и таблице замеров
 }) {
   const [w, setW] = useState(0)
-  const PAD_L = bare ? 12 : 34
-  const PAD_R = 8
-  const PAD_T = 10
-  const PAD_B = 20
+  const PAD_L = spark ? 2 : bare ? 12 : 34
+  const PAD_R = spark ? 2 : 8
+  const PAD_T = spark ? 4 : 10
+  const PAD_B = spark ? 4 : 20
 
   if (!data.length || w === 0) {
     return <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height }} />
@@ -117,7 +119,7 @@ export function SvgAreaChart({
             </SvgText>
           ))}
         <Path d={area} fill="url(#fill)" />
-        <Path d={line} stroke={color} strokeWidth={2.5} fill="none" />
+        <Path d={line} stroke={color} strokeWidth={spark ? 2 : 2.5} fill="none" />
         {hasGoal && (
           <>
             <Line
@@ -136,7 +138,7 @@ export function SvgAreaChart({
         )}
         {dot &&
           pts.map((p, i) => (
-            <Circle key={`d${i}`} cx={p.x} cy={p.y} r={3} fill={dotColor || color} />
+            <Circle key={`d${i}`} cx={p.x} cy={p.y} r={spark ? 2 : 3} fill={dotColor || color} />
           ))}
         {activeIndex != null && activeIndex >= 0 && activeIndex < data.length && (
           <>
@@ -182,20 +184,21 @@ export function SvgAreaChart({
               </>
             )
           })()}
-        {data.map((d, i) =>
-          i % skip === 0 || i === data.length - 1 ? (
-            <SvgText
-              key={`x${i}`}
-              x={x(i)}
-              y={height - 6}
-              fill={AXIS}
-              fontSize={9}
-              textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
-            >
-              {d.label}
-            </SvgText>
-          ) : null
-        )}
+        {!spark &&
+          data.map((d, i) =>
+            i % skip === 0 || i === data.length - 1 ? (
+              <SvgText
+                key={`x${i}`}
+                x={x(i)}
+                y={height - 6}
+                fill={AXIS}
+                fontSize={9}
+                textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
+              >
+                {d.label}
+              </SvgText>
+            ) : null
+          )}
       </Svg>
     </View>
   )

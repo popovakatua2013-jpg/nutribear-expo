@@ -48,11 +48,12 @@ function sparkOf(rows, key) {
 }
 
 // Мини-спарклайн без осей: мягкая линия с заливкой в цвет метрики
+// (spark-режим SvgAreaChart — без подписей, чистая линия как на референсе)
 function Spark({ data, color }) {
   if (!data || data.length < 2) return null
   return (
     <View className="mt-1">
-      <SvgAreaChart bare dot={false} data={data} color={color} height={22} />
+      <SvgAreaChart spark dot={false} data={data} color={color} height={24} />
     </View>
   )
 }
