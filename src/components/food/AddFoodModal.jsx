@@ -20,6 +20,7 @@ import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
 import { MEALS } from '@/lib/data/meals'
+import { useFoodStore } from '@/store/useFoodStore'
 
 // Пилюля выбора дня с иконкой и шевроном — как на референс-скриншоте:
 // календарь «Сегодня», часы «Вчера»; активная подсвечена фиолетовым
@@ -48,9 +49,18 @@ function DayPill({ active, icon: Icon, label, onPress }) {
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
   const insets = useSafeAreaInsets()
-  // Дополнительные слоты «Перекус 2, 3…» больше не показываем —
-  // все перекусы живут в одной карточке «Перекус/Полдник»
-  const meals = MEALS
+  const customMeals = useFoodStore((s) => s.customMeals)
+  // Базовые приёмы + свои перекусы («Перекус 2»…) — теперь их можно
+  // выбрать и здесь (отзыв Кати: «как добавить пользовательский
+  // перекус?»). Короткие имена «П2», «П3» — влезают в ряд пилюль
+  const meals = [
+    ...MEALS,
+    ...customMeals.map((m) => ({
+      id: m.id,
+      name: m.name,
+      short: `П${m.name.replace(/^Перекус\s*/, '')}`,
+    })),
+  ]
   const [mode, setMode] = useState('hub')
   const [picked, setPicked] = useState(null)
   // За какой день записываем: 0 = сегодня, 1 = вчера. Выбор действует

@@ -1,11 +1,9 @@
 // Шапка карточки «Приёмы пищи»: фиолетовый чип-иконка BodyChip (стиль
-// вкладки «Тело») и заголовок.
-// Кнопки «+ Добавить» больше нет — добавление по тапу на плитку
-// приёма (завтрак/обед/ужин/перекус), дубли не нужны. Ниже — только
-// серые иконки-кнопки без подписей: «Повторить день» (выбор дня и
-// копирование его еды в сегодня), «История» и «Порции»; справа —
-// ссылка «Все». Подписи убраны по обратной связи: они делали ряд
-// широким, «Все» переносилось на вторую строку и блоки съезжали.
+// вкладки «Тела») и заголовок. Кнопки «+ Добавить» больше нет —
+// добавление по тапу на плитку приёма (завтрак/обед/ужин/перекус),
+// дубли не нужны. «Повторить день» — ПОДПИСАННАЯ сиреневая кнопка
+// (отзыв Кати: серая иконка без подписи была не найти), «История» и
+// «Порции» — серые иконки; справа — ссылка «Все».
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -48,13 +46,31 @@ export function PlanHeader({ onViewAll, onHistory }) {
         </View>
       </View>
 
-      {/* служебная строка: серые иконки слева, «Все» справа — всегда один ряд */}
-      <View className="mt-2.5 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-1.5">
-          <IconButton onPress={() => setRepeatOpen(true)} label="Повторить день" Icon={Copy} />
-          <IconButton onPress={onHistory} label="История" Icon={History} />
-          <IconButton onPress={() => setPortionsOpen(true)} label="Порции" Icon={Hand} />
-        </View>
+      {/* служебная строка: «Повторить день» с подписью слева, «История»
+          и «Порции» — иконки рядом, «Все» справа */}
+      <View className="mt-2.5 flex-row items-center gap-1.5">
+        {/* Повторить день: с подписью, чтобы кнопку было видно сразу
+            (отзыв Кати: «не могу даже я найти!») */}
+        <Pressable
+          onPress={() => setRepeatOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Повторить день — скопировать еду выбранного дня в сегодня"
+          hitSlop={4}
+          className="shrink-0 flex-row items-center gap-1.5 rounded-full border border-[#A78BFA]/45 bg-[#A78BFA]/15 px-3 py-[7px] active:opacity-70"
+        >
+          <Copy size={15} color="#C4B5FD" />
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+            maxFontSizeMultiplier={1.15}
+            className="font-bold text-[14.5px] text-[#C4B5FD]"
+          >
+            Повторить день
+          </Text>
+        </Pressable>
+        <IconButton onPress={onHistory} label="История приёмов" Icon={History} />
+        <IconButton onPress={() => setPortionsOpen(true)} label="Порции" Icon={Hand} />
 
         {onViewAll && (
           <Pressable
@@ -62,7 +78,7 @@ export function PlanHeader({ onViewAll, onHistory }) {
             accessibilityRole="button"
             accessibilityLabel="Открыть все приёмы пищи"
             hitSlop={4}
-            className="flex-row items-center gap-0.5 px-1 py-1.5"
+            className="ml-auto flex-row items-center gap-0.5 px-1 py-1.5"
           >
             <Text className="font-medium text-[16.5px] text-[#6C8CFF]">Все</Text>
             <ChevronRight size={16} color="#6C8CFF" />

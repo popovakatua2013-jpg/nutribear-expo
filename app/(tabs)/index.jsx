@@ -44,6 +44,7 @@ import { QuoteCard } from '@/components/home/QuoteCard'
 import { AllMealsModal } from '@/components/home/AllMealsModal'
 import { AddFoodModal } from '@/components/food/AddFoodModal'
 import { AiChat } from '@/components/home/AiChat'
+import { FoodInsight } from '@/components/home/FoodInsight'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
@@ -254,6 +255,11 @@ export default function HomeScreen() {
         {/* Приветствие: мишка, время суток и дата. Строку статуса
             («осталось N ккал») убрали — дубль блока «Осталось» в сводке */}
         <Greeting />
+
+        {/* Персональная подсказка по дневнику питания: «за 3 дня белка
+            меньше нормы — вес стоит» и т.п.; закрывается крестиком до
+            конца дня (отзыв Кати) */}
+        <FoodInsight />
 
         {/* Съедено за сегодня — сводка В САМОМ ВЕРХУ главной (отзыв Кати):
             кольца «съедено» и «сожжено», узкая карточка «Итоги»

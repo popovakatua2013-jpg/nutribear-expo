@@ -87,6 +87,9 @@ function deltaTone(m, d) {
 export function MeasurementsCard() {
   const measurements = useProfileStore((s) => s.measurements)
   const customs = useProfileStore((s) => s.customMeasurements)
+  // Скрытые замеры (снятые галочки в «Записать замеры») — не видны
+  // в плитках и таблице, но данные хранятся (отзыв Кати)
+  const hiddenKeys = useProfileStore((s) => s.hiddenMeasurements)
   const weightKg = useProfileStore((s) => s.weightKg)
   const heightCm = useProfileStore((s) => s.heightCm)
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
@@ -95,7 +98,10 @@ export function MeasurementsCard() {
   // Секция развёрнута по умолчанию (отзыв Кати) — не храним в сторe:
   // состояние локальное, свернуть можно тапом по шапке
   const [secOpen, setSecOpen] = useState(true)
-  const items = useMemo(() => allItems(customs), [customs])
+  const items = useMemo(
+    () => allItems(customs).filter((m) => !hiddenKeys.includes(m.key)),
+    [customs, hiddenKeys]
+  )
   // Есть ли хоть один замер: пока нет — вместо таблицы прочерков «—»
   // показываем чистое пустое состояние: после регистрации «Измерение
   // тела» пусто по умолчанию (отзыв Кати)
@@ -105,13 +111,21 @@ export function MeasurementsCard() {
   )
 
   // Оценка общего прогресса: вес к цели + динамика талии/живота +
-  // регулярность замеров (формула в lib/data/bmi.js)
+  // регулярность замеров (формула в lib/data/bmi.js). Скрытые замеры
+  // не считаем — их убрали осознанно
+  const visibleMeasurements = useMemo(() => {
+    const out = {}
+    for (const [k, v] of Object.entries(measurements)) {
+      if (!hiddenKeys.includes(k)) out[k] = v
+    }
+    return out
+  }, [measurements, hiddenKeys])
   const { score, caption, stars } = bodyProgressScore({
     weightKg,
     weights,
     goalWeightKg,
     heightCm,
-    measurements,
+    measurements: visibleMeasurements,
   })
 
   // Строки таблицы: замеры в сантиметрах. Дельта — к предыдущему
@@ -415,6 +429,10 @@ function MeasurementsModal({ open, onClose }) {
   const { toast } = useToast()
   const measurements = useProfileStore((s) => s.measurements)
   const customs = useProfileStore((s) => s.customMeasurements)
+  // Скрытые замеры: снятая галочка сохраняется в стор и переживает
+  // повторное открытие окна (отзыв Кати: раньше сбрасывалось)
+  const hiddenKeys = useProfileStore((s) => s.hiddenMeasurements)
+  const setMeasurementHidden = useProfileStore((s) => s.setMeasurementHidden)
   const addMeasurement = useProfileStore((s) => s.addMeasurement)
   const addCustomMeasurement = useProfileStore((s) => s.addCustomMeasurement)
   const removeCustomMeasurement = useProfileStore((s) => s.removeCustomMeasurement)
@@ -439,7 +457,8 @@ function MeasurementsModal({ open, onClose }) {
       init[m.key] = last ? String(last.cm) : ''
     })
     setVals(init)
-    setPicked({})
+    // Снятые галочки — из стора: скрытые замеры приходят отключёнными
+    setPicked(Object.fromEntries(hiddenKeys.map((k) => [k, false])))
     setTouched({})
     setNewName('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -490,9 +509,14 @@ function MeasurementsModal({ open, onClose }) {
   function handleSave() {
     if (hasBad) return
     const savedNames = []
+    const offNames = []
     items.forEach((m) => {
-      // Галочка снята — этот замер в этот раз не записываем
-      if (picked[m.key] === false) return
+      // Галочка снята — замер ПРЯЧЕТСЯ из карточки (данные остаются;
+      // отзыв Кати: снятые галочки не сохранялись)
+      if (picked[m.key] === false) {
+        offNames.push(m.label)
+        return
+      }
       const txt = String(vals[m.key] ?? '').trim()
       if (txt === '') return
       const n = parseNum(txt)
@@ -504,7 +528,10 @@ function MeasurementsModal({ open, onClose }) {
       if (addMeasurement(m.key, n)) savedNames.push(m.label)
     })
 
-    if (!savedNames.length) {
+    // Видимость замеров — в стор: скрыты все с снятой галочкой
+    setMeasurementHidden(items.filter((m) => picked[m.key] === false).map((m) => m.key))
+
+    if (!savedNames.length && !offNames.length) {
       const anyTyped = items.some(
         (m) =>
           touched[m.key] &&
@@ -516,6 +543,13 @@ function MeasurementsModal({ open, onClose }) {
         description: anyTyped
           ? 'Значения совпадают с последними'
           : 'Впишите значения — они запишутся в динамику',
+      })
+    } else if (!savedNames.length) {
+      const head = offNames.slice(0, 3).join(', ')
+      const rest = offNames.length > 3 ? ` и ещё ${offNames.length - 3}` : ''
+      toast({
+        title: '🙈 Замеры скрыты',
+        description: `${head}${rest} — вернутся, если снова поставить галочку`,
       })
     } else {
       const head = savedNames.slice(0, 3).join(', ')
@@ -541,7 +575,7 @@ function MeasurementsModal({ open, onClose }) {
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">Записать замеры</Text>
                 <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
-                  Сантиметровая лента; отметьте галочками, что измерили
+                  Отметьте, что измерили. Снятая галочка прячет замер из карточки
                 </Text>
               </View>
               <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">

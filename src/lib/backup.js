@@ -120,6 +120,9 @@ export async function applyBackup(data) {
     // восстановлении терялись — таблица «Тело» после переноса пустая
     measurements: obj(prof.measurements),
     customMeasurements: arr(prof.customMeasurements),
+    // Скрытые замеры (снятые галочки) — тоже переносим, иначе после
+    // восстановления вернутся скрытые строки
+    hiddenMeasurements: arr(prof.hiddenMeasurements).filter((k) => typeof k === 'string'),
     lastBmiCat: BMI_CATS.has(prof.lastBmiCat) ? prof.lastBmiCat : null,
   })
 

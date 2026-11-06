@@ -40,6 +40,15 @@ import { fontFamilies } from './ring-font'
 const nowTime = () =>
   new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 
+// Цвет столба за день (отзыв Кати): норма выпита — зелёный, половина и
+// больше — оранжевый, мало — красный, нет статистики — серый
+function dayBarColor(value, goalMl) {
+  if (!value || value <= 0) return 'rgba(139,150,184,0.38)'
+  if (goalMl > 0 && value >= goalMl) return '#4ADE80'
+  if (goalMl > 0 && value >= goalMl / 2) return '#FB923C'
+  return '#F87171'
+}
+
 // «14:30», «14.30», «1430», «9» → «ЧЧ:ММ»; не разобрали — null
 function normalizeTime(text) {
   const t = String(text).trim().replace(/[.,]/g, ':')
@@ -125,6 +134,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [editMl, setEditMl] = useState('')
   const [editTime, setEditTime] = useState('')
   const [logOpen, setLogOpen] = useState(true) // записи за сегодня сразу на виду
+  const [weekOpen, setWeekOpen] = useState(true) // «Последние 7 дней»
   const scrollRef = useRef(null)
   const editRowY = useRef(0) // Y строки правки в содержимом журнала
 
@@ -138,6 +148,20 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
       // При следующем открытии записи снова на виду — не заставляем
       // искать их в конце списка
       setLogOpen(true)
+      return
+    }
+    // «Последние 7 дней» свёрнуто, пока за неделю нет ни капли —
+    // пустой график не занимает место (отзыв Кати)
+    try {
+      const days = useHistoryStore.getState().days
+      let any = false
+      for (let i = 0; i < 7 && !any; i++) {
+        const key = dayKeyOf(new Date(Date.now() - i * 86400000))
+        if ((days[key]?.waterMl || 0) > 0) any = true
+      }
+      setWeekOpen(any)
+    } catch {
+      setWeekOpen(true)
     }
   }, [open])
 
@@ -459,14 +483,30 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
 
                 {/* Последние 7 дней: среднее за неделю, Δ к прошлой неделе
                     и мини-бары по дням — единственный график недели
-                    (дубль «Динамика за 7 дней» убран по запросу) */}
-                <View className="mt-3 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5">
+                    (дубль «Динамика за 7 дней» убран по запросу).
+                    Сворачивается тапом по шапке; без данных за неделю
+                    свёрнуто по умолчанию (отзыв Кати) */}
+                <Pressable
+                  onPress={() => setWeekOpen((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    weekOpen ? 'Свернуть статистику по дням' : 'Развернуть статистику по дням'
+                  }
+                  className="mt-3 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:opacity-80"
+                >
                   <View className="flex-row items-center gap-1.5">
                     <Trophy size={15} color="#FBBF24" />
                     <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text">
                       Последние 7 дней
                     </Text>
+                    {weekOpen ? (
+                      <ChevronUp size={17} color="#8B96B8" />
+                    ) : (
+                      <ChevronDown size={17} color="#8B96B8" />
+                    )}
                   </View>
+                  {weekOpen && (
+                    <>
                   <View className="mt-1.5 flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
                     <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">
                       {formatNum(weekAvg)}
@@ -505,9 +545,9 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                         <View
                           className="w-full rounded-t-[4px]"
                           style={{
-                            height: `${Math.max(8, Math.round((d.value / weekMax) * 100))}%`,
-                            backgroundColor: '#38BDF8',
-                            opacity: d.today ? 1 : 0.4,
+                            height: d.value > 0 ? `${Math.max(10, Math.round((d.value / weekMax) * 100))}%` : '10%',
+                            backgroundColor: dayBarColor(d.value, goalMl),
+                            opacity: d.today ? 1 : 0.55,
                           }}
                         />
                       </View>
@@ -525,7 +565,9 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                       </Text>
                     ))}
                   </View>
-                </View>
+                    </>
+                  )}
+                </Pressable>
               </View>
             </ScrollView>
           </LinearGradient>

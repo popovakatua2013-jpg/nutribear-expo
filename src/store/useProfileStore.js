@@ -41,6 +41,10 @@ export const useProfileStore = create(
       measurements: {},
       // Свои замеры через «+» в карточке «Замеры»: [{ id, name }]
       customMeasurements: [],
+      // Скрытые замеры (отзыв Кати: снятые галочки в «Записать замеры»
+      // не сохранялись): ключи, убранные из карточки и таблицы.
+      // Данные не удаляются — вернуть замер можно той же галочкой
+      hiddenMeasurements: [],
       lastBmiCat: null, // последняя известная категория ИМТ (low|norm|over|obese1|obese2) — по ней ловим живой переход в «Норму» для поздравления
 
       setProfile: (patch) =>
@@ -171,6 +175,16 @@ export const useProfileStore = create(
         })
         return removed
       },
+
+      // Применить снятые галочки «Записать замеры»: массив СКРЫТЫХ
+      // ключей целиком. Данные замеров остаются в measurements —
+      // видимость не удаление
+      setMeasurementHidden: (keys) =>
+        set({
+          hiddenMeasurements: Array.isArray(keys)
+            ? keys.filter((k) => typeof k === 'string')
+            : [],
+        }),
     }),
     {
       name: 'nutribear-profile-v1',
@@ -190,6 +204,7 @@ export const useProfileStore = create(
         weights: s.weights,
         measurements: s.measurements,
         customMeasurements: s.customMeasurements,
+        hiddenMeasurements: s.hiddenMeasurements,
         lastBmiCat: s.lastBmiCat,
       }),
     }

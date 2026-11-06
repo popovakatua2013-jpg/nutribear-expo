@@ -1,143 +1,117 @@
-// Закономерности для главной: короткие наблюдения, которые мишка
-// подмечает в уже собираемых данных (история дней, взвешивания,
-// тренировки, цели). Только чтение — новые сторы не нужны.
-// Каждый помощник возвращает { emoji, text } или null, если данных мало.
+// Персональные подсказки по дневнику питания (отзыв Кати: «могу сделать
+// их персональными по дневнику питания — например, „за 3 дня белка
+// меньше нормы — вес стоит“»). Чистая функция: на вход — последние
+// дни дневника (еда + вода), цели и вес; на выходе — ОДНА самая важная
+// подсказка или null (похваливать и выдумывать проблемы не нужно —
+// подсказка появляется только на реальном повторяющемся отклонении).
+//
+// Правила смотрят на 3 ПОСЛЕДНИХ ВЕДЁННЫХ дня (день «ведён» — была еда
+// или вода; пустые дни среднее не топят, как в дисциплине отчётов):
+//   1. protein-low — белок ниже 80% нормы все 3 дня (+ «вес стоит»,
+//      если последние взвешивания не двигаются — ровно пример Кати)
+//   2. kcal-over  — калории выше цели на 15%+ все 3 дня
+//   3. water-low  — воды меньше половины нормы все 3 дня
+//   4. kcal-low   — калории ниже 70% цели все 3 дня (голодание тормозит)
+//   5. fib-low    — клетчатка ниже 60% нормы все 3 дня
+// Приоритет сверху вниз: показываем одну — самую важную.
 
-import { dayKeyOf } from '@/store/useHistoryStore'
-import { dayStatus } from '@/lib/data/calendar'
-import { fmtDecimal } from '@/lib/data/bmi'
+import { FIBER_NORM } from './nutrition'
 
-// Дни недели в предложениях: «в норме чаще всего по вторникам»
-const WD = [
-  'по понедельникам', 'по вторникам', 'по средам', 'по четвергам',
-  'по пятницам', 'по субботам', 'по воскресеньям',
-]
-
-// Склонение: 1 день, 2 дня, 5 дней
-function plural(n, one, few, many) {
-  const m10 = n % 10
-  const m100 = n % 100
-  if (m10 === 1 && m100 !== 11) return one
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few
-  return many
-}
-
-// Динамика веса за последние 30 дней: нужно хотя бы 2 измерения
-// в разные дни. Ровный вес тоже наблюдение — пусть радует.
-export function weightInsight(weights) {
-  const now = Date.now()
-  const inWindow = (weights || []).filter(
-    (w) => now - new Date(w.date).getTime() <= 30 * 86400000
-  )
-  const daySet = new Set(inWindow.map((w) => String(w.date).slice(0, 10)))
-  if (daySet.size < 2) return null
-  const sorted = [...inWindow].sort((a, b) => new Date(a.date) - new Date(b.date))
-  const delta = Math.round((sorted[sorted.length - 1].kg - sorted[0].kg) * 10) / 10
-  if (delta <= -0.3) return { emoji: '📉', text: `Вес за месяц: −${fmtDecimal(-delta)} кг` }
-  if (delta >= 0.3) return { emoji: '📈', text: `Вес за месяц: +${fmtDecimal(delta)} кг` }
-  return { emoji: '⚖️', text: 'Вес за месяц держится ровно — устойчивость тоже результат' }
-}
-
-// Счёт дней «в норме»/«перебор» по дням недели (статус из календаря)
-function weekdayStats(days, goalKcal) {
-  const ok = Array(7).fill(0)
-  const over = Array(7).fill(0)
-  Object.keys(days || {}).forEach((key) => {
-    const st = dayStatus(days[key], goalKcal)
-    if (!st) return
-    const wd = new Date(`${key}T00:00:00`).getDay()
-    if (st === 'ok') ok[wd]++
-    else over[wd]++
-  })
-  return { ok, over }
-}
-
-// Лучший день недели (не меньше min повторов), иначе null
-function topWeekday(arr, min) {
-  let best = -1
-  arr.forEach((n, wd) => {
-    if (n >= min && (best < 0 || n > arr[best])) best = wd
-  })
-  return best < 0 ? null : { wd: best, n: arr[best] }
-}
-
-// Привычка с водой: сначала серия дней подряд (сегодня, если ещё пусто,
-// не ломает серию — как в серии календаря), иначе доля за 14 дней
-export function waterInsight(days, waterGoalMl) {
-  if (!waterGoalMl) return null
-  const d = new Date()
-  const todayRow = days[dayKeyOf(d)]
-  let streak = 0
-  for (
-    let i = (todayRow?.waterMl || 0) >= waterGoalMl ? 0 : 1;
-    i < 60;
-    i++
-  ) {
-    const dd = new Date(d)
-    dd.setDate(d.getDate() - i)
-    const row = days[dayKeyOf(dd)]
-    if ((row?.waterMl || 0) >= waterGoalMl) streak++
-    else break
+// Автонормы от цели по калориям — как в «Съедено за сегодня»
+// (тарелка 20/30/50 %, клетчатка 25 г)
+function macroTargets(kcal) {
+  return {
+    p: Math.round((kcal * 0.2) / 4),
+    fib: FIBER_NORM,
   }
-  if (streak >= 3) {
-    return { emoji: '💧', text: `Вода в норме ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд` }
-  }
-  let norm = 0
-  let withData = 0
-  for (let i = 0; i < 14; i++) {
-    const dd = new Date(d)
-    dd.setDate(d.getDate() - i)
-    const row = days[dayKeyOf(dd)]
-    if (!row || (!row.waterMl && !row.steps && !row.kcal)) continue
-    withData++
-    if ((row.waterMl || 0) >= waterGoalMl) norm++
-  }
-  const gen = withData % 10 === 1 && withData % 100 !== 11 ? 'дня' : 'дней'
-  if (withData >= 4 && norm > 0) {
-    return { emoji: '💧', text: `Вода в норме ${norm} из ${withData} ${gen}` }
-  }
-  return null
 }
 
-// Ритм тренировок: сколько дней с тренировками за последние 7 дней
-export function workoutInsight(exLogs) {
-  const d = new Date()
-  let n = 0
-  for (let i = 0; i < 7; i++) {
-    const dd = new Date(d)
-    dd.setDate(d.getDate() - i)
-    if ((exLogs[dayKeyOf(dd)] || []).length > 0) n++
+// Нормы с учётом своих значений из целей (0 = авто)
+export function insightNorms(goals) {
+  const g = goals || {}
+  const auto = macroTargets(g.kcal || 0)
+  const norms = g.macroNorms || {}
+  return {
+    kcal: g.kcal > 0 ? g.kcal : 0,
+    waterMl: g.waterMl > 0 ? g.waterMl : 0,
+    p: norms.p > 0 ? norms.p : auto.p,
+    fib: norms.fib > 0 ? norms.fib : auto.fib,
   }
-  if (n >= 1) return { emoji: '🏋️', text: `Тренировок за неделю: ${n}` }
-  return null
 }
 
-// Собирает наблюдения по порядку: вес, лучший день, переборы, вода,
-// тренировки. Максимум 4 строки, чтобы карточка оставалась компактной.
-export function buildInsights({ days, goals, weights, exLogs }) {
-  const list = []
-  const weight = weightInsight(weights)
-  if (weight) list.push(weight)
-  if (goals?.kcal) {
-    const { ok, over } = weekdayStats(days, goals.kcal)
-    const bestOk = topWeekday(ok, 3)
-    if (bestOk) {
-      list.push({
-        emoji: '✅',
-        text: `В норме чаще всего ${WD[bestOk.wd]} — ${bestOk.n} ${plural(bestOk.n, 'день', 'дня', 'дней')}`,
-      })
-    }
-    const bestOver = topWeekday(over, 2)
-    if (bestOver && (!bestOk || bestOver.wd !== bestOk.wd)) {
-      list.push({
-        emoji: '⚠️',
-        text: `Переборы чаще ${WD[bestOver.wd]} — ${bestOver.n} ${plural(bestOver.n, 'раз', 'раза', 'раз')}`,
-      })
+// «Вес стоит»: есть хотя бы два взвешивания, оба свежие (последние
+// 14 дней), разница между двумя последними ≤ 0,3 кг
+export function weightStands(weights, now = Date.now()) {
+  const list = Array.isArray(weights) ? weights.filter((w) => w && Number.isFinite(w.kg)) : []
+  if (list.length < 2) return false
+  const [a, b] = list
+  if (Math.abs(a.kg - b.kg) > 0.3) return false
+  const fresh = Math.abs(a.date ? now - new Date(a.date).getTime() : Infinity) <= 14 * 86400000
+  return fresh
+}
+
+// Склонение «3 дня / дня» — только для 3, окно фиксированное
+const THREE_DAYS_WORD = 'дня'
+
+// Главная подсказка: { id, title, text } | null
+export function foodInsight({ rows = [], goals = null, weights = [] }) {
+  const norms = insightNorms(goals)
+  // Только ведённые дни — пустые не считаем отклонением
+  const led = rows.filter((r) => r && (Number(r.kcal) > 0 || Number(r.waterMl) > 0))
+  if (led.length < 3) return null
+  const last3 = led.slice(-3)
+
+  const pLow =
+    norms.p > 0 && last3.every((r) => Number(r.p) < norms.p * 0.8)
+  const kcalOver =
+    norms.kcal > 0 && last3.every((r) => Number(r.kcal) > norms.kcal * 1.15)
+  const waterLow =
+    norms.waterMl > 0 && last3.every((r) => Number(r.waterMl) < norms.waterMl * 0.5)
+  const kcalLow =
+    norms.kcal > 0 && last3.every((r) => Number(r.kcal) > 0 && Number(r.kcal) < norms.kcal * 0.7)
+  const fibLow =
+    norms.fib > 0 && last3.every((r) => Number(r.fib) < norms.fib * 0.6)
+
+  if (pLow) {
+    return weightStands(weights)
+      ? {
+          id: 'protein-low-stall',
+          title: 'Мало белка — и вес стоит',
+          text: `Уже 3 ${THREE_DAYS_WORD} белка меньше нормы, а вес не двигается. Белок держит сытость и мышцы: добавьте творог, яйца, рыбу или курицу — и вес снова сдвинется.`,
+        }
+      : {
+          id: 'protein-low',
+          title: 'Мало белка',
+          text: `Белка ниже нормы 3 ${THREE_DAYS_WORD} подряд. Добавьте творог, яйца, рыбу или бобовые — белок держит сытость и помогает весу уходить.`,
+        }
+  }
+  if (kcalOver) {
+    return {
+      id: 'kcal-over',
+      title: 'Калории выше цели',
+      text: `3 ${THREE_DAYS_WORD} подряд выше цели больше чем на 15%. Сегодня сделайте легче: овощи и белок вместо сладкого — и дневник снова позеленеет.`,
     }
   }
-  const water = waterInsight(days, goals?.waterMl)
-  if (water) list.push(water)
-  const workout = workoutInsight(exLogs || {})
-  if (workout) list.push(workout)
-  return list.slice(0, 4)
+  if (waterLow) {
+    return {
+      id: 'water-low',
+      title: 'Мало воды',
+      text: `Воды меньше половины нормы уже 3 ${THREE_DAYS_WORD}. Стакан воды перед каждым приёмом пищи — и норма наберётся незаметно.`,
+    }
+  }
+  if (kcalLow) {
+    return {
+      id: 'kcal-low',
+      title: 'Слишком мало калорий',
+      text: `Калории сильно ниже цели 3 ${THREE_DAYS_WORD} подряд. На голодном пайке вес останавливается: добавьте сытный завтрак и не урезайте белок.`,
+    }
+  }
+  if (fibLow) {
+    return {
+      id: 'fib-low',
+      title: 'Мало клетчатки',
+      text: `Клетчатки ниже нормы 3 ${THREE_DAYS_WORD} подряд. Овощи, ягоды и цельнозерновое — и пищеварение скажет спасибо.`,
+    }
+  }
+  return null
 }

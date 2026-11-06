@@ -208,9 +208,19 @@ export function HistoryModal({ visible, onClose }) {
           {/* Список по дням */}
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {groups.length === 0 ? (
-              <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">
-                {query.trim() ? 'Ничего не нашлось 🐻' : 'Пока пусто — добавьте первое блюдо 🐻'}
-              </Text>
+              mealFilter === 'custom' && !query.trim() ? (
+                // Отзыв Кати: «как добавить пользовательский перекус?» —
+                // объясняем, где он создаётся
+                <Text className="px-5 py-8 text-center font-sans text-[15.5px] leading-snug text-bear-sub">
+                  Здесь появятся записи в свои перекусы «Перекус 2», «Перекус 3»…
+                  {'\n\n'}
+                  Создать свой перекус: «Все приёмы пищи» → карточка «Перекус» → «+ Добавить свой перекус» 🐻
+                </Text>
+              ) : (
+                <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">
+                  {query.trim() ? 'Ничего не нашлось 🐻' : 'Пока пусто — добавьте первое блюдо 🐻'}
+                </Text>
+              )
             ) : (
               <View className="gap-4 pb-3">
                 {groups.map(([day, rows]) => (

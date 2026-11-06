@@ -27,6 +27,9 @@ export const useUiPrefsStore = create(
       // («ГГГГ-ММ-ДД»), в котором его закрыли — назавтра придёт новый
       // совет, и карточка снова появится
       tipHiddenDay: null,
+      // Персональная подсказка на Главной закрыта крестиком — тоже до
+      // конца дня: назавтра может прийти другая подсказка
+      insightHiddenDay: null,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -44,6 +47,8 @@ export const useUiPrefsStore = create(
       setOrgHintDone: (value) => set({ orgHintDone: !!value }),
 
       dismissTipOfDay: (dayKey) => set({ tipHiddenDay: dayKey }),
+
+      dismissInsight: (dayKey) => set({ insightHiddenDay: dayKey }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',

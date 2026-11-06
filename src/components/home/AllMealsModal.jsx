@@ -59,6 +59,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
+  const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
   const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
   const { toast } = useToast()
   const [edit, setEdit] = useState(null) // {mealId, entry, mealName}
@@ -232,17 +233,47 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                             onEdit={(e) => setEdit({ mealId: meal.id, entry: e, mealName: meal.name })}
                           />
                         ))}
-                        {extraGroups.flatMap((g) =>
-                          g.list.map((entry) => (
-                            <EntryRow
-                              key={entry.id}
-                              mealId={g.id}
-                              mealName={meal.name}
-                              entry={entry}
-                              onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
-                            />
-                          ))
-                        )}
+                        {/* Свои перекусы — отдельными группами с подписью
+                            («Перекус 2», «Перекус 3»…) и корзиной; тап по
+                            блюду — правка, как у обычных записей */}
+                        {extraGroups.map((g) => (
+                          <View key={g.id} className="mt-1.5 gap-1">
+                            <View className="flex-row items-center gap-1.5 px-1">
+                              <Text
+                                numberOfLines={1}
+                                maxFontSizeMultiplier={1.2}
+                                className="min-w-0 flex-1 font-sans text-[14px] font-semibold uppercase tracking-wide text-bear-dim"
+                              >
+                                {customMeals.find((m) => m.id === g.id)?.name || 'Перекус'}
+                              </Text>
+                              <Pressable
+                                onPress={() => {
+                                  const meal = customMeals.find((m) => m.id === g.id)
+                                  if (meal) handleRemoveCustom(meal)
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Удалить перекус ${customMeals.find((m) => m.id === g.id)?.name || ''}`}
+                                className="rounded p-1 active:opacity-60"
+                              >
+                                <Trash2 size={14} color="#98A2C2" />
+                              </Pressable>
+                            </View>
+                            {g.list.map((entry) => (
+                              <EntryRow
+                                key={entry.id}
+                                mealId={g.id}
+                                mealName={meal.name}
+                                entry={entry}
+                                onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
+                              />
+                            ))}
+                            {!g.list.length && (
+                              <Text className="px-1 font-sans text-[14.5px] text-bear-dim">
+                                Пусто — добавьте блюдо в этот перекус
+                              </Text>
+                            )}
+                          </View>
+                        ))}
                       </View>
 
                       {!mealEntries.length && !extraCount && (
@@ -264,14 +295,29 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
 
                       {isSnack && (
                         <Pressable
-                          onPress={() => onAddToMeal(meal.id)}
+                          onPress={() => {
+                            // Настоящий свой перекус: «Перекус 2», «Перекус 3»…
+                            // (отзыв Кати: «как добавить пользовательский
+                            // перекус?» — раньше кнопка лишь открывала
+                            // добавление блюда в обычный перекус)
+                            const meal = addCustomMeal()
+                            if (meal) {
+                              // Разворачиваем и карточку «Перекус», и новую
+                              // группу — новая секция видна сразу
+                              setExpanded((s) => ({ ...s, [meal.id]: true, snack: true }))
+                              toast({
+                                title: `🥨 ${meal.name} создан`,
+                                description: 'Он появится и в окне добавления, и в истории приёмов',
+                              })
+                            }
+                          }}
                           accessibilityRole="button"
-                          accessibilityLabel="Добавить перекус"
+                          accessibilityLabel="Добавить свой перекус — ещё один приём пищи"
                           className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
                         >
                           <Plus size={15} color="#A5AECB" />
                           <Text className="font-semibold text-[15px] text-bear-sub">
-                            Добавить перекус
+                            Добавить свой перекус
                           </Text>
                         </Pressable>
                       )}
