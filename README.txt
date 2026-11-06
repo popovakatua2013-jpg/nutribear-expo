@@ -40,7 +40,6 @@ NutriBear — заплатка от 25.10 (39 файлов)
   src/components/home/EntryList.jsx
   src/components/home/GramsPicker.jsx
   src/components/home/HistoryModal.jsx
-  src/components/home/MealCard.jsx
   src/components/home/MealPlanCard.jsx
   src/components/home/WaterModal.jsx
   src/components/more/AboutCard.jsx

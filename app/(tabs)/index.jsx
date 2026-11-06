@@ -89,7 +89,6 @@ export default function HomeScreen() {
   }
 
   const entries = useFoodStore((s) => s.entries)
-  const removeEntry = useFoodStore((s) => s.removeEntry)
   const waterMl = useActivityStore((s) => s.waterMl)
   const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
   const addWater = useActivityStore((s) => s.addWater)
@@ -248,10 +247,10 @@ export default function HomeScreen() {
         {/* Приветствие: мишка, время суток, статус дневника и дата */}
         <Greeting consumed={consumed} target={goals.kcal} />
 
-        {/* План питания: 4 приёма пищи — первый блок экрана */}
+        {/* Дневник питания под шапкой: секции приёмов с блюдами,
+            счётчиком и рекомендованными ккал (правка/удаление — внутри) */}
         <MealPlanCard
           onAdd={openAdd}
-          onRemove={removeEntry}
           onViewAll={() => setAllOpen(true)}
         />
 

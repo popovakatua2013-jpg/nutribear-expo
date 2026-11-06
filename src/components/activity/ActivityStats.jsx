@@ -1,23 +1,20 @@
 // Компактный ряд из трёх карточек за сегодня: «Шаги», «Вода»,
 // «Активность» — в одну строку (361dp ≈ 102dp на карточку).
-// Редизайн по референсу: центр карточки — КОЛЬЦО прогресса своей цели,
-// иконка-чип стоит на дуге сверху (12 часов), внутри кольца — значение
-// и подстрока, под кольцом — подпись и итоговая строка. Кнопка «+»
-// быстрого добавления переехала в угол карточки (шаги/вода). Тапы и
+// Кольца прогресса убраны по просьбе Кати (в маленьких блоках лишние):
+// центр карточки — иконка-чип на цветном градиенте, под ней крупное
+// значение и подстрока, дальше подпись и итоговая строка. Кнопка «+»
+// быстрого добавления — в углу карточки (шаги/вода). Тапы и
 // долгие тапы прежние: «Шаги» — записать шаги вручную, «Вода» — стаканы
 // за день (долгий тап — изменить цель воды), «Активность» — раскрыть/
 // скрыть блок «Тренировки» (долгий тап — изменить цель сжигания).
-// Кольцо «Активности» теперь показывает ПРОЦЕНТ ЦЕЛИ МИНУТ (раньше
-// маленькое кольцо в углу показывало процент сжигания — та цифра живёт
-// в сводке «Съедено за сегодня»). Тексты однострочные и при нехватке
-// ширины сжимаются (adjustsFontSizeToFit), а не обрезаются. Карточку
-// «Калории» убрали ранее — она дублировала сводку. История по дням —
-// во вкладке «Дневник» (тап по карточке-итогу в «Отчётах»).
+// Тексты однострочные и при нехватке ширины сжимаются
+// (adjustsFontSizeToFit), а не обрезаются. Карточку «Калории» убрали
+// ранее — она дублировала сводку. История по дням — во вкладке
+// «Дневник» (тап по карточке-итогу в «Отчётах»).
 // Поверхность плиток — bear-bodyCard с цветной обводкой показателя.
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import Svg, { Circle } from 'react-native-svg'
 import { ChevronDown, ChevronUp, Dumbbell, Droplets, Footprints, Plus } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
@@ -38,83 +35,7 @@ function FitLine({ className, maxFontSizeMultiplier = 1.25, style, children }) {
   )
 }
 
-// Размеры кольца цели
-const RING = 74
-const SW = 6
-
-// Кольцо прогресса своей цели: серый трек + цветная дуга на процент
-// выполнения; иконка-чип на дуге сверху; внутри — значение и подстрока
-function GoalRing({ pct, color, iconColors, Icon, value, sub }) {
-  const R = (RING - SW) / 2
-  const C = 2 * Math.PI * R
-  const clamped = Math.min(100, Math.max(0, pct || 0))
-  const frac = clamped / 100
-  const half = RING / 2
-
-  return (
-    <View
-      accessibilityRole="progressbar"
-      accessibilityLabel={`Выполнено ${Math.round(clamped)} процентов дневной цели`}
-      style={{ width: RING, height: RING, marginTop: 10 }}
-    >
-      <Svg width={RING} height={RING}>
-        <Circle cx={half} cy={half} r={R} stroke="rgba(255,255,255,0.08)" strokeWidth={SW} fill="none" />
-        {frac > 0 && (
-          <Circle
-            cx={half}
-            cy={half}
-            r={R}
-            stroke={color}
-            strokeWidth={SW}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={`${C * frac} ${C}`}
-            transform={`rotate(-90 ${half} ${half})`}
-          />
-        )}
-      </Svg>
-
-      {/* иконка-чип на дуге, 12 часов — наполовину над кольцом */}
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={iconColors}
-        style={{
-          position: 'absolute',
-          top: -7,
-          left: half - 13,
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon size={14} color="#FFFFFF" />
-      </LinearGradient>
-
-      {/* значение + подстрока внутри кольца */}
-      <View pointerEvents="none" className="absolute inset-0 items-center justify-center" style={{ paddingTop: 10 }}>
-        <FitLine
-          maxFontSizeMultiplier={1.15}
-          className="text-center font-extrabold text-[17px] leading-tight tracking-tight text-bear-text"
-          style={{ width: RING - 18 }}
-        >
-          {value}
-        </FitLine>
-        <FitLine
-          maxFontSizeMultiplier={1.15}
-          className="mt-0.5 text-center font-sans text-[10px] leading-tight text-bear-dim"
-          style={{ width: RING - 12 }}
-        >
-          {sub}
-        </FitLine>
-      </View>
-    </View>
-  )
-}
-
-function StatCard({ colors, Icon, label, value, sub, foot, pct, onPlus, plusLabel, onPress, onLongPress, longHint }) {
+function StatCard({ colors, Icon, label, value, sub, foot, onPlus, plusLabel, onPress, onLongPress, longHint }) {
   const Root = onPress || onLongPress ? Pressable : View
   return (
     <Root
@@ -146,9 +67,38 @@ function StatCard({ colors, Icon, label, value, sub, foot, pct, onPlus, plusLabe
         </Pressable>
       )}
 
-      <GoalRing pct={pct} color={colors.tint} iconColors={colors.icon} Icon={Icon} value={value} sub={sub} />
+      {/* иконка-чип на градиенте — вместо прежнего кольца */}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        colors={colors.icon}
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 15,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 2,
+        }}
+      >
+        <Icon size={16} color="#FFFFFF" />
+      </LinearGradient>
 
-      {/* подпись под кольцом */}
+      {/* значение + подстрока крупно по центру */}
+      <FitLine
+        maxFontSizeMultiplier={1.2}
+        className="mt-2 text-center font-extrabold text-[19px] leading-tight tracking-tight text-bear-text"
+      >
+        {value}
+      </FitLine>
+      <FitLine
+        maxFontSizeMultiplier={1.15}
+        className="mt-0.5 text-center font-sans text-[10.5px] leading-tight text-bear-dim"
+      >
+        {sub}
+      </FitLine>
+
+      {/* подпись под значением */}
       <FitLine className="mt-1.5 font-semibold text-[12.5px] text-bear-soft">
         {label}
       </FitLine>
@@ -243,8 +193,6 @@ export function ActivityStats({
       label: 'Шаги сегодня',
       value: formatNum(steps),
       sub: `/ ${formatNum(stepsGoal)}`,
-      // дуга кольца — доля пройденной цели по шагам
-      pct: stepsGoal > 0 ? (steps / stepsGoal) * 100 : 0,
       foot: stepsFoot,
       onPlus: onAddSteps,
       plusLabel: 'Добавить 1 000 шагов',
@@ -261,7 +209,6 @@ export function ActivityStats({
       label: 'Вода',
       value: `${waterPct}%`,
       sub: `из ${formatLiters(waterGoalMl)} · ${formatNum(waterMl)} мл`,
-      pct: waterPct,
       foot: waterFoot,
       onPlus: onAddWater,
       plusLabel: 'Выпить стакан воды',
@@ -277,9 +224,8 @@ export function ActivityStats({
       label: 'Активность',
       value: `${minutes} мин`,
       sub: `из ${formatNum(minutesGoal)} мин`,
-      // дуга кольца — доля цели по минутам; процент сжигания остался
-      // в сводке и на долгом тапе
-      pct: minutesPct,
+      // процент цели по минутам — в итоговой строке; процент сжигания
+      // живёт в сводке и на долгом тапе
       foot: minutesFoot,
       // тап — раскрыть/скрыть тренировки прямо под плитками (этот же блок)
       onPress: onGoActivity,
