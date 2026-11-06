@@ -1,18 +1,26 @@
-// Главный экран — порядок блоков по решению пользователя: 1) план
-// питания (приёмы пищи), 2) сводка «Съедено за сегодня», далее блок
-// «Активность» (3 плитки: шаги, вода, активность; тап по «Активности»
-// раскрывает тренировки прямо внутри блока — отдельной секции
-// тренировок на главной больше нет), рейтинг питания (клетчатка, сахар,
-// нутриенты — за день и месяц). Блоки «Голодание» и «Ваши цели» удалены
-// по запросу. Модалки: еда (хаб), все приёмы. Шапка экрана — с мягкой
-// неоновой дымкой, как на вкладке «Тело» (единый стиль страниц).
-// Показатели дня пишутся в историю — для отчётов.
+// Главный экран — порядок блоков по решению пользователя: 1) сводка
+// «Съедено за сегодня» в самом верху и максимально компактная (отзыв
+// Кати: «перемести в самый верх и сделай его компактным как можно
+// больше — он очень огромный»; итоги — узкой карточкой посередине
+// между кольцами, дубль «Съедено/Сожжено» убран), 2) план питания
+// (приёмы пищи), 3) блок «Активность» (3 плитки: шаги, вода,
+// активность), 4) «Тренировки» — ОТДЕЛЬНАЯ секция-карточка (отзыв
+// Кати: «сейчас он находится в блоке активность, вынеси пока
+// отдельно на главную страницу»), которая ВСЕГДА начинается свёрнутой
+// (отзыв Кати: «выпадающий список очень большой — всегда свёрнут»):
+// компактная шапка, разворачивается по тапу по ней или по плитке
+// «Активность»; при уходе со вкладки сворачивается сама. Далее —
+// рейтинг питания (клетчатка, сахар, нутриенты — за день и месяц).
+// Блоки «Голодание» и «Ваши цели» удалены по запросу. Модалки: еда
+// (хаб), все приёмы. Шапка экрана — с мягкой неоновой дымкой, как на
+// вкладке «Тело» (единый стиль страниц). Показатели дня пишутся в
+// историю — для отчётов.
 // «Главная» — только сегодня (по запросу пользователя): карточки
 // показателей открывают свои быстрые действия (тап «Шаги» — записать
 // шаги вручную, тап «Вода» — изменить стаканы, тап «Активность» —
-// раскрыть тренировки внутри блока), история по дням теперь живёт
-// во вкладке «Дневник»: тап по карточке-итогу в «Отчётах» открывает
-// окно истории (MetricHistoryModal).
+// раскрыть/свернуть отдельную секцию «Тренировки»), история по дням
+// теперь живёт во вкладке «Дневник»: тап по карточке-итогу в «Отчётах»
+// открывает окно истории (MetricHistoryModal).
 // История за вчера и старше — там, за сегодня — здесь.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -20,13 +28,14 @@ import { DeviceEventEmitter, KeyboardAvoidingView, Modal, Platform, Pressable, S
 import { useFocusEffect } from 'expo-router'
 import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { X } from 'lucide-react-native'
+import { ChevronDown, Dumbbell, X } from 'lucide-react-native'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { Greeting } from '@/components/home/Greeting'
+import { BodyChip } from '@/components/ui/BodyChip'
 import { EveningNudge } from '@/components/home/EveningNudge'
 import { CycleBadge } from '@/components/home/CycleBadge'
 import { MealPlanCard } from '@/components/home/MealPlanCard'
@@ -51,8 +60,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { toast } = useToast()
   const scrollRef = useRef(null)
-  // Раскрытые тренировки внутри блока «Активность» (тап по плитке):
-  // по умолчанию скрыты — главная короче без отдельной секции
+  // Раскрытие секции «Тренировки» (отдельная карточка под блоком
+  // «Активность»): по умолчанию и после каждого возврата на вкладку —
+  // свёрнута (отзыв Кати: «всегда свёрнут»)
   const [exOpen, setExOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
@@ -106,6 +116,17 @@ export default function HomeScreen() {
   const day = dayBju(entries)
   // Вся активность за сегодня: тренировки + шаги (≈0.04 ккал/шаг)
   const burned = totalBurned(exLogs, dayKeyOf(), extraSteps)
+  // Тренировки за сегодня (без шагов) — для подписи в свёрнутой шапке
+  // секции «Тренировки»
+  const todayExList = exLogs[dayKeyOf()] || []
+  const exBurned = totalBurned(exLogs, dayKeyOf(), 0)
+  // «1 запись / 2 записи / 5 записей» — для той же подписи
+  const exNoun = (n) =>
+    n % 10 === 1 && n % 100 !== 11
+      ? 'запись'
+      : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)
+        ? 'записи'
+        : 'записей'
   const mealCount = Object.values(entries).flat().length
   // Опыт: шаги + стаканы воды + приёмы пищи + тренировки (общая формула)
   const xp = xpForDay({ steps: extraSteps, waterMl, mealCount, burned })
@@ -175,6 +196,9 @@ export default function HomeScreen() {
         setAllOpen(false)
         setWaterOpen(false)
         setStepsOpen(false)
+        // Тренировки при уходе со вкладки сворачиваются — секция всегда
+        // встречает свёрнутой («всегда свёрнут» — отзыв Кати)
+        setExOpen(false)
       },
       []
     )
@@ -241,20 +265,11 @@ export default function HomeScreen() {
             («осталось N ккал») убрали — дубль блока «Осталось» в сводке */}
         <Greeting />
 
-        {/* Дневник питания под шапкой: секции приёмов с блюдами,
-            счётчиком и рекомендованными ккал (правка/удаление — внутри) */}
-        <MealPlanCard
-          onAdd={openAdd}
-          onViewAll={() => setAllOpen(true)}
-        />
-
-        {/* Мягкий бейдж фазы цикла — только если трекер включён в «Ещё» */}
-        <CycleBadge />
-
-        {/* Съедено за сегодня — сводка под планом питания: кольца «съедено»
-            и «сожжено», пилюля остатка и итог дня; тап по половинам —
-            правка соответствующей цели. История по дням — во вкладке
-            «Дневник» (тап по карточке-итогу в «Отчётах») */}
+        {/* Съедено за сегодня — сводка В САМОМ ВЕРХУ главной (отзыв Кати):
+            кольца «съедено» и «сожжено», узкая карточка «Итоги»
+            посередине; тап по кольцам и карточке — правка соответствующей
+            цели. История по дням — во вкладке «Дневник» (тап по
+            карточке-итогу в «Отчётах») */}
         <DailySummary
           consumed={consumed}
           target={goals.kcal}
@@ -270,12 +285,22 @@ export default function HomeScreen() {
           }
         />
 
-        {/* Блок «Активность» — единый контейнер после сводки: ряд плиток
-            за сегодня (шаги, вода, активность) и тренировки, которые по
-            тапу на «Активность» раскрываются прямо здесь. Кнопки «+» на
-            плитках убраны — тап по плитке и есть добавить/открыть.
-            Долгий тап по плиткам — правка целей; история по дням —
-            во вкладке «Дневник» */}
+        {/* Дневник питания под сводкой: секции приёмов с блюдами,
+            счётчиком и рекомендованными ккал (правка/удаление — внутри) */}
+        <MealPlanCard
+          onAdd={openAdd}
+          onViewAll={() => setAllOpen(true)}
+        />
+
+        {/* Мягкий бейдж фазы цикла — только если трекер включён в «Ещё» */}
+        <CycleBadge />
+
+        {/* Блок «Активность» — ряд плиток за сегодня (шаги, вода,
+            активность). Тренировки больше не живут внутри — вынесены
+            в отдельную секцию ниже (отзыв Кати). Кнопки «+» на плитках
+            убраны — тап по плитке и есть добавить/открыть. Долгий тап
+            по плиткам — правка целей; история по дням — во вкладке
+            «Дневник» */}
         <View className="rounded-3xl border border-bear-bodyLine bg-white/[0.02] p-3">
           <ActivityStats
             steps={extraSteps}
@@ -299,14 +324,43 @@ export default function HomeScreen() {
             onGoActivity={() => setExOpen((v) => !v)}
             exOpen={exOpen}
           />
+        </View>
 
-          {/* Тренировки: живут внутри блока «Активность» — без обводки
-              (flat), под разделителем; повторно открытые — со своим
-              списком за сегодня, повтором дня и суммой сожжённого */}
-          {exOpen && (
-            <View className="mt-3 border-t border-white/[0.06] pt-3">
-              <ExerciseSection flat />
-            </View>
+        {/* Тренировки — ОТДЕЛЬНАЯ секция-карточка (отзыв Кати: вынести
+            из блока «Активность» на главную), которая всегда начинается
+            СВЁРНУТОЙ (отзыв Кати: выпадающий список очень большой):
+            компактная шапка с итогом дня; разворачивается по тапу по
+            шапке или по плитке «Активность», при уходе со вкладки
+            сворачивается сама */}
+        <View className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4">
+          {exOpen ? (
+            <ExerciseSection flat />
+          ) : (
+            <Pressable
+              onPress={() => setExOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Раскрыть тренировки"
+              className="flex-row items-center gap-2.5 active:opacity-70"
+            >
+              <BodyChip icon={<Dumbbell size={17} />} />
+              <View className="min-w-0 flex-1">
+                <Text className="font-bold text-[20px] tracking-tight text-bear-text">
+                  Тренировки
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  maxFontSizeMultiplier={1.25}
+                  className="font-sans text-[14px] text-bear-sub2"
+                >
+                  {todayExList.length > 0
+                    ? `${todayExList.length} ${exNoun(todayExList.length)} за сегодня · ${formatNum(exBurned)} ккал`
+                    : 'Пока пусто — нажмите, чтобы добавить'}
+                </Text>
+              </View>
+              <ChevronDown size={20} color="#A5AECB" />
+            </Pressable>
           )}
         </View>
 
