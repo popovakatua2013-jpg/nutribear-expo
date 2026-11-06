@@ -1,13 +1,18 @@
 // Карточки «Отчётов»: компактная сетка 3×2, как на референсе дневника —
 // верхний ряд «Шаги / Калории / Вода», нижний «Сон / Вес / Сожжено».
 // У каждой карточки — значение за период, подпись «% к прошлой неделе»
-// (у сна и веса без данных — честное «нет измерений») и мини-спарклайн
-// за последние дни. Тап по карточке показателя ОТКРЫВАЕТ ОКНО ИСТОРИИ
-// (MetricHistoryModal): среднее за день, столбики по дням, лучшие дни и
-// теплокарта недели. Тап по «Весу» открывает вкладку ИМТ и докручивает
-// до графика «Динамика веса». Показатели и форматы — из общего реестра
-// lib/data/metrics.js. Поверхности — в стиле вкладки «Тело»: градиент
-// от цветного тинта метрики к фиолетовой подложке и фиолетовая обводка.
+// и мини-спарклайн за последние дни. Сравнение с прошлым периодом
+// показывается ТОЛЬКО когда по показателю есть данные прошлого периода
+// (отзыв Кати: у новой недели не с чем сравнивать — «0% к прошлой
+// неделе» вводит в заблуждение, ждём, пока соберутся данные).
+// Подпись цели внизу — с иконкой календаря и тонкой линией сверху,
+// как на скрине-2 («Цель: 0 из 7 дней»). Тап по карточке показателя
+// ОТКРЫВАЕТ ОКНО ИСТОРИИ (MetricHistoryModal): среднее за день,
+// столбики по дням, лучшие дни и теплокарта недели. Тап по «Весу»
+// открывает вкладку ИМТ и докручивает до графика «Динамика веса».
+// Показатели и форматы — из общего реестра lib/data/metrics.js.
+// Поверхности — как на скрине-2: у каждой карточки свой цветной ореол
+// (градиент от тинта метрики и обводка в её цвете), плитка иконки ярче.
 //
 // «Сон» — псевдокарточка без данных: трекера сна в приложении пока нет,
 // она показывает «—» и приберегена под будущую фичу (в реестр METRICS её
@@ -20,7 +25,7 @@ import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
-import { ArrowDownRight, ArrowUpRight, MoonStar, Scale } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, Calendar, MoonStar, Scale } from 'lucide-react-native'
 import { changePct, deltaTone, discipline, periodTotals, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -64,10 +69,57 @@ function Spark({ data, color }) {
   )
 }
 
+// Фон карточки «как на скрине-2»: у каждой метрики свой ореол —
+// градиент от цветного тинта к фиолетовой подложке и обводка
+// в цвете метрики (Шаги — зелёная, Калории — красная, Вода — голубая…)
+function CardBg({ color }) {
+  return (
+    <LinearGradient
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      colors={[`${color}2B`, '#1A123A']}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: `${color}66`,
+      }}
+    />
+  )
+}
+
+// Подпись-футер с иконкой календаря и тонкой линией сверху — как на
+// скрине-2 («Цель: 0 из 7 дней», «Нет измерений за 7 дней»)
+function CalFooter({ children, color = '#8B96B8', line = true }) {
+  return (
+    <View>
+      {line && <View className="mt-2 h-px bg-white/[0.07]" />}
+      <View className="mt-1.5 flex-row items-center gap-1">
+        <Calendar size={11} color={color} />
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.2}
+          className="min-w-0 flex-1 font-medium text-[10.5px]"
+          style={{ color }}
+        >
+          {children}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
 function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => {} }) {
-  const pct = changePct(cur[m.key], prev[m.key])
-  const tone = deltaTone(pct, m.invert)
-  const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
+  // Сравнение с прошлым периодом — только когда есть данные (отзыв
+  // Кати: «0% к прошлой неделе» без данных не показываем)
+  const hasPrev = Number(prev[m.key]) > 0
+  const pct = hasPrev ? changePct(cur[m.key], prev[m.key]) : null
+  const tone = pct == null ? '#8B96B8' : deltaTone(pct, m.invert)
+  const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
   const spark = useMemo(() => sparkOf(rows, m.key), [rows, m.key])
 
   return (
@@ -82,21 +134,7 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
           рядом карточек). НЕ height:'100%' — в ряду с авто-высотой Yoga
           считал 100% от высоты вьюпорта, и карточки растягивались
           на весь экран (скрин «ужаса» из отзыва) */}
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={[`${m.color}14`, '#1A123A']}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: 'rgba(168,85,247,0.30)',
-        }}
-      />
+      <CardBg color={m.color} />
       <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
@@ -104,7 +142,7 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
               width: 26,
               height: 26,
               borderRadius: 9,
-              backgroundColor: `${m.color}1f`,
+              backgroundColor: `${m.color}33`,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -127,30 +165,29 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
         >
           {m.fmt(cur[m.key])}
         </Text>
-        <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
-          <Arrow size={12} color={tone} />
-          <Text
-            numberOfLines={2}
-            maxFontSizeMultiplier={1.2}
-            className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
-            style={{ color: tone }}
-          >
-            {`${Math.abs(pct)}% ${prevLabel(days)}`}
-          </Text>
-        </View>
+        {/* «% к прошлой неделе» — только с данными прошлого периода;
+            без сравнения строка не занимает место (отзыв Кати) */}
+        {pct != null && (
+          <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
+            <Arrow size={12} color={tone} />
+            <Text
+              numberOfLines={2}
+              maxFontSizeMultiplier={1.2}
+              className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
+              style={{ color: tone }}
+            >
+              {`${Math.abs(pct)}% ${prevLabel(days)}`}
+            </Text>
+          </View>
+        )}
         {/* Сколько дней периода цель достигнута — перенесено из карточки
             «Дисциплина» (отзыв Кати): в карточке показателя это уместнее,
             чем дубли плиток. Для калорий цель — «в рамках», не перебрать.
             goalMet = null (цель не задана) — строки нет */}
         {goalMet != null && (
-          <Text
-            numberOfLines={2}
-            maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-medium text-[10.5px] leading-[13px]"
-            style={{ color: goalMet > 0 ? '#4ade80' : '#8B96B8' }}
-          >
-            {`${m.key === 'kcal' ? 'В рамках цели' : 'Цель достигнута'} в ${goalMet} из ${days} ${pluralDays(days)}`}
-          </Text>
+          <CalFooter color={goalMet > 0 ? '#4ade80' : '#8B96B8'}>
+            {`${m.key === 'kcal' ? 'В рамках' : 'Цель'}: ${goalMet} из ${days} ${pluralDays(days)}`}
+          </CalFooter>
         )}
         <Spark data={spark} color={m.color} />
       </View>
@@ -159,27 +196,13 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
 }
 
 // Карточка «Сон»: данных нет — трекера сна пока нет. Показываем «—»
-// и честную подпись за выбранный период, как на референсе
+// и честную подпись за выбранный период с иконкой календаря (скрин-2)
 function SleepCard({ days }) {
   return (
     <View className="min-w-0 flex-1" style={{ borderRadius: 16 }}>
       {/* фон — абсолютный градиент (см. комментарий в ReportCard:
           height:'100%' растягивал карточку до высоты вьюпорта) */}
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={['#c084fc14', '#1A123A']}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: 'rgba(168,85,247,0.30)',
-        }}
-      />
+      <CardBg color="#c084fc" />
       <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
@@ -187,7 +210,7 @@ function SleepCard({ days }) {
               width: 26,
               height: 26,
               borderRadius: 9,
-              backgroundColor: '#c084fc1f',
+              backgroundColor: '#c084fc33',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -205,13 +228,11 @@ function SleepCard({ days }) {
         <Text maxFontSizeMultiplier={1.15} className="mt-1.5 font-extrabold text-[19px] leading-tight text-bear-text">
           —
         </Text>
-        <Text
-          numberOfLines={2}
-          maxFontSizeMultiplier={1.2}
-          className="mt-1 min-h-[26px] font-medium text-[10.5px] leading-[13px] text-bear-dim"
-        >
-          {`нет измерений за ${days} ${pluralDays(days)}`}
-        </Text>
+        <View className="mt-1 min-h-[26px]">
+          <CalFooter line={false}>
+            {`Нет измерений за ${days} ${pluralDays(days)}`}
+          </CalFooter>
+        </View>
       </View>
     </View>
   )
@@ -256,21 +277,7 @@ function WeightReportCard({ days }) {
       className="min-w-0 flex-1 active:opacity-80"
       style={{ borderRadius: 16 }}
     >
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={['#a78bfa14', '#1A123A']}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: 'rgba(168,85,247,0.30)',
-        }}
-      />
+      <CardBg color="#a78bfa" />
       <View style={{ padding: 10 }}>
         <View className="flex-row items-center gap-1.5">
           <View
@@ -278,7 +285,7 @@ function WeightReportCard({ days }) {
               width: 26,
               height: 26,
               borderRadius: 9,
-              backgroundColor: '#a78bfa1f',
+              backgroundColor: '#a78bfa33',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -302,19 +309,27 @@ function WeightReportCard({ days }) {
           {lastW ? `${fmtDecimal(lastW.kg)} кг` : '—'}
         </Text>
         <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
-          {delta != null && delta !== 0 && <Arrow size={12} color={tone} />}
-          <Text
-            numberOfLines={2}
-            maxFontSizeMultiplier={1.2}
-            className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
-            style={{ color: tone }}
-          >
-            {delta == null
-              ? `нет измерений за ${days} ${pluralDays(days)}`
-              : delta === 0
-                ? `без изменений за ${days} ${pluralDays(days)}`
-                : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))} кг за ${days} ${pluralDays(days)}`}
-          </Text>
+          {delta == null ? (
+            <View className="min-w-0 flex-1">
+              <CalFooter line={false}>
+                {`Нет измерений за ${days} ${pluralDays(days)}`}
+              </CalFooter>
+            </View>
+          ) : (
+            <>
+              {delta !== 0 && <Arrow size={12} color={tone} />}
+              <Text
+                numberOfLines={2}
+                maxFontSizeMultiplier={1.2}
+                className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
+                style={{ color: tone }}
+              >
+                {delta === 0
+                  ? `без изменений за ${days} ${pluralDays(days)}`
+                  : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))} кг за ${days} ${pluralDays(days)}`}
+              </Text>
+            </>
+          )}
         </View>
         <Spark data={spark} color="#a78bfa" />
       </View>

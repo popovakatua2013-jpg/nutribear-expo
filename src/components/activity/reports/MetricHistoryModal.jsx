@@ -110,9 +110,12 @@ export function MetricHistoryModal({
   const hasMetric = rows.some((r) => (r?.[metric.key] || 0) > 0)
   const avg = dailyAverage(rows, metric.key)
   const prevAvg = dailyAverage(prevRows, metric.key)
-  const pct = changePct(avg, prevAvg)
-  const tone = deltaTone(pct, metric.invert)
-  const Arrow = pct < 0 ? ArrowDownRight : ArrowUpRight
+  // Сравнение с прошлым периодом — только когда там есть данные:
+  // «0% к прошлой неделе» без прошлого вводит в заблуждение (отзыв
+  // Кати) — ждём, пока соберутся данные, и не показываем Δ вовсе
+  const pct = prevAvg > 0 ? changePct(avg, prevAvg) : null
+  const tone = pct == null ? '#8B96B8' : deltaTone(pct, metric.invert)
+  const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
 
   const maxVal = Math.max(bestDay(rows, metric.key), 1)
   const top = bestDays(rows, metric.key, 3)
@@ -175,12 +178,14 @@ export function MetricHistoryModal({
                       <Text className="mt-1 font-extrabold text-[26px] leading-tight tracking-tight text-bear-text">
                         {metric.fmt(avg)}
                       </Text>
-                      <View className="mt-1 flex-row items-center gap-1">
-                        {pct !== 0 && <Arrow size={15} color={tone} />}
-                        <Text className="font-medium text-[15px]" style={{ color: tone }}>
-                          {`${pct > 0 ? '+' : ''}${pct}% ${prevLabel(days)}`}
-                        </Text>
-                      </View>
+                      {pct != null && (
+                        <View className="mt-1 flex-row items-center gap-1">
+                          {pct !== 0 && <Arrow size={15} color={tone} />}
+                          <Text className="font-medium text-[15px]" style={{ color: tone }}>
+                            {`${pct > 0 ? '+' : ''}${pct}% ${prevLabel(days)}`}
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     {/* Столбики по дням: высота — от максимума периода,

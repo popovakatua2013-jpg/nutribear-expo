@@ -23,6 +23,10 @@ export const useUiPrefsStore = create(
       bmiAdviceHidden: false,
       // Обучающая подсказка на вкладке «Организм» закрыта крестиком
       orgHintDone: false,
+      // «Совет дня» на вкладке «Тело» закрыт крестиком: храним день
+      // («ГГГГ-ММ-ДД»), в котором его закрыли — назавтра придёт новый
+      // совет, и карточка снова появится
+      tipHiddenDay: null,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -38,6 +42,8 @@ export const useUiPrefsStore = create(
       setBmiAdviceHidden: (value) => set({ bmiAdviceHidden: !!value }),
 
       setOrgHintDone: (value) => set({ orgHintDone: !!value }),
+
+      dismissTipOfDay: (dayKey) => set({ tipHiddenDay: dayKey }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',

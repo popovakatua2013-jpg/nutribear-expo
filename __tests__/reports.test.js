@@ -14,6 +14,7 @@ const {
   dailyAverage,
   weekdayMatrix,
   prevLabel,
+  changePct,
   nutrientsByDay,
   nutrientTotals,
   dayHasRecords,
@@ -284,5 +285,21 @@ describe('prevLabel', () => {
     expect(prevLabel(7)).toBe('к прошлой неделе')
     expect(prevLabel(30)).toBe('к прошлому месяцу')
     expect(prevLabel(90)).toBe('к предыдущим 90 дням')
+  })
+})
+
+describe('changePct — сравнение только с данными', () => {
+  test('есть данные прошлого периода — честный процент', () => {
+    expect(changePct(1500, 1000)).toBe(50)
+    expect(changePct(500, 1000)).toBe(-50)
+    expect(changePct(1000, 1000)).toBe(0)
+  })
+
+  test('прошлый период пуст — 0 (карточка прячет строку «0% к прошлой неделе»)', () => {
+    // Контракт после отзыва Кати: пока прошлая неделя не соберёт
+    // данные, сравнения нет — changePct возвращает 0, а UI по
+    // prev === 0 скрывает строку сравнения целиком
+    expect(changePct(1234, 0)).toBe(0)
+    expect(changePct(0, 0)).toBe(0)
   })
 })

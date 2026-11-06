@@ -5,9 +5,13 @@
 // в строке, корзина — удаление), внизу «Последние 7 дней» — среднее,
 // Δ к прошлой неделе и мини-бары. Дубль-график «Динамика за 7 дней»
 // и плашка-поддержка («Хороший темп!») удалены по запросу пользователя.
+// Строка правки записи — карточкой в два ряда: поля сверху, явные
+// кнопки «Сохранить»/«Отмена» снизу (отзыв Кати: галочка уезжала
+// за край, кнопку «Сохранить» было не видно); при старте правки
+// журнал докручивается к строке, клавиатура её не перекрывает.
 
-import { useEffect, useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import {
   Check,
@@ -121,6 +125,8 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [editMl, setEditMl] = useState('')
   const [editTime, setEditTime] = useState('')
   const [logOpen, setLogOpen] = useState(true) // записи за сегодня сразу на виду
+  const scrollRef = useRef(null)
+  const editRowY = useRef(0) // Y строки правки в содержимом журнала
 
   // Окно закрыто — черновик правки записи сбрасывается: повторное
   // открытие показывает журнал, а не застаревшую строку в режиме правки
@@ -134,6 +140,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
       setLogOpen(true)
     }
   }, [open])
+
+  // Старт правки — докручиваем журнал так, чтобы строка правки и
+  // кнопка «Сохранить» были на виду (и не уезжали под клавиатуру)
+  useEffect(() => {
+    if (!editingId) return
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, editRowY.current - 80), animated: true })
+    }, 260)
+    return () => clearTimeout(t)
+  }, [editingId])
 
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
 
@@ -216,6 +232,13 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
 
   return (
     <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      {/* Клавиатура не перекрывает журнал и кнопки правки (iOS); на
+          Android окно ресайзится само */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        pointerEvents="box-none"
+      >
       {/* Тап по затемнению закрывает окно, тап по самой шторке — нет */}
       <Pressable
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
@@ -228,7 +251,12 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
             end={{ x: 0, y: 1 }}
             colors={['#16234A', '#131E3A', '#101A36']}
           >
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 14 }}>
+            <ScrollView
+              ref={scrollRef}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 14 }}
+            >
               {/* Шапка: чип-иконка + название, колокольчик напоминаний, крестик */}
               <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-2.5 pt-3.5">
                 <View className="flex-row items-center gap-2.5">
@@ -336,42 +364,62 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                         return (
                           <View
                             key={w.id}
-                            className="flex-row items-center gap-1.5 rounded-2xl border border-sky-400/40 bg-sky-400/10 px-2.5 py-2"
+                            onLayout={(e) => {
+                              editRowY.current = e.nativeEvent.layout.y
+                            }}
+                            className="rounded-2xl border border-sky-400/40 bg-sky-400/10 px-2.5 py-2"
                           >
-                            <TextInput
-                              value={editMl}
-                              onChangeText={setEditMl}
-                              keyboardType="number-pad"
-                              maxLength={4}
-                              accessibilityLabel="Объём в миллилитрах"
-                              className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
-                            />
-                            <Text className="shrink-0 font-sans text-[15px] text-bear-sub">мл в</Text>
-                            <TextInput
-                              value={editTime}
-                              onChangeText={setEditTime}
-                              keyboardType="numbers-and-punctuation"
-                              maxLength={5}
-                              accessibilityLabel="Время в формате часы:минуты"
-                              className="w-[56px] shrink-0 rounded-lg bg-white/5 px-1 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
-                            />
-                            <Pressable
-                              onPress={saveEdit}
-                              accessibilityRole="button"
-                              accessibilityLabel="Сохранить изменения"
-                              className="shrink-0 rounded-lg p-1.5 active:opacity-80"
-                              style={{ backgroundColor: '#22C55E' }}
-                            >
-                              <Check size={17} color="#fff" strokeWidth={2.5} />
-                            </Pressable>
-                            <Pressable
-                              onPress={cancelEdit}
-                              accessibilityRole="button"
-                              accessibilityLabel="Отменить изменение"
-                              className="shrink-0 rounded-lg bg-white/10 p-1.5 active:opacity-80"
-                            >
-                              <X hitSlop={10} size={17} color="#A5AECB" />
-                            </Pressable>
+                            {/* Поля: объём и время. Времени дали место —
+                                теперь поле объёма сужается, а не толкает
+                                кнопки за край экрана */}
+                            <View className="flex-row items-center gap-1.5">
+                              <TextInput
+                                value={editMl}
+                                onChangeText={setEditMl}
+                                keyboardType="number-pad"
+                                maxLength={4}
+                                autoFocus
+                                accessibilityLabel="Объём в миллилитрах"
+                                className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
+                              />
+                              <Text
+                                maxFontSizeMultiplier={1.1}
+                                className="shrink-0 font-sans text-[15px] text-bear-sub"
+                              >
+                                мл в
+                              </Text>
+                              <TextInput
+                                value={editTime}
+                                onChangeText={setEditTime}
+                                keyboardType="numbers-and-punctuation"
+                                maxLength={5}
+                                accessibilityLabel="Время в формате часы:минуты"
+                                className="w-[58px] shrink-0 rounded-lg bg-white/5 px-1 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
+                              />
+                            </View>
+                            {/* «Сохранить» — явная кнопка на всю ширину
+                                половины: видна всегда, не уезжает за край
+                                и не прячется под клавиатурой (отзыв Кати) */}
+                            <View className="mt-1.5 flex-row gap-1.5">
+                              <Pressable
+                                onPress={saveEdit}
+                                accessibilityRole="button"
+                                accessibilityLabel="Сохранить изменения"
+                                className="min-w-0 flex-1 flex-row items-center justify-center gap-1 rounded-lg py-2 active:opacity-80"
+                                style={{ backgroundColor: '#22C55E' }}
+                              >
+                                <Check size={16} color="#fff" strokeWidth={2.5} />
+                                <Text className="font-bold text-[15px] text-white">Сохранить</Text>
+                              </Pressable>
+                              <Pressable
+                                onPress={cancelEdit}
+                                accessibilityRole="button"
+                                accessibilityLabel="Отменить изменение"
+                                className="min-w-0 flex-1 items-center justify-center rounded-lg bg-white/10 py-2 active:opacity-80"
+                              >
+                                <Text className="font-bold text-[15px] text-bear-sub">Отмена</Text>
+                              </Pressable>
+                            </View>
                           </View>
                         )
                       }
@@ -483,6 +531,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
           </LinearGradient>
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   )
 }

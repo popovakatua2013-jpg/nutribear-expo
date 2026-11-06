@@ -4,9 +4,10 @@
 // СВЁРНУТА: тап по шапке разворачивает/сворачивает содержимое. Ниже ряд:
 // слева узкая карточка «Текущий вес» с ростом под весом (карандаш — окно
 // изменения роста: поле роста из окна записи веса убрано как дубль),
-// целью и кнопкой «Задать цель», под ней — заметная кнопка записи веса
-// «+ Записать вес» (перенесена из шапки по отзыву Кати — плюс крупнее
-// и заметнее), справа — карточка с пилюлей
+// целью и ОДНОЙ заметной кнопкой «+ Записать вес» (отзыв Кати: кнопки
+// «Изменить» и «+» открывали одно и то же окно — дубль убран, остался
+// один крупный «+»; цель правится тапом по строке «Цель» с карандашом —
+// то же окно записи веса с полем цели), под ней — справа — карточка с пилюлей
 // «Изменение: N кг», графиком (линия красная/зелёная по цели — отзыв
 // Кати) с днями и внутренней строкой-
 // поддержкой («Ваш вес стабилен…» с лайком — весStrip из lib/data/bmi;
@@ -40,7 +41,6 @@ import {
   NotebookText,
   Pencil,
   Plus,
-  Target,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -431,42 +431,42 @@ export function WeightCard() {
           <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
             Цель
           </Text>
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-bold text-[17.5px] text-bear-text"
-          >
-            {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
-          </Text>
-
+          {/* Цель редактируется тапом по строке (отзыв Кати: кнопка
+              «Изменить» дублировала «+ Записать вес» — отдельной кнопки
+              больше нет; карандаш открывает то же окно записи веса
+              с полем цели) */}
           <Pressable
             onPress={() => setOpen(true)}
             accessibilityRole="button"
-            accessibilityLabel={goalWeightKg != null ? 'Изменить цель по весу' : 'Задать цель по весу'}
-            className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] py-2 active:opacity-70"
+            accessibilityLabel={goalWeightKg != null ? `Цель ${fmtDecimal(goalWeightKg)} килограммов — изменить` : 'Задать цель по весу'}
+            className="mt-0.5 flex-row items-center gap-1 self-start active:opacity-70"
           >
-            <Target size={14} color="#8DABFF" />
-            <Text className="font-bold text-[15px] text-[#8DABFF]">
-              {goalWeightKg != null ? 'Изменить' : 'Задать цель'}
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.2}
+              className="font-bold text-[17.5px] text-bear-text"
+            >
+              {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
             </Text>
+            <Pencil size={15} color="#8DABFF" />
           </Pressable>
 
-          {/* Записать вес: заметный «+» под «Изменить» — перенесён из шапки
-              секции по отзыву Кати (плюс стал крупнее и заметнее); тап
-              открывает то же окно записи веса, что и тап по значению веса */}
+          {/* Записать вес — единственная кнопка записи: крупный «+»
+              (отзыв Кати: «Изменить» и «+» дублировали действие —
+              оставили только «+», теперь он крупнее и заметнее) */}
           <Pressable
             onPress={() => setOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Записать вес"
-            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#A78BFA]/40 bg-[#A78BFA]/15 py-2 active:opacity-70"
+            className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#A78BFA]/50 bg-[#A78BFA]/25 py-3 active:opacity-70"
           >
-            <Plus size={21} color="#C4B5FD" strokeWidth={2.75} />
+            <Plus size={24} color="#C4B5FD" strokeWidth={2.75} />
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
               maxFontSizeMultiplier={1.2}
-              className="min-w-0 flex-1 text-center font-bold text-[14.5px] text-[#C4B5FD]"
+              className="min-w-0 flex-1 text-center font-bold text-[16px] text-[#C4B5FD]"
             >
               Записать вес
             </Text>

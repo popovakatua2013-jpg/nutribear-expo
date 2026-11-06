@@ -365,11 +365,11 @@ export function MeasurementsCard() {
           </Text>
           <Stars value={stars} />
           <Text
-            numberOfLines={2}
+            numberOfLines={3}
             maxFontSizeMultiplier={1.25}
             className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim"
           >
-            Вес к цели, динамика талии и регулярность замеров
+            Вес к цели — до 60 баллов, талия и живот — до 25, регулярность замеров и взвешиваний — до 15
           </Text>
         </View>
       </View>
