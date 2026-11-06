@@ -3,8 +3,9 @@
 // со строками (эмодзи, название, калории, кнопка «Добавить», шеврон —
 // карточки сворачиваются), пунктирная кнопка «Сохранить приём»,
 // внизу — 6 цветных плиток (сканер, фото, голос, галерея, этикетка,
-// рецепты). Плюс «Прошлый раз», «Только калории» и «База продуктов» —
-// отдельное окно со своими продуктами.
+// рецепты). «Только калории» перенесено на главную (под секциями
+// дневника — запрос Кати), тут остались «Прошлый раз» и тонкая строка
+// «База продуктов» — отдельное окно со своими продуктами.
 
 import { useMemo, useState } from 'react'
 import {
@@ -35,7 +36,6 @@ import {
   Search,
   UtensilsCrossed,
   X,
-  Zap,
 } from 'lucide-react-native'
 import { FoodList } from './FoodList'
 import { BaseMode } from './BaseMode'
@@ -74,9 +74,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   const [query, setQuery] = useState('')
   const [baseOpen, setBaseOpen] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(false)
-  const [qName, setQName] = useState('')
-  const [qKcal, setQKcal] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
   const [comboName, setComboName] = useState('')
   // Сворачивание карточек «Мои комбо» и «Недавние и частые»
@@ -224,32 +221,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
     toast({ title: '💾 Комбо сохранено', description: `${name} · ${mealEntries.length} блюд(а)` })
     setComboName('')
     setComboOpen(false)
-  }
-
-  function submitQuick() {
-    const kcal = Math.round(Number(String(qKcal).replace(',', '.')) || 0)
-    if (kcal < 10 || kcal > 3000) {
-      toast({ title: '⚡ Укажите калории', description: 'От 10 до 3000 ккал, например 250' })
-      return
-    }
-    const name = qName.trim().slice(0, 40) || 'Быстрая запись'
-    addEntry(
-      mealId,
-      {
-        food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
-        grams: 0,
-        kcal,
-        desc: '',
-      },
-      dayOff
-    )
-    toast({
-      title: `⚡ ${kcal} ккал — в «${mealName}»`,
-      description: `${name}${dayOff ? ' · записано за вчера' : ''}`,
-    })
-    setQuickOpen(false)
-    setQName('')
-    setQKcal('')
   }
 
   return (
@@ -474,47 +445,34 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             ))}
           </View>
 
-          {/* повтор прошлого приёма + быстрая запись калорий */}
-          <View className="mt-2 flex-row gap-2">
-            {lastMeal && (
-              <Pressable
-                onPress={repeatLast}
-                accessibilityRole="button"
-                accessibilityLabel={`Повторить прошлый приём: ${lastMeal.list.length} блюд(а)`}
-                className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
-              >
-                <RefreshCcw size={17} color="#AEB9D9" />
-                <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
-                  Прошлый раз
-                </Text>
-              </Pressable>
-            )}
+          {/* повтор прошлого приёма: тап — весь приём с той же граммовкой */}
+          {lastMeal && (
             <Pressable
-              onPress={() => setQuickOpen(true)}
+              onPress={repeatLast}
               accessibilityRole="button"
-              accessibilityLabel="Быстрая запись: только калории"
-              className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
+              accessibilityLabel={`Повторить прошлый приём: ${lastMeal.list.length} блюд(а)`}
+              className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
             >
-              <Zap size={17} color="#FBBF24" />
+              <RefreshCcw size={17} color="#AEB9D9" />
               <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
-                Только калории
+                Прошлый раз
               </Text>
             </Pressable>
-          </View>
+          )}
 
-          {/* ручной поиск: база продуктов отдельным окном — компактная
-              строка без плитки-иконки (по запросу: была слишком крупной) */}
+          {/* база продуктов — тонкая строка-ссылка без плашки (отзыв:
+              прежняя строка с рамкой и фоном была громоздкой) */}
           <Pressable
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Открыть базу продуктов"
-            className="mt-2 flex-row items-center gap-2 rounded-xl border border-white/5 bg-white/[0.04] px-3 py-1.5 active:bg-white/10"
+            className="mt-1 flex-row items-center justify-center gap-1.5 py-2 active:opacity-60"
           >
-            <LayoutGrid size={16} color="#A78BFA" />
-            <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-soft">
+            <LayoutGrid size={14} color="#8B96B8" />
+            <Text numberOfLines={1} className="font-sans text-[14px] text-bear-dim">
               База продуктов · ручной поиск
             </Text>
-            <ChevronRight size={15} color="#8B96B8" />
+            <ChevronRight size={13} color="#8B96B8" />
           </Pressable>
         </ScrollView>
       )}
@@ -554,87 +512,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             <View className="min-h-0 flex-1 px-5 pb-4 pt-3">
               <BaseMode mealId={mealId} onPick={pick} />
             </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* быстрая запись: только калории */}
-      <Modal
-        visible={quickOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setQuickOpen(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1 items-center justify-center bg-black/60 px-8"
-        >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2">
-                <View
-                  className="h-9 w-9 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: '#F59E0B' }}
-                >
-                  <Zap size={16} color="#FFFFFF" />
-                </View>
-                <Text className="font-bold text-[20px] text-bear-text">Быстрая запись</Text>
-              </View>
-              <Pressable
-                onPress={() => setQuickOpen(false)}
-                accessibilityLabel="Закрыть быструю запись"
-                className="p-1"
-              >
-                <X hitSlop={10} size={20} color="#A5AECB" />
-              </Pressable>
-            </View>
-            <Text className="mt-1 font-sans text-[15px] text-bear-sub">
-              Когда некогда искать блюдо — запишите только калории
-            </Text>
-
-            <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
-              Калории
-            </Text>
-            <View className="mt-1.5 flex-row items-center gap-2">
-              <TextInput
-                value={qKcal}
-                onChangeText={setQKcal}
-                keyboardType="number-pad"
-                maxLength={4}
-                placeholder="250"
-                placeholderTextColor="#8B96B8"
-                accessibilityLabel="Калории за порцию"
-                autoFocus
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
-              />
-              <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
-            </View>
-
-            <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
-              Название (необязательно)
-            </Text>
-            <TextInput
-              value={qName}
-              onChangeText={setQName}
-              maxLength={40}
-              placeholder="Перекус в офисе"
-              placeholderTextColor="#8B96B8"
-              accessibilityLabel="Название быстрой записи"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
-            />
-
-            <Pressable
-              onPress={submitQuick}
-              accessibilityRole="button"
-              accessibilityLabel="Добавить быструю запись"
-              className="mt-4 rounded-2xl py-3 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
-            >
-              <Text className="text-center font-bold text-[19px] text-white">
-                Добавить в «{mealName}»
-              </Text>
-            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </Modal>

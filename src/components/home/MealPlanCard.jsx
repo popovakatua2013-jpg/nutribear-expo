@@ -7,7 +7,10 @@
 // свёрнуты — видно только шапку (отзыв Кати: раскрытые списки делали
 // дневник громоздким), тап по заголовку разворачивает список блюд с
 // правкой (карандаш) и удалением (корзина), «+» и кнопка «Добавить
-// блюдо» добавляют еду. Рекомендованные ккал по приёмам считаются
+// блюдо» добавляют еду. Под секциями — кнопка «Только калории»
+// (перенесена из окна «Добавить приём пищи» по запросу Кати): тап
+// открывает окно быстрой записи — пилюли приёмов, калории, название.
+// Рекомендованные ккал по приёмам считаются
 // от дневной нормы (targetsFromKcal: пропорции 25/35/30/10) и видны
 // парой «X / Y» в каждой секции; строку-легенду «Норма N ккал:
 // завтрак … · обед …» убрали по запросу. Управление (повтор дня,
@@ -16,17 +19,28 @@
 // + обводка bear-bodyLine).
 
 import { useState } from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
-import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-react-native'
+import {
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
+import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Zap, X } from 'lucide-react-native'
 import { PlanHeader } from './PlanHeader'
 import { HistoryModal } from './HistoryModal'
 import { EditEntryModal } from '../food/EditEntryModal'
+import { MealTabs } from '../food/MealTabs'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { MEALS } from '@/lib/data/meals'
+import { MEALS, getMeal } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
 import { animateExpandCollapse } from '@/lib/anim'
 import { targetsFromKcal } from '@/lib/data/goals'
+import { useToast } from '../ui/Toast'
 
 const MAX = 1.2
 // диаметр круглого фото приёма; радиус = половина
@@ -255,9 +269,17 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit }) {
 export function MealPlanCard({ onAdd, onViewAll }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
+  const addEntry = useFoodStore((s) => s.addEntry)
   const kcalGoal = useGoalsStore((s) => s.goals.kcal)
+  const { toast } = useToast()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [edit, setEdit] = useState(null) // {mealId, entry, mealName}
+  // Быстрая запись «Только калории» (кнопка под секциями): выбор приёма,
+  // калории (10…3000) и необязательное название
+  const [quickOpen, setQuickOpen] = useState(false)
+  const [qMealId, setQMealId] = useState('snack')
+  const [qKcal, setQKcal] = useState('')
+  const [qName, setQName] = useState('')
   // Ручное сворачивание: по умолчанию все секции свёрнуты — видно только
   // шапку (отзыв Кати); тап запоминает выбор пользователя
   const [expanded, setExpanded] = useState({})
@@ -272,6 +294,28 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   function toggle(meal) {
     animateExpandCollapse()
     setExpanded((s) => ({ ...s, [meal.id]: !isOpen(meal) }))
+  }
+
+  // Быстрая запись: только калории в выбранный пилюлей приём.
+  // Пишем за сегодня — окно открывается с главной, дневник «сегодня»
+  function submitQuick() {
+    const kcal = Math.round(Number(String(qKcal).replace(',', '.')) || 0)
+    if (kcal < 10 || kcal > 3000) {
+      toast({ title: '⚡ Укажите калории', description: 'От 10 до 3000 ккал, например 250' })
+      return
+    }
+    const name = qName.trim().slice(0, 40) || 'Быстрая запись'
+    const mealName = getMeal(qMealId).name
+    addEntry(qMealId, {
+      food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
+      grams: 0,
+      kcal,
+      desc: '',
+    })
+    toast({ title: `⚡ ${kcal} ккал — в «${mealName}»`, description: name })
+    setQuickOpen(false)
+    setQKcal('')
+    setQName('')
   }
 
   return (
@@ -301,6 +345,111 @@ export function MealPlanCard({ onAdd, onViewAll }) {
           />
         ))}
       </View>
+
+      {/* быстрая запись «Только калории» — перенесена сюда из окна
+          «Добавить приём пищи» (запрос Кати): перекус в один тап,
+          когда некогда искать блюдо */}
+      <Pressable
+        onPress={() => setQuickOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Быстрая запись: только калории"
+        className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] py-2.5 active:bg-white/10"
+      >
+        <Zap size={15} color="#FBBF24" />
+        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[14.5px] text-bear-text">
+          Только калории
+        </Text>
+      </Pressable>
+
+      {/* окно быстрой записи: пилюли приёмов + калории + название */}
+      <Modal
+        visible={quickOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setQuickOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 items-center justify-center bg-black/60 px-8"
+        >
+          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-lg"
+                  style={{ backgroundColor: '#F59E0B' }}
+                >
+                  <Zap size={16} color="#FFFFFF" />
+                </View>
+                <Text className="font-bold text-[20px] text-bear-text">Быстрая запись</Text>
+              </View>
+              <Pressable
+                onPress={() => setQuickOpen(false)}
+                accessibilityLabel="Закрыть быструю запись"
+                className="p-1"
+              >
+                <X hitSlop={10} size={20} color="#A5AECB" />
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[15px] text-bear-sub">
+              Когда некогда искать блюдо — запишите только калории
+            </Text>
+
+            <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+              Приём пищи
+            </Text>
+            <MealTabs meals={MEALS} mealId={qMealId} onChange={setQMealId} />
+
+            <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+              Калории
+            </Text>
+            <View className="mt-1.5 flex-row items-center gap-2">
+              <TextInput
+                value={qKcal}
+                onChangeText={setQKcal}
+                keyboardType="number-pad"
+                maxLength={4}
+                placeholder="250"
+                placeholderTextColor="#8B96B8"
+                accessibilityLabel="Калории за порцию"
+                autoFocus
+                maxFontSizeMultiplier={1.3}
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+              />
+              <Text maxFontSizeMultiplier={1.3} className="shrink-0 font-sans text-[19px] text-bear-sub">
+                ккал
+              </Text>
+            </View>
+
+            <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+              Название (необязательно)
+            </Text>
+            <TextInput
+              value={qName}
+              onChangeText={setQName}
+              maxLength={40}
+              placeholder="Перекус в офисе"
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Название быстрой записи"
+              maxFontSizeMultiplier={1.3}
+              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+            />
+
+            <Pressable
+              onPress={submitQuick}
+              accessibilityRole="button"
+              accessibilityLabel="Добавить быструю запись"
+              className="mt-4 rounded-2xl py-3 active:opacity-80"
+              style={{ backgroundColor: '#7B6CF6' }}
+            >
+              <Text maxFontSizeMultiplier={1.25} className="text-center font-bold text-[19px] text-white">
+                {`Добавить в «${getMeal(qMealId).name}»`}
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <HistoryModal visible={historyOpen} onClose={() => setHistoryOpen(false)} />
 
