@@ -2,6 +2,8 @@
 // копии и описание прав. Персональные данные о здоровье — особая
 // категория: пользователь имеет право на переносимость данных
 // (экспорт + импорт) и полное удаление (кнопка в «Данных»).
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — содержимое встраивается в строку меню «Приватность и данные».
 
 import { Alert, Pressable, Text, View } from 'react-native'
 import { FileDown, FileUp, ShieldCheck } from 'lucide-react-native'
@@ -12,7 +14,7 @@ import { applyBackup } from '@/lib/backup'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 
-export function DataPortability() {
+export function DataPortability({ embedded = false }) {
   const { toast } = useToast()
 
   async function exportAll() {
@@ -83,14 +85,8 @@ export function DataPortability() {
     }
   }
 
-  return (
-    <CollapsibleCard
-      storageKey="data-portability"
-      accessibilityLabel="Приватность"
-      icon={<ShieldCheck size={20} color="#4ade80" />}
-      title="Приватность и данные"
-      summary="экспорт · восстановление"
-    >
+  const content = (
+    <>
       <Text className="font-sans text-[15px] leading-relaxed text-bear-sub2">
         Ваши данные о здоровье — особая категория. Они хранятся только на
         устройстве и не передаются в сеть. Вы можете в любой момент
@@ -132,6 +128,23 @@ export function DataPortability() {
           </Text>
         </View>
       </Pressable>
+    </>
+  )
+
+  // Встроено в строку меню — только содержимое
+  if (embedded) {
+    return <View accessibilityLabel="Приватность">{content}</View>
+  }
+
+  return (
+    <CollapsibleCard
+      storageKey="data-portability"
+      accessibilityLabel="Приватность"
+      icon={<ShieldCheck size={20} color="#4ade80" />}
+      title="Приватность и данные"
+      summary="экспорт · восстановление"
+    >
+      {content}
     </CollapsibleCard>
   )
 }

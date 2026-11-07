@@ -3,6 +3,9 @@
 // со стрелками. Цифры честные, из сторов: вес — журнал веса, талия —
 // замеры, активность — изменение сожжённых к предыдущему периоду.
 // Чип «За месяц ›» переключает период месяц ↔ неделя.
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — чип периода, кривая и три изменения встраиваются в строку
+// меню «Статистика».
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -66,7 +69,7 @@ function DeltaBox({ text, caption, dir, good }) {
   )
 }
 
-export function StatsCard() {
+export function StatsCard({ embedded = false }) {
   const days = useHistoryStore((s) => s.days)
   const weights = useProfileStore((s) => s.weights)
   const measurements = useProfileStore((s) => s.measurements)
@@ -107,6 +110,80 @@ export function StatsCard() {
   const weightText = fmtDelta(weightDelta, 'кг')
   const waistText = fmtDelta(waistDelta, 'см')
 
+  const periodChip = (
+    <Pressable
+      onPress={() => setPeriod((p) => (p === 30 ? 7 : 30))}
+      accessibilityRole="button"
+      accessibilityLabel={`Период статистики: ${period === 30 ? 'за месяц' : 'за неделю'} — поменять`}
+      hitSlop={6}
+      className="flex-row shrink-0 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 active:opacity-70"
+    >
+      <Text maxFontSizeMultiplier={1.1} className="font-semibold text-[13.5px] text-bear-soft">
+        {period === 30 ? 'За месяц' : 'За неделю'}
+      </Text>
+      <ChevronRight size={14} color="#A5AECB" />
+    </Pressable>
+  )
+
+  // Кривая активности — светящаяся линия с точками, как на шаблоне
+  const chartBlock = hasData ? (
+    <View className="px-2">
+      <SvgAreaChart
+        data={series}
+        color="#E879F9"
+        height={118}
+        yFmt={(v) => formatNumShort(v)}
+        bare
+        lastBadge
+      />
+    </View>
+  ) : (
+    <View className={`mt-1 items-center rounded-2xl border border-dashed border-white/10 px-3 py-4 ${embedded ? 'mx-0' : 'mx-4'}`}>
+      <Text
+        maxFontSizeMultiplier={1.2}
+        className="text-center font-sans text-[13px] leading-snug text-bear-dim"
+      >
+        Пока тихо: запишите тренировки или шаги — появится кривая активности
+      </Text>
+    </View>
+  )
+
+  // Три изменения в ряд — как на шаблоне (вес ↓, талия ↓, активность ↑).
+  // Нет данных за период — прочерк без стрелки
+  const deltasRow = (
+    <View className={`flex-row gap-2 pt-3 ${embedded ? '' : 'px-4 pb-4'}`}>
+      <DeltaBox
+        text={weightText || '—'}
+        caption="вес"
+        dir={weightDelta == null ? 'down' : weightDelta <= 0 ? 'down' : 'up'}
+        good={weightDelta == null ? false : weightDelta <= 0}
+      />
+      <DeltaBox
+        text={waistText || '—'}
+        caption="талия"
+        dir={waistDelta == null ? 'down' : waistDelta <= 0 ? 'down' : 'up'}
+        good={waistDelta == null ? false : waistDelta <= 0}
+      />
+      <DeltaBox
+        text={`${actPct > 0 ? '+' : actPct < 0 ? '−' : ''}${Math.abs(actPct)}%`}
+        caption="активность"
+        dir={actPct >= 0 ? 'up' : 'down'}
+        good={actPct >= 0}
+      />
+    </View>
+  )
+
+  // Встроено в строку меню: чип периода справа, кривая и изменения
+  if (embedded) {
+    return (
+      <View accessibilityLabel="Статистика">
+        <View className="mb-1 flex-row justify-end">{periodChip}</View>
+        {chartBlock}
+        {deltasRow}
+      </View>
+    )
+  }
+
   return (
     <View
       accessibilityLabel="Статистика"
@@ -118,65 +195,11 @@ export function StatsCard() {
         <Text className="min-w-0 flex-1 font-extrabold text-[20px] tracking-tight text-bear-text">
           Статистика
         </Text>
-        <Pressable
-          onPress={() => setPeriod((p) => (p === 30 ? 7 : 30))}
-          accessibilityRole="button"
-          accessibilityLabel={`Период статистики: ${period === 30 ? 'за месяц' : 'за неделю'} — поменять`}
-          hitSlop={6}
-          className="flex-row shrink-0 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 active:opacity-70"
-        >
-          <Text maxFontSizeMultiplier={1.1} className="font-semibold text-[13.5px] text-bear-soft">
-            {period === 30 ? 'За месяц' : 'За неделю'}
-          </Text>
-          <ChevronRight size={14} color="#A5AECB" />
-        </Pressable>
+        {periodChip}
       </View>
 
-      {/* Кривая активности — светящаяся линия с точками, как на шаблоне */}
-      {hasData ? (
-        <View className="px-2">
-          <SvgAreaChart
-            data={series}
-            color="#E879F9"
-            height={118}
-            yFmt={(v) => formatNumShort(v)}
-            bare
-            lastBadge
-          />
-        </View>
-      ) : (
-        <View className="mx-4 mt-1 items-center rounded-2xl border border-dashed border-white/10 px-3 py-4">
-          <Text
-            maxFontSizeMultiplier={1.2}
-            className="text-center font-sans text-[13px] leading-snug text-bear-dim"
-          >
-            Пока тихо: запишите тренировки или шаги — появится кривая активности
-          </Text>
-        </View>
-      )}
-
-      {/* Три изменения в ряд — как на шаблоне (вес ↓, талия ↓, активность ↑).
-          Нет данных за период — прочерк без стрелки */}
-      <View className="flex-row gap-2 px-4 pb-4 pt-3">
-        <DeltaBox
-          text={weightText || '—'}
-          caption="вес"
-          dir={weightDelta == null ? 'down' : weightDelta <= 0 ? 'down' : 'up'}
-          good={weightDelta == null ? false : weightDelta <= 0}
-        />
-        <DeltaBox
-          text={waistText || '—'}
-          caption="талия"
-          dir={waistDelta == null ? 'down' : waistDelta <= 0 ? 'down' : 'up'}
-          good={waistDelta == null ? false : waistDelta <= 0}
-        />
-        <DeltaBox
-          text={`${actPct > 0 ? '+' : actPct < 0 ? '−' : ''}${Math.abs(actPct)}%`}
-          caption="активность"
-          dir={actPct >= 0 ? 'up' : 'down'}
-          good={actPct >= 0}
-        />
-      </View>
+      {chartBlock}
+      {deltasRow}
     </View>
   )
 }

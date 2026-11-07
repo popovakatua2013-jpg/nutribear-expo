@@ -6,10 +6,13 @@
 // еда, взвешивание, вечерняя подсказка, тренировка, сон, вибрация —
 // и тумблер возврата калорий (переехал сюда из плиток по шаблону).
 // Свёрнутое состояние НЕ запоминается: секция всегда открывается свёрнутой.
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — плитки, возврат калорий и полный набор настроек встраиваются
+// в строку меню «Напоминания» (полный набор — за кнопкой «Все настройки»).
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Bell, ChevronRight, Droplets, Dumbbell, Scale } from 'lucide-react-native'
+import { Bell, ChevronDown, ChevronRight, Droplets, Dumbbell, Scale } from 'lucide-react-native'
 import { BodyChip } from '../ui/BodyChip'
 import { MealRemindersCard } from './MealRemindersCard'
 import { WeighReminderCard } from './WeighReminderCard'
@@ -64,7 +67,7 @@ function QuickTile({ icon, title, sub, value, onChange, a11y }) {
   )
 }
 
-export function NotificationsSection() {
+export function NotificationsSection({ embedded = false }) {
   // Всегда свёрнуто по умолчанию (отзыв Кати) — без запоминания
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -92,6 +95,98 @@ export function NotificationsSection() {
     setReminder(patch(current, on))
   }
 
+  // Быстрые тумблеры — три плитки: Тренировка (пинок о ней), Пей воду,
+  // Взвешивание. Работают без раскрытия; подписи — коротким статусом
+  const tiles = (
+    <View className={`flex-row gap-2 ${embedded ? '' : 'px-3 pb-3'}`}>
+      <QuickTile
+        a11y="Напоминание о тренировке"
+        icon={<Dumbbell size={18} color="#A78BFA" />}
+        title="Тренировка"
+        sub={exercise.enabled ? `пинок в ${exercise.time}` : 'выключено'}
+        value={Boolean(exercise.enabled)}
+        onChange={(v) => toggleWithPermission(exercise, (x, on) => ({ exercise: { ...x, enabled: on } }), v)}
+      />
+      <QuickTile
+        a11y="Напоминание о воде"
+        icon={<Droplets size={18} color="#38BDF8" />}
+        title="Пей воду"
+        sub={water.enabled ? `каждые ${water.everyMin} мин` : 'выключено'}
+        value={Boolean(water.enabled)}
+        onChange={(v) => toggleWithPermission(water, (x, on) => ({ enabled: on }), v)}
+      />
+      <QuickTile
+        a11y="Напоминание о взвешивании"
+        icon={<Scale size={18} color="#7DD3FC" />}
+        title="Взвешивание"
+        sub={weigh.enabled ? 'по графику' : 'выключено'}
+        value={Boolean(weigh.enabled)}
+        onChange={(v) => toggleWithPermission(weigh, (x, on) => ({ weigh: { ...x, enabled: on } }), v)}
+      />
+    </View>
+  )
+
+  // Строка «Возвращать калории»: сожжённое возвращается в остаток дня
+  // или остаётся строгим (во встроенном режиме видна сразу под плитками)
+  const burnRow = (
+    <View className="flex-row items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
+      <View className="min-w-0 flex-1 pr-2">
+        <Text className="font-semibold text-[15.5px] text-bear-text">Возвращать калории</Text>
+        <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-[16px] text-bear-sub">
+          Сожжённое за тренировки прибавляется к остатку дня
+        </Text>
+      </View>
+      <MiniToggle
+        value={countBurned}
+        onChange={(v) => setGoals({ countBurned: v })}
+        label="Возвращать калории"
+      />
+    </View>
+  )
+
+  // Полный набор настроек (переехал из плиток внутрь «Все»)
+  const allSettings = (
+    <>
+      <Text className="px-1 font-sans text-[12.5px] text-bear-dim">
+        Все настройки напоминаний и отклика приложения
+      </Text>
+      <MealRemindersCard />
+      <WeighReminderCard />
+      <WeighNudgeCard />
+      <ExerciseReminderCard />
+      <SleepReminderCard />
+      <HapticsCard />
+    </>
+  )
+
+  // Встроено в строку меню: плитки + возврат калорий видны сразу,
+  // полный набор — за кнопкой «Все настройки»
+  if (embedded) {
+    return (
+      <View accessibilityLabel="Уведомления" className="gap-2.5">
+        {tiles}
+        {burnRow}
+        <Pressable
+          onPress={() => setOpen((s) => !s)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          accessibilityLabel={open ? 'Свернуть все настройки' : 'Раскрыть все настройки напоминаний'}
+          className="flex-row items-center justify-center gap-1 rounded-2xl bg-white/[0.04] py-2.5 active:opacity-70"
+        >
+          <Text className="font-semibold text-[14px] text-bear-bright">
+            {open ? 'Свернуть настройки' : 'Все настройки напоминаний'}
+          </Text>
+          <ChevronDown
+            size={15}
+            color="#C4B5FD"
+            style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+          />
+        </Pressable>
+        {open && <View className="gap-2">{allSettings}</View>}
+      </View>
+    )
+  }
+
   return (
     <View
       accessibilityLabel="Уведомления"
@@ -117,62 +212,14 @@ export function NotificationsSection() {
         </View>
       </Pressable>
 
-      {/* Быстрые тумблеры — видны всегда, работают без раскрытия секции.
-          Три плитки как на шаблоне: Тренировка (пинок о ней), Пей воду,
-          Взвешивание. Подписи — коротким статусом */}
-      <View className="flex-row gap-2 px-3 pb-3">
-        <QuickTile
-          a11y="Напоминание о тренировке"
-          icon={<Dumbbell size={18} color="#A78BFA" />}
-          title="Тренировка"
-          sub={exercise.enabled ? `пинок в ${exercise.time}` : 'выключено'}
-          value={Boolean(exercise.enabled)}
-          onChange={(v) => toggleWithPermission(exercise, (x, on) => ({ exercise: { ...x, enabled: on } }), v)}
-        />
-        <QuickTile
-          a11y="Напоминание о воде"
-          icon={<Droplets size={18} color="#38BDF8" />}
-          title="Пей воду"
-          sub={water.enabled ? `каждые ${water.everyMin} мин` : 'выключено'}
-          value={Boolean(water.enabled)}
-          onChange={(v) => toggleWithPermission(water, (x, on) => ({ enabled: on }))}
-        />
-        <QuickTile
-          a11y="Напоминание о взвешивании"
-          icon={<Scale size={18} color="#7DD3FC" />}
-          title="Взвешивание"
-          sub={weigh.enabled ? 'по графику' : 'выключено'}
-          value={Boolean(weigh.enabled)}
-          onChange={(v) => toggleWithPermission(weigh, (x, on) => ({ weigh: { ...x, enabled: on } }), v)}
-        />
-      </View>
+      {tiles}
 
       {open && (
         <View className="gap-2 px-3 pb-3">
-          <Text className="px-1 font-sans text-[12.5px] text-bear-dim">
-            Все настройки напоминаний и отклика приложения
-          </Text>
           {/* Возврат калорий тренировок — переехал из плиток внутрь «Все»:
               сожжённое возвращается в остаток дня или остаётся строгим */}
-          <View className="flex-row items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
-            <View className="min-w-0 flex-1 pr-2">
-              <Text className="font-semibold text-[15.5px] text-bear-text">Возвращать калории</Text>
-              <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-[16px] text-bear-sub">
-                Сожжённое за тренировки прибавляется к остатку дня
-              </Text>
-            </View>
-            <MiniToggle
-              value={countBurned}
-              onChange={(v) => setGoals({ countBurned: v })}
-              label="Возвращать калории"
-            />
-          </View>
-          <MealRemindersCard />
-          <WeighReminderCard />
-          <WeighNudgeCard />
-          <ExerciseReminderCard />
-          <SleepReminderCard />
-          <HapticsCard />
+          {burnRow}
+          {allSettings}
         </View>
       )}
     </View>

@@ -1,5 +1,8 @@
 // О приложении: версия, сборка (бейдж), описание, медицинский дисклеймер
 // и кнопка «Правовая информация» (политика + соглашение)
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — содержимое встраивается в строку меню «О приложении»
+// (хэш сборки виден прямо в строке — там же, где проверяют обновление).
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -16,17 +19,11 @@ const VERSION = Constants?.expoConfig?.version || '1.0'
 // при каждом обновлении. 'dev' — копия обновлялась вручную, без скрипта.
 const BUILD = BUILD_HASH || 'dev'
 
-export function AboutCard() {
+export function AboutCard({ embedded = false }) {
   const [legalOpen, setLegalOpen] = useState(false)
 
-  return (
-    <CollapsibleCard
-      storageKey="about"
-      accessibilityLabel="О приложении"
-      icon={<Text className="text-[26px]">🐻</Text>}
-      title="NutriBear"
-      summary={`сборка ${BUILD}`}
-    >
+  const content = (
+    <>
       <Text className="mx-auto mt-1 max-w-[300px] text-center font-sans text-[16.5px] leading-relaxed text-bear-sub2">
         Дневник питания и активности с мишкой-наставником. Веди дневник,
         пей воду, ходи пешком и получай награды — все данные хранятся
@@ -48,7 +45,7 @@ export function AboutCard() {
         onPress={() => setLegalOpen(true)}
         accessibilityLabel="Открыть правовую информацию"
         accessibilityRole="button"
-        className="mt-3 w-full max-w-[300px] flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 active:opacity-80"
+        className="mt-3 w-full max-w-[300px] flex-row items-center justify-between self-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 active:opacity-80"
       >
         <View className="flex-row items-center">
           <FileText size={18} color="#8DABFF" />
@@ -60,6 +57,23 @@ export function AboutCard() {
       </Pressable>
 
       <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
+    </>
+  )
+
+  // Встроено в строку меню — только содержимое (хэш сборки — в строке меню)
+  if (embedded) {
+    return <View accessibilityLabel="О приложении">{content}</View>
+  }
+
+  return (
+    <CollapsibleCard
+      storageKey="about"
+      accessibilityLabel="О приложении"
+      icon={<Text className="text-[26px]">🐻</Text>}
+      title="NutriBear"
+      summary={`сборка ${BUILD}`}
+    >
+      {content}
     </CollapsibleCard>
   )
 }

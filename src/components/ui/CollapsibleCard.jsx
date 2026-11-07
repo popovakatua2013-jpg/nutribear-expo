@@ -6,6 +6,8 @@
 // в раскрытом виде. Поверхность и шапка — в стиле вкладки «Тело»
 // (фиолетовая bear-bodyCard, иконка — в градиентном чипе BodyChip):
 // карточки вкладки «Ещё» выглядят как карточки «Тела» (единый стиль).
+// Режим embedded (редизайн «Ещё» в групповое меню): без оболочки и
+// шапки — только содержимое; строка меню и раскрытие живут в MenuRow.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -21,6 +23,7 @@ export function CollapsibleCard({
   children,
   storageKey,
   accessibilityLabel,
+  embedded = false,
 }) {
   const stored = useUiPrefsStore((s) => (storageKey ? s.expanded[storageKey] : undefined))
   const setExpanded = useUiPrefsStore((s) => s.setExpanded)
@@ -32,6 +35,12 @@ export function CollapsibleCard({
     const next = !open
     if (storageKey) setExpanded(storageKey, next)
     else setLocalOpen(next)
+  }
+
+  // Встроено в строку меню: виден только слой содержимого (раскрытие
+  // и рамка секции — на стороне MenuGroup/MenuRow)
+  if (embedded) {
+    return <View accessibilityLabel={accessibilityLabel}>{children}</View>
   }
 
   return (

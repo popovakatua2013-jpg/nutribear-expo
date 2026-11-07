@@ -7,6 +7,9 @@
 //   по умолчанию 18:00; если тренировка уже записана — промолчит).
 // Состояние общее с карточками внутри «Все настройки» — где включишь,
 // там и работает.
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — настройка (тумблер + время) встраивается в строку меню
+// «Сон» / «Время пинка», время дублируется в значении строки.
 
 import { useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
@@ -19,7 +22,8 @@ import { TimeField } from './MealRemindersCard'
 const SWITCH_COLORS = { true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }
 
 // Карточка пинка: шапка (иконка в квадрате + заголовок + подпись + чип
-// времени) и раскрывающаяся настройка (тумблер + время)
+// времени) и раскрывающаяся настройка (тумблер + время).
+// embedded — только настройка, без карточки и шапки (строка меню — в MenuRow)
 function PokeCard({
   icon,
   squareColor,
@@ -31,8 +35,51 @@ function PokeCard({
   onTime,
   hint,
   a11y,
+  embedded = false,
 }) {
   const [open, setOpen] = useState(false)
+
+  // Настройка: тумблер + время (в обычном режиме — по тапу на шапку,
+  // во встроенном — всегда; раскрытие делает MenuRow)
+  const settings = (
+    <>
+      <View className="flex-row items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
+        <View className="min-w-0 flex-1 pr-2">
+          <Text className="font-semibold text-[15.5px] text-bear-text">
+            {enabled ? 'Пинок включён' : 'Пинок выключен'}
+          </Text>
+          <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-[16px] text-bear-sub">
+            {hint}
+          </Text>
+        </View>
+        <Switch
+          value={enabled}
+          onValueChange={onToggle}
+          trackColor={SWITCH_COLORS}
+          thumbColor="#fff"
+          accessibilityLabel={`Включить: ${title}`}
+        />
+      </View>
+      {enabled && (
+        <View className="mt-2 flex-row items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-2.5">
+          <Text className="text-[20px]">⏰</Text>
+          <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text">
+            Время пинка
+          </Text>
+          <TimeField value={time} onChange={onTime} />
+        </View>
+      )}
+    </>
+  )
+
+  // Встроено в строку меню — только настройка
+  if (embedded) {
+    return (
+      <View accessibilityLabel={a11y} className="gap-1">
+        {settings}
+      </View>
+    )
+  }
 
   return (
     <View accessibilityLabel={a11y} className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
@@ -71,36 +118,7 @@ function PokeCard({
         </View>
       </Pressable>
 
-      {open && (
-        <View className="px-4 pb-4">
-          <View className="flex-row items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
-            <View className="min-w-0 flex-1 pr-2">
-              <Text className="font-semibold text-[15.5px] text-bear-text">
-                {enabled ? 'Пинок включён' : 'Пинок выключен'}
-              </Text>
-              <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-[16px] text-bear-sub">
-                {hint}
-              </Text>
-            </View>
-            <Switch
-              value={enabled}
-              onValueChange={onToggle}
-              trackColor={SWITCH_COLORS}
-              thumbColor="#fff"
-              accessibilityLabel={`Включить: ${title}`}
-            />
-          </View>
-          {enabled && (
-            <View className="mt-2 flex-row items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3.5 py-2.5">
-              <Text className="text-[20px]">⏰</Text>
-              <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text">
-                Время пинка
-              </Text>
-              <TimeField value={time} onChange={onTime} />
-            </View>
-          )}
-        </View>
-      )}
+      {open && <View className="px-4 pb-4">{settings}</View>}
     </View>
   )
 }
@@ -128,7 +146,7 @@ function usePokeToggle() {
 }
 
 // «Сон»: вечерний пинок «пора в кровать» (reminder.sleep)
-export function SleepDashboardCard() {
+export function SleepDashboardCard({ embedded = false }) {
   const sleep = useActivityStore((s) => s.reminder?.sleep) || { enabled: false, time: '22:30' }
   const setReminder = useActivityStore((s) => s.setReminder)
   const toggle = usePokeToggle()
@@ -136,6 +154,7 @@ export function SleepDashboardCard() {
   return (
     <PokeCard
       a11y="Напоминание о сне"
+      embedded={embedded}
       icon={<Sun size={22} color="#FBBF24" />}
       squareColor="rgba(251,191,36,0.16)"
       title="Сон"
@@ -150,7 +169,7 @@ export function SleepDashboardCard() {
 }
 
 // «Время пинка»: ежедневный пинок о тренировке (reminder.exercise)
-export function KickTimeCard() {
+export function KickTimeCard({ embedded = false }) {
   const exercise = useActivityStore((s) => s.reminder?.exercise) || { enabled: false, time: '18:00' }
   const setReminder = useActivityStore((s) => s.setReminder)
   const toggle = usePokeToggle()
@@ -158,6 +177,7 @@ export function KickTimeCard() {
   return (
     <PokeCard
       a11y="Время пинка о тренировке"
+      embedded={embedded}
       icon={<Moon size={22} color="#C4B5FD" />}
       squareColor="rgba(123,108,246,0.16)"
       title="Время пинка"

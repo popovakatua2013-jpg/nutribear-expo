@@ -1,4 +1,6 @@
 // Управление данными: начать новый день и стереть все данные (с подтверждением)
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — содержимое встраивается в строку меню «Сброс и удаление».
 
 import { Alert, Pressable, Text, View } from 'react-native'
 import { Database, Sunrise, Trash2 } from 'lucide-react-native'
@@ -23,7 +25,7 @@ import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
 
-export function DataActions() {
+export function DataActions({ embedded = false }) {
   const { toast } = useToast()
   const entries = useFoodStore((s) => s.entries)
   const resetDay = useFoodStore((s) => s.resetDay)
@@ -94,6 +96,43 @@ export function DataActions() {
     )
   }
 
+  const content = (
+    <View className="mt-1 gap-2">
+      <Pressable
+        onPress={newDay}
+        className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+      >
+        <Sunrise size={20} color="#fbbf24" />
+        <View className="min-w-0 flex-1">
+          <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
+          <Text className="font-sans text-[15px] text-bear-sub2">
+            {kcal > 0
+              ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
+              : 'Обнулит дневник, воду и шаги'}
+          </Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        onPress={confirmWipe}
+        className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
+      >
+        <Trash2 size={20} color="#fb7185" />
+        <View className="min-w-0 flex-1">
+          <Text className="font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
+          <Text className="font-sans text-[15px] text-bear-sub2">
+            Полное удаление по GDPR: профиль, дневник, онбординг
+          </Text>
+        </View>
+      </Pressable>
+    </View>
+  )
+
+  // Встроено в строку меню — только содержимое
+  if (embedded) {
+    return <View accessibilityLabel="Сброс и удаление">{content}</View>
+  }
+
   return (
     <CollapsibleCard
       storageKey="data-actions"
@@ -102,35 +141,7 @@ export function DataActions() {
       title="Данные"
       summary="новый день · стереть всё"
     >
-      <View className="mt-1 gap-2">
-        <Pressable
-          onPress={newDay}
-          className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
-        >
-          <Sunrise size={20} color="#fbbf24" />
-          <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
-            <Text className="font-sans text-[15px] text-bear-sub2">
-              {kcal > 0
-                ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
-                : 'Обнулит дневник, воду и шаги'}
-            </Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          onPress={confirmWipe}
-          className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
-        >
-          <Trash2 size={20} color="#fb7185" />
-          <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
-            <Text className="font-sans text-[15px] text-bear-sub2">
-              Полное удаление по GDPR: профиль, дневник, онбординг
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      {content}
     </CollapsibleCard>
   )
 }

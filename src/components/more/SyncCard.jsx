@@ -4,6 +4,8 @@
 // Health Connect (Android) — системный «банк здоровья»: шаги собираются
 // в фоне даже при закрытом приложении, с историей и часами/браслетами.
 // Тумблеры внешних сервисов пока сохраняются локально.
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — содержимое встраивается в строку меню «Шаги и здоровье».
 
 import { useState } from 'react'
 import { Platform, Switch, Text, View } from 'react-native'
@@ -32,7 +34,7 @@ const SWITCH_COLORS = {
   false: 'rgba(255,255,255,0.15)',
 }
 
-export function SyncCard() {
+export function SyncCard({ embedded = false }) {
   const sync = useOnboardingStore((s) => s.sync)
   const toggleSync = useOnboardingStore((s) => s.toggleSync)
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
@@ -134,6 +136,93 @@ export function SyncCard() {
     }
   }
 
+  const rows = (
+    <View className="mt-1 gap-2">
+      {ROWS.map((r) => (
+        <View
+          key={r.key}
+          className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3"
+        >
+          <View className="min-w-0 flex-1">
+            <Text className="font-bold text-[17.5px] text-bear-text">{r.label}</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">{r.hint}</Text>
+          </View>
+          <Switch
+            value={sync[r.key]}
+            onValueChange={() => toggleSync(r.key)}
+            trackColor={SWITCH_COLORS}
+            thumbColor="#FFFFFF"
+            accessibilityLabel={r.label}
+          />
+        </View>
+      ))}
+
+      {Platform.OS === 'android' && (
+        <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+          <View className="min-w-0 flex-1">
+            <View className="flex-row items-center gap-1.5">
+              <HeartPulse size={18} color="#F0ABFC" />
+              <Text className="font-bold text-[17.5px] text-bear-text">Health Connect</Text>
+            </View>
+            <Text className="font-sans text-[15px] text-bear-sub2">
+              {healthConnectEnabled
+                ? 'шаги с системы: фон + история телефона и часов'
+                : 'шаги телефона и часов — даже при закрытом приложении'}
+            </Text>
+          </View>
+          <Switch
+            value={healthConnectEnabled}
+            onValueChange={toggleHealthConnect}
+            trackColor={SWITCH_COLORS}
+            thumbColor="#FFFFFF"
+            accessibilityLabel="Health Connect"
+          />
+        </View>
+      )}
+
+      <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+        <View className="min-w-0 flex-1">
+          <View className="flex-row items-center gap-1.5">
+            <Footprints size={18} color="#EEF2FB" />
+            <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
+          </View>
+          <Text className="font-sans text-[15px] text-bear-sub2">
+            {pedometerEnabled
+              ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
+              : 'считает шаги сам, плюс ручные добавления'}
+          </Text>
+        </View>
+        <Switch
+          value={pedometerEnabled}
+          onValueChange={togglePedometer}
+          trackColor={SWITCH_COLORS}
+          thumbColor="#FFFFFF"
+          accessibilityLabel="Встроенный шагомер"
+        />
+      </View>
+    </View>
+  )
+
+  const footnote = (
+    <Text className="mt-3 px-1 font-sans text-[15px] leading-relaxed text-bear-dim">
+      {Platform.OS === 'web'
+        ? 'Веб-версия работает офлайн: данные не покидают устройство. Шагомер доступен в приложении на телефоне.'
+        : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона: шаги засчитываются, пока приложение запущено. Health Connect, если подключён, даёт шаги с историей — система собирает их даже при закрытом приложении, включая шаги с часов и браслетов.'}{' '}
+      Подключение к внешним сервисам включит синхронизацию шагов, когда
+      она станет доступна.
+    </Text>
+  )
+
+  // Встроено в строку меню — только содержимое
+  if (embedded) {
+    return (
+      <View accessibilityLabel="Шаги и здоровье">
+        {rows}
+        {footnote}
+      </View>
+    )
+  }
+
   return (
     <CollapsibleCard
       storageKey="sync"
@@ -148,78 +237,8 @@ export function SyncCard() {
             : undefined
       }
     >
-      <View className="mt-1 gap-2">
-        {ROWS.map((r) => (
-          <View
-            key={r.key}
-            className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3"
-          >
-            <View className="min-w-0 flex-1">
-              <Text className="font-bold text-[17.5px] text-bear-text">{r.label}</Text>
-              <Text className="font-sans text-[15px] text-bear-sub2">{r.hint}</Text>
-            </View>
-            <Switch
-              value={sync[r.key]}
-              onValueChange={() => toggleSync(r.key)}
-              trackColor={SWITCH_COLORS}
-              thumbColor="#FFFFFF"
-              accessibilityLabel={r.label}
-            />
-          </View>
-        ))}
-
-        {Platform.OS === 'android' && (
-          <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
-            <View className="min-w-0 flex-1">
-              <View className="flex-row items-center gap-1.5">
-                <HeartPulse size={18} color="#F0ABFC" />
-                <Text className="font-bold text-[17.5px] text-bear-text">Health Connect</Text>
-              </View>
-              <Text className="font-sans text-[15px] text-bear-sub2">
-                {healthConnectEnabled
-                  ? 'шаги с системы: фон + история телефона и часов'
-                  : 'шаги телефона и часов — даже при закрытом приложении'}
-              </Text>
-            </View>
-            <Switch
-              value={healthConnectEnabled}
-              onValueChange={toggleHealthConnect}
-              trackColor={SWITCH_COLORS}
-              thumbColor="#FFFFFF"
-              accessibilityLabel="Health Connect"
-            />
-          </View>
-        )}
-
-        <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
-          <View className="min-w-0 flex-1">
-            <View className="flex-row items-center gap-1.5">
-              <Footprints size={18} color="#EEF2FB" />
-              <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
-            </View>
-            <Text className="font-sans text-[15px] text-bear-sub2">
-              {pedometerEnabled
-                ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
-                : 'считает шаги сам, плюс ручные добавления'}
-            </Text>
-          </View>
-          <Switch
-            value={pedometerEnabled}
-            onValueChange={togglePedometer}
-            trackColor={SWITCH_COLORS}
-            thumbColor="#FFFFFF"
-            accessibilityLabel="Встроенный шагомер"
-          />
-        </View>
-      </View>
-
-      <Text className="mt-3 px-1 font-sans text-[15px] leading-relaxed text-bear-dim">
-        {Platform.OS === 'web'
-          ? 'Веб-версия работает офлайн: данные не покидают устройство. Шагомер доступен в приложении на телефоне.'
-          : 'Приложение работает офлайн: данные не покидают устройство. Встроенный шагомер читает системный счётчик шагов телефона: шаги засчитываются, пока приложение запущено. Health Connect, если подключён, даёт шаги с историей — система собирает их даже при закрытом приложении, включая шаги с часов и браслетов.'}{' '}
-        Подключение к внешним сервисам включит синхронизацию шагов, когда
-        она станет доступна.
-      </Text>
+      {rows}
+      {footnote}
     </CollapsibleCard>
   )
 }
