@@ -89,6 +89,48 @@ describe('foodInsight — калории и вода', () => {
   })
 })
 
+describe('foodInsight — цель ниже привычной калорийности', () => {
+  // Пример Кати: цель 1200 ккал, три дня подряд съедено ~1725 —
+  // строгий остаток каждый день красный, дело не в дисциплине
+  const GOALS_1200 = {
+    kcal: 1200,
+    waterMl: 2000,
+    macroNorms: { p: 0, f: 0, c: 0, fib: 0 },
+  }
+
+  test('ровно пример Кати: цель 1200, три дня ~1725 — мягкая подсказка про цель', () => {
+    const rows = [day({ kcal: 1725 }), day({ kcal: 1700 }), day({ kcal: 1750 })]
+    const res = foodInsight({ rows, goals: GOALS_1200, weights: [] })
+    expect(res.id).toBe('goal-below-habit')
+    expect(res.title).toBe('Может, цель слишком низкая?')
+    expect(res.text).toContain('обычной калорийности')
+    expect(res.text).toContain('«Тело»')
+    // Мягкий тон: без «сделайте легче» — дело не в сегодняшнем дне
+    expect(res.text).not.toContain('сделайте легче')
+  })
+
+  test('граница: средний перебор ровно 25% — подсказка про цель', () => {
+    const rows = [day({ kcal: 2500 }), day({ kcal: 2500 }), day({ kcal: 2500 })]
+    expect(foodInsight({ rows, goals: GOALS, weights: [] }).id).toBe('goal-below-habit')
+  })
+
+  test('умеренный перебор (в среднем 17%) — прежняя подсказка kcal-over', () => {
+    const rows = [day({ kcal: 2340 }), day({ kcal: 2340 }), day({ kcal: 2340 })]
+    expect(foodInsight({ rows, goals: GOALS, weights: [] }).id).toBe('kcal-over')
+  })
+
+  test('не каждый день выше цели — подсказки про цель нет', () => {
+    const rows = [day(), day({ kcal: 2600 }), day({ kcal: 2600 })]
+    expect(foodInsight({ rows, goals: GOALS, weights: [] })).toBeNull()
+  })
+
+  test('белок по-прежнему важнее подсказки про цель', () => {
+    // Авто-норма белка при цели 1200 = 60 г, порог 80% = 48 г — все дни ниже
+    const rows = [day({ p: 40, kcal: 1725 }), day({ p: 45, kcal: 1700 }), day({ p: 44, kcal: 1750 })]
+    expect(foodInsight({ rows, goals: GOALS_1200, weights: [] }).id).toBe('protein-low')
+  })
+})
+
 describe('foodInsight — приоритеты и пустые дни', () => {
   test('белок важнее перебора калорий', () => {
     const rows = [day({ p: 40, kcal: 2400 }), day({ p: 50, kcal: 2500 }), day({ p: 45, kcal: 2300 })]
