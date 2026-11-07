@@ -26,8 +26,18 @@
 // корзина — удалить). Записей нет — в окне мишка «Запишите первый вес»
 // с кнопкой записи (рекомендация пользователя); запись сегодняшнего
 // дня подсвечена («Сегодня» фиолетовым, как «сегодня» в истории
-// показателей). Поверхность карточек — фиолетовая, одинаковая
-// с ИМТ-блоком выше. Кольцо «Прогресс» из старой карточки переехало
+// показателей). Журнал всегда открывается СвЁРНУТЫМ: видна свежая
+// запись, остальные — по кнопке «Показать все записи (N)» (просьба
+// Кати), разворот не запоминается.
+//
+// Аудит по скринам Кати (все записи «сегодня»): «Изменение: 0 кг»
+// при любых вводах — окно периода добивало дни без записей текущим
+// весом, ряд становился плоским. Теперь если записей нет раньше окна
+// периода, график показывает сами записи журнала, а «Изменение»
+// считается ОТ ПЕРВОЙ записи (подпись «с первой записи»); при одной
+// записи — «Изменение: —, нужно ещё взвешивание».
+// Поверхность карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
+// Кольцо «Прогресс» из старой карточки переехало
 // в блок замеров («Общий прогресс», MeasurementsCard) — карточка
 // стала легче.
 
@@ -111,6 +121,8 @@ export function WeightCard() {
   const [period, setPeriod] = useState('week')
   const [menuOpen, setMenuOpen] = useState(false)
   const [journalOpen, setJournalOpen] = useState(false)
+  // Свёрнутый вид журнала: свежая запись, остальные по кнопке
+  const [showAllRecs, setShowAllRecs] = useState(false)
   const [editing, setEditing] = useState(null) // измерение на изменении
   const [kgText, setKgText] = useState('')
   // Окно изменения роста (карандаш в карточке «Текущий вес»)
@@ -135,14 +147,58 @@ export function WeightCard() {
     return () => sub.remove()
   }, [])
 
-  // «Всё» без минимум двух точек смысла не имеет — показываем неделю
+  // «Всегда свёрнут»: при каждом открытии журнала показывается только
+  // свежая запись, разворот не запоминается (просьба Кати)
+  useEffect(() => {
+    if (journalOpen) setShowAllRecs(false)
+  }, [journalOpen])
+
+  // ── Ряд графика и база «Изменения» (аудит по скринам Кати) ──
+  // Раньше окно периода добивало дни без записей текущим весом: если
+  // все записи сделаны сегодня (журнал только начинается), ряд был
+  // плоским и «Изменение» висело на «0 кг», сколько бы разных весов
+  // ни вводить (вопрос Кати: «почему в карточке изменение всегда 0?»).
+  // Теперь: если записей НЕТ раньше окна периода — показываем сами
+  // записи журнала и движение ОТ ПЕРВОЙ записи, подпись «с первой
+  // записи». Одна запись — сравнивать не с чем: «Изменение: —»
   const allPts = allWeights(weights)
-  const data =
-    period === 'month'
-      ? monthWeights(weightKg, weights)
-      : period === 'all' && allPts.length >= 2
-        ? allPts
+  const fewData = weights.length < 2
+  // Записи журнала по возрастанию даты — БЕЗ схлопывания по дням
+  // (allWeights оставил бы от шести сегодняшних взвешиваний одну
+  // точку — и динамика снова потерялась бы)
+  const journalPts = [...weights]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(-24)
+    .map((r) => ({ label: shortDateNum(new Date(r.date)), kg: r.kg }))
+  // Есть ли записи РАНЬШЕ окна периода (неделя — 6 дней назад,
+  // месяц — 29): день как число ггггммдд — сравнение дат без строк
+  const winStart = new Date()
+  winStart.setDate(winStart.getDate() - (period === 'month' ? 29 : 6))
+  const winStartNum =
+    winStart.getFullYear() * 10000 + (winStart.getMonth() + 1) * 100 + winStart.getDate()
+  const hasOlder =
+    period !== 'all' &&
+    weights.some((r) => {
+      const d = new Date(r.date)
+      return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() < winStartNum
+    })
+
+  let data
+  let deltaLabel = DELTA_CAPTION[period]
+  if (period === 'all' && allPts.length >= 2) {
+    // «Всё» — одна точка на день, подпись своя (проверять раньше
+    // фолбэка: у «Всё» окна нет и hasOlder всегда false)
+    data = allPts
+  } else if (!fewData && !hasOlder) {
+    // Весь журнал внутри окна — честная база только одна: первая запись
+    data = journalPts.length >= 2 ? journalPts : allPts
+    deltaLabel = 'с первой записи'
+  } else {
+    data =
+      period === 'month'
+        ? monthWeights(weightKg, weights)
         : weekWeights(weightKg, weights)
+  }
   const last = data[data.length - 1]
   const periodDelta = Math.round((last.kg - data[0].kg) * 10) / 10
 
@@ -201,7 +257,7 @@ export function WeightCard() {
   // сколько осталось до цели и что делать — набору — добавить калорий,
   // похудению — слегка снизить калорийность
   const strip = weightStrip({
-    delta: periodDelta,
+    delta: fewData ? null : periodDelta,
     towardGoal: goalWeightKg != null ? periodTowardGoal : null,
     towardNorm,
     goalReached,
@@ -209,14 +265,16 @@ export function WeightCard() {
       goalWeightKg != null && !goalReached ? Math.abs(goalDiff) : null,
     gaining: wantUp,
   })
-  const toneColor = strip.tone === 'bad' ? '#FB7185' : '#34D399'
+  const toneColor =
+    strip.tone === 'bad' ? '#FB7185' : strip.tone === 'info' ? '#8B96B8' : '#34D399'
 
   // Цвет линии графика (отзыв Кати: «в зависимости от цели — линия
   // красная/зелёная»): красная — за период вес уходит от цели (или,
-  // без цели, от здоровой нормы), зелёная — к цели/норме или на месте
+  // без цели, от здоровой нормы), зелёная — к цели/норме или на месте.
+  // Одна запись — вывода нет: нейтральная серая
   const away =
     goalWeightKg != null ? periodTowardGoal === false : towardNorm === false
-  const lineColor = away ? '#fb7185' : '#4ade80'
+  const lineColor = fewData ? '#8B96B8' : away ? '#fb7185' : '#4ade80'
 
   // Подсветка «Текущего веса» (отзыв Кати): по калькулятору ИМТ перебор —
   // красный, недостаток веса — жёлтый; в норме цвет уточняет цель
@@ -434,10 +492,10 @@ export function WeightCard() {
 
           <View>
             <View className="flex-row items-center gap-1">
-              {periodDelta < 0 && (
+              {!fewData && periodDelta < 0 && (
                 <TrendingDown size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
               )}
-              {periodDelta > 0 && (
+              {!fewData && periodDelta > 0 && (
                 <TrendingUp size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
               )}
               <Text
@@ -446,13 +504,15 @@ export function WeightCard() {
                 className="font-semibold text-[15px]"
                 style={{ color: toneColor }}
               >
-                {periodDelta === 0
-                  ? 'без изменений'
-                  : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
+                {fewData
+                  ? '—'
+                  : periodDelta === 0
+                    ? 'без изменений'
+                    : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
               </Text>
             </View>
             <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
-              {DELTA_CAPTION[period]}
+              {fewData ? 'нужно ещё взвешивание' : deltaLabel}
             </Text>
           </View>
 
@@ -555,12 +615,20 @@ export function WeightCard() {
 
         {/* График + строка-поддержка */}
         <View className="min-w-0 flex-1 rounded-2xl p-3" style={CARD}>
-          {/* Пилюля изменения за период: точка в цвет тона */}
+          {/* Пилюля изменения за период: точка в цвет тона. Одна запись —
+              «—»: сравнивать не с чем (аудит: «0 кг» при одном взвешивании
+              читалось как «вес стоит», хотя пары точек просто нет) */}
           <View
             className="self-start rounded-full bg-white/[0.06] px-2.5 py-1.5"
-            accessibilityLabel={`Изменение веса ${DELTA_CAPTION[period]}: ${
-              periodDelta === 0 ? '0 кг' : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
-            }`}
+            accessibilityLabel={
+              fewData
+                ? 'Изменение веса: пока нет данных — нужно ещё взвешивание'
+                : `Изменение веса ${deltaLabel}: ${
+                    periodDelta === 0
+                      ? '0 кг'
+                      : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
+                  }`
+            }
           >
             <View className="flex-row items-center gap-1.5">
               <View
@@ -573,9 +641,11 @@ export function WeightCard() {
               />
               <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-bear-sub">
                 {`Изменение: ${
-                  periodDelta === 0
-                    ? '0 кг'
-                    : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
+                  fewData
+                    ? '—'
+                    : periodDelta === 0
+                      ? '0 кг'
+                      : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`
                 }`}
               </Text>
             </View>
@@ -655,7 +725,7 @@ export function WeightCard() {
               <ThumbsDown size={22} color="#FBBF24" />
             ) : strip.tone === 'push' ? (
               <ThumbsUp size={22} color="#FBBF24" />
-            ) : (
+            ) : strip.tone === 'info' ? null : (
               <ThumbsUp size={22} color="#4ADE80" />
             )}
           </View>
@@ -726,12 +796,14 @@ export function WeightCard() {
             ) : (
               <>
                 <Text className="mt-1 font-sans text-[15px] text-bear-sub">
-                  {`Записей: ${weights.length} · тап по записи — изменить`}
+                  {`Записей: ${weights.length} · тап по записи — изменить${
+                    weights.length > 1 && !showAllRecs ? ' · видна свежая' : ''
+                  }`}
                 </Text>
 
                 <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false} className="mt-3">
                   <View className="gap-1">
-                    {weights.map((w) => {
+                    {(showAllRecs ? weights : weights.slice(0, 1)).map((w) => {
                       const isToday = new Date(w.date).toDateString() === todayStr
                       return (
                         <Pressable
@@ -775,6 +847,26 @@ export function WeightCard() {
                     })}
                   </View>
                 </ScrollView>
+
+                {/* Свежая запись видна сразу, остальные — по тапу (просьба
+                    Кати: «по умолчанию видно последнюю, остальное свернуть
+                    всегда»); при одной записи кнопки нет */}
+                {weights.length > 1 && (
+                  <Pressable
+                    onPress={() => setShowAllRecs((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showAllRecs
+                        ? 'Свернуть журнал веса'
+                        : `Показать все записи журнала: ${weights.length}`
+                    }
+                    className="mt-2.5 items-center rounded-xl bg-white/[0.06] py-2.5 active:opacity-70"
+                  >
+                    <Text className="font-semibold text-[15px] text-[#8DABFF]">
+                      {showAllRecs ? 'Свернуть' : `Показать все записи (${weights.length})`}
+                    </Text>
+                  </Pressable>
+                )}
               </>
             )}
           </View>
