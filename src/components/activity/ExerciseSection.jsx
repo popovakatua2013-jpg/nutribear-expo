@@ -154,12 +154,28 @@ export function ExerciseSection({ flat = false }) {
   // Неделя для плиток и кольца, стрик, популярные виды, последние
   // записи, ряд «Динамики» — чистые функции из lib/data/exerciseStats
   const week = useMemo(() => weekStats(logs), [logs])
+  // Число тренировок за 7 дней — для плитки «Тренировок»: раньше плитка
+  // «Прогресс» показывала те же % , что и кольцо рядом (дубль), а
+  // «Тренировок» подписывалась под минутами. Развели: минуты — отдельно,
+  // количество — отдельно (отзыв Кати: «дублируется одно и то же»)
+  const weekCount = useMemo(() => {
+    let n = 0
+    for (let i = 0; i < 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      n += (logs[todayKey(d)] || []).length
+    }
+    return n
+  }, [logs])
   const exStreak = useMemo(() => workoutStreak(logs), [logs])
   const popular = useMemo(() => popularTypes(logs, 30), [logs])
   const recent = useMemo(() => recentWorkouts(logs, 14, 6), [logs])
   const [dynRange, setDynRange] = useState('7')
   const dynData = useMemo(() => dynamicsSeries(logs, Number(dynRange)), [logs, dynRange])
-  const hasDyn = useMemo(() => dynData.some((p) => p.value > 0), [dynData])
+  // График имеет смысл только когда есть ЧТО сравнивать: одна запись
+  // даёт кривую из одной точки — она дублирует hero и «Последние»
+  // (отзыв Кати: «дублируется одно и то же»). Показываем от 2 дней
+  const hasDyn = useMemo(() => dynData.filter((p) => p.value > 0).length >= 2, [dynData])
   // Самая свежая тренировка за сегодня — лицо hero-карточки
   const hero = items[0] || null
 
@@ -223,8 +239,11 @@ export function ExerciseSection({ flat = false }) {
       </View>
 
       {/* Повтор активности за прошлый день: стрелками выбираем любой
-          из последних 7 дней с тренировками, кнопка копирует в сегодня */}
-      {repDay && (
+          из последних 7 дней с тренировками, кнопка копирует в сегодня.
+          Показываем только пока за сегодня НИЧЕГО не записано: после
+          записи этот блок дублировал hero и «Последние тренировки»
+          (отзыв Кати: «дублируется одно и то же») */}
+      {repDay && items.length === 0 && (
         <View className="mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-3.5 py-2.5">
           {repeatDays.length > 1 && (
             <Pressable
@@ -275,10 +294,10 @@ export function ExerciseSection({ flat = false }) {
 
       {/* ── Витрина по шаблону: 4 плитки · hero + кольцо недели ────────── */}
       <View className="mt-3 flex-row gap-1.5">
-        <StatTile emoji="🔥" value={formatNum(burned)} label="Ккал" />
-        <StatTile emoji="⏱" value={fmtHours(week.minutes)} label="Тренировок" />
+        <StatTile emoji="🔥" value={formatNum(burned)} label="Ккал сегодня" />
+        <StatTile emoji="⏱" value={fmtHours(week.minutes)} label="За неделю" />
         <StatTile emoji="🏆" value={String(exStreak)} label="Дней подряд" />
-        <StatTile emoji="📊" value={`${week.pct}%`} label="Прогресс" />
+        <StatTile emoji="🏋️" value={String(weekCount)} label="Тренировок" />
       </View>
 
       <View className="mt-2 flex-row gap-2">
@@ -338,7 +357,9 @@ export function ExerciseSection({ flat = false }) {
             >
               {hero
                 ? `${hero.minutes} мин · ${formatNum(hero.kcal)} ккал`
-                : 'Добавьте первую — прогулка тоже считается'}
+                : recent.length > 0
+                  ? `Последняя — ${dayLabel(recent[0].daysAgo).toLowerCase()} · повторите сегодня`
+                  : 'Добавьте первую — прогулка тоже считается'}
             </Text>
           </View>
           {/* Кнопка — на всю ширину карточки: раскрывает/сворачивает
@@ -446,9 +467,11 @@ export function ExerciseSection({ flat = false }) {
         </View>
       )}
 
-      {/* Популярные виды: топ-4 за 30 дней по минутам — плитки 2×2
-          с эмодзи и суммой часов, как на шаблоне */}
-      {popular.length > 0 && (
+      {/* Популярные виды: топ за 30 дней по минутам — плитки 2×2
+          с эмодзи и суммой часов, как на шаблоне. Один вид — это всё
+          ещё та же запись, что в hero и «Последних»: показываем только
+          когда есть из чего выбирать (отзыв Кати о дублях) */}
+      {popular.length >= 2 && (
         <View className="mt-2 rounded-3xl border border-white/10 bg-white/[0.03] p-3.5">
           <View className="flex-row items-center gap-1.5">
             <Star size={16} color="#FBBF24" />
