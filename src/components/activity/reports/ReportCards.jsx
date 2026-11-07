@@ -57,9 +57,15 @@ const LARGE_ITEMS = [
 ]
 
 // Единый размер всех шести карточек (отзыв Кати: два размера рядом
-// выглядели как недоделка — теперь сетка ровная)
+// выглядели как недоделка — теперь сетка ровная); после этого —
+// компактнее (отзыв Кати: «блоки стали одного размера, но громоздкие»):
+// плитка 26 вместо 30, значение 19 вместо 21, спарклайн 20 вместо 28,
+// плотнее отступы — сетка стала ниже на ~12% без потери читаемости.
+// Слоты Δ% (26px) и спарклайна оставлены: без них карточки с данными
+// прошлого периода/линией становились выше соседей — сетка распадалась
+// на разные размеры (первый отзыв)
 const SIZES = {
-  card: { pad: 12, tile: 30, icon: 16, label: 13, value: 21, cap: 11, spark: 28 },
+  card: { pad: 10, tile: 26, icon: 14, label: 12, value: 19, cap: 11, spark: 20 },
 }
 
 // Спарклайн карточки: последние дни периода (до 14 точек — плотность
@@ -78,7 +84,7 @@ function sparkOf(rows, key) {
 // с ненулевыми значениями показателя. Но СЛОТ под график резервируется
 // у каждой карточки всегда — иначе карточка без данных становилась ниже
 // соседей и сетка распадалась на разные размеры (отзыв Кати)
-function Spark({ data, color, height = 28 }) {
+function Spark({ data, color, height = 20 }) {
   const meaningful = data ? data.filter((d) => d.value > 0).length : 0
   return (
     <View className="mt-1 min-w-0" style={{ height }}>
@@ -118,8 +124,8 @@ function CardBg({ color }) {
 function CalFooter({ children, color = '#8B96B8', line = true }) {
   return (
     <View>
-      {line && <View className="mt-2 h-px bg-white/[0.07]" />}
-      <View className="mt-1.5 flex-row items-center gap-1">
+      {line && <View className="mt-1.5 h-px bg-white/[0.07]" />}
+      <View className="mt-1 flex-row items-center gap-1">
         <Calendar size={11} color={color} />
         <Text
           numberOfLines={1}
@@ -208,7 +214,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           maxFontSizeMultiplier={1.15}
           adjustsFontSizeToFit
           minimumFontScale={0.6}
-          className="mt-1.5 font-extrabold leading-tight tracking-tight text-bear-text"
+          className="mt-1 font-extrabold leading-tight tracking-tight text-bear-text"
           style={{ fontSize: s.value }}
         >
           {/* Единицы «ккал» у калорий и сожжённых (аудит по скрину Кати);
@@ -249,12 +255,15 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
             у калорий цель — уложиться в норму, день засчитан когда поел
             и не перебрал; у сожжённых цель burnKcal. goalMet = null
             (цель не задана) — строки нет */}
+        {/* Спарклайн ПЕРЕД футером: цель прижата к нижнему краю карточки,
+            у карточек без линии воздух уходит в середину, а не висит
+            пустотой под целью (отзыв Кати: «громоздкие») */}
+        <Spark data={spark} color={m.color} height={s.spark} />
         {goalMet != null && (
           <CalFooter color={goalMet > 0 ? '#4ade80' : '#8B96B8'}>
             {`Цель: ${goalMet}/${days} дн`}
           </CalFooter>
         )}
-        <Spark data={spark} color={m.color} height={s.spark} />
       </View>
     </Pressable>
   )
@@ -300,7 +309,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
               maxFontSizeMultiplier={1.15}
               adjustsFontSizeToFit
               minimumFontScale={0.7}
-              className="mt-1.5 font-extrabold leading-tight tracking-tight text-bear-text"
+              className="mt-1 font-extrabold leading-tight tracking-tight text-bear-text"
               style={{ fontSize: s.value }}
             >
               {fmtSleep(avg)}
@@ -316,19 +325,19 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
               в среднем за ночь
             </Text>
             <View className="mt-1 min-h-[26px]" />
-            {/* Футер цели — в той же позиции, что у соседних карточек
-                крупного ряда (отзыв Кати: вторая сетка должна выглядеть
-                единообразно): слот Δ%, черта, цель, спарклайн */}
+            {/* Спарклайн перед футером — как у соседних карточек крупного
+                ряда (отзыв Кати: вторая сетка должна выглядеть единообразно):
+                слот Δ%, спарклайн, черта, цель внизу */}
+            <Spark data={spark} color="#c084fc" height={s.spark} />
             <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
               {`Цель: ${inNorm}/${days} дн`}
             </CalFooter>
-            <Spark data={spark} color="#c084fc" height={s.spark} />
           </>
         ) : (
           <>
             <Text
               maxFontSizeMultiplier={1.15}
-              className="mt-1.5 font-extrabold leading-tight text-bear-text"
+              className="mt-1 font-extrabold leading-tight text-bear-text"
               style={{ fontSize: s.value }}
             >
               —
@@ -391,7 +400,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
           maxFontSizeMultiplier={1.15}
           adjustsFontSizeToFit
           minimumFontScale={0.7}
-          className="mt-1.5 font-extrabold leading-tight tracking-tight text-bear-text"
+          className="mt-1 font-extrabold leading-tight tracking-tight text-bear-text"
           style={{ fontSize: s.value }}
         >
           {lastW ? `${fmtDecimal(lastW.kg)} кг` : '—'}
@@ -432,16 +441,16 @@ function WeightReportCard({ days, onPress = () => {} }) {
             </>
           )}
         </View>
-        {/* Футер «Норма» — в одной позиции с целями соседних карточек
-            ряда (отзыв Кати: вторая сетка должна выглядеть единообразно);
+        {/* Спарклайн перед футером — как у остальных карточек:
+            цель/норма всегда внизу карточки (отзыв Кати «громоздкие»);
             у веса нет дневной цели — показываем здоровый диапазон роста.
             Рост не указан (min/max = 0) — футера нет */}
+        <Spark data={spark} color="#a78bfa" height={s.spark} />
         {heightCm > 0 && Number.isFinite(min) && Number.isFinite(max) && max > min && (
           <CalFooter color="#8DABFF">
             {`Норма: ${min}–${max} кг`}
           </CalFooter>
         )}
-        <Spark data={spark} color="#a78bfa" height={s.spark} />
       </View>
     </Pressable>
   )
