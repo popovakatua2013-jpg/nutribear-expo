@@ -4,15 +4,18 @@
 // Оформление — по макету пользователя (скрин «Калории · история»):
 // фиолетовое свечение по контуру окна, градиентная плитка показателя
 // в шапке, пилюли периода (7/30/90) в цвете показателя, совмещённая
-// стеклянная карточка «В среднем за день | По дням» (на неделе — рядом
-// с вертикальной чертой, на 30/90 днях — друг под другом, иначе
-// столбики не читаются), два блока в ряд — «Лучшие дни» (чип значения
-// в градиенте показателя) и «По дням недели» (одна строка точек Пн…Вс,
-// цвет точки — уровень среднего за этот день недели), легенда и большая
-// градиентная кнопка «Закрыть». Тап по столбику (7/30 дней) и по строке
-// лучших дней открывает сводку дня. Период у окна свой: открывается
-// с периода секции и дальше меняется независимо. Совсем пустой период —
-// спокойное уведомление с мишкой по центру.
+// стеклянная карточка «В среднем за день | По дням» — РЯДОМ с чертой
+// ВО ВСЕХ периодах (отзыв Кати: «статистика за 30/90 должна выглядеть
+// так же, как за 7»; на 30/90 столбики тоньше — компактнее и выше,
+// и «Закрыть» не уезжает за экран). Подписи дней — ЧИСЛОВЫЕ даты
+// «7.11» вместо «1 ноя», которое в узких колонках обрезалось до
+// «1 …» / «…» (отзыв Кати). Два блока в ряд — «Лучшие дни» (чип
+// значения + дата под ним — раньше дата выдавливалась чипом) и
+// «По дням недели» (точки Пн…Вс), легенда — только уровни, которые
+// реально встречаются в периоде. Тап по столбику (7/30 дней) и по
+// строке лучших дней открывает сводку дня. Период у окна свой:
+// открывается с периода секции и дальше меняется независимо. Совсем
+// пустой период — спокойное уведомление с мишкой по центру.
 //
 // «Вес» — особый показатель: данные из журнала взвешиваний
 // (useProfileStore.weights → weightByDay), поэтому в окне не «среднее
@@ -27,7 +30,7 @@ import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ArrowDownRight, ArrowUpRight, Plus, X } from 'lucide-react-native'
-import { RANGES, history } from '@/lib/data/activity'
+import { RANGES, dotDateFromKey, history, shortWeekday } from '@/lib/data/activity'
 import { METRICS, WEIGHT_METRIC } from '@/lib/data/metrics'
 import {
   bestDay,
@@ -53,10 +56,19 @@ import { DayDetailsModal } from '../../home/DayDetailsModal'
 // Ключ цели в useGoalsStore для каждого показателя реестра
 const GOAL_KEY = { steps: 'steps', kcal: 'kcal', waterMl: 'waterMl', burned: 'burnKcal', sleepMin: 'sleepMin' }
 const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] // дни недели в блоке точек
-const DOT = 13 // размер точки «по дням недели»
-const CHART_H = 112 // высота графика по дням
+const DOT = 12 // размер точки «по дням недели»
+const WD_COL = 20 // ширина колонки точки — блок точек уже, «Лучшим дням» просторнее
+const CHART_H = 84 // высота графика по дням (компактно: окно не растёт на 30/90)
 const BUBBLE_H = 18 // запас сверху под подпись максимума
 const STUB = 'rgba(255,255,255,0.09)' // пустой день: плоская площадка у нуля
+
+// «Сб, 7.11» — подпись дня для строк «Лучших дней» и accessibility:
+// коротко и всегда помещается (row.label «7 ноя» терялся в узкой строке)
+function wdDateLabel(key) {
+  const d = new Date(`${key}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${shortWeekday(d)}, ${dotDateFromKey(key)}`
+}
 
 // Цвет точки/легенды по уровню дня (как в календаре-теплокарте)
 function levelColor(metric, level) {
@@ -92,12 +104,13 @@ function legendOf(metric) {
   ]
 }
 
-// Метки под столбиками: неделя — каждый день, месяц и больше —
-// только начало, середина и конец периода
+// Метки под столбиками: неделя — каждая дата, 30/90 — начало,
+// середина и конец периода (отдельной строкой — метка не зажата
+// в узкую колонку и не превращается в «…»)
 function labelIndexes(len) {
   if (len <= 7) return null // каждая колонка подписана
   const mid = Math.floor((len - 1) / 2)
-  return new Set([0, mid, len - 1])
+  return [0, mid, len - 1]
 }
 
 // ===== Кусочки оформления по макету =====
@@ -107,9 +120,11 @@ function CapLabel({ children, style, lines = 1 }) {
   return (
     <Text
       numberOfLines={lines}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
       maxFontSizeMultiplier={1.2}
       className="font-sans text-[12.5px] font-semibold text-bear-dim"
-      style={[{ textTransform: 'uppercase', letterSpacing: 1.1 }, style]}
+      style={[{ textTransform: 'uppercase', letterSpacing: 0.8 }, style]}
     >
       {children}
     </Text>
@@ -161,7 +176,7 @@ function ValueChip({ metric, value }) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={[metric.color, `${metric.color}B3`]}
-      style={{ borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 120 }}
+      style={{ borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 100 }}
     >
       <Text
         numberOfLines={1}
@@ -207,6 +222,8 @@ export function MetricHistoryModal({
   // Период окна: открывается с периода секции, дальше живёт своей жизнью
   const [rangeId, setRangeId] = useState(initialRangeId)
   const [dayKey, setDayKey] = useState(null) // сводка дня (тап по столбику/точке)
+  // Ширина графика по дням — для плашки значения над выделенным столбиком
+  const [chartW, setChartW] = useState(0)
   const days = RANGES.find((r) => r.id === rangeId)?.days || 30
   const todayKey = dayKeyOf()
   const todayWd = (new Date().getDay() + 6) % 7 // столбец «сегодня» в точках недели
@@ -224,6 +241,11 @@ export function MetricHistoryModal({
     const put = (rs) => rs.map((r) => ({ ...r, [metric.key]: wByDay[r.key] || 0 }))
     return { rows: put(cut.rows), prevRows: cut.prevRows }
   }, [days, today, isWeight, wByDay, metric.key])
+
+  // Дни периода с взвешиваниями — объявлены ДО hasData: гейт пустого
+  // периода у веса смотрит на замеры, и ссылка «до объявления» давала
+  // TDZ ReferenceError при открытии окна «Вес · история»
+  const measured = isWeight ? rows.filter((r) => r.weight > 0) : []
 
   const hasAny = rows.some(dayHasRecords)
   // По конкретной метрике: если её не вели в периоде — показываем
@@ -243,7 +265,6 @@ export function MetricHistoryModal({
   const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
 
   // ===== Вес: текущий замер, Δ за период и шкала столбиков =====
-  const measured = isWeight ? rows.filter((r) => r.weight > 0) : []
   const lastMeasure = measured.length ? measured[measured.length - 1] : null
   // Δ веса за период: последний замер минус первый; тон — движение
   // к здоровому диапазону (та же логика, что у карточки «Вес»)
@@ -292,7 +313,6 @@ export function MetricHistoryModal({
         ? 'Ближе к цели'
         : 'Больше всего'
       : 'Лучшие дни'
-
   // Точки «по дням недели»: среднее за этот день недели за период.
   // Для веса считаем по дням с взвешиваниями: день «только вес» не
   // попадает в dayHasRecords, но для веса он — день с данными
@@ -309,15 +329,46 @@ export function MetricHistoryModal({
     }
     return weekdayAverages(rows, metric.key)
   }, [rows, isWeight, metric.key])
-  const sparse = labelIndexes(rows.length)
+
+  // Легенда — только уровни, которые реально встречаются в периоде:
+  // лишние пункты разгоняют окно вверх и давят «Закрыть» вниз
+  const legend = useMemo(() => {
+    const present = new Set()
+    for (const r of rows) {
+      if (isWeight) {
+        present.add(r.weight > 0 ? 'met' : 'none')
+        continue
+      }
+      present.add(dayLevel(metric.key, r[metric.key] || 0, goals[GOAL_KEY[metric.key]] || 0))
+    }
+    return legendOf(metric).filter(([level]) => present.has(level))
+  }, [rows, isWeight, metric, goals])
+
+  // Высота столбика — одна для рисования и для плашки значения над ним
+  const barH = (v) =>
+    isWeight
+      ? v > 0
+        ? Math.max(6, Math.round(((v - wScaleLo) / Math.max(wScaleHi - wScaleLo, 0.1)) * CHART_H))
+        : 3
+      : v > 0
+        ? Math.max(3, Math.round((v / maxVal) * CHART_H))
+        : 3
+  // Выделенный столбик (максимум / последний замер веса) — над ним
+  // плашка значения. В колонку недели (~18px) «1 725» не помещается
+  // (обрезалось до «1 …»), поэтому плашка — абсолютом над столбиком
+  const hlIdx =
+    days <= 7
+      ? rows.findIndex((row, i) =>
+          isWeight ? i === latestIdx : (row[metric.key] || 0) > 0 && row[metric.key] === maxVal
+        )
+      : -1
+  const hlV = hlIdx >= 0 ? rows[hlIdx][metric.key] || 0 : 0
+  const hlH = hlIdx >= 0 ? barH(hlV) : 0
 
   function pickRange(id) {
     setRangeId(id)
     setDayKey(null) // сводка дня от другого периода не нужна
   }
-
-  // Подпись под карточкой среднего: Δ% к прошлому периоду или Δ веса
-  const side = days <= 7 // на неделе среднее и график — рядом, как в макете
 
   return (
     <>
@@ -330,9 +381,12 @@ export function MetricHistoryModal({
               start={{ x: 0, y: 0.1 }}
               end={{ x: 1, y: 0.9 }}
               colors={['#8B5CF6', '#D946EF', '#6D28D9']}
-              style={{ borderRadius: 30, padding: 1.6 }}
+              // flexShrink: по умолчанию Yoga не сжимает детей — цепочка
+              // «макс-высота → градиент → карточка → ScrollView» рвалась,
+              // и «Закрыть» уезжала за экран на 30/90 днях (отзыв Кати)
+              style={{ borderRadius: 30, padding: 1.6, flexShrink: 1 }}
             >
-              <View className="overflow-hidden rounded-[28px] bg-[#150F2D]">
+              <View className="overflow-hidden rounded-[28px] bg-[#150F2D]" style={{ flexShrink: 1 }}>
                 {/* Шапка: плитка показателя + заголовок + крестик */}
                 <View className="flex-row items-center gap-3 border-b border-bear-line px-4 pb-3.5 pt-4">
                   <MetricTile metric={metric} />
@@ -372,7 +426,7 @@ export function MetricHistoryModal({
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
-                  <View className="gap-3.5 px-4 pb-4 pt-3">
+                  <View className="gap-3 px-4 pb-3.5 pt-3">
                     {/* Период — активная пилюля в цвете показателя */}
                     <Pills
                       size="md"
@@ -385,22 +439,23 @@ export function MetricHistoryModal({
                     {hasData ? (
                       <>
                         {/* Совмещённая карточка макета: среднее за день и
-                            график по дням. На неделе — рядом с чертой (как
-                            на макете), на 30/90 днях — друг под другом:
-                            90 столбиков в половине ширины не читаются */}
-                        <Glass className="p-4">
-                          <View className={side ? 'flex-row gap-3' : ''}>
+                            график по дням РЯДОМ с чертой — во всех периодах
+                            (отзыв Кати: «за 30/90 должна выглядеть так же,
+                            как за 7»; на 30/90 столбики тоньше, зато окно
+                            компактное и «Закрыть» всегда на виду) */}
+                        <Glass className="p-3.5">
+                          <View className="flex-row gap-3">
                               {/* Среднее за день (у веса — текущий вес);
-                                  на неделе подпись может занять две строки */}
+                                  подпись может занять две строки */}
                               <View
                                 accessibilityLabel={
                                   isWeight
                                     ? `Текущий вес: ${lastMeasure ? metric.fmt(lastMeasure.weight) : 'нет замеров'}`
                                     : `В среднем за день: ${metric.fmt(avg)}`
                                 }
-                                className={side ? 'w-[44%]' : ''}
+                                className="w-[40%]"
                               >
-                                <CapLabel lines={side ? 2 : 1}>{isWeight ? 'Текущий вес' : 'В среднем за день'}</CapLabel>
+                                <CapLabel lines={2}>{isWeight ? 'Текущий вес' : 'В среднем за день'}</CapLabel>
                               <View className="mt-2.5 flex-row items-center gap-2.5">
                                 <AvgBubble metric={metric} />
                                 <Text
@@ -428,7 +483,7 @@ export function MetricHistoryModal({
                                         : <ArrowUpRight size={14} color={weightDeltaTone} />
                                     )}
                                     <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-medium text-[13.5px]" style={{ color: weightDeltaTone }}>
-                                      {`${weightDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(weightDelta))} кг за ${days} ${pluralDays(days)}`}
+                                      {`${weightDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(weightDelta))} кг · ${days} дн.`}
                                     </Text>
                                   </View>
                                 ) : null
@@ -444,18 +499,20 @@ export function MetricHistoryModal({
                               )}
                             </View>
 
-                            {/* Вертикальная черта — только на неделе */}
-                            {side && <View className="w-px self-stretch bg-white/10" />}
+                            {/* Вертикальная черта между средним и графиком —
+                                во всех периодах, как на макете */}
+                            <View className="w-px self-stretch bg-white/10" />
 
                             {/* График по дням */}
-                            <View className={side ? 'min-w-0 flex-1' : 'mt-3 border-t border-white/10 pt-3'}>
+                            <View className="min-w-0 flex-1">
                               <CapLabel>{`По дням · ${days} дн.`}</CapLabel>
                               <View
+                                onLayout={(e) => setChartW(e.nativeEvent.layout.width)}
                                 style={{
                                   height: BUBBLE_H + CHART_H,
                                   flexDirection: 'row',
                                   alignItems: 'flex-end',
-                                  gap: days > 30 ? 1 : 3,
+                                  gap: days > 7 ? 1 : 2,
                                   marginTop: 8,
                                 }}
                               >
@@ -463,13 +520,7 @@ export function MetricHistoryModal({
                                   const v = row[metric.key] || 0
                                   const highlight = isWeight ? i === latestIdx : v > 0 && v === maxVal
                                   const isToday = row.key === todayKey
-                                  const h = isWeight
-                                    ? v > 0
-                                      ? Math.max(6, Math.round(((v - wScaleLo) / Math.max(wScaleHi - wScaleLo, 0.1)) * CHART_H))
-                                      : 3
-                                    : v > 0
-                                      ? Math.max(3, Math.round((v / maxVal) * CHART_H))
-                                      : 3
+                                  const h = barH(v)
                                   const bar =
                                     v > 0 && highlight ? (
                                       <LinearGradient
@@ -491,22 +542,11 @@ export function MetricHistoryModal({
                                     )
                                   return (
                                     <View key={row.key} style={{ flex: 1, height: '100%', justifyContent: 'flex-end' }}>
-                                      {/* Подпись над столбиком — только на неделе:
-                                          на 30/90 днях колонка уже текста */}
-                                      {highlight && days <= 7 && (
-                                        <Text
-                                          numberOfLines={1}
-                                          className="mb-0.5 text-center font-sans text-[12.5px] font-bold"
-                                          style={{ color: metric.color }}
-                                        >
-                                          {metric.fmt(v)}
-                                        </Text>
-                                      )}
                                       {days <= 30 ? (
                                         <Pressable
                                           onPress={() => setDayKey(row.key)}
                                           accessibilityRole="button"
-                                          accessibilityLabel={`${row.label}: ${v > 0 ? metric.fmt(v) : 'нет записей'}. Тап — сводка дня`}
+                                          accessibilityLabel={`${wdDateLabel(row.key)}: ${v > 0 ? metric.fmt(v) : 'нет записей'}. Тап — сводка дня`}
                                           hitSlop={{ top: 2, bottom: 2, left: 1, right: 1 }}
                                           style={{ justifyContent: 'flex-end' }}
                                         >
@@ -518,21 +558,66 @@ export function MetricHistoryModal({
                                     </View>
                                   )
                                 })}
+                                {/* Плашка значения над выделенным столбиком —
+                                    абсолютом на всю ширину графика: в узкой
+                                    колонке «1 725» обрезалось до «1 …» */}
+                                {hlIdx >= 0 && chartW > 0 &&
+                                  (() => {
+                                    const bw = 68
+                                    const col = chartW / rows.length
+                                    const left = Math.min(Math.max(hlIdx * col + col / 2 - bw / 2, 0), Math.max(0, chartW - bw))
+                                    return (
+                                      <Text
+                                        numberOfLines={1}
+                                        className="absolute font-sans text-[12.5px] font-bold"
+                                        style={{ color: metric.color, bottom: hlH + 3, left, width: bw, textAlign: 'center' }}
+                                      >
+                                        {metric.fmt(hlV)}
+                                      </Text>
+                                    )
+                                  })()}
                               </View>
-                              {/* Подписи дат: неделя — все, дальше — начало/середина/конец */}
-                              <View style={{ flexDirection: 'row', gap: days > 30 ? 1 : 3 }} className="mt-1.5">
-                                {rows.map((row, i) => (
-                                  <Text
-                                    key={row.key}
-                                    numberOfLines={1}
-                                    className={`flex-1 text-center font-sans text-[11.5px] ${
-                                      row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
-                                    }`}
-                                  >
-                                    {!sparse || sparse.has(i) ? row.label : ' '}
-                                  </Text>
-                                ))}
-                              </View>
+                              {/* Подписи дат «7.11» вместо «1 ноя», которое
+                                  в узких колонках обрезалось до «1 …» (отзыв
+                                  Кати): неделя — каждая дата, 30/90 — начало,
+                                  середина и конец отдельной строкой, чтобы
+                                  дата не зажималась в колонку столбика */}
+                              {rows.length <= 7 ? (
+                                <View style={{ flexDirection: 'row', gap: 2 }} className="mt-1.5">
+                                  {rows.map((row) => (
+                                    <Text
+                                      key={row.key}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                      minimumFontScale={0.7}
+                                      className={`flex-1 text-center font-sans text-[10px] ${
+                                        row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                                      }`}
+                                    >
+                                      {dotDateFromKey(row.key)}
+                                    </Text>
+                                  ))}
+                                </View>
+                              ) : (
+                                <View className="mt-1.5 flex-row items-center justify-between">
+                                  {labelIndexes(rows.length).map((idx) => {
+                                    const row = rows[idx]
+                                    const edge = idx === 0 ? 'text-left' : idx === rows.length - 1 ? 'text-right' : 'text-center'
+                                    return (
+                                      <Text
+                                        key={row.key}
+                                        numberOfLines={1}
+                                        maxFontSizeMultiplier={1.1}
+                                        className={`flex-1 font-sans text-[11px] ${edge} ${
+                                          row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                                        }`}
+                                      >
+                                        {dotDateFromKey(row.key)}
+                                      </Text>
+                                    )
+                                  })}
+                                </View>
+                              )}
                             </View>
                           </View>
                         </Glass>
@@ -549,7 +634,7 @@ export function MetricHistoryModal({
                                 Пока нет данных
                               </Text>
                             ) : (
-                              <View className="mt-2 gap-2">
+                              <View className="mt-2 gap-2.5">
                                 {top.map(({ row, value, dev }, i) => (
                                   <Pressable
                                     key={row.key}
@@ -557,18 +642,30 @@ export function MetricHistoryModal({
                                     accessibilityRole="button"
                                     accessibilityLabel={
                                       isWeight
-                                        ? `${row.label}: ${metric.fmt(value)}. Тап — сводка дня`
+                                        ? `${wdDateLabel(row.key)}: ${metric.fmt(value)}. Тап — сводка дня`
                                         : dev != null
-                                          ? `${row.label}: ${metric.fmt(value)}, отклонение ${dev} ккал от цели. Тап — сводка дня`
-                                          : `${row.label}: ${metric.fmt(value)}. Тап — сводка дня`
+                                          ? `${wdDateLabel(row.key)}: ${metric.fmt(value)}, отклонение ${dev} ккал от цели. Тап — сводка дня`
+                                          : `${wdDateLabel(row.key)}: ${metric.fmt(value)}. Тап — сводка дня`
                                     }
-                                    className="flex-row items-center gap-2 active:opacity-70"
+                                    className="active:opacity-70"
                                   >
-                                    <RankBubble metric={metric} n={i + 1} />
-                                    <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[14.5px] text-bear-sub">
-                                      {row.label}
+                                    {/* Кружок места и чип значения в строку,
+                                        дата — под ними на всю ширину: раньше
+                                        дата выдавливалась чипом в ноль (отзыв
+                                        Кати про «1725 выходит за рамки») */}
+                                    <View className="flex-row items-center gap-2">
+                                      <RankBubble metric={metric} n={i + 1} />
+                                      <ValueChip metric={metric} value={metric.fmt(value)} />
+                                    </View>
+                                    <Text
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                      minimumFontScale={0.8}
+                                      maxFontSizeMultiplier={1.1}
+                                      className="mt-1 font-sans text-[12px] text-bear-dim"
+                                    >
+                                      {wdDateLabel(row.key)}
                                     </Text>
-                                    <ValueChip metric={metric} value={metric.fmt(value)} />
                                   </Pressable>
                                 ))}
                               </View>
@@ -577,8 +674,10 @@ export function MetricHistoryModal({
 
                           {/* По дням недели: строка точек Пн…Вс — цвет точки
                               это уровень среднего за день недели; у сегод-
-                              няшнего дня недели обводка */}
-                          <Glass className="shrink-0 p-3.5" style={{ width: 7 * 24 + 28 }}>
+                              няшнего дня недели обводка. Колонка уже (20px),
+                              зато «Лучшим дням» достаётся ширина — подписи
+                              и даты больше не обрезаются (отзыв Кати) */}
+                          <Glass className="shrink-0 p-3" style={{ width: 7 * WD_COL + 24 }}>
                             <CapLabel>По дням недели</CapLabel>
                             <View className="mt-2.5 flex-row">
                               {WD.map((w, i) => {
@@ -589,11 +688,13 @@ export function MetricHistoryModal({
                                     : STUB
                                   : levelColor(metric, dayLevel(metric.key, b.avg, goals[GOAL_KEY[metric.key]] || 0))
                                 return (
-                                  <View key={w} style={{ width: 24, alignItems: 'center' }}>
+                                  <View key={w} style={{ width: WD_COL, alignItems: 'center' }}>
                                     <Text
                                       numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                      minimumFontScale={0.8}
                                       maxFontSizeMultiplier={1.1}
-                                      className={`font-sans text-[11.5px] ${i === todayWd ? 'font-bold text-bear-text' : 'text-bear-dim'}`}
+                                      className={`font-sans text-[10px] ${i === todayWd ? 'font-bold text-bear-text' : 'text-bear-dim'}`}
                                     >
                                       {w}
                                     </Text>
@@ -620,9 +721,10 @@ export function MetricHistoryModal({
                           </Glass>
                         </View>
 
-                        {/* Легенда */}
-                        <View className="flex-row flex-wrap items-center justify-center gap-x-3.5 gap-y-1">
-                          {legendOf(metric).map(([level, label]) => (
+                        {/* Легенда — только уровни, которые реально
+                            встречаются в периоде: меньше строк — окно ниже */}
+                        <View className="flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                          {legend.map(([level, label]) => (
                             <View key={level} className="flex-row items-center gap-1.5">
                               <View
                                 style={{
@@ -632,7 +734,7 @@ export function MetricHistoryModal({
                                   backgroundColor: levelColor(metric, level),
                                 }}
                               />
-                              <Text className="font-sans text-[13.5px] text-bear-dim">{label}</Text>
+                              <Text maxFontSizeMultiplier={1.1} className="font-sans text-[12.5px] text-bear-dim">{label}</Text>
                             </View>
                           ))}
                         </View>

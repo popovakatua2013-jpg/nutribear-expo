@@ -25,6 +25,17 @@ export function shortDate(date) {
   }).format(date)
 }
 
+// «7.11» — числовая дата без ведущих нулей по ключу дня «ГГГГ-ММ-ДД».
+// Подписи дней в окнах истории: «1 ноя» из shortDate в узких колонках
+// графика обрезалось до «1 …» / «…» (отзыв Кати: «должен быть месяц
+// вместо точек или 7.11 8.11 9.11») — числовой формат помещается всегда.
+// Мусорный ключ — пустая строка (подпись просто не рисуется).
+export function dotDateFromKey(key) {
+  const d = new Date(`${key}T00:00:00`)
+  if (!key || Number.isNaN(d.getTime())) return ''
+  return `${d.getDate()}.${d.getMonth() + 1}`
+}
+
 function savedDays() {
   return useHistoryStore.getState().days || {}
 }
