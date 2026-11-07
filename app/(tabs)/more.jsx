@@ -15,6 +15,7 @@
 // «О приложении» (и внутри неё).
 // Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
 
+import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings } from 'lucide-react-native'
@@ -32,6 +33,7 @@ import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { AboutCard } from '@/components/more/AboutCard'
+import { LegalModal } from '@/components/more/LegalModal'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BodyChip } from '@/components/ui/BodyChip'
 import { useCycleStore, daysToNext } from '@/store/useCycleStore'
@@ -46,6 +48,10 @@ import { BUILD_HASH } from '@/lib/version'
 
 export default function MoreScreen() {
   const insets = useSafeAreaInsets()
+  // Окно «Правовые документы»: политика, соглашение и дисклеймер —
+  // в одном месте, вместо длинных абзацев внутри карточек (отзыв Кати:
+  // «если данные по закону нужны — перепиши их в документы»)
+  const [legalOpen, setLegalOpen] = useState(false)
 
   // ── Живые значения строк меню — из тех же сторов, что и виджеты ──
   // Цикл: «через N дн» / «ожидается сегодня» / «задержка N дн»
@@ -236,6 +242,13 @@ export default function MoreScreen() {
             <DataActions embedded />
           </MenuRow>
           <MenuRow
+            icon="📄"
+            iconBg="rgba(96,165,250,0.16)"
+            title="Правовые документы"
+            value="3 документа"
+            onPress={() => setLegalOpen(true)}
+          />
+          <MenuRow
             icon="🐻"
             iconBg="rgba(139,92,246,0.16)"
             title="О приложении"
@@ -245,6 +258,10 @@ export default function MoreScreen() {
           </MenuRow>
         </MenuGroup>
       </ScrollView>
+
+      {/* Правовые документы: политика конфиденциальности, пользовательское
+          соглашение и медицинский дисклеймер — один документ-окно */}
+      <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
     </View>
   )
 }

@@ -37,12 +37,16 @@ export function MenuGroup({ title, children }) {
 
 // Строка меню: иконка-квадрат + название + значение + шеврон.
 // Тап раскрывает содержимое (виджет) прямо внутри секции.
+// Строка-действие: если задан onPress — тап вызывает его вместо
+// раскрытия (например, «Правовые документы» открывает окно),
+// шеврон остаётся направленным вправо.
 export function MenuRow({
   icon,
   iconBg,
   title,
   value,
   children,
+  onPress,
   accessibilityLabel,
   bordered = false,
 }) {
@@ -51,10 +55,10 @@ export function MenuRow({
   return (
     <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-white/[0.06]' : ''}>
       <Pressable
-        onPress={() => setOpen((s) => !s)}
+        onPress={onPress ? onPress : () => setOpen((s) => !s)}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={open ? `Свернуть: ${title}` : `Раскрыть: ${title}`}
+        accessibilityState={onPress ? undefined : { expanded: open }}
+        accessibilityLabel={onPress ? title : open ? `Свернуть: ${title}` : `Раскрыть: ${title}`}
         className="min-w-0 flex-row items-center gap-3 px-4 py-3 active:opacity-70"
       >
         {/* Цветной квадрат-иконка (как плитки на референсе Кати) */}

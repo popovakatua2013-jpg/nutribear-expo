@@ -1,17 +1,16 @@
-// О приложении: версия, сборка (бейдж), описание, медицинский дисклеймер
-// и кнопка «Правовая информация» (политика + соглашение)
+// О приложении: краткое описание и версия со сборкой (бейдж).
+// Длинные юридические тексты (дисклеймер, политика, соглашение) убраны
+// из карточки — по отзыву Кати («если эти данные по закону нужны, можно
+// ли переписать их в документы») они теперь живут в отдельном документе-
+// окне «Ещё → Правовые документы».
 // Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
 // и шапки — содержимое встраивается в строку меню «О приложении»
 // (хэш сборки виден прямо в строке — там же, где проверяют обновление).
 
-import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { ChevronRight, FileText } from 'lucide-react-native'
+import { Text, View } from 'react-native'
 import Constants from 'expo-constants'
-import { DISCLAIMER } from '@/lib/data/disclaimer'
 import { BUILD_HASH } from '@/lib/version'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
-import { LegalModal } from '@/components/more/LegalModal'
 
 // Версия из app.json (expo), а не захардкоженная
 const VERSION = Constants?.expoConfig?.version || '1.0'
@@ -20,8 +19,6 @@ const VERSION = Constants?.expoConfig?.version || '1.0'
 const BUILD = BUILD_HASH || 'dev'
 
 export function AboutCard({ embedded = false }) {
-  const [legalOpen, setLegalOpen] = useState(false)
-
   const content = (
     <>
       <Text className="mx-auto mt-1 max-w-[300px] text-center font-sans text-[16.5px] leading-relaxed text-bear-sub2">
@@ -29,34 +26,11 @@ export function AboutCard({ embedded = false }) {
         пей воду, ходи пешком и получай награды — все данные хранятся
         только на твоём устройстве.
       </Text>
-      <View className="mx-auto mt-3 w-full max-w-[300px] border-t border-white/5 pt-3">
-        <Text className="text-center font-sans text-[15px] leading-relaxed text-bear-dim">
-          {DISCLAIMER}
-        </Text>
-      </View>
 
       {/* Полная строка версии: бейдж в шапке обрезан до хэша, здесь — целиком */}
       <Text maxFontSizeMultiplier={1.25} className="mt-3 text-center font-sans text-[13px] text-bear-dim">
         Версия {VERSION} · сборка {BUILD}
       </Text>
-
-      {/* Правовая информация: политика конфиденциальности + соглашение */}
-      <Pressable
-        onPress={() => setLegalOpen(true)}
-        accessibilityLabel="Открыть правовую информацию"
-        accessibilityRole="button"
-        className="mt-3 w-full max-w-[300px] flex-row items-center justify-between self-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 active:opacity-80"
-      >
-        <View className="flex-row items-center">
-          <FileText size={18} color="#8DABFF" />
-          <Text className="ml-2.5 font-bold text-[17.5px] text-bear-text">
-            Правовая информация
-          </Text>
-        </View>
-        <ChevronRight size={18} color="#A5AECB" />
-      </Pressable>
-
-      <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
     </>
   )
 

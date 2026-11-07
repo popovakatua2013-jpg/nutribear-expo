@@ -1,16 +1,19 @@
-// Окно «Правовая информация»: вкладки «Политика конфиденциальности»
-// и «Пользовательское соглашение», кнопка связи с поддержкой.
-// Открывается из «О приложении» и из согласия при регистрации.
+// Окно «Правовые документы»: три вкладки — «Политика конфиденциальности»,
+// «Пользовательское соглашение» и «Медицинский дисклеймер», кнопка связи
+// с поддержкой. Открывается из строки «Правовые документы» на вкладке
+// «Ещё» (длинные юридические тексты убраны из карточек — по отзыву
+// Кати «можно ли переписать их в документы») и из согласия при регистрации.
 
 import { useEffect, useState } from 'react'
 import { Linking, Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { FileText, Mail, ShieldCheck, X } from 'lucide-react-native'
+import { FileText, Mail, ShieldCheck, Stethoscope, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { OPERATOR, PRIVACY_SECTIONS, TERMS_SECTIONS } from '@/lib/data/legal'
+import { OPERATOR, PRIVACY_SECTIONS, TERMS_SECTIONS, MEDICAL_SECTIONS } from '@/lib/data/legal'
 
 const TABS = [
   { id: 'privacy', label: 'Политика', Icon: ShieldCheck, sections: PRIVACY_SECTIONS },
   { id: 'terms', label: 'Соглашение', Icon: FileText, sections: TERMS_SECTIONS },
+  { id: 'medical', label: 'Дисклеймер', Icon: Stethoscope, sections: MEDICAL_SECTIONS },
 ]
 
 export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
@@ -34,7 +37,7 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-1">
-              <Text className="font-bold text-[20px] text-bear-text">Правовая информация</Text>
+              <Text className="font-bold text-[20px] text-bear-text">Правовые документы</Text>
               <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
                 Редакция от {OPERATOR.effective}
               </Text>
@@ -57,7 +60,7 @@ export function LegalModal({ open, onClose, initialTab = 'privacy' }) {
                 <Pressable
                   key={t.id}
                   onPress={() => setTabId(t.id)}
-                  accessibilityLabel={`Показать ${t.label}`}
+                  accessibilityLabel={`Показать: ${t.label}`}
                   className="overflow-hidden rounded-full"
                 >
                   {active ? (
