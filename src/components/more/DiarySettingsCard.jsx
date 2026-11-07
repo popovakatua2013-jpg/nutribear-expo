@@ -74,46 +74,51 @@ export function DiarySettingsCard() {
         {Object.keys(DAY_TYPES).map((t) => {
           const meta = DAY_TYPES[t]
           const val = deltas[t] || 0
+          const btn =
+            'h-9 w-9 items-center justify-center rounded-full active:opacity-70'
           return (
-            <View key={t} className="flex-row items-center gap-2.5">
-              <Text className="w-8 text-center text-[20px]">{meta.emoji}</Text>
-              <Text numberOfLines={1} className="min-w-0 flex-1 font-bold text-[15.5px] text-bear-text">
-                {meta.label}
-              </Text>
-              <Pressable
-                onPress={() => setDelta(t, Math.max(DELTA_MIN, val - DELTA_STEP))}
-                disabled={val <= DELTA_MIN}
-                accessibilityRole="button"
-                accessibilityLabel={`Уменьшить прибавку для «${meta.label}»`}
-                hitSlop={6}
-                className={`h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70 ${
-                  val <= DELTA_MIN ? 'opacity-30' : ''
-                }`}
-              >
-                <Minus size={16} color="#AEB9D9" />
-              </Pressable>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-                maxFontSizeMultiplier={1.1}
-                className="w-[86px] shrink-0 text-center font-bold text-[15px] text-bear-text"
-              >
-                {`+${formatNum(val)} ккал`}
-              </Text>
-              <Pressable
-                onPress={() => setDelta(t, Math.min(DELTA_MAX, val + DELTA_STEP))}
-                disabled={val >= DELTA_MAX}
-                accessibilityRole="button"
-                accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
-                hitSlop={6}
-                className={`h-9 w-9 items-center justify-center rounded-full active:opacity-70 ${
-                  val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''
-                }`}
-                style={{ backgroundColor: 'rgba(123,108,246,0.15)' }}
-              >
-                <Plus size={16} color="#A78BFA" />
-              </Pressable>
+            <View key={t} className="rounded-xl bg-white/[0.03] px-3 py-2.5">
+              {/* Название — всей шириной строки: «Менструация», «Командировка»
+                  и «Праздник» больше не обрезаются на узких экранах */}
+              <View className="flex-row items-center gap-2.5">
+                <Text className="w-8 text-center text-[20px]">{meta.emoji}</Text>
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  className="min-w-0 flex-1 font-bold text-[15.5px] text-bear-text"
+                >
+                  {meta.label}
+                </Text>
+              </View>
+              {/* Степпер отдельной строкой: − прибавка + */}
+              <View className="mt-2 flex-row items-center gap-3 pl-[42px]">
+                <Pressable
+                  onPress={() => setDelta(t, Math.max(DELTA_MIN, val - DELTA_STEP))}
+                  disabled={val <= DELTA_MIN}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Уменьшить прибавку для «${meta.label}»`}
+                  hitSlop={6}
+                  className={`${btn} bg-white/5 ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
+                >
+                  <Minus size={16} color="#AEB9D9" />
+                </Pressable>
+                <Text
+                  maxFontSizeMultiplier={1.1}
+                  className="min-w-0 flex-1 text-center font-bold text-[15px] text-[#C4B5FD]"
+                >
+                  {`+${formatNum(val)} ккал`}
+                </Text>
+                <Pressable
+                  onPress={() => setDelta(t, Math.min(DELTA_MAX, val + DELTA_STEP))}
+                  disabled={val >= DELTA_MAX}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
+                  hitSlop={6}
+                  className={`${btn} ${val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''}`}
+                  style={val >= DELTA_MAX ? null : { backgroundColor: 'rgba(123,108,246,0.15)' }}
+                >
+                  <Plus size={16} color="#A78BFA" />
+                </Pressable>
+              </View>
             </View>
           )
         })}

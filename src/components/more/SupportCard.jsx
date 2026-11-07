@@ -70,9 +70,10 @@ export function SupportCard() {
 
   return (
     <View accessibilityLabel="Поддержка" className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4">
-      {/* Шапка: чип-робот + заголовок + подсказка (как на шаблоне) */}
+      {/* Шапка: чип + заголовок + подсказка; справа — крупный робот,
+          как на шаблоне */}
       <View className="flex-row items-center gap-2.5">
-        <BodyChip icon={<Text className="text-[19px]">🤖</Text>} />
+        <BodyChip icon={<Text className="text-[19px]">💬</Text>} />
         <View className="min-w-0 flex-1">
           <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
             Поддержка и помощь
@@ -85,6 +86,9 @@ export function SupportCard() {
             Отвечаем на вопросы и советы — читаем всё
           </Text>
         </View>
+        <Text maxFontSizeMultiplier={1.1} className="shrink-0 text-[34px]" accessibilityLabel="Робот-помощник">
+          🤖
+        </Text>
       </View>
 
       {/* Темы обращения: тап — окно письма с выбранной темой */}
@@ -121,9 +125,6 @@ export function SupportCard() {
           className="min-w-0 flex-1 font-sans text-[14.5px] text-bear-sub"
         >
           {EMAIL}
-        </Text>
-        <Text maxFontSizeMultiplier={1.15} className="shrink-0 font-sans text-[12.5px] text-bear-dim">
-          из политики конфиденциальности
         </Text>
       </View>
 

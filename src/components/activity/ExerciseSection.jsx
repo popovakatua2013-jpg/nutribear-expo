@@ -497,79 +497,85 @@ export function ExerciseSection({ flat = false }) {
       </View>
 
       <View className="mt-2 flex-row gap-2">
-        {/* Hero «Сегодняшняя тренировка»: точка-статус, эмодзи-плитка,
-            название и метрики самой свежей записи дня, кнопка добавления;
-            справа фото — как на шаблоне */}
+        {/* Hero «Сегодняшняя тренировка» (шаблон): точка-статус и заголовок
+            на всю ширину карточки, запись (плитка + название) с фото-акцентом
+            справа, кнопка — на всю ширину карточки: на узких экранах (360dp)
+            ничего не пережимается и не обрезается. Метрики записи — своей
+            строкой под названием */}
         <View
           className="min-w-0 flex-1 overflow-hidden rounded-3xl border border-white/10"
           style={{ backgroundColor: 'rgba(123,108,246,0.10)' }}
         >
-          <View className="flex-row">
-            <View className="min-w-0 flex-1 p-3.5">
-              <View className="flex-row items-center gap-1.5">
-                <View
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: hero ? '#4ADE80' : 'rgba(255,255,255,0.25)' }}
+          <View className="px-3.5 pt-3">
+            <View className="flex-row items-center gap-1.5">
+              <View
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: hero ? '#4ADE80' : 'rgba(255,255,255,0.25)' }}
+              />
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.1}
+                className="min-w-0 flex-1 font-semibold text-[13px] text-bear-sub"
+              >
+                Сегодняшняя тренировка
+              </Text>
+            </View>
+            <View className="mt-2.5 flex-row items-center gap-2">
+              <View
+                className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                style={{ backgroundColor: 'rgba(123,108,246,0.22)' }}
+              >
+                <Text className="text-[22px]">{hero ? hero.emoji : '🏃'}</Text>
+              </View>
+              <Text
+                numberOfLines={hero ? 1 : 2}
+                maxFontSizeMultiplier={1.15}
+                className="min-w-0 flex-1 font-bold text-[16.5px] leading-tight text-bear-text"
+              >
+                {hero ? hero.name : 'Тренировок ещё нет'}
+              </Text>
+              {hero && (
+                <ImageBackground
+                  source={SNEAKERS}
+                  style={{ width: 60, height: 44, borderRadius: 14 }}
+                  imageStyle={{ resizeMode: 'cover', borderRadius: 14 }}
+                  accessibilityLabel="Кроссовки"
                 />
+              )}
+            </View>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              maxFontSizeMultiplier={1.1}
+              className="mt-1 font-sans text-[13px] leading-tight text-bear-sub2"
+            >
+              {hero
+                ? `${hero.minutes} мин · ${formatNum(hero.kcal)} ккал`
+                : 'Добавьте первую — прогулка тоже считается'}
+            </Text>
+          </View>
+          {/* Кнопка — на всю ширину карточки: «Добавить тренировку» всегда
+              в одну строку (референс: широкая градиентная кнопка) */}
+          <Pressable
+            onPress={() => openModal(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Добавить тренировку"
+            className="mt-2.5 overflow-hidden active:opacity-80"
+          >
+            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
+              <View className="flex-row items-center justify-center gap-1.5 py-2.5">
+                <Play size={15} color="#FFFFFF" />
                 <Text
                   numberOfLines={1}
-                  maxFontSizeMultiplier={1.1}
-                  className="font-semibold text-[13px] text-bear-sub"
+                  maxFontSizeMultiplier={1.05}
+                  className="font-bold text-[14.5px] text-white"
                 >
-                  Сегодняшняя тренировка
+                  Добавить тренировку
                 </Text>
               </View>
-              <View className="mt-2 flex-row items-center gap-2.5">
-                <View
-                  className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: 'rgba(123,108,246,0.22)' }}
-                >
-                  <Text className="text-[22px]">{hero ? hero.emoji : '🏃'}</Text>
-                </View>
-                <View className="min-w-0 flex-1">
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    maxFontSizeMultiplier={1.15}
-                    className="font-bold text-[18px] leading-tight text-bear-text"
-                  >
-                    {hero ? hero.name : 'Пока нет тренировок'}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    maxFontSizeMultiplier={1.1}
-                    className="font-sans text-[13.5px] leading-tight text-bear-sub2"
-                  >
-                    {hero
-                      ? `${hero.minutes} мин · ${formatNum(hero.kcal)} ккал`
-                      : 'Даже прогулка считается'}
-                  </Text>
-                </View>
-              </View>
-              <Pressable
-                onPress={() => openModal(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Добавить тренировку"
-                className="mt-3 overflow-hidden rounded-2xl active:opacity-80"
-              >
-                <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
-                  <View className="flex-row items-center justify-center gap-1.5 py-2.5">
-                    <Play size={15} color="#FFFFFF" />
-                    <Text className="font-bold text-[15px] text-white">Добавить тренировку</Text>
-                  </View>
-                </LinearGradient>
-              </Pressable>
-            </View>
-            <ImageBackground
-              source={SNEAKERS}
-              style={{ width: 88 }}
-              imageStyle={{ resizeMode: 'cover' }}
-              accessibilityLabel="Кроссовки"
-            />
-          </View>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {/* Кольцо недели: % от недельной нормы 150 минут (рекомендация
@@ -588,7 +594,7 @@ export function ExerciseSection({ flat = false }) {
           }
           accessibilityRole="button"
           accessibilityLabel={`Выполнено за неделю ${week.pct} процентов`}
-          className="w-[112px] shrink-0 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] py-3 active:opacity-80"
+          className="w-[104px] shrink-0 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] py-3 active:opacity-80"
         >
           <WeekRing pct={week.pct} />
           <Text

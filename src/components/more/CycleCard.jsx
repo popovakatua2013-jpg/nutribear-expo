@@ -177,31 +177,83 @@ export function CycleCard() {
 
   return (
     <View accessibilityLabel="Цикл" className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
-      {/* Шапка: кольцо «N дней до след. цикла» + подписи, как на шаблоне */}
-      <Pressable
-        onPress={() => setOpen((s) => !s)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={open ? 'Свернуть цикл' : 'Настройки цикла'}
-        className="flex-row items-center gap-3.5 px-4 py-4 active:opacity-80"
-      >
-        <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
-        <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">Цикл</Text>
-          <Text className="font-semibold text-[15px] text-bear-bright">Трекер цикла</Text>
-          <Text
-            maxFontSizeMultiplier={1.2}
-            className="font-sans text-[13px] leading-[17px] text-bear-dim"
-          >
-            Фазы цикла и подсказки
-          </Text>
+      {/* Шапка: кольцо «N дней до след. цикла» + подписи; тап раскрывает
+          настройку. Ниже шапки — пилюли пресетов длины цикла, как на шаблоне */}
+      <View className="px-4 pb-3.5 pt-4">
+        <Pressable
+          onPress={() => setOpen((s) => !s)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          accessibilityLabel={open ? 'Свернуть цикл' : 'Настройки цикла'}
+          className="flex-row items-center gap-3.5 active:opacity-80"
+        >
+          <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
+          <View className="min-w-0 flex-1">
+            <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">Цикл</Text>
+            <Text className="font-semibold text-[15px] text-bear-bright">Трекер цикла</Text>
+            <Text
+              maxFontSizeMultiplier={1.2}
+              className="font-sans text-[13px] leading-[17px] text-bear-dim"
+            >
+              Фазы цикла и подсказки
+            </Text>
+          </View>
+          <ChevronDown
+            size={20}
+            color="#A5AECB"
+            style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+          />
+        </Pressable>
+
+        {/* Пилюли — как на шаблоне: быстрые пресеты длины цикла (активная
+            подсвечена; точная подгонка — степпером внутри), а при выключенном
+            трекере — одна яркая пилюля «Включить» прямо с карточки */}
+        <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pl-[110px]">
+          {enabled ? (
+            [24, 28, 32].map((v) => {
+              const active = v === length
+              return (
+                <Pressable
+                  key={v}
+                  onPress={() => setSettings({ length: v })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`Длина цикла ${v} дней`}
+                  hitSlop={4}
+                  className="rounded-full px-2.5 py-1.5 active:opacity-80"
+                  style={{ backgroundColor: active ? '#7B6CF6' : 'rgba(255,255,255,0.06)' }}
+                >
+                  <Text
+                    maxFontSizeMultiplier={1.05}
+                    className={`font-semibold text-[12.5px] ${active ? 'text-white' : 'text-bear-dim'}`}
+                  >
+                    {`${v} дн`}
+                  </Text>
+                </Pressable>
+              )
+            })
+          ) : (
+            <Pressable
+              onPress={() => {
+                setEnabled(true)
+                toast({
+                  title: '🌙 Трекер цикла включён',
+                  description: 'Отметьте начало последних месячных — подсказки появятся сами',
+                })
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Включить трекер цикла"
+              hitSlop={4}
+              className="rounded-full px-3.5 py-1.5 active:opacity-80"
+              style={{ backgroundColor: 'rgba(244,114,182,0.16)' }}
+            >
+              <Text maxFontSizeMultiplier={1.1} className="font-bold text-[13px] text-[#F9A8D4]">
+                🌙 Включить трекер
+              </Text>
+            </Pressable>
+          )}
         </View>
-        <ChevronDown
-          size={20}
-          color="#A5AECB"
-          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
-        />
-      </Pressable>
+      </View>
 
       {open && (
         <View className="px-4 pb-4">

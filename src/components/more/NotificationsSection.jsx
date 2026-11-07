@@ -9,7 +9,7 @@
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Bell, ChevronDown, Flame, Scale, UtensilsCrossed } from 'lucide-react-native'
+import { Bell, ChevronRight, Flame, Scale, UtensilsCrossed } from 'lucide-react-native'
 import { BodyChip } from '../ui/BodyChip'
 import { MealRemindersCard } from './MealRemindersCard'
 import { WeighReminderCard } from './WeighReminderCard'
@@ -103,28 +103,21 @@ export function NotificationsSection() {
         className="min-w-0 flex-row items-center gap-2.5 px-4 py-3.5 active:opacity-70"
       >
         <BodyChip icon={<Bell size={20} color="#C4B5FD" />} />
-        <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
-            Напоминания
+        <Text className="min-w-0 flex-1 font-extrabold text-[20px] tracking-tight text-bear-text">
+          Напоминания
+        </Text>
+        {/* Чип «Все» — как на шаблоне: раскрывает полный набор настроек */}
+        <View className="flex-row shrink-0 items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5">
+          <Text maxFontSizeMultiplier={1.1} className="font-semibold text-[13.5px] text-bear-soft">
+            Все
           </Text>
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.2}
-            className="font-sans text-[13.5px] leading-snug text-bear-dim"
-          >
-            {open ? 'Все настройки — тумблеры и время' : 'Быстрые тумблеры · «Все настройки» внутри'}
-          </Text>
+          <ChevronRight size={14} color="#A5AECB" />
         </View>
-        <ChevronDown
-          size={20}
-          color="#A5AECB"
-          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
-        />
       </Pressable>
 
       {/* Быстрые тумблеры — видны всегда, работают без раскрытия секции.
-          Заголовки короткие («Калории», «Еда», «Вес»): в узкую плитку
-          длинные слова («Напоминания») не помещаются без обреза */}
+          Подписи — коротким статусом, как на шаблоне («Тренировка не
+          возвращают калории», «Взвешивание и замеры») */}
       <View className="flex-row gap-2 px-3 pb-3">
         <QuickTile
           a11y="Тренировки возвращают калории"
@@ -138,7 +131,7 @@ export function NotificationsSection() {
           a11y="Напоминания о еде"
           icon={<UtensilsCrossed size={18} color="#F59E0B" />}
           title="Еда"
-          sub={meals.enabled ? 'напоминания вкл' : 'по времени'}
+          sub={meals.enabled ? 'о приёмах пищи' : 'напоминания выкл'}
           value={meals.enabled}
           onChange={(v) => toggleWithPermission(meals, (m, on) => ({ meals: { ...m, enabled: on } }), v)}
         />
@@ -146,7 +139,7 @@ export function NotificationsSection() {
           a11y="Напоминание о взвешивании"
           icon={<Scale size={18} color="#7DD3FC" />}
           title="Вес"
-          sub={weigh.enabled ? 'напоминание вкл' : 'раз в неделю'}
+          sub={weigh.enabled ? 'взвешивание вкл' : 'раз в неделю'}
           value={weigh.enabled}
           onChange={(v) => toggleWithPermission(weigh, (w, on) => ({ weigh: { ...w, enabled: on } }), v)}
         />
