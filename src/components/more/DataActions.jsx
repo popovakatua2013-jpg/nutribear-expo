@@ -25,7 +25,7 @@ import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
 
-export function DataActions({ embedded = false }) {
+export function DataActions({ embedded = false, variant = null }) {
   const { toast } = useToast()
   const entries = useFoodStore((s) => s.entries)
   const resetDay = useFoodStore((s) => s.resetDay)
@@ -93,6 +93,44 @@ export function DataActions({ embedded = false }) {
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },
       ]
+    )
+  }
+
+  // Вариант «только новый день» — для строки «Начать новый день»
+  if (variant === 'newday') {
+    return (
+      <View accessibilityLabel="Начать новый день" className="mt-1">
+        <Pressable
+          onPress={newDay}
+          className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        >
+          <Sunrise size={20} color="#fbbf24" />
+          <View className="min-w-0 flex-1">
+            <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
+            <Text className="font-sans text-[15px] text-bear-sub2">
+              {kcal > 0
+                ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
+                : 'Обнулит дневник, воду и шаги'}
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+    )
+  }
+
+  // Вариант «только стирание» — красная строка внизу «Ещё», как в
+  // стандартных приложениях; подробности — в диалоге подтверждения
+  if (variant === 'wipe') {
+    return (
+      <View accessibilityLabel="Стереть все данные">
+        <Pressable
+          onPress={confirmWipe}
+          className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
+        >
+          <Trash2 size={20} color="#fb7185" />
+          <Text className="min-w-0 flex-1 font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
+        </Pressable>
+      </View>
     )
   }
 

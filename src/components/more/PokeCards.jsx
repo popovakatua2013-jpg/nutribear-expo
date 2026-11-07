@@ -17,7 +17,7 @@ import { ChevronRight, Moon, Sun } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
-import { TimeField } from './MealRemindersCard'
+import { TimeField } from './TimeField'
 
 const SWITCH_COLORS = { true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }
 

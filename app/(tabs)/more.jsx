@@ -1,30 +1,30 @@
-// Экран «Ещё» — редизайн по отзыву Кати («сделай вкладку ещё полностью
-// по другому, не нравится результат»). Вместо стены из 14 больших
-// карточек — компактное групповое меню (как в настройках iOS и в «Ещё»
-// у MyFitnessPal/Yazio):
-//   Герой-профиль: аватар, рост • вес, тап — редактирование
-//   ЗДОРОВЬЕ:      Цикл / Сон / Время пинка
-//   ДНЕВНИК И ЦЕЛИ: Данные / Статистика / Мои цели / Напоминания
-//   ПОДДЕРЖКА:     Поддержка и помощь
-//   ПРИЛОЖЕНИЕ:    Дневник питания / Шаги и здоровье / Приватность /
-//                  Сброс и удаление / О приложении
-// Каждая строка показывает живое значение (время пинка, «через N дн»,
-// норма ккал, «сборка …»); тап раскрывает прежний виджет внутри группы —
-// все компоненты переиспользуются в режиме embedded, логика и данные
-// не менялись. Хэш сборки для проверки обновления — в строке
-// «О приложении» (и внутри неё).
+// Экран «Ещё» — компактное групповое меню (как в настройках iOS и в
+// «Ещё» у MyFitnessPal/Yazio). Структура по отзывам Кати:
+//   Герой-профиль:   аватар, рост • вес, тап — редактирование
+//   ЗДОРОВЬЕ:        Цикл / Сон / Время пинка
+//   ДНЕВНИК И ЦЕЛИ:  Мои цели / Напоминания / Начать новый день
+//   ПОДДЕРЖКА:       Поддержка и помощь
+//   ПРИЛОЖЕНИЕ:      Дневник питания / Шаги и здоровье / Вибрация /
+//                    Стиль пинков / Напоминание мишки / Приватность
+//   Внизу — как в стандартных приложениях: Документы, О приложении
+//   и красная строка «Стереть все данные».
+// Дубли удалены (отзыв Кати: «данные и статистику удалить — дубль»):
+// «Данные» и «Статистика» показывают то же, что вкладки Тело и
+// Активность. «Возвращать калории» — только в «Дневнике питания».
+// Напоминания — раскрывающийся список: тренировка, вода, взвешивание,
+// еда, сон — тумблер вкл/выкл и окно времени, без подсказок.
+// Хэш сборки для проверки обновления — в строке «О приложении» (и
+// внутри неё).
 // Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
 
 import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings } from 'lucide-react-native'
-import { MenuGroup, MenuRow } from '@/components/more/MenuList'
+import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { CycleCard } from '@/components/more/CycleCard'
 import { SleepDashboardCard, KickTimeCard } from '@/components/more/PokeCards'
-import { DataCard } from '@/components/more/DataCard'
-import { StatsCard } from '@/components/more/StatsCard'
 import { GoalPicker } from '@/components/more/GoalPicker'
 import { NotificationsSection } from '@/components/more/NotificationsSection'
 import { SupportCard } from '@/components/more/SupportCard'
@@ -40,17 +40,25 @@ import { useCycleStore, daysToNext } from '@/store/useCycleStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useHistoryStore } from '@/store/useHistoryStore'
-import { streakOf } from '@/lib/streak'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { getDailyTarget } from '@/lib/data/goals'
 import { formatNum } from '@/lib/format'
 import { BUILD_HASH } from '@/lib/version'
 
+// Стиль пинков медведя: мягко / с характером (дефолт) / с перцем
+const STYLE_LABEL = { soft: 'Мягко', bear: 'С характером', spicy: 'С перцем' }
+const STYLE_OPTIONS = [
+  { key: 'soft', label: 'Мягко' },
+  { key: 'bear', label: 'С характером 🐻' },
+  { key: 'spicy', label: 'С перцем 🌶' },
+]
+// Порог «Напоминания мишки»: сколько дней без записи веса
+const NUDGE_OPTIONS = [5, 7, 10].map((n) => ({ key: n, label: `${n} дней` }))
+
 export default function MoreScreen() {
   const insets = useSafeAreaInsets()
-  // Окно «Правовые документы»: политика, соглашение и дисклеймер —
-  // в одном месте, вместо длинных абзацев внутри карточек (отзыв Кати:
-  // «если данные по закону нужны — перепиши их в документы»)
+  // Окно «Документы»: политика, соглашение и дисклеймер — как в
+  // стандартных приложениях, внизу экрана
   const [legalOpen, setLegalOpen] = useState(false)
 
   // ── Живые значения строк меню — из тех же сторов, что и виджеты ──
@@ -69,19 +77,21 @@ export default function MoreScreen() {
           ? 'ожидается сегодня'
           : `через ${left} дн`
 
-  // Данные: стрик дневника («N дн в ряду»)
-  const days = useHistoryStore((s) => s.days)
-  const streak = streakOf(days)
-
-  // Напоминания: сколько включено (сон, тренировка, вода, взвешивание)
+  // Напоминания: сколько включено (вода, еда, взвешивание, тренировка, сон)
   const reminder = useActivityStore((s) => s.reminder)
+  const setReminder = useActivityStore((s) => s.setReminder)
   const sleep = reminder?.sleep || { enabled: false, time: '22:30' }
   const exercise = reminder?.exercise || { enabled: false, time: '18:00' }
+  const meals =
+    reminder?.meals ||
+    { enabled: false, breakfast: '09:00', lunch: '13:00', dinner: '19:00', style: 'bear' }
+  const mealStyle = meals.style === 'soft' ? 'soft' : meals.style === 'spicy' ? 'spicy' : 'bear'
   const remCount = [
-    sleep.enabled,
-    exercise.enabled,
     reminder?.enabled,
+    meals.enabled,
     reminder?.weigh?.enabled,
+    exercise.enabled,
+    sleep.enabled,
   ].filter(Boolean).length
 
   // Мои цели: дневная норма ккал по выбранной цели
@@ -94,6 +104,12 @@ export default function MoreScreen() {
   // Шаги и здоровье: что подключено
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
   const healthConnectEnabled = useActivityStore((s) => s.healthConnectEnabled)
+
+  // Вибро-отклик, стиль пинков и порог «Напоминания мишки»
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  const setHaptics = useUiPrefsStore((s) => s.setHaptics)
+  const weighNudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
+  const setWeighNudgeDays = useUiPrefsStore((s) => s.setWeighNudgeDays)
 
   return (
     <View className="flex-1 bg-bear-bg">
@@ -156,22 +172,6 @@ export default function MoreScreen() {
         {/* ── ДНЕВНИК И ЦЕЛИ ──────────────────────────────────────────── */}
         <MenuGroup title="ДНЕВНИК И ЦЕЛИ">
           <MenuRow
-            icon="📊"
-            iconBg="rgba(77,124,254,0.16)"
-            title="Данные"
-            value={streak > 0 ? `${streak} дн в ряду` : 'вес и ккал'}
-          >
-            <DataCard embedded />
-          </MenuRow>
-          <MenuRow
-            icon="📈"
-            iconBg="rgba(232,121,249,0.16)"
-            title="Статистика"
-            value="За месяц"
-          >
-            <StatsCard embedded />
-          </MenuRow>
-          <MenuRow
             icon="🎯"
             iconBg="rgba(167,139,250,0.16)"
             title="Мои цели"
@@ -185,7 +185,15 @@ export default function MoreScreen() {
             title="Напоминания"
             value={remCount > 0 ? `${remCount} вкл` : 'выключены'}
           >
-            <NotificationsSection embedded />
+            <NotificationsSection />
+          </MenuRow>
+          <MenuRow
+            icon="🌅"
+            iconBg="rgba(251,146,60,0.16)"
+            title="Начать новый день"
+            value="обнулить день"
+          >
+            <DataActions embedded variant="newday" />
           </MenuRow>
         </MenuGroup>
 
@@ -226,6 +234,38 @@ export default function MoreScreen() {
             <SyncCard embedded />
           </MenuRow>
           <MenuRow
+            icon="📳"
+            iconBg="rgba(167,139,250,0.16)"
+            title="Вибрация"
+            toggle={{ value: haptics, onChange: setHaptics, label: 'Вибро-отклик' }}
+          />
+          <MenuRow
+            icon="🐻"
+            iconBg="rgba(139,92,246,0.16)"
+            title="Стиль пинков"
+            value={STYLE_LABEL[mealStyle]}
+          >
+            <PillPicker
+              options={STYLE_OPTIONS}
+              value={mealStyle}
+              onChange={(k) => setReminder({ meals: { ...meals, style: k } })}
+              accessibilityLabel="Стиль напоминаний"
+            />
+          </MenuRow>
+          <MenuRow
+            icon="🐾"
+            iconBg="rgba(251,191,36,0.16)"
+            title="Напоминание мишки"
+            value={`через ${weighNudgeDays} дн`}
+          >
+            <PillPicker
+              options={NUDGE_OPTIONS}
+              value={weighNudgeDays}
+              onChange={setWeighNudgeDays}
+              accessibilityLabel="Через сколько дней напомнить о весе"
+            />
+          </MenuRow>
+          <MenuRow
             icon="🛡"
             iconBg="rgba(74,222,128,0.16)"
             title="Приватность и данные"
@@ -233,19 +273,16 @@ export default function MoreScreen() {
           >
             <DataPortability embedded />
           </MenuRow>
-          <MenuRow
-            icon="🗑"
-            iconBg="rgba(251,113,133,0.16)"
-            title="Сброс и удаление"
-            value="день · стереть всё"
-          >
-            <DataActions embedded />
-          </MenuRow>
+        </MenuGroup>
+
+        {/* ── Документы и О приложении — внизу, как в стандартных
+               приложениях; ниже — красная строка стирания данных ── */}
+        <MenuGroup>
           <MenuRow
             icon="📄"
             iconBg="rgba(96,165,250,0.16)"
-            title="Правовые документы"
-            value="3 документа"
+            title="Документы"
+            value="политика · соглашение"
             onPress={() => setLegalOpen(true)}
           />
           <MenuRow
@@ -257,10 +294,14 @@ export default function MoreScreen() {
             <AboutCard embedded />
           </MenuRow>
         </MenuGroup>
+
+        {/* Стереть все данные: красная строка отдельно, как в стандартных
+            приложениях; подтверждение — в диалоге */}
+        <DataActions embedded variant="wipe" />
       </ScrollView>
 
-      {/* Правовые документы: политика конфиденциальности, пользовательское
-          соглашение и медицинский дисклеймер — один документ-окно */}
+      {/* Документы: политика конфиденциальности, пользовательское
+          соглашение и медицинский дисклеймер — одно окно */}
       <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
     </View>
   )
