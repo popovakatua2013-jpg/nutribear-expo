@@ -2,6 +2,8 @@
 // ккал (тренировки) и опыт — по датам. Наполняется сама, когда вы
 // пользуетесь приложением (экраны «Главная» и «Дневник»).
 // Нужна графикам и отчётам: раньше прошлые дни были нулями.
+// sleepMin — минуты сна за день пробуждения (трекер «лёг/встал»,
+// lib/data/sleep.js); запись ведёт окно «Записать сон» в Отчётах.
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -15,7 +17,7 @@ export function dayKeyOf(d = new Date()) {
   return `${y}-${m}-${day}`
 }
 
-export const EMPTY_DAY = { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0 }
+export const EMPTY_DAY = { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0, sleepMin: 0 }
 
 const MAX_DAYS = 210 // около 7 месяцев: отчёт «90 дней» сравнивает
 // текущий период с предыдущими 90 — итого до 180 дней истории

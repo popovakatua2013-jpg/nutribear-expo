@@ -9,6 +9,7 @@ module.exports = {
     '^expo-constants$': '<rootDir>/__tests__/helpers/expo-constants-stub.js',
     '^@react-native-async-storage/async-storage$': '<rootDir>/__tests__/helpers/async-storage-stub.js',
     '^react-native$': '<rootDir>/__tests__/helpers/react-native-stub.js',
+    '^react-native-svg$': '<rootDir>/__tests__/helpers/react-native-svg-stub.js',
   },
   transform: {
     '^.+\\.(js|jsx)$': ['babel-jest', { configFile: require.resolve('./babel.test.config.js') }],

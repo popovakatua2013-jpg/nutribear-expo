@@ -9,6 +9,7 @@
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { fmtSleep } from '@/lib/data/sleep'
 import { dayData, dayStatus } from '@/lib/data/calendar'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { useOrganismGameStore } from '@/store/useOrganismGameStore'
@@ -44,7 +45,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
     return !Number.isNaN(t.getTime()) && dayKeyOf(t) === dayKey
   })
   const auditVal = d.audit != null ? d.audit : auditDays[dayKey]
-  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !weight && auditVal == null
+  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !d.sleepMin && !weight && auditVal == null
 
   const dt = dayKey ? new Date(`${dayKey}T00:00:00`) : null
   const title = dt ? `${dt.getDate()} ${MONTHS[dt.getMonth()]} · ${WD[dt.getDay()]}` : ''
@@ -95,6 +96,9 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
                     label="Сожжено на тренировках"
                     value={d.burned ? `+${formatNum(d.burned)} ккал` : '—'}
                   />
+                  {/* Сон за ночь этого дня (день пробуждения): «—» — ночей
+                      не записано, как у остальных строк */}
+                  <Row icon="😴" label="Сон" value={d.sleepMin ? fmtSleep(d.sleepMin) : '—'} />
                   {auditVal != null && (
                     <Row
                       icon="🩺"

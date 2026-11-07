@@ -16,6 +16,7 @@ import { WeightTrendCard } from './WeightTrendCard'
 import { DisciplineCard } from './DisciplineCard'
 import { MetricHistoryModal } from './MetricHistoryModal'
 import { NutrientsCard } from './NutrientsCard'
+import { SleepModal } from './SleepModal'
 import { WeeklyShareCard } from './WeeklyShareCard'
 import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
@@ -32,6 +33,9 @@ export function ReportsSection({
 }) {
   const [shareOpen, setShareOpen] = useState(false)
   const [dayShareOpen, setDayShareOpen] = useState(false)
+  // Окно «Записать сон» (лёг/встал): открывается тапом по пустой карточке
+  // «Сон» и кнопкой «Записать» в шапке окна истории сна
+  const [sleepOpen, setSleepOpen] = useState(false)
   // Окно истории: какой показатель открыт (null — закрыто).
   // Панель, разворачивавшаяся под карточками, заменена окном
   const [historyMetric, setHistoryMetric] = useState(null)
@@ -45,7 +49,7 @@ export function ReportsSection({
   const totals = useMemo(() => periodTotals(days, 0, today), [days, today])
   const prev = useMemo(() => periodTotals(days, days), [days])
   // Сколько дней периода велся дневник — для шерингового чипа
-  const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned).length
+  const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned || r.sleepMin).length
 
   // Тап по карточке-итогу: открываем окно истории этого показателя.
   // «Вес» сюда не попадает — у него свой тап, ведущий к графику на
@@ -102,6 +106,7 @@ export function ReportsSection({
         days={days}
         rows={rows}
         onSelectMetric={handleSelectMetric}
+        onAddSleep={() => setSleepOpen(true)}
       />
 
       {/* График веса — своя карточка с переключателем 7/30/90, как на референсе */}
@@ -131,8 +136,15 @@ export function ReportsSection({
           metricId={historyMetric}
           initialRangeId={rangeId}
           today={today}
+          // Кнопка «Записать» — только в истории сна: оттуда открывается
+          // окно «лёг/встал», окно истории остаётся снизу
+          onAdd={historyMetric === 'sleepMin' ? () => setSleepOpen(true) : undefined}
         />
       )}
+
+      {/* Окно «Записать сон»: карточка «Сон» и окно истории открывают его
+          поверх; после сохранения история видит новую ночь сама (стор) */}
+      <SleepModal open={sleepOpen} onClose={() => setSleepOpen(false)} />
     </View>
   )
 }

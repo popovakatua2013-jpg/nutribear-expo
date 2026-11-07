@@ -8,10 +8,14 @@
 // «Опыт» из списка убран: организм его не использует, а в интерфейсе
 // он только путал. Значение по-прежнему пишется в историю дней —
 // данные не теряются, если опыт понадобится позже.
+// «Сон» вернулся в реестр вместе с настоящим трекером (ввод «лёг/встал»,
+// поле sleepMin — минуты за день пробуждения): окно истории, теплокарта
+// и сравнение периодов работают для него как для остальных показателей.
 
-import { Droplets, Flame, Footprints, Sparkles } from 'lucide-react-native'
+import { Droplets, Flame, Footprints, MoonStar, Sparkles } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
+import { fmtSleep } from '@/lib/data/sleep'
 
 // gen — родительный падеж для подзаголовка окна истории
 // («Динамика шагов за 30 дней»)
@@ -55,5 +59,15 @@ export const METRICS = [
     invert: false,
     yFmt: (v) => `${Math.round(v)}`,
     fmt: (v) => formatNum(v),
+  },
+  {
+    key: 'sleepMin',
+    label: 'Сон',
+    gen: 'сна',
+    Icon: MoonStar,
+    color: '#c084fc',
+    invert: false, // больше сна — хорошо (до верхней границы нормы)
+    yFmt: (v) => `${Math.round(v / 60)}ч`, // ось столбиков истории — часы
+    fmt: (v) => fmtSleep(v), // «7 ч 30 мин»
   },
 ]

@@ -107,14 +107,17 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
             </View>
 
             {/* Сравнение с прошлым периодом: только показатели, по которым
-                в прошлый период были данные — иначе Δ бессмысленна */}
-            {METRICS.some((m) => (prev?.[m.key] || 0) > 0) ? (
+                в прошлый период были данные — иначе Δ бессмысленна.
+                Сон не в полосе: карточка сравнивает четыре больших показателя
+                (шаги, калории, вода, сожжено), а суммарные часы сна за период
+                в паре «+N%» читаются плохо — сон виден в истории и в окне сна */}
+            {METRICS.some((m) => m.key !== 'sleepMin' && (prev?.[m.key] || 0) > 0) ? (
               <View className="mt-2.5 rounded-2xl bg-white/[0.05] px-3 py-2.5">
                 <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px] text-white/50">
                   К прошлому периоду
                 </Text>
                 <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
-                  {METRICS.filter((m) => (prev?.[m.key] || 0) > 0).map((m) => {
+                  {METRICS.filter((m) => m.key !== 'sleepMin' && (prev?.[m.key] || 0) > 0).map((m) => {
                     const pct = changePct(totals?.[m.key] || 0, prev[m.key])
                     const tone = deltaTone(pct, m.invert, '#8B96B8')
                     const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null

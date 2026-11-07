@@ -14,12 +14,11 @@
 // Поверхности — как на скрине-2: у каждой карточки свой цветной ореол
 // (градиент от тинта метрики и обводка в её цвете), плитка иконки ярче.
 //
-// «Сон» — псевдокарточка без данных: трекера сна в приложении пока нет,
-// она показывает «—» и приберегена под будущую фичу (в реестр METRICS её
-// сознательно не добавляем — теплокарта, окно истории и шеринг должны
-// видеть только реальные показатели). «Лучший день» с карточек убран —
-// в компактной сетке для него нет места, полный список лучших дней
-// остался в окне истории показателя.
+// «Сон» — полноценная карточка трекера сна (ввод «лёг/встал»): крупно
+// средний сон за ночь по записанным дням, спарклайн ночей, футер
+// «Цель: N из 7 дней» (норма ≥ 7 ч). Пока ночей нет — приглашение
+// «Записать первый сон →», тап по пустой карточке открывает окно
+// записи, тап по карточке с данными — окно истории показателя.
 
 import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -28,6 +27,7 @@ import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, Calendar, MoonStar, Scale } from 'lucide-react-native'
 import { changePct, deltaTone, discipline, periodTotals, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
+import { fmtSleep, nightsInNorm, sleepAvg } from '@/lib/data/sleep'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
@@ -40,7 +40,7 @@ const CARD_ITEMS = [
   METRICS.find((m) => m.key === 'steps'),
   METRICS.find((m) => m.key === 'kcal'),
   METRICS.find((m) => m.key === 'waterMl'),
-  { key: 'sleep', label: 'Сон' },
+  METRICS.find((m) => m.key === 'sleepMin'),
   { key: 'weight' },
   METRICS.find((m) => m.key === 'burned'),
 ]
@@ -195,11 +195,33 @@ function ReportCard({ m, cur, prev, days, rows, goalMet = null, onPress = () => 
   )
 }
 
-// Карточка «Сон»: данных нет — трекера сна пока нет. Показываем «—»
-// и честную подпись за выбранный период с иконкой календаря (скрин-2)
-function SleepCard({ days }) {
+// Карточка «Сон»: средний сон за ночь по записанным дням периода —
+// пустые дни среднее не топят (сон могли начать вести вчера).
+// Футер «Цель: N из 7 дней» — ночи с нормой ≥ цели по сну (goals.sleepMin,
+// по умолчанию 7 ч). Пока ночей нет — приглашение «Записать первый сон →»:
+// тап по пустой карточке открывает окно записи, тап по карточке с
+// данными — окно истории показателя (как у остальных карточек)
+function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd = () => {} }) {
+  const nights = rows.filter((r) => r.sleepMin > 0).length
+  const avg = sleepAvg(rows)
+  const inNorm = nightsInNorm(rows, goalMin)
+  const spark = useMemo(
+    () => rows.slice(-14).map((r) => ({ label: r.label, value: Number(r.sleepMin) || 0 })),
+    [rows]
+  )
+
   return (
-    <View className="min-w-0 flex-1" style={{ borderRadius: 16 }}>
+    <Pressable
+      onPress={nights ? onPress : onQuickAdd}
+      accessibilityRole="button"
+      accessibilityLabel={
+        nights
+          ? `Сон: в среднем ${fmtSleep(avg)} за ночь. Тап — история показателя`
+          : 'Сон пока не записан. Тап — записать первый сон'
+      }
+      className="min-w-0 flex-1 active:opacity-90"
+      style={{ borderRadius: 16 }}
+    >
       {/* фон — абсолютный градиент (см. комментарий в ReportCard:
           height:'100%' растягивал карточку до высоты вьюпорта) */}
       <CardBg color="#c084fc" />
@@ -225,16 +247,39 @@ function SleepCard({ days }) {
             Сон
           </Text>
         </View>
-        <Text maxFontSizeMultiplier={1.15} className="mt-1.5 font-extrabold text-[19px] leading-tight text-bear-text">
-          —
-        </Text>
-        <View className="mt-1 min-h-[26px]">
-          <CalFooter line={false}>
-            {`Нет измерений за ${days} ${pluralDays(days)}`}
-          </CalFooter>
-        </View>
+        {nights ? (
+          <>
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              className="mt-1.5 font-extrabold text-[19px] leading-tight tracking-tight text-bear-text"
+            >
+              {fmtSleep(avg)}
+            </Text>
+            <Text maxFontSizeMultiplier={1.15} className="mt-0.5 font-sans text-[10.5px] leading-tight text-bear-dim">
+              в среднем за ночь
+            </Text>
+            <View className="mt-1 min-h-[26px]">
+              <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
+                {`Цель: ${inNorm} из ${days} ${pluralDays(days)}`}
+              </CalFooter>
+            </View>
+            <Spark data={spark} color="#c084fc" />
+          </>
+        ) : (
+          <>
+            <Text maxFontSizeMultiplier={1.15} className="mt-1.5 font-extrabold text-[19px] leading-tight text-bear-text">
+              —
+            </Text>
+            <View className="mt-1 min-h-[26px]">
+              <CalFooter color="#8DABFF">Записать первый сон →</CalFooter>
+            </View>
+          </>
+        )}
       </View>
-    </View>
+    </Pressable>
   )
 }
 
@@ -337,7 +382,7 @@ function WeightReportCard({ days }) {
   )
 }
 
-export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} }) {
+export function ReportCards({ today, days, rows = [], onSelectMetric = () => {}, onAddSleep = () => {} }) {
   const goals = useGoalsStore((s) => s.goals)
   // periodTotals обходит до 180 дней истории — считаем только при
   // смене периода/данных, а не на каждом рендере экрана
@@ -367,8 +412,15 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {} 
           {row.map((m) =>
             m.key === 'weight' ? (
               <WeightReportCard key={m.key} days={days} />
-            ) : m.key === 'sleep' ? (
-              <SleepCard key={m.key} days={days} />
+            ) : m.key === 'sleepMin' ? (
+              <SleepCard
+                key={m.key}
+                days={days}
+                rows={rows}
+                goalMin={goals.sleepMin || 420}
+                onPress={() => onSelectMetric(m.key)}
+                onQuickAdd={onAddSleep}
+              />
             ) : (
               <ReportCard
                 key={m.key}

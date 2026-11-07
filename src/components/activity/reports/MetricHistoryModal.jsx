@@ -15,7 +15,7 @@
 
 import { useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { ArrowDownRight, ArrowUpRight, X } from 'lucide-react-native'
+import { ArrowDownRight, ArrowUpRight, Plus, X } from 'lucide-react-native'
 import { RANGES, history } from '@/lib/data/activity'
 import { METRICS } from '@/lib/data/metrics'
 import {
@@ -38,7 +38,7 @@ import { Pills } from '../../ui/Pills'
 import { DayDetailsModal } from '../../home/DayDetailsModal'
 
 // Ключ цели в useGoalsStore для каждого показателя реестра
-const GOAL_KEY = { steps: 'steps', kcal: 'kcal', waterMl: 'waterMl', burned: 'burnKcal' }
+const GOAL_KEY = { steps: 'steps', kcal: 'kcal', waterMl: 'waterMl', burned: 'burnKcal', sleepMin: 'sleepMin' }
 const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] // столбцы теплокарты
 const DOT = 13 // размер точки теплокарты
 const GAP = 3 // промежуток
@@ -85,6 +85,7 @@ export function MetricHistoryModal({
   metricId = 'steps',
   initialRangeId = '30d',
   today,
+  onAdd, // опциональная кнопка «Записать» в шапке (у сна — «лёг/встал»)
 }) {
   const goals = useGoalsStore((s) => s.goals)
   const savedDays = useHistoryStore((s) => s.days) // подписка: сводка дня живо видит записи
@@ -143,6 +144,23 @@ export function MetricHistoryModal({
                   {`Динамика ${metric.gen} за ${days} ${pluralDays(days)}`}
                 </Text>
               </View>
+              {/* «Записать» — быстрый вход из истории (у сна — «лёг/встал»);
+                  у остальных показателей записи ведутся на других экранах,
+                  кнопка им не нужна */}
+              {onAdd ? (
+                <Pressable
+                  onPress={onAdd}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Записать: ${metric.label}`}
+                  className="shrink-0 flex-row items-center gap-1 rounded-full px-3 py-2 active:opacity-70"
+                  style={{ backgroundColor: `${metric.color}26`, borderWidth: 1, borderColor: `${metric.color}66` }}
+                >
+                  <Plus size={15} color={metric.color} />
+                  <Text maxFontSizeMultiplier={1.15} className="font-bold text-[14px]" style={{ color: metric.color }}>
+                    Записать
+                  </Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 onPress={onClose}
                 accessibilityRole="button"

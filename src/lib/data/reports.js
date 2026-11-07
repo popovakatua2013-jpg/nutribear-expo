@@ -8,10 +8,10 @@
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { dayRow } from './activity'
 
-const FIELDS = ['steps', 'kcal', 'waterMl', 'burned', 'xp']
+const FIELDS = ['steps', 'kcal', 'waterMl', 'burned', 'xp', 'sleepMin']
 
 function emptyTotals() {
-  return { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0 }
+  return { steps: 0, kcal: 0, waterMl: 0, burned: 0, xp: 0, sleepMin: 0 }
 }
 
 // Показатель дня `daysAgo` дней назад; для «сегодня» поверх истории
@@ -78,12 +78,12 @@ export function weeksComparison(weeks, today) {
 // ===== Дисциплина, теплокарта, рекорды, нутриенты периода =====
 
 // Дисциплина периода: сколько дней дневник вели (есть любая запись —
-// шаги, еда, вода, тренировка) и сколько дней дневная цель достигнута.
+// шаги, еда, вода, тренировка, сон) и сколько дней дневная цель достигнута.
 // Калории считаются достигнутыми, когда еда записана и не выше цели —
 // пустой день не «автоматически молодец», а честно не считается.
 export function discipline(rows, goals) {
   const days = rows.length
-  const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned).length
+  const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned || r.sleepMin).length
   const g = goals || {}
   const met = {
     steps: g.steps > 0 ? rows.filter((r) => r.steps >= g.steps).length : 0,
@@ -166,7 +166,7 @@ export function prevLabel(days) {
 // проверка, что у дисциплины и стрика; нулевой показатель дня с
 // едой/водой — не «простой», а честный ноль)
 export function dayHasRecords(row) {
-  return !!(row && (row.steps || row.kcal || row.waterMl || row.burned))
+  return !!(row && (row.steps || row.kcal || row.waterMl || row.burned || row.sleepMin))
 }
 
 // Нутриенты по дням из журнала приёмов (useFoodStore.history — у записей
