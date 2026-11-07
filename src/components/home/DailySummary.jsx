@@ -3,19 +3,13 @@
 // кольца были разных размеров), внутри — съеденные ккал («0 из 1800
 // ккал») и сожжённые (зелёная дуга #34D399 — отзыв Кати: красное
 // кольцо смотрелось тревожно, теперь число и «из N ккал», если
-// цель задана). Посередине — узкая карточка «Итоги» (отзыв Кати:
-// «итоги — по середине, между сожжено и съедено»; отдельный блок
-// «Итоги» под кольцами удалён — он дублировал цифры колец):
-// огонёк и подпись «Итоги» в строку, ниже жирная цифра баланса дня
-// (съедено − сожжено) и мелкая строка цели («осталось N ккал» /
-// «перебор N ккал» / «цель достигнута»). Карточка по содержимому,
-// не на всю ширину, и точно по центру между кольцами: и по
-// горизонтали, и по вертикали. Ширина — общая с «Приёмами пищи»
-// максимально компактная: p-3, плотные отступы (отзыв Кати: «сделай
-// компактным как можно больше — он очень огромный»; на главной блок
-// перенесён в самый верх). Кольцо анимируется как донат
-// ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля, число
-// в центре отсчитывается вверх — и всё это повторяется при каждом
+// цель задана). Посередине — узкий блок «Остаток» БЕЗ РАМКИ (отзыв
+// Кати: «убери рамку»): огонёк и подпись «Остаток» в строку, ниже
+// жирная цифра остатка калорий на день (цель − съедено + сожжено —
+// отзыв Кати: «там должно быть остаток калорий» вместо прежнего
+// баланса «+902») и мелкая строка-пояснение. Кольцо анимируется как
+// донат ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля,
+// число в центре отсчитывается вверх — и всё это повторяется при каждом
 // возврате на «Главную» (запрос пользователя).
 // Короткий тап по левой половине — изменить цель по калориям, по блоку
 // «сожжено» — цель «сжечь за день» (короткий тап вместо долгого —
@@ -27,16 +21,19 @@
 // панель истории). Мини-чипы шагов/воды/минут
 // удалены — эти цифры
 // живут в трёх карточках над сводкой. Умный огонёк в «Итогах»:
-// зелёный — дефицит (итог в пределах цели), жёлтый — небольшой
+// зелёный — остаток в плюсе (ещё можно съесть), жёлтый — небольшой
 // перебор (до 100 ккал), красный — большой; цели нет — зелёный
-// (сравнивать не с чем). Без карандаша в итогах (правка цели
+// (сравнивать не с чем). Без карандаша в остатках (правка цели
 // сжигания осталась на тапе по кольцу),
-// далее нутриенты ОДНОЙ строкой из четырёх ячеек с иконками
-// и разделителями, в порядке Белки → Жиры → Углеводы → Клетчатка
-// (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»);
-// сетка 2×2 с точками и барами заменена — при чтении «столбиками»
-// порядок сбивался. Нормы БЖУ — свои из целей (маленький карандашик
-// в конце строки открывает окно правки), а если не заданы — «классическая
+// далее нутриенты сеткой 2×2 — БЕЛКИ/ЖИРЫ в верхней строке,
+// УГЛЕВОДЫ/КЛЕТЧАТКА в нижней (отзыв Кати: «белки-жиры одного размера
+// с углеводы-клетчатка» — в одну строку длинные значения сжимались
+// до мелкого шрифта, в сетке 2×2 у всех четырёх ячеек одинаковый
+// крупный шрифт). Порядок чтения слева направо — прежний:
+// Белки → Жиры → Углеводы → Клетчатка, с иконками и разделителями
+// (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»).
+// Нормы БЖУ — свои из целей (маленький карандашик в конце нижней
+// строки открывает окно правки), а если не заданы — «классическая
 // тарелка» (20/30/50% калорий), клетчатка — своя норма, иначе 25 г/день
 // (ВОЗ, FIBER_NORM). Карточка оформлена в стиле вкладки «Тело»
 // (фиолетовая поверхность bear-bodyCard + чип-иконка в шапке BodyChip).
@@ -265,9 +262,8 @@ export function DailySummary({
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0
   // Доля сожжённых ккал от цели «сжечь за день» — для кольца «сожжено»
   const burnPct = burnGoal > 0 ? Math.round((burned / burnGoal) * 100) : 0
-  const remaining = Math.max(0, target - consumed)
   const over = Math.max(0, consumed - target)
-  const done = consumed > 0 && remaining === 0 && over === 0
+  const done = target > 0 && consumed > 0 && over === 0
 
   // Нормы нутриентов: свои из целей (макросы > 0), иначе — авто от
   // цели по калориям («тарелка» 20/30/50 % + 25 г клетчатки)
@@ -311,11 +307,11 @@ export function DailySummary({
     toast({ title: '🎯 Нормы нутриентов обновлены', description: 'Пустое поле — считаем от цели по калориям' })
   }
 
-  const net = consumed - burned // итог дня с учётом активности
-
-  // Умный огонёк «Итога»: перебор считаем по запросу — «съедено больше
-  // сожжённого + цели» (тон — в netTone ниже)
-  const overNet = target > 0 ? net - target : 0
+  // ОСТАТОК калорий на день (отзыв Кати: «там должно быть остаток
+  // калорий» вместо баланса «+902»): цель − съедено + сожжено.
+  // Сожжённые учитываются — их гасит кольцо «сожжено» рядом; цели нет —
+  // остаток не считаем
+  const rem = target > 0 ? Math.round(target - consumed + burned) : null
 
   // Анимация колец перезапускается при каждом возврате на вкладку
   // «Главная» — как у доната ИМТ, который заливается при переходе
@@ -333,15 +329,15 @@ export function DailySummary({
   const BurnZone = onEditBurnGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
-  // Тон карточки «Итоги»: зелёный — дефицит (итог в пределах цели),
+  // Тон блока «Остаток»: зелёный — остаток в плюсе (можно ещё съесть),
   // жёлтый — небольшой перебор (до 100 ккал — погрешность дня),
   // красный — больший перебор. Цели нет — зелёный (сравнивать не с чем)
-  const netTone =
-    overNet <= 0
-      ? { text: '#34D399', border: 'rgba(52,211,153,0.35)', bg: 'rgba(52,211,153,0.08)' }
-      : overNet <= 100
-        ? { text: '#FBBF24', border: 'rgba(251,191,36,0.35)', bg: 'rgba(251,191,36,0.08)' }
-        : { text: '#FB7185', border: 'rgba(251,113,133,0.35)', bg: 'rgba(251,113,133,0.08)' }
+  const remTone =
+    rem == null || rem >= 0
+      ? { text: '#34D399' }
+      : rem >= -100
+        ? { text: '#FBBF24' }
+        : { text: '#FB7185' }
 
   return (
     <View
@@ -402,45 +398,48 @@ export function DailySummary({
           />
         </Row>
 
-        {/* Карточка «Итоги» — по середине между кольцами (отзыв Кати),
-            вместо отдельного блока под кольцами, который дублировал
-            цифры. Контейнер занимает всё пространство между кольцами,
-            высота — с кольцо (84 px), карточка внутри — по содержимому
-            (px-3, узкая) и по центру; max-w-full страхует от вылезания
-            при крупном системном шрифте (adjustsFontSizeToFit дожмёт
-            текст) */}
+        {/* Блок «Остаток» — по середине между кольцами (отзыв Кати),
+            БЕЗ РАМКИ и фона (отзыв Кати: «убери рамку»): только тексты.
+            Контейнер занимает всё пространство между кольцами,
+            высота — с кольцо (84 px), блок внутри — по содержимому
+            и по центру; max-w-full страхует от вылезания при крупном
+            системном шрифте (adjustsFontSizeToFit дожмёт текст) */}
         <View className="min-w-0 flex-1 items-center justify-center" style={{ height: RING }}>
           <Row
             onPress={onEditKcalGoal}
             accessibilityRole={onEditKcalGoal ? 'button' : undefined}
             accessibilityLabel={
               onEditKcalGoal
-                ? `Итоги дня: съедено ${formatNum(consumed)}, сожжено ${formatNum(burned)} килокалорий. Нажмите, чтобы изменить цель по калориям`
+                ? `Остаток ${rem == null ? 'неизвестен' : formatNum(Math.abs(rem))} килокалорий. Нажмите, чтобы изменить цель по калориям`
                 : undefined
             }
             className="max-w-full"
           >
-            {/* «Итоги»: огонёк и подпись в строку, ниже — баланс дня
-                (съедено − сожжено) жирным и мелкая строка цели */}
+            {/* «Остаток»: огонёк и подпись в строку, ниже — остаток
+                калорий на день жирным (цель − съедено + сожжено),
+                мелкой строкой — пояснение */}
             <View
               accessibilityLabel={
-                `Итоги дня: съедено ${formatNum(consumed)} килокалорий, сожжено ${formatNum(burned)} килокалорий, ` +
-                (overNet <= 0 ? 'в пределах цели' : `перебор ${formatNum(Math.round(overNet))} килокалорий`)
+                `Остаток калорий на сегодня: ` +
+                (rem == null
+                  ? 'цель не задана'
+                  : rem >= 0
+                    ? `${formatNum(rem)} килокалорий с учётом сожжённых`
+                    : `перебор ${formatNum(Math.abs(rem))} килокалорий`)
               }
-              className="max-w-full items-center rounded-2xl px-3 py-2"
-              style={{ borderWidth: 1, borderColor: netTone.border, backgroundColor: netTone.bg }}
+              className="max-w-full items-center px-3 py-2"
             >
               <View className="flex-row items-center gap-1">
-                <Flame size={13} color={netTone.text} />
+                <Flame size={13} color={remTone.text} />
                 <Text
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                   maxFontSizeMultiplier={MAX}
                   className="font-bold text-[12.5px] leading-tight"
-                  style={{ color: netTone.text }}
+                  style={{ color: remTone.text }}
                 >
-                  Итоги
+                  Остаток
                 </Text>
               </View>
               <Text
@@ -449,13 +448,13 @@ export function DailySummary({
                 minimumFontScale={0.75}
                 maxFontSizeMultiplier={MAX}
                 className="mt-0.5 font-bold text-[15px] leading-tight"
-                style={{ color: netTone.text }}
+                style={{ color: remTone.text }}
               >
-                {net < 0
-                  ? `−${formatNum(Math.abs(Math.round(net)))} ккал`
-                  : net > 0
-                    ? `+${formatNum(Math.round(net))} ккал`
-                    : '0 ккал'}
+                {rem == null
+                  ? '—'
+                  : rem >= 0
+                    ? `${formatNum(rem)} ккал`
+                    : `−${formatNum(Math.abs(rem))} ккал`}
               </Text>
               <Text
                 numberOfLines={1}
@@ -464,11 +463,11 @@ export function DailySummary({
                 maxFontSizeMultiplier={MAX}
                 className="mt-0.5 font-sans text-[10.5px] leading-tight text-bear-sub2"
               >
-                {over > 0
-                  ? `перебор ${formatNum(over)} ккал`
-                  : done
-                    ? 'цель достигнута'
-                    : `осталось ${formatNum(remaining)} ккал`}
+                {rem == null
+                  ? 'цель не задана'
+                  : rem >= 0
+                    ? 'с учётом сожжённых'
+                    : 'съедено больше нормы'}
               </Text>
             </View>
           </Row>
@@ -500,9 +499,15 @@ export function DailySummary({
         </BurnZone>
       </View>
 
-      {/* нутриенты одной строкой в заданном порядке:
-          1. Белки  2. Жиры  3. Углеводы  4. Клетчатка.
-          В конце — маленький карандашик: свои нормы нутриентов */}
+      {/* нутриенты сеткой 2×2 (отзыв Кати: «белки-жиры одного размера
+          с углеводы-клетчатка» — в одну строку длинные значения «172 /
+          150 г» сжимались adjustsFontSizeToFit до мелкого шрифта; в
+          сетке у каждой ячейки половина ширины карточки, поэтому у всех
+          четырёх одинаковый крупный шрифт). Порядок чтения прежний:
+          1. Белки  2. Жиры
+          3. Углеводы  4. Клетчатка.
+          Справа — маленький карандашик: свои нормы нутриентов
+          (pr-8 резервирует ему место, ячейки остаются равными) */}
       <View
         accessibilityLabel={
           `Белки ${formatNum(Math.round(bju.p))} из ${formatNum(norms.p)} грамм, `
@@ -510,27 +515,30 @@ export function DailySummary({
           + `углеводы ${formatNum(Math.round(bju.c))} из ${formatNum(norms.c)} грамм, `
           + `клетчатка ${formatNum(Math.round(bju.fib || 0))} из ${formatNum(norms.fib)} грамм`
         }
-        className="mt-2.5 flex-row items-center"
+        className="mt-2.5 pr-8"
       >
-        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
-        <VDivider />
-        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
-        <VDivider />
-        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
-        <VDivider />
-        <NutrientCell
-          label="Клетчатка"
-          value={bju.fib || 0}
-          target={norms.fib}
-          color="#34D399"
-          Icon={Leaf}
-        />
+        <View className="flex-row items-center">
+          <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
+          <VDivider />
+          <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
+        </View>
+        <View className="mt-2 flex-row items-center">
+          <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
+          <VDivider />
+          <NutrientCell
+            label="Клетчатка"
+            value={bju.fib || 0}
+            target={norms.fib}
+            color="#34D399"
+            Icon={Leaf}
+          />
+        </View>
         <Pressable
           onPress={openNormsEdit}
           accessibilityRole="button"
           accessibilityLabel="Изменить нормы белков, жиров, углеводов и клетчатки"
           hitSlop={6}
-          className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="absolute bottom-0 right-0 h-[26px] w-[26px] items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
           <Pencil size={14} color="#8B96B8" />
         </Pressable>

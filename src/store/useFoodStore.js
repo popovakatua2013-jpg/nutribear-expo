@@ -153,15 +153,26 @@ export const useFoodStore = create(
         if (day) syncHistoryKcal(day, true)
       },
 
-      // Ещё один перекус пользователя («Перекус 2», «Перекус 3»…)
-      addCustomMeal: () =>
-        set((state) => {
-          const id = `custom-${makeId()}`
-          return {
-            customMeals: [...state.customMeals, { id, name: `Перекус ${state.customMeals.length + 2}` }],
-            entries: { ...state.entries, [id]: [] },
-          }
-        }),
+      // Ещё один перекус пользователя («Перекус 2», «Перекус 3»…).
+      // Имя — по максимальному занятому номеру + 1: после удаления
+      // «Перекус 2» из набора «2, 3» новый станет «Перекус 4», а не
+      // вторым «Перекус 3». Возвращает созданный перекус — тостам и
+      // автосворачиванию секций удобно
+      addCustomMeal: () => {
+        const maxNum = useFoodStore
+          .getState()
+          .customMeals.reduce((mx, m) => {
+            const n = Number(String(m.name || '').match(/^Перекус\s*(\d+)$/)?.[1] || 1)
+            return Math.max(mx, n)
+          }, 1)
+        const id = `custom-${makeId()}`
+        const meal = { id, name: `Перекус ${Math.max(2, maxNum + 1)}` }
+        set((state) => ({
+          customMeals: [...state.customMeals, meal],
+          entries: { ...state.entries, [id]: [] },
+        }))
+        return meal
+      },
 
       // Удалить дополнительный перекус (вместе с его записями — история
       // дневника остаётся, там это просто журнал)

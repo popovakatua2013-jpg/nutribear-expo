@@ -69,6 +69,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const removeCombo = useCombosStore((s) => s.remove)
   const history = useFoodStore((s) => s.history)
   const mealEntries = useFoodStore((s) => s.entries[mealId]) || []
+  const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
 
@@ -82,7 +83,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const [combosOpen, setCombosOpen] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
 
-  const mealName = getMeal(mealId).name
+  const mealName = getMeal(mealId, customMeals).name
   const q = query.trim().toLowerCase()
 
   // Выбор блюда из поиска или базы — окно базы закрываем сами
@@ -227,17 +228,18 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — компактное поле: ниже и тоньше прежнего
-          (отзыв Кати: прежнее поле было слишком громоздким) */}
-      <View className="flex-row items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
-        <Search size={15} color="#8B96B8" />
+      {/* строка поиска — та же высота, радиус и кегль, что у кнопки
+          «Сохранить приём» ниже (отзыв Кати: «чтобы смотрелось
+          одинаково»): rounded-2xl, py-2.5, текст 15.5px */}
+      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5">
+        <Search size={16} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
           placeholder="Найти продукт или рецепт…"
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 font-sans text-[14.5px] text-bear-text"
+          className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text"
         />
         {query.length > 0 && (
           <Pressable
@@ -265,10 +267,10 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Ручной поиск по всей базе продуктов"
-            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
+            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2.5 active:bg-white/10"
           >
-            <LayoutGrid size={15} color="#AEB9D9" />
-            <Text className="font-semibold text-[14.5px] text-bear-soft">
+            <LayoutGrid size={16} color="#A78BFA" />
+            <Text className="font-semibold text-[15px] text-bear-soft">
               Ручной поиск · вся база продуктов
             </Text>
           </Pressable>
@@ -471,19 +473,20 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             </Pressable>
           )}
 
-          {/* база продуктов — тонкая строка-ссылка без плашки (отзыв:
-              прежняя строка с рамкой и фоном была громоздкой) */}
+          {/* база продуктов — заметнее прежнего (отзыв Кати:
+              «крупнее и значок фиолетовый»): фиолетовая иконка и
+              покрупнее шрифт, чуть выше строка */}
           <Pressable
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Открыть базу продуктов"
-            className="mt-1 flex-row items-center justify-center gap-1.5 py-2 active:opacity-60"
+            className="mt-1 flex-row items-center justify-center gap-1.5 py-2.5 active:opacity-60"
           >
-            <LayoutGrid size={14} color="#8B96B8" />
-            <Text numberOfLines={1} className="font-sans text-[14px] text-bear-dim">
+            <LayoutGrid size={16} color="#A78BFA" />
+            <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-bear-soft">
               База продуктов · ручной поиск
             </Text>
-            <ChevronRight size={13} color="#8B96B8" />
+            <ChevronRight size={14} color="#A78BFA" />
           </Pressable>
         </ScrollView>
       )}

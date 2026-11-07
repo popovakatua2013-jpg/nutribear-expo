@@ -50,15 +50,15 @@ function DayPill({ active, icon: Icon, label, onPress }) {
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
   const insets = useSafeAreaInsets()
   const customMeals = useFoodStore((s) => s.customMeals)
-  // Базовые приёмы + свои перекусы («Перекус 2»…) — теперь их можно
-  // выбрать и здесь (отзыв Кати: «как добавить пользовательский
-  // перекус?»). Короткие имена «П2», «П3» — влезают в ряд пилюль
+  // Базовые приёмы + свои перекусы («Перекус 2»…) — под полным именем
+  // (отзыв Кати: загадочные пилюли «П2» убраны; если пилюль много,
+  // текст сжимается, а не режется)
   const meals = [
     ...MEALS,
     ...customMeals.map((m) => ({
       id: m.id,
       name: m.name,
-      short: `П${m.name.replace(/^Перекус\s*/, '')}`,
+      short: m.name,
     })),
   ]
   const [mode, setMode] = useState('hub')

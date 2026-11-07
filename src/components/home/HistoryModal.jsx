@@ -209,12 +209,12 @@ export function HistoryModal({ visible, onClose }) {
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {groups.length === 0 ? (
               mealFilter === 'custom' && !query.trim() ? (
-                // Отзыв Кати: «как добавить пользовательский перекус?» —
-                // объясняем, где он создаётся
+                // Свои перекусы создаются кнопкой «+ Добавить перекус»
+                // на главной или в «Все приёмы пищи»
                 <Text className="px-5 py-8 text-center font-sans text-[15.5px] leading-snug text-bear-sub">
                   Здесь появятся записи в свои перекусы «Перекус 2», «Перекус 3»…
                   {'\n\n'}
-                  Создать свой перекус: «Все приёмы пищи» → карточка «Перекус» → «+ Добавить свой перекус» 🐻
+                  Создать перекус: на главной под приёмами — «+ Добавить перекус» 🐻
                 </Text>
               ) : (
                 <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">

@@ -32,6 +32,26 @@ export const MEALS = [
 
 export const MEAL_IDS = MEALS.map((m) => m.id)
 
-export function getMeal(mealId) {
-  return MEALS.find((m) => m.id === mealId) || MEALS[0]
+// Карточка своего перекуса («Перекус 2», «Перекус 3»…) для секций
+// дневника: та же круглая картинка, что у «Перекус/Полдник», короткое
+// имя равно полному — теперь каждый свой перекус виден ОТДЕЛЬНОЙ
+// секцией (отзыв Кати: «все перекусы сохраняются в один»)
+export function customMealCard(m) {
+  return {
+    id: m.id,
+    name: m.name,
+    short: m.name,
+    image: require('../../../assets/images/snack.webp'),
+  }
+}
+
+// Приём пищи по id: встроенный, свой перекус (если передан список) или
+// завтрак как безопасный фолбэк — старые вызовы с одним аргументом
+// работают как раньше
+export function getMeal(mealId, customMeals = []) {
+  const base = MEALS.find((m) => m.id === mealId)
+  if (base) return base
+  const custom = customMeals.find((m) => m.id === mealId)
+  if (custom) return customMealCard(custom)
+  return MEALS[0]
 }

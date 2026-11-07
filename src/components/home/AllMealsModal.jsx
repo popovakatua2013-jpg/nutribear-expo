@@ -1,16 +1,17 @@
 // Модалка «Все приёмы пищи»: общий обзор дневника за сегодня,
 // редактирование граммовки, удаление и добавление блюд.
-// Все перекусы (Перекус 2, 3…) живут внутри одной карточки
-// «Перекус/Полдник» — отдельными блоками больше не показываются:
-// в карточке кнопка «Добавить блюдо» и ниже — «Добавить перекус».
-// Автосворачивание: при открытии все приёмы свёрнуты и показывают
-// только количество внесённого в дневник («2 блюда · 420 ккал»);
-// тап по заголовку разворачивает/сворачивает секцию обратно.
+// Свои перекусы («Перекус 2», «Перекус 3»…) — отдельные секции после
+// «Перекус/Полдник», как на главной (отзыв Кати: «все перекусы
+// сохраняются в один» — больше не смешиваются); внизу — кнопка
+// «+ Добавить перекус». Автосворачивание: при открытии все приёмы
+// свёрнуты и показывают только количество внесённого в дневник
+// («2 блюда · 420 ккал»); тап по заголовку разворачивает/сворачивает
+// секцию обратно.
 
 import { useEffect, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react-native'
-import { MEALS } from '@/lib/data/meals'
+import { MEALS, customMealCard } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
 import { animateExpandCollapse } from '@/lib/anim'
 import { dayBju, totalConsumed } from '@/lib/data/diary'
@@ -105,7 +106,20 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const dailyTarget = kcal
   const dayTotal = totalConsumed(entries)
   const day = dayBju(entries)
-  const meals = MEALS // доп. перекусы сливаются в карточку «Перекус/Полдник»
+  // Свои перекусы — отдельные секции после встроенных приёмов
+  const meals = [...MEALS, ...customMeals.map(customMealCard)]
+
+  // Кнопка «+ Добавить перекус» в конце списка: создаёт «Перекус 2»,
+  // «Перекус 3»… отдельной секцией и раскрывает её
+  function addSnack() {
+    const meal = addCustomMeal()
+    animateExpandCollapse()
+    setExpanded((s) => ({ ...s, [meal.id]: true }))
+    toast({
+      title: `🥨 ${meal.name} создан`,
+      description: 'Добавляйте блюда в свою секцию — тап по «+»',
+    })
+  }
 
   return (
     <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={close}>
@@ -133,30 +147,18 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
             </Pressable>
           </View>
 
-          {/* Секции приёмов */}
+          {/* Секции приёмов + кнопка нового перекуса в конце */}
           <ScrollView
             contentContainerStyle={{ padding: 20, gap: 16 }}
             showsVerticalScrollIndicator={false}
           >
             {meals.map((meal) => {
-              const isSnack = meal.id === 'snack'
               const mealEntries = entries[meal.id] || []
-              // Доп. перекусы («Перекус 2», «Перекус 3»…) — внутри этой же
-              // карточки; у записей сохраняем их настоящий mealId,
-              // чтобы правка и удаление работали как раньше
-              const extraGroups = isSnack
-                ? customMeals.map((m) => ({ id: m.id, list: entries[m.id] || [] }))
-                : []
-              const extraCount = extraGroups.reduce((s, g) => s + g.list.length, 0)
-              const consumed =
-                mealEntries.reduce((s, e) => s + e.kcal, 0) +
-                extraGroups.reduce(
-                  (s, g) => s + g.list.reduce((x, e) => x + e.kcal, 0),
-                  0
-                )
+              const consumed = mealEntries.reduce((s, e) => s + e.kcal, 0)
               const target = targets[meal.id] ?? targets.snack
               const openNow = Boolean(expanded[meal.id])
-              const totalDishes = mealEntries.length + extraCount
+              const totalDishes = mealEntries.length
+              const isCustom = meal.id.startsWith('custom-')
 
               return (
                 <View
@@ -197,7 +199,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                           : 'Пока пусто'}
                     </Text>
 
-                    {meal.id.startsWith('custom-') && (
+                    {isCustom && (
                       <Pressable
                         onPress={() => handleRemoveCustom(meal)}
                         accessibilityLabel={`Удалить «${meal.name}»`}
@@ -233,50 +235,9 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                             onEdit={(e) => setEdit({ mealId: meal.id, entry: e, mealName: meal.name })}
                           />
                         ))}
-                        {/* Свои перекусы — отдельными группами с подписью
-                            («Перекус 2», «Перекус 3»…) и корзиной; тап по
-                            блюду — правка, как у обычных записей */}
-                        {extraGroups.map((g) => (
-                          <View key={g.id} className="mt-1.5 gap-1">
-                            <View className="flex-row items-center gap-1.5 px-1">
-                              <Text
-                                numberOfLines={1}
-                                maxFontSizeMultiplier={1.2}
-                                className="min-w-0 flex-1 font-sans text-[14px] font-semibold uppercase tracking-wide text-bear-dim"
-                              >
-                                {customMeals.find((m) => m.id === g.id)?.name || 'Перекус'}
-                              </Text>
-                              <Pressable
-                                onPress={() => {
-                                  const meal = customMeals.find((m) => m.id === g.id)
-                                  if (meal) handleRemoveCustom(meal)
-                                }}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Удалить перекус ${customMeals.find((m) => m.id === g.id)?.name || ''}`}
-                                className="rounded p-1 active:opacity-60"
-                              >
-                                <Trash2 size={14} color="#98A2C2" />
-                              </Pressable>
-                            </View>
-                            {g.list.map((entry) => (
-                              <EntryRow
-                                key={entry.id}
-                                mealId={g.id}
-                                mealName={meal.name}
-                                entry={entry}
-                                onEdit={(e) => setEdit({ mealId: g.id, entry: e, mealName: meal.name })}
-                              />
-                            ))}
-                            {!g.list.length && (
-                              <Text className="px-1 font-sans text-[14.5px] text-bear-dim">
-                                Пусто — добавьте блюдо в этот перекус
-                              </Text>
-                            )}
-                          </View>
-                        ))}
                       </View>
 
-                      {!mealEntries.length && !extraCount && (
+                      {!mealEntries.length && (
                         <Text className="mt-2 font-sans text-[15px] text-bear-dim">
                           Пока ничего не добавлено
                         </Text>
@@ -292,40 +253,25 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                           Добавить блюдо
                         </Text>
                       </Pressable>
-
-                      {isSnack && (
-                        <Pressable
-                          onPress={() => {
-                            // Настоящий свой перекус: «Перекус 2», «Перекус 3»…
-                            // (отзыв Кати: «как добавить пользовательский
-                            // перекус?» — раньше кнопка лишь открывала
-                            // добавление блюда в обычный перекус)
-                            const meal = addCustomMeal()
-                            if (meal) {
-                              // Разворачиваем и карточку «Перекус», и новую
-                              // группу — новая секция видна сразу
-                              setExpanded((s) => ({ ...s, [meal.id]: true, snack: true }))
-                              toast({
-                                title: `🥨 ${meal.name} создан`,
-                                description: 'Он появится и в окне добавления, и в истории приёмов',
-                              })
-                            }
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel="Добавить свой перекус — ещё один приём пищи"
-                          className="mt-1.5 flex-row items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 py-2 active:border-[#5B7FFF]/50"
-                        >
-                          <Plus size={15} color="#A5AECB" />
-                          <Text className="font-semibold text-[15px] text-bear-sub">
-                            Добавить свой перекус
-                          </Text>
-                        </Pressable>
-                      )}
                     </>
                   )}
                 </View>
               )
             })}
+
+            {/* Новый свой перекус — в конце списка: отдельная секция
+                «Перекус 2», «Перекус 3»… со своими блюдами */}
+            <Pressable
+              onPress={addSnack}
+              accessibilityRole="button"
+              accessibilityLabel="Добавить свой перекус — ещё одну секцию дневника"
+              className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
+            >
+              <Plus size={16} color="#A5AECB" />
+              <Text className="font-semibold text-[15px] text-bear-sub">
+                Добавить перекус
+              </Text>
+            </Pressable>
           </ScrollView>
         </Pressable>
       </Pressable>

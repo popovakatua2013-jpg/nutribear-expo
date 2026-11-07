@@ -13,13 +13,18 @@
 // Рекомендованные ккал по приёмам считаются
 // от дневной нормы (targetsFromKcal: пропорции 25/35/30/10) и видны
 // парой «X / Y» в каждой секции; строку-легенду «Норма N ккал:
-// завтрак … · обед …» убрали по запросу. Управление (повтор дня,
+// завтрак … · обед …» убрали по запросу. Свои перекусы («Перекус 2»,
+// «Перекус 3»…) — ПОЛНОЦЕННЫЕ секции после «Перекус/Полдник», каждая
+// со своими блюдами, «+» и корзиной (отзыв Кати: «все перекусы
+// сохраняются в один» — больше не смешиваются): создаёт их кнопка
+// «+ Добавить перекус» под секциями. Управление (повтор дня,
 // история, порции) — в шапке, «Все» открывает старое окно со сводкой
 // БЖУ. Поверхность — в стиле вкладки «Тело» (фиолетовая bear-bodyCard
 // + обводка bear-bodyLine).
 
 import { useState } from 'react'
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -36,7 +41,7 @@ import { EditEntryModal } from '../food/EditEntryModal'
 import { MealTabs } from '../food/MealTabs'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { MEALS, getMeal } from '@/lib/data/meals'
+import { MEALS, customMealCard, getMeal } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
 import { animateExpandCollapse } from '@/lib/anim'
 import { targetsFromKcal } from '@/lib/data/goals'
@@ -61,19 +66,13 @@ function Fit({ className, children, max = 1.15, min = 0.8 }) {
   )
 }
 
-// Итоги по приёму: блюда основного списка + доп. перекусы («Перекус 2,
-// 3…»), которые живут внутри карточки «Перекус/Полдник»
-function mealTotals(meal, entries, customMeals) {
+// Итоги по приёму: только его собственные блюда — у каждого приёма,
+// включая свои перекусы («Перекус 2, 3…»), теперь своя секция
+function mealTotals(meal, entries) {
   const mealEntries = entries[meal.id] || []
-  const extraGroups =
-    meal.id === 'snack'
-      ? customMeals.map((m) => ({ id: m.id, list: entries[m.id] || [] }))
-      : []
-  const count = mealEntries.length + extraGroups.reduce((s, g) => s + g.list.length, 0)
-  const consumed =
-    mealEntries.reduce((s, e) => s + e.kcal, 0) +
-    extraGroups.reduce((s, g) => s + g.list.reduce((x, e) => x + e.kcal, 0), 0)
-  return { mealEntries, extraGroups, count, consumed }
+  const count = mealEntries.length
+  const consumed = mealEntries.reduce((s, e) => s + e.kcal, 0)
+  return { mealEntries, count, consumed }
 }
 
 // Строка блюда внутри раскрытой секции: эмодзи, название, граммовка,
@@ -126,8 +125,8 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
 // Секция одного приёма пищи: фото + название + счётчик блюд, справа —
 // «съедено / рекомендовано ккал» и шеврон; тап по заголовку сворачивает
 // и разворачивает список блюд, «+» добавляет без раскрытия
-function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit }) {
-  const { mealEntries, extraGroups, count, consumed } = totals
+function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDelete }) {
+  const { mealEntries, count, consumed } = totals
   const pct = target > 0 ? Math.round((consumed / target) * 100) : 0
   const barPct = Math.min(100, Math.max(0, pct))
   const over = pct > 100 // перебор нормы — полоска янтарная
@@ -193,6 +192,20 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit }) {
           </Text>
         </View>
 
+        {/* корзина — только у своего перекуса: секция удаляется целиком
+            (вложенный Pressable перехватывает тап до сворачивания) */}
+        {onDelete && (
+          <Pressable
+            onPress={onDelete}
+            accessibilityRole="button"
+            accessibilityLabel={`Удалить перекус «${meal.name}»`}
+            hitSlop={4}
+            className="shrink-0 rounded p-1 active:opacity-60"
+          >
+            <Trash2 size={14} color="#f87171" />
+          </Pressable>
+        )}
+
         {open ? (
           <ChevronUp size={15} color="#98A2C2" />
         ) : (
@@ -231,17 +244,6 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit }) {
               onEdit={onEdit}
             />
           ))}
-          {extraGroups.flatMap((g) =>
-            g.list.map((entry) => (
-              <DishRow
-                key={entry.id}
-                mealId={g.id}
-                mealName={meal.name}
-                entry={entry}
-                onEdit={onEdit}
-              />
-            ))
-          )}
 
           {!count && (
             <Text className="px-1 py-1 font-sans text-[14px] text-bear-dim">
@@ -280,12 +282,46 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   const [qMealId, setQMealId] = useState('snack')
   const [qKcal, setQKcal] = useState('')
   const [qName, setQName] = useState('')
+  const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
+  const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
   // Ручное сворачивание: по умолчанию все секции свёрнуты — видно только
   // шапку (отзыв Кати); тап запоминает выбор пользователя
   const [expanded, setExpanded] = useState({})
 
   // Рекомендованные ккал по приёмам от дневной нормы
   const targets = targetsFromKcal(kcalGoal)
+
+  // Новый свой перекус: «Перекус 2», «Перекус 3»… (стор возвращает
+  // созданный перекус — раскрываем его секцию сразу)
+  function addSnack() {
+    const meal = addCustomMeal()
+    animateExpandCollapse()
+    setExpanded((s) => ({ ...s, [meal.id]: true }))
+    toast({
+      title: `🥨 ${meal.name} создан`,
+      description: 'Добавляйте блюда в свою секцию — тап по «+»',
+    })
+  }
+
+  // Удалить свой перекус: подтверждение — записи уйдут из дневника,
+  // журнал приёмов сохранится
+  function confirmRemove(meal) {
+    Alert.alert(
+      `Удалить «${meal.name}»?`,
+      'Записи этого перекуса уйдут из дневника за сегодня — журнал приёмов сохранится.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: () => {
+            removeCustomMeal(meal.id)
+            toast({ title: '🗑 Перекус удалён', description: `«${meal.name}» больше не в списке приёмов` })
+          },
+        },
+      ]
+    )
+  }
 
   function isOpen(meal) {
     return Boolean(expanded[meal.id])
@@ -296,8 +332,9 @@ export function MealPlanCard({ onAdd, onViewAll }) {
     setExpanded((s) => ({ ...s, [meal.id]: !isOpen(meal) }))
   }
 
-  // Быстрая запись: только калории в выбранный пилюлей приём.
-  // Пишем за сегодня — окно открывается с главной, дневник «сегодня»
+  // Быстрая запись: только калории в выбранный пилюлей приём (включая
+  // свои перекусы). Пишем за сегодня — окно открывается с главной,
+  // дневник «сегодня»
   function submitQuick() {
     const kcal = Math.round(Number(String(qKcal).replace(',', '.')) || 0)
     if (kcal < 10 || kcal > 3000) {
@@ -305,7 +342,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
       return
     }
     const name = qName.trim().slice(0, 40) || 'Быстрая запись'
-    const mealName = getMeal(qMealId).name
+    const mealName = getMeal(qMealId, customMeals).name
     addEntry(qMealId, {
       food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
       grams: 0,
@@ -328,22 +365,40 @@ export function MealPlanCard({ onAdd, onViewAll }) {
         onHistory={() => setHistoryOpen(true)}
       />
 
-      {/* секции приёмов, одна под другой */}
+      {/* секции приёмов, одна под другой; после «Перекус/Полдник» —
+          свои перекусы («Перекус 2», «Перекус 3»…) отдельными секциями:
+          у каждой свои блюда и «+», корзина в шапке удаляет секцию */}
       <View className="gap-2">
-        {MEALS.map((meal) => (
+        {[...MEALS, ...customMeals.map(customMealCard)].map((meal) => (
           <MealSection
             key={meal.id}
             meal={meal}
             target={targets[meal.id] ?? targets.snack}
-            totals={mealTotals(meal, entries, customMeals)}
+            totals={mealTotals(meal, entries)}
             open={isOpen(meal)}
             onToggle={() => toggle(meal)}
             onAdd={() => onAdd(meal.id)}
             onEdit={(entry, mealId) =>
               setEdit({ mealId: mealId || meal.id, entry, mealName: meal.name })
             }
+            onDelete={meal.id.startsWith('custom-') ? () => confirmRemove(meal) : undefined}
           />
         ))}
+
+        {/* новый свой перекус: создаётся сразу с именем «Перекус 2»,
+            «Перекус 3»… и появляется отдельной секцией — в неё можно
+            добавлять блюда, как в обычный приём */}
+        <Pressable
+          onPress={addSnack}
+          accessibilityRole="button"
+          accessibilityLabel="Добавить свой перекус — ещё одну секцию дневника"
+          className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
+        >
+          <Plus size={16} color="#A5AECB" />
+          <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[15px] text-bear-sub">
+            Добавить перекус
+          </Text>
+        </Pressable>
       </View>
 
       {/* быстрая запись «Только калории» — перенесена сюда из окна
@@ -395,7 +450,11 @@ export function MealPlanCard({ onAdd, onViewAll }) {
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Куда записать?
             </Text>
-            <MealTabs meals={MEALS} mealId={qMealId} onChange={setQMealId} />
+            <MealTabs
+              meals={[...MEALS, ...customMeals.map(customMealCard)]}
+              mealId={qMealId}
+              onChange={setQMealId}
+            />
 
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Калории
@@ -440,7 +499,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               style={{ backgroundColor: '#7B6CF6' }}
             >
               <Text maxFontSizeMultiplier={1.25} className="text-center font-bold text-[19px] text-white">
-                {`Добавить в «${getMeal(qMealId).name}»`}
+                {`Добавить в «${getMeal(qMealId, customMeals).name}»`}
               </Text>
             </Pressable>
           </View>
