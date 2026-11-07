@@ -42,6 +42,7 @@ import {
   dayLevel,
   deltaTone,
   diaryAgeDays,
+  periodLocked,
   prevLabel,
   weekdayAverages,
   weightByDay,
@@ -50,7 +51,6 @@ import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
-import { pluralDays } from '@/lib/format'
 import { Pills } from '../../ui/Pills'
 import { DayDetailsModal } from '../../home/DayDetailsModal'
 
@@ -222,13 +222,15 @@ export function MetricHistoryModal({
   const isWeight = metric.key === 'weight'
   // Разблокировка периодов — та же логика, что у пилюль секции (отзыв
   // Кати: динамика за 30/90 дней открывается на 30-й/90-й день ведения
-  // дневника). Окно маунтится только открытым — возраст на маунте актуален
+  // дневника; НЕДЕЛЯ всегда открыта — замок на «7 дней» в первые 7 дней
+  // выглядел как поломка). Окно маунтится только открытым — возраст
+  // на маунте актуален
   const diaryAge = diaryAgeDays(savedDays)
   // Период окна: открывается с периода секции; если тот ещё закрыт
   // (секция могла открыть окно до того, как её эффект вернул 7d) — неделя
   const [rangeId, setRangeId] = useState(() => {
     const init = RANGES.find((r) => r.id === initialRangeId)
-    return init && init.days > diaryAge ? '7d' : initialRangeId
+    return init && periodLocked(init.days, diaryAge) ? '7d' : initialRangeId
   })
   const [dayKey, setDayKey] = useState(null) // сводка дня (тап по столбику/точке)
   // Подсказка по тапу на закрытый период — гаснет через 4 секунды
@@ -383,7 +385,7 @@ export function MetricHistoryModal({
 
   function pickRange(id) {
     const r = RANGES.find((x) => x.id === id)
-    if (r && r.days > diaryAge) {
+    if (r && periodLocked(r.days, diaryAge)) {
       setLockHint(
         r.days === 30
           ? 'Период 30 дней откроется на 30-й день ведения дневника'
@@ -413,55 +415,75 @@ export function MetricHistoryModal({
               style={{ borderRadius: 30, padding: 1.6, flexShrink: 1 }}
             >
               <View className="overflow-hidden rounded-[28px] bg-[#150F2D]" style={{ flexShrink: 1 }}>
-                {/* Шапка: плитка показателя + заголовок + крестик */}
-                <View className="flex-row items-center gap-3 border-b border-bear-line px-4 pb-3.5 pt-4">
+                {/* Шапка: плитка показателя + заголовок с крестиком,
+                    ниже — подпись и «Записать» (отзыв Кати: «Вес · исто…»
+                    и «Динамика веса …» обрезались — кнопка теснила заголовок;
+                    теперь у заголовка вся ширина строки, а период убран из
+                    подписи — он и так выбран пилюлями под шапкой) */}
+                <View className="flex-row items-center gap-3 border-b border-bear-line px-4 pb-3 pt-4">
                   <MetricTile metric={metric} />
                   <View className="min-w-0 flex-1">
-                    <Text numberOfLines={1} maxFontSizeMultiplier={1.15} className="font-bold text-[21px] tracking-tight text-bear-text">
-                      {`${metric.label} · история`}
-                    </Text>
-                    <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[14.5px] leading-snug text-bear-sub">
-                      {`Динамика ${metric.gen} за ${days} ${pluralDays(days)}`}
-                    </Text>
-                  </View>
-                  {/* «Записать» — быстрый вход из истории (у сна — «лёг/встал»,
-                      у веса — экран веса); у остальных показателей записи
-                      ведутся на других экранах, кнопка им не нужна */}
-                  {onAdd ? (
-                    <Pressable
-                      onPress={onAdd}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Записать: ${metric.label}`}
-                      className="shrink-0 flex-row items-center gap-1 rounded-full px-3 py-2 active:opacity-70"
-                      style={{ backgroundColor: `${metric.color}26`, borderWidth: 1, borderColor: `${metric.color}66` }}
-                    >
-                      <Plus size={15} color={metric.color} />
-                      <Text maxFontSizeMultiplier={1.15} className="font-bold text-[14px]" style={{ color: metric.color }}>
-                        Записать
+                    <View className="flex-row items-center gap-2">
+                      <Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                        maxFontSizeMultiplier={1.15}
+                        className="min-w-0 flex-1 font-bold text-[20px] tracking-tight text-bear-text"
+                      >
+                        {`${metric.label} · история`}
                       </Text>
-                    </Pressable>
-                  ) : null}
-                  <Pressable
-                    onPress={onClose}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Закрыть историю: ${metric.label}`}
-                    className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
-                  >
-                    <X hitSlop={10} size={20} color="#C7D2F0" />
-                  </Pressable>
+                      <Pressable
+                        onPress={onClose}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Закрыть историю: ${metric.label}`}
+                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+                      >
+                        <X hitSlop={10} size={20} color="#C7D2F0" />
+                      </Pressable>
+                    </View>
+                    <View className="mt-0.5 flex-row items-center gap-2">
+                      <Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                        maxFontSizeMultiplier={1.2}
+                        className="min-w-0 flex-1 font-sans text-[14.5px] leading-snug text-bear-sub"
+                      >
+                        {`Динамика ${metric.gen}`}
+                      </Text>
+                      {/* «Записать» — быстрый вход из истории (у сна — «лёг/встал»,
+                          у веса — экран веса); у остальных показателей записи
+                          ведутся на других экранах, кнопка им не нужна */}
+                      {onAdd ? (
+                        <Pressable
+                          onPress={onAdd}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Записать: ${metric.label}`}
+                          className="shrink-0 flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-70"
+                          style={{ backgroundColor: `${metric.color}26`, borderWidth: 1, borderColor: `${metric.color}66` }}
+                        >
+                          <Plus size={14} color={metric.color} />
+                          <Text maxFontSizeMultiplier={1.15} className="font-bold text-[13.5px]" style={{ color: metric.color }}>
+                            Записать
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  </View>
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
                   <View className="gap-3 px-4 pb-3.5 pt-3">
                     {/* Период — активная пилюля в цвете показателя;
-                        30/90 с замком, пока дневник не дожил до этих дней */}
+                        под замком только 30/90 (отзыв Кати), неделя — всегда */}
                     <Pills
                       size="md"
                       items={RANGES.map((r) => ({
                         id: r.id,
                         label: r.label,
                         color: metric.color,
-                        disabled: r.days > diaryAge,
+                        disabled: periodLocked(r.days, diaryAge),
                       }))}
                       value={rangeId}
                       onChange={pickRange}

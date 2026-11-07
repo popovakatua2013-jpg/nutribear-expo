@@ -23,7 +23,7 @@ import { SleepModal } from './SleepModal'
 import { WeeklyShareCard } from './WeeklyShareCard'
 import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
-import { periodTotals, diaryAgeDays } from '@/lib/data/reports'
+import { periodTotals, diaryAgeDays, periodLocked } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
 import { consumeOpenSleepModal, requestScrollToWeight } from '@/lib/navEvents'
 import { useHistoryStore } from '@/store/useHistoryStore'
@@ -48,7 +48,9 @@ export function ReportsSection({
 
   // Разблокировка периодов (отзыв Кати: «зачем динамика за 90 дней,
   // если он ещё только на 7 дне»): 30 дней открываются на 30-й день
-  // ведения дневника, 90 — на 90-й. До этого — серые пилюли с замком
+  // ведения дневника, 90 — на 90-й. До этого — серые пилюли с замком.
+  // НЕДЕЛЯ всегда открыта (отзыв Кати: замок на «7 дней» в первые
+  // 7 дней выглядел как поломка)
   const diaryAge = useMemo(() => diaryAgeDays(savedDays), [savedDays])
   // Подсказка по тапу на закрытый период: на 4 секунды, потом сама гаснет
   const [lockHint, setLockHint] = useState(null)
@@ -64,12 +66,12 @@ export function ReportsSection({
     hintTimer.current = setTimeout(() => setLockHint(null), 4000)
   }
   const rangeItems = useMemo(
-    () => RANGES.map((r) => ({ id: r.id, label: r.label, disabled: r.days > diaryAge })),
+    () => RANGES.map((r) => ({ id: r.id, label: r.label, disabled: periodLocked(r.days, diaryAge) })),
     [diaryAge]
   )
   const changeRange = (id) => {
     const r = RANGES.find((x) => x.id === id)
-    if (r && r.days > diaryAge) {
+    if (r && periodLocked(r.days, diaryAge)) {
       showLockHint(r.days)
       return
     }
@@ -80,7 +82,7 @@ export function ReportsSection({
   // очищена в «Ещё») — тихо возвращаемся на неделю
   useEffect(() => {
     const cur = RANGES.find((r) => r.id === rangeId)
-    if (cur && cur.days > diaryAge) onRangeChange('7d')
+    if (cur && periodLocked(cur.days, diaryAge)) onRangeChange('7d')
   }, [diaryAge, rangeId, onRangeChange])
 
   // Тап по вечернему пинку «пора спать» ведёт сюда и открывает окно

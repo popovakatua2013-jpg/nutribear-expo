@@ -131,36 +131,41 @@ function CalFooter({ children, color = '#8B96B8', line = true }) {
   )
 }
 
-// Шапка карточки: плитка иконки + название + шеврон-подсказка тапа
-// (аудит: ни одной подсказки, что карточку можно открыть — теперь
-// тонкий шеврон в углу каждой карточки; размер — от плитки: крупный
-// ряд с плиткой 32 получает и шеврон крупнее)
+// Шапка карточки: плитка иконки + шеврон-подсказка тапа в строке,
+// название — СВОЕЙ строкой на всю ширину карточки (отзыв Кати:
+// «название блоков обрезано» — в 3 колонки рядом с плиткой и
+// шевроном «Калории»/«Сожжено» сжимались до «Кало…»/«С…»; теперь
+// название всегда целиком, с adjustsFontSizeToFit как страховкой)
 function CardHead({ m, s, iconColor = null }) {
   const color = iconColor || m.color
   const big = s.tile >= 32
   return (
-    <View className="flex-row items-center gap-1.5">
-      <View
-        style={{
-          width: s.tile,
-          height: s.tile,
-          borderRadius: big ? 11 : 9,
-          backgroundColor: `${color}33`,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <m.Icon size={s.icon} color={color} />
+    <View>
+      <View className="flex-row items-center justify-between">
+        <View
+          style={{
+            width: s.tile,
+            height: s.tile,
+            borderRadius: big ? 11 : 9,
+            backgroundColor: `${color}33`,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <m.Icon size={s.icon} color={color} />
+        </View>
+        <ChevronRight size={big ? 15 : 13} color="rgba(255,255,255,0.28)" />
       </View>
       <Text
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
         maxFontSizeMultiplier={1.15}
-        className="min-w-0 flex-1 font-sans leading-tight text-bear-soft"
+        className="mt-1 font-sans leading-tight text-bear-soft"
         style={{ fontSize: s.label }}
       >
         {m.label}
       </Text>
-      <ChevronRight size={big ? 15 : 13} color="rgba(255,255,255,0.28)" />
     </View>
   )
 }
@@ -303,11 +308,13 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             >
               в среднем за ночь
             </Text>
-            <View className="mt-1 min-h-[26px]">
-              <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
-                {`Цель: ${inNorm}/${days} дн`}
-              </CalFooter>
-            </View>
+            <View className="mt-1 min-h-[26px]" />
+            {/* Футер цели — в той же позиции, что у соседних карточек
+                крупного ряда (отзыв Кати: вторая сетка должна выглядеть
+                единообразно): слот Δ%, черта, цель, спарклайн */}
+            <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
+              {`Цель: ${inNorm}/${days} дн`}
+            </CalFooter>
             <Spark data={spark} color="#c084fc" height={s.spark} />
           </>
         ) : (
@@ -319,9 +326,8 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             >
               —
             </Text>
-            <View className="mt-1 min-h-[26px]">
-              <CalFooter color="#8DABFF">Записать первый сон →</CalFooter>
-            </View>
+            <View className="mt-1 min-h-[26px]" />
+            <CalFooter color="#8DABFF">Записать первый сон →</CalFooter>
           </>
         )}
       </View>
@@ -395,9 +401,14 @@ function WeightReportCard({ days, onPress = () => {} }) {
         </Text>
         <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
           {delta == null ? (
-            <View className="min-w-0 flex-1">
-              <CalFooter line={false}>{`Нет измерений за ${days} дн`}</CalFooter>
-            </View>
+            <Text
+              numberOfLines={2}
+              maxFontSizeMultiplier={1.2}
+              className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
+              style={{ color: '#8B96B8' }}
+            >
+              {`Нет измерений за ${days} дн`}
+            </Text>
           ) : (
             <>
               {delta !== 0 && <Arrow size={12} color={tone} />}
@@ -414,6 +425,15 @@ function WeightReportCard({ days, onPress = () => {} }) {
             </>
           )}
         </View>
+        {/* Футер «Норма» — в одной позиции с целями соседних карточек
+            ряда (отзыв Кати: вторая сетка должна выглядеть единообразно);
+            у веса нет дневной цели — показываем здоровый диапазон роста.
+            Рост не указан (min/max = 0) — футера нет */}
+        {heightCm > 0 && Number.isFinite(min) && Number.isFinite(max) && max > min && (
+          <CalFooter color="#8DABFF">
+            {`Норма: ${min}–${max} кг`}
+          </CalFooter>
+        )}
         <Spark data={spark} color="#a78bfa" height={s.spark} />
       </View>
     </Pressable>

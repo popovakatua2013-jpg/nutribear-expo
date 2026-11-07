@@ -5,9 +5,10 @@
 // давали «Сб Сб Сб Сб» в подписях и ломали масштаб (аудит по скрину
 // Кати). Подписи дней — числовые даты «7.11» (отзыв Кати: месяц
 // вместо точек). Золотой пунктир — цель по весу, если задана; шкалу
-// цель больше не растягивает (см. SvgAreaChart). 30/90 дней — с
-// замком, пока дневник не дожил до этих дней (отзыв Кати: «зачем
-// 90 дней, если он ещё только на 7 дне»). Данные — журнал
+// цель больше не растягивает (см. SvgAreaChart). Под замком ТОЛЬКО
+// 30/90 — пока дневник не дожил до этих дней; неделя открыта всегда
+// (отзыв Кати: замок на «7 д» в первые 7 дней выглядел как поломка).
+// Данные — журнал
 // взвешиваний из профиля; за период измерений нет — честная
 // подсказка. Тап по карточке открывает вкладку ИМТ и докручивает
 // до большого графика «Динамика веса»
@@ -19,7 +20,7 @@ import { router } from 'expo-router'
 import { BarChart3, Lock } from 'lucide-react-native'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
 import { dotDateFromKey } from '@/lib/data/activity'
-import { weightByDay, diaryAgeDays } from '@/lib/data/reports'
+import { weightByDay, diaryAgeDays, periodLocked } from '@/lib/data/reports'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
@@ -61,7 +62,7 @@ export function WeightTrendCard() {
 
   function pickDays(next) {
     const r = WEIGHT_RANGES.find((x) => x.id === next)
-    if (r && r.days > diaryAge) {
+    if (r && periodLocked(r.days, diaryAge)) {
       setLockHint(
         r.days === 30
           ? 'Период 30 дней откроется на 30-й день ведения дневника'
@@ -130,12 +131,12 @@ export function WeightTrendCard() {
           ) : null}
         </View>
 
-        {/* Период: короткие чипы 7/30/90 — как на референсе; 30/90 —
-            с замком, пока дневник не дожил до этих дней */}
+        {/* Период: короткие чипы 7/30/90 — как на референсе; под замком
+            только 30/90, неделя — всегда (отзыв Кати) */}
         <View className="mt-2.5 flex-row items-center gap-1.5">
           {WEIGHT_RANGES.map((r) => {
             const active = days === r.id
-            const locked = r.days > diaryAge
+            const locked = periodLocked(r.days, diaryAge)
             return (
               <Pressable
                 key={r.id}

@@ -19,6 +19,7 @@ const {
   nutrientTotals,
   dayHasRecords,
   diaryAgeDays,
+  periodLocked,
 } = require('@/lib/data/reports')
 const { dayKeyOf } = require('@/store/useHistoryStore')
 
@@ -107,6 +108,22 @@ describe('diaryAgeDays (разблокировка периодов 30/90)', () 
 
   test('мусорные ключи игнорируются', () => {
     expect(diaryAgeDays({ garbage: {}, [keyAt(-1)]: {} })).toBe(2)
+  })
+})
+
+describe('periodLocked (замок периодов)', () => {
+  test('неделя открыта всегда — даже в первый день (отзыв Кати: замок на «7 дней» выглядел как поломка)', () => {
+    expect(periodLocked(7, 1)).toBe(false)
+    expect(periodLocked(7, 3)).toBe(false)
+    expect(periodLocked(7, 0)).toBe(false)
+  })
+
+  test('30/90 закрыты до своего дня, открыты после', () => {
+    expect(periodLocked(30, 1)).toBe(true)
+    expect(periodLocked(30, 29)).toBe(true)
+    expect(periodLocked(30, 30)).toBe(false)
+    expect(periodLocked(90, 45)).toBe(true)
+    expect(periodLocked(90, 90)).toBe(false)
   })
 })
 
