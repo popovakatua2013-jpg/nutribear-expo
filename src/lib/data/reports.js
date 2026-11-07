@@ -83,14 +83,19 @@ export function weeksComparison(weeks, today) {
 // пустой день не «автоматически молодец», а честно не считается.
 // Сожжённые — от цели burnKcal (отзыв Кати: в карточке «Сожжено»
 // футер с целью был пуст — цели не считались вовсе)
-export function discipline(rows, goals) {
+export function discipline(rows, goals, kcalGoalFor = null) {
   const days = rows.length
   const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned || r.sleepMin).length
   const g = goals || {}
+  // Цель калорий ПО ДНЮ: у особого дня (менструация/командировка/
+  // праздник) норма выше на прибавку — «Цель: N/7 дн» честно считает
+  // по норме каждого дня, а не по базовой (kcalGoalFor даёт ключ дня).
+  // Без функции — по базовой цели, как раньше
+  const kcalGoalOf = kcalGoalFor ? (r) => kcalGoalFor(r.key) : () => g.kcal
   const met = {
     steps: g.steps > 0 ? rows.filter((r) => r.steps >= g.steps).length : 0,
     waterMl: g.waterMl > 0 ? rows.filter((r) => r.waterMl >= g.waterMl).length : 0,
-    kcal: g.kcal > 0 ? rows.filter((r) => r.kcal > 0 && r.kcal <= g.kcal).length : 0,
+    kcal: g.kcal > 0 ? rows.filter((r) => r.kcal > 0 && r.kcal <= kcalGoalOf(r)).length : 0,
     burned: g.burnKcal > 0 ? rows.filter((r) => r.burned >= g.burnKcal).length : 0,
   }
   return { days, recorded, met }

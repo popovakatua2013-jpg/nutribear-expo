@@ -1,19 +1,24 @@
-// Секция «Тренировки»: список за сегодня, сумма сожжённых калорий
-// и окно добавления/изменения тренировки (каталог + СВОИ тренировки).
+// Секция «Тренировки»: РЕДДИЗАЙН ПО ШАБЛОНУ (референс Кати — тёмно-
+// фиолетовый фитнес-экран): 4 плитки-статистики (ккал за сегодня,
+// часы за неделю, дней подряд, % недели от 150 мин ВОЗ), hero-карточка
+// «Сегодняшняя тренировка» с фото и градиентной кнопкой, рядом кольцо
+// «Выполнено за неделю» с дельтой к прошлой неделе, «Динамика»
+// (сожжённые за день, 7/30/90), «Популярные виды» (топ за 30 дней)
+// и «Последние тренировки» (сегодняшние открываются по тапу).
+// Окно добавления/изменения — прежнее: каталог + СВОИ тренировки.
 // Свою тренировку пользователь создаёт сам: название, иконка,
 // интенсивность — приложение запоминает её между сессиями.
 // Сожжённые калории считаются по формуле MET, но значение можно
 // исправить вручную (например, по цифре с тренажёра или смарт-часов).
-// Тап по записи — изменение, корзина — удаление. Поверхность и шапка —
-// в стиле вкладки «Тело» (фиолетовая bear-bodyCard + чип BodyChip).
-// Режим flat — без собственной карточки: секция встраивается внутрь
-// блока «Активность» на главной (тап по плитке «Активность» раскрывает
-// тренировки прямо под плитками, отдельной секции на странице больше нет).
+// Тап по записи — изменение, корзина — удаление. Режим flat — без
+// собственной карточки: секция встраивается в свёрнутый блок
+// «Тренировки» на главной.
 
 import { useCallback, useMemo, useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Flame, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react-native'
+import { ImageBackground, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Flame, History, Pencil, Play, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { useExerciseStore, todayKey, dayBurned, syncHistoryBurned } from '@/store/useExerciseStore'
@@ -27,10 +32,31 @@ import {
   intensityMet,
   kcalBurned,
 } from '@/lib/data/exercises'
+import {
+  WHO_WEEK_MIN,
+  weekStats,
+  workoutStreak,
+  popularTypes,
+  recentWorkouts,
+  dynamicsSeries,
+  dayLabel,
+  fmtHours,
+} from '@/lib/data/exerciseStats'
+import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { useToast } from '../ui/Toast'
 import { Pills } from '../ui/Pills'
 import { BodyChip } from '../ui/BodyChip'
 import { formatNum, makeId } from '@/lib/format'
+
+// Фото-акцент hero-карточки «Сегодняшняя тренировка» — как на шаблоне
+const SNEAKERS = require('../../../assets/images/sneakers.webp')
+
+// Периоды «Динамики» — пилюли, как на шаблоне
+const DYN_RANGES = [
+  { id: '7', label: '7д' },
+  { id: '30', label: '30д' },
+  { id: '90', label: '90д' },
+]
 
 const KCAL_MAX = 10000
 
@@ -130,6 +156,19 @@ export function ExerciseSection({ flat = false }) {
   const repDay = repeatDays.length
     ? repeatDays[Math.min(repIdx, repeatDays.length - 1)]
     : null
+
+  // ── Данные витрины (реддизайн по шаблону) ────────────────────────────
+  // Неделя для плиток и кольца, стрик, популярные виды, последние
+  // записи, ряд «Динамики» — чистые функции из lib/data/exerciseStats
+  const week = useMemo(() => weekStats(logs), [logs])
+  const exStreak = useMemo(() => workoutStreak(logs), [logs])
+  const popular = useMemo(() => popularTypes(logs, 30), [logs])
+  const recent = useMemo(() => recentWorkouts(logs, 14, 6), [logs])
+  const [dynRange, setDynRange] = useState('7')
+  const dynData = useMemo(() => dynamicsSeries(logs, Number(dynRange)), [logs, dynRange])
+  const hasDyn = useMemo(() => dynData.some((p) => p.value > 0), [dynData])
+  // Самая свежая тренировка за сегодня — лицо hero-карточки
+  const hero = items[0] || null
 
   // Каталог + запомненные свои тренировки (пересобирается при изменениях)
   const allExercises = useMemo(() => [...EXERCISES, ...custom], [custom])
@@ -373,11 +412,20 @@ export function ExerciseSection({ flat = false }) {
       className={flat ? '' : 'rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5'}
     >
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-row items-center gap-2">
+        <View className="min-w-0 flex-row items-center gap-2">
           <BodyChip icon={<Dumbbell size={17} />} />
-          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
-            Тренировки
-          </Text>
+          <View className="min-w-0 flex-1">
+            <Text className="font-bold text-[20px] tracking-tight text-bear-text">
+              Тренировки
+            </Text>
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}
+              className="font-sans text-[13.5px] leading-tight text-bear-sub2"
+            >
+              Твой путь к лучшей форме
+            </Text>
+          </View>
         </View>
         <Pressable
           onPress={() => openModal(null)}
@@ -440,48 +488,289 @@ export function ExerciseSection({ flat = false }) {
         </View>
       )}
 
-      {items.length === 0 ? (
-        <Text className="mt-3 font-sans text-[16.5px] leading-relaxed text-bear-sub2">
-          Добавьте прогулку или тренировку — отмечайте активность дня.
-        </Text>
-      ) : (
-        <View className="mt-3 gap-2">
-          {items.map((e) => (
-            <Pressable
-              key={e.id}
-              onPress={() => openModal(e)}
-              accessibilityRole="button"
-              accessibilityLabel={`Изменить ${e.name}`}
-              className="flex-row items-center gap-3 rounded-2xl bg-white/[0.03] px-3.5 py-2.5 active:opacity-70"
-            >
-              <Text className="text-[23px]">{e.emoji}</Text>
-              <View className="min-w-0 flex-1">
-                <Text className="font-bold text-[17.5px] text-bear-text">{e.name}</Text>
-                <Text className="font-sans text-[15px] text-bear-sub2">
-                  {e.minutes} мин · {formatNum(e.kcal)} ккал{e.manual ? ' · вручную' : ''}
+      {/* ── Витрина по шаблону: 4 плитки · hero + кольцо недели ────────── */}
+      <View className="mt-3 flex-row gap-1.5">
+        <StatTile emoji="🔥" value={formatNum(burned)} label="Ккал" />
+        <StatTile emoji="⏱" value={fmtHours(week.minutes)} label="Тренировок" />
+        <StatTile emoji="🏆" value={String(exStreak)} label="Дней подряд" />
+        <StatTile emoji="📊" value={`${week.pct}%`} label="Прогресс" />
+      </View>
+
+      <View className="mt-2 flex-row gap-2">
+        {/* Hero «Сегодняшняя тренировка»: точка-статус, эмодзи-плитка,
+            название и метрики самой свежей записи дня, кнопка добавления;
+            справа фото — как на шаблоне */}
+        <View
+          className="min-w-0 flex-1 overflow-hidden rounded-3xl border border-white/10"
+          style={{ backgroundColor: 'rgba(123,108,246,0.10)' }}
+        >
+          <View className="flex-row">
+            <View className="min-w-0 flex-1 p-3.5">
+              <View className="flex-row items-center gap-1.5">
+                <View
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: hero ? '#4ADE80' : 'rgba(255,255,255,0.25)' }}
+                />
+                <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.1}
+                  className="font-semibold text-[13px] text-bear-sub"
+                >
+                  Сегодняшняя тренировка
                 </Text>
               </View>
-              <View className="shrink-0 flex-row items-center gap-1">
-                <View className="h-9 w-9 items-center justify-center rounded-full bg-white/5">
-                  <Pencil size={15} color="#A5AECB" />
-                </View>
-                <Pressable
-                  onPress={() => remove(e)}
-                  accessibilityLabel={`Удалить ${e.name}`}
-                  className="h-9 w-9 items-center justify-center rounded-full bg-white/5"
+              <View className="mt-2 flex-row items-center gap-2.5">
+                <View
+                  className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                  style={{ backgroundColor: 'rgba(123,108,246,0.22)' }}
                 >
-                  <Trash2 size={16} color="#98A2C2" />
-                </Pressable>
+                  <Text className="text-[22px]">{hero ? hero.emoji : '🏃'}</Text>
+                </View>
+                <View className="min-w-0 flex-1">
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    maxFontSizeMultiplier={1.15}
+                    className="font-bold text-[18px] leading-tight text-bear-text"
+                  >
+                    {hero ? hero.name : 'Пока нет тренировок'}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    maxFontSizeMultiplier={1.1}
+                    className="font-sans text-[13.5px] leading-tight text-bear-sub2"
+                  >
+                    {hero
+                      ? `${hero.minutes} мин · ${formatNum(hero.kcal)} ккал`
+                      : 'Даже прогулка считается'}
+                  </Text>
+                </View>
               </View>
-            </Pressable>
-          ))}
+              <Pressable
+                onPress={() => openModal(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Добавить тренировку"
+                className="mt-3 overflow-hidden rounded-2xl active:opacity-80"
+              >
+                <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
+                  <View className="flex-row items-center justify-center gap-1.5 py-2.5">
+                    <Play size={15} color="#FFFFFF" />
+                    <Text className="font-bold text-[15px] text-white">Добавить тренировку</Text>
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            </View>
+            <ImageBackground
+              source={SNEAKERS}
+              style={{ width: 88 }}
+              imageStyle={{ resizeMode: 'cover' }}
+              accessibilityLabel="Кроссовки"
+            />
+          </View>
+        </View>
+
+        {/* Кольцо недели: % от недельной нормы 150 минут (рекомендация
+            ВОЗ) и дельта к прошлой неделе — «↑ +12%» на шаблоне */}
+        <Pressable
+          onPress={() =>
+            toast({
+              title: `📅 Неделя: ${week.minutes} из ${WHO_WEEK_MIN} мин`,
+              description:
+                week.delta === 0
+                  ? 'Норма недели — 150 минут активности (рекомендация ВОЗ)'
+                  : week.delta > 0
+                    ? `${week.delta}% к прошлой неделе — норма недели 150 минут (ВОЗ)`
+                    : `${week.delta}% к прошлой неделе — норма недели 150 минут (ВОЗ)`,
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel={`Выполнено за неделю ${week.pct} процентов`}
+          className="w-[112px] shrink-0 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] py-3 active:opacity-80"
+        >
+          <WeekRing pct={week.pct} />
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.05}
+            className="mt-1.5 font-sans text-[11px] leading-tight text-bear-dim"
+          >
+            за неделю
+          </Text>
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.1}
+            className="mt-0.5 font-bold text-[12.5px] leading-tight"
+            style={{
+              color:
+                week.delta > 0 ? '#34D399' : week.delta < 0 ? '#FB7185' : '#8B96B8',
+            }}
+          >
+            {week.delta > 0 ? `↑ +${week.delta}%` : week.delta < 0 ? `↓ −${Math.abs(week.delta)}%` : 'как раньше'}
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Динамика: сожжённые ккал по дням, периоды 7/30/90 — как на
+          шаблоне. Пока тренировок нет — карточку не рисуем (пустых
+          заглушек на витрине не оставляем) */}
+      {hasDyn && (
+        <View className="mt-2 rounded-3xl border border-white/10 bg-white/[0.03] p-3.5">
+          <View className="flex-row items-center justify-between gap-2">
+            <View className="min-w-0 flex-row items-center gap-1.5">
+              <BarChart3 size={16} color="#A78BFA" />
+              <Text className="font-bold text-[16px] text-bear-text">Динамика</Text>
+            </View>
+            <Pills
+              items={DYN_RANGES}
+              value={dynRange}
+              onChange={setDynRange}
+              size="sm"
+              accessibilityLabel="Период динамики тренировок"
+            />
+          </View>
+          <View className="mt-1.5">
+            <SvgAreaChart
+              data={dynData}
+              color="#A78BFA"
+              height={132}
+              yFmt={(v) => formatNum(Math.round(v))}
+              bare
+              lastBadge
+            />
+          </View>
         </View>
       )}
 
-      {burned > 0 && (
-        <Text className="mt-3 rounded-2xl bg-[#f87171]/[0.07] px-3.5 py-2.5 font-semibold text-[16.5px] text-[#f87171]">
-          🔥 Сожжено за сегодня: {formatNum(burned)} ккал
-        </Text>
+      {/* Популярные виды: топ-4 за 30 дней по минутам — плитки 2×2
+          с эмодзи и суммой часов, как на шаблоне */}
+      {popular.length > 0 && (
+        <View className="mt-2 rounded-3xl border border-white/10 bg-white/[0.03] p-3.5">
+          <View className="flex-row items-center gap-1.5">
+            <Star size={16} color="#FBBF24" />
+            <Text className="font-bold text-[16px] text-bear-text">Популярные виды</Text>
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.05}
+              className="ml-auto shrink font-sans text-[12px] text-bear-sub2"
+            >
+              за 30 дней
+            </Text>
+          </View>
+          <View className="mt-2 gap-2">
+            {popular
+              .reduce((rows, p, i) => {
+                if (i % 2 === 0) rows.push([])
+                rows[rows.length - 1].push(p)
+                return rows
+              }, [])
+              .map((row, ri) => (
+                <View key={`pop-row-${ri}`} className="flex-row gap-2">
+                  {row.map((p) => (
+                    <View
+                      key={p.name}
+                      className="min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl bg-white/[0.04] px-2.5 py-2"
+                    >
+                      <Text className="text-[19px]">{p.emoji}</Text>
+                      <View className="min-w-0 flex-1">
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.1}
+                          className="font-bold text-[13.5px] leading-tight text-bear-text"
+                        >
+                          {p.name}
+                        </Text>
+                        <Text
+                          numberOfLines={1}
+                          maxFontSizeMultiplier={1.05}
+                          className="font-sans text-[12px] leading-tight text-bear-sub2"
+                        >
+                          {fmtHours(p.minutes)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                  {row.length === 1 && <View className="flex-1" />}
+                </View>
+              ))}
+          </View>
+        </View>
+      )}
+
+      {/* Последние тренировки: свежие записи дней (сегодня — сверху).
+          Записи за СЕГОДНЯ открываются по тапу (изменить), у них же
+          корзина; прошлые дни — просто история, справа зелёная галочка */}
+      {recent.length > 0 && (
+        <View className="mt-2 rounded-3xl border border-white/10 bg-white/[0.03] p-3.5">
+          <View className="flex-row items-center gap-1.5">
+            <History size={16} color="#8B96B8" />
+            <Text className="font-bold text-[16px] text-bear-text">Последние тренировки</Text>
+          </View>
+          <View className="mt-1.5 gap-0.5">
+            {recent.map((e) => {
+              const isToday = e.daysAgo === 0
+              const RowWrap = isToday ? Pressable : View
+              return (
+                <RowWrap
+                  key={`${e.daysAgo}-${e.id}`}
+                  onPress={isToday ? () => openModal(e) : undefined}
+                  accessibilityRole={isToday ? 'button' : undefined}
+                  accessibilityLabel={isToday ? `Изменить ${e.name}` : undefined}
+                  className="flex-row items-center gap-2.5 rounded-2xl px-0.5 py-1.5 active:opacity-70"
+                >
+                  <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5">
+                    <Text className="text-[17px]">{e.emoji}</Text>
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.1}
+                      className="font-bold text-[15px] leading-tight text-bear-text"
+                    >
+                      {e.name}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.05}
+                      className="font-sans text-[12.5px] leading-tight text-bear-sub2"
+                    >
+                      {`${e.minutes} мин · ${formatNum(e.kcal)} ккал`}
+                    </Text>
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.05}
+                    className="shrink-0 font-sans text-[12.5px] text-bear-dim"
+                  >
+                    {dayLabel(e.daysAgo)}
+                  </Text>
+                  <View
+                    className="h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: 'rgba(52,211,153,0.15)' }}
+                  >
+                    <Check size={13} color="#34D399" />
+                  </View>
+                  {isToday ? (
+                    <Pressable
+                      onPress={() => remove(e)}
+                      accessibilityLabel={`Удалить ${e.name}`}
+                      hitSlop={6}
+                      className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5"
+                    >
+                      <Trash2 size={14} color="#98A2C2" />
+                    </Pressable>
+                  ) : null}
+                </RowWrap>
+              )
+            })}
+          </View>
+          {recent.some((e) => e.daysAgo === 0) && (
+            <Text className="mt-1 font-sans text-[12px] leading-snug text-bear-dim">
+              Тап по сегодняшней записи — изменить.
+            </Text>
+          )}
+        </View>
       )}
 
       {/* Окно добавления/изменения тренировки */}
@@ -974,6 +1263,89 @@ export function ExerciseSection({ flat = false }) {
           </View>
         </View>
       </Modal>
+    </View>
+  )
+}
+
+// Плитка-статистика витрины (по шаблону): эмодзи, крупное значение,
+// подпись. Значение с дожимом — «12,5 ч» и «1 048» помещаются даже
+// на узком экране
+function StatTile({ emoji, value, label }) {
+  return (
+    <View className="min-w-0 flex-1 items-center rounded-2xl bg-white/[0.04] px-0.5 py-2">
+      <Text className="text-[14px] leading-none">{emoji}</Text>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.72}
+        maxFontSizeMultiplier={1.1}
+        className="mt-1 w-full text-center font-extrabold text-[15.5px] leading-tight text-bear-text"
+      >
+        {value}
+      </Text>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+        maxFontSizeMultiplier={1.05}
+        className="mt-0.5 w-full text-center font-sans text-[10.5px] leading-tight text-bear-sub2"
+      >
+        {label}
+      </Text>
+    </View>
+  )
+}
+
+// Кольцо недели (по шаблону): % недельной нормы — 150 минут ВОЗ.
+// Статичное (без анимации) — растёт с каждой записанной тренировкой,
+// дельта к прошлой неделе стоит под ним отдельной строкой
+function WeekRing({ pct, size = 76 }) {
+  const sw = 8
+  const r = (size - sw) / 2
+  const c = 2 * Math.PI * r
+  const frac = Math.max(0, Math.min(100, pct)) / 100
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size}>
+        <Defs>
+          <SvgGrad id="wkRingGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#8B5CF6" />
+            <Stop offset="1" stopColor="#A45BFF" />
+          </SvgGrad>
+        </Defs>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke="rgba(255,255,255,0.08)"
+          strokeWidth={sw}
+          fill="none"
+        />
+        {pct > 0 && (
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke="url(#wkRingGrad)"
+            strokeWidth={sw}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${c * frac} ${c}`}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        )}
+      </Svg>
+      <View className="absolute inset-0 items-center justify-center">
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          maxFontSizeMultiplier={1.1}
+          className="text-center font-extrabold text-[19px] text-bear-text"
+        >
+          {`${Math.round(pct)}%`}
+        </Text>
+      </View>
     </View>
   )
 }

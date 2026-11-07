@@ -49,7 +49,10 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useCycleStore } from '@/store/useCycleStore'
+import { useDayTypesStore } from '@/store/useDayTypesStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
+import { dayMark as dayMarkOf, kcalWithDayMark } from '@/lib/data/dayContext'
 import { streakOf } from '@/lib/streak'
 import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS, xpForDay } from '@/lib/data/activity'
@@ -114,6 +117,30 @@ export default function HomeScreen() {
   const streak = useMemo(() => streakOf(historyDays), [historyDays])
   const goals = useGoalsStore((s) => s.goals)
   const setGoals = useGoalsStore((s) => s.setGoals)
+  // Особые дни (менструация/командировка/праздник): норма СЕГОДНЯ =
+  // база + прибавка дня. Раньше корректировка цикла никуда не
+  // записывалась — теперь день имеет свою норму: остаток, кольца,
+  // вечерняя подсказка и отчёты считают по ней (lib/data/dayContext)
+  const dayMarks = useDayTypesStore((s) => s.marks)
+  const dayDeltas = useDayTypesStore((s) => s.deltas)
+  const cycEnabled = useCycleStore((s) => s.enabled)
+  const cycLastStart = useCycleStore((s) => s.lastStart)
+  const cycLength = useCycleStore((s) => s.length)
+  const cycBleed = useCycleStore((s) => s.bleed)
+  const cycHistory = useCycleStore((s) => s.history)
+  const todayKeyStr = dayKeyOf()
+  const dayCtx = useMemo(() => ({ marks: dayMarks, deltas: dayDeltas }), [dayMarks, dayDeltas])
+  const cycSnapshot = useMemo(
+    () => ({ enabled: cycEnabled, lastStart: cycLastStart, length: cycLength, bleed: cycBleed, history: cycHistory }),
+    [cycEnabled, cycLastStart, cycLength, cycBleed, cycHistory]
+  )
+  // Норма дня (база + прибавка особого дня) и сама метка — в сводку,
+  // вечернюю подсказку и окно «Все приёмы»
+  const kcalTargetToday = useMemo(
+    () => kcalWithDayMark(goals.kcal, todayKeyStr, dayCtx, cycSnapshot),
+    [goals.kcal, todayKeyStr, dayCtx, cycSnapshot]
+  )
+  const mark = useMemo(() => dayMarkOf(todayKeyStr, dayCtx, cycSnapshot), [todayKeyStr, dayCtx, cycSnapshot])
 
   const consumed = totalConsumed(entries)
   const day = dayBju(entries)
@@ -279,11 +306,12 @@ export default function HomeScreen() {
             карточке-итогу в «Отчётах») */}
         <DailySummary
           consumed={consumed}
-          target={goals.kcal}
+          target={kcalTargetToday}
           bju={day}
           burned={burned}
           burnGoal={goals.burnKcal}
           streak={streak}
+          dayMark={mark}
           onEditKcalGoal={() =>
             openGoalEdit({ field: 'kcal', title: 'Цель по калориям', unit: 'ккал', min: 800, max: 6000 })
           }
@@ -380,7 +408,7 @@ export default function HomeScreen() {
           waterMl={waterMl}
           waterGoalMl={goals.waterMl}
           kcal={consumed}
-          kcalGoal={goals.kcal}
+          kcalGoal={kcalTargetToday}
           onAddWater={handleAddWater}
           onAddFood={() => openAdd('dinner')}
         />
@@ -407,7 +435,7 @@ export default function HomeScreen() {
       <AllMealsModal
         open={allOpen}
         onClose={() => setAllOpen(false)}
-        kcal={goals.kcal}
+        kcal={kcalTargetToday}
         onAddToMeal={(id) => {
           setAllOpen(false)
           openAdd(id)

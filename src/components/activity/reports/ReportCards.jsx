@@ -40,6 +40,9 @@ import { METRICS } from '@/lib/data/metrics'
 import { fmtSleep, nightsInNorm, sleepAvg } from '@/lib/data/sleep'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useDayTypesStore } from '@/store/useDayTypesStore'
+import { useCycleStore } from '@/store/useCycleStore'
+import { kcalWithDayMark } from '@/lib/data/dayContext'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { history } from '@/lib/data/activity'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
@@ -454,13 +457,31 @@ function WeightReportCard({ days, onPress = () => {} }) {
 
 export function ReportCards({ today, days, rows = [], onSelectMetric = () => {}, onAddSleep = () => {} }) {
   const goals = useGoalsStore((s) => s.goals)
+  // Особые дни: у дня с меткой (менструация/командировка/праздник)
+  // своя норма — «Цель: N/7 дн» считает каждый день по его норме
+  // (отзыв Кати: перерасчёт в особые дни нигде не фиксировался)
+  const dayMarks = useDayTypesStore((s) => s.marks)
+  const dayDeltas = useDayTypesStore((s) => s.deltas)
+  const cycEnabled = useCycleStore((s) => s.enabled)
+  const cycLastStart = useCycleStore((s) => s.lastStart)
+  const cycLength = useCycleStore((s) => s.length)
+  const cycBleed = useCycleStore((s) => s.bleed)
+  const cycHistory = useCycleStore((s) => s.history)
+  const dayCtx = useMemo(() => ({ marks: dayMarks, deltas: dayDeltas }), [dayMarks, dayDeltas])
+  const cycSnapshot = useMemo(
+    () => ({ enabled: cycEnabled, lastStart: cycLastStart, length: cycLength, bleed: cycBleed, history: cycHistory }),
+    [cycEnabled, cycLastStart, cycLength, cycBleed, cycHistory]
+  )
   // Сколько дней периода цель достигнута по шагам/воде/калориям/сожжённым —
   // та же функция, что считала плитки «Дисциплины» (теперь данные
   // живут прямо в карточках показателей; сожжённые добавлены —
   // отзыв Кати: «в блоке сожжено пусто, нет ни цели»)
   const goalMet = useMemo(
-    () => discipline(rows, goals).met,
-    [rows, goals]
+    () =>
+      discipline(rows, goals, (key) =>
+        kcalWithDayMark(goals.kcal, key, dayCtx, cycSnapshot)
+      ).met,
+    [rows, goals, dayCtx, cycSnapshot]
   )
   // Прошлый период — для Δ% по средним: один обход двойной истории,
   // режем пополам (тот же приём, что в окнах истории)

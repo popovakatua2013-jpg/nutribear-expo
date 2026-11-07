@@ -62,8 +62,12 @@ import { formatNum, pluralDays } from '@/lib/format'
 import { remainderOf } from '@/lib/data/remainder'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useDayTypesStore } from '@/store/useDayTypesStore'
+import { DAY_TYPES } from '@/lib/data/dayContext'
+import { dayKeyOf as cycleDayKeyOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
+import { Check, ChevronDown, RotateCcw } from 'lucide-react-native'
 
 const MAX = 1.25
 const RING = 84
@@ -254,11 +258,12 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 export function DailySummary({
   consumed = 0,
-  target = 0,
+  target = 0, // норма ДНЯ: база + прибавка особого дня (считает index.jsx)
   bju = { p: 0, f: 0, c: 0, fib: 0 },
   burned = 0, // вся активность за день: тренировки + шаги
   burnGoal = 0, // цель «сжечь за день», ккал
   streak = 0, // дней подряд с дневником (чип с огоньком)
+  dayMark = null, // особый день: { type, delta, auto } | null (lib/data/dayContext)
   onEditBurnGoal, // тап по кольцу сжигания — изменить цель
   onEditKcalGoal, // тап по левой половине — изменить цель по калориям
 }) {
@@ -280,6 +285,33 @@ export function DailySummary({
     f: macroNorms.f > 0 ? macroNorms.f : autoNorms.f,
     c: macroNorms.c > 0 ? macroNorms.c : autoNorms.c,
     fib: macroNorms.fib > 0 ? macroNorms.fib : autoNorms.fib,
+  }
+
+  // ── Особый день (менструация / командировка / праздник) ─────────────
+  // Бейдж под кольцами + окно выбора: отзыв Кати — корректировка
+  // калорий в особые дни «нигде не фиксировалась». Прибавка уже внутри
+  // target (считает index.jsx через kcalWithDayMark) — здесь витрина
+  // и ручная установка метки. Прибавки типов — из стора особых дней
+  const dayDeltas = useDayTypesStore((s) => s.deltas)
+  const setDayMark = useDayTypesStore((s) => s.setMark)
+  const todayKeyStr = cycleDayKeyOf()
+  const [markOpen, setMarkOpen] = useState(false)
+  const markMeta = dayMark ? DAY_TYPES[dayMark.type] : null
+
+  function pickDayMark(type) {
+    const same = dayMark && dayMark.type === type && !dayMark.auto
+    setDayMark(todayKeyStr, same ? null : type)
+    setMarkOpen(false)
+    if (same) {
+      toast({ title: '↩ Обычный день', description: 'Метка снята — считаем по базовой норме' })
+    } else {
+      const meta = DAY_TYPES[type]
+      const plus = dayDeltas[type] || 0
+      toast({
+        title: `${meta.emoji} ${meta.label} — особый день`,
+        description: plus > 0 ? `Норма дня: +${formatNum(plus)} ккал к вашей цели` : 'Норма дня без прибавки (прибавка = 0)',
+      })
+    }
   }
 
   // Окно правки своих норм нутриентов (карандашик в строке нутриентов)
@@ -425,9 +457,12 @@ export function DailySummary({
             className="max-w-full"
           >
             {/* «Остаток»: огонёк и подпись в строку, ниже — остаток
-                калорий на день жирным (режим — см. шапку файла;
-                цифра крупнее — отзыв Кати: «остаток сделать крупнее»),
-                мелкой строкой — пояснение */}
+                калорий на день. ЦИФРА КРУПНЕЕ (отзыв Кати: «остаток
+                очень мелко написан»): значение 27px, «ккал» мельче в той
+                же строке — раньше «1 016 ккал» одной строкой 22px не
+                влезало в узкий столбик между кольцами, дожим шрифта
+                (adjustsFontSizeToFit) сжимал её до ~15px; теперь число
+                короче и помещается без сжатия, мелкой строкой — пояснение */}
             <View
               accessibilityLabel={
                 `Остаток калорий на сегодня: ` +
@@ -457,14 +492,13 @@ export function DailySummary({
                 adjustsFontSizeToFit
                 minimumFontScale={0.7}
                 maxFontSizeMultiplier={MAX}
-                className="mt-0.5 font-bold text-[22px] leading-tight"
-                style={{ color: remTone.text }}
+                className="mt-0.5 font-extrabold leading-tight"
+                style={{ color: remTone.text, fontSize: 27 }}
               >
-                {rem == null
-                  ? '—'
-                  : rem >= 0
-                    ? `${formatNum(rem)} ккал`
-                    : `−${formatNum(Math.abs(rem))} ккал`}
+                {rem == null ? '—' : rem >= 0 ? formatNum(rem) : `−${formatNum(Math.abs(rem))}`}
+                <Text className="font-bold" style={{ fontSize: 13, color: '#8B96B8' }}>
+                  {' ккал'}
+                </Text>
               </Text>
               <Text
                 numberOfLines={1}
@@ -510,6 +544,46 @@ export function DailySummary({
           />
         </BurnZone>
       </View>
+
+      {/* Особый день — метка и перерасчёт нормы ТЕПЕРЬ ВИДНЫ (отзыв
+          Кати: корректировку калорий в особые дни «нигде не фиксируется»).
+          Есть метка — цветной чип «эмодзи Тип · норма N ккал (+M)»,
+          нет — пунктирный «+ Особый день». Тап открывает окно выбора;
+          дни менструации подставляются сами из трекера цикла */}
+      <Pressable
+        onPress={() => setMarkOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          dayMark
+            ? `Особый день: ${markMeta.label}, норма ${formatNum(target)} килокалорий. Нажмите, чтобы изменить`
+            : 'Отметить особый день: менструация, командировка или праздник'
+        }
+        className={`mt-2.5 flex-row items-center gap-1.5 self-start rounded-full px-3 py-1.5 active:opacity-75 ${
+          dayMark ? '' : 'border border-dashed border-white/15'
+        }`}
+        style={
+          dayMark
+            ? { backgroundColor: `${markMeta.color}1F`, borderColor: `${markMeta.color}55`, borderWidth: 1 }
+            : null
+        }
+      >
+        <Text className="text-[14px] leading-none">{dayMark ? markMeta.emoji : '＋'}</Text>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          maxFontSizeMultiplier={MAX}
+          className="font-bold text-[13.5px] leading-tight"
+          style={{ color: dayMark ? markMeta.color : '#8B96B8' }}
+        >
+          {dayMark
+            ? `${markMeta.label} · норма ${formatNum(target)} ккал${
+                dayMark.delta > 0 ? ` (+${formatNum(dayMark.delta)})` : ''
+              }`
+            : 'Особый день'}
+        </Text>
+        <ChevronDown size={14} color={dayMark ? markMeta.color : '#8B96B8'} />
+      </Pressable>
 
       {/* нутриенты одной строкой в заданном порядке (Катя попросила
           вернуть одну строку вместо сетки 2×2: «верни бжу и клетчатку
@@ -625,6 +699,106 @@ export function DailySummary({
             </Pressable>
           </Pressable>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Окно «Особый день»: выбор типа дня; выбранный подсвечен своим
+          цветом с галочкой. Дни менструации приходят из трекера цикла
+          автоматически (footnote), командировку и праздник отмечает
+          сама. Прибавки правятся в «Ещё → Дневник питания» */}
+      <Modal
+        visible={markOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setMarkOpen(false)}
+      >
+        <Pressable
+          className="flex-1 items-center justify-center bg-black/60 px-8"
+          onPress={() => setMarkOpen(false)}
+        >
+          <Pressable
+            className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+            onPress={() => {}}
+            accessibilityLabel="Особый день"
+          >
+            <View className="flex-row items-center justify-between">
+              <Text className="font-bold text-[20px] text-bear-text">🗓 Особый день</Text>
+              <Pressable
+                onPress={() => setMarkOpen(false)}
+                accessibilityLabel="Закрыть"
+                className="p-1"
+              >
+                <X hitSlop={10} size={22} color="#A5AECB" />
+              </Pressable>
+            </View>
+            <Text className="mt-1 font-sans text-[15px] leading-relaxed text-bear-sub">
+              В особый день норма калорий пересчитывается с прибавкой: остаток на Главной, кольцо «съедено» и «Цель: N/7 дн» в отчётах считают по норме этого дня.
+            </Text>
+            <View className="mt-3 gap-2">
+              {Object.keys(DAY_TYPES).map((t) => {
+                const meta = DAY_TYPES[t]
+                const active = dayMark && dayMark.type === t
+                return (
+                  <Pressable
+                    key={t}
+                    onPress={() => pickDayMark(t)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: Boolean(active) }}
+                    accessibilityLabel={`Отметить день: ${meta.label}`}
+                    className="flex-row items-center gap-2.5 rounded-2xl border px-3 py-2.5 active:opacity-75"
+                    style={{
+                      borderColor: active ? `${meta.color}66` : 'rgba(255,255,255,0.09)',
+                      backgroundColor: active ? `${meta.color}1A` : 'rgba(255,255,255,0.03)',
+                    }}
+                  >
+                    <Text className="text-[21px]">{meta.emoji}</Text>
+                    <View className="min-w-0 flex-1">
+                      <Text className="font-bold text-[16px] text-bear-text">{meta.label}</Text>
+                      <Text
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={MAX}
+                        className="font-sans text-[13px] text-bear-sub2"
+                      >
+                        {`+${formatNum(dayDeltas[t] || 0)} ккал к норме`}
+                      </Text>
+                    </View>
+                    {active && (
+                      <View
+                        className="h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: `${meta.color}33` }}
+                      >
+                        <Check size={14} color={meta.color} />
+                      </View>
+                    )}
+                  </Pressable>
+                )
+              })}
+            </View>
+            {/* Снять ручную метку (авто-день цикла кнопкой не убирается —
+                он считается из трекера) */}
+            {dayMark && !dayMark.auto && (
+              <Pressable
+                onPress={() => {
+                  setDayMark(todayKeyStr, null)
+                  setMarkOpen(false)
+                  toast({ title: '↩ Обычный день', description: 'Метка снята — считаем по базовой норме' })
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Вернуть обычный день"
+                className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-white/5 py-2.5 active:opacity-70"
+              >
+                <RotateCcw size={15} color="#AEB9D9" />
+                <Text className="font-bold text-[16px] text-bear-soft">Вернуть обычный день</Text>
+              </Pressable>
+            )}
+            <Text className="mt-2.5 font-sans text-[13px] leading-snug text-bear-dim">
+              🌙 Дни менструации отмечаются сами, если включён трекер цикла
+              («Ещё» → «Цикл»). Размер прибавок — «Ещё» → «Дневник питания» →
+              «Особые дни».
+              {!(target > 0) ? ' Норма калорий не задана — прибавка заработает, когда зададите цель.' : ''}
+            </Text>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   )
