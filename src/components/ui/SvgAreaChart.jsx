@@ -4,7 +4,10 @@
 // (например, целевой вес). Цель НЕ растягивает шкалу (отзыв Кати:
 // цель 93 сплющивала кривую 52–65 в прямую линию): шкала строится
 // по измерениям, а линия при выходе за диапазон прижимается к краю
-// с подписью значения («цель 93»). Деления оси Y — круглые числа.
+// с подписью значения («цель 93»). Деления оси Y — круглые числа
+// на своих настоящих позициях (значение выше — деление выше;
+// раньше подписи шли по возрастанию сверху вниз и ось выглядела
+// перевёрнутой — отзыв Кати: блок «Динамики веса» выглядел недоделанным).
 
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -68,18 +71,29 @@ export function SvgAreaChart({
   }
 
   const values = data.map((d) => d.value)
-  // Шкала — ТОЛЬКО по измерениям (см. шапку файла): цель поверх,
-  // при выходе за диапазон — прижата к краю
+  // Шкала — ТОЛЬКО по измерениям (см. шапку файла). Цель включается
+  // в шкалу, когда она близко (не дальше 1,5 размаха) — пунктир встаёт
+  // ровно на своё значение между делениями; далеко — прижимается
+  // к краю, чтобы не сплющить кривую (цель 93 при данных 52–65)
   const max = Math.max(...values)
   const min = Math.min(...values)
-  const rawLo = min === max ? min - 1 : min - (max - min) * 0.1
-  const lo = min >= 0 ? Math.max(0, rawLo) : rawLo
-  const hi = max === min ? max + 1 : max + (max - min) * 0.08
+  const flat = min === max
+  let lo = flat ? min - 1 : min - (max - min) * 0.1
+  let hi = flat ? max + 1 : max + (max - min) * 0.08
+  const hasGoal = goalLine != null && Number.isFinite(goalLine)
+  const span = hi - lo
+  if (hasGoal && goalLine > hi && goalLine - hi <= 1.5 * span) {
+    hi = goalLine + (flat ? 0.5 : (max - min) * 0.08)
+  } else if (hasGoal && goalLine < lo && lo - goalLine <= 1.5 * span) {
+    lo = goalLine - (flat ? 0.5 : (max - min) * 0.1)
+  }
+  if (min >= 0 && lo < 0) lo = 0
 
-  // Круглые деления внутри шкалы; дубли подписей после yFmt (например
-  // 52,5 → «53» при целочисленном формате) убираем — grid и подписи
-  // всегда согласованы
-  const step = niceStep(hi - lo)
+  // Круглые деления внутри шкалы; у ровной линии (все значения равны)
+  // шаг ровно 1 — подписи 87 / 88 / 89 без дробей и дублей. Дубли
+  // после yFmt (например 52,5 → «53» при целочисленном формате)
+  // убираем — grid и подписи всегда согласованы
+  const step = flat ? 1 : niceStep(hi - lo)
   const start = Math.ceil(lo / step) * step
   const rawTicks = []
   for (let i = 0; i < 10; i++) {
@@ -104,7 +118,6 @@ export function SvgAreaChart({
   // Пунктир цели: линия прижимается к краю, если цель вне шкалы;
   // у прижатой линии подпись со значением («цель 93»), чтобы позиция
   // не читалась как настоящее значение цели
-  const hasGoal = goalLine != null && Number.isFinite(goalLine)
   const goalClamped = hasGoal && (goalLine > hi || goalLine < lo)
   const goalY = hasGoal ? Math.min(Math.max(y(goalLine), PAD_T + 2), PAD_T + ih - 2) : 0
   // Подпись «цель»: над линией, а если линия у верхней кромки — под ней,
@@ -125,11 +138,15 @@ export function SvgAreaChart({
           </LinearGradient>
         </Defs>
         {!bare &&
-          ticks.map((t, i) => {
-            const ty = PAD_T + (ih * i) / 3
+          ticks.map((t) => {
+            // Сетка — на НАСТОЯЩЕЙ позиции значения: раньше деления
+            // стояли через равные промежутки высоты, а значения шли
+            // по возрастанию сверху вниз, и ось Y выглядела
+            // перевёрнутой (87 сверху, 89 снизу при шкале «больше = выше»)
+            const ty = y(t)
             return (
               <Line
-                key={`g${i}`}
+                key={`g${t}`}
                 x1={PAD_L}
                 y1={ty}
                 x2={w - PAD_R}
@@ -140,11 +157,11 @@ export function SvgAreaChart({
             )
           })}
         {!bare &&
-          ticks.map((t, i) => (
+          ticks.map((t) => (
             <SvgText
-              key={`t${i}`}
+              key={`t${t}`}
               x={PAD_L - 5}
-              y={PAD_T + (ih * i) / 3 + 3}
+              y={y(t) + 3}
               fill={AXIS}
               fontSize={9}
               textAnchor="end"

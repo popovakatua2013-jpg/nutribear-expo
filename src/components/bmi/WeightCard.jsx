@@ -4,7 +4,8 @@
 // СВЁРНУТА: тап по шапке разворачивает/сворачивает содержимое. Ниже ряд:
 // слева узкая карточка «Текущий вес» с ростом под весом (карандаш — окно
 // изменения роста: поле роста из окна записи веса убрано как дубль),
-// целью и ОДНОЙ заметной кнопкой записи — крупный «+» БЕЗ текста
+// целью, прогрессом до цели (без цели — здоровый диапазон по росту)
+// и ОДНОЙ заметной кнопкой записи — крупный «+» БЕЗ текста
 // (отзыв Кати: «просто +, текст не нужен, сделай плюс крупнее»; раньше
 // кнопки «Изменить» и «+» дублировали друг друга — дубль убран ещё
 // раньше; цель правится тапом по строке «Цель» с карандашом —
@@ -158,6 +159,27 @@ export function WeightCard() {
   // Направление цели: «похудеть» — цель ниже текущего веса, «набрать» — выше
   const wantDown = goalWeightKg != null && goalWeightKg < weightKg - 0.05
   const wantUp = goalWeightKg != null && goalWeightKg > weightKg + 0.05
+
+  // Прогресс до цели — полоса от самой первой записи журнала к цели
+  // (отзыв Кати: левый блок «Динамики веса» выглядел недоделанным —
+  // под кнопкой записи зияла пустота). weights хранит «новые сверху»,
+  // поэтому самая ранняя запись ищется по дате — порядок не важен
+  const startRec =
+    weights.length > 0
+      ? weights.reduce((a, b) => (new Date(a.date) <= new Date(b.date) ? a : b))
+      : null
+  const startKg = startRec ? startRec.kg : weightKg
+  let goalPct = 0
+  if (goalWeightKg != null) {
+    if (goalReached) {
+      goalPct = 1
+    } else if (wantUp && goalWeightKg > startKg) {
+      goalPct = (weightKg - startKg) / (goalWeightKg - startKg)
+    } else if (wantDown && startKg > goalWeightKg) {
+      goalPct = (startKg - weightKg) / (startKg - goalWeightKg)
+    }
+    goalPct = Math.max(0, Math.min(1, goalPct))
+  }
 
   // Движение к цели за ВЫБРАННЫЙ ПЕРИОД, а не за всю историю (отзыв
   // Кати: «моя цель похудеть — я ввожу вес больше, а он пишет
@@ -364,103 +386,168 @@ export function WeightCard() {
       {/* Ряд: узкая карточка веса/цели + карточка с графиком */}
       <View className="flex-row items-stretch gap-2.5">
         {/* Текущий вес + цель + кнопка «Задать цель»; тап по весу — запись */}
-        <View className="w-[122px] shrink-0 rounded-2xl p-3.5" style={CARD}>
-          <Pressable
-            onPress={() => setOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Записать вес"
-            className="active:opacity-70"
-          >
-            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
-              Текущий вес
-            </Text>
-            {/* Значение подсвечено по калькулятору ИМТ и цели (отзыв
-                Кати): перебор — красный, норма без цели — зелёный,
-                сушка — янтарный, поддержка — голубой, набор — фиолетовый */}
-            <Text
-              maxFontSizeMultiplier={1.15}
-              className="mt-1.5 font-extrabold text-[27px] leading-none tracking-tight"
-              style={{ color: weightTone }}
+        <View
+          className="w-[122px] shrink-0 justify-between rounded-2xl p-3.5"
+          style={CARD}
+        >
+          <View>
+            <Pressable
+              onPress={() => setOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Записать вес"
+              className="active:opacity-70"
             >
-              {fmtDecimal(weightKg)}
-              <Text className="font-semibold text-[16.5px] text-bear-sub2"> кг</Text>
-            </Text>
-          </Pressable>
+              <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
+                Текущий вес
+              </Text>
+              {/* Значение подсвечено по калькулятору ИМТ и цели (отзыв
+                  Кати): перебор — красный, норма без цели — зелёный,
+                  сушка — янтарный, поддержка — голубой, набор — фиолетовый */}
+              <Text
+                maxFontSizeMultiplier={1.15}
+                className="mt-1.5 font-extrabold text-[27px] leading-none tracking-tight"
+                style={{ color: weightTone }}
+              >
+                {fmtDecimal(weightKg)}
+                <Text className="font-semibold text-[16.5px] text-bear-sub2"> кг</Text>
+              </Text>
+            </Pressable>
 
-          {/* Рост — под весом, карандаш открывает окно изменения
-              (поле роста из окна записи веса убрано как дубль) */}
-          <Pressable
-            onPress={() => {
-              setHeightText(String(heightCm))
-              setHeightOpen(true)
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Рост ${heightCm} сантиметров — изменить`}
-            className="mt-1.5 flex-row items-center gap-1 self-start active:opacity-70"
-          >
-            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">Рост</Text>
-            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16px] text-bear-text">
-              {heightCm} см
-            </Text>
-            <Pencil size={15} color="#8DABFF" />
-          </Pressable>
-
-          <View className="mt-2 flex-row items-center gap-1">
-            {periodDelta < 0 && (
-              <TrendingDown size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
-            )}
-            {periodDelta > 0 && (
-              <TrendingUp size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
-            )}
-            <Text
-              numberOfLines={1}
-              maxFontSizeMultiplier={1.2}
-              className="font-semibold text-[15px]"
-              style={{ color: toneColor }}
+            {/* Рост — под весом, карандаш открывает окно изменения
+                (поле роста из окна записи веса убрано как дубль) */}
+            <Pressable
+              onPress={() => {
+                setHeightText(String(heightCm))
+                setHeightOpen(true)
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Рост ${heightCm} сантиметров — изменить`}
+              className="mt-1.5 flex-row items-center gap-1 self-start active:opacity-70"
             >
-              {periodDelta === 0
-                ? 'без изменений'
-                : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
+              <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">Рост</Text>
+              <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16px] text-bear-text">
+                {heightCm} см
+              </Text>
+              <Pencil size={15} color="#8DABFF" />
+            </Pressable>
+          </View>
+
+          <View>
+            <View className="flex-row items-center gap-1">
+              {periodDelta < 0 && (
+                <TrendingDown size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+              )}
+              {periodDelta > 0 && (
+                <TrendingUp size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+              )}
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="font-semibold text-[15px]"
+                style={{ color: toneColor }}
+              >
+                {periodDelta === 0
+                  ? 'без изменений'
+                  : `${periodDelta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(periodDelta))} кг`}
+              </Text>
+            </View>
+            <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
+              {DELTA_CAPTION[period]}
             </Text>
           </View>
-          <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
-            {DELTA_CAPTION[period]}
-          </Text>
 
-          <View className="my-2.5 h-px bg-white/[0.06]" />
-
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
-            Цель
-          </Text>
-          {/* Цель редактируется тапом по строке (отзыв Кати: кнопка
-              «Изменить» дублировала «+ Записать вес» — отдельной кнопки
-              больше нет; карандаш открывает то же окно записи веса
-              с полем цели) */}
-          <Pressable
-            onPress={() => setOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={goalWeightKg != null ? `Цель ${fmtDecimal(goalWeightKg)} килограммов — изменить` : 'Задать цель по весу'}
-            className="mt-0.5 flex-row items-center gap-1 self-start active:opacity-70"
-          >
-            <Text
-              numberOfLines={1}
-              maxFontSizeMultiplier={1.2}
-              className="font-bold text-[17.5px] text-bear-text"
-            >
-              {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
+          <View>
+            <View className="mb-2 h-px bg-white/[0.06]" />
+            <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
+              Цель
             </Text>
-            <Pencil size={15} color="#8DABFF" />
-          </Pressable>
+            {/* Цель редактируется тапом по строке (отзыв Кати: кнопка
+                «Изменить» дублировала «+ Записать вес» — отдельной кнопки
+                больше нет; карандаш открывает то же окно записи веса
+                с полем цели) */}
+            <Pressable
+              onPress={() => setOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={goalWeightKg != null ? `Цель ${fmtDecimal(goalWeightKg)} килограммов — изменить` : 'Задать цель по весу'}
+              className="mt-0.5 flex-row items-center gap-1 self-start active:opacity-70"
+            >
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="font-bold text-[17.5px] text-bear-text"
+              >
+                {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
+              </Text>
+              <Pencil size={15} color="#8DABFF" />
+            </Pressable>
+
+            {/* Прогресс до цели — полоса от первой записи журнала к цели
+                (отзыв Кати: левый блок выглядел недоделанным — под кнопкой
+                зияла пустота). Без цели — здоровый диапазон по росту,
+                как в карточке «Вес» в «Отчётах» */}
+            {goalWeightKg != null ? (
+              goalReached ? (
+                <View accessibilityLabel="Цель по весу достигнута" className="mt-2">
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    maxFontSizeMultiplier={1.2}
+                    className="font-semibold text-[13px]"
+                    style={{ color: '#4ADE80' }}
+                  >
+                    Цель достигнута!
+                  </Text>
+                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <View
+                      className="h-full rounded-full"
+                      style={{ width: '100%', backgroundColor: '#4ADE80' }}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View
+                  accessibilityLabel={`До цели ${fmtDecimal(Math.abs(goalDiff))} килограммов, прогресс ${Math.round(goalPct * 100)} процентов`}
+                  className="mt-2"
+                >
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    maxFontSizeMultiplier={1.2}
+                    className="font-sans text-[13px] text-bear-dim"
+                  >
+                    До цели {fmtDecimal(Math.abs(goalDiff))} кг
+                  </Text>
+                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <View
+                      className="h-full rounded-full"
+                      style={{ width: `${Math.max(goalPct * 100, 4)}%`, backgroundColor: lineColor }}
+                    />
+                  </View>
+                </View>
+              )
+            ) : (
+              heightCm > 50 && (
+                <Text
+                  maxFontSizeMultiplier={1.2}
+                  accessibilityLabel={`Здоровый диапазон для роста ${heightCm} сантиметров: от ${min} до ${max} килограммов`}
+                  className="mt-2 font-sans text-[13px] leading-snug text-bear-dim"
+                >
+                  Норма: {min}–{max} кг
+                </Text>
+              )
+            )}
+          </View>
 
           {/* Записать вес — единственная кнопка записи: БЕЗ текста,
               только крупный «+» (отзыв Кати: «просто +, текст не нужен,
               сделай плюс крупнее»); подпись осталась в шапке карточки и
-              в accessibilityLabel */}
+              в accessibilityLabel. Кнопка прижата к низу карточки —
+              пустоты под ней больше нет */}
           <Pressable
             onPress={() => setOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Записать вес"
-            className="mt-2.5 items-center justify-center rounded-xl border border-[#A78BFA]/50 bg-[#A78BFA]/25 py-2 active:opacity-70"
+            className="mt-2 items-center justify-center rounded-xl border border-[#A78BFA]/50 bg-[#A78BFA]/25 py-2 active:opacity-70"
           >
             <Plus size={32} color="#C4B5FD" strokeWidth={2.75} />
           </Pressable>
