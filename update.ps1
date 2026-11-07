@@ -6,10 +6,10 @@
 #    2) В терминале VS Code:  .\update.ps1
 #
 #  Скрипт сам:
-#    - находит рабочую копию проекта: путь каждой удачно
-#      обновлённой копии запоминается в файле-настройке
-#      %USERPROFILE%\.nutribear\work-path.txt, поэтому скрипт
-#      находит нужную копию, даже если запущен из другой папки;
+#    - находит рабочую копию проекта: сначала папка, где лежит
+#      сам скрипт (запустили update.bat в папке - её и обновляем),
+#      затем путь последней удачно обновлённой копии из файла-
+#      настройки %USERPROFILE%\.nutribear\work-path.txt;
 #    - предупреждает, если видит две вложенные копии проекта
 #      («Похоже, у вас две папки проекта — оставьте одну»);
 #    - ищет копию и в папке nutribear-expo на рабочем столе, и
@@ -24,7 +24,9 @@
 #    - переносит файл .env (ключи ИИ) из старой копии, если в этой
 #      его нет, и держит запасную копию в %USERPROFILE%\.nutribear;
 #    - переустанавливает библиотеки, если они изменились, ещё не
-#      стоят или устарели (старше файла зависимостей);
+#      стоят, устарели или прошлую установку оборвало (например,
+#      кончилось место на диске) - перед установкой проверяется
+#      свободное место и подсказывается, что освободить;
 #    - гасит залипший Metro на порту 8081 перед стартом;
 #    - записывает хэш версии для бейджа «сборка» в разделе «Ещё»;
 #    - запускает приложение (npx expo start --clear).
@@ -92,19 +94,26 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
 }
 
 # --- 2. Находим рабочую копию проекта ----------------------------
-# Сначала файл-настройка, затем текущая папка, затем типовые места.
-$fromSettings = $false
+# Порядок: ПАПКА САМОГО СКРИПТА (запустили update.bat в папке -
+# её и обновляем), затем файл-настройка, затем текущая папка,
+# затем типовые места на рабочем столе. Раньше файл-настройка
+# стояла первой: в ней сохранялся путь старой ZIP-копии, и скрипт
+# уносил обновление туда, даже когда его запускали из основной
+# папки (случай Кати: обновилась копия nutribear-expo-main\nutribear-app
+# вместо запущенной nutribear-expo, и .env переехал в лишнюю копию).
 $proj = ''
+$scriptDir = $PSScriptRoot
 $desktop = [Environment]::GetFolderPath('Desktop')
 $cfgDir  = Join-Path $env:USERPROFILE '.nutribear'
 $cfgFile = Join-Path $cfgDir 'work-path.txt'
-if (Test-Path $cfgFile) {
+if ($scriptDir -and (Test-Project $scriptDir)) {
+    # папка, где лежит сам update.ps1 - главный ориентир
+    $proj = $scriptDir
+}
+if (-not $proj -and (Test-Path $cfgFile)) {
     $saved = ''
     try { $saved = (Get-Content $cfgFile -Raw).Trim() } catch { $saved = '' }
-    if ($saved -and (Test-Project $saved)) {
-        $proj = $saved
-        $fromSettings = $true
-    }
+    if ($saved -and (Test-Project $saved)) { $proj = $saved }
 }
 if (-not $proj -and (Test-Project (Get-Location).Path)) {
     $proj = (Get-Location).Path
@@ -131,19 +140,17 @@ if (-not (Test-Project $proj)) {
 # --- 3. Две вложенные копии (папка из ZIP внутри такой же) -------
 if ($proj -match 'nutribear-expo-main\\nutribear-expo-main') {
     Write-Host '[!] Похоже, у вас две папки проекта — оставьте одну.' -ForegroundColor Yellow
-    if (-not $fromSettings) {
-        # ...\nbem\nbem\остальное  ->  ...\nbem\остальное
-        $alt = $proj -replace '(nutribear-expo-main\\)+', 'nutribear-expo-main\'
-        if ($alt -eq $proj) {
-            # ...\nbem\nbem (без завершающего слэша)  ->  ...\nbem
-            $alt = $proj -replace 'nutribear-expo-main\\nutribear-expo-main$', 'nutribear-expo-main'
-        }
-        if (($alt -ne $proj) -and (Test-Project $alt)) {
-            Write-Host ('    Обновляю основную копию: ' + $alt)
-            $proj = $alt
-        } else {
-            Write-Host ('    Обновляю копию: ' + $proj)
-        }
+    # ...\nbem\nbem\остальное  ->  ...\nbem\остальное
+    $alt = $proj -replace '(nutribear-expo-main\\)+', 'nutribear-expo-main\'
+    if ($alt -eq $proj) {
+        # ...\nbem\nbem (без завершающего слэша)  ->  ...\nbem
+        $alt = $proj -replace 'nutribear-expo-main\\nutribear-expo-main$', 'nutribear-expo-main'
+    }
+    if (($alt -ne $proj) -and (Test-Project $alt)) {
+        Write-Host ('    Обновляю основную копию: ' + $alt)
+        $proj = $alt
+    } else {
+        Write-Host ('    Обновляю копию: ' + $proj)
     }
 }
 
@@ -180,8 +187,8 @@ if ($desktop -and (-not $dupWarned)) {
     if ($others.Count -gt 0) {
         Write-Host '[i] На рабочем столе есть и другие копии проекта:' -ForegroundColor DarkGray
         foreach ($o in $others) { Write-Host ('    ' + $o) -ForegroundColor DarkGray }
-        Write-Host '    Сейчас обновляю копию, указанную выше (строка «Папка проекта»).' -ForegroundColor DarkGray
-        Write-Host '    Когда убедитесь, что приложение работает, лишнюю папку' -ForegroundColor DarkGray
+        Write-Host '    Обновляю ту, что в строке «Папка проекта» ниже.' -ForegroundColor DarkGray
+        Write-Host '    Когда убедитесь, что приложение работает, лишние папки' -ForegroundColor DarkGray
         Write-Host '    лучше удалить в Проводнике - так не будет путаницы.' -ForegroundColor DarkGray
     }
 }
@@ -257,19 +264,36 @@ if ($fetched) {
     if ($LASTEXITCODE -eq 0) { $local = git rev-parse HEAD }
 
     # --- 7а. Самопроверка: сначала обновляем сам скрипт ----------
-    # Если файл update.ps1 отличается от версии на GitHub - сразу
-    # забираем свежий и перезапускаем себя, чтобы все остальные
-    # шаги выполнились по актуальной версии скрипта.
+    # Сравниваем хэш ЛОКАЛЬНОГО файла ДО и ПОСЛЕ git checkout из
+    # origin. Раньше сравнивали git-хэш файла с хэшем блоба на
+    # GitHub: у Кати на Windows core.autocrlf при подсчёте хэша
+    # превращает CRLF в LF, а блоб в репозитории хранит CRLF -
+    # хэши не сходились даже у одинаковых файлов, и после
+    # перезапуска скрипт снова считал себя устаревшим («Не удалось
+    # обновить сам скрипт»). Теперь одинаковый файл не перезапуска.
     $self = Join-Path $proj 'update.ps1'
+    if ($scriptDir -and (Test-Path (Join-Path $scriptDir 'update.ps1'))) {
+        # скрипт может лежать не в обновляемой копии - тогда
+        # обновляем файл, из которого реально запущены
+        $self = Join-Path $scriptDir 'update.ps1'
+    }
     if (Test-Path $self) {
-        $localSelf = git hash-object -- $self
-        $remoteSelf = git rev-parse --verify --quiet 'origin/main:update.ps1'
-        if ($localSelf -and $remoteSelf -and ($localSelf -ne $remoteSelf)) {
+        $selfDir = Split-Path $self -Parent
+        $hashBefore = git hash-object -- $self
+        Push-Location $selfDir
+        try {
+            git checkout origin/main -- update.ps1
+            if ($LASTEXITCODE -eq 0) {
+                $hashAfter = git hash-object -- $self
+            } else {
+                $hashAfter = $hashBefore
+            }
+        } finally { Pop-Location }
+        if ($hashBefore -ne $hashAfter) {
             if ($env:NUTRIBEAR_SELFCHECK -eq '1') {
                 Write-Host '[!] Не удалось обновить сам скрипт - продолжаю текущей версией.' -ForegroundColor Yellow
             } else {
                 Write-Host 'Файл update.ps1 отличается от GitHub - обновляю сам себя и перезапускаюсь...' -ForegroundColor Cyan
-                git checkout origin/main -- update.ps1
                 $env:NUTRIBEAR_SELFCHECK = '1'
                 $childArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self)
                 if ($Clean) { $childArgs += @('-Clean', $Clean) }
@@ -318,6 +342,33 @@ if ($fetched) {
     $updateOk = $false
 }
 
+# --- 7б. Свежий update.ps1 раздаём во все известные копии ---------
+# Копий проекта может быть несколько (основная и ZIP-копия): если в
+# одной из них остался старый скрипт, он снова уводил обновление не
+# в ту папку (случай Кати: старый скрипт в nutribear-expo брал путь
+# из файла-настройки и тащил всё в ZIP-копию). Раздаём текущий
+# скрипт во все валидные копии - где бы ни запустили update.bat,
+# везде будет одна и та же версия.
+$self = Join-Path $proj 'update.ps1'
+if ($scriptDir -and (Test-Path (Join-Path $scriptDir 'update.ps1'))) {
+    $self = Join-Path $scriptDir 'update.ps1'
+}
+if (Test-Path $self) {
+    $selfDir = Split-Path $self -Parent
+    foreach ($cand in @(
+        (Join-Path $desktop 'nutribear-expo'),
+        (Join-Path $desktop 'nutribear-app'),
+        (Join-Path $desktop 'nutribear-expo-main\nutribear-app'),
+        (Join-Path $desktop 'nutribear-expo-main\nutribear-expo-main\nutribear-app'),
+        (Join-Path $desktop 'nutribear-expo-main\nutribear-expo-main'),
+        (Join-Path $desktop 'nutribear-expo-main')
+    )) {
+        if ((Test-Project $cand) -and ((Resolve-Path $cand).Path -ne $selfDir)) {
+            try { Copy-Item $self (Join-Path $cand 'update.ps1') -Force } catch {}
+        }
+    }
+}
+
 # --- 8. Библиотеки: ставим, если изменились, отсутствуют или устарели
 $after = ($depFiles | ForEach-Object {
     $f = Join-Path $proj $_
@@ -326,12 +377,20 @@ $after = ($depFiles | ForEach-Object {
 
 $nodeModules = Join-Path $proj 'node_modules'
 $nmExpo = Join-Path $nodeModules 'expo'
+# Маркер успешной установки: npm install мог оборваться в прошлый
+# раз (например, кончилось место на диске - ошибка ENOSPC), а
+# package.json с тех пор не менялся - без маркера установка
+# повторится и докачает библиотеки, иначе expo не запускается
+# («"expo" не является внутренней или внешней командой»)
+$okMark = Join-Path $nodeModules '.nutribear-install-ok'
 $installReason = ''
 if ($before -ne $after) {
     $installReason = 'Состав библиотек изменился'
 } elseif (-not (Test-Path $nmExpo)) {
     # В свежей копии (например, из ZIP) node_modules нет вовсе
     $installReason = 'Библиотеки ещё не установлены'
+} elseif (-not (Test-Path $okMark)) {
+    $installReason = 'Прошлая установка библиотек оборвалась - докачиваю'
 } else {
     # Свежесть по дате: git переписывает package-lock.json только при
     # реальных изменениях зависимостей, поэтому если он новее самой
@@ -347,9 +406,41 @@ if ($before -ne $after) {
 }
 
 if ($installReason) {
+    # Место на диске: npm распаковывает сотни мегабайт, при нехватке
+    # места установка падает с ENOSPC и приложение не стартует
+    $driveName = ([System.IO.Path]::GetPathRoot($proj)).TrimEnd('\').TrimEnd(':')
+    $drive = Get-PSDrive -Name $driveName -ErrorAction SilentlyContinue
+    if ($drive) {
+        $freeGb = [math]::Round($drive.Free / 1GB, 1)
+        if ($freeGb -lt 3) {
+            Write-Host ('[i] Свободно на диске ' + $driveName + ': всего ' + $freeGb + ' ГБ - для установки библиотек нужно ~2-3 ГБ.') -ForegroundColor Yellow
+            Write-Host '    Можно освободить: Корзина, старые копии проекта (например,' -ForegroundColor Yellow
+            Write-Host '    лишняя папка nutribear-expo-main из ZIP занимает гигабайты),' -ForegroundColor Yellow
+            Write-Host '    временные файлы Windows (папка %TEMP%).' -ForegroundColor Yellow
+        }
+    }
     Write-Host ($installReason + ' - устанавливаю (может занять несколько минут)...') -ForegroundColor Cyan
-    npm install
-    if ($LASTEXITCODE -ne 0) {
+    if (Test-Path $okMark) { Remove-Item $okMark -Force -ErrorAction SilentlyContinue }
+    # EAP=Stop ломает нативный stderr через 2>&1 (NativeCommandError) -
+    # на время установки переключаем на Continue (вывод npm сохраняем
+    # в переменную, чтобы распознать нехватку места)
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & npm install 2>&1 | Tee-Object -Variable npmLog
+    $ErrorActionPreference = $prevEap
+    if ($LASTEXITCODE -eq 0) {
+        New-Item -ItemType File -Path $okMark -Force | Out-Null
+    } else {
+        $npmText = ($npmLog | ForEach-Object { "$_" }) -join ' '
+        if ($npmText -match 'ENOSPC|no space left') {
+            Write-Host ''
+            Write-Host '[!] На диске кончилось место - npm не смог распаковать библиотеки.' -ForegroundColor Yellow
+            Write-Host '    Освободите место: очистите Корзину, удалите лишние копии' -ForegroundColor Yellow
+            Write-Host '    проекта (папка nutribear-expo-main из ZIP - гигабайты), файлы' -ForegroundColor Yellow
+            Write-Host '    во временной папке Windows (%TEMP%). Затем запустите update.bat' -ForegroundColor Yellow
+            Write-Host '    ещё раз - установка докачается с этого места.' -ForegroundColor Yellow
+            Wait-Exit 1
+        }
         Write-Host '[!] npm install завершился с ошибкой. Продолжаю, но если приложение не запустится - пришлите мне текст ошибки.' -ForegroundColor Yellow
     }
 } else {
