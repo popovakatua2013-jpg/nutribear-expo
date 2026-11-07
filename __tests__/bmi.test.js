@@ -91,10 +91,10 @@ describe('формулы плана', () => {
     expect(bodyFatPercent(50, 80, 'male')).toBe(60) // 62.2 → потолок
   })
 
-  test('формат «22.4» — точка вместо запятой', () => {
-    expect(fmtDecimal(22.856)).toBe('22.9')
-    expect(fmtDecimal(40)).toBe('40.0')
-    expect(fmtDecimal(null)).toBe('0.0')
+  test('формат «22,4» — запятая как десятичный разделитель (отзыв Кати: единый формат с «2,3 л»)', () => {
+    expect(fmtDecimal(22.856)).toBe('22,9')
+    expect(fmtDecimal(40)).toBe('40,0')
+    expect(fmtDecimal(null)).toBe('0,0')
   })
 })
 
@@ -155,13 +155,13 @@ describe('kgToNextCategory', () => {
   test('ожирение I — сколько до лишнего веса', () => {
     const r = kgToNextCategory(95, 175) // ИМТ 31.0 → до 29.9
     expect(r.tone).toBe('info')
-    expect(r.text).toBe('До «Лишнего веса» осталось −3.4 кг')
+    expect(r.text).toBe('До «Лишнего веса» осталось −3,4 кг')
   })
 
   test('недостаток веса — сколько набрать до нормы', () => {
     const r = kgToNextCategory(50, 175) // ИМТ 16.3 → до 18.5
     expect(r.tone).toBe('info')
-    expect(r.text).toBe('До «Нормы» осталось +6.7 кг')
+    expect(r.text).toBe('До «Нормы» осталось +6,7 кг')
   })
 
   test('без данных — null', () => {
@@ -190,7 +190,7 @@ describe('weightStrip — подпись-поддержка под график�
     // Цель «похудеть», вес стоит — совет про калорийность, не похвала
     const losing = weightStrip({ delta: 0, goalPendingKg: 12.5, gaining: false })
     expect(losing.tone).toBe('push')
-    expect(losing.text).toContain('12.5')
+    expect(losing.text).toContain('12,5')
     expect(losing.text).toContain('снизьте калорийность')
   })
 

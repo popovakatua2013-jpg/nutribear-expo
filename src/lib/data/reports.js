@@ -81,6 +81,8 @@ export function weeksComparison(weeks, today) {
 // шаги, еда, вода, тренировка, сон) и сколько дней дневная цель достигнута.
 // Калории считаются достигнутыми, когда еда записана и не выше цели —
 // пустой день не «автоматически молодец», а честно не считается.
+// Сожжённые — от цели burnKcal (отзыв Кати: в карточке «Сожжено»
+// футер с целью был пуст — цели не считались вовсе)
 export function discipline(rows, goals) {
   const days = rows.length
   const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned || r.sleepMin).length
@@ -89,8 +91,24 @@ export function discipline(rows, goals) {
     steps: g.steps > 0 ? rows.filter((r) => r.steps >= g.steps).length : 0,
     waterMl: g.waterMl > 0 ? rows.filter((r) => r.waterMl >= g.waterMl).length : 0,
     kcal: g.kcal > 0 ? rows.filter((r) => r.kcal > 0 && r.kcal <= g.kcal).length : 0,
+    burned: g.burnKcal > 0 ? rows.filter((r) => r.burned >= g.burnKcal).length : 0,
   }
   return { days, recorded, met }
+}
+
+// Сколько дней пользователь ведёт дневник: от ПЕРВОЙ записи в истории
+// до сегодняшнего дня включительно. Основа «разблокировки» периодов
+// (отзыв Кати: «зачем динамика за 90 дней, если он ещё только на 7 дне»):
+// 30 дней открываются на 30-й день ведения дневника, 90 — на 90-й.
+// Записей нет — считаем первым днём сегодняшний (пользователь в начале пути).
+export function diaryAgeDays(savedDays, now = new Date()) {
+  const keys = Object.keys(savedDays || {})
+    .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k))
+    .sort()
+  const first = keys.length ? new Date(`${keys[0]}T00:00:00`) : now
+  if (Number.isNaN(first.getTime())) return 1
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.max(1, Math.round((today - first) / 86400000) + 1)
 }
 
 // Уровень дня для теплокарты: met — цель достигнута, mid — не меньше

@@ -163,9 +163,10 @@ export function bodyFatLevel(fatPct, sex) {
   return { id: 'norm', label: 'норма', color: '#4ade80' }
 }
 
-// «22.4» / «62.3» — с точкой, как на фото-макете (не локаль ru-RU с запятой)
+// «22,4» / «62,3» — с запятой, как принято в русских интерфейсах
+// (отзыв Кати: «2,3 л» и «55,0 кг» — везде единый десятичный разделитель)
 export function fmtDecimal(n) {
-  return (Math.round((n || 0) * 10) / 10).toFixed(1)
+  return (Math.round((n || 0) * 10) / 10).toFixed(1).replace('.', ',')
 }
 
 // Вес за неделю (Пн…Вс): реальные записи пользователя; дни без записей
@@ -252,7 +253,7 @@ export function kgToNextCategory(weightKg, heightCm) {
   const h2 = (heightCm / 100) ** 2
   const bmi = weightKg / h2
   const cat = bmiCategory(bmi)
-  const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1)
+  const fmt = (n) => (Math.round(n * 10) / 10).toFixed(1).replace('.', ',')
 
   if (cat.id === 'norm') {
     const { min, max } = healthyRange(heightCm)

@@ -39,8 +39,10 @@ export function DisciplineCard({ rows }) {
           </Text>
         </View>
         <View className={`shrink-0 rounded-full px-2.5 py-1.5 ${tone.chip}`}>
+          {/* Кратко «2/7 дн»: полная форма «2 из 7 дней» обрезалась
+              на узких экранах (отзыв Кати) */}
           <Text className={`font-semibold text-[15px] ${tone.text}`}>
-            вели дневник {recorded} из {days} дней
+            вели дневник {recorded}/{days} дн
           </Text>
         </View>
       </View>

@@ -18,6 +18,7 @@ const {
   nutrientsByDay,
   nutrientTotals,
   dayHasRecords,
+  diaryAgeDays,
 } = require('@/lib/data/reports')
 const { dayKeyOf } = require('@/store/useHistoryStore')
 
@@ -55,6 +56,15 @@ describe('discipline', () => {
     expect(d.met.kcal).toBe(1) // 1800 ≤ 2000 и > 0; 2100 — перебор
   })
 
+  test('сожжённые: от цели burnKcal (футер «Сожжено» больше не пуст)', () => {
+    const d = discipline(rows, GOALS) // в rows один день с burned: 100 (< 300)
+    expect(d.met.burned).toBe(0)
+    const hit = [row({ burned: 350 })]
+    expect(discipline(hit, GOALS).met.burned).toBe(1)
+    // Цель не задана — показатель не попадает в зачёт
+    expect(discipline(hit, { ...GOALS, burnKcal: 0 }).met.burned).toBe(0)
+  })
+
   test('дни без записей не считаются достигнутыми по калориям', () => {
     const rowsEmpty = [row(), row()]
     const d = discipline(rowsEmpty, GOALS)
@@ -69,7 +79,34 @@ describe('discipline', () => {
 
   test('пустые rows и отсутствие целей — нули без ошибок', () => {
     const d = discipline([], null)
-    expect(d).toEqual({ days: 0, recorded: 0, met: { steps: 0, waterMl: 0, kcal: 0 } })
+    expect(d).toEqual({
+      days: 0,
+      recorded: 0,
+      met: { steps: 0, waterMl: 0, kcal: 0, burned: 0 },
+    })
+  })
+})
+
+describe('diaryAgeDays (разблокировка периодов 30/90)', () => {
+  test('записей нет — первый день: 30/90 закрыты', () => {
+    expect(diaryAgeDays({})).toBe(1)
+    expect(diaryAgeDays(null)).toBe(1)
+  })
+
+  test('возраст — от первой записи до сегодня включительно', () => {
+    const days = { [keyAt(-6)]: {}, [keyAt(0)]: {} }
+    expect(diaryAgeDays(days)).toBe(7)
+  })
+
+  test('30 дней открывается на 30-й день ведения, 90 — на 90-й', () => {
+    expect(diaryAgeDays({ [keyAt(-28)]: {} })).toBe(29) // 30 ещё закрыт
+    expect(diaryAgeDays({ [keyAt(-29)]: {} })).toBe(30) // открыт
+    expect(diaryAgeDays({ [keyAt(-88)]: {} })).toBe(89) // 90 ещё закрыт
+    expect(diaryAgeDays({ [keyAt(-89)]: {} })).toBe(90) // открыт
+  })
+
+  test('мусорные ключи игнорируются', () => {
+    expect(diaryAgeDays({ garbage: {}, [keyAt(-1)]: {} })).toBe(2)
   })
 })
 

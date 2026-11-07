@@ -9,7 +9,7 @@
 // открывается тапом по дню внутри окна. Кнопка
 // «Итоги» — шеринговая PNG-карточка периода (медведь + цифры + сравнение).
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { Share2 } from 'lucide-react-native'
@@ -23,7 +23,7 @@ import { SleepModal } from './SleepModal'
 import { WeeklyShareCard } from './WeeklyShareCard'
 import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
-import { periodTotals } from '@/lib/data/reports'
+import { periodTotals, diaryAgeDays } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
 import { consumeOpenSleepModal, requestScrollToWeight } from '@/lib/navEvents'
 import { useHistoryStore } from '@/store/useHistoryStore'
@@ -45,6 +45,43 @@ export function ReportsSection({
   const [historyMetric, setHistoryMetric] = useState(null)
   const savedDays = useHistoryStore((s) => s.days) // карта истории: { 'ГГГГ-ММ-ДД': … } — для стрика
   const streak = streakOf(savedDays)
+
+  // Разблокировка периодов (отзыв Кати: «зачем динамика за 90 дней,
+  // если он ещё только на 7 дне»): 30 дней открываются на 30-й день
+  // ведения дневника, 90 — на 90-й. До этого — серые пилюли с замком
+  const diaryAge = useMemo(() => diaryAgeDays(savedDays), [savedDays])
+  // Подсказка по тапу на закрытый период: на 4 секунды, потом сама гаснет
+  const [lockHint, setLockHint] = useState(null)
+  const hintTimer = useRef(null)
+  useEffect(() => () => clearTimeout(hintTimer.current), [])
+  const showLockHint = (days) => {
+    setLockHint(
+      days === 30
+        ? 'Период 30 дней откроется на 30-й день ведения дневника'
+        : `Период ${days} дней откроется на ${days}-й день ведения дневника`
+    )
+    clearTimeout(hintTimer.current)
+    hintTimer.current = setTimeout(() => setLockHint(null), 4000)
+  }
+  const rangeItems = useMemo(
+    () => RANGES.map((r) => ({ id: r.id, label: r.label, disabled: r.days > diaryAge })),
+    [diaryAge]
+  )
+  const changeRange = (id) => {
+    const r = RANGES.find((x) => x.id === id)
+    if (r && r.days > diaryAge) {
+      showLockHint(r.days)
+      return
+    }
+    setLockHint(null)
+    onRangeChange(id)
+  }
+  // Если выбранный период оказался заблокирован (например, история
+  // очищена в «Ещё») — тихо возвращаемся на неделю
+  useEffect(() => {
+    const cur = RANGES.find((r) => r.id === rangeId)
+    if (cur && cur.days > diaryAge) onRangeChange('7d')
+  }, [diaryAge, rangeId, onRangeChange])
 
   // Тап по вечернему пинку «пора спать» ведёт сюда и открывает окно
   // записи сна: живое событие (секция уже смонтирована) + отложенный
@@ -109,13 +146,25 @@ export function ReportsSection({
       </View>
 
       {/* Период — единственный переключатель на вкладке: управляет
-        // карточками, дисциплиной, нутриентами, историей и шеринговым «Итогами» */}
-      <Pills
-        items={RANGES.map((r) => ({ id: r.id, label: r.label }))}
-        value={rangeId}
-        onChange={onRangeChange}
-        accessibilityLabel="Период"
-      />
+        // карточками, дисциплиной, нутриентами, историей и шеринговым «Итогами».
+        // 30/90 — с замком, пока дневник не дожил до этих дней (отзыв Кати) */}
+      <View>
+        <Pills
+          items={rangeItems}
+          value={rangeId}
+          onChange={changeRange}
+          accessibilityLabel="Период"
+        />
+        {lockHint && (
+          <Text
+            maxFontSizeMultiplier={1.2}
+            accessibilityLiveRegion="polite"
+            className="mt-1.5 font-sans text-[13px] leading-snug text-bear-dim"
+          >
+            🔒 {lockHint}
+          </Text>
+        )}
+      </View>
 
       <GoalCelebration />
 

@@ -1,50 +1,77 @@
 // Карточка «График веса» — как на референсе дневника: заголовок со
 // значком, переключатель периода (7/30/90 дней) и сглаженная линия
-// измерений с заливкой; на неделе — точки каждого взвешивания (белые),
-// последняя — самая свежая. Золотой пунктир — цель по весу, если задана.
-// Данные — журнал взвешиваний из профиля; за период измерений нет —
-// честная подсказка. Тап по карточке открывает вкладку ИМТ и докручивает
+// измерений с заливкой. ПО ОДНОМУ ЗНАЧЕНИЮ НА ДЕНЬ (weightByDay —
+// последнее взвешивание дня): раньше несколько замеров за один день
+// давали «Сб Сб Сб Сб» в подписях и ломали масштаб (аудит по скрину
+// Кати). Подписи дней — числовые даты «7.11» (отзыв Кати: месяц
+// вместо точек). Золотой пунктир — цель по весу, если задана; шкалу
+// цель больше не растягивает (см. SvgAreaChart). 30/90 дней — с
+// замком, пока дневник не дожил до этих дней (отзыв Кати: «зачем
+// 90 дней, если он ещё только на 7 дне»). Данные — журнал
+// взвешиваний из профиля; за период измерений нет — честная
+// подсказка. Тап по карточке открывает вкладку ИМТ и докручивает
 // до большого графика «Динамика веса»
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
-import { BarChart3 } from 'lucide-react-native'
+import { BarChart3, Lock } from 'lucide-react-native'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
-import { shortDate, shortWeekday } from '@/lib/data/activity'
+import { dotDateFromKey } from '@/lib/data/activity'
+import { weightByDay, diaryAgeDays } from '@/lib/data/reports'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { useProfileStore } from '@/store/useProfileStore'
-import { pluralDays } from '@/lib/format'
+import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { requestScrollToWeight } from '@/lib/navEvents'
 
 const WEIGHT_RANGES = [
-  { id: 7, label: '7 д' },
-  { id: 30, label: '30 д' },
-  { id: 90, label: '90 д' },
+  { id: 7, label: '7 д', days: 7 },
+  { id: 30, label: '30 д', days: 30 },
+  { id: 90, label: '90 д', days: 90 },
 ]
 
 export function WeightTrendCard() {
   const weights = useProfileStore((s) => s.weights)
   const goalKg = useProfileStore((s) => s.goalWeightKg)
+  const savedDays = useHistoryStore((s) => s.days)
   const [days, setDays] = useState(7)
+  const [lockHint, setLockHint] = useState(null)
 
-  // Измерения периода по возрастанию даты (журнал хранит новые сверху).
-  // На неделе подписи — дни недели (Пн…Вс), на 30/90 — даты
+  // Замок периодов — та же логика, что у пилюль «Отчётов» и окон истории
+  const diaryAge = diaryAgeDays(savedDays)
+
+  // По одному значению на день (последнее взвешивание дня) по возрастанию
+  // даты; подписи — числовые даты «7.11» (на неделе дни различимы и так,
+  // но даты не путаются между одинаковыми днями разных недель)
   const data = useMemo(() => {
-    const cutoff = Date.now() - days * 86400000
-    return weights
-      .filter((w) => new Date(w.date).getTime() >= cutoff)
-      .slice()
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((w) => {
-        const d = new Date(w.date)
-        return { label: days <= 7 ? shortWeekday(d) : shortDate(d), value: w.kg }
-      })
+    const byDay = weightByDay(weights)
+    const out = []
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const k = dayKeyOf(d)
+      if (byDay[k]) out.push({ label: dotDateFromKey(k), value: byDay[k] })
+    }
+    return out
   }, [weights, days])
 
   // Последнее измерение — для плашки значения в шапке
   const last = data.length ? data[data.length - 1] : null
+
+  function pickDays(next) {
+    const r = WEIGHT_RANGES.find((x) => x.id === next)
+    if (r && r.days > diaryAge) {
+      setLockHint(
+        r.days === 30
+          ? 'Период 30 дней откроется на 30-й день ведения дневника'
+          : `Период ${r.days} дней откроется на ${r.days}-й день ведения дневника`
+      )
+      return
+    }
+    setLockHint(null)
+    setDays(next)
+  }
 
   function openWeightChart() {
     router.navigate('/bmi')
@@ -103,20 +130,25 @@ export function WeightTrendCard() {
           ) : null}
         </View>
 
-        {/* Период: короткие чипы 7/30/90 — как на референсе */}
+        {/* Период: короткие чипы 7/30/90 — как на референсе; 30/90 —
+            с замком, пока дневник не дожил до этих дней */}
         <View className="mt-2.5 flex-row items-center gap-1.5">
           {WEIGHT_RANGES.map((r) => {
             const active = days === r.id
+            const locked = r.days > diaryAge
             return (
               <Pressable
                 key={r.id}
-                onPress={() => setDays(r.id)}
+                onPress={() => pickDays(r.id)}
                 accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={`График за ${r.id} ${pluralDays(r.id)}`}
-                className={`rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-white/[0.06]'}`}
-                style={active ? { backgroundColor: '#7B6CF6' } : null}
+                accessibilityState={{ selected: active, disabled: locked }}
+                accessibilityLabel={`График за ${r.id} дней${locked ? ' — пока недоступно' : ''}`}
+                className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-white/[0.06]'}`}
+                style={[active ? { backgroundColor: '#7B6CF6' } : null, locked ? { opacity: 0.5 } : null]}
               >
+                {locked && (
+                  <Lock size={11} color={active ? '#FFFFFF' : '#8B96B8'} />
+                )}
                 <Text
                   maxFontSizeMultiplier={1.15}
                   className={`font-semibold text-[12.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
@@ -127,6 +159,15 @@ export function WeightTrendCard() {
             )
           })}
         </View>
+        {lockHint ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            maxFontSizeMultiplier={1.2}
+            className="mt-1.5 font-sans text-[12.5px] leading-snug text-bear-dim"
+          >
+            🔒 {lockHint}
+          </Text>
+        ) : null}
 
         {data.length >= 2 ? (
           <View className="mt-1">
@@ -151,7 +192,7 @@ export function WeightTrendCard() {
             >
               {data.length === 1
                 ? 'Нужно хотя бы два взвешивания — запишите вес ещё раз на вкладке «Тело»'
-                : `Нет измерений за ${days} ${pluralDays(days)} — запишите вес на вкладке «Тело»`}
+                : `Нет измерений за ${days} дней — запишите вес на вкладке «Тело»`}
             </Text>
           </View>
         )}

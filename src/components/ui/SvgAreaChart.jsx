@@ -1,7 +1,10 @@
 // Заливка области под линией (замена recharts AreaChart).
 // Данные: [{ label, value }], ширина меряется через onLayout.
 // goalLine — необязательная горизонтальная пунктирная линия цели
-// (например, целевой вес): шкала растягивается, чтобы линию было видно.
+// (например, целевой вес). Цель НЕ растягивает шкалу (отзыв Кати:
+// цель 93 сплющивала кривую 52–65 в прямую линию): шкала строится
+// по измерениям, а линия при выходе за диапазон прижимается к краю
+// с подписью значения («цель 93»). Деления оси Y — круглые числа.
 
 import { useState } from 'react'
 import { View } from 'react-native'
@@ -9,6 +12,18 @@ import Svg, { Defs, LinearGradient, Stop, Path, Circle, Line, Rect, Text as SvgT
 
 const AXIS = '#8B96B8'
 const GRID = 'rgba(255,255,255,0.06)'
+
+// Круглый шаг делений оси: ближайшее «красивое» число (1/2/2.5/5 × 10^k)
+// к range/target — подписи вроде «54,3» больше не появляются
+function niceStep(range, target = 4) {
+  if (!(range > 0) || !Number.isFinite(range)) return 1
+  const raw = range / target
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)))
+  for (const m of [1, 2, 2.5, 5, 10]) {
+    if (raw <= m * pow + 1e-9) return m * pow
+  }
+  return 10 * pow
+}
 
 // Сглаженная кривая (Catmull-Rom → кубические Безье)
 export function smoothPath(pts) {
@@ -53,14 +68,29 @@ export function SvgAreaChart({
   }
 
   const values = data.map((d) => d.value)
-  // Цель участвует в шкале наравне с измерениями — линия не обрезается
-  const hasGoal = goalLine != null && Number.isFinite(goalLine)
-  const rangeValues = hasGoal ? [...values, goalLine] : values
-  const max = Math.max(...rangeValues)
-  const min = Math.min(...rangeValues)
+  // Шкала — ТОЛЬКО по измерениям (см. шапку файла): цель поверх,
+  // при выходе за диапазон — прижата к краю
+  const max = Math.max(...values)
+  const min = Math.min(...values)
   const rawLo = min === max ? min - 1 : min - (max - min) * 0.1
   const lo = min >= 0 ? Math.max(0, rawLo) : rawLo
   const hi = max === min ? max + 1 : max + (max - min) * 0.08
+
+  // Круглые деления внутри шкалы; дубли подписей после yFmt (например
+  // 52,5 → «53» при целочисленном формате) убираем — grid и подписи
+  // всегда согласованы
+  const step = niceStep(hi - lo)
+  const start = Math.ceil(lo / step) * step
+  const rawTicks = []
+  for (let i = 0; i < 10; i++) {
+    const t = start + i * step
+    if (t > hi + 1e-9) break
+    rawTicks.push(t)
+  }
+  const ticks = []
+  for (const t of rawTicks) {
+    if (!ticks.length || yFmt(t) !== yFmt(ticks[ticks.length - 1])) ticks.push(t)
+  }
 
   const iw = w - PAD_L - PAD_R
   const ih = height - PAD_T - PAD_B
@@ -71,13 +101,17 @@ export function SvgAreaChart({
   const line = smoothPath(pts)
   const area = `${line} L ${pts[pts.length - 1].x} ${PAD_T + ih} L ${pts[0].x} ${PAD_T + ih} Z`
 
-  // Пунктир цели: подпись «цель» над линией, а если линия у верхней
-  // кромки — под ней, чтобы надпись не обрезалась
-  const goalY = hasGoal ? y(goalLine) : 0
+  // Пунктир цели: линия прижимается к краю, если цель вне шкалы;
+  // у прижатой линии подпись со значением («цель 93»), чтобы позиция
+  // не читалась как настоящее значение цели
+  const hasGoal = goalLine != null && Number.isFinite(goalLine)
+  const goalClamped = hasGoal && (goalLine > hi || goalLine < lo)
+  const goalY = hasGoal ? Math.min(Math.max(y(goalLine), PAD_T + 2), PAD_T + ih - 2) : 0
+  // Подпись «цель»: над линией, а если линия у верхней кромки — под ней,
+  // чтобы надпись не обрезалась
   const goalLabelY = hasGoal && goalY - 4 < PAD_T + 9 ? goalY + 12 : goalY - 4
+  const goalText = hasGoal ? (goalClamped ? `цель ${yFmt(goalLine)}` : 'цель') : ''
 
-  // Подписи сверху вниз: от максимума к минимуму (ось Y растёт вверх)
-  const ticks = [0, 1, 2, 3].map((i) => hi - ((hi - lo) * i) / 3)
   // Подписи X: при >8 точках — через одну (плюс последняя)
   const skip = data.length > 8 ? Math.ceil(data.length / 6) : 1
 
@@ -132,7 +166,7 @@ export function SvgAreaChart({
               strokeDasharray="5 4"
             />
             <SvgText x={w - PAD_R} y={goalLabelY} fill="#fbbf24" fontSize={9} textAnchor="end">
-              цель
+              {goalText}
             </SvgText>
           </>
         )}

@@ -26,7 +26,7 @@
 // взвешивания»; точки недели — есть взвешивание/нет. Кнопка «Записать»
 // в шапке ведёт на экран веса (вкладка «Тело»).
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ArrowDownRight, ArrowUpRight, Plus, X } from 'lucide-react-native'
@@ -41,6 +41,7 @@ import {
   dayHasRecords,
   dayLevel,
   deltaTone,
+  diaryAgeDays,
   prevLabel,
   weekdayAverages,
   weightByDay,
@@ -219,9 +220,24 @@ export function MetricHistoryModal({
   const heightCm = useProfileStore((s) => s.heightCm)
   const metric = metricId === 'weight' ? WEIGHT_METRIC : METRICS.find((m) => m.key === metricId) || METRICS[0]
   const isWeight = metric.key === 'weight'
-  // Период окна: открывается с периода секции, дальше живёт своей жизнью
-  const [rangeId, setRangeId] = useState(initialRangeId)
+  // Разблокировка периодов — та же логика, что у пилюль секции (отзыв
+  // Кати: динамика за 30/90 дней открывается на 30-й/90-й день ведения
+  // дневника). Окно маунтится только открытым — возраст на маунте актуален
+  const diaryAge = diaryAgeDays(savedDays)
+  // Период окна: открывается с периода секции; если тот ещё закрыт
+  // (секция могла открыть окно до того, как её эффект вернул 7d) — неделя
+  const [rangeId, setRangeId] = useState(() => {
+    const init = RANGES.find((r) => r.id === initialRangeId)
+    return init && init.days > diaryAge ? '7d' : initialRangeId
+  })
   const [dayKey, setDayKey] = useState(null) // сводка дня (тап по столбику/точке)
+  // Подсказка по тапу на закрытый период — гаснет через 4 секунды
+  const [lockHint, setLockHint] = useState(null)
+  useEffect(() => {
+    if (!lockHint) return undefined
+    const t = setTimeout(() => setLockHint(null), 4000)
+    return () => clearTimeout(t)
+  }, [lockHint])
   // Ширина графика по дням — для плашки значения над выделенным столбиком
   const [chartW, setChartW] = useState(0)
   const days = RANGES.find((r) => r.id === rangeId)?.days || 30
@@ -366,6 +382,16 @@ export function MetricHistoryModal({
   const hlH = hlIdx >= 0 ? barH(hlV) : 0
 
   function pickRange(id) {
+    const r = RANGES.find((x) => x.id === id)
+    if (r && r.days > diaryAge) {
+      setLockHint(
+        r.days === 30
+          ? 'Период 30 дней откроется на 30-й день ведения дневника'
+          : `Период ${r.days} дней откроется на ${r.days}-й день ведения дневника`
+      )
+      return
+    }
+    setLockHint(null)
     setRangeId(id)
     setDayKey(null) // сводка дня от другого периода не нужна
   }
@@ -427,14 +453,29 @@ export function MetricHistoryModal({
 
                 <ScrollView showsVerticalScrollIndicator={false} style={{ flexShrink: 1 }}>
                   <View className="gap-3 px-4 pb-3.5 pt-3">
-                    {/* Период — активная пилюля в цвете показателя */}
+                    {/* Период — активная пилюля в цвете показателя;
+                        30/90 с замком, пока дневник не дожил до этих дней */}
                     <Pills
                       size="md"
-                      items={RANGES.map((r) => ({ id: r.id, label: r.label, color: metric.color }))}
+                      items={RANGES.map((r) => ({
+                        id: r.id,
+                        label: r.label,
+                        color: metric.color,
+                        disabled: r.days > diaryAge,
+                      }))}
                       value={rangeId}
                       onChange={pickRange}
                       accessibilityLabel="Период истории"
                     />
+                    {lockHint && (
+                      <Text
+                        accessibilityLiveRegion="polite"
+                        maxFontSizeMultiplier={1.2}
+                        className="font-sans text-[13.5px] leading-snug text-bear-dim"
+                      >
+                        🔒 {lockHint}
+                      </Text>
+                    )}
 
                     {hasData ? (
                       <>
