@@ -5,9 +5,15 @@
 // кольцо смотрелось тревожно, теперь число и «из N ккал», если
 // цель задана). Посередине — узкий блок «Остаток» БЕЗ РАМКИ (отзыв
 // Кати: «убери рамку»): огонёк и подпись «Остаток» в строку, ниже
-// жирная цифра остатка калорий на день (цель − съедено + сожжено —
-// отзыв Кати: «там должно быть остаток калорий» вместо прежнего
-// баланса «+902») и мелкая строка-пояснение. Кольцо анимируется как
+// жирная цифра остатка калорий на день (отзыв Кати: «там должно быть
+// остаток калорий» вместо прежнего баланса «+902»; крупнее — отзыв:
+// «остаток сделать крупнее») и мелкая строка-пояснение. Режим
+// остатка — goals.countBurned, переключатель в «Ещё → Дневник
+// питания»: по умолчанию СТРОГИЙ — остаток = цель − съедено,
+// сожжённое не возвращается (отзыв Кати: «строгий остаток по
+// умолчанию»); переключатель «с учётом сожжённых» включает прежнюю
+// формулу цель − съедено + сожжено (remainderOf в lib/data/remainder).
+// Кольцо анимируется как
 // донат ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля,
 // число в центре отсчитывается вверх — и всё это повторяется при каждом
 // возврате на «Главную» (запрос пользователя).
@@ -53,6 +59,7 @@ import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplet, Flame, Hexagon, Leaf, Pencil, Utensils, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
+import { remainderOf } from '@/lib/data/remainder'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useToast } from '../ui/Toast'
@@ -307,10 +314,13 @@ export function DailySummary({
   }
 
   // ОСТАТОК калорий на день (отзыв Кати: «там должно быть остаток
-  // калорий» вместо баланса «+902»): цель − съедено + сожжено.
-  // Сожжённые учитываются — их гасит кольцо «сожжено» рядом; цели нет —
-  // остаток не считаем
-  const rem = target > 0 ? Math.round(target - consumed + burned) : null
+  // калорий» вместо баланса «+902»). Режим — goals.countBurned,
+  // переключатель в «Ещё → Дневник питания»: по умолчанию СТРОГИЙ
+  // (цель − съедено, сожжённое не прибавляется — отзыв Кати: «строгий
+  // остаток по умолчанию»), «с учётом сожжённых» возвращает активность
+  // в остаток. Цели нет — остаток не считаем
+  const countBurned = Boolean(goals.countBurned)
+  const rem = remainderOf(target, consumed, burned, countBurned)
 
   // Анимация колец перезапускается при каждом возврате на вкладку
   // «Главная» — как у доната ИМТ, который заливается при переходе
@@ -415,7 +425,8 @@ export function DailySummary({
             className="max-w-full"
           >
             {/* «Остаток»: огонёк и подпись в строку, ниже — остаток
-                калорий на день жирным (цель − съедено + сожжено),
+                калорий на день жирным (режим — см. шапку файла;
+                цифра крупнее — отзыв Кати: «остаток сделать крупнее»),
                 мелкой строкой — пояснение */}
             <View
               accessibilityLabel={
@@ -423,19 +434,19 @@ export function DailySummary({
                 (rem == null
                   ? 'цель не задана'
                   : rem >= 0
-                    ? `${formatNum(rem)} килокалорий с учётом сожжённых`
+                    ? `${formatNum(rem)} килокалорий${countBurned ? ' с учётом сожжённых' : ''}`
                     : `перебор ${formatNum(Math.abs(rem))} килокалорий`)
               }
               className="max-w-full items-center px-3 py-2"
             >
               <View className="flex-row items-center gap-1">
-                <Flame size={13} color={remTone.text} />
+                <Flame size={15} color={remTone.text} />
                 <Text
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.8}
                   maxFontSizeMultiplier={MAX}
-                  className="font-bold text-[12.5px] leading-tight"
+                  className="font-bold text-[13.5px] leading-tight"
                   style={{ color: remTone.text }}
                 >
                   Остаток
@@ -444,9 +455,9 @@ export function DailySummary({
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.75}
+                minimumFontScale={0.7}
                 maxFontSizeMultiplier={MAX}
-                className="mt-0.5 font-bold text-[15px] leading-tight"
+                className="mt-0.5 font-bold text-[22px] leading-tight"
                 style={{ color: remTone.text }}
               >
                 {rem == null
@@ -460,12 +471,14 @@ export function DailySummary({
                 adjustsFontSizeToFit
                 minimumFontScale={0.7}
                 maxFontSizeMultiplier={MAX}
-                className="mt-0.5 font-sans text-[10.5px] leading-tight text-bear-sub2"
+                className="mt-0.5 font-sans text-[11px] leading-tight text-bear-sub2"
               >
                 {rem == null
                   ? 'цель не задана'
                   : rem >= 0
-                    ? 'с учётом сожжённых'
+                    ? countBurned
+                      ? 'с учётом сожжённых'
+                      : 'без учёта сожжённых'
                     : 'съедено больше нормы'}
               </Text>
             </View>

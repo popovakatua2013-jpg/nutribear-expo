@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings } from 'lucide-react-native'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { GoalPicker } from '@/components/more/GoalPicker'
+import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
 import { MealRemindersCard } from '@/components/more/MealRemindersCard'
 import { WeighReminderCard } from '@/components/more/WeighReminderCard'
 import { ExerciseReminderCard } from '@/components/more/ExerciseReminderCard'
@@ -53,6 +54,7 @@ export default function MoreScreen() {
 
         <ProfileEditor />
         <GoalPicker />
+        <DiarySettingsCard />
         <MealRemindersCard />
         <WeighReminderCard />
         <ExerciseReminderCard />

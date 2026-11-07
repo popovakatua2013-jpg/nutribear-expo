@@ -228,10 +228,12 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* строка поиска — та же высота, радиус и кегль, что у кнопки
-          «Сохранить приём» ниже (отзыв Кати: «чтобы смотрелось
-          одинаково»): rounded-2xl, py-2.5, текст 15.5px */}
-      <View className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5">
+      {/* строка поиска — ЖЁСТКО та же высота, что у кнопки «Сохранить
+          приём» ниже: у обеих h-[42px]. Прежняя «одинаковость» через
+          py-2.5 не работала: нативная высота TextInput на Android
+          раздувала поле выше кнопки (отзыв Кати: «по прежнему
+          габаритная»). py-0 и textAlignVertical — текст по центру */}
+      <View className="h-[42px] flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5">
         <Search size={16} color="#8B96B8" />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
@@ -239,7 +241,8 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           placeholderTextColor="#8B96B8"
           value={query}
           onChangeText={setQuery}
-          className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text"
+          className="min-w-0 flex-1 py-0 font-sans text-[15.5px] text-bear-text"
+          style={{ textAlignVertical: 'center' }}
         />
         {query.length > 0 && (
           <Pressable
@@ -356,7 +359,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
               onPress={() => setComboOpen(true)}
               accessibilityRole="button"
               accessibilityLabel="Сохранить текущий приём как комбо"
-              className={`flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#7B6CF6]/50 py-2.5 active:bg-[#7B6CF6]/10 ${
+              className={`h-[42px] flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#7B6CF6]/50 active:bg-[#7B6CF6]/10 ${
                 combos.length > 0 ? 'mt-2.5' : ''
               }`}
             >

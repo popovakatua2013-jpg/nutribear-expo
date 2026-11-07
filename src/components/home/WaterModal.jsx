@@ -150,19 +150,11 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
       setLogOpen(true)
       return
     }
-    // «Последние 7 дней» свёрнуто, пока за неделю нет ни капли —
-    // пустой график не занимает место (отзыв Кати)
-    try {
-      const days = useHistoryStore.getState().days
-      let any = false
-      for (let i = 0; i < 7 && !any; i++) {
-        const key = dayKeyOf(new Date(Date.now() - i * 86400000))
-        if ((days[key]?.waterMl || 0) > 0) any = true
-      }
-      setWeekOpen(any)
-    } catch {
-      setWeekOpen(true)
-    }
+    // «Последние 7 дней» больше НЕ схлопывается сам (отзыв Кати:
+    // «раздел по дням недели по-прежнему схлопнут») — окно каждый раз
+    // открывается с развёрнутой неделей, даже пока вода не ведётся;
+    // свернуть можно тапом по шапке вручную
+    setWeekOpen(true)
   }, [open])
 
   // Старт правки — докручиваем журнал так, чтобы строка правки и
