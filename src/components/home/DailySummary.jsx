@@ -25,15 +25,14 @@
 // перебор (до 100 ккал), красный — большой; цели нет — зелёный
 // (сравнивать не с чем). Без карандаша в остатках (правка цели
 // сжигания осталась на тапе по кольцу),
-// далее нутриенты сеткой 2×2 — БЕЛКИ/ЖИРЫ в верхней строке,
-// УГЛЕВОДЫ/КЛЕТЧАТКА в нижней (отзыв Кати: «белки-жиры одного размера
-// с углеводы-клетчатка» — в одну строку длинные значения сжимались
-// до мелкого шрифта, в сетке 2×2 у всех четырёх ячеек одинаковый
-// крупный шрифт). Порядок чтения слева направо — прежний:
-// Белки → Жиры → Углеводы → Клетчатка, с иконками и разделителями
-// (по референсу: шестиугольник/огонь/капля/лист + «0 / N г»).
-// Нормы БЖУ — свои из целей (маленький карандашик в конце нижней
-// строки открывает окно правки), а если не заданы — «классическая
+// далее нутриенты ОДНОЙ СТРОКОЙ: Белки → Жиры → Углеводы →
+// Клетчатка, с иконками и разделителями (по референсу:
+// шестиугольник/огонь/капля/лист + «0 / N г»). Пробовали ради крупного
+// шрифта сетку 2×2, но Катя попросила прежний вид («верни бжу и
+// клетчатку в одну строку как было») — возвращена одна строка,
+// длинные значения страхует дожим шрифта (adjustsFontSizeToFit).
+// Нормы БЖУ — свои из целей (маленький карандашик в конце строки
+// открывает окно правки), а если не заданы — «классическая
 // тарелка» (20/30/50% калорий), клетчатка — своя норма, иначе 25 г/день
 // (ВОЗ, FIBER_NORM). Карточка оформлена в стиле вкладки «Тело»
 // (фиолетовая поверхность bear-bodyCard + чип-иконка в шапке BodyChip).
@@ -499,15 +498,11 @@ export function DailySummary({
         </BurnZone>
       </View>
 
-      {/* нутриенты сеткой 2×2 (отзыв Кати: «белки-жиры одного размера
-          с углеводы-клетчатка» — в одну строку длинные значения «172 /
-          150 г» сжимались adjustsFontSizeToFit до мелкого шрифта; в
-          сетке у каждой ячейки половина ширины карточки, поэтому у всех
-          четырёх одинаковый крупный шрифт). Порядок чтения прежний:
-          1. Белки  2. Жиры
-          3. Углеводы  4. Клетчатка.
-          Справа — маленький карандашик: свои нормы нутриентов
-          (pr-8 резервирует ему место, ячейки остаются равными) */}
+      {/* нутриенты одной строкой в заданном порядке (Катя попросила
+          вернуть одну строку вместо сетки 2×2: «верни бжу и клетчатку
+          в одну строку как было»):
+          1. Белки  2. Жиры  3. Углеводы  4. Клетчатка.
+          В конце — маленький карандашик: свои нормы нутриентов */}
       <View
         accessibilityLabel={
           `Белки ${formatNum(Math.round(bju.p))} из ${formatNum(norms.p)} грамм, `
@@ -515,30 +510,27 @@ export function DailySummary({
           + `углеводы ${formatNum(Math.round(bju.c))} из ${formatNum(norms.c)} грамм, `
           + `клетчатка ${formatNum(Math.round(bju.fib || 0))} из ${formatNum(norms.fib)} грамм`
         }
-        className="mt-2.5 pr-8"
+        className="mt-2.5 flex-row items-center"
       >
-        <View className="flex-row items-center">
-          <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
-          <VDivider />
-          <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
-        </View>
-        <View className="mt-2 flex-row items-center">
-          <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
-          <VDivider />
-          <NutrientCell
-            label="Клетчатка"
-            value={bju.fib || 0}
-            target={norms.fib}
-            color="#34D399"
-            Icon={Leaf}
-          />
-        </View>
+        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
+        <VDivider />
+        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
+        <VDivider />
+        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
+        <VDivider />
+        <NutrientCell
+          label="Клетчатка"
+          value={bju.fib || 0}
+          target={norms.fib}
+          color="#34D399"
+          Icon={Leaf}
+        />
         <Pressable
           onPress={openNormsEdit}
           accessibilityRole="button"
           accessibilityLabel="Изменить нормы белков, жиров, углеводов и клетчатки"
           hitSlop={6}
-          className="absolute bottom-0 right-0 h-[26px] w-[26px] items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
           <Pencil size={14} color="#8B96B8" />
         </Pressable>
