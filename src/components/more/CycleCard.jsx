@@ -11,6 +11,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText
 import { ChevronDown, Trash2 } from 'lucide-react-native'
 import { useCycleStore, dayKeyOf, daysToNext, phaseOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
+import { BodyChip } from '../ui/BodyChip'
 import { fontFamilies } from '../home/ring-font'
 
 const SWITCH_COLORS = {
@@ -177,8 +178,10 @@ export function CycleCard() {
 
   return (
     <View accessibilityLabel="Цикл" className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
-      {/* Шапка: кольцо «N дней до след. цикла» + подписи; тап раскрывает
-          настройку. Ниже шапки — пилюли пресетов длины цикла, как на шаблоне */}
+      {/* Шапка: при включённом трекере — кольцо «N дней до след. цикла»
+          (как на шаблоне), при выключенном — компактный чип 🌙 вместо
+          мёртвого кольца (скрин Кати: карточка выглядела полупустой).
+          Тап раскрывает настройку */}
       <View className="px-4 pb-3.5 pt-4">
         <Pressable
           onPress={() => setOpen((s) => !s)}
@@ -187,16 +190,34 @@ export function CycleCard() {
           accessibilityLabel={open ? 'Свернуть цикл' : 'Настройки цикла'}
           className="flex-row items-center gap-3.5 active:opacity-80"
         >
-          <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
+          {enabled ? (
+            <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
+          ) : (
+            <BodyChip icon={<Text className="text-[21px]">🌙</Text>} size={44} />
+          )}
           <View className="min-w-0 flex-1">
             <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">Цикл</Text>
-            <Text className="font-semibold text-[15px] text-bear-bright">Трекер цикла</Text>
-            <Text
-              maxFontSizeMultiplier={1.2}
-              className="font-sans text-[13px] leading-[17px] text-bear-dim"
-            >
-              Фазы цикла и подсказки
-            </Text>
+            {enabled ? (
+              <>
+                <Text className="font-semibold text-[15px] text-bear-bright">Трекер цикла</Text>
+                <Text
+                  maxFontSizeMultiplier={1.2}
+                  className="font-sans text-[13px] leading-[17px] text-bear-dim"
+                >
+                  Фазы цикла и подсказки
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text className="font-semibold text-[15px] text-bear-sub">Трекер выключен</Text>
+                <Text
+                  maxFontSizeMultiplier={1.2}
+                  className="font-sans text-[13px] leading-[17px] text-bear-dim"
+                >
+                  Включите — появятся фазы и подсказки
+                </Text>
+              </>
+            )}
           </View>
           <ChevronDown
             size={20}
@@ -207,8 +228,9 @@ export function CycleCard() {
 
         {/* Пилюли — как на шаблоне: быстрые пресеты длины цикла (активная
             подсвечена; точная подгонка — степпером внутри), а при выключенном
-            трекере — одна яркая пилюля «Включить» прямо с карточки */}
-        <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pl-[110px]">
+            трекере — одна яркая пилюля «Включить» прямо с карточки.
+            Отступ слева — под колонку текста (кольцо 96px либо чип 44px) */}
+        <View className={`mt-2.5 flex-row flex-wrap items-center gap-1.5 ${enabled ? 'pl-[126px]' : 'pl-[74px]'}`}>
           {enabled ? (
             [24, 28, 32].map((v) => {
               const active = v === length

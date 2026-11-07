@@ -79,16 +79,23 @@ export function GoalPicker() {
   const currentGoal = GOALS.find((x) => x.id === goal)
 
   // Полоса прогресса: движение веса к цели по весу (в кг), если она есть.
-  // Старт — самая ранняя запись журнала веса (weights хранит новые сверху)
+  // Старт — самая ранняя запись журнала веса (weights хранит новые сверху).
+  // Над полосой — «сейчас → цель», в подписи — сколько уже пройдено
+  // (скрин Кати: голая полоса без цифр ни о чём не говорила)
   let barPct = null
   let barCaption = null
+  let barDone = null
   if (goalWeightKg != null) {
     const start = weights.length ? weights[weights.length - 1].kg : weightKg
     const total = Math.abs(start - goalWeightKg)
     const left = Math.abs(weightKg - goalWeightKg)
     barPct = total > 0 ? Math.max(0, Math.min(1, 1 - left / total)) : left < 0.05 ? 1 : 0
+    barDone = Math.max(0, total - left)
+    const doneLabel = goal === 'lose' ? 'Сброшено' : 'Пройдено'
     barCaption =
-      left < 0.05 ? 'Цель по весу достигнута! 🎉' : `Осталось: ${fmtDecimal(left)} кг`
+      left < 0.05
+        ? 'Цель по весу достигнута! 🎉'
+        : `${doneLabel}: ${fmtDecimal(barDone)} кг · Осталось: ${fmtDecimal(left)} кг`
   }
 
   return (
@@ -127,6 +134,21 @@ export function GoalPicker() {
 
           {barPct != null ? (
             <View className="mt-2.5">
+              {/* Метки «сейчас → цель» по краям полосы */}
+              <View className="mb-1 flex-row items-center justify-between">
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  className="font-sans text-[12.5px] text-bear-dim"
+                >
+                  {`${fmtDecimal(weightKg)} кг сейчас`}
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  className="font-sans text-[12.5px] text-bear-dim"
+                >
+                  {`цель ${fmtDecimal(goalWeightKg)} кг`}
+                </Text>
+              </View>
               {/* Полоса прогресса к цели по весу */}
               <View className="h-[7px] overflow-hidden rounded-full bg-white/[0.08]">
                 <View

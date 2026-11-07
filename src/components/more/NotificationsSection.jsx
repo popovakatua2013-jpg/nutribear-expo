@@ -123,7 +123,7 @@ export function NotificationsSection() {
           a11y="Тренировки возвращают калории"
           icon={<Flame size={18} color="#F97316" />}
           title="Калории"
-          sub={countBurned ? 'тренировки возвращают' : 'тренировки не возвращают'}
+          sub={countBurned ? 'возврат ккал' : 'строгий остаток'}
           value={countBurned}
           onChange={(v) => setGoals({ countBurned: v })}
         />
@@ -131,7 +131,7 @@ export function NotificationsSection() {
           a11y="Напоминания о еде"
           icon={<UtensilsCrossed size={18} color="#F59E0B" />}
           title="Еда"
-          sub={meals.enabled ? 'о приёмах пищи' : 'напоминания выкл'}
+          sub={meals.enabled ? 'по времени' : 'выключено'}
           value={meals.enabled}
           onChange={(v) => toggleWithPermission(meals, (m, on) => ({ meals: { ...m, enabled: on } }), v)}
         />
@@ -139,7 +139,7 @@ export function NotificationsSection() {
           a11y="Напоминание о взвешивании"
           icon={<Scale size={18} color="#7DD3FC" />}
           title="Вес"
-          sub={weigh.enabled ? 'взвешивание вкл' : 'раз в неделю'}
+          sub={weigh.enabled ? 'по графику' : 'выключено'}
           value={weigh.enabled}
           onChange={(v) => toggleWithPermission(weigh, (w, on) => ({ weigh: { ...w, enabled: on } }), v)}
         />

@@ -13,8 +13,9 @@
 // Менструальные дни включаются сами из трекера цикла, командировку и
 // праздник отмечают на Главной — чип «Особый день» в сводке.
 
+import { useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
-import { Minus, Plus, Utensils } from 'lucide-react-native'
+import { ChevronDown, Minus, Plus, Utensils } from 'lucide-react-native'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useDayTypesStore, DELTA_MIN, DELTA_MAX, DELTA_STEP } from '@/store/useDayTypesStore'
 import { DAY_TYPES } from '@/lib/data/dayContext'
@@ -27,6 +28,9 @@ export function DiarySettingsCard() {
   // Прибавки особых дней: строка «эмодзи Тип − 150 ккал +»
   const deltas = useDayTypesStore((s) => s.deltas)
   const setDelta = useDayTypesStore((s) => s.setDelta)
+  // Простыня объяснений спрятана в раскрывашку (скрин Кати: три абзаца
+  // текста занимали пол-экрана — настройки выглядели как статья)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   return (
     <CollapsibleCard
@@ -45,31 +49,52 @@ export function DiarySettingsCard() {
       }
     >
       <Text className="font-bold text-[16px] text-bear-text">
-        {countBurned ? 'Тренировки возвращают калории' : 'Тренировки не возвращают калории'}
+        {countBurned ? 'Тренировки возвращают калории' : 'Строгий остаток: только съеденное'}
       </Text>
-      {/* Простым языком (отзыв Кати: «написать подсказку для
-          пользователя простым языком») — без формул в лоб */}
-      <Text className="mt-1 font-sans text-[15.5px] leading-snug text-bear-sub">
+      {/* Коротко — сразу, подробно — по тапу (отзыв Кати: «написать
+          подсказку простым языком» без простыни текста) */}
+      <Text className="mt-1 font-sans text-[15px] leading-snug text-bear-sub">
         {countBurned
-          ? 'Сожгли на прогулке или тренировке — эти калории вернутся в ваш остаток на Главной: потратили 200, значит можете съесть на 200 больше. Так же считают MyFitnessPal и Samsung Health.'
-          : 'Считаем только съеденное: от вашей нормы отнимается еда, а «сожжённое» на шагах и тренировках не возвращается. Приложения часто преувеличивают сожжённое — так проще не перебрать и честнее видеть дефицит.'}
+          ? 'Сожгли 200 — можете съесть на 200 больше: активность возвращается в остаток на Главной.'
+          : 'Считаем только съеденное: сожжённое не возвращается — так дефицит виден честнее.'}
       </Text>
-      {/* Как считаются дни «в рамках» в отчётах (отзыв Кати: «калории
-          сейчас в рамках 1/7 дн — нужно как везде цель 1/7 дн»): подпись
-          в карточке «Калории» теперь единая «Цель: N/7 дн», а здесь —
-          простое объяснение, что это значит */}
-      <Text className="mt-2 font-sans text-[15.5px] leading-snug text-bear-sub">
-        В отчётах у карточки «Калории» цель — уложиться в свою норму: день засчитан, если вы поели и не вышли за неё. Строка «Цель: 2/7 дн» значит: из 7 дней вы 2 дня уложились в норму.
-      </Text>
-      <Text className="mt-2 font-sans text-[14px] leading-snug text-bear-sub2">
-        Переключатель сверху решает, возвращать ли потраченные калории в остаток на Главной.
-      </Text>
+      {/* Раскрывашка с подробностями: сравнение с MFP/SC Health,
+          как читается «Цель: N/7 дн» в отчётах */}
+      <Pressable
+        onPress={() => setMoreOpen((s) => !s)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: moreOpen }}
+        accessibilityLabel={moreOpen ? 'Свернуть подробности' : 'Подробнее о режиме остатка'}
+        hitSlop={6}
+        className="mt-2 max-w-[220px] flex-row items-center gap-1 self-start active:opacity-70"
+      >
+        <Text className="font-semibold text-[13.5px] text-bear-bright">
+          {moreOpen ? 'Свернуть' : 'Как это работает'}
+        </Text>
+        <ChevronDown
+          size={14}
+          color="#C4B5FD"
+          style={{ transform: [{ rotate: moreOpen ? '180deg' : '0deg' }] }}
+        />
+      </Pressable>
+      {moreOpen && (
+        <View className="mt-2 gap-2 rounded-2xl bg-white/[0.03] p-3">
+          <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+            {countBurned
+              ? 'Так же считают MyFitnessPal и Samsung Health: потраченное возвращается в дневной баланс. Учтите: приложения часто преувеличивают сожжённое — если цифры сомнительны, выключите возврат.'
+              : 'Многие приложения возвращают сожжённое, но часто преувеличивают его — из-за этого легко перебрать норму и не заметить дефицит. Включите возврат переключателем сверху, если доверяете цифрам шагомера.'}
+          </Text>
+          <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+            В отчётах у карточки «Калории» цель — уложиться в свою норму: день засчитан, если вы поели и не вышли за неё. Строка «Цель: 2/7 дн» значит: из 7 дней вы 2 дня уложились в норму.
+          </Text>
+        </View>
+      )}
 
       {/* ── Особые дни: прибавка ккал к норме ─────────────────────────── */}
       <View className="mt-3 gap-2.5 rounded-2xl bg-white/[0.03] p-3.5">
         <Text className="font-bold text-[16px] text-bear-text">🗓 Особые дни</Text>
-        <Text className="font-sans text-[14.5px] leading-snug text-bear-sub">
-          В такой день норма калорий увеличивается на прибавку: остаток на Главной, кольцо «съедено» и «Цель: N/7 дн» в отчётах считают по норме дня. Дни менструации отмечаются сами, если включён трекер цикла; командировку и праздник отметьте на Главной — чип «Особый день» в карточке «Съедено за сегодня».
+        <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+          В такой день норма вырастает на прибавку. Менструация отмечается сама (если включён трекер цикла), командировку и праздник отметьте чипом «Особый день» на Главной.
         </Text>
         {Object.keys(DAY_TYPES).map((t) => {
           const meta = DAY_TYPES[t]

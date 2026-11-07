@@ -88,21 +88,25 @@ export function ProfileEditor() {
         </View>
 
         <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">Профиль</Text>
+          {/* Имя — в заголовок героя (как на шаблоне); без имени — «Профиль» */}
+          <Text numberOfLines={1} className="font-extrabold text-[21px] tracking-tight text-bear-text">
+            {name || 'Профиль'}
+          </Text>
           <Text
             maxFontSizeMultiplier={1.2}
             className="font-sans text-[15.5px] text-bear-sub"
           >
             {heightCm} см • {fmtDecimal(weightKg)} кг
           </Text>
-          {/* Чип с именем: как на шаблоне — «Как тебя зовут? ✏️» */}
+          {/* Чип с именем: до ввода — приглашение «Как тебя зовут? ✏️»,
+              после — «Изменить имя» (имя уже в заголовке) */}
           <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-white/[0.08] px-3 py-1.5">
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.15}
               className="max-w-[150px] font-semibold text-[13.5px] text-bear-bright"
             >
-              {name ? name : 'Как тебя зовут?'}
+              {name ? 'Изменить имя' : 'Как тебя зовут?'}
             </Text>
             <Pencil size={12.5} color="#C4B5FD" />
           </View>

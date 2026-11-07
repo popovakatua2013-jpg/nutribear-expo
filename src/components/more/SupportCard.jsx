@@ -31,7 +31,7 @@ const EMAIL = OPERATOR.email
 // Темы обращения: subject — готовая тема письма
 const TOPICS = [
   { id: 'idea', emoji: '💡', label: 'Предложение', subject: 'Предложение по приложению' },
-  { id: 'bug', emoji: '🐞', label: 'Лаг или ошибка', subject: 'Лаг или ошибка в приложении' },
+  { id: 'bug', emoji: '🐞', label: 'Баг или ошибка', subject: 'Баг или ошибка в приложении' },
   { id: 'pay', emoji: '💳', label: 'Оплата и чеки', subject: 'Вопрос по оплате и чекам' },
   { id: 'other', emoji: '❓', label: 'Другое', subject: 'Вопрос в поддержку NutriBear' },
 ]
@@ -83,7 +83,7 @@ export function SupportCard() {
             maxFontSizeMultiplier={1.2}
             className="font-sans text-[13.5px] leading-snug text-bear-dim"
           >
-            Отвечаем на вопросы и советы — читаем всё
+            Идеи, ошибки, оплата — читаем всё
           </Text>
         </View>
         <Text maxFontSizeMultiplier={1.1} className="shrink-0 text-[34px]" accessibilityLabel="Робот-помощник">

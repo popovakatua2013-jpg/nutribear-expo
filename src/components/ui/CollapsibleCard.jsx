@@ -48,21 +48,26 @@ export function CollapsibleCard({
           className="min-w-0 flex-1 flex-row items-center gap-2.5 px-4 py-3.5 active:opacity-70"
         >
           {icon ? <BodyChip icon={icon} /> : null}
-          <Text
-            numberOfLines={1}
-            className="min-w-0 flex-1 font-bold text-[20px] tracking-tight text-bear-text"
-          >
-            {title}
-          </Text>
-          {summary ? (
+          {/* Заголовок и сводка — столбиком: в одну строку на 360dp
+              длинная сводка сжимала заголовок до одной буквы
+              («П экспорт · восстановление») */}
+          <View className="min-w-0 flex-1">
             <Text
               numberOfLines={1}
-              maxFontSizeMultiplier={1.2}
-              className="shrink-0 font-semibold text-[16px] text-bear-dim"
+              className="font-bold text-[20px] tracking-tight text-bear-text"
             >
-              {summary}
+              {title}
             </Text>
-          ) : null}
+            {summary ? (
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.2}
+                className="mt-0.5 font-sans text-[13px] text-bear-dim"
+              >
+                {summary}
+              </Text>
+            ) : null}
+          </View>
           <ChevronDown
             size={20}
             color="#A5AECB"
