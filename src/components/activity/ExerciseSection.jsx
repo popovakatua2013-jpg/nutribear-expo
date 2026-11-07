@@ -4,29 +4,51 @@
 // «Сегодняшняя тренировка» с фото и градиентной кнопкой, рядом кольцо
 // «Выполнено за неделю» с дельтой к прошлой неделе, «Динамика»
 // (сожжённые за день, 7/30/90), «Популярные виды» (топ за 30 дней)
-// и «Последние тренировки» (сегодняшние открываются по тапу).
-// Окно добавления/изменения — прежнее: каталог + СВОИ тренировки.
-// Свою тренировку пользователь создаёт сам: название, иконка,
-// интенсивность — приложение запоминает её между сессиями.
-// Сожжённые калории считаются по формуле MET, но значение можно
-// исправить вручную (например, по цифре с тренажёра или смарт-часов).
-// Тап по записи — изменение, корзина — удаление. Режим flat — без
-// собственной карточки: секция встраивается в свёрнутый блок
-// «Тренировки» на главной.
+// и «Последние тренировки».
+//
+// Добавление — ПО СХЕМЕ КАТИ (отзыв: «при раскрытии добавить
+// тренировку — раскрывающийся список — выбор тренировки — указать
+// время и кал вручную — записать»): тап «Добавить тренировку» больше
+// НЕ открывает отдельное окно — прямо в секции раскрывается панель:
+//   1) выпадающий список «Выбор тренировки» (каталог + свои);
+//   2) время и калории — два поля, оба вписываются вручную;
+//   3) кнопка «Записать».
+// Калории можно оставить пустыми — посчитаем по формуле MET (вес
+// берём из профиля); вписанная вручную цифра (с тренажёра или часов)
+// всегда точнее — она и запишется. Свою тренировку пользователь
+// создаёт сам: название, иконка, интенсивность — запоминается между
+// сессиями. Изменение записи — тап по сегодняшней строке в «Последних
+// тренировках»: та же панель раскрывается прямо в списке, с кнопкой
+// удаления. Режим flat — без собственной карточки: секция
+// встраивается в свёрнутый блок «Тренировки» на главной.
 
 import { useCallback, useMemo, useState } from 'react'
-import { ImageBackground, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Flame, History, Pencil, Play, Plus, RotateCcw, Star, Trash2, X } from 'lucide-react-native'
+import { ImageBackground, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import {
+  BarChart3,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Dumbbell,
+  History,
+  Pencil,
+  Play,
+  Plus,
+  RotateCcw,
+  Star,
+  Trash2,
+  X,
+} from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { useExerciseStore, todayKey, dayBurned, syncHistoryBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { shortWeekday } from '@/lib/data/activity'
 import {
   EXERCISES,
-  QUICK_MINUTES,
   CUSTOM_EMOJIS,
   INTENSITY_LEVELS,
   intensityMet,
@@ -84,8 +106,8 @@ function closestExercise(met) {
 
 // Дефолт дня для новой тренировки: после полуночи (пока не 5 утра)
 // тренировка почти всегда относится к предыдущему дню — вечерней
-// прогулке/залу, о которых вспомнили после 00:00. Раньше окно
-// открывалось с «Сегодня», и такие записи уходили в новый день:
+// прогулке/залу, о которых вспомнили после 00:00. Раньше панель
+// открывалась с «Сегодня», и такие записи уходили в новый день:
 // назавтра в сводке горели «сожжено за сегодня», хотя ничего
 // не добавляли. Днём — как раньше, «Сегодня».
 function defaultDayOff() {
@@ -95,42 +117,13 @@ function defaultDayOff() {
 export function ExerciseSection({ flat = false }) {
   const logs = useExerciseStore((s) => s.logs)
   const addLog = useExerciseStore((s) => s.addLog)
-  const updateLog = useExerciseStore((s) => s.updateLog)
-  const removeLog = useExerciseStore((s) => s.removeLog)
-  const custom = useExerciseStore((s) => s.custom)
-  const addCustom = useExerciseStore((s) => s.addCustom)
-  const updateCustom = useExerciseStore((s) => s.updateCustom)
-  const removeCustom = useExerciseStore((s) => s.removeCustom)
-  const weightKg = useProfileStore((s) => s.weightKg)
   const { toast } = useToast()
-  const insets = useSafeAreaInsets()
 
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState(null) // запись на изменение
-  // День записи: 0 — сегодня, 1 — вчера. Для новой тренировки после
-  // полуночи по умолчанию «Вчера» (см. defaultDayOff), при изменении
-  // 0 — запись остаётся в своём дне, «Вчера» — перенести её туда
-  const [dayOff, setDayOff] = useState(defaultDayOff)
-  const [exId, setExId] = useState(null)
-  const [minutes, setMinutes] = useState(null)
-  // Сожжённые калории: null — «по формуле», число — ручная правка
-  const [kcalManual, setKcalManual] = useState(null)
-  const [kcalEditing, setKcalEditing] = useState(false)
-  const [kcalDraft, setKcalDraft] = useState('')
-  // Форма своей тренировки
-  const [creating, setCreating] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newEmoji, setNewEmoji] = useState('🔥')
-  const [newLevel, setNewLevel] = useState('mid')
-  const [newMode, setNewMode] = useState('level') // level | kcal
-  const [newKcal30, setNewKcal30] = useState('')
-  // Свёрнутые блоки формы: иконка и уровень — одна строка с текущим
-  // выбором, список раскрывается только по тапу (сетка иконок и уровней
-  // больше не занимает пол-окна)
-  const [emojiOpen, setEmojiOpen] = useState(false)
-  const [levelOpen, setLevelOpen] = useState(false)
-  // Правка запомненной тренировки: id своей тренировки в форме
-  const [editingCustomId, setEditingCustomId] = useState(null)
+  // Панель добавления: раскрыта/свёрнута (схема Кати — без отдельного окна)
+  const [addOpen, setAddOpen] = useState(false)
+  // Изменение записи: id записи из «Последних тренировок» — панель
+  // раскрывается прямо на месте строки
+  const [editId, setEditId] = useState(null)
 
   // Ключ дня — в состоянии и обновляется при каждом возврате на вкладку:
   // если приложение оставалось открытым через полночь, список «Сегодня»
@@ -170,217 +163,16 @@ export function ExerciseSection({ flat = false }) {
   // Самая свежая тренировка за сегодня — лицо hero-карточки
   const hero = items[0] || null
 
-  // Каталог + запомненные свои тренировки (пересобирается при изменениях)
-  const allExercises = useMemo(() => [...EXERCISES, ...custom], [custom])
-
-  // Открыть окно: без записи — «добавить», с записью — «изменить»
-  function openModal(entry) {
-    if (entry) {
-      setEditing(entry)
-      setExId(entry.exId)
-      setMinutes(entry.minutes)
-      // Если калории правили вручную — открываем с этим значением
-      setKcalManual(entry.manual ? entry.kcal : null)
-      // Запись остаётся в своём дне, пока не выберут перенос «Вчера»
-      setDayOff(0)
-    } else {
-      setEditing(null)
-      setExId(null)
-      setMinutes(null)
-      setKcalManual(null)
-      // После полуночи — по умолчанию «Вчера» (см. defaultDayOff)
-      setDayOff(defaultDayOff())
-    }
-    setKcalEditing(false)
-    setCreating(false)
-    setOpen(true)
+  // Раскрыть/свернуть панель добавления (закрывая форму изменения)
+  function toggleAdd() {
+    setEditId(null)
+    setAddOpen((v) => !v)
   }
 
-  function closeModal() {
-    setOpen(false)
-    setEditing(null)
-    setCreating(false)
-    setEditingCustomId(null)
-  }
-
-  // Открыть форму своей тренировки с чистого листа (и сбросить
-  // развёрнутые списки — иконка/уровень всегда начинаются свёрнутыми)
-  function startCreate() {
-    setCreating(true)
-    setEditingCustomId(null)
-    setNewName('')
-    setNewEmoji('🔥')
-    setNewLevel('mid')
-    setNewMode('level')
-    setNewKcal30('')
-    setEmojiOpen(false)
-    setLevelOpen(false)
-  }
-
-  // Изменить запомненную тренировку: подставляем её данные в форму.
-  // Хранится только MET, поэтому режим интенсивности подбираем обратным
-  // пересчётом: точное совпадение с уровнем — «По уровню», иначе — ккал за 30 мин
-  function startEditCustom() {
-    if (!ex || !ex.id.startsWith('custom-')) return
-    setCreating(true)
-    setEditingCustomId(ex.id)
-    setNewName(ex.name)
-    setNewEmoji(ex.emoji)
-    const level = INTENSITY_LEVELS.find((l) => l.met === ex.met)
-    if (level) {
-      setNewMode('level')
-      setNewLevel(level.id)
-      setNewKcal30('')
-    } else {
-      setNewMode('kcal')
-      setNewKcal30(String(Math.max(20, Math.round(ex.met * 0.525 * weightKg) || 20)))
-    }
-    setEmojiOpen(false)
-    setLevelOpen(false)
-  }
-
-  const ex = allExercises.find((e) => e.id === exId)
-  const autoKcal = ex && minutes ? kcalBurned(ex.met, weightKg, minutes) : 0
-  const kcalShow = kcalManual != null ? Math.round(kcalManual) : autoKcal
-
-  // Превью формы своей тренировки: MET из калорий за 30 минут (если режим
-  // «ккал» и введено число) или из выбранного уровня — для живого примера
-  const kcal30Num = Number(String(newKcal30).replace(',', '.')) || 0
-  const kcalMet = metFromKcal30(kcal30Num, weightKg)
-  const previewMet = newMode === 'kcal' ? kcalMet : intensityMet(newLevel)
-
-  function startKcalEdit() {
-    setKcalDraft(String(kcalShow || ''))
-    setKcalEditing(true)
-  }
-
-  function applyKcal() {
-    const n = Math.round(Number(String(kcalDraft).replace(',', '.')) || 0)
-    if (!n || n < 1) {
-      toast({
-        title: '❗ Неверное значение',
-        description: `Введите число от 1 до ${formatNum(KCAL_MAX)}`,
-      })
-      return
-    }
-    setKcalManual(Math.min(n, KCAL_MAX))
-    setKcalEditing(false)
-  }
-
-  // Вернуться к автоматическому расчёту по MET
-  function resetKcal() {
-    setKcalManual(null)
-    setKcalEditing(false)
-  }
-
-  function save() {
-    const payload = { exId: ex.id, name: ex.name, emoji: ex.emoji, minutes, kcal: kcalShow }
-    if (kcalManual != null) payload.manual = true
-    if (editing) {
-      if (dayOff) {
-        // Перенос записи за вчера: убираем из сегодняшних, пишем
-        // во вчерашний день — «сожжено» обоих дней сразу пересчитывается
-        // в дневной истории (календарь, сводка, отчёты)
-        removeLog(key, editing.id)
-        const d = new Date()
-        d.setDate(d.getDate() - dayOff)
-        const movedKey = todayKey(d)
-        addLog(movedKey, payload)
-        syncHistoryBurned(movedKey)
-        syncHistoryBurned(key)
-        toast({
-          title: `${ex.emoji} ${ex.name} — за вчера`,
-          description: `${minutes} мин · ${formatNum(kcalShow)} ккал · запись перенесена`,
-        })
-      } else {
-        updateLog(key, editing.id, payload)
-        syncHistoryBurned(key)
-        toast({
-          title: `${ex.emoji} ${ex.name} — изменено`,
-          description: `${minutes} мин · ${formatNum(kcalShow)} ккал${
-            kcalManual != null ? ' · вручную' : ''
-          }`,
-        })
-      }
-    } else {
-      // Ключ дня по выбору «Сегодня / Вчера» — не по времени сохранения:
-      // тренировка, записанная после полуночи, уходит во вчерашний день
-      // (после полуночи «Вчера» выбрано по умолчанию)
-      const d = new Date()
-      if (dayOff) d.setDate(d.getDate() - dayOff)
-      const dayKey = todayKey(d)
-      addLog(dayKey, payload)
-      syncHistoryBurned(dayKey)
-      toast({
-        title: `${ex.emoji} ${ex.name} — ${minutes} мин`,
-        description: `Сожжено ${formatNum(kcalShow)} ккал · записано${
-          dayOff ? ' за вчера' : ''
-        }`,
-      })
-    }
-    closeModal()
-  }
-
-  function remove(entry) {
-    removeLog(key, entry.id)
-    syncHistoryBurned(key)
-    if (editing && editing.id === entry.id) closeModal()
-    toast({ title: '🗑 Удалено', description: `${entry.name} убрана из дневника` })
-  }
-
-  // Создать/сохранить свою тренировку — хранится навсегда, в каталоге.
-  // При правке id не меняется — записи дневника остаются привязаны к ней
-  function saveCustom() {
-    const name = newName.trim()
-    if (!name) {
-      toast({ title: '❗ Нужно название', description: 'Например: Бокс, скакалка, падел' })
-      return
-    }
-    let met
-    if (newMode === 'kcal') {
-      // Интенсивность из калорий за 30 минут (цифрой с тренажёра)
-      const k = Math.round(Number(String(newKcal30).replace(',', '.')) || 0)
-      if (!k || k < 20 || k > 2000) {
-        toast({
-          title: '❗ Неверное значение',
-          description: 'Введите калории за 30 минут — от 20 до 2000',
-        })
-        return
-      }
-      met = metFromKcal30(k, weightKg)
-    } else {
-      met = intensityMet(newLevel)
-    }
-    if (editingCustomId) {
-      updateCustom(editingCustomId, { name, emoji: newEmoji, met })
-      setExId(editingCustomId)
-      setCreating(false)
-      setEditingCustomId(null)
-      setNewName('')
-      setNewEmoji('🔥')
-      setNewLevel('mid')
-      setNewMode('level')
-      setNewKcal30('')
-      setEmojiOpen(false)
-      setLevelOpen(false)
-      toast({ title: '✏️ Изменено', description: `«${name}» обновлена` })
-      return
-    }
-    const exObj = { id: `custom-${makeId()}`, name, emoji: newEmoji, met }
-    addCustom(exObj)
-    setExId(exObj.id)
-    setCreating(false)
-    setNewName('')
-    setNewEmoji('🔥')
-    setNewLevel('mid')
-    setNewMode('level')
-    setNewKcal30('')
-    setEmojiOpen(false)
-    setLevelOpen(false)
-    toast({
-      title: `${exObj.emoji} «${name}» запомнена`,
-      description: 'Теперь она всегда в списке тренировок',
-    })
+  // Изменить запись: панель раскрывается прямо в «Последних тренировках»
+  function openEdit(entry) {
+    setAddOpen(false)
+    setEditId(entry.id)
   }
 
   // Повторить выбранный день: копируем все его записи в сегодня
@@ -396,14 +188,6 @@ export function ExerciseSection({ flat = false }) {
         repDay.list.length === 1 ? 'запись добавлена' : 'записи добавлено'
       } из «${repDay.day}» в сегодня`,
     })
-  }
-
-  // Удалить свою тренировку из списка (записи дневника не пропадают)
-  function forgetCustom() {
-    if (!ex) return
-    removeCustom(ex.id)
-    setExId(null)
-    toast({ title: '🗑 Удалено', description: `«${ex.name}» больше не в списке` })
   }
 
   return (
@@ -428,11 +212,13 @@ export function ExerciseSection({ flat = false }) {
           </View>
         </View>
         <Pressable
-          onPress={() => openModal(null)}
+          onPress={toggleAdd}
           className="flex-row items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 active:opacity-70"
         >
-          <Plus size={16} color="#AEB9D9" />
-          <Text className="font-bold text-[16.5px] text-bear-soft">Добавить</Text>
+          {addOpen ? <X size={16} color="#AEB9D9" /> : <Plus size={16} color="#AEB9D9" />}
+          <Text className="font-bold text-[16.5px] text-bear-soft">
+            {addOpen ? 'Свернуть' : 'Добавить'}
+          </Text>
         </Pressable>
       </View>
 
@@ -458,8 +244,7 @@ export function ExerciseSection({ flat = false }) {
               {repDay.list
                 .slice(0, 2)
                 .map((e) => `${e.emoji} ${e.name}`)
-                .join(' · ')
-              }
+                .join(' · ')}
               {repDay.list.length > 2 ? ` · ещё ${repDay.list.length - 2}` : ''}
             </Text>
           </View>
@@ -501,7 +286,8 @@ export function ExerciseSection({ flat = false }) {
             на всю ширину карточки, запись (плитка + название) с фото-акцентом
             справа, кнопка — на всю ширину карточки: на узких экранах (360dp)
             ничего не пережимается и не обрезается. Метрики записи — своей
-            строкой под названием */}
+            строкой под названием. Тап по кнопке РАСКРЫВАЕТ панель добавления
+            прямо под карточкой (схема Кати) */}
         <View
           className="min-w-0 flex-1 overflow-hidden rounded-3xl border border-white/10"
           style={{ backgroundColor: 'rgba(123,108,246,0.10)' }}
@@ -555,23 +341,27 @@ export function ExerciseSection({ flat = false }) {
                 : 'Добавьте первую — прогулка тоже считается'}
             </Text>
           </View>
-          {/* Кнопка — на всю ширину карточки: «Добавить тренировку» всегда
-              в одну строку (референс: широкая градиентная кнопка) */}
+          {/* Кнопка — на всю ширину карточки: раскрывает/сворачивает
+              панель добавления под hero (референс: широкая градиентная кнопка) */}
           <Pressable
-            onPress={() => openModal(null)}
+            onPress={toggleAdd}
             accessibilityRole="button"
-            accessibilityLabel="Добавить тренировку"
+            accessibilityLabel={addOpen ? 'Свернуть панель добавления' : 'Добавить тренировку'}
             className="mt-2.5 overflow-hidden active:opacity-80"
           >
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
               <View className="flex-row items-center justify-center gap-1.5 py-2.5">
-                <Play size={15} color="#FFFFFF" />
+                {addOpen ? (
+                  <ChevronUp size={15} color="#FFFFFF" />
+                ) : (
+                  <Play size={15} color="#FFFFFF" />
+                )}
                 <Text
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.05}
                   className="font-bold text-[14.5px] text-white"
                 >
-                  Добавить тренировку
+                  {addOpen ? 'Свернуть' : 'Добавить тренировку'}
                 </Text>
               </View>
             </LinearGradient>
@@ -617,6 +407,13 @@ export function ExerciseSection({ flat = false }) {
           </Text>
         </Pressable>
       </View>
+
+      {/* ── Панель добавления (схема Кати): список → время/ккал → записать ── */}
+      {addOpen && (
+        <View className="mt-2">
+          <WorkoutForm onDone={() => setAddOpen(false)} />
+        </View>
+      )}
 
       {/* Динамика: сожжённые ккал по дням, периоды 7/30/90 — как на
           шаблоне. Пока тренировок нет — карточку не рисуем (пустых
@@ -705,8 +502,10 @@ export function ExerciseSection({ flat = false }) {
       )}
 
       {/* Последние тренировки: свежие записи дней (сегодня — сверху).
-          Записи за СЕГОДНЯ открываются по тапу (изменить), у них же
-          корзина; прошлые дни — просто история, справа зелёная галочка */}
+          Тап по сегодняшней записи раскрывает ПАНЕЛЬ ИЗМЕНЕНИЯ прямо на
+          месте строки (та же форма, что у добавления): правка времени и
+          калорий, перенос за вчера, корзина — удаление. Прошлые дни —
+          просто история, справа зелёная галочка */}
       {recent.length > 0 && (
         <View className="mt-2 rounded-3xl border border-white/10 bg-white/[0.03] p-3.5">
           <View className="flex-row items-center gap-1.5">
@@ -716,11 +515,21 @@ export function ExerciseSection({ flat = false }) {
           <View className="mt-1.5 gap-0.5">
             {recent.map((e) => {
               const isToday = e.daysAgo === 0
+              if (isToday && editId === e.id) {
+                return (
+                  <WorkoutForm
+                    key={`edit-${e.id}`}
+                    editing={e}
+                    className="mt-1"
+                    onDone={() => setEditId(null)}
+                  />
+                )
+              }
               const RowWrap = isToday ? Pressable : View
               return (
                 <RowWrap
                   key={`${e.daysAgo}-${e.id}`}
-                  onPress={isToday ? () => openModal(e) : undefined}
+                  onPress={isToday ? () => openEdit(e) : undefined}
                   accessibilityRole={isToday ? 'button' : undefined}
                   accessibilityLabel={isToday ? `Изменить ${e.name}` : undefined}
                   className="flex-row items-center gap-2.5 rounded-2xl px-0.5 py-1.5 active:opacity-70"
@@ -757,16 +566,6 @@ export function ExerciseSection({ flat = false }) {
                   >
                     <Check size={13} color="#34D399" />
                   </View>
-                  {isToday ? (
-                    <Pressable
-                      onPress={() => remove(e)}
-                      accessibilityLabel={`Удалить ${e.name}`}
-                      hitSlop={6}
-                      className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5"
-                    >
-                      <Trash2 size={14} color="#98A2C2" />
-                    </Pressable>
-                  ) : null}
                 </RowWrap>
               )
             })}
@@ -778,497 +577,620 @@ export function ExerciseSection({ flat = false }) {
           )}
         </View>
       )}
+    </View>
+  )
+}
 
-      {/* Окно добавления/изменения тренировки */}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={closeModal}>
-        <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-          <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
-            {/* Шапка: гантель как на референсе, закрытие — в квадратной кнопке */}
-            <View className="flex-row items-center gap-3 border-b border-bear-line px-4 pb-3 pt-3.5">
+// ── Панель «добавить/изменить тренировку» (схема Кати) ──────────────────
+// Раскрывается прямо в секции, без отдельного окна:
+//   1) «Выбор тренировки» — выпадающий список (каталог + свои, внизу
+//      «＋ Своя тренировка» с формой запоминания);
+//   2) «Время, мин» и «Калории» — два поля, оба вписываются вручную;
+//   3) «Записать» — добавляет (или сохраняет изменения).
+// Калории можно оставить пустыми — тогда считает формула MET; вписанная
+// цифра (тренажёр, часы) точнее — запишется она. Изменение: та же панель
+// с данными записи, «Сохранить» и корзиной; «Вчера» переносит запись.
+function WorkoutForm({ editing = null, onDone, className = '' }) {
+  const weightKg = useProfileStore((s) => s.weightKg)
+  const addLog = useExerciseStore((s) => s.addLog)
+  const updateLog = useExerciseStore((s) => s.updateLog)
+  const removeLog = useExerciseStore((s) => s.removeLog)
+  const custom = useExerciseStore((s) => s.custom)
+  const addCustom = useExerciseStore((s) => s.addCustom)
+  const updateCustom = useExerciseStore((s) => s.updateCustom)
+  const removeCustom = useExerciseStore((s) => s.removeCustom)
+  const { toast } = useToast()
+
+  // День записи: 0 — сегодня, 1 — вчера. Для новой тренировки после
+  // полуночи по умолчанию «Вчера» (см. defaultDayOff), при изменении
+  // 0 — запись остаётся в своём дне, «Вчера» — перенести её туда
+  const [dayOff, setDayOff] = useState(editing ? 0 : defaultDayOff)
+  const [exId, setExId] = useState(editing ? editing.exId : null)
+  // Время — строка поля (вручную, схема Кати)
+  const [minutesStr, setMinutesStr] = useState(editing ? String(editing.minutes) : '')
+  // Калории — строка поля: пусто → расчёт по формуле, число → вручную
+  const [kcalStr, setKcalStr] = useState(editing && editing.manual ? String(editing.kcal) : '')
+  // Выпадающий список тренировок: раскрыт/свёрнут
+  const [listOpen, setListOpen] = useState(false)
+
+  // Форма своей тренировки (внутри списка)
+  const [creating, setCreating] = useState(false)
+  const [editingCustomId, setEditingCustomId] = useState(null)
+  const [newName, setNewName] = useState('')
+  const [newEmoji, setNewEmoji] = useState('🔥')
+  const [newLevel, setNewLevel] = useState('mid')
+  const [newMode, setNewMode] = useState('level') // level | kcal
+  const [newKcal30, setNewKcal30] = useState('')
+  // Свёрнутый блок формы: иконка — одна строка с текущим выбором,
+  // сетка раскрывается только по тапу
+  const [emojiOpen, setEmojiOpen] = useState(false)
+
+  // Каталог + запомненные свои тренировки
+  const allExercises = useMemo(() => [...EXERCISES, ...custom], [custom])
+  const ex = allExercises.find((e) => e.id === exId)
+  const minutesNum = Math.round(Number(minutesStr) || 0)
+  const autoKcal = ex && minutesNum ? kcalBurned(ex.met, weightKg, minutesNum) : 0
+  const kcalNum = Math.round(Number(String(kcalStr).replace(',', '.')) || 0)
+  const kcalEmpty = !String(kcalStr).trim()
+
+  // Превью формы своей тренировки: MET из калорий за 30 минут (если режим
+  // «ккал» и введено число) или из выбранного уровня — для живого примера
+  const kcal30Num = Number(String(newKcal30).replace(',', '.')) || 0
+  const kcalMet = metFromKcal30(kcal30Num, weightKg)
+  const previewMet = newMode === 'kcal' ? kcalMet : intensityMet(newLevel)
+
+  function resetCreate() {
+    setCreating(false)
+    setEditingCustomId(null)
+    setNewName('')
+    setNewEmoji('🔥')
+    setNewLevel('mid')
+    setNewMode('level')
+    setNewKcal30('')
+    setEmojiOpen(false)
+  }
+
+  // Создать свою тренировку с чистого листа (список прячем — вместо
+  // него раскрывается форма)
+  function startCreate() {
+    resetCreate()
+    setCreating(true)
+  }
+
+  // Изменить запомненную тренировку: подставляем её данные в форму.
+  // Хранится только MET, поэтому режим интенсивности подбираем обратным
+  // пересчётом: точное совпадение с уровнем — «По уровню», иначе — ккал за 30 мин
+  function startEditCustom() {
+    if (!ex || !ex.id.startsWith('custom-')) return
+    setCreating(true)
+    setEditingCustomId(ex.id)
+    setNewName(ex.name)
+    setNewEmoji(ex.emoji)
+    const level = INTENSITY_LEVELS.find((l) => l.met === ex.met)
+    if (level) {
+      setNewMode('level')
+      setNewLevel(level.id)
+      setNewKcal30('')
+    } else {
+      setNewMode('kcal')
+      setNewKcal30(String(Math.max(20, Math.round(ex.met * 0.525 * weightKg) || 20)))
+    }
+    setEmojiOpen(false)
+  }
+
+  // Создать/сохранить свою тренировку — хранится навсегда, в каталоге.
+  // При правке id не меняется — записи дневника остаются привязаны к ней
+  function saveCustom() {
+    const name = newName.trim()
+    if (!name) {
+      toast({ title: '❗ Нужно название', description: 'Например: Бокс, скакалка, падел' })
+      return
+    }
+    let met
+    if (newMode === 'kcal') {
+      // Интенсивность из калорий за 30 минут (цифрой с тренажёра)
+      const k = Math.round(Number(String(newKcal30).replace(',', '.')) || 0)
+      if (!k || k < 20 || k > 2000) {
+        toast({
+          title: '❗ Неверное значение',
+          description: 'Введите калории за 30 минут — от 20 до 2000',
+        })
+        return
+      }
+      met = metFromKcal30(k, weightKg)
+    } else {
+      met = intensityMet(newLevel)
+    }
+    if (editingCustomId) {
+      updateCustom(editingCustomId, { name, emoji: newEmoji, met })
+      setExId(editingCustomId)
+      toast({ title: '✏️ Изменено', description: `«${name}» обновлена` })
+      resetCreate()
+      return
+    }
+    const exObj = { id: `custom-${makeId()}`, name, emoji: newEmoji, met }
+    addCustom(exObj)
+    setExId(exObj.id)
+    toast({
+      title: `${exObj.emoji} «${name}» запомнена`,
+      description: 'Теперь она всегда в списке тренировок',
+    })
+    resetCreate()
+  }
+
+  // Удалить свою тренировку из списка (записи дневника не пропадают)
+  function forgetCustom() {
+    if (!ex) return
+    removeCustom(ex.id)
+    setExId(null)
+    toast({ title: '🗑 Удалено', description: `«${ex.name}» больше не в списке` })
+  }
+
+  // Записать: проверяем поля и добавляем/сохраняем запись
+  function save() {
+    if (!ex) {
+      toast({
+        title: '❗ Выберите тренировку',
+        description: 'Раскройте список и выберите вид',
+      })
+      return
+    }
+    if (!minutesNum || minutesNum < 1) {
+      toast({ title: '❗ Укажите время', description: 'Впишите минуты — например, 30' })
+      return
+    }
+    if (minutesNum > 600) {
+      toast({ title: '❗ Слишком долго', description: 'Максимум 600 минут за запись' })
+      return
+    }
+    let kcal
+    let manual = false
+    if (!kcalEmpty) {
+      if (kcalNum < 1 || kcalNum > KCAL_MAX) {
+        toast({
+          title: '❗ Неверные калории',
+          description: `Число от 1 до ${formatNum(KCAL_MAX)} — или оставьте поле пустым`,
+        })
+        return
+      }
+      kcal = kcalNum
+      manual = true
+    } else {
+      kcal = autoKcal
+    }
+    const payload = { exId: ex.id, name: ex.name, emoji: ex.emoji, minutes: minutesNum, kcal }
+    if (manual) payload.manual = true
+    if (editing) {
+      if (dayOff) {
+        // Перенос записи за вчера: убираем из сегодняшних, пишем
+        // во вчерашний день — «сожжено» обоих дней сразу пересчитывается
+        // в дневной истории (календарь, сводка, отчёты)
+        removeLog(todayKey(), editing.id)
+        const d = new Date()
+        d.setDate(d.getDate() - dayOff)
+        const movedKey = todayKey(d)
+        addLog(movedKey, payload)
+        syncHistoryBurned(movedKey)
+        syncHistoryBurned(todayKey())
+        toast({
+          title: `${ex.emoji} ${ex.name} — за вчера`,
+          description: `${minutesNum} мин · ${formatNum(kcal)} ккал · запись перенесена`,
+        })
+      } else {
+        updateLog(todayKey(), editing.id, payload)
+        syncHistoryBurned(todayKey())
+        toast({
+          title: `${ex.emoji} ${ex.name} — изменено`,
+          description: `${minutesNum} мин · ${formatNum(kcal)} ккал${
+            manual ? ' · вручную' : ''
+          }`,
+        })
+      }
+    } else {
+      // Ключ дня по выбору «Сегодня / Вчера» — не по времени сохранения:
+      // тренировка, записанная после полуночи, уходит во вчерашний день
+      // (после полуночи «Вчера» выбрано по умолчанию)
+      const d = new Date()
+      if (dayOff) d.setDate(d.getDate() - dayOff)
+      const dayKey = todayKey(d)
+      addLog(dayKey, payload)
+      syncHistoryBurned(dayKey)
+      toast({
+        title: `${ex.emoji} ${ex.name} — ${minutesNum} мин`,
+        description: `Сожжено ${formatNum(kcal)} ккал · записано${
+          dayOff ? ' за вчера' : ''
+        }`,
+      })
+    }
+    onDone()
+  }
+
+  // Удалить запись (корзина в панели изменения)
+  function deleteEntry() {
+    if (!editing) return
+    removeLog(todayKey(), editing.id)
+    syncHistoryBurned(todayKey())
+    toast({ title: '🗑 Удалено', description: `${editing.name} убрана из дневника` })
+    onDone()
+  }
+
+  return (
+    <View
+      className={`overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] ${className}`}
+    >
+      {/* Шапка панели: что сейчас делаем + закрыть */}
+      <View className="flex-row items-center gap-2 border-b border-white/10 px-4 pb-2.5 pt-3">
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.1}
+          className="min-w-0 flex-1 font-bold text-[17px] text-bear-text"
+        >
+          {editing ? 'Изменить тренировку' : 'Новая тренировка'}
+        </Text>
+        <Pressable
+          onPress={onDone}
+          accessibilityLabel="Закрыть"
+          hitSlop={6}
+          className="h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/5 active:opacity-70"
+        >
+          <X size={18} color="#A5AECB" />
+        </Pressable>
+      </View>
+
+      <View className="gap-3 px-4 pb-4 pt-3">
+        {/* День записи: подпись и пилюли в одной строке. Для новой — куда
+            записать (после полуночи по умолчанию «Вчера»), при изменении
+            выбор «Вчера» переносит запись в предыдущий день */}
+        <View>
+          <View className="flex-row flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5">
+            <Text className="font-sans text-[15px] text-bear-sub2">
+              {editing ? 'День записи:' : 'За какой день?'}
+            </Text>
+            <Pills
+              items={[
+                { id: 0, label: 'Сегодня' },
+                { id: 1, label: 'Вчера' },
+              ]}
+              value={dayOff}
+              onChange={setDayOff}
+              size="sm"
+              accessibilityLabel="День тренировки"
+            />
+          </View>
+          {editing && dayOff ? (
+            <Text className="mt-1 font-sans text-[13.5px] text-bear-dim">
+              Сохраните — запись перенесётся за вчера
+            </Text>
+          ) : null}
+        </View>
+
+        {/* 1. Выбор тренировки — выпадающий список (схема Кати) */}
+        <View>
+          <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">Выбор тренировки</Text>
+          <Pressable
+            onPress={() => setListOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={listOpen ? 'Скрыть список тренировок' : 'Выбрать тренировку'}
+            className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 active:opacity-70"
+          >
+            {ex ? (
+              <Text className="text-[22px]">{ex.emoji}</Text>
+            ) : (
               <View
-                className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
+                className="h-7 w-7 shrink-0 items-center justify-center rounded-xl"
                 style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
               >
-                <Dumbbell size={20} color="#A78BFA" />
+                <Dumbbell size={16} color="#A78BFA" />
               </View>
-              <View className="min-w-0 flex-1">
-                <Text className="font-bold text-[20px] text-bear-text">
-                  {creating
-                    ? editingCustomId
-                      ? 'Изменить тренировку'
-                      : 'Своя тренировка'
-                    : editing
-                      ? 'Изменить тренировку'
-                      : 'Новая тренировка'}
-                </Text>
-                <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
-                  {creating
-                    ? editingCustomId
-                      ? 'Поменяйте что нужно — она останется в списке'
-                      : 'Запомним её — будет всегда в списке'
-                    : `Расчёт по формуле MET для веса ${weightKg} кг`}
-                </Text>
-              </View>
+            )}
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.1}
+              className={`min-w-0 flex-1 font-semibold text-[16.5px] ${ex ? 'text-bear-text' : 'text-bear-dim'}`}
+            >
+              {ex ? ex.name : 'Выберите тренировку'}
+            </Text>
+            {listOpen ? (
+              <ChevronUp size={18} color="#A5AECB" />
+            ) : (
+              <ChevronDown size={18} color="#A5AECB" />
+            )}
+          </Pressable>
+
+          {/* Выбрана своя тренировка — её можно изменить или удалить */}
+          {ex && ex.id.startsWith('custom-') && !creating && (
+            <View className="mt-1.5 flex-row items-center gap-5 pl-1">
               <Pressable
-                onPress={closeModal}
-                accessibilityLabel="Закрыть"
-                hitSlop={6}
-                className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5 active:opacity-70"
+                onPress={startEditCustom}
+                accessibilityRole="button"
+                accessibilityLabel={`Изменить ${ex.name}`}
+                className="flex-row items-center gap-1.5 active:opacity-70"
               >
-                <X size={20} color="#A5AECB" />
+                <Pencil size={13} color="#A5AECB" />
+                <Text className="font-sans text-[14px] text-bear-sub2">Изменить</Text>
+              </Pressable>
+              <Pressable
+                onPress={forgetCustom}
+                accessibilityRole="button"
+                accessibilityLabel={`Удалить ${ex.name} из моих тренировок`}
+                className="flex-row items-center gap-1.5 active:opacity-70"
+              >
+                <Trash2 size={13} color="#98A2C2" />
+                <Text className="font-sans text-[14px] text-bear-sub2">Удалить из списка</Text>
               </Pressable>
             </View>
+          )}
 
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ flexShrink: 1 }}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14 }}
-            >
-              {creating ? (
-                /* Форма своей тренировки: название + иконка + интенсивность */
-                <View className="gap-3.5">
-                  <View>
-                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">Название</Text>
-                    <TextInput
-                      value={newName}
-                      onChangeText={setNewName}
-                      maxLength={24}
-                      placeholder="Например: Бокс, скакалка, падел"
-                      placeholderTextColor="#8B96B8"
-                      accessibilityLabel="Название своей тренировки"
-                      className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 font-sans text-[19px] text-bear-text"
-                    />
-                  </View>
-
-                  {/* Иконка — свёрнута: одна строка с текущим выбором,
-                      сетка раскрывается только по тапу */}
-                  <View>
-                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">Иконка</Text>
+          {/* Раскрытый список тренировок: каталог + свои, внизу —
+              «Своя тренировка» с формой запоминания */}
+          {listOpen && !creating && (
+            <View className="mt-2 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+              <ScrollView
+                style={{ maxHeight: 248 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}
+              >
+                {allExercises.map((e) => {
+                  const active = exId === e.id
+                  const isCustom = e.id.startsWith('custom-')
+                  return (
                     <Pressable
-                      onPress={() => setEmojiOpen((v) => !v)}
+                      key={e.id}
+                      onPress={() => {
+                        setExId(e.id)
+                        setListOpen(false)
+                      }}
                       accessibilityRole="button"
-                      accessibilityLabel={emojiOpen ? 'Скрыть выбор иконки' : 'Выбрать иконку'}
-                      className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2 active:opacity-70"
-                    >
-                      <Text className="text-[24px]">{newEmoji}</Text>
-                      <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-soft">
-                        {emojiOpen ? 'Свернуть' : 'Выбрать иконку'}
-                      </Text>
-                      {emojiOpen ? (
-                        <ChevronUp size={18} color="#A5AECB" />
-                      ) : (
-                        <ChevronDown size={18} color="#A5AECB" />
-                      )}
-                    </Pressable>
-                    {emojiOpen && (
-                      <View className="mt-2 flex-row flex-wrap gap-1.5">
-                        {CUSTOM_EMOJIS.map((em) => (
-                          <Pressable
-                            key={em}
-                            onPress={() => setNewEmoji(em)}
-                            accessibilityLabel={`Иконка ${em}`}
-                            accessibilityRole="button"
-                            className={`h-9 w-9 items-center justify-center rounded-xl border ${
-                              newEmoji === em
-                                ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10'
-                                : 'border-white/5 bg-white/[0.03]'
-                            }`}
-                          >
-                            <Text className="text-[22px]">{em}</Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-
-                  <View>
-                    <Text className="mb-1.5 font-sans text-[16px] text-bear-sub2">
-                      Интенсивность
-                    </Text>
-                    {/* Способ: уровни (проще) или калории за 30 минут (точнее) */}
-                    <Pills
-                      items={FORM_MODES}
-                      value={newMode}
-                      onChange={setNewMode}
-                      size="md"
-                      accessibilityLabel="Способ задания интенсивности"
-                    />
-                    {newMode === 'level' ? (
-                      /* Уровень — тоже свёрнут: строка с выбранным уровнем,
-                         список раскрывается по тапу */
-                      <View className="mt-2">
-                        <Pressable
-                          onPress={() => setLevelOpen((v) => !v)}
-                          accessibilityRole="button"
-                          accessibilityLabel={levelOpen ? 'Скрыть уровни' : 'Выбрать уровень'}
-                          className="flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5 active:opacity-70"
-                        >
-                          <Text className="font-semibold text-[16.5px] text-bear-text">
-                            {INTENSITY_LEVELS.find((l) => l.id === newLevel)?.label || 'Средняя'}
-                          </Text>
-                          {levelOpen ? (
-                            <ChevronUp size={18} color="#A5AECB" />
-                          ) : (
-                            <ChevronDown size={18} color="#A5AECB" />
-                          )}
-                        </Pressable>
-                        {levelOpen && (
-                          <View className="mt-2">
-                            <Pills
-                              items={INTENSITY_LEVELS}
-                              value={newLevel}
-                              onChange={setNewLevel}
-                              size="md"
-                              accessibilityLabel="Интенсивность"
-                            />
-                          </View>
-                        )}
-                      </View>
-                    ) : (
-                      <View className="mt-2 gap-1.5">
-                        <View className="flex-row items-center gap-2">
-                          <TextInput
-                            value={newKcal30}
-                            onChangeText={setNewKcal30}
-                            keyboardType="number-pad"
-                            maxLength={4}
-                            placeholder="300"
-                            placeholderTextColor="#8B96B8"
-                            accessibilityLabel="Калории за 30 минут"
-                            className="w-24 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
-                          />
-                          <Text className="min-w-0 flex-1 font-sans text-[15px] leading-relaxed text-bear-sub2">
-                            ккал за 30 минут этой активности — цифра с тренажёра или часов
-                          </Text>
-                        </View>
-                        {kcalMet && (
-                          <Text className="font-sans text-[15px] text-bear-dim">
-                            {`≈ MET ${Math.round(kcalMet * 10) / 10} · как ${
-                              closestExercise(kcalMet).emoji
-                            } ${closestExercise(kcalMet).name.toLowerCase()}`}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  </View>
-
-                  {previewMet && (
-                    <Text className="font-sans text-[16px] leading-relaxed text-bear-sub2">
-                      Пример: 30 минут этой активности — ≈{' '}
-                      <Text className="font-bold text-[#f87171]">
-                        {formatNum(kcalBurned(previewMet, weightKg, 30))} ккал
-                      </Text>{' '}
-                      при весе {weightKg} кг
-                    </Text>
-                  )}
-
-                  {/* Кнопка «Запомнить» закреплена внизу окна — общая зона
-                      действий под прокручиваемым списком (см. ниже) */}
-                </View>
-              ) : (
-                <>
-                  {/* День записи: подпись и пилюли в одной строке — окно
-                      компактнее (отзыв Кати). Для новой — куда записать
-                      (после полуночи по умолчанию «Вчера»), при изменении
-                      выбор «Вчера» переносит запись в предыдущий день */}
-                  <View>
-                    <View className="flex-row flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                      <Text className="font-sans text-[15px] text-bear-sub2">
-                        {editing ? 'День записи:' : 'За какой день?'}
-                      </Text>
-                      <Pills
-                        items={[
-                          { id: 0, label: 'Сегодня' },
-                          { id: 1, label: 'Вчера' },
-                        ]}
-                        value={dayOff}
-                        onChange={setDayOff}
-                        size="sm"
-                        accessibilityLabel="День тренировки"
-                      />
-                    </View>
-                    {editing && dayOff ? (
-                      <Text className="mt-1.5 font-sans text-[14.5px] text-bear-dim">
-                        Сохраните — запись перенесётся за вчера
-                      </Text>
-                    ) : null}
-                  </View>
-
-                  {/* Каталог упражнений + свои: сетка 2 колонки.
-                      Плитки компактные — на небольшом экране каталог
-                      почти целиком влезает без прокрутки */}
-                  <View className="gap-2">
-                    {allExercises.reduce((rows, e, i) => {
-                      if (i % 2 === 0) rows.push([])
-                      rows[rows.length - 1].push(e)
-                      return rows
-                    }, []).map((row) => (
-                      <View key={row[0].id} className="flex-row gap-2">
-                        {row.map((e) => (
-                          <ExButton key={e.id} e={e} exId={exId} setExId={setExId} />
-                        ))}
-                        {row.length === 1 && <View className="flex-1" />}
-                      </View>
-                    ))}
-
-                    {/* Своя тренировка: создаётся один раз, запоминается.
-                        Крупный текст — по просьбе: строка читается сразу */}
-                    <Pressable
-                      onPress={startCreate}
-                      accessibilityRole="button"
-                      accessibilityLabel="Создать свою тренировку"
-                      className="mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/15 py-2.5 active:opacity-70"
-                      style={{ borderStyle: 'dashed' }}
-                    >
-                      <Plus size={17} color="#A5AECB" />
-                      <Text className="font-bold text-[17.5px] text-bear-soft">
-                        Своя тренировка
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  {/* Длительность и итог рядом: слева чипы минут, справа —
-                      огонёк «сожжено» с карандашом (ручная правка калорий).
-                      Старый блок с календарём «Рекомендуемое время» убран —
-                      он дублировал чип минут; рекомендуемая длительность
-                      теперь маленькой подсказкой под чипами и исчезает,
-                      как только выбрана (отзыв Кати) */}
-                  <View className="mt-3 flex-row items-stretch gap-2.5">
-                    <View className="min-w-0 flex-1 flex-row flex-wrap content-start gap-1.5">
-                      {QUICK_MINUTES.map((m) => {
-                        const active = minutes === m
-                        return (
-                          <Pressable
-                            key={m}
-                            onPress={() => setMinutes(m)}
-                            accessibilityRole="button"
-                            accessibilityLabel={`${m} минут`}
-                            accessibilityState={{ selected: active }}
-                            className={`flex-row items-center justify-center gap-1 rounded-2xl px-3 py-2.5 active:opacity-80 ${
-                              active ? '' : 'bg-white/5'
-                            }`}
-                            style={active ? { backgroundColor: '#7B6CF6' } : null}
-                          >
-                            <Text
-                              className={`font-bold text-[15.5px] ${active ? 'text-white' : 'text-bear-soft'}`}
-                            >
-                              {m} мин
-                            </Text>
-                            {active && <Check size={15} color="#FFFFFF" />}
-                          </Pressable>
-                        )
-                      })}
-                      {/* Рекомендуемая длительность — маленькой подсказкой:
-                          тап подставляет её, после выбора подсказка исчезает */}
-                      {ex?.typ && minutes !== ex.typ ? (
-                        <Pressable
-                          onPress={() => setMinutes(ex.typ)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Рекомендуемое время ${ex.typ} минут — поставить`}
-                          className="flex-row items-center gap-1 rounded-full bg-white/5 px-2.5 py-1.5 active:opacity-70"
-                        >
-                          <Calendar size={13} color="#8B96B8" />
-                          <Text
-                            numberOfLines={1}
-                            maxFontSizeMultiplier={1.1}
-                            className="font-sans text-[13px] text-bear-sub2"
-                          >
-                            {`рекомендуем ${ex.typ} мин`}
-                          </Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                    <View className="w-px self-stretch bg-white/10" />
-                    {/* Итог тренировки: огонёк + сожжённые калории +
-                        карандаш ручной правки (цифра с тренажёра или часов) */}
-                    <View
-                      className={`w-[104px] shrink-0 items-center justify-center rounded-2xl px-1 py-2 ${
-                        kcalShow > 0 ? 'bg-[#f87171]/[0.06]' : 'bg-white/[0.03]'
+                      accessibilityLabel={e.name}
+                      accessibilityState={{ selected: active }}
+                      className={`flex-row items-center gap-2.5 border-b border-white/5 px-3.5 py-2.5 active:opacity-70 ${
+                        active ? 'bg-[#7B6CF6]/10' : ''
                       }`}
                     >
-                      <View className="w-full flex-row items-center justify-center gap-1">
-                        <Flame size={16} color="#f87171" />
-                        <Text
-                          numberOfLines={1}
-                          adjustsFontSizeToFit
-                          minimumFontScale={0.75}
-                          maxFontSizeMultiplier={1.2}
-                          className={`min-w-0 flex-1 text-right font-bold text-[16px] ${
-                            kcalShow > 0 ? 'text-[#f87171]' : 'text-bear-sub2'
-                          }`}
-                        >
-                          {kcalShow > 0 ? `${formatNum(kcalShow)} ккал` : '—'}
-                        </Text>
-                      </View>
+                      <Text className="text-[20px]">{e.emoji}</Text>
                       <Text
                         numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.8}
-                        maxFontSizeMultiplier={1.2}
-                        className="mt-0.5 w-full text-center font-sans text-[11px] leading-[13px] text-bear-sub2"
+                        maxFontSizeMultiplier={1.1}
+                        className={`min-w-0 flex-1 font-semibold text-[15.5px] ${
+                          active ? 'text-[#C4B5FD]' : 'text-bear-text'
+                        }`}
                       >
-                        {kcalManual != null ? 'Сожжено · вручную' : 'Сожжено'}
+                        {e.name}
                       </Text>
-                      <Pressable
-                        onPress={startKcalEdit}
-                        disabled={!ex || !minutes || kcalEditing}
-                        accessibilityLabel="Исправить калории вручную"
-                        className={`mt-1.5 h-9 w-9 items-center justify-center rounded-full active:opacity-70 ${
-                          kcalManual != null ? 'bg-[#7B6CF6]/25' : 'bg-white/5'
-                        } ${!ex || !minutes || kcalEditing ? 'opacity-40' : ''}`}
-                      >
-                        <Pencil size={15} color="#A5AECB" />
-                      </Pressable>
-                    </View>
-                  </View>
+                      {isCustom && (
+                        <Text className="shrink-0 font-sans text-[12px] text-bear-dim">моё</Text>
+                      )}
+                      {active && (
+                        <View
+                          className="h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: '#7B6CF6' }}
+                        >
+                          <Check size={13} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </Pressable>
+                  )
+                })}
+                {/* Своя тренировка: создаётся один раз, запоминается */}
+                <Pressable
+                  onPress={startCreate}
+                  accessibilityRole="button"
+                  accessibilityLabel="Создать свою тренировку"
+                  className="flex-row items-center justify-center gap-2 py-3 active:opacity-70"
+                >
+                  <Plus size={16} color="#A5AECB" />
+                  <Text className="font-bold text-[15px] text-bear-soft">Своя тренировка</Text>
+                </Pressable>
+              </ScrollView>
+            </View>
+          )}
 
-                  {/* Своя длительность: если в быстрых кнопках нужного
-                      нет — вписываем своё число минут */}
-                  <View className="mt-2 flex-row items-center gap-2">
-                    <TextInput
-                      value={minutes == null ? '' : String(minutes)}
-                      onChangeText={(t) => {
-                        const n = Math.round(Number(t) || 0)
-                        setMinutes(n ? Math.min(600, n) : null)
-                      }}
-                      keyboardType="number-pad"
-                      maxLength={3}
-                      placeholder="—"
-                      placeholderTextColor="#8B96B8"
-                      accessibilityLabel="Своя длительность в минутах"
-                      className="w-20 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
+          {/* Форма своей тренировки — вместо списка, прямо в панели */}
+          {listOpen && creating && (
+            <View className="mt-2 gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <View>
+                <Text className="mb-1.5 font-sans text-[14.5px] text-bear-sub2">Название</Text>
+                <TextInput
+                  value={newName}
+                  onChangeText={setNewName}
+                  maxLength={24}
+                  placeholder="Например: Бокс, скакалка, падел"
+                  placeholderTextColor="#8B96B8"
+                  accessibilityLabel="Название своей тренировки"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 font-sans text-[17px] text-bear-text"
+                />
+              </View>
+
+              {/* Иконка — свёрнута: одна строка с текущим выбором,
+                  сетка раскрывается только по тапу */}
+              <View>
+                <Text className="mb-1.5 font-sans text-[14.5px] text-bear-sub2">Иконка</Text>
+                <Pressable
+                  onPress={() => setEmojiOpen((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityLabel={emojiOpen ? 'Скрыть выбор иконки' : 'Выбрать иконку'}
+                  className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 active:opacity-70"
+                >
+                  <Text className="text-[22px]">{newEmoji}</Text>
+                  <Text className="min-w-0 flex-1 font-semibold text-[15.5px] text-bear-soft">
+                    {emojiOpen ? 'Свернуть' : 'Выбрать иконку'}
+                  </Text>
+                  {emojiOpen ? (
+                    <ChevronUp size={17} color="#A5AECB" />
+                  ) : (
+                    <ChevronDown size={17} color="#A5AECB" />
+                  )}
+                </Pressable>
+                {emojiOpen && (
+                  <View className="mt-2 flex-row flex-wrap gap-1.5">
+                    {CUSTOM_EMOJIS.map((em) => (
+                      <Pressable
+                        key={em}
+                        onPress={() => setNewEmoji(em)}
+                        accessibilityLabel={`Иконка ${em}`}
+                        accessibilityRole="button"
+                        className={`h-9 w-9 items-center justify-center rounded-xl border ${
+                          newEmoji === em
+                            ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10'
+                            : 'border-white/5 bg-white/[0.03]'
+                        }`}
+                      >
+                        <Text className="text-[20px]">{em}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View>
+                <Text className="mb-1.5 font-sans text-[14.5px] text-bear-sub2">
+                  Интенсивность
+                </Text>
+                {/* Способ: уровни (проще) или калории за 30 минут (точнее) */}
+                <Pills
+                  items={FORM_MODES}
+                  value={newMode}
+                  onChange={setNewMode}
+                  size="md"
+                  accessibilityLabel="Способ задания интенсивности"
+                />
+                {newMode === 'level' ? (
+                  <View className="mt-2">
+                    <Pills
+                      items={INTENSITY_LEVELS}
+                      value={newLevel}
+                      onChange={setNewLevel}
+                      size="md"
+                      accessibilityLabel="Интенсивность"
                     />
-                    <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
-                      минут — впишите свою, если нужной нет
-                    </Text>
                   </View>
-
-                  {/* Ручная правка калорий — открывается карандашом у огонька
-                      «сожжено» (цифра с тренажёра или часов точнее формулы).
-                      Отдельная плашка «Сожжено | MET» больше не дублируется
-                      под чипами — итог теперь стоит справа от чипов минут */}
-                  {kcalEditing && (
-                    <View className="mt-2.5 gap-2">
-                      <Text className="font-sans text-[15px] text-bear-sub2">
-                        Сожжено за эту тренировку, ккал
-                      </Text>
-                      <View className="flex-row items-center gap-2">
-                        <TextInput
-                          value={kcalDraft}
-                          onChangeText={setKcalDraft}
-                          keyboardType="number-pad"
-                          maxLength={5}
-                          autoFocus
-                          accessibilityLabel="Сожжённые калории вручную"
-                          className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[19px] text-bear-text"
-                        />
-                        <Text className="shrink-0 font-sans text-[16.5px] text-bear-sub">ккал</Text>
-                      </View>
-                      <View className="flex-row gap-2">
-                        <Pressable
-                          onPress={resetKcal}
-                          accessibilityLabel="Вернуть расчёт по формуле"
-                          className="flex-row flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:opacity-70"
-                        >
-                          <RotateCcw size={14} color="#A5AECB" />
-                          <Text className="font-bold text-[16px] text-bear-soft">По формуле</Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={applyKcal}
-                          accessibilityLabel="Применить значение"
-                          className="flex-1 items-center rounded-xl bg-white/10 py-2 active:opacity-70"
-                        >
-                          <Text className="font-bold text-[16px] text-bear-text">Готово</Text>
-                        </Pressable>
-                      </View>
-                      <Text className="font-sans text-[15px] leading-relaxed text-bear-dim">
-                        Точнее формулы: цифра с тренажёра, пульсометра или смарт-часов.
+                ) : (
+                  <View className="mt-2 gap-1.5">
+                    <View className="flex-row items-center gap-2">
+                      <TextInput
+                        value={newKcal30}
+                        onChangeText={setNewKcal30}
+                        keyboardType="number-pad"
+                        maxLength={4}
+                        placeholder="300"
+                        placeholderTextColor="#8B96B8"
+                        accessibilityLabel="Калории за 30 минут"
+                        className="w-24 rounded-2xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[17px] text-bear-text"
+                      />
+                      <Text className="min-w-0 flex-1 font-sans text-[13.5px] leading-snug text-bear-sub2">
+                        ккал за 30 минут этой активности — цифра с тренажёра или часов
                       </Text>
                     </View>
-                  )}
+                    {kcalMet && (
+                      <Text className="font-sans text-[13.5px] text-bear-dim">
+                        {`≈ MET ${Math.round(kcalMet * 10) / 10} · как ${
+                          closestExercise(kcalMet).emoji
+                        } ${closestExercise(kcalMet).name.toLowerCase()}`}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {previewMet && (
+                  <Text className="mt-2 font-sans text-[14px] leading-snug text-bear-sub2">
+                    Пример: 30 минут — ≈{' '}
+                    <Text className="font-bold text-[#f87171]">
+                      {formatNum(kcalBurned(previewMet, weightKg, 30))} ккал
+                    </Text>{' '}
+                    при весе {weightKg} кг
+                  </Text>
+                )}
+              </View>
 
-                  {/* Своя тренировка выбрана — её можно изменить или удалить */}
-                  {ex && ex.id.startsWith('custom-') && (
-                    <View className="mt-2 flex-row items-center justify-center gap-6">
-                      <Pressable
-                        onPress={startEditCustom}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Изменить ${ex.name}`}
-                        className="flex-row items-center gap-1.5 active:opacity-70"
-                      >
-                        <Pencil size={14} color="#A5AECB" />
-                        <Text className="font-sans text-[15px] text-bear-sub2">Изменить</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={forgetCustom}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Удалить ${ex.name} из моих тренировок`}
-                        className="flex-row items-center gap-1.5 active:opacity-70"
-                      >
-                        <Trash2 size={14} color="#98A2C2" />
-                        <Text className="font-sans text-[15px] text-bear-sub2">Удалить</Text>
-                      </Pressable>
-                    </View>
-                  )}
-                </>
-              )}
-            </ScrollView>
-
-            {/* Кнопка действия — закреплена внизу окна, вне прокрутки.
-                Раньше «Добавить тренировку» была последним элементом списка:
-                на небольшом экране она уходила за нижний край вместе с
-                прокруткой, и казалось, что кнопки нет вовсе. Теперь шапка,
-                список и кнопка разделены: кнопка видна всегда, а прокручивается
-                только каталог активностей. Пока не выбраны активность и
-                длительность — кнопка видна, но приглушена, а под ней
-                подсказка, чего не хватает. */}
-            <View
-              className="gap-1.5 border-t border-bear-line px-4 pt-2.5"
-              style={{ paddingBottom: Math.max(16, insets.bottom + 12) }}
-            >
-              {creating ? (
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={resetCreate}
+                  accessibilityLabel="Отмена"
+                  className="shrink-0 items-center justify-center rounded-xl bg-white/5 px-4 py-2.5 active:opacity-70"
+                >
+                  <Text className="font-bold text-[15.5px] text-bear-soft">Отмена</Text>
+                </Pressable>
                 <Pressable
                   onPress={saveCustom}
                   accessibilityRole="button"
                   accessibilityLabel="Запомнить тренировку"
-                  className="items-center rounded-2xl py-3 active:opacity-80"
+                  className="min-w-0 flex-1 items-center justify-center rounded-xl py-2.5 active:opacity-80"
                   style={{ backgroundColor: '#7B6CF6' }}
                 >
-                  <Text className="font-bold text-[17px] text-white">
+                  <Text className="font-bold text-[15.5px] text-white">
                     {editingCustomId ? 'Сохранить' : 'Запомнить'}
                   </Text>
                 </Pressable>
-              ) : (
-                <>
-                  <Pressable
-                    onPress={save}
-                    disabled={!ex || !minutes}
-                    accessibilityRole="button"
-                    accessibilityLabel={editing ? 'Сохранить изменения' : 'Добавить тренировку'}
-                    className={`overflow-hidden rounded-2xl ${!ex || !minutes ? 'opacity-40' : ''}`}
-                  >
-                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-                      <Text className="w-full py-3 text-center font-bold text-[18px] text-white">
-                        {editing ? 'Сохранить' : 'Добавить тренировку'}
-                      </Text>
-                    </LinearGradient>
-                  </Pressable>
-                  {/* Чего не хватает до добавления — под приглушённой кнопкой */}
-                  {!ex || !minutes ? (
-                    <Text maxFontSizeMultiplier={1.2} className="text-center font-sans text-[15px] text-bear-dim">
-                      {!ex && !minutes
-                        ? 'Выберите активность и длительность'
-                        : !ex
-                          ? 'Выберите активность'
-                          : 'Выберите длительность'}
-                    </Text>
-                  ) : null}
-                </>
-              )}
+              </View>
             </View>
+          )}
+        </View>
+
+        {/* 2. Время и калории — оба вписываются вручную (схема Кати).
+            Калории можно оставить пустыми: тогда посчитаем по формуле
+            MET, подсказка под полями покажет сколько получается */}
+        <View className="flex-row gap-2.5">
+          <View className="min-w-0 flex-1">
+            <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">Время, мин</Text>
+            <TextInput
+              value={minutesStr}
+              onChangeText={setMinutesStr}
+              keyboardType="number-pad"
+              maxLength={3}
+              placeholder="30"
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Время тренировки в минутах"
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-center font-bold text-[19px] text-bear-text"
+            />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="mb-1.5 font-sans text-[15px] text-bear-sub2">Калории</Text>
+            <TextInput
+              value={kcalStr}
+              onChangeText={setKcalStr}
+              keyboardType="number-pad"
+              maxLength={5}
+              placeholder={autoKcal ? `≈${formatNum(autoKcal)}` : '—'}
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Сожжённые калории — вручную"
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-center font-bold text-[19px] text-bear-text"
+            />
           </View>
         </View>
-      </Modal>
+        {ex && minutesNum > 0 && kcalEmpty && autoKcal > 0 ? (
+          <Text className="-mt-1.5 font-sans text-[13.5px] leading-snug text-bear-dim">
+            {`Пусто — посчитаем сами: ≈ ${formatNum(autoKcal)} ккал за ${minutesNum} мин при весе ${weightKg} кг. Впишите свою цифру (тренажёр, часы) — запишется она.`}
+          </Text>
+        ) : null}
+
+        {/* 3. Записать: добавляет тренировку (при изменении — «Сохранить»
+            и корзина). Без серых блокировок: если чего-то не хватает,
+            подсказка придёт тостом */}
+        <View className="mt-0.5 flex-row items-center gap-2">
+          <Pressable
+            onPress={save}
+            accessibilityRole="button"
+            accessibilityLabel={editing ? 'Сохранить изменения' : 'Записать тренировку'}
+            className="min-w-0 flex-1 overflow-hidden active:opacity-80"
+          >
+            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
+              <Text className="w-full py-3 text-center font-bold text-[17.5px] text-white">
+                {editing ? 'Сохранить' : 'Записать'}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+          {editing && (
+            <Pressable
+              onPress={deleteEntry}
+              accessibilityRole="button"
+              accessibilityLabel={`Удалить ${editing.name}`}
+              className="h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl active:opacity-70"
+              style={{ backgroundColor: 'rgba(248,113,113,0.12)' }}
+            >
+              <Trash2 size={18} color="#f87171" />
+            </Pressable>
+          )}
+        </View>
+      </View>
     </View>
   )
 }
@@ -1353,41 +1275,5 @@ function WeekRing({ pct, size = 76 }) {
         </Text>
       </View>
     </View>
-  )
-}
-
-// Плитка каталога: как на референсе — выбранная подсвечена фиолетовой
-// рамкой с галочкой-бейджем в углу, у остальных мягкая серая граница
-function ExButton({ e, exId, setExId }) {
-  const active = exId === e.id
-  const isCustom = e.id.startsWith('custom-')
-  return (
-    <Pressable
-      onPress={() => setExId(e.id)}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      className={`relative min-w-0 flex-1 flex-row items-center gap-2 rounded-2xl border-2 px-2.5 py-2 ${
-        active ? 'border-[#7B6CF6] bg-[#7B6CF6]/10' : 'border-white/10 bg-white/[0.03]'
-      }`}
-    >
-      <Text className="text-[24px]">{e.emoji}</Text>
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="font-bold text-[16px] text-bear-text">
-          {e.name}
-        </Text>
-        <Text numberOfLines={1} className="font-sans text-[14px] text-bear-sub2">
-          {`MET ${e.met}${isCustom ? ' · моё' : ''}`}
-        </Text>
-      </View>
-      {active && (
-        <View
-          pointerEvents="none"
-          className="absolute right-1.5 top-1.5 h-5 w-5 items-center justify-center rounded-full"
-          style={{ backgroundColor: '#7B6CF6' }}
-        >
-          <Check size={13} color="#FFFFFF" />
-        </View>
-      )}
-    </Pressable>
   )
 }
