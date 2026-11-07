@@ -21,8 +21,9 @@ import {
   View,
 } from 'react-native'
 import Constants from 'expo-constants'
-import { LifeBuoy, Mail, Send, X } from 'lucide-react-native'
+import { Mail, Send, X } from 'lucide-react-native'
 import { OPERATOR } from '@/lib/data/legal'
+import { BodyChip } from '../ui/BodyChip'
 import { useToast } from '../ui/Toast'
 
 const EMAIL = OPERATOR.email
@@ -69,24 +70,19 @@ export function SupportCard() {
 
   return (
     <View accessibilityLabel="Поддержка" className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4">
-      {/* Шапка: чип-иконка + заголовок + подсказка */}
+      {/* Шапка: чип-робот + заголовок + подсказка (как на шаблоне) */}
       <View className="flex-row items-center gap-2.5">
-        <View
-          className="h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: '#7B6CF61F' }}
-        >
-          <LifeBuoy size={20} color="#A78BFA" />
-        </View>
+        <BodyChip icon={<Text className="text-[19px]">🤖</Text>} />
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[20px] tracking-tight text-bear-text">
-            Поддержка
+          <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
+            Поддержка и помощь
           </Text>
           <Text
             numberOfLines={2}
             maxFontSizeMultiplier={1.2}
             className="font-sans text-[13.5px] leading-snug text-bear-dim"
           >
-            Идея, лаг, вопрос по оплате — напишите нам, читаем всё
+            Отвечаем на вопросы и советы — читаем всё
           </Text>
         </View>
       </View>

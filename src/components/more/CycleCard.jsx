@@ -1,13 +1,17 @@
-// Трекер цикла в «Ещё»: тумблер + настройка длины цикла и месячных,
-// отметка начала последних месячных (степперы −/+ по дням + быстрое
-// «Началось сегодня»). Без медицинских рекомендаций — только фазы,
-// прогноз и мягкие подсказки. Данные хранятся только на устройстве.
+// Карточка «Цикл» на «Ещё» (редизайн по шаблону Катиного референса:
+// кольцо «7 дней / до след. цикла» слева, подписи справа, тап раскрывает
+// настройку). Внутри — прежние контролы: тумблер, длина цикла и месячных,
+// отметка начала последних месячных (степперы −/+ + «Началось сегодня»).
+// Без медицинских рекомендаций — только фазы, прогноз и мягкие подсказки.
+// Данные хранятся только на устройстве.
 
+import { useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
-import { Trash2 } from 'lucide-react-native'
-import { useCycleStore, dayKeyOf, phaseOf } from '@/store/useCycleStore'
-import { CollapsibleCard } from '../ui/CollapsibleCard'
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from 'react-native-svg'
+import { ChevronDown, Trash2 } from 'lucide-react-native'
+import { useCycleStore, dayKeyOf, daysToNext, phaseOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
+import { fontFamilies } from '../home/ring-font'
 
 const SWITCH_COLORS = {
   true: '#4D7CFE',
@@ -25,6 +29,86 @@ function formatDateRu(key) {
   if (Number.isNaN(d.getTime())) return '—'
   const base = `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`
   return d.getFullYear() === new Date().getFullYear() ? base : `${base} ${d.getFullYear()}`
+}
+
+// Что показать в кольце: { value, caption, progress }
+// progress — доля пройденного цикла (0…1) для дуги
+function ringState(enabled, lastStart, length) {
+  if (!enabled) return { value: '—', caption: 'выключен', progress: 0 }
+  if (!lastStart) return { value: '—', caption: 'отметьте начало', progress: 0 }
+  const ph = phaseOf(lastStart, length)
+  const left = daysToNext(lastStart, length)
+  // Задержка: следующее начало уже позади — дни считаем от него
+  if (left != null && left < 0) {
+    return { value: `${Math.abs(left)} дн`, caption: 'задержка', progress: 1 }
+  }
+  if (left === 0) {
+    return { value: 'сегодня', caption: 'ожидается', progress: ph ? ph.dayInCycle / ph.cycleLength : 0 }
+  }
+  return {
+    value: left != null ? `${left} дн` : '—',
+    caption: 'до след. цикла',
+    progress: ph ? Math.min(1, ph.dayInCycle / ph.cycleLength) : 0,
+  }
+}
+
+// Кольцо цикла: дорожка + фиолетово-розовая дуга пройденной части цикла
+function CycleRing({ value, caption, progress }) {
+  const SIZE = 96
+  const R = 41
+  const CIRC = 2 * Math.PI * R
+  const arc = Math.max(0, Math.min(1, progress)) * CIRC
+  return (
+    <View
+      accessibilityRole="image"
+      accessibilityLabel={`Цикл: ${value} ${caption}`}
+      className="h-[96px] w-[96px] shrink-0"
+    >
+      <Svg width={SIZE} height={SIZE} viewBox="0 0 96 96">
+        <Defs>
+          <SvgGradient id="cycleRing" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#F472B6" />
+            <Stop offset="1" stopColor="#A78BFA" />
+          </SvgGradient>
+        </Defs>
+        <Circle cx="48" cy="48" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="7" />
+        {arc > 0 && (
+          <Circle
+            cx="48"
+            cy="48"
+            r={R}
+            fill="none"
+            stroke="url(#cycleRing)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={`${arc} ${CIRC}`}
+            transform="rotate(-90 48 48)"
+          />
+        )}
+        <SvgText
+          x="48"
+          y="46"
+          fill="#EEF2FB"
+          fontSize="14.5"
+          fontWeight="800"
+          fontFamily={fontFamilies.extrabold}
+          textAnchor="middle"
+        >
+          {value}
+        </SvgText>
+        <SvgText
+          x="48"
+          y="60"
+          fill="#8B96B8"
+          fontSize="8"
+          fontFamily={fontFamilies.regular}
+          textAnchor="middle"
+        >
+          {caption}
+        </SvgText>
+      </Svg>
+    </View>
+  )
 }
 
 // Степпер: подпись слева, значение + кнопки −/+ справа
@@ -73,7 +157,9 @@ export function CycleCard() {
   const resetAll = useCycleStore((s) => s.resetAll)
   const { toast } = useToast()
 
+  const [open, setOpen] = useState(false)
   const phase = enabled && lastStart ? phaseOf(lastStart, length, bleed) : null
+  const ring = ringState(enabled, lastStart, length)
 
   function markToday() {
     const ok = logStart(dayKeyOf())
@@ -90,78 +176,101 @@ export function CycleCard() {
   }
 
   return (
-    <CollapsibleCard
-      storageKey="cycle"
-      accessibilityLabel="Цикл"
-      title="Цикл"
-      summary={enabled ? 'Включён' : undefined}
-    >
-      <View className="mt-1 gap-2">
-        <View className="flex-row items-center justify-between gap-2">
-          <View className="min-w-0 flex-1">
-            <Text className="font-semibold text-[15px] text-bear-text">Трекер цикла</Text>
-            <Text className="mt-0.5 font-sans text-[12.5px] leading-[17px] text-bear-sub">
-              Фазы цикла и подсказки про аппетит. Без медицины. Данные — только на этом телефоне.
-            </Text>
-          </View>
-          <Switch
-            value={enabled}
-            onValueChange={setEnabled}
-            trackColor={SWITCH_COLORS}
-            thumbColor="#fff"
-            accessibilityLabel="Включить трекер цикла"
-          />
+    <View accessibilityLabel="Цикл" className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
+      {/* Шапка: кольцо «N дней до след. цикла» + подписи, как на шаблоне */}
+      <Pressable
+        onPress={() => setOpen((s) => !s)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={open ? 'Свернуть цикл' : 'Настройки цикла'}
+        className="flex-row items-center gap-3.5 px-4 py-4 active:opacity-80"
+      >
+        <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
+        <View className="min-w-0 flex-1">
+          <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">Цикл</Text>
+          <Text className="font-semibold text-[15px] text-bear-bright">Трекер цикла</Text>
+          <Text
+            maxFontSizeMultiplier={1.2}
+            className="font-sans text-[13px] leading-[17px] text-bear-dim"
+          >
+            Фазы цикла и подсказки
+          </Text>
         </View>
+        <ChevronDown
+          size={20}
+          color="#A5AECB"
+          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+        />
+      </Pressable>
 
-        {enabled && (
-          <View className="mt-1 gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-            <Stepper
-              label="Начало последних месячных"
-              value={lastStart ? formatDateRu(lastStart) : 'не отмечено'}
-              disabled={!lastStart}
-              onMinus={() => shiftLastStart(-1)}
-              onPlus={() => shiftLastStart(1)}
-            />
-            <Pressable
-              onPress={markToday}
-              accessibilityRole="button"
-              accessibilityLabel="Отметить начало месячных сегодня"
-              className="mt-1 self-start rounded-full bg-[#F472B6]/15 px-4 py-2 active:opacity-80"
-            >
-              <Text className="font-bold text-[13px] text-[#F9A8D4]">🌙 Началось сегодня</Text>
-            </Pressable>
-
-            <Stepper
-              label="Средняя длина цикла"
-              value={`${length} дн.`}
-              onMinus={() => setSettings({ length: length - 1 })}
-              onPlus={() => setSettings({ length: length + 1 })}
-            />
-            <Stepper
-              label="Длительность месячных"
-              value={`${bleed} дн.`}
-              onMinus={() => setSettings({ bleed: bleed - 1 })}
-              onPlus={() => setSettings({ bleed: bleed + 1 })}
-            />
-
-            {phase && (
-              <Text className="mt-1 font-sans text-[12.5px] leading-[17px] text-bear-dim">
-                Сейчас: день {phase.dayInCycle}, следующее начало ≈ {formatDateRu(phase.nextStart)}
+      {open && (
+        <View className="px-4 pb-4">
+          <View className="flex-row items-center justify-between gap-2">
+            <View className="min-w-0 flex-1">
+              <Text className="font-semibold text-[15px] text-bear-text">Включить трекер</Text>
+              <Text className="mt-0.5 font-sans text-[12.5px] leading-[17px] text-bear-sub">
+                Без медицины. Данные — только на этом телефоне.
               </Text>
-            )}
-
-            <Pressable
-              onPress={wipe}
-              accessibilityRole="button"
-              accessibilityLabel="Удалить все данные цикла"
-              className="mt-1 flex-row items-center gap-1.5 self-start rounded-full px-2 py-1 active:opacity-60"
-            >
-              <Trash2 size={13} color="#F87171" />
-              <Text className="font-sans text-[12.5px] text-[#F87171]">Удалить данные цикла</Text>
-            </Pressable>
+            </View>
+            <Switch
+              value={enabled}
+              onValueChange={setEnabled}
+              trackColor={SWITCH_COLORS}
+              thumbColor="#fff"
+              accessibilityLabel="Включить трекер цикла"
+            />
           </View>
-        )}
-      </View>
-    </CollapsibleCard>
+
+          {enabled && (
+            <View className="mt-1 gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+              <Stepper
+                label="Начало последних месячных"
+                value={lastStart ? formatDateRu(lastStart) : 'не отмечено'}
+                disabled={!lastStart}
+                onMinus={() => shiftLastStart(-1)}
+                onPlus={() => shiftLastStart(1)}
+              />
+              <Pressable
+                onPress={markToday}
+                accessibilityRole="button"
+                accessibilityLabel="Отметить начало месячных сегодня"
+                className="mt-1 self-start rounded-full bg-[#F472B6]/15 px-4 py-2 active:opacity-80"
+              >
+                <Text className="font-bold text-[13px] text-[#F9A8D4]">🌙 Началось сегодня</Text>
+              </Pressable>
+
+              <Stepper
+                label="Средняя длина цикла"
+                value={`${length} дн.`}
+                onMinus={() => setSettings({ length: length - 1 })}
+                onPlus={() => setSettings({ length: length + 1 })}
+              />
+              <Stepper
+                label="Длительность месячных"
+                value={`${bleed} дн.`}
+                onMinus={() => setSettings({ bleed: bleed - 1 })}
+                onPlus={() => setSettings({ bleed: bleed + 1 })}
+              />
+
+              {phase && (
+                <Text className="mt-1 font-sans text-[12.5px] leading-[17px] text-bear-dim">
+                  Сейчас: день {phase.dayInCycle}, следующее начало ≈ {formatDateRu(phase.nextStart)}
+                </Text>
+              )}
+
+              <Pressable
+                onPress={wipe}
+                accessibilityRole="button"
+                accessibilityLabel="Удалить все данные цикла"
+                className="mt-1 flex-row items-center gap-1.5 self-start rounded-full px-2 py-1 active:opacity-60"
+              >
+                <Trash2 size={13} color="#F87171" />
+                <Text className="font-sans text-[12.5px] text-[#F87171]">Удалить данные цикла</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
   )
 }
