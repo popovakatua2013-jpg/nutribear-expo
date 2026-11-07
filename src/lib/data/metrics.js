@@ -12,7 +12,7 @@
 // поле sleepMin — минуты за день пробуждения): окно истории, теплокарта
 // и сравнение периодов работают для него как для остальных показателей.
 
-import { Droplets, Flame, Footprints, MoonStar, Sparkles } from 'lucide-react-native'
+import { Droplets, Flame, Footprints, MoonStar, Scale, Sparkles } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
 import { fmtSleep } from '@/lib/data/sleep'
@@ -71,3 +71,20 @@ export const METRICS = [
     fmt: (v) => fmtSleep(v), // «7 ч 30 мин»
   },
 ]
+
+// «Вес» — НЕ в массиве METRICS: дневная история (useHistoryStore) вес не
+// хранит (он живёт в useProfileStore.weights), а шеринговые карточки
+// перебирают METRICS и в дневных итогах веса нет. Как единый дескриптор
+// для окна истории «Вес · история» (Катя: история — для ВСЕХ карточек)
+// вес описан отдельным экспортом: тот же набор полей, что у METRICS,
+// и цвет карточки «Вес» в «Отчётах» (#a78bfa).
+export const WEIGHT_METRIC = {
+  key: 'weight',
+  label: 'Вес',
+  gen: 'веса',
+  Icon: Scale,
+  color: '#a78bfa',
+  invert: false, // тон Δ веса считает само окно (к здоровому диапазону)
+  yFmt: (v) => `${Math.round(v)}`,
+  fmt: (v) => `${(Math.round((v || 0) * 10) / 10).toFixed(1).replace('.', ',')} кг`,
+}

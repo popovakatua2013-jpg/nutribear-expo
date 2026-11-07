@@ -303,3 +303,112 @@ describe('changePct — сравнение только с данными', () =
     expect(changePct(0, 0)).toBe(0)
   })
 })
+
+// ===== Окно истории показателя по макету Кати (вес, «ближе к цели»,
+// точки «по дням недели») =====
+
+const {
+  weightByDay,
+  closestToGoal,
+  weekdayAverages,
+} = require('@/lib/data/reports')
+const { METRICS, WEIGHT_METRIC } = require('@/lib/data/metrics')
+
+describe('weightByDay — журнал взвешиваний в карту «день → кг»', () => {
+  test('ISO-дата → ключ дня; несколько замеров за день — последнее (новое сверху)', () => {
+    const day = keyAt(0)
+    const kg = weightByDay([
+      { id: 'a', date: `${day}T18:30:00`, kg: 71.8 }, // новое — сверху
+      { id: 'b', date: `${day}T07:10:00`, kg: 72.4 }, // утреннее — ниже
+    ])
+    expect(Object.keys(kg)).toEqual([day])
+    expect(kg[day]).toBe(71.8) // победило последнее взвешивание
+  })
+
+  test('округление до 100 г и пропуск битых записей', () => {
+    const day = keyAt(-1)
+    const kg = weightByDay([
+      { id: 'a', date: `${day}T09:00:00`, kg: 71.46 }, // → 71,5
+      { id: 'b', date: 'не дата', kg: 70 },
+      { id: 'c', date: `${day}T10:00:00`, kg: 0 }, // ноль — не замер
+      { id: 'd', date: `${day}T11:00:00`, kg: -3 }, // мусор — не замер
+    ])
+    expect(kg).toEqual({ [day]: 71.5 })
+  })
+
+  test('пустой журнал — пустая карта без ошибок', () => {
+    expect(weightByDay([])).toEqual({})
+    expect(weightByDay(null)).toEqual({})
+  })
+})
+
+describe('closestToGoal — дни ближе всего к цели по калориям', () => {
+  test('сортировка по отклонению, а не по максимуму; пустые дни не участвуют', () => {
+    const rows = [
+      row({ kcal: 2400, steps: 1 }, { key: keyAt(-3) }), // dev 1200
+      row({ kcal: 1250, steps: 1 }, { key: keyAt(-2) }), // dev 50 — лучший
+      row({ kcal: 0, steps: 1 }, { key: keyAt(-1) }), // пустой по калориям
+      row({ kcal: 1100, steps: 1 }, { key: keyAt(0) }), // dev 100
+    ]
+    const top = closestToGoal(rows, 'kcal', 1200, 3)
+    expect(top.map((d) => d.value)).toEqual([1250, 1100, 2400])
+    expect(top[0].dev).toBe(50)
+  })
+
+  test('равное отклонение — раньше по хронологии выше; срез по n; пустой список', () => {
+    const rows = [
+      row({ kcal: 1300 }, { key: keyAt(-2) }), // dev 100, старше
+      row({ kcal: 1100 }, { key: keyAt(-1) }), // dev 100, новее
+      row({ kcal: 900 }, { key: keyAt(0) }), // dev 300
+    ]
+    const top = closestToGoal(rows, 'kcal', 1200, 2)
+    expect(top.map((d) => d.row.key)).toEqual([keyAt(-2), keyAt(-1)])
+    expect(closestToGoal([], 'kcal', 1200)).toEqual([])
+  })
+})
+
+describe('weekdayAverages — среднее по дням недели для точек окна', () => {
+  test('среднее делится только на ведённые дни, пустой день недели — recorded: false', () => {
+    // Сегодня — по локальному времени песочницы; строим 10 дней подряд,
+    // среди них два дня не велись — они не должны топить среднее
+    const rows = []
+    for (let i = 9; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const k = dayKeyOf(d)
+      const skip = i === 4 || i === 8 // дни-простои
+      rows.push({ key: k, steps: skip ? 0 : 8000, kcal: skip ? 0 : 1800, waterMl: 0, burned: 0, xp: 0, sleepMin: 0 })
+    }
+    const wd = weekdayAverages(rows, 'steps')
+    expect(wd).toHaveLength(7)
+    const recordedWd = wd.filter((b) => b.recorded)
+    expect(recordedWd.length).toBeGreaterThanOrEqual(5)
+    for (const b of recordedWd) expect(b.avg).toBe(8000)
+    // у пропущенных дней недели записей нет (если такой день недели
+    // вообще был среди десяти)
+    const skippedWds = new Set([4, 8].map((i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      return (d.getDay() + 6) % 7
+    }))
+    for (const [i, b] of wd.entries()) {
+      if (skippedWds.has(i) && b.recorded === false) expect(b.avg).toBe(0)
+    }
+  })
+
+  test('все дни пусты — все нули; калории считаются по своей шкале levels отдельно', () => {
+    const rows = [row({}, { key: keyAt(0) }), row({}, { key: keyAt(-1) })]
+    expect(weekdayAverages(rows, 'kcal').every((b) => !b.recorded && b.avg === 0)).toBe(true)
+  })
+})
+
+describe('WEIGHT_METRIC — дескриптор веса для окна истории', () => {
+  test('формат «71,5 кг» с запятой; ключ weight; вне массива METRICS', () => {
+    expect(WEIGHT_METRIC.key).toBe('weight')
+    expect(WEIGHT_METRIC.label).toBe('Вес')
+    expect(WEIGHT_METRIC.fmt(71.5)).toBe('71,5 кг')
+    expect(WEIGHT_METRIC.fmt(70)).toBe('70,0 кг')
+    expect(WEIGHT_METRIC.fmt(0)).toBe('0,0 кг')
+    expect(METRICS.some((m) => m.key === 'weight')).toBe(false) // шеринг перебирает METRICS — вес туда не попал
+  })
+})

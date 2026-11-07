@@ -7,10 +7,10 @@
 // неделе» вводит в заблуждение, ждём, пока соберутся данные).
 // Подпись цели внизу — с иконкой календаря и тонкой линией сверху,
 // как на скрине-2 («Цель: 0 из 7 дней»). Тап по карточке показателя
-// ОТКРЫВАЕТ ОКНО ИСТОРИИ (MetricHistoryModal): среднее за день,
-// столбики по дням, лучшие дни и теплокарта недели. Тап по «Весу»
-// открывает вкладку ИМТ и докручивает до графика «Динамика веса».
-// Показатели и форматы — из общего реестра lib/data/metrics.js.
+// ОТКРЫВАЕТ ОКНО ИСТОРИИ (MetricHistoryModal) — теперь у ВСЕХ шести
+// карточек, включая «Вес» (отзыв Кати: «делаем историю для всех
+// карточек, 7/30/90 дней одинаково оформить»). Показатели и форматы —
+// из общего реестра lib/data/metrics.js.
 // Поверхности — как на скрине-2: у каждой карточки свой цветной ореол
 // (градиент от тинта метрики и обводка в её цвете), плитка иконки ярче.
 //
@@ -23,7 +23,6 @@
 import { useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { router } from 'expo-router'
 import { ArrowDownRight, ArrowUpRight, Calendar, MoonStar, Scale } from 'lucide-react-native'
 import { changePct, deltaTone, discipline, periodTotals, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
@@ -32,7 +31,6 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { pluralDays } from '@/lib/format'
-import { requestScrollToWeight } from '@/lib/navEvents'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
 
 // Порядок карточек 3×2 — как на референсе
@@ -285,8 +283,9 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
 
 // Карточка «Вес»: последнее взвешивание крупно, изменение за период
 // в кг (зелёное — движение к здоровому диапазону) и спарклайн последних
-// взвешиваний. Тап — вкладка ИМТ к графику «Динамика веса»
-function WeightReportCard({ days }) {
+// взвешиваний. Тап — окно истории «Вес · история» (как у остальных
+// карточек — отзыв Кати; график динамики веса остаётся и на «Теле»)
+function WeightReportCard({ days, onPress = () => {} }) {
   const weights = useProfileStore((s) => s.weights)
   const heightCm = useProfileStore((s) => s.heightCm)
 
@@ -309,16 +308,15 @@ function WeightReportCard({ days }) {
     [weights]
   )
 
-  function openWeightChart() {
-    router.navigate('/bmi')
-    requestScrollToWeight()
-  }
-
   return (
     <Pressable
-      onPress={openWeightChart}
+      onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Вес — открыть график динамики веса на вкладке ИМТ"
+      accessibilityLabel={
+        lastW
+          ? `Вес: ${fmtDecimal(lastW.kg)} кг. Тап — история показателя`
+          : 'Вес — история показателя'
+      }
       className="min-w-0 flex-1 active:opacity-80"
       style={{ borderRadius: 16 }}
     >
@@ -411,7 +409,7 @@ export function ReportCards({ today, days, rows = [], onSelectMetric = () => {},
         <View key={ri} className="flex-row gap-2.5">
           {row.map((m) =>
             m.key === 'weight' ? (
-              <WeightReportCard key={m.key} days={days} />
+              <WeightReportCard key={m.key} days={days} onPress={() => onSelectMetric(m.key)} />
             ) : m.key === 'sleepMin' ? (
               <SleepCard
                 key={m.key}

@@ -162,6 +162,53 @@ export function prevLabel(days) {
   return `к предыдущим ${days} дням`
 }
 
+// ===== Окно истории показателя: вес, «ближе к цели», дни недели =====
+
+// Вес по дням: журнал взвешиваний (useProfileStore.weights — новые
+// сверху, date — ISO) → карта «ГГГГ-ММ-ДД» → кг. Несколько взвешиваний
+// за один день — в карте ПОСЛЕДНЕЕ (первое в массиве — оно новое).
+// Переноса на соседние дни нет: где не взвешивалась — там пусто,
+// честная история, а не разглаженная линия.
+export function weightByDay(weights) {
+  const out = {}
+  for (const w of weights || []) {
+    if (!w || !w.date || !(w.kg > 0)) continue
+    const d = new Date(w.date)
+    if (Number.isNaN(d.getTime())) continue
+    const k = dayKeyOf(d)
+    if (!out[k]) out[k] = Math.round(w.kg * 10) / 10
+  }
+  return out
+}
+
+// Дни периода, БЛИЖЕ ВСЕГО к цели по калориям — для блока «Ближе к цели»
+// в окне истории: «лучший» день по максимуму калорий — это перебор,
+// а вот минимальное отклонение от цели — аккуратный день. Пустые дни
+// не участвуют; равное отклонение — раньше по хронологии выше.
+export function closestToGoal(rows, key, goal, n = 3) {
+  return (rows || [])
+    .map((r) => ({ row: r, value: r[key] || 0, dev: Math.abs((r[key] || 0) - goal) }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => a.dev - b.dev || (a.row.key < b.row.key ? -1 : 1))
+    .slice(0, n)
+}
+
+// Среднее по дням недели (Пн…Вс) за период — ряд точек в окне истории
+// по макету пользователя: одна строка из семи точек вместо сетки недель.
+// Делится только на ведённые дни (dayHasRecords) — та же философия,
+// что у dailyAverage: простои среднее не топят. recorded — был ли
+// у дня недели хотя бы один ведённый день.
+export function weekdayAverages(rows, key) {
+  const buckets = Array.from({ length: 7 }, () => ({ sum: 0, n: 0 }))
+  for (const r of rows || []) {
+    if (!dayHasRecords(r)) continue
+    const wd = (new Date(`${r.key}T00:00:00`).getDay() + 6) % 7
+    buckets[wd].sum += r[key] || 0
+    buckets[wd].n += 1
+  }
+  return buckets.map((b) => ({ avg: b.n ? Math.round(b.sum / b.n) : 0, recorded: b.n > 0 }))
+}
+
 // День «с записями» — дневник хоть что-то фиксировал (та же честная
 // проверка, что у дисциплины и стрика; нулевой показатель дня с
 // едой/водой — не «простой», а честный ноль)

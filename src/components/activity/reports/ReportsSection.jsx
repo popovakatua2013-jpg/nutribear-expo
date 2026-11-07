@@ -2,13 +2,16 @@
 // нутриенты из журнала питания и окно истории показателя. Период (7/30/90)
 // выбирается пилюлями в шапке секции — им живут карточки, дисциплина и
 // нутриенты. Тап по карточке показателя ОТКРЫВАЕТ ОКНО ИСТОРИИ
-// (MetricHistoryModal): у окна свой период (открывается с периода секции),
-// внутри — среднее за день, столбики по дням, лучшие дни и теплокарта
-// недели; сводка дня открывается тапом по дню внутри окна. Кнопка
+// (MetricHistoryModal) — теперь у ВСЕХ шести карточек, включая «Вес»
+// (отзыв Кати: «делаем историю для всех карточек, 7/30/90 дней одинаково
+// оформить»); у окна свой период (открывается с периода секции), внутри —
+// среднее за день, столбики по дням, лучшие дни и точки недели; сводка дня
+// открывается тапом по дню внутри окна. Кнопка
 // «Итоги» — шеринговая PNG-карточка периода (медведь + цифры + сравнение).
 
 import { useEffect, useMemo, useState } from 'react'
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
+import { router } from 'expo-router'
 import { Share2 } from 'lucide-react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
@@ -22,7 +25,7 @@ import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
 import { periodTotals } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
-import { consumeOpenSleepModal } from '@/lib/navEvents'
+import { consumeOpenSleepModal, requestScrollToWeight } from '@/lib/navEvents'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
 
@@ -61,11 +64,18 @@ export function ReportsSection({
   // Сколько дней периода велся дневник — для шерингового чипа
   const recorded = rows.filter((r) => r.steps || r.kcal || r.waterMl || r.burned || r.sleepMin).length
 
-  // Тап по карточке-итогу: открываем окно истории этого показателя.
-  // «Вес» сюда не попадает — у него свой тап, ведущий к графику на
-  // вкладке «Тело» (ReportCards обрабатывает его отдельно)
+  // Тап по карточке-итогу: открываем окно истории этого показателя —
+  // теперь у всех шести карточек, включая «Вес» (отзыв Кати:
+  // «делаем историю для всех карточек»)
   function handleSelectMetric(id) {
     setHistoryMetric(id)
+  }
+
+  // «Записать» из окна истории веса — на вкладку «Тело», к журналу
+  // взвешиваний (запись веса живёт там)
+  function openWeightScreen() {
+    router.navigate('/bmi')
+    requestScrollToWeight()
   }
 
   return (
@@ -146,9 +156,15 @@ export function ReportsSection({
           metricId={historyMetric}
           initialRangeId={rangeId}
           today={today}
-          // Кнопка «Записать» — только в истории сна: оттуда открывается
-          // окно «лёг/встал», окно истории остаётся снизу
-          onAdd={historyMetric === 'sleepMin' ? () => setSleepOpen(true) : undefined}
+          // Кнопка «Записать» в шапке окна: у сна — окно «лёг/встал»,
+          // у веса — экран веса на «Теле»; окно истории остаётся снизу
+          onAdd={
+            historyMetric === 'sleepMin'
+              ? () => setSleepOpen(true)
+              : historyMetric === 'weight'
+                ? openWeightScreen
+                : undefined
+          }
         />
       )}
 
