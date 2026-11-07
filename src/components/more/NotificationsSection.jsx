@@ -1,15 +1,15 @@
-// Секция «Уведомления» на «Ещё» (редизайн по шаблону Катиного референса:
-// шапка + ряд быстрых тумблеров, как плитки «Напоминания» в референсе, и
-// «Все настройки» — прежний полный набор внутри). Быстрые тумблеры:
-// тренировки и калории (возвращать ли сожжённое), напоминания о еде,
-// взвешивание — работают без раскрытия секции. Внутри — прежние
-// карточки-настройки: еда, взвешивание, вечерняя подсказка, тренировка,
-// сон и вибрация (тактильный отклик). Свёрнутое состояние НЕ
-// запоминается: секция всегда открывается свёрнутой.
+// Секция «Напоминания» на «Ещё» (редизайн по шаблону Катиного референса:
+// шапка + ряд быстрых тумблеров «Тренировка / Пей воду / Взвешивание»
+// и чип «Все» с полным набором внутри). Быстрые тумблеры работают без
+// раскрытия секции; состояние общее с карточками «Сон» и «Время пинка»
+// (одни и те же поля стора). Внутри — прежние карточки-настройки:
+// еда, взвешивание, вечерняя подсказка, тренировка, сон, вибрация —
+// и тумблер возврата калорий (переехал сюда из плиток по шаблону).
+// Свёрнутое состояние НЕ запоминается: секция всегда открывается свёрнутой.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Bell, ChevronRight, Flame, Scale, UtensilsCrossed } from 'lucide-react-native'
+import { Bell, ChevronRight, Droplets, Dumbbell, Scale } from 'lucide-react-native'
 import { BodyChip } from '../ui/BodyChip'
 import { MealRemindersCard } from './MealRemindersCard'
 import { WeighReminderCard } from './WeighReminderCard'
@@ -71,8 +71,10 @@ export function NotificationsSection() {
 
   const countBurned = useGoalsStore((s) => Boolean(s.goals.countBurned))
   const setGoals = useGoalsStore((s) => s.setGoals)
-  const meals = useActivityStore((s) => s.reminder.meals)
-  const weigh = useActivityStore((s) => s.reminder.weigh)
+  const reminder = useActivityStore((s) => s.reminder)
+  const weigh = reminder.weigh
+  const exercise = reminder.exercise
+  const water = { enabled: reminder.enabled, everyMin: reminder.everyMin }
   const setReminder = useActivityStore((s) => s.setReminder)
 
   // Включение напоминаний требует разрешения на уведомления
@@ -116,32 +118,32 @@ export function NotificationsSection() {
       </Pressable>
 
       {/* Быстрые тумблеры — видны всегда, работают без раскрытия секции.
-          Подписи — коротким статусом, как на шаблоне («Тренировка не
-          возвращают калории», «Взвешивание и замеры») */}
+          Три плитки как на шаблоне: Тренировка (пинок о ней), Пей воду,
+          Взвешивание. Подписи — коротким статусом */}
       <View className="flex-row gap-2 px-3 pb-3">
         <QuickTile
-          a11y="Тренировки возвращают калории"
-          icon={<Flame size={18} color="#F97316" />}
-          title="Калории"
-          sub={countBurned ? 'возврат ккал' : 'строгий остаток'}
-          value={countBurned}
-          onChange={(v) => setGoals({ countBurned: v })}
+          a11y="Напоминание о тренировке"
+          icon={<Dumbbell size={18} color="#A78BFA" />}
+          title="Тренировка"
+          sub={exercise.enabled ? `пинок в ${exercise.time}` : 'выключено'}
+          value={Boolean(exercise.enabled)}
+          onChange={(v) => toggleWithPermission(exercise, (x, on) => ({ exercise: { ...x, enabled: on } }), v)}
         />
         <QuickTile
-          a11y="Напоминания о еде"
-          icon={<UtensilsCrossed size={18} color="#F59E0B" />}
-          title="Еда"
-          sub={meals.enabled ? 'по времени' : 'выключено'}
-          value={meals.enabled}
-          onChange={(v) => toggleWithPermission(meals, (m, on) => ({ meals: { ...m, enabled: on } }), v)}
+          a11y="Напоминание о воде"
+          icon={<Droplets size={18} color="#38BDF8" />}
+          title="Пей воду"
+          sub={water.enabled ? `каждые ${water.everyMin} мин` : 'выключено'}
+          value={Boolean(water.enabled)}
+          onChange={(v) => toggleWithPermission(water, (x, on) => ({ enabled: on }))}
         />
         <QuickTile
           a11y="Напоминание о взвешивании"
           icon={<Scale size={18} color="#7DD3FC" />}
-          title="Вес"
+          title="Взвешивание"
           sub={weigh.enabled ? 'по графику' : 'выключено'}
-          value={weigh.enabled}
-          onChange={(v) => toggleWithPermission(weigh, (w, on) => ({ weigh: { ...w, enabled: on } }), v)}
+          value={Boolean(weigh.enabled)}
+          onChange={(v) => toggleWithPermission(weigh, (x, on) => ({ weigh: { ...x, enabled: on } }), v)}
         />
       </View>
 
@@ -150,6 +152,21 @@ export function NotificationsSection() {
           <Text className="px-1 font-sans text-[12.5px] text-bear-dim">
             Все настройки напоминаний и отклика приложения
           </Text>
+          {/* Возврат калорий тренировок — переехал из плиток внутрь «Все»:
+              сожжённое возвращается в остаток дня или остаётся строгим */}
+          <View className="flex-row items-center justify-between gap-2 rounded-2xl bg-white/[0.04] px-3.5 py-2.5">
+            <View className="min-w-0 flex-1 pr-2">
+              <Text className="font-semibold text-[15.5px] text-bear-text">Возвращать калории</Text>
+              <Text maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] leading-[16px] text-bear-sub">
+                Сожжённое за тренировки прибавляется к остатку дня
+              </Text>
+            </View>
+            <MiniToggle
+              value={countBurned}
+              onChange={(v) => setGoals({ countBurned: v })}
+              label="Возвращать калории"
+            />
+          </View>
           <MealRemindersCard />
           <WeighReminderCard />
           <WeighNudgeCard />

@@ -83,7 +83,7 @@ export function SupportCard() {
             maxFontSizeMultiplier={1.2}
             className="font-sans text-[13.5px] leading-snug text-bear-dim"
           >
-            Идеи, ошибки, оплата — читаем всё
+            Ответы на вопросы и советы
           </Text>
         </View>
         <Text maxFontSizeMultiplier={1.1} className="shrink-0 text-[34px]" accessibilityLabel="Робот-помощник">
