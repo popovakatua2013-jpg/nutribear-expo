@@ -57,15 +57,19 @@ const LARGE_ITEMS = [
 ]
 
 // Единый размер всех шести карточек (отзыв Кати: два размера рядом
-// выглядели как недоделка — теперь сетка ровная); после этого —
-// компактнее (отзыв Кати: «блоки стали одного размера, но громоздкие»):
-// плитка 26 вместо 30, значение 19 вместо 21, спарклайн 20 вместо 28,
-// плотнее отступы — сетка стала ниже на ~12% без потери читаемости.
-// Слоты Δ% (26px) и спарклайна оставлены: без них карточки с данными
-// прошлого периода/линией становились выше соседей — сетка распадалась
-// на разные размеры (первый отзыв)
+// выглядели как недоделка — теперь сетка ровная). Два прохода
+// «облегчения» по отзывам Кати:
+// 1) «блоки стали одного размера, но громоздкие» — плитка 30→26,
+//    значение 21→19, плотнее отступы;
+// 2) скрин от 07.11 («так же») — главный виновник громоздкости не
+//    плитки, а ДВА зарезервированных пустых слота в середине карточки
+//    (26px под Δ% + 20px под спарклайн ≈ 46px пустоты у карточки без
+//    данных). Теперь вместо двух слотов — ОДНА лента 22px: в ней живёт
+//    спарклайн (есть ≥2 дня данных), иначе строка Δ%, иначе пусто.
+//    Итог: карточка ~158px вместо ~186px (−15%), сетка по-прежнему
+//    идеально ровная — структура всех шести карточек одинаковая.
 const SIZES = {
-  card: { pad: 10, tile: 26, icon: 14, label: 12, value: 19, cap: 11, spark: 20 },
+  card: { pad: 10, tile: 24, icon: 13, label: 12, value: 19, cap: 11, band: 22 },
 }
 
 // Спарклайн карточки: последние дни периода (до 14 точек — плотность
@@ -76,20 +80,22 @@ function sparkOf(rows, key) {
   return tail.map((r) => ({ label: r.label, value: Number(r[key]) || 0 }))
 }
 
-// Мини-спарклайн без осей: мягкая линия с заливкой в цвет метрики
-// (spark-режим SvgAreaChart — без подписей, чистая линия как на референсе;
-// min-w-0 — страховка, чтобы график не распирал узкую колонку).
-// Линия рисуется ТОЛЬКО когда есть данные (отзыв Кати: после регистрации
-// в отчётах шли цветные линии-заглушки — плоские нули): минимум два дня
-// с ненулевыми значениями показателя. Но СЛОТ под график резервируется
-// у каждой карточки всегда — иначе карточка без данных становилась ниже
-// соседей и сетка распадалась на разные размеры (отзыв Кати)
-function Spark({ data, color, height = 20 }) {
+// Единая лента карточки вместо двух пустых слотов: 22px, в ней живёт
+// спарклайн (минимум два дня с ненулевыми значениями — отзыв про
+// линии-заглушки «плоские нули» соблюдён), иначе строка Δ% (children),
+// иначе лента пуста. ВЫСОТА ленты одинакова у всех карточек всегда —
+// сетка не распадается на разные размеры, но пустоты в середине
+// больше нет (скрин Кати 07.11: «так же» громоздкие).
+// min-w-0 — страховка, чтобы график не распирал узкую колонку
+function CardBand({ data, color, height = 22, children }) {
   const meaningful = data ? data.filter((d) => d.value > 0).length : 0
+  const showSpark = !!data && meaningful >= 2
   return (
-    <View className="mt-1 min-w-0" style={{ height }}>
-      {data && meaningful >= 2 && (
+    <View className="mt-1.5 min-w-0 justify-center" style={{ height }}>
+      {showSpark ? (
         <SvgAreaChart spark dot={false} data={data} color={color} height={height} />
+      ) : (
+        children || null
       )}
     </View>
   )
@@ -123,7 +129,9 @@ function CardBg({ color }) {
 // скрине-2. Текст краткий («Цель: 4/7 дн») — помещается всегда
 function CalFooter({ children, color = '#8B96B8', line = true }) {
   return (
-    <View>
+    // mt-auto — футер прижат к нижнему краю карточки даже когда сосед
+    // в ряду выше (растянутая карточка не оставляет футер в середине)
+    <View className="mt-auto">
       {line && <View className="mt-1.5 h-px bg-white/[0.07]" />}
       <View className="mt-1 flex-row items-center gap-1">
         <Calendar size={11} color={color} />
@@ -207,7 +215,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           считал 100% от высоты вьюпорта, и карточки растягивались
           на весь экран (скрин «ужаса» из отзыва) */}
       <CardBg color={m.color} />
-      <View style={{ padding: s.pad }}>
+      <View style={{ padding: s.pad }} className="flex-1">
         <CardHead m={m} s={s} />
         <Text
           numberOfLines={1}
@@ -231,23 +239,6 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
         >
           в среднем за день
         </Text>
-        {/* «% к прошлому периоду» — только с данными прошлого периода;
-            без сравнения строка не занимает место (отзыв Кати) */}
-        <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
-          {pct != null && (
-            <>
-              <Arrow size={12} color={tone} />
-              <Text
-                numberOfLines={2}
-                maxFontSizeMultiplier={1.2}
-                className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
-                style={{ color: tone }}
-              >
-                {`${Math.abs(pct)}% ${prevLabel(days)}`}
-              </Text>
-            </>
-          )}
-        </View>
         {/* Сколько дней периода цель достигнута — перенесено из карточки
             «Дисциплина» (отзыв Кати): в карточке показателя это уместнее,
             чем дубли плиток. Подпись ЕДИНАЯ «Цель: N/7 дн» (отзыв Кати:
@@ -255,10 +246,26 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
             у калорий цель — уложиться в норму, день засчитан когда поел
             и не перебрал; у сожжённых цель burnKcal. goalMet = null
             (цель не задана) — строки нет */}
-        {/* Спарклайн ПЕРЕД футером: цель прижата к нижнему краю карточки,
-            у карточек без линии воздух уходит в середину, а не висит
-            пустотой под целью (отзыв Кати: «громоздкие») */}
-        <Spark data={spark} color={m.color} height={s.spark} />
+        {/* Лента: спарклайн, а без данных — Δ% к прошлому периоду
+            (только когда есть с чем сравнивать — отзыв Кати), иначе
+            пусто. Одна лента вместо двух слотов — середина карточки
+            больше не пустует (скрин Кати 07.11: «так же» громоздкие);
+            точный % и график за период — в окне истории по тапу */}
+        <CardBand data={spark} color={m.color} height={s.band}>
+          {pct != null && (
+            <View className="flex-row items-center gap-0.5">
+              <Arrow size={12} color={tone} />
+              <Text
+                numberOfLines={2}
+                maxFontSizeMultiplier={1.2}
+                className="min-w-0 flex-1 font-medium text-[10.5px] leading-[11px]"
+                style={{ color: tone }}
+              >
+                {`${Math.abs(pct)}% ${prevLabel(days)}`}
+              </Text>
+            </View>
+          )}
+        </CardBand>
         {goalMet != null && (
           <CalFooter color={goalMet > 0 ? '#4ade80' : '#8B96B8'}>
             {`Цель: ${goalMet}/${days} дн`}
@@ -300,7 +307,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
       {/* фон — абсолютный градиент (см. комментарий в ReportCard:
           height:'100%' растягивал карточку до высоты вьюпорта) */}
       <CardBg color="#c084fc" />
-      <View style={{ padding: s.pad }}>
+      <View style={{ padding: s.pad }} className="flex-1">
         <CardHead m={{ label: 'Сон', Icon: MoonStar, color: '#c084fc' }} s={s} />
         {nights ? (
           <>
@@ -324,11 +331,9 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             >
               в среднем за ночь
             </Text>
-            <View className="mt-1 min-h-[26px]" />
-            {/* Спарклайн перед футером — как у соседних карточек крупного
-                ряда (отзыв Кати: вторая сетка должна выглядеть единообразно):
-                слот Δ%, спарклайн, черта, цель внизу */}
-            <Spark data={spark} color="#c084fc" height={s.spark} />
+            {/* Лента со спарклайном ночей — как у соседних карточек:
+                одна и та же структура, футер прижат к низу */}
+            <CardBand data={spark} color="#c084fc" height={s.band} />
             <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
               {`Цель: ${inNorm}/${days} дн`}
             </CalFooter>
@@ -342,7 +347,19 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             >
               —
             </Text>
-            <View className="mt-1 min-h-[26px]" />
+            {/* Подпись как у карточек с данными — структура (и высота)
+                всех состояний карточки одинаковая */}
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              maxFontSizeMultiplier={1.15}
+              className="font-sans leading-tight text-bear-dim"
+              style={{ fontSize: s.cap }}
+            >
+              пока нет записей
+            </Text>
+            <CardBand height={s.band} />
             <CalFooter color="#8DABFF">Записать первый сон →</CalFooter>
           </>
         )}
@@ -371,7 +388,6 @@ function WeightReportCard({ days, onPress = () => {} }) {
   const towardNorm =
     delta != null && ((delta < 0 && lastW.kg >= min) || (delta > 0 && lastW.kg <= max))
   const tone = delta == null || delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
-  const Arrow = delta != null && delta < 0 ? ArrowDownRight : ArrowUpRight
 
   // Спарклайн: последние до 10 взвешиваний по возрастанию даты
   // (журнал хранит новые сверху). Меньше двух точек — линии нет
@@ -393,7 +409,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
       style={{ borderRadius: 16 }}
     >
       <CardBg color="#a78bfa" />
-      <View style={{ padding: s.pad }}>
+      <View style={{ padding: s.pad }} className="flex-1">
         <CardHead m={{ label: 'Вес', Icon: Scale, color: '#a78bfa' }} s={s} />
         <Text
           numberOfLines={1}
@@ -405,47 +421,27 @@ function WeightReportCard({ days, onPress = () => {} }) {
         >
           {lastW ? `${fmtDecimal(lastW.kg)} кг` : '—'}
         </Text>
+        {/* Δ за период — в строке подписи (скрин Кати 07.11: экономим
+            высоту): «+36,0 кг за 7 дн» в цвете движения к норме, без
+            изменений — серым. Сравнивать не с чем — «последний замер» */}
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.8}
           maxFontSizeMultiplier={1.15}
           className="font-sans leading-tight text-bear-dim"
-          style={{ fontSize: s.cap }}
+          style={{ fontSize: s.cap, color: delta != null ? tone : undefined }}
         >
-          последний замер
+          {delta == null
+            ? 'последний замер'
+            : delta === 0
+              ? `без изменений за ${days} дн`
+              : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))} кг за ${days} дн`}
         </Text>
-        <View className="mt-1 min-h-[26px] flex-row items-start gap-0.5">
-          {delta == null ? (
-            <Text
-              numberOfLines={2}
-              maxFontSizeMultiplier={1.2}
-              className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
-              style={{ color: '#8B96B8' }}
-            >
-              {`Нет измерений за ${days} дн`}
-            </Text>
-          ) : (
-            <>
-              {delta !== 0 && <Arrow size={12} color={tone} />}
-              <Text
-                numberOfLines={2}
-                maxFontSizeMultiplier={1.2}
-                className="min-w-0 flex-1 font-medium text-[10.5px] leading-[13px]"
-                style={{ color: tone }}
-              >
-                {delta === 0
-                  ? `без изменений за ${days} дн`
-                  : `${delta > 0 ? '+' : '−'}${fmtDecimal(Math.abs(delta))} кг за ${days} дн`}
-              </Text>
-            </>
-          )}
-        </View>
-        {/* Спарклайн перед футером — как у остальных карточек:
-            цель/норма всегда внизу карточки (отзыв Кати «громоздкие»);
+        {/* Лента со спарклайном взвешиваний — как у соседних карточек;
             у веса нет дневной цели — показываем здоровый диапазон роста.
             Рост не указан (min/max = 0) — футера нет */}
-        <Spark data={spark} color="#a78bfa" height={s.spark} />
+        <CardBand data={spark} color="#a78bfa" height={s.band} />
         {heightCm > 0 && Number.isFinite(min) && Number.isFinite(max) && max > min && (
           <CalFooter color="#8DABFF">
             {`Норма: ${min}–${max} кг`}
