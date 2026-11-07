@@ -197,11 +197,13 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, large = false, on
           numberOfLines={1}
           maxFontSizeMultiplier={1.15}
           adjustsFontSizeToFit
-          minimumFontScale={0.7}
+          minimumFontScale={0.6}
           className="mt-1.5 font-extrabold leading-tight tracking-tight text-bear-text"
           style={{ fontSize: s.value }}
         >
-          {m.fmt(avg)}
+          {/* Единицы «ккал» у калорий и сожжённых (аудит по скрину Кати);
+              авто-сжатие держит строку в узкой колонке */}
+          {`${m.fmt(avg)}${m.key === 'kcal' || m.key === 'burned' ? ' ккал' : ''}`}
         </Text>
         <Text
           numberOfLines={1}

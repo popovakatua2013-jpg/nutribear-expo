@@ -65,6 +65,9 @@ export default function HomeScreen() {
   // свёрнута (отзыв Кати: «всегда свёрнут»)
   const [exOpen, setExOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  // Рецепт, выбранный в отдельном окне «Рецепты» («Записать»):
+  // окно добавления еды откроется сразу на экране порции этого рецепта
+  const [recipePick, setRecipePick] = useState(null)
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
@@ -242,6 +245,14 @@ export default function HomeScreen() {
     setAddOpen(true)
   }
 
+  // «Записать» рецепта из окна «Рецепты»: окно добавления еды откроем
+  // с рецептом уже выбранным (экран порции); приём по умолчанию — перекус
+  function openAddWithPick(item) {
+    setRecipePick(item)
+    setMealId('snack')
+    setAddOpen(true)
+  }
+
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
@@ -282,10 +293,13 @@ export default function HomeScreen() {
         />
 
         {/* Дневник питания под сводкой: секции приёмов с блюдами,
-            счётчиком и рекомендованными ккал (правка/удаление — внутри) */}
+            счётчиком и рекомендованными ккал (правка/удаление — внутри).
+            onAddRecipe — «Записать» рецепта в отдельном окне «Рецепты»:
+            рецепт открывается в окне добавления еды (порция + приём) */}
         <MealPlanCard
           onAdd={openAdd}
           onViewAll={() => setAllOpen(true)}
+          onAddRecipe={openAddWithPick}
         />
 
         {/* Мягкий бейдж фазы цикла — только если трекер включён в «Ещё» */}
@@ -386,6 +400,8 @@ export default function HomeScreen() {
         onClose={() => setAddOpen(false)}
         mealId={mealId}
         onMealIdChange={setMealId}
+        initialPick={recipePick}
+        onPickConsumed={() => setRecipePick(null)}
       />
 
       <AllMealsModal

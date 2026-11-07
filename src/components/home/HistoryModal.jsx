@@ -209,12 +209,13 @@ export function HistoryModal({ visible, onClose }) {
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {groups.length === 0 ? (
               mealFilter === 'custom' && !query.trim() ? (
-                // Свои перекусы создаются кнопкой «+ Добавить перекус»
-                // на главной или в «Все приёмы пищи»
+                // Свои перекусы создаются в окне «Все приёмы пищи»
+                // (на главной кнопки «+ Добавить перекус» больше нет —
+                // отзыв Кати: «Перекус 2/3/4 туда не добавлять»)
                 <Text className="px-5 py-8 text-center font-sans text-[15.5px] leading-snug text-bear-sub">
                   Здесь появятся записи в свои перекусы «Перекус 2», «Перекус 3»…
                   {'\n\n'}
-                  Создать перекус: на главной под приёмами — «+ Добавить перекус» 🐻
+                  Создать перекус: шапка «Приёмов пищи» — «Все» → «+ Добавить перекус» 🐻
                 </Text>
               ) : (
                 <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">

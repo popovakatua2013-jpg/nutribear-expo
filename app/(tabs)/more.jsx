@@ -8,12 +8,8 @@ import { Settings } from 'lucide-react-native'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { GoalPicker } from '@/components/more/GoalPicker'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
-import { MealRemindersCard } from '@/components/more/MealRemindersCard'
-import { WeighReminderCard } from '@/components/more/WeighReminderCard'
-import { ExerciseReminderCard } from '@/components/more/ExerciseReminderCard'
-import { SleepReminderCard } from '@/components/more/SleepReminderCard'
-import { WeighNudgeCard } from '@/components/more/WeighNudgeCard'
-import { HapticsCard } from '@/components/more/HapticsCard'
+import { NotificationsSection } from '@/components/more/NotificationsSection'
+import { SupportCard } from '@/components/more/SupportCard'
 import { SyncCard } from '@/components/more/SyncCard'
 import { CycleCard } from '@/components/more/CycleCard'
 import { DataPortability } from '@/components/more/DataPortability'
@@ -55,16 +51,16 @@ export default function MoreScreen() {
         <ProfileEditor />
         <GoalPicker />
         <DiarySettingsCard />
-        <MealRemindersCard />
-        <WeighReminderCard />
-        <ExerciseReminderCard />
-        <SleepReminderCard />
-        <WeighNudgeCard />
-        <HapticsCard />
+        {/* Все напоминания (еда, взвешивание, тренировки, сон) и вибрация —
+            одним свёрнутым блоком «Уведомления» (отзыв Кати) */}
+        <NotificationsSection />
         <SyncCard />
         <CycleCard />
         <DataPortability />
         <DataActions />
+        {/* Поддержка: предложения, лаги, оплата — письмо разработчику
+            на адрес из политики конфиденциальности (отзыв Кати) */}
+        <SupportCard />
         <AboutCard />
       </ScrollView>
     </View>

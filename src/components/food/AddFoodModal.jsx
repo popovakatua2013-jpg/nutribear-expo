@@ -6,7 +6,7 @@
 // а не в чужой день. Подсказка под заголовком удалена по запросу —
 // плитки говорят сами за себя.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { Calendar, ChevronDown, ChevronLeft, Clock, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,7 +15,6 @@ import { AddHub } from './AddHub'
 import { BaseMode } from './BaseMode'
 import { BarcodeMode } from './BarcodeMode'
 import { LabelMode } from './LabelMode'
-import { RecipeMode } from './RecipeMode'
 import { PhotoMode } from './PhotoMode'
 import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
@@ -47,20 +46,20 @@ function DayPill({ active, icon: Icon, label, onPress }) {
   )
 }
 
-export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
+export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPick = null, onPickConsumed = () => {} }) {
   const insets = useSafeAreaInsets()
   const customMeals = useFoodStore((s) => s.customMeals)
-  // Базовые приёмы + свои перекусы («Перекус 2»…) — под полным именем
-  // (отзыв Кати: загадочные пилюли «П2» убраны; если пилюль много,
-  // текст сжимается, а не режется)
-  const meals = [
-    ...MEALS,
-    ...customMeals.map((m) => ({
-      id: m.id,
-      name: m.name,
-      short: m.name,
-    })),
-  ]
+  // Базовые приёмы; свои перекусы («Перекус 2», «Перекус 3»…) в пилюли
+  // НЕ добавляем (отзыв Кати: «Перекус 2 встаёт криво — если можно, туда
+  // не добавлять перекус 2, 3, 4 и т.д.») — пять пилюль в строке
+  // ломали вёрстку, а запись в свои перекусы и так идёт через «+» их
+  // секции на Главной. Исключение: если окно открыто ЦЕЛЬНО в свой
+  // перекус (тап по «+» его секции) — показываем его одной пилюлей,
+  // чтобы цель записи была видна
+  const selectedCustom = customMeals.find((m) => m.id === mealId)
+  const meals = selectedCustom
+    ? [...MEALS, { id: selectedCustom.id, name: selectedCustom.name, short: selectedCustom.name }]
+    : MEALS
   const [mode, setMode] = useState('hub')
   const [picked, setPicked] = useState(null)
   // За какой день записываем: 0 = сегодня, 1 = вчера. Выбор действует
@@ -69,6 +68,15 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
   const [dayOff, setDayOff] = useState(0)
 
   const meal = meals.find((m) => m.id === mealId) || meals[0]
+
+  // Рецепт, выбранный в отдельном окне «Рецепты» («Записать»): окно
+  // добавления открывается сразу на экране порции этого рецепта
+  useEffect(() => {
+    if (open && initialPick) {
+      setPicked(initialPick)
+      onPickConsumed()
+    }
+  }, [open, initialPick, onPickConsumed])
 
   function close() {
     setMode('hub')
@@ -162,7 +170,6 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange }) {
                 {mode === 'voice' && <VoiceMode onPick={setPicked} />}
                 {mode === 'gallery' && <PhotoMode source="library" onPick={setPicked} />}
                 {mode === 'label' && <LabelMode onPick={setPicked} />}
-                {mode === 'recipes' && <RecipeMode onPick={setPicked} />}
               </View>
             </>
           )}

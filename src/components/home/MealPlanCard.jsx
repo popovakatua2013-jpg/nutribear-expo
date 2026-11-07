@@ -6,18 +6,23 @@
 // 454 ккал»), полоска заполнения приёма. По умолчанию ВСЕ секции
 // свёрнуты — видно только шапку (отзыв Кати: раскрытые списки делали
 // дневник громоздким), тап по заголовку разворачивает список блюд с
-// правкой (карандаш) и удалением (корзина), «+» и кнопка «Добавить
-// блюдо» добавляют еду. Под секциями — кнопка «Только калории»
-// (перенесена из окна «Добавить приём пищи» по запросу Кати): тап
-// открывает окно быстрой записи — пилюли приёмов, калории, название.
+// правкой (карандаш) и удалением (корзина), «+» добавляет еду.
+// Под секциями — ОДНА раскрывающаяся кнопка «Добавить еду» вместо трёх
+// отдельных блоков (отзыв Кати: «Добавить блюдо / Добавить перекус /
+// Только калории — переделаем в раскрывающий список»), и первым в
+// списке — «Только калории». В списке три пункта: быстрая запись
+// калорий, добавление блюда (окно поиска/сканера/ИИ) и «Добавить
+// рецепт» — отдельное окно своих рецептов (создание + список уже
+// добавленных — перенесено из окна «Добавить приём пищи», где были
+// блоки с ИИ-распознаванием). Отдельной кнопки «+ Добавить перекус»
+// больше нет (отзыв Кати: «Перекус 2/3/4 туда не добавлять») — свои
+// перекусы создаются в окне «Все приёмы пищи», а в уже созданные
+// блюда добавляются через «+» их секции.
 // Рекомендованные ккал по приёмам считаются
 // от дневной нормы (targetsFromKcal: пропорции 25/35/30/10) и видны
-// парой «X / Y» в каждой секции; строку-легенду «Норма N ккал:
-// завтрак … · обед …» убрали по запросу. Свои перекусы («Перекус 2»,
+// парой «X / Y» в каждой секции. Свои перекусы («Перекус 2»,
 // «Перекус 3»…) — ПОЛНОЦЕННЫЕ секции после «Перекус/Полдник», каждая
-// со своими блюдами, «+» и корзиной (отзыв Кати: «все перекусы
-// сохраняются в один» — больше не смешиваются): создаёт их кнопка
-// «+ Добавить перекус» под секциями. Управление (повтор дня,
+// со своими блюдами, «+» и корзиной. Управление (повтор дня,
 // история, порции) — в шапке, «Все» открывает старое окно со сводкой
 // БЖУ. Поверхность — в стиле вкладки «Тело» (фиолетовая bear-bodyCard
 // + обводка bear-bodyLine).
@@ -34,9 +39,22 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Zap, X } from 'lucide-react-native'
+import {
+  ChefHat,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Pencil,
+  Plus,
+  Trash2,
+  UtensilsCrossed,
+  Zap,
+  X,
+} from 'lucide-react-native'
 import { PlanHeader } from './PlanHeader'
 import { HistoryModal } from './HistoryModal'
+import { RecipesModal } from '../food/RecipesModal'
 import { EditEntryModal } from '../food/EditEntryModal'
 import { MealTabs } from '../food/MealTabs'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -73,6 +91,43 @@ function mealTotals(meal, entries) {
   const count = mealEntries.length
   const consumed = mealEntries.reduce((s, e) => s + e.kcal, 0)
   return { mealEntries, count, consumed }
+}
+
+// Строка раскрывающегося списка способов добавления: цветная плитка
+// с иконкой + название + серая подсказка. Тап — выбрать способ и свернуть
+function MenuRow({ icon, tile, title, sub, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${sub}`}
+      className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2.5 py-2.5 active:bg-white/10"
+    >
+      <View
+        className="h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ backgroundColor: tile }}
+      >
+        {icon}
+      </View>
+      <View className="min-w-0 flex-1">
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={MAX}
+          className="font-semibold text-[16px] text-bear-text"
+        >
+          {title}
+        </Text>
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={MAX}
+          className="font-sans text-[13px] text-bear-sub2"
+        >
+          {sub}
+        </Text>
+      </View>
+      <ChevronRight size={16} color="#8B96B8" />
+    </Pressable>
+  )
 }
 
 // Строка блюда внутри раскрытой секции: эмодзи, название, граммовка,
@@ -268,7 +323,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
   )
 }
 
-export function MealPlanCard({ onAdd, onViewAll }) {
+export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -276,13 +331,18 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   const { toast } = useToast()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [edit, setEdit] = useState(null) // {mealId, entry, mealName}
-  // Быстрая запись «Только калории» (кнопка под секциями): выбор приёма,
+  // Раскрывающийся список способов добавления — вместо трёх отдельных
+  // блоков под секциями (отзыв Кати); сворачивается после выбора пункта
+  const [menuOpen, setMenuOpen] = useState(false)
+  // Быстрая запись «Только калории»: выбор приёма,
   // калории (10…3000) и необязательное название
   const [quickOpen, setQuickOpen] = useState(false)
   const [qMealId, setQMealId] = useState('snack')
   const [qKcal, setQKcal] = useState('')
   const [qName, setQName] = useState('')
-  const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
+  // Окно рецептов: создание своих рецептов + список уже добавленных
+  // (перенесено из окна «Добавить приём пищи» — отзыв Кати)
+  const [recipesOpen, setRecipesOpen] = useState(false)
   const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
   // Ручное сворачивание: по умолчанию все секции свёрнуты — видно только
   // шапку (отзыв Кати); тап запоминает выбор пользователя
@@ -290,18 +350,6 @@ export function MealPlanCard({ onAdd, onViewAll }) {
 
   // Рекомендованные ккал по приёмам от дневной нормы
   const targets = targetsFromKcal(kcalGoal)
-
-  // Новый свой перекус: «Перекус 2», «Перекус 3»… (стор возвращает
-  // созданный перекус — раскрываем его секцию сразу)
-  function addSnack() {
-    const meal = addCustomMeal()
-    animateExpandCollapse()
-    setExpanded((s) => ({ ...s, [meal.id]: true }))
-    toast({
-      title: `🥨 ${meal.name} создан`,
-      description: 'Добавляйте блюда в свою секцию — тап по «+»',
-    })
-  }
 
   // Удалить свой перекус: подтверждение — записи уйдут из дневника,
   // журнал приёмов сохранится
@@ -332,9 +380,8 @@ export function MealPlanCard({ onAdd, onViewAll }) {
     setExpanded((s) => ({ ...s, [meal.id]: !isOpen(meal) }))
   }
 
-  // Быстрая запись: только калории в выбранный пилюлей приём (включая
-  // свои перекусы). Пишем за сегодня — окно открывается с главной,
-  // дневник «сегодня»
+  // Быстрая запись: только калории в выбранный пилюлей приём. Пишем
+  // за сегодня — окно открывается с главной, дневник «сегодня»
   function submitQuick() {
     const kcal = Math.round(Number(String(qKcal).replace(',', '.')) || 0)
     if (kcal < 10 || kcal > 3000) {
@@ -367,7 +414,9 @@ export function MealPlanCard({ onAdd, onViewAll }) {
 
       {/* секции приёмов, одна под другой; после «Перекус/Полдник» —
           свои перекусы («Перекус 2», «Перекус 3»…) отдельными секциями:
-          у каждой свои блюда и «+», корзина в шапке удаляет секцию */}
+          у каждой свои блюда и «+», корзина в шапке удаляет секцию.
+          Новые свои перекусы создаются в окне «Все приёмы пищи» —
+          на главной их больше не создаём (отзыв Кати) */}
       <View className="gap-2">
         {[...MEALS, ...customMeals.map(customMealCard)].map((meal) => (
           <MealSection
@@ -384,37 +433,85 @@ export function MealPlanCard({ onAdd, onViewAll }) {
             onDelete={meal.id.startsWith('custom-') ? () => confirmRemove(meal) : undefined}
           />
         ))}
-
-        {/* новый свой перекус: создаётся сразу с именем «Перекус 2»,
-            «Перекус 3»… и появляется отдельной секцией — в неё можно
-            добавлять блюда, как в обычный приём */}
-        <Pressable
-          onPress={addSnack}
-          accessibilityRole="button"
-          accessibilityLabel="Добавить свой перекус — ещё одну секцию дневника"
-          className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
-        >
-          <Plus size={16} color="#A5AECB" />
-          <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[15px] text-bear-sub">
-            Добавить перекус
-          </Text>
-        </Pressable>
       </View>
 
-      {/* быстрая запись «Только калории» — перенесена сюда из окна
-          «Добавить приём пищи» (запрос Кати): перекус в один тап,
-          когда некогда искать блюдо */}
+      {/* Раскрывающийся список способов добавления — вместо трёх отдельных
+          блоков «Добавить блюдо / Добавить перекус / Только калории»
+          (отзыв Кати). Первым в списке — «Только калории» */}
       <Pressable
-        onPress={() => setQuickOpen(true)}
+        onPress={() => setMenuOpen((s) => !s)}
         accessibilityRole="button"
-        accessibilityLabel="Быстрая запись: только калории"
-        className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] py-2.5 active:bg-white/10"
+        accessibilityState={{ expanded: menuOpen }}
+        accessibilityLabel={menuOpen ? 'Свернуть способы добавления еды' : 'Добавить еду — раскрыть способы'}
+        className="mt-2 h-[42px] flex-row items-center justify-center gap-1.5 rounded-2xl active:opacity-80"
+        style={{ backgroundColor: '#7B6CF6' }}
       >
-        <Zap size={15} color="#FBBF24" />
-        <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[14.5px] text-bear-text">
-          Только калории
+        <Plus size={17} color="#FFFFFF" />
+        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[16px] text-white">
+          Добавить еду
         </Text>
+        <ChevronDown
+          size={17}
+          color="#FFFFFF"
+          style={{ transform: [{ rotate: menuOpen ? '180deg' : '0deg' }] }}
+        />
       </Pressable>
+
+      {menuOpen && (
+        <View
+          className="mt-2 gap-1 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] p-1.5"
+          accessibilityLabel="Способы добавления еды"
+        >
+          {/* 1. Только калории — первым (отзыв Кати): перекус в один тап,
+              когда некогда искать блюдо */}
+          <MenuRow
+            icon={<Zap size={17} color="#FBBF24" />}
+            tile="#FBBF2422"
+            title="Только калории"
+            sub="Быстрая запись, без поиска блюд"
+            onPress={() => {
+              setMenuOpen(false)
+              setQuickOpen(true)
+            }}
+          />
+          {/* 2. Добавить блюдо — окно поиска, сканера, фото и ИИ */}
+          <MenuRow
+            icon={<UtensilsCrossed size={17} color="#8DABFF" />}
+            tile="#5B7FFF22"
+            title="Добавить блюдо"
+            sub="Поиск, сканер, фото, голос, этикетка"
+            onPress={() => {
+              setMenuOpen(false)
+              onAdd('snack')
+            }}
+          />
+          {/* 3. Добавить рецепт — отдельное окно своих рецептов: создание
+              + список уже добавленных (перенесено из окна «Добавить
+              приём пищи», отзыв Кати) */}
+          <MenuRow
+            icon={<ChefHat size={17} color="#4ADE80" />}
+            tile="#22C55E22"
+            title="Добавить рецепт"
+            sub="Свой рецепт · мои рецепты"
+            onPress={() => {
+              setMenuOpen(false)
+              setRecipesOpen(true)
+            }}
+          />
+        </View>
+      )}
+
+      {/* Окно рецептов: монтируется только открытым — каждый раз
+          стартует со списка (или формы, если рецептов ещё нет) */}
+      {recipesOpen && (
+        <RecipesModal
+          onClose={() => setRecipesOpen(false)}
+          onLogRecipe={(item) => {
+            setRecipesOpen(false)
+            onAddRecipe(item)
+          }}
+        />
+      )}
 
       {/* окно быстрой записи: пилюли приёмов + калории + название */}
       <Modal
@@ -450,11 +547,10 @@ export function MealPlanCard({ onAdd, onViewAll }) {
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Куда записать?
             </Text>
-            <MealTabs
-              meals={[...MEALS, ...customMeals.map(customMealCard)]}
-              mealId={qMealId}
-              onChange={setQMealId}
-            />
+            {/* Только базовые приёмы (отзыв Кати: «Перекус 2/3/4 туда
+                не добавлять» — в свои перекусы записывают через «+» их
+                секции) */}
+            <MealTabs meals={MEALS} mealId={qMealId} onChange={setQMealId} />
 
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
               Калории
