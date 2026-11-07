@@ -393,13 +393,17 @@ if ($before -ne $after) {
     $installReason = 'Прошлая установка библиотек оборвалась - докачиваю'
 } else {
     # Свежесть по дате: git переписывает package-lock.json только при
-    # реальных изменениях зависимостей, поэтому если он новее самой
-    # установки node_modules - библиотеки старее кода и могут ломать его.
+    # реальных изменениях зависимостей, поэтому если он новее последней
+    # успешной установки - библиотеки старее кода и могут ломать его.
+    # Сравниваем с маркером установки, а не с папкой expo: npm install
+    # без изменений не трогает папки библиотек, и сравнение с папкой
+    # запускало установку заново при каждом запуске скрипта (случай
+    # Кати: «Библиотеки старше файла зависимостей» на каждом запуске).
     $lockFile = Join-Path $proj 'package-lock.json'
     if (Test-Path $lockFile) {
         $lockTime = (Get-Item $lockFile).LastWriteTimeUtc
-        $nmTime = (Get-Item $nmExpo).LastWriteTimeUtc
-        if ($lockTime -gt $nmTime) {
+        $markTime = (Get-Item $okMark).LastWriteTimeUtc
+        if ($lockTime -gt $markTime) {
             $installReason = 'Библиотеки старше файла зависимостей'
         }
     }
@@ -423,10 +427,16 @@ if ($installReason) {
     if (Test-Path $okMark) { Remove-Item $okMark -Force -ErrorAction SilentlyContinue }
     # EAP=Stop ломает нативный stderr через 2>&1 (NativeCommandError) -
     # на время установки переключаем на Continue (вывод npm сохраняем
-    # в переменную, чтобы распознать нехватку места)
+    # в переменную, чтобы распознать нехватку места). Строки stderr npm
+    # приходят как ErrorRecord - PowerShell рисует их красной ошибкой
+    # «NativeCommandError» (случай Кати: пугающий красный блок из-за
+    # безобидного npm warn allow-scripts). ForEach-Object { "$_" } превращает
+    # их обратно в обычный текст. --no-audit --no-fund убирают блок
+    # «23 vulnerabilities ... run npm audit fix» - запуск npm audit fix
+    # --force на проекте Expo ломает зависимости.
     $prevEap = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    & npm install 2>&1 | Tee-Object -Variable npmLog
+    & npm install --no-audit --no-fund 2>&1 | ForEach-Object { "$_" } | Tee-Object -Variable npmLog
     $ErrorActionPreference = $prevEap
     if ($LASTEXITCODE -eq 0) {
         New-Item -ItemType File -Path $okMark -Force | Out-Null
