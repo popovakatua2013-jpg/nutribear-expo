@@ -13,6 +13,11 @@
 // «+ Свой замер». Ниже — карточка «Общий прогресс» (датчик ScoreGauge,
 // подпись и звёзды — bodyProgressScore). Поверхность карточек —
 // фиолетовая, одинаковая с ИМТ-блоком выше.
+// История записей: журнал всегда лежал в хранилище (по нему «Сейчас»,
+// «Изменение» и линия), но смотреть его было негде (вопрос Кати:
+// «ввожу повторно данные — где хранится история?») — теперь в футере
+// таблицы кнопка «История»: все записи по дням, запись с опечаткой
+// можно удалить (MeasurementHistoryModal).
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -33,12 +38,14 @@ import {
   Trash2,
   Waves,
   X,
+  History,
 } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
 import { bodyProgressScore, fmtDecimal } from '@/lib/data/bmi'
 import { ScoreGauge } from './ScoreGauge'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
+import { MeasurementHistoryModal } from './MeasurementHistoryModal'
 import { useToast } from '../ui/Toast'
 
 const CUSTOM_COLOR = '#4ADE80'
@@ -95,6 +102,8 @@ export function MeasurementsCard() {
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const weights = useProfileStore((s) => s.weights)
   const [open, setOpen] = useState(false)
+  // Окно истории записей (кнопка в футере таблицы)
+  const [histOpen, setHistOpen] = useState(false)
   // Секция развёрнута по умолчанию (отзыв Кати) — не храним в сторe:
   // состояние локальное, свернуть можно тапом по шапке
   const [secOpen, setSecOpen] = useState(true)
@@ -170,6 +179,17 @@ export function MeasurementsCard() {
       minute: '2-digit',
     }).format(new Date(Math.max(...times)))
   }, [measurements])
+
+  // Для окна истории: ВСЕ замеры (включая скрытые галочкой) с иконками —
+  // записи скрытых тоже живые данные, в истории их видно с пометкой
+  const histItems = useMemo(
+    () =>
+      allItems(customs).map((m) => ({
+        ...m,
+        Icon: m.custom ? Ruler : MEAS_ICONS[m.key] || Ruler,
+      })),
+    [customs]
+  )
 
   return (
     <View accessibilityLabel="Замеры тела" className="gap-2.5">
@@ -339,7 +359,9 @@ export function MeasurementsCard() {
           </Pressable>
         ))}
 
-        {/* Футер: когда что-то измерялось последний раз */}
+        {/* Футер: когда что-то измерялось последний раз + кнопка
+            «История» — журнал всех записей по дням (вопрос Кати:
+            «где хранится история?» — смотреть её было негде) */}
         <View className="mt-1.5 flex-row items-center gap-1.5 border-t border-white/[0.07] pt-2">
           <Info size={13} color="#8B96B8" />
           <Text
@@ -351,6 +373,21 @@ export function MeasurementsCard() {
               ? `Последнее обновление: ${lastUpdated}`
               : 'Пока нет замеров — нажмите «+ Добавить»'}
           </Text>
+          <Pressable
+            onPress={() => setHistOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Открыть историю замеров"
+            hitSlop={6}
+            className="shrink-0 flex-row items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 active:opacity-70"
+          >
+            <History size={12} color="#8DABFF" />
+            <Text
+              maxFontSizeMultiplier={1.2}
+              className="font-bold text-[12.5px] text-[#8DABFF]"
+            >
+              История
+            </Text>
+          </Pressable>
         </View>
       </View>
         </>
@@ -391,6 +428,11 @@ export function MeasurementsCard() {
       )}
 
       <MeasurementsModal open={open} onClose={() => setOpen(false)} />
+      <MeasurementHistoryModal
+        open={histOpen}
+        onClose={() => setHistOpen(false)}
+        items={histItems}
+      />
     </View>
   )
 }
