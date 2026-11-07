@@ -42,6 +42,10 @@ const GOAL_KEY = { steps: 'steps', kcal: 'kcal', waterMl: 'waterMl', burned: 'bu
 const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] // столбцы теплокарты
 const DOT = 13 // размер точки теплокарты
 const GAP = 3 // промежуток
+// Ширина колонки теплокарты: подпись «Пн…Вс» при 13px не влезает в
+// ширину точки и переносится на две строки («П» / «н» — скрин Кати),
+// поэтому колонка шире точки, точка — по центру колонки
+const COL = 18
 const CHART_H = 112 // высота графика по дням
 const BUBBLE_H = 18 // запас сверху под подпись максимума
 
@@ -324,13 +328,14 @@ export function MetricHistoryModal({
                         <Text className="mb-1.5 px-1 font-sans text-[15px] font-semibold uppercase tracking-wide text-bear-sub">
                           По дням недели
                         </Text>
-                        <View style={{ width: 7 * DOT + 6 * GAP }}>
+                        <View style={{ width: 7 * COL + 6 * GAP }}>
                           <View style={{ flexDirection: 'row', gap: GAP }}>
                             {WD.map((w) => (
                               <Text
                                 key={w}
+                                numberOfLines={1}
                                 className="text-center font-sans text-[13px] text-bear-dim"
-                                style={{ width: DOT }}
+                                style={{ width: COL }}
                               >
                                 {w}
                               </Text>
@@ -340,25 +345,26 @@ export function MetricHistoryModal({
                             <View key={ri} style={{ flexDirection: 'row', gap: GAP, marginTop: GAP }}>
                               {week.map((cell, ci) =>
                                 cell ? (
-                                  <Pressable
-                                    key={cell.key}
-                                    onPress={() => setDayKey(cell.key)}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={`${cell.label}: ${metric.fmt(cell[metric.key] || 0)}. Тап — сводка дня`}
-                                    style={{
-                                      width: DOT,
-                                      height: DOT,
-                                      borderRadius: 4,
-                                      backgroundColor: levelColor(
-                                        metric,
-                                        dayLevel(metric.key, cell[metric.key] || 0, goals[GOAL_KEY[metric.key]] || 0)
-                                      ),
-                                      borderWidth: cell.key === todayKey ? 1 : 0,
-                                      borderColor: 'rgba(255,255,255,0.35)',
-                                    }}
-                                  />
+                                  <View key={cell.key} style={{ width: COL, alignItems: 'center' }}>
+                                    <Pressable
+                                      onPress={() => setDayKey(cell.key)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`${cell.label}: ${metric.fmt(cell[metric.key] || 0)}. Тап — сводка дня`}
+                                      style={{
+                                        width: DOT,
+                                        height: DOT,
+                                        borderRadius: 4,
+                                        backgroundColor: levelColor(
+                                          metric,
+                                          dayLevel(metric.key, cell[metric.key] || 0, goals[GOAL_KEY[metric.key]] || 0)
+                                        ),
+                                        borderWidth: cell.key === todayKey ? 1 : 0,
+                                        borderColor: 'rgba(255,255,255,0.35)',
+                                      }}
+                                    />
+                                  </View>
                                 ) : (
-                                  <View key={`${ri}-${ci}`} style={{ width: DOT, height: DOT }} />
+                                  <View key={`${ri}-${ci}`} style={{ width: COL, height: DOT }} />
                                 )
                               )}
                             </View>

@@ -20,6 +20,7 @@ import {
   scoreStars,
   TIPS_OF_DAY,
   tipOfDay,
+  tdeeExplainer,
 } from '@/lib/data/bmi'
 
 describe('calcBmi', () => {
@@ -402,5 +403,35 @@ describe('normStreakWeeks', () => {
     expect(normStreakWeeks(70, [], 175)).toBe(0)
     expect(normStreakWeeks(0, [{ date: daysAgo(1), kg: 70 }], 175)).toBe(0)
     expect(normStreakWeeks(70, [{ date: daysAgo(1), kg: 70 }], 0)).toBe(0)
+  })
+})
+
+describe('tdeeExplainer — пояснение нормы от активности', () => {
+  test('живые цифры: базовый обмен × коэффициент ≈ норма', () => {
+    const t = tdeeExplainer('female', 1375, 1.375, 1891)
+    expect(t).toContain('1375 × 1,375 ≈ 1891 ккал')
+    expect(t).toContain('активност')
+  })
+
+  test('коэффициенты без хвоста: 1,2 · 1,55 · 1,9', () => {
+    expect(tdeeExplainer('female', 1400, 1.2, 1680)).toContain('× 1,2 ')
+    expect(tdeeExplainer('female', 1400, 1.55, 2170)).toContain('× 1,55 ')
+    expect(tdeeExplainer('female', 1400, 1.9, 2660)).toContain('× 1,9 ')
+  })
+
+  test('связь с целью: «Похудение» минус ~500, пол заземляет минимум', () => {
+    const f = tdeeExplainer('female', 1375, 1.375, 1891)
+    expect(f).toContain('«Моей цели»')
+    expect(f).toContain('~500 ккал')
+    expect(f).toContain('не ниже 1200 ккал')
+    const m = tdeeExplainer('male', 1700, 1.375, 2338)
+    expect(m).toContain('не ниже 1500 ккал')
+  })
+
+  test('мягкий тон: без имён формул (их убирали в 4d225ae)', () => {
+    const t = tdeeExplainer('female', 1375, 1.375, 1891)
+    expect(t).not.toContain('Миффлин')
+    expect(t).not.toContain('Сан Жеор')
+    expect(t).not.toContain('Девайн')
   })
 })
