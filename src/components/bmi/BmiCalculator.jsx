@@ -7,21 +7,27 @@
 // карточки: сворачивание шапкой прячет и их — калькулятор можно закрыть
 // после ввода данных (решение пользователя). Строка «Жир в организме»
 // красится по уровню жира: норма — зелёным, предожирение — оранжевым,
-// ожирение — красным (строка и цифры, bodyFatLevel). Под чипами
-// активности — краткое пояснение, как активность участвует в суточной
-// норме и как от неё считается цель в «Моей цели» (отзыв Кати, «делаем»;
-// это НЕ возвращение подсказки-перечисления формул — её убрали в 4d225ae:
-// имена формул не называем).
+// ожирение — красным (строка и цифры, bodyFatLevel).
+// Уровень активности — ВЫПАДАЮЩИЙ СПИСОК (запрос Кати): вместо чипов —
+// поле с текущим уровнем, тап открывает шторку со всеми уровнями
+// (полная подпись + подсказка + коэффициент, галочка у выбранного).
+// Подсказка «как считается норма» — СВЁРНУТА ПО УМОЛЧАНИЮ (запрос Кати):
+// строка со значком-лампочкой и шевроном, тап раскрывает живые цифры
+// (это НЕ возвращение подсказки-перечисления формул — её убрали в
+// 4d225ae: имена формул не называем).
 //
 // Формулы: ИМТ — ВОЗ; базовый обмен — Миффлин — Сан Жеор;
 // идеальный вес — Девайн; % жира — оценка Дёренберга; TDEE = BMR × коэффициент.
 
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
-import { Calculator, ChevronDown, ChevronUp } from 'lucide-react-native'
+import { Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Calculator, Check, ChevronDown, ChevronUp, Lightbulb, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useToast } from '../ui/Toast'
 import {
   calcBmi,
@@ -37,10 +43,6 @@ import {
   bodyFatLevel,
   tdeeExplainer,
 } from '@/lib/data/bmi'
-
-const GRAD = ['#4D7CFE', '#8B5CF6', '#A45BFF']
-const ACTIVE_BORDER = 'rgba(108,140,255,0.6)'
-const CHIP_GRAD = ['rgba(108,140,255,0.20)', 'rgba(108,140,255,0.08)']
 
 // «72,5» → 72.5 (русская запятая — тоже десятичный разделитель)
 const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
@@ -63,6 +65,23 @@ export function BmiCalculator() {
   const [showResult, setShowResult] = useState(false)
   // Свёрнут по умолчанию: тап по шапке раскрывает поля калькулятора
   const [open, setOpen] = useState(false)
+  // Шторка выпадающего списка уровней активности (запрос Кати)
+  const [actOpen, setActOpen] = useState(false)
+  // Подсказка про норму — свёрнута по умолчанию (запрос Кати):
+  // видна строка-шапка с лампочкой, цифры раскрываются тапом
+  const [hintOpen, setHintOpen] = useState(false)
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  const insets = useSafeAreaInsets()
+
+  // Выбранный уровень — для поля выпадающего списка
+  const currentLevel = TDEE_LEVELS.find((l) => l.id === activityId) || null
+
+  // Тап по уровню в шторке: выбираем, закрываем, лёгкая вибрация
+  function pickActivity(id) {
+    setActivityId(id)
+    setActOpen(false)
+    if (haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+  }
 
   // Один раз подтягиваем биоданные из завершённого онбординга, если профиль
   // их ещё не получал (старые пользователи без sex/age в хранилище)
@@ -280,48 +299,155 @@ export function BmiCalculator() {
             </Text>
           </View>
 
-          {/* Уровень активности — участвует в суточной норме */}
+          {/* Уровень активности — выпадающий список (запрос Кати):
+              поле с текущим уровнем, тап открывает шторку со всеми
+              уровнями; выбор применяется кнопкой «Рассчитать» */}
           <Text className="mt-3 font-medium text-[16px] text-bear-sub">Уровень активности</Text>
-          <View className="mt-1.5 flex-row flex-wrap gap-2">
+          <Pressable
+            onPress={() => setActOpen(true)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: actOpen }}
+            accessibilityLabel={
+              currentLevel
+                ? `Уровень активности: ${currentLevel.label}. Открыть список`
+                : 'Уровень активности — выбрать'
+            }
+            className="mt-1.5 flex-row items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2.5 active:opacity-80"
+          >
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}
+              className="min-w-0 flex-1 font-semibold text-[16px] text-white"
+            >
+              {currentLevel ? currentLevel.label : 'Выберите…'}
+            </Text>
+            <ChevronDown size={18} color="#C4B5FD" />
+          </Pressable>
+
+          {/* Подсказка «как считается норма» — СВЁРНУТА по умолчанию
+              (запрос Кати): значок-лампочка перед подсказкой, шеврон
+              справа; тап раскрывает живые цифры калькулятора — базовый
+              обмен × коэффициент ≈ суточная норма и связь с целью в
+              «Моей цели». Без имён формул — ту подсказку убирали в
+              4d225ae, сюда вернули только суть про активность */}
+          <Pressable
+            onPress={() => setHintOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: hintOpen }}
+            accessibilityLabel={
+              hintOpen
+                ? 'Свернуть подсказку: как считается суточная норма'
+                : 'Развернуть подсказку: как считается суточная норма'
+            }
+            className="mt-2.5 flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5 active:opacity-80"
+          >
+            <Lightbulb size={16} color="#FBBF24" />
+            <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.15}
+              className="min-w-0 flex-1 font-semibold text-[14px] text-bear-soft"
+            >
+              Как считается суточная норма?
+            </Text>
+            {hintOpen ? (
+              <ChevronUp size={16} color="#8B96B8" />
+            ) : (
+              <ChevronDown size={16} color="#8B96B8" />
+            )}
+          </Pressable>
+          {hintOpen && (
+            <Text
+              accessibilityLabel="Пояснение: как активность участвует в суточной норме и как от неё считается цель"
+              maxFontSizeMultiplier={1.25}
+              className="mt-1.5 px-1 font-sans text-[13.5px] leading-snug text-bear-sub"
+            >
+              {tdeeExplainer(sex, bmr, tdeeMult(activityId), tdee)}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Шторка выпадающего списка уровней активности: тёмная панель
+          снизу в стиле окон приложения (#150F2D, фиолетовая кромка),
+          у каждого уровня — полная подпись, подсказка и коэффициент,
+          галочка у выбранного. Выбор закрывает шторку и живо обновляет
+          подсказку и «Суточную норму» (профиль сохранит «Рассчитать») */}
+      <Modal visible={actOpen} transparent animationType="fade" onRequestClose={() => setActOpen(false)}>
+        <Pressable
+          accessibilityLabel="Закрыть список уровней активности"
+          className="flex-1 justify-end bg-black/60"
+          onPress={() => setActOpen(false)}
+        >
+          <Pressable
+            className="overflow-hidden rounded-t-[28px] border-t px-2 pb-2"
+            style={{ backgroundColor: '#150F2D', borderColor: 'rgba(168,85,247,0.35)' }}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {/* Ручка-полоска */}
+            <View className="items-center pt-2.5">
+              <View className="h-1 w-10 rounded-full bg-white/15" />
+            </View>
+            <View className="flex-row items-center gap-2 px-3 pb-1 pt-2">
+              <View className="min-w-0 flex-1">
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.15} className="font-bold text-[19px] tracking-tight text-bear-text">
+                  Уровень активности
+                </Text>
+                <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13.5px] text-bear-dim">
+                  Умножает базовый обмен в суточной норме
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setActOpen(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Закрыть"
+                className="shrink-0 rounded-full bg-white/[0.06] p-1.5 active:opacity-70"
+              >
+                <X size={18} color="#C4B5FD" />
+              </Pressable>
+            </View>
             {TDEE_LEVELS.map((l) => {
-              const active = activityId === l.id
+              const active = l.id === activityId
               return (
                 <Pressable
                   key={l.id}
-                  onPress={() => setActivityId(l.id)}
+                  onPress={() => pickActivity(l.id)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
-                  accessibilityLabel={l.label}
-                  className="overflow-hidden rounded-full border"
-                  style={{ borderColor: active ? ACTIVE_BORDER : 'rgba(255,255,255,0.10)' }}
+                  accessibilityLabel={`${l.label}, коэффициент ${String(l.mult).replace('.', ',')}`}
+                  className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:opacity-80"
+                  style={active ? { backgroundColor: 'rgba(139,92,246,0.14)' } : null}
                 >
-                  {active ? (
-                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={CHIP_GRAD}>
-                      <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-white">{l.label}</Text>
-                    </LinearGradient>
-                  ) : (
-                    <View className="bg-white/5">
-                      <Text className="px-3.5 py-2 font-medium text-[16.5px] text-bear-sub">{l.label}</Text>
-                    </View>
-                  )}
+                  <View
+                    className="h-6 w-6 shrink-0 items-center justify-center rounded-full border"
+                    style={
+                      active
+                        ? { backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }
+                        : { borderColor: 'rgba(255,255,255,0.18)' }
+                    }
+                  >
+                    {active && <Check size={15} color="#FFFFFF" />}
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text numberOfLines={1} maxFontSizeMultiplier={1.15} className="font-semibold text-[16px] text-white">
+                      {l.label}
+                    </Text>
+                    {l.hint ? (
+                      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="mt-0.5 font-sans text-[12.5px] text-bear-dim">
+                        {l.hint}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[14px] text-[#C4B5FD]">
+                    {`×${String(l.mult).replace('.', ',')}`}
+                  </Text>
                 </Pressable>
               )
             })}
-          </View>
-
-          {/* Как считается норма (отзыв Кати, «делаем»): живые цифры
-              калькулятора — базовый обмен × коэффициент ≈ суточная норма
-              и связь с целью в «Моей цели». Без имён формул — ту подсказку
-              убирали в 4d225ae, сюда вернули только суть про активность */}
-          <Text
-            accessibilityLabel="Пояснение: как активность участвует в суточной норме и как от неё считается цель"
-            maxFontSizeMultiplier={1.25}
-            className="mt-2.5 font-sans text-[13.5px] leading-snug text-bear-sub"
-          >
-            {tdeeExplainer(sex, bmr, tdeeMult(activityId), tdee)}
-          </Text>
-        </View>
-      )}
+            {/* Отступ под системную жестовую полосу */}
+            <View style={{ height: Math.max(12, insets.bottom) }} />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   )
 }
