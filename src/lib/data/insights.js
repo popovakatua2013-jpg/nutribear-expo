@@ -13,9 +13,13 @@
 //   3. water-low  — воды меньше половины нормы все 3 дня
 //   4. kcal-low   — калории ниже 70% цели все 3 дня (голодание тормозит)
 //   5. fib-low    — клетчатка ниже 60% нормы все 3 дня
+//   6. sleep-low  — последние 3 записанные ночи короче нормы по сну
+//      (цель goals.sleepMin, по умолчанию 7 ч) — трекер «лёг/встал»;
+//      если вес при этом стоит — отдельная версия с «вес стоит»
 // Приоритет сверху вниз: показываем одну — самую важную.
 
 import { FIBER_NORM } from './nutrition'
+import { SLEEP_NORM_MIN } from './sleep'
 
 // Автонормы от цели по калориям — как в «Съедено за сегодня»
 // (тарелка 20/30/50 %, клетчатка 25 г)
@@ -56,20 +60,38 @@ const THREE_DAYS_WORD = 'дня'
 // Главная подсказка: { id, title, text } | null
 export function foodInsight({ rows = [], goals = null, weights = [] }) {
   const norms = insightNorms(goals)
+  // Ночи по трекеру сна: строки с записанным sleepMin (в minutes).
+  // Ночь живёт в дне пробуждения — считаем по последним записанным.
+  // Правило сна независимо от дневника питания: вести еду не обязательно
+  const nights = rows.filter((r) => r && Number(r.sleepMin) > 0).slice(-3)
+  const sleepGoalMin =
+    goals && Number(goals.sleepMin) > 0 ? Number(goals.sleepMin) : SLEEP_NORM_MIN
+  const sleepLow = nights.length >= 3 && nights.every((r) => Number(r.sleepMin) < sleepGoalMin)
+
   // Только ведённые дни — пустые не считаем отклонением
   const led = rows.filter((r) => r && (Number(r.kcal) > 0 || Number(r.waterMl) > 0))
-  if (led.length < 3) return null
+  // Пищевых правил нет (меньше 3 ведённых дней) и ночей мало — подсказки
+  // пока не о чем: не выдумываем проблемы
+  if (led.length < 3 && nights.length < 3) return null
   const last3 = led.slice(-3)
 
+  // Пищевые правила считаются только по ТРЁМ ведённым дням — даже когда
+  // сработало правило сна (например, ведено 2 дня и 3 короткие ночи:
+  // подсказка про сон, а не про белок по двум дням)
+  const enoughFood = led.length >= 3
   const pLow =
+    enoughFood &&
     norms.p > 0 && last3.every((r) => Number(r.p) < norms.p * 0.8)
   const kcalOver =
-    norms.kcal > 0 && last3.every((r) => Number(r.kcal) > norms.kcal * 1.15)
+    enoughFood && norms.kcal > 0 && last3.every((r) => Number(r.kcal) > norms.kcal * 1.15)
   const waterLow =
+    enoughFood &&
     norms.waterMl > 0 && last3.every((r) => Number(r.waterMl) < norms.waterMl * 0.5)
   const kcalLow =
+    enoughFood &&
     norms.kcal > 0 && last3.every((r) => Number(r.kcal) > 0 && Number(r.kcal) < norms.kcal * 0.7)
   const fibLow =
+    enoughFood &&
     norms.fib > 0 && last3.every((r) => Number(r.fib) < norms.fib * 0.6)
 
   if (pLow) {
@@ -83,6 +105,20 @@ export function foodInsight({ rows = [], goals = null, weights = [] }) {
           id: 'protein-low',
           title: 'Мало белка',
           text: `Белка ниже нормы 3 ${THREE_DAYS_WORD} подряд. Добавьте творог, яйца, рыбу или бобовые — белок держит сытость и помогает весу уходить.`,
+        }
+  }
+  if (sleepLow) {
+    const goalH = Math.round((sleepGoalMin / 60) * 10) / 10
+    return weightStands(weights)
+      ? {
+          id: 'sleep-low-stall',
+          title: 'Мало сна — и вес стоит',
+          text: `3 ночи подряд короче ${goalH} ч, а вес не двигается. Недосып усиливает аппетит и тормозит вес: сегодня лечь пораньше — и организм скажет спасибо.`,
+        }
+      : {
+          id: 'sleep-low',
+          title: 'Мало сна',
+          text: `3 ночи подряд короче ${goalH} ч. Недосып усиливает голод и подтачивает силы: попробуйте сегодня лечь на час раньше — цель 7–8 часов.`,
         }
   }
   if (kcalOver) {

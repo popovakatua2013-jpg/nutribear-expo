@@ -12,10 +12,12 @@ import {
   WEIGH_PHRASES,
   GONE_PHRASES,
   WORKOUT_PHRASES,
+  SLEEP_PHRASES,
   waterPokeMessage,
   weighPokeMessage,
   gonePokeBody,
   workoutPokeMessage,
+  sleepPokeMessage,
 } from '@/lib/bearPhrases'
 
 const POOL0 = () => 0 // random-стаб: всегда первая фраза пула
@@ -270,6 +272,26 @@ describe('вторая серия: вода, весы, «пропал», тре�
       expect(p).not.toMatch(/забыл[аа]?\b/)
       expect(p).not.toMatch(/пропал[аа]?[,.]/)
       expect(p).not.toMatch(/ты (ушёл|ушла|сделал|сделала|сдался|сдалась)\b/)
+    }
+  })
+
+  test('сон: soft — спокойный текст, bear — живой пул без подкола', () => {
+    const soft = sleepPokeMessage({ style: 'soft' })
+    expect(soft.title).toBe('🌙 Пора ложиться')
+    expect(soft.body).toContain('7–8 часов')
+    expect(SLEEP_PHRASES).not.toContain(soft.body)
+    const bear = sleepPokeMessage({ style: 'bear', random: POOL0 })
+    expect(bear.title).toBe('🌙 Пора спать')
+    expect(bear.body).toBe(SLEEP_PHRASES[0])
+  })
+
+  test('сон: фразы вечерние — без рода, мягкий тон (без «лентяй/опять»)', () => {
+    for (const p of SLEEP_PHRASES) {
+      expect(p).not.toMatch(/лентя/)
+      expect(p).not.toMatch(/опять не/)
+      expect(p).not.toMatch(/ты (не|забыл|забыла)\b/)
+      // вечерний пинок — про сон, не про еду
+      expect(p).not.toMatch(/булоч|тортик/)
     }
   })
 })

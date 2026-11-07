@@ -7,8 +7,8 @@
 // недели; сводка дня открывается тапом по дню внутри окна. Кнопка
 // «Итоги» — шеринговая PNG-карточка периода (медведь + цифры + сравнение).
 
-import { useMemo, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { useEffect, useMemo, useState } from 'react'
+import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
 import { Share2 } from 'lucide-react-native'
 import { GoalCelebration } from './GoalCelebration'
 import { ReportCards } from './ReportCards'
@@ -22,6 +22,7 @@ import { DayShareCard } from './DayShareCard'
 import { Pills } from '../../ui/Pills'
 import { periodTotals } from '@/lib/data/reports'
 import { history, RANGES } from '@/lib/data/activity'
+import { consumeOpenSleepModal } from '@/lib/navEvents'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
 
@@ -41,6 +42,15 @@ export function ReportsSection({
   const [historyMetric, setHistoryMetric] = useState(null)
   const savedDays = useHistoryStore((s) => s.days) // карта истории: { 'ГГГГ-ММ-ДД': … } — для стрика
   const streak = streakOf(savedDays)
+
+  // Тап по вечернему пинку «пора спать» ведёт сюда и открывает окно
+  // записи сна: живое событие (секция уже смонтирована) + отложенный
+  // флаг первым маунтом (вкладка Активности ленивая) — как у окна веса
+  useEffect(() => {
+    if (consumeOpenSleepModal()) setSleepOpen(true)
+    const sub = DeviceEventEmitter.addListener('nutribear/open-sleep', () => setSleepOpen(true))
+    return () => sub.remove()
+  }, [])
 
   // Дневные строки периода — один обход истории на все блоки секции:
   // дисциплина, рекорды карточек, панель истории читают одни и те же rows

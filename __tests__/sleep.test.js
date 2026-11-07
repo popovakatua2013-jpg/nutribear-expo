@@ -21,6 +21,7 @@ const { EMPTY_DAY, dayKeyOf, useHistoryStore } = require('@/store/useHistoryStor
 const { DEFAULT_GOALS } = require('@/store/useGoalsStore')
 const { history } = require('@/lib/data/activity')
 const { discipline, dayHasRecords, periodTotals } = require('@/lib/data/reports')
+const { foodInsight, weightStands } = require('@/lib/data/insights')
 
 // Ключ дня со сдвигом: keyAt(0) — сегодня, keyAt(-1) — вчера
 function keyAt(offsetDays) {
@@ -206,5 +207,115 @@ describe('Сон в отчётах: итоги, дисциплина, «ведё
     expect(dayLevel('sleepMin', 300, 420)).toBe('mid')
     expect(dayLevel('sleepMin', 60, 420)).toBe('low')
     expect(dayLevel('sleepMin', 0, 420)).toBe('none')
+  })
+})
+
+describe('Подсказка «мало сна» в персональных подсказках', () => {
+  const now = new Date()
+  const iso = (offsetDays) => new Date(now.getTime() - offsetDays * 86400000).toISOString()
+
+  // Вес стоит: два свежих взвешивания с разницей ≤ 0,3 кг (weightStands)
+  const standingWeights = [
+    { kg: 70.0, date: iso(0) },
+    { kg: 70.2, date: iso(3) },
+  ]
+
+  // Ночь короткая/долгая — для компактности строк
+  const night = (min) => ({ kcal: 0, waterMl: 0, p: 0, fib: 0, sleepMin: min })
+
+  test('3 короткие ночи + вес стоит → «Мало сна — и вес стоит»', () => {
+    const rows = [night(390), night(400), night(410)]
+    const hint = foodInsight({ rows, goals: null, weights: standingWeights })
+    expect(hint).not.toBeNull()
+    expect(hint.id).toBe('sleep-low-stall')
+    expect(hint.title).toBe('Мало сна — и вес стоит')
+    expect(hint.text).toContain('3 ночи подряд короче 7 ч')
+  })
+
+  test('3 короткие ночи без данных веса → «Мало сна» без «вес стоит»', () => {
+    const hint = foodInsight({ rows: [night(350), night(400), night(419)], goals: null, weights: [] })
+    expect(hint.id).toBe('sleep-low')
+    expect(hint.title).toBe('Мало сна')
+    expect(hint.text).not.toContain('вес не двигается')
+  })
+
+  test('меньше 3 записанных ночей — подсказки нет (не выдумываем проблемы)', () => {
+    expect(foodInsight({ rows: [night(300), night(300)], goals: null, weights: [] })).toBeNull()
+  })
+
+  test('3 ночи в норме — подсказки нет', () => {
+    expect(
+      foodInsight({ rows: [night(420), night(480), night(450)], goals: null, weights: [] })
+    ).toBeNull()
+  })
+
+  test('своя цель по сну уважается: при цели 6 ч ночи 6:10 — уже норма', () => {
+    const goals = { ...DEFAULT_GOALS, sleepMin: 360 }
+    const short = foodInsight({ rows: [night(350), night(355), night(340)], goals, weights: [] })
+    expect(short.id).toBe('sleep-low')
+    expect(short.text).toContain('6 ч')
+    const ok = foodInsight({ rows: [night(360), night(370), night(380)], goals, weights: [] })
+    expect(ok).toBeNull()
+  })
+
+  test('правило сна работает БЕЗ дневника питания (вести еду не обязательно)', () => {
+    // ни один день не ведён по еде/воде, но 3 ночи записаны
+    const hint = foodInsight({ rows: [night(300), night(300), night(300)], goals: null, weights: [] })
+    expect(hint.id).toBe('sleep-low')
+  })
+
+  test('пищевые правила не срабатывают по 2 дням при 3 коротких ночах', () => {
+    // 2 ведённых дня с низким белком + 3 короткие ночи → про сон,
+    // а не про белок (белок считается только по трём ведённым дням)
+    const rows = [
+      { kcal: 1500, waterMl: 1500, p: 20, fib: 5, sleepMin: 0 },
+      { kcal: 1500, waterMl: 1500, p: 20, fib: 5, sleepMin: 0 },
+      night(300),
+      night(300),
+      night(300),
+    ]
+    const hint = foodInsight({ rows, goals: { ...DEFAULT_GOALS, kcal: 2000 }, weights: [] })
+    expect(hint.id).toBe('sleep-low')
+  })
+
+  test('приоритет: мало белка И мало сна — побеждает белок (пример Кати)', () => {
+    const rows = [
+      { kcal: 1500, waterMl: 1500, p: 20, fib: 10, sleepMin: 300 },
+      { kcal: 1500, waterMl: 1500, p: 20, fib: 10, sleepMin: 300 },
+      { kcal: 1500, waterMl: 1500, p: 20, fib: 10, sleepMin: 300 },
+    ]
+    const hint = foodInsight({ rows, goals: { ...DEFAULT_GOALS, kcal: 2000 }, weights: standingWeights })
+    expect(hint.id).toBe('protein-low-stall')
+  })
+
+  test('weightStands: вес движется — вариант «вес стоит» не показывается', () => {
+    const moving = [
+      { kg: 71.5, date: iso(0) },
+      { kg: 70.2, date: iso(3) },
+    ]
+    expect(weightStands(moving)).toBe(false)
+    const hint = foodInsight({ rows: [night(300), night(300), night(300)], goals: null, weights: moving })
+    expect(hint.id).toBe('sleep-low')
+  })
+})
+
+describe('Пинок «пора спать»: настройки в сторе напоминаний', () => {
+  test('блок sleep по умолчанию — выключен, время 22:30', () => {
+    const { useActivityStore } = require('@/store/useActivityStore')
+    expect(useActivityStore.getState().reminder.sleep).toEqual({
+      enabled: false,
+      time: '22:30',
+    })
+  })
+
+  test('setReminder включает пинок, не трогая остальное', () => {
+    const { useActivityStore } = require('@/store/useActivityStore')
+    const before = useActivityStore.getState().reminder.exercise
+    useActivityStore.getState().setReminder({ sleep: { enabled: true, time: '23:00' } })
+    const r = useActivityStore.getState().reminder
+    expect(r.sleep).toEqual({ enabled: true, time: '23:00' })
+    expect(r.exercise).toEqual(before) // соседние пинки не задеты
+    // вернуть как было
+    useActivityStore.getState().setReminder({ sleep: { enabled: false, time: '22:30' } })
   })
 })

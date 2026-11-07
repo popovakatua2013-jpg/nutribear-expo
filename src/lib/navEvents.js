@@ -42,3 +42,24 @@ export function consumeScrollToWeight() {
   pendingWeightScroll = false
   return was
 }
+
+// ─── Окно «Записать сон» (Отчёты → тап по карточке «Сон») ───────────
+// Тап по вечернему пинку «пора спать» ведёт на вкладку Активности и
+// сразу открывает окно записи сна. Тот же двойной механизм, что у веса:
+// живое событие для смонтированной секции + отложенный флаг, который
+// секция забирает первым маунтом (вкладка монтируется лениво).
+let pendingSleepModal = false
+
+export function requestOpenSleepModal() {
+  pendingSleepModal = true
+  try {
+    DeviceEventEmitter.emit('nutribear/open-sleep')
+  } catch {}
+}
+
+// Возвращает true, если открытие окна запрашивалось (и сбрасывает флаг)
+export function consumeOpenSleepModal() {
+  const was = pendingSleepModal
+  pendingSleepModal = false
+  return was
+}

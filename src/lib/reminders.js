@@ -25,7 +25,7 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
-import { requestOpenWeightModal } from '@/lib/navEvents'
+import { requestOpenWeightModal, requestOpenSleepModal } from '@/lib/navEvents'
 import {
   mealPokeMessage,
   mealStreaks,
@@ -34,6 +34,7 @@ import {
   weighPokeMessage,
   gonePokeBody,
   workoutPokeMessage,
+  sleepPokeMessage,
 } from '@/lib/bearPhrases'
 
 // Тихие часы для воды: напоминаем только с 8:00 до 23:00
@@ -129,6 +130,10 @@ async function ensureChannels() {
     })
     await Notifications.setNotificationChannelAsync('workout', {
       name: 'Напоминания о тренировках',
+      importance: Notifications.AndroidImportance.HIGH,
+    })
+    await Notifications.setNotificationChannelAsync('sleep', {
+      name: 'Напоминания о сне',
       importance: Notifications.AndroidImportance.HIGH,
     })
     await Notifications.setNotificationChannelAsync('day', {
@@ -429,6 +434,37 @@ async function scheduleWorkout(reminder) {
   }
 }
 
+// Сон: ежедневно в выбранное время (по умолчанию 22:30). Проверки
+// «уже записан?» нет — будущую ночь нельзя записать заранее, пинок
+// всегда уместен. Тап открывает окно «Записать сон» (navEvents)
+async function scheduleSleep(reminder) {
+  const sleep = reminder?.sleep
+  if (!sleep?.enabled) return
+  const t = parseTime(sleep.time)
+  if (!t) return
+  const sleepMsg = sleepPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'sleep-daily',
+      content: {
+        title: sleepMsg.title,
+        body: sleepMsg.body,
+        sound: 'default',
+        data: { kind: 'sleep' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: t.hour,
+        minute: t.minute,
+        timezone: deviceTimeZone(),
+        channelId: 'sleep',
+      },
+    })
+  } catch (e) {
+    console.warn('Напоминание о сне не запланировано:', e)
+  }
+}
+
 // Перепланировать все напоминания по текущим настройкам стора.
 // Сначала отменяем всё и планируем заново только включённое.
 let seq = 0
@@ -483,6 +519,9 @@ export async function rescheduleReminders() {
   // Тренировка: ежедневно в выбранное время
   await scheduleWorkout(reminder)
 
+  // Сон: ежедневно в выбранное время (вечерний пинок «пора спать»)
+  await scheduleSleep(reminder)
+
   // Утренняя сводка «Новый день» — не зависит от тумблеров напоминаний
   if (my !== seq) return
   await scheduleMorningSummary()
@@ -505,6 +544,7 @@ async function refreshDailyPokes() {
       'meal-dinner',
       'weigh-weekly',
       'workout-daily',
+      'sleep-daily',
     ]) {
       await Notifications.cancelScheduledNotificationAsync(id)
     }
@@ -514,6 +554,7 @@ async function refreshDailyPokes() {
   await scheduleMeals(reminder?.meals)
   await scheduleWeigh(reminder)
   await scheduleWorkout(reminder)
+  await scheduleSleep(reminder)
   await scheduleMorningSummary()
 }
 
@@ -539,6 +580,11 @@ function handleNotificationTap(data) {
     } else if (kind === 'exercise') {
       // Тап по пинку о тренировке — сразу в дневник тренировок
       router.navigate('/activity')
+    } else if (kind === 'sleep') {
+      // Тап по пинку «пора спать» — сразу окно «Записать сон» (сон
+      // за прошлую ночь удобно записать с утра, а вечером — просто лечь)
+      router.navigate('/activity')
+      requestOpenSleepModal()
     } else if (kind === 'day') {
       // Утренняя сводка: если в ней упоминался доктор — вела в аудит.
       // Открываем вкладку «Организм» — там Доктор Топтыгин и живёт

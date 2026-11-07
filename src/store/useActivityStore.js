@@ -44,6 +44,8 @@ export const useActivityStore = create(
       // weigh — еженедельное взвешивание: weekday 0=Пн…6=Вс, time «ЧЧ:ММ».
       // exercise — ежедневный пинок о тренировке: time «ЧЧ:ММ»; если занятие
       // уже записано в дневник тренировок, в момент срабатывания молчит
+      // sleep — вечерний пинок «пора спать» (трекер сна): time «ЧЧ:ММ»;
+      // проверок «уже записан?» нет — будущую ночь не записать заранее
       reminder: {
         enabled: false,
         everyMin: 60,
@@ -51,6 +53,7 @@ export const useActivityStore = create(
         meals: { enabled: false, breakfast: '08:30', lunch: '13:00', dinner: '19:00', style: 'bear' },
         weigh: { enabled: false, weekday: 5, time: '09:00' },
         exercise: { enabled: false, time: '18:00' },
+        sleep: { enabled: false, time: '22:30' },
       },
       // Встроенный шагомер: тумблер и дневная сумма хранятся (сумма —
       // вместе с dayKey, на новый день обнуляется в rollDay). Агент
@@ -146,13 +149,14 @@ export const useActivityStore = create(
     }),
     {
       name: 'nutribear-activity-v1',
-      version: 5,
+      version: 6,
       storage: createJSONStorage(() => AsyncStorage),
       // version 0→1: старый набор из 3 ёмкостей — добавляем «Кувшин 700».
       // version 1→2: напоминаниям о воде добавляем блок «meals» (приёмы пищи).
       // version 2→3: добавляем блок «weigh» (еженедельное взвешивание).
       // version 3→4: приёмам пищи добавляем «style» — медвежьи пинки.
       // version 4→5: добавляем блок «exercise» (пинок о тренировке).
+      // version 5→6: добавляем блок «sleep» (вечерний пинок «пора спать»).
       migrate: (state, version) => {
         if (version < 1 && state && Array.isArray(state.vessels)) {
           const isOld =
@@ -180,6 +184,9 @@ export const useActivityStore = create(
         }
         if (version < 5 && state && state.reminder && !state.reminder.exercise) {
           state.reminder.exercise = { enabled: false, time: '18:00' }
+        }
+        if (version < 6 && state && state.reminder && !state.reminder.sleep) {
+          state.reminder.sleep = { enabled: false, time: '22:30' }
         }
         return state
       },

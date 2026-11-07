@@ -35,7 +35,8 @@ export function FoodInsight() {
 
   const insight = useMemo(() => {
     // Прошлые 6 дней — из журнала питания (по ключу дня) и дневной
-    // истории (вода), сегодня — живые значения сторов
+    // истории (вода, сон из трекера «лёг/встал»), сегодня — живые
+    // значения сторов (сон сегодня уже лежит в истории дня)
     const byDay = nutrientsByDay(foodHistory)
     const todayKey = dayKeyOf()
     const rows = []
@@ -48,6 +49,7 @@ export function FoodInsight() {
         p: Number(n.p) || 0,
         fib: Number(n.fib) || 0,
         waterMl: key === todayKey ? waterMl : historyDays[key]?.waterMl || 0,
+        sleepMin: Number(historyDays[key]?.sleepMin) || 0,
       })
     }
     return foodInsight({ rows, goals, weights })
