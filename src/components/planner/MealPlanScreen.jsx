@@ -22,7 +22,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, Text, View } from 'react-native'
 import {
-  ChevronLeft, ChevronRight, ClipboardCheck, Copy, Plus, Trash2, X,
+  ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X,
 } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
@@ -43,9 +43,18 @@ const WEEKDAYS_FULL = ['Понедельник', 'Вторник', 'Среда',
 // Подсказка для пустой недели (исчезает, как только неделя заполнена)
 const HOW_STEPS = [
   'Выберите день в полосе Пн–Вс: заполненные дни помечены точкой',
-  'Тапните «+ добавить» у приёма — найдите продукт в базе или создайте своё блюдо',
-  'Тап по «100 г · 180 ккал» меняет порцию, кнопка «В дневник» переносит день в питание',
+  '«+ добавить» у приёма — найдите продукт: порция и ккал считаются сами, галочка «в покупки» — для того, чего нет дома',
+  'Тап по названию приёма — показать/скрыть блюда; тап по «80 г · 200 ккал» — изменить порцию',
 ]
+
+// «1 блюдо / 2 блюда / 5 блюд» — для строки приёма
+const dishWord = (n) => {
+  const m10 = Math.abs(Math.round(n)) % 10
+  const m100 = Math.abs(Math.round(n)) % 100
+  if (m10 === 1 && m100 !== 11) return 'блюдо'
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'блюда'
+  return 'блюд'
+}
 
 const dayKeyOfDate = (d) => {
   const p = (n) => String(n).padStart(2, '0')
@@ -61,6 +70,9 @@ export function MealPlanScreen() {
   const [picker, setPicker] = useState(null) // { dayIdx, mealId }
   const [copyFrom, setCopyFrom] = useState(null) // idx дня-источника
   const [gramsFor, setGramsFor] = useState(null) // { dayIdx, mealId, itemId }
+  // Раскрытые приёмы (по умолчанию все свёрнуты — видно название, число
+  // блюд и ккал; просьба Кати: сворачивать продукты после добавления)
+  const [openMeals, setOpenMeals] = useState({})
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
 
@@ -105,6 +117,13 @@ export function MealPlanScreen() {
   const onPick = (item) => {
     if (!picker) return
     store.getState().addItem(weekKey, picker.dayIdx, picker.mealId, item)
+    // После добавления приём сворачивается — карточка дня остаётся
+    // компактной (просьба Кати); итог виден в строке приёма и в тосте
+    setOpenMeals((s) => ({ ...s, [picker.mealId]: false }))
+    toast({
+      title: `${item.emoji} ${item.name}`,
+      description: `${item.grams} г · ${formatNum(item.kcal)} ккал — в «${MEAL_NAMES[picker.mealId]}»${item.shopAdded ? ' · 🛒 добавлено в покупки' : ''}`,
+    })
     setPicker(null)
   }
 
@@ -264,24 +283,50 @@ export function MealPlanScreen() {
           )}
         </View>
 
-        {/* Приёмы пищи */}
+        {/* Приёмы пищи: свёрнуты по умолчанию, после добавления —
+            сворачиваются (просьба Кати). Тап по названию — раскрыть;
+            «+ добавить» — окно добавления */}
         {MEAL_IDS.map((mealId) => {
           const items = day?.[mealId] || []
+          const open = Boolean(openMeals[mealId])
+          const mealKcal = items.reduce((n, it) => n + (Number(it.kcal) || 0), 0)
           return (
             <View key={mealId} style={styles.mealBlock}>
-              <Pressable
-                onPress={() => setPicker({ dayIdx: sel, mealId })}
-                style={styles.mealHead}
-                accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
-              >
-                <Text style={styles.mealEmoji}>{MEAL_EMOJI[mealId]}</Text>
-                <Text style={styles.mealName}>{MEAL_NAMES[mealId]}</Text>
-                <View style={styles.mealAdd}>
+              <View style={styles.mealHead}>
+                <Pressable
+                  onPress={() => setOpenMeals((s) => ({ ...s, [mealId]: !s[mealId] }))}
+                  style={styles.mealHeadMain}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: open }}
+                  accessibilityLabel={
+                    `${MEAL_NAMES[mealId]}: ${items.length ? `${items.length} ${dishWord(items.length)}, ${formatNum(mealKcal)} ккал` : 'пусто'}. Тап — ${open ? 'скрыть' : 'показать'} блюда`
+                  }
+                >
+                  <Text style={styles.mealEmoji}>{MEAL_EMOJI[mealId]}</Text>
+                  <View style={styles.mealHeadText}>
+                    <Text style={styles.mealName}>{MEAL_NAMES[mealId]}</Text>
+                    <Text style={styles.mealSummary}>
+                      {items.length
+                        ? `${items.length} ${dishWord(items.length)} · ${formatNum(mealKcal)} ккал`
+                        : 'пусто'}
+                    </Text>
+                  </View>
+                  {open ? (
+                    <ChevronUp size={15} color={colors.text3} />
+                  ) : (
+                    <ChevronDown size={15} color={colors.text3} />
+                  )}
+                </Pressable>
+                <Pressable
+                  onPress={() => setPicker({ dayIdx: sel, mealId })}
+                  style={styles.mealAdd}
+                  accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
+                >
                   <Plus size={13} color={colors.accent} />
                   <Text style={styles.mealAddText}>добавить</Text>
-                </View>
-              </Pressable>
-              {items.map((it) => (
+                </Pressable>
+              </View>
+              {open && items.map((it) => (
                 <View key={it.id} style={styles.itemRow}>
                   <Text style={styles.itemEmoji}>{it.emoji}</Text>
                   <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
@@ -427,6 +472,9 @@ const styles = {
   transferText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accentInk },
   mealBlock: { marginTop: spacing.m },
   mealHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, minHeight: 36 },
+  mealHeadMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingVertical: 4 },
+  mealHeadText: { flex: 1 },
+  mealSummary: { ...type.caption, color: colors.text3, marginTop: 1 },
   mealEmoji: { fontSize: 16, width: 22, textAlign: 'center' },
   mealName: { ...type.body, color: colors.text, fontWeight: '700', fontFamily: F[700], fontSize: 13.5, flex: 1 },
   mealAdd: {
