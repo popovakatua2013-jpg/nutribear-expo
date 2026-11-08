@@ -20,6 +20,7 @@ import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useSessionsStore, usePrefsStore } from '@/features/workouts/store/useWorkoutsStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
@@ -69,9 +70,18 @@ export function DataActions({ embedded = false, variant = null }) {
     wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
+    // Журнал вкладки «Тренировки» (сессии и настройки фильтров) — тоже данные
+    useSessionsStore.setState({ sessions: [] })
+    usePrefsStore.setState({ lang: 'ru', filterType: 'all', query: '' })
     // «Организм» и копилка монеток удалены из приложения — стираем их
-    // старые ключи в хранилище, оставшиеся от прежних версий
-    AsyncStorage.multiRemove(['nutribear-shop-v1', 'nutribear-organism-game-v1'])
+    // старые ключи в хранилище, оставшиеся от прежних версий; туда же —
+    // ключи вкладки «Тренировки»
+    AsyncStorage.multiRemove([
+      'nutribear-shop-v1',
+      'nutribear-organism-game-v1',
+      '@app/workouts/sessions',
+      '@app/workouts/prefs',
+    ])
     // Мелкие настройки интерфейса — к стартовым значениям
     useUiPrefsStore.setState({ expanded: {}, haptics: true, weighNudgeDays: 7 })
     // GDPR-удаление: онбординг начнётся заново (корневой макет переключится сам)

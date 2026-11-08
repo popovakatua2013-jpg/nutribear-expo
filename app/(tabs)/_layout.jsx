@@ -1,4 +1,4 @@
-// Нижняя навигация: Главная / Дневник / Тело / Ещё.
+// Нижняя навигация: Главная / Дневник / Тело / Тренировки / Ещё.
 // Активная вкладка — иконка
 // в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
 // серые, без подложки: сразу видно, где вы находитесь.
@@ -6,12 +6,13 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, House, Menu, PersonStanding, Scale } from 'lucide-react-native'
+import { BookOpen, Dumbbell, House, Menu, PersonStanding } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Дневник', Icon: BookOpen },
   { name: 'bmi', label: 'Тело', Icon: PersonStanding },
+  { name: 'workouts', label: 'Тренировки', Icon: Dumbbell },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
@@ -54,7 +55,7 @@ export default function TabsLayout() {
           paddingBottom: 7 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+        tabBarLabelStyle: { fontSize: 12.5, fontFamily: 'Inter_600SemiBold' },
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >

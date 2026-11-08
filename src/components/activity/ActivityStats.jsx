@@ -5,9 +5,11 @@
 // и внизу пилюля итога с цветной галочкой («осталось 7 000»).
 // Кнопки «+» убраны по отзыву Кати: тап по карточке и есть добавить/
 // открыть — «Шаги» открывает ввод шагов, «Вода» — стаканы за день
-// (долгий тап — изменить цель воды), «Активность» — раскрыть/скрыть
-// ОТДЕЛЬНУЮ секцию «Тренировки» под блоком плиток (долгий тап —
-// изменить цель сжигания).
+// (долгий тап — изменить цель воды). Тренировки с главного убраны
+// совсем (отзыв Кати: «полностью удаляем тренировки с главного экрана»)
+// — им посвящена отдельная вкладка «Тренировки»: тап по плитке
+// «Активность» больше ничего не раскрывает (долгий тап — изменить
+// цель сжигания).
 // Тексты однострочные и при нехватке ширины сжимаются
 // (adjustsFontSizeToFit), а не обрезаются. Карточку «Калории» убрали
 // ранее — она дублировала сводку. История по дням — во вкладке
@@ -18,8 +20,6 @@ import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import {
   Check,
-  ChevronDown,
-  ChevronUp,
   Dumbbell,
   Droplets,
   Flame,
@@ -152,7 +152,7 @@ export function ActivityStats({
   steps, burned, minutes, minutesGoal, minutesPct, waterPct, waterMl,
   stepsGoal, waterGoalMl, burnGoal, onEditBurnGoal,
   onOpenWater, onEditWaterGoal,
-  onOpenStepsInput, onGoActivity, exOpen = false,
+  onOpenStepsInput,
 }) {
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в карточку
   const stepsLeft = stepsGoal - steps
@@ -168,9 +168,7 @@ export function ActivityStats({
     <Foot>цель не задана</Foot>
   )
 
-  // у «Активности» итоговая пилюля: процент дневной цели + шеврон
-  // раскрытия тренировок (тап по карточке разворачивает отдельную
-  // секцию «Тренировки» под блоком плиток)
+  // у «Активности» итоговая пилюля: процент дневной цели по минутам
   const minutesFoot = (
     <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-white/[0.05] px-1 py-1">
       <View
@@ -190,11 +188,6 @@ export function ActivityStats({
       >
         {minutesGoal > 0 ? `${minutesPct}% от цели` : 'цель не задана'}
       </FitLine>
-      {exOpen ? (
-        <ChevronUp size={12} color="#A78BFA" />
-      ) : (
-        <ChevronDown size={12} color="#A78BFA" />
-      )}
     </View>
   )
 
@@ -255,16 +248,15 @@ export function ActivityStats({
       // процент цели по минутам — в итоговой пилюле; процент сжигания
       // живёт в сводке и на долгом тапе
       foot: minutesFoot,
-      // тап — раскрыть/скрыть отдельную секцию «Тренировки» (под блоком)
-      onPress: onGoActivity,
-      onLongPress: onEditBurnGoal, // долгий тап — изменить цель сжигания
+      // тапа нет: тренировки переехали во вкладку «Тренировки»;
+      // долгий тап — изменить цель сжигания
+      onLongPress: onEditBurnGoal,
       longHint: 'Долгий тап — изменить цель сжигания',
     },
   ]
 
   // Компактный ряд: три карточки в одну строку — «Шаги», «Вода»,
   // «Активность»; flex-1 делит ширину поровну, текст сжимается сам.
-  // Раскрытые тренировки рендерит родитель (блок «Активность» на главной)
   return (
     <View className="flex-row gap-2">
       {cards.map((c) => <StatCard key={c.label} {...c} />)}
