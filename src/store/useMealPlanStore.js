@@ -1,0 +1,184 @@
+// План питания на неделю (вкладка «Тренировки» → сегмент «Меню»).
+// Хранение: plans[weekKey][dayIdx][mealId] = [items], где weekKey —
+// дата понедельника недели 'YYYY-MM-DD' (недели с понедельника, как в
+// календарях отчётов), dayIdx 0…6, mealId — приёмы из MEAL_IDS.
+// Элемент меню — выжимка из buildFood (продукт базы или «своё блюдо»)
+// + граммовка и ккал порции: этого достаточно, чтобы «В дневник»
+// записал блюдо через useFoodStore.addEntry с полным БЖУ.
+// Сохраняется в AsyncStorage, как остальные сторы приложения.
+
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { makeId } from '@/lib/format'
+
+export const MEAL_IDS = ['breakfast', 'lunch', 'dinner', 'snack']
+
+export const MEAL_NAMES = {
+  breakfast: 'Завтрак',
+  lunch: 'Обед',
+  dinner: 'Ужин',
+  snack: 'Перекус',
+}
+
+export const MEAL_EMOJI = {
+  breakfast: '🌅',
+  lunch: '🍲',
+  dinner: '🌙',
+  snack: '🍎',
+}
+
+export const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+const pad = (n) => String(n).padStart(2, '0')
+
+/** Ключ недели (дата понедельника) для даты: 'YYYY-MM-DD'.
+ * Полдень в дате — от сдвигов часового пояса/DST вокруг полуночи. */
+export function weekKeyOf(date) {
+  const d = new Date(date)
+  d.setHours(12, 0, 0, 0)
+  const dow = (d.getDay() + 6) % 7 // 0 = понедельник
+  d.setDate(d.getDate() - dow)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** Ключ недели, сдвинутый на n недель (n может быть отрицательным) */
+export function weekKeyShift(weekKey, n) {
+  const [y, m, dd] = weekKey.split('-').map(Number)
+  const d = new Date(y, m - 1, dd, 12)
+  d.setDate(d.getDate() + n * 7)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** Дата (Date) дня недели внутри недели weekKey: idx 0 = понедельник */
+export function dayDate(weekKey, idx) {
+  const [y, m, dd] = weekKey.split('-').map(Number)
+  const d = new Date(y, m - 1, dd, 12)
+  d.setDate(d.getDate() + idx)
+  return d
+}
+
+/** Пустой день плана: все приёмы пустые */
+export function emptyDay() {
+  return { breakfast: [], lunch: [], dinner: [], snack: [] }
+}
+
+/** Сумма калорий дня плана */
+export function dayKcal(planDay) {
+  if (!planDay) return 0
+  return Math.round(
+    MEAL_IDS.reduce(
+      (sum, mealId) =>
+        sum + (planDay[mealId] || []).reduce((n, it) => n + (Number(it.kcal) || 0), 0),
+      0,
+    ),
+  )
+}
+
+export const useMealPlanStore = create(
+  persist(
+    (set, get) => ({
+      plans: {},
+
+      /** Добавить блюдо в приём: item — buildFood-подобный объект + grams */
+      addItem(weekKey, dayIdx, mealId, item) {
+        const planItem = {
+          id: makeId(),
+          name: String(item.name || 'Блюдо').slice(0, 80),
+          emoji: item.emoji || '🍽️',
+          grams: Math.round(item.grams || 100),
+          kcal: Math.round((Number(item.kcal) || 0) * 10) / 10,
+          kcal100: item.kcal100 ?? item.kcal ?? 100,
+          p: item.p, f: item.f, c: item.c,
+          source: item.source || 'local',
+        }
+        set((state) => {
+          const week = state.plans[weekKey] || {}
+          const day = week[dayIdx] || emptyDay()
+          return {
+            plans: {
+              ...state.plans,
+              [weekKey]: {
+                ...week,
+                [dayIdx]: { ...day, [mealId]: [...(day[mealId] || []), planItem] },
+              },
+            },
+          }
+        })
+      },
+
+      removeItem(weekKey, dayIdx, mealId, itemId) {
+        set((state) => {
+          const week = state.plans[weekKey]
+          const day = week?.[dayIdx]
+          if (!day) return state
+          return {
+            plans: {
+              ...state.plans,
+              [weekKey]: {
+                ...week,
+                [dayIdx]: {
+                  ...day,
+                  [mealId]: (day[mealId] || []).filter((it) => it.id !== itemId),
+                },
+              },
+            },
+          }
+        })
+      },
+
+      /** Копировать день (в т.ч. между неделями); id у копий новые */
+      copyDay(fromWeekKey, fromIdx, toWeekKey, toIdx) {
+        set((state) => {
+          const src = state.plans[fromWeekKey]?.[fromIdx]
+          const day = emptyDay()
+          if (src) {
+            for (const mealId of MEAL_IDS) {
+              day[mealId] = (src[mealId] || []).map((it) => ({ ...it, id: makeId() }))
+            }
+          }
+          const week = state.plans[toWeekKey] || {}
+          return { plans: { ...state.plans, [toWeekKey]: { ...week, [toIdx]: day } } }
+        })
+      },
+
+      clearDay(weekKey, dayIdx) {
+        set((state) => {
+          const week = state.plans[weekKey]
+          if (!week) return state
+          return { plans: { ...state.plans, [weekKey]: { ...week, [dayIdx]: emptyDay() } } }
+        })
+      },
+
+      /** Заполнить неделю копией предыдущей. false — у прошлой нет меню */
+      copyPrevWeek(weekKey) {
+        const src = get().plans[weekKeyShift(weekKey, -1)]
+        if (!src) return false
+        set((state) => {
+          const week = {}
+          for (let i = 0; i < 7; i++) {
+            const day = emptyDay()
+            const srcDay = src[i]
+            if (srcDay) {
+              for (const mealId of MEAL_IDS) {
+                day[mealId] = (srcDay[mealId] || []).map((it) => ({ ...it, id: makeId() }))
+              }
+            }
+            week[i] = day
+          }
+          return { plans: { ...state.plans, [weekKey]: week } }
+        })
+        return true
+      },
+
+      clearWeek(weekKey) {
+        set((state) => {
+          const plans = { ...state.plans }
+          delete plans[weekKey]
+          return { plans }
+        })
+      },
+    }),
+    { name: 'nutribear-meal-plan', storage: createJSONStorage(() => AsyncStorage) },
+  ),
+)

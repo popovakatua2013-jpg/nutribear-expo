@@ -11,7 +11,11 @@
 // отчёты, опыт); поверх остаётся экран итогов, «Готово» закрывает окно.
 // В конце каталога — строка «Своя тренировка»: прежняя запись вручную
 // (выбор, время, ккал) переехала сюда с главной (отзыв Кати:
-// «тренировки с главного экрана — убрать»).
+// «тренировки с главного экрана — убрать»). Сегменты «Меню» и
+// «Покупки» (просьба Кати): недельный план питания (7 дней × приёмы,
+// поиск по базе продуктов, копирование дней/недели, «В дневник») и
+// список покупок — экраны в components/planner, сторы
+// useMealPlanStore / useShoppingStore.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
@@ -34,6 +38,8 @@ import { dayKeyOf } from '@/store/useHistoryStore'
 import { formatNum } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
+import { MealPlanScreen } from '@/components/planner/MealPlanScreen'
+import { ShoppingListScreen } from '@/components/planner/ShoppingListScreen'
 
 export default function WorkoutsTab() {
   const { toast } = useToast()
@@ -142,6 +148,8 @@ export default function WorkoutsTab() {
         {[
           ['catalog', lang === 'ru' ? 'Каталог' : 'Catalog'],
           ['progress', lang === 'ru' ? 'Прогресс' : 'Progress'],
+          ['menu', lang === 'ru' ? 'Меню' : 'Menu'],
+          ['shopping', lang === 'ru' ? 'Покупки' : 'Shopping'],
         ].map(([id, label]) => {
           const active = screen === id
           return (
@@ -165,8 +173,12 @@ export default function WorkoutsTab() {
           onResumeWorkout={resumeWorkout}
           footer={<ManualEntry />}
         />
-      ) : (
+      ) : screen === 'progress' ? (
         <ProgressScreen onGoCatalog={() => setScreen('catalog')} />
+      ) : screen === 'menu' ? (
+        <MealPlanScreen />
+      ) : (
+        <ShoppingListScreen />
       )}
 
       {/* Экран идущей тренировки */}
