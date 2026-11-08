@@ -23,6 +23,7 @@ import { buildResult, PLAYER_TIMINGS } from '../../player/engine'
 import { buildPlan } from '../../player/planBuilder'
 import { usePlayerEngine } from '../../player/usePlayerEngine'
 import { TimerRing } from '../../player/components/TimerRing'
+import { ExerciseDemo } from '../../player/components/ExerciseDemo'
 import { FinishScreen } from './FinishScreen'
 
 const PHASE_COLOR = {
@@ -167,8 +168,8 @@ export function PlayerScreen({ workout, startIndex = 0, onClose, onFinish }) {
               color={phaseColor}
               unitLabel={t('player.sec')}
             />
-            {/* Пиктограмма + название + подсказка: что именно делать */}
-            <Text style={styles.exerciseEmoji}>{focus.emoji ?? '💪'}</Text>
+            {/* Живая демонстрация + название + подсказка: что именно делать */}
+            <ExerciseDemo exercise={focus} paused={state.paused} scale={0.83} />
             <Text style={styles.exerciseName} numberOfLines={2}>
               {centerTitle}
             </Text>
@@ -318,11 +319,6 @@ const styles = StyleSheet.create({
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.l },
   ringWrap: { alignItems: 'center', gap: spacing.s },
-  exerciseEmoji: {
-    fontSize: 46,
-    lineHeight: 52,
-    textAlign: 'center',
-  },
   exerciseName: {
     ...type.title,
     fontSize: 19,
@@ -371,7 +367,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  queue: { maxHeight: 190, paddingHorizontal: spacing.xl },
+  queue: { maxHeight: 156, paddingHorizontal: spacing.xl },
   queueContent: { gap: 6, paddingBottom: spacing.xl },
   queueRow: {
     flexDirection: 'row',
