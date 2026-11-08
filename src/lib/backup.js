@@ -15,11 +15,8 @@ import { useRecipesStore } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
-import { useShopStore } from '@/store/useShopStore'
-import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCycleStore, normLength, normBleed } from '@/store/useCycleStore'
-import { expeditionOf } from '@/lib/data/organism-game'
 import { restorePhotos } from '@/lib/photos'
 
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
@@ -152,62 +149,6 @@ export async function applyBackup(data) {
     }
     if (Object.keys(clean).length) store.setState(clean)
   }
-
-  // ── Копилка: монетки и купленный декор (экспортировались и раньше,
-  //    но при восстановлении терялись) ─────────────────────────
-  const shop = obj(data.shop)
-  useShopStore.setState({
-    coins: Math.max(0, Math.round(num(shop.coins))),
-    owned: obj(shop.owned),
-  })
-
-  // ── Прогресс организма: гены, кристаллы, мутаген, капсулы,
-  //    эволюция, рейд стаи, комбо-стрик и коллекция. Сначала честный
-  //    сброс к стартовым значениям, затем поверх — значения из копии:
-  //    пропущенные поля остаются валидными ───────────────────
-  const og = obj(data.organismGame)
-  useOrganismGameStore.getState().resetAll()
-  useOrganismGameStore.setState({
-    genes: Math.max(0, Math.round(num(og.genes, 12))),
-    crystals: Math.max(0, Math.round(num(og.crystals))),
-    mutagen: Math.max(0, Math.round(num(og.mutagen))),
-    capsules: Math.max(0, Math.round(num(og.capsules, 1))),
-    evoStage: Math.min(4, Math.max(0, Math.round(num(og.evoStage)))),
-    evoBranch: typeof og.evoBranch === 'string' ? og.evoBranch : '',
-    createdAt: typeof og.createdAt === 'string' ? og.createdAt : null,
-    stableDays: Math.max(0, Math.round(num(og.stableDays))),
-    stableLastKey: typeof og.stableLastKey === 'string' ? og.stableLastKey : null,
-    mutationUnlocked: Boolean(og.mutationUnlocked),
-    raidWeekStart: typeof og.raidWeekStart === 'string' ? og.raidWeekStart : '',
-    raidDays: obj(og.raidDays),
-    raidKilled: Boolean(og.raidKilled),
-    raidRewarded: Boolean(og.raidRewarded),
-    goodDays: obj(og.goodDays),
-    // Осмотры организма: история оценок по дням и день, когда бонус
-    // за осмотр уже получен — без них «перенос» сбрасывал аудит
-    auditDays: obj(og.auditDays),
-    auditBonusDay: typeof og.auditBonusDay === 'string' ? og.auditBonusDay : null,
-    streak: Math.max(0, Math.round(num(og.streak))),
-    streakLastKey: typeof og.streakLastKey === 'string' ? og.streakLastKey : null,
-    items: arr(og.items),
-    opened: Math.max(0, Math.round(num(og.opened))),
-    log: arr(og.log),
-    // Прыщи от игнора: какие пятна выдавлены сегодня; битые записи — «чисто»
-    pimplePop:
-      og.pimplePop && Array.isArray(og.pimplePop.popped)
-        ? {
-            dayKey: typeof og.pimplePop.dayKey === 'string' ? og.pimplePop.dayKey : null,
-            popped: og.pimplePop.popped.filter((n) => Number.isFinite(n)).map((n) => Math.round(n)),
-          }
-        : { dayKey: null, popped: [] },
-    pimpleBonusDay: typeof og.pimpleBonusDay === 'string' ? og.pimpleBonusDay : null,
-    // Активная экспедиция: ключ проверяется по справочнику, время — по
-    // реальным часам; битые записи превращаются в «организм дома»
-    expedition:
-      og.expedition && expeditionOf(og.expedition.key) && num(og.expedition.startedAt) > 0
-        ? { key: og.expedition.key, startedAt: num(og.expedition.startedAt) }
-        : null,
-  })
 
   // ── Мелкие настройки: вибро-отклик, порог напоминания мишки ──
   const ui = obj(data.uiPrefs)

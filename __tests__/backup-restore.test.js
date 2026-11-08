@@ -1,8 +1,8 @@
 // Тесты восстановления из копии (applyBackup). Аудит нашёл дыры:
-// блок exercise пинка о тренировке, тумблеры шагомера/Health Connect,
-// замеры тела и история осмотров организма экспортировались, но при
-// восстановлении терялись — «перенос на новый телефон» приходил
-// с дырками, а включение пинка падало на отсутствующем времени.
+// блок exercise пинка о тренировке, тумблеры шагомера/Health Connect
+// и замеры тела экспортировались, но при восстановлении терялись —
+// «перенос на новый телефон» приходил с дырками, а включение пинка
+// падало на отсутствующем времени.
 
 // RN-стабы должны встать до импортов стора
 jest.requireActual('./helpers/react-native-stub')
@@ -44,23 +44,16 @@ function backup() {
       lastBmiCat: 'norm',
     },
     goals: { goals: { kcal: 1800 } },
-    organismGame: {
-      genes: 20,
-      auditDays: { '2026-11-03': 78, '2026-11-04': 91 },
-      auditBonusDay: '2026-11-04',
-    },
-    shop: { coins: 55 },
   }
 }
 
 describe('applyBackup: перенос на новый телефон без потерь', () => {
-  let applyBackup, useActivityStore, useProfileStore, useOrganismGameStore
+  let applyBackup, useActivityStore, useProfileStore
 
   beforeAll(() => {
     ;({ applyBackup } = require('@/lib/backup'))
     ;({ useActivityStore } = require('@/store/useActivityStore'))
     ;({ useProfileStore } = require('@/store/useProfileStore'))
-    ;({ useOrganismGameStore } = require('@/store/useOrganismGameStore'))
   })
 
   test('пинок о тренировке восстанавливается (раньше терялся)', async () => {
@@ -111,14 +104,6 @@ describe('applyBackup: перенос на новый телефон без по
     b.profile.lastBmiCat = 'hacker'
     await applyBackup(b)
     expect(useProfileStore.getState().lastBmiCat).toBeNull()
-  })
-
-  test('осмотры организма и день бонуса восстанавливаются', async () => {
-    await applyBackup(backup())
-    const g = useOrganismGameStore.getState()
-    expect(g.auditDays['2026-11-03']).toBe(78)
-    expect(g.auditDays['2026-11-04']).toBe(91)
-    expect(g.auditBonusDay).toBe('2026-11-04')
   })
 
   test('чужой файл отвергается', async () => {

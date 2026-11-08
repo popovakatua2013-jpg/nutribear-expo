@@ -1,7 +1,5 @@
 // Сводка дня по тапу на клетку календаря: вес, калории против цели,
-// шаги, вода, тренировки, аудит организма, опыт. Данные — дневная
-// история + взвешивания; аудит для недавних дней подмешивается из
-// стора организма (там окно 14 дней, история хранит дольше).
+// шаги, вода, тренировки, опыт. Данные — дневная история + взвешивания.
 // Кнопка «Закрыть» закреплена внизу окна — видна всегда, даже когда
 // список строк не влезает на небольшом экране (крестик в шапке тоже
 // остался). Прокручивается только список строк.
@@ -12,7 +10,6 @@ import { formatNum } from '@/lib/format'
 import { fmtSleep } from '@/lib/data/sleep'
 import { dayData, dayStatus } from '@/lib/data/calendar'
 import { dayKeyOf } from '@/store/useHistoryStore'
-import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 
 const MONTHS = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -32,9 +29,6 @@ function Row({ icon, label, value, tone }) {
 }
 
 export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights }) {
-  // счёт аудита: сначала дневная история (пишется при осмотре),
-  // для недавних дней — фолбэк на стор организма (окно 14 дней)
-  const auditDays = useOrganismGameStore((s) => s.auditDays || {})
   const d = dayData(history, dayKey, null)
   const status = dayStatus(d, goals.kcal)
   // Взвешивания хранятся с ISO-датой (UTC): сравнение по локальному
@@ -44,8 +38,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
     const t = new Date(w.date)
     return !Number.isNaN(t.getTime()) && dayKeyOf(t) === dayKey
   })
-  const auditVal = d.audit != null ? d.audit : auditDays[dayKey]
-  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !d.sleepMin && !weight && auditVal == null
+  const empty = !d.kcal && !d.steps && !d.waterMl && !d.burned && !d.sleepMin && !weight
 
   const dt = dayKey ? new Date(`${dayKey}T00:00:00`) : null
   const title = dt ? `${dt.getDate()} ${MONTHS[dt.getMonth()]} · ${WD[dt.getDay()]}` : ''
@@ -99,14 +92,6 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
                   {/* Сон за ночь этого дня (день пробуждения): «—» — ночей
                       не записано, как у остальных строк */}
                   <Row icon="😴" label="Сон" value={d.sleepMin ? fmtSleep(d.sleepMin) : '—'} />
-                  {auditVal != null && (
-                    <Row
-                      icon="🩺"
-                      label="Аудит организма"
-                      value={`${auditVal}/100`}
-                      tone={auditVal >= 75 ? 'text-emerald-400' : auditVal >= 45 ? 'text-amber-400' : 'text-rose-400'}
-                    />
-                  )}
                   <Row icon="⭐" label="Опыт" value={`+${formatNum(d.xp)}`} />
                 </View>
               )}

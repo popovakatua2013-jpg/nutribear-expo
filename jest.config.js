@@ -1,4 +1,4 @@
-// Jest: юнит-тесты чистой логики (organism, organism-game, bmi) в Node.
+// Jest: юнит-тесты чистой логики (bmi) в Node.
 // react-native и AsyncStorage подменяются стабами — тестируется только
 // математика расчётов, без эмулятора и RN-рантайма.
 module.exports = {

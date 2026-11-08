@@ -17,8 +17,6 @@ import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { useHistoryStore } from '@/store/useHistoryStore'
-import { useShopStore } from '@/store/useShopStore'
-import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCycleStore } from '@/store/useCycleStore'
 import { collectPhotosForBackup } from '@/lib/photos'
@@ -47,12 +45,6 @@ export async function collectAll() {
     photos,
     // Дневная история (шаги/ккал/вода/тренировки по датам) — для отчётов
     history: useHistoryStore.getState(),
-    // Копилка организма: монетки и купленный декор
-    shop: useShopStore.getState(),
-    // Прогресс организма: гены, кристаллы, мутаген, капсулы, эволюция,
-    // рейд стаи, комбо-стрик и коллекция артефактов — без этого блок
-    // перенос на новый телефон терял бы весь игровой прогресс
-    organismGame: useOrganismGameStore.getState(),
     // Мелкие настройки: вибро-отклик, порог напоминания о взвешивании
     uiPrefs: useUiPrefsStore.getState(),
     // Трекер цикла: настройки и история — только локальные данные,

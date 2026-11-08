@@ -6,8 +6,6 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
 import { dayKeyOf } from './useHistoryStore'
-import { useShopStore } from './useShopStore'
-import { EARN } from '@/lib/data/shop'
 
 export const DEFAULT_VESSELS = [
   { id: 'glass', label: 'Стакан', ml: 250 },
@@ -84,8 +82,6 @@ export const useActivityStore = create(
             ...s.waterLog,
           ].slice(0, 60),
         }))
-        // +2 монетки за стакан (250 мл) — копилка организма
-        useShopStore.getState().earn(Math.round((safeMl / 250) * EARN.water))
       },
 
       // Удалить запись из журнала воды (минус её объём из дневной суммы)
@@ -116,8 +112,6 @@ export const useActivityStore = create(
         // Санитизация: NaN/мусор → 0, минус не отнимает чужие шаги
         const add = Math.max(0, Math.round(Number(n) || 0))
         set((s) => ({ extraSteps: Math.min(50000, s.extraSteps + add) }))
-        // +5 монеток за каждую 1 000 добавленных шагов — копилка организма
-        useShopStore.getState().earn(Math.round((add / 1000) * EARN.steps))
       },
 
       resetToday: () =>

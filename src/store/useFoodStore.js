@@ -9,8 +9,6 @@ import { makeId } from '@/lib/format'
 import { bjuForPortion } from '@/lib/data/bju'
 import { rescaleEntry } from '@/lib/data/diary'
 import { dayKeyOf, useHistoryStore } from './useHistoryStore'
-import { useShopStore } from './useShopStore'
-import { EARN } from '@/lib/data/shop'
 
 const EMPTY_ENTRIES = { breakfast: [], lunch: [], dinner: [], snack: [] }
 
@@ -102,8 +100,6 @@ export const useFoodStore = create(
             ...state.history,
           ].slice(0, 900), // ~2 месяца при 15 записях/день — месяц рейтинга помещается целиком
         }))
-        // +3 монетки за запись в дневнике — копилка организма
-        useShopStore.getState().earn(EARN.meal)
         return entry
       },
 

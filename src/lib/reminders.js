@@ -20,7 +20,6 @@ import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { totalConsumed } from '@/lib/data/diary'
@@ -182,21 +181,14 @@ export async function scheduleMorningSummary() {
     yst.setDate(yst.getDate() - 1)
     const yKey = dayKeyOf(yst)
     const t = summaryTotalsFor(yKey)
-    // Аудит организма вчера не проводился — Доктор Топтыгин мягко напоминает
-    const auditMissed = useOrganismGameStore.getState().auditDays?.[yKey] == null
     // Вчера ни одной записи — фраза «пропал из приложения» (вторая серия);
     // в мягком стиле остаётся стандартный текст «Новый день…»
     const gone = t ? null : gonePokeBody({ style: useActivityStore.getState().reminder?.meals?.style || 'bear' })
-    const tail = auditMissed ? 'Доктор Топтыгин ждёт вас на осмотр 🩺' : 'Хорошего дня! 🐻'
     const body = t
-      ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. ${tail}`
+      ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. Хорошего дня! 🐻`
       : gone
-        ? auditMissed
-          ? `${gone} И загляни к доктору Топтыгину 🩺`
-          : `${gone} 🐻`
-        : auditMissed
-          ? 'Новый день! Доктор Топтыгин ждёт вас на осмотр 🩺🐻'
-          : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
+        ? `${gone} 🐻`
+        : 'Новый день — запишите завтрак и не забудьте про воду 🐻'
 
     await Notifications.cancelScheduledNotificationAsync('morning-summary')
     await Notifications.scheduleNotificationAsync({
@@ -586,9 +578,8 @@ function handleNotificationTap(data) {
       router.navigate('/activity')
       requestOpenSleepModal()
     } else if (kind === 'day') {
-      // Утренняя сводка: если в ней упоминался доктор — вела в аудит.
-      // Открываем вкладку «Организм» — там Доктор Топтыгин и живёт
-      router.navigate('/organism')
+      // Тап по утренней сводке — открываем Главную
+      router.navigate('/')
     }
   } catch (e) {
     console.warn('Не удалось открыть экран по тапу:', e)

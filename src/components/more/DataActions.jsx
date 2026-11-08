@@ -3,6 +3,7 @@
 // и шапки — содержимое встраивается в строку меню «Сброс и удаление».
 
 import { Alert, Pressable, Text, View } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Database, Sunrise, Trash2 } from 'lucide-react-native'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
@@ -18,8 +19,6 @@ import { useCombosStore } from '@/store/useCombosStore'
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
-import { useShopStore } from '@/store/useShopStore'
-import { useOrganismGameStore } from '@/store/useOrganismGameStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
@@ -70,11 +69,9 @@ export function DataActions({ embedded = false, variant = null }) {
     wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
-    // Копилка организма и купленный декор — тоже данные пользователя
-    useShopStore.getState().resetAll()
-    // Прогресс организма (гены, эволюция, рейд, капсулы, коллекция) —
-    // тоже персональные данные, стирается вместе с остальным
-    useOrganismGameStore.getState().resetAll()
+    // «Организм» и копилка монеток удалены из приложения — стираем их
+    // старые ключи в хранилище, оставшиеся от прежних версий
+    AsyncStorage.multiRemove(['nutribear-shop-v1', 'nutribear-organism-game-v1'])
     // Мелкие настройки интерфейса — к стартовым значениям
     useUiPrefsStore.setState({ expanded: {}, haptics: true, weighNudgeDays: 7 })
     // GDPR-удаление: онбординг начнётся заново (корневой макет переключится сам)
@@ -88,7 +85,7 @@ export function DataActions({ embedded = false, variant = null }) {
   function confirmWipe() {
     Alert.alert(
       'Стереть все данные?',
-      'Полное удаление по GDPR: дневник, история, профиль, план онбординга, прогресс организма. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
+      'Полное удаление по GDPR: дневник, история, профиль, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },

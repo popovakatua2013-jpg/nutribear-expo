@@ -1,4 +1,4 @@
-// Нижняя навигация: Главная / Дневник / ИМТ / Организм / Ещё.
+// Нижняя навигация: Главная / Дневник / Тело / Ещё.
 // Активная вкладка — иконка
 // в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
 // серые, без подложки: сразу видно, где вы находитесь.
@@ -6,13 +6,12 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, House, Menu, PersonStanding, Scale, Sparkles } from 'lucide-react-native'
+import { BookOpen, House, Menu, PersonStanding, Scale } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Дневник', Icon: BookOpen },
   { name: 'bmi', label: 'Тело', Icon: PersonStanding },
-  { name: 'organism', label: 'Организм', Icon: Sparkles },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
