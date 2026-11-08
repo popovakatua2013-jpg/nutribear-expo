@@ -109,7 +109,9 @@ export function AddDishModal({ open, onClose, onPick }) {
               <Pressable style={styles.row} onPress={() => pickProduct(item)}>
                 <Text style={styles.rowEmoji}>{item.emoji}</Text>
                 <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.rowMeta}>{item.kcal} ккал/100 г</Text>
+                <Text style={styles.rowMeta}>
+                  {item.kcal} ккал/100 г{item.defaultGrams && item.defaultGrams !== 100 ? ` · порция ${item.defaultGrams} г` : ''}
+                </Text>
               </Pressable>
             )}
           />

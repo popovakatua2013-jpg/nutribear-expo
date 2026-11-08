@@ -1,6 +1,8 @@
 // Экран «Меню на неделю» (вкладка «Тренировки» → сегмент «Меню»):
 // семь карточек дней (Пн–Вс) с приёмами пищи. Тап по приёму — окно
-// «Добавить блюдо» (база продуктов или своё блюдо). У каждого дня —
+// «Добавить блюдо» (база продуктов или своё блюдо). Тап по пилюле
+// «250 г · 220 ккал» — правка граммовки (GramsModal), ккал
+// пересчитываются от калорийности на 100 г. У каждого дня —
 // сумма калорий против цели (пилюля + полоска), копирование дня,
 // очистка; на сегодняшней карточке — «В дневник»: переносит блюда в
 // дневник питания через useFoodStore.addEntry (полный БЖУ по граммовке).
@@ -22,6 +24,7 @@ import {
 } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { AddDishModal } from './AddDishModal'
+import { GramsModal } from './GramsModal'
 import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
@@ -38,6 +41,7 @@ export function MealPlanScreen() {
   const [weekKey, setWeekKey] = useState(() => weekKeyOf(new Date()))
   const [picker, setPicker] = useState(null) // { dayIdx, mealId }
   const [copyFrom, setCopyFrom] = useState(null) // idx дня-источника
+  const [gramsFor, setGramsFor] = useState(null) // { dayIdx, mealId, itemId }
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
   const goal = useGoalsStore((s) => s.goals.kcal)
@@ -68,6 +72,19 @@ export function MealPlanScreen() {
 
   const removeItem = (dayIdx, mealId, itemId) =>
     store.getState().removeItem(weekKey, dayIdx, mealId, itemId)
+
+  const saveGrams = (g) => {
+    if (!gramsFor) return
+    const { dayIdx, mealId, itemId } = gramsFor
+    const it = (week[dayIdx]?.[mealId] || []).find((x) => x.id === itemId)
+    store.getState().updateGrams(weekKey, dayIdx, mealId, itemId, g)
+    const kcal = Math.round(((Number(it?.kcal100) || 0) * g) / 100)
+    toast({
+      title: '⚖️ Порция обновлена',
+      description: `${it?.name || 'Блюдо'}: ${g} г · ${formatNum(kcal)} ккал`,
+    })
+    setGramsFor(null)
+  }
 
   const clearDay = (idx, label) => {
     Alert.alert(`Очистить ${label.toLowerCase()}?`, 'Меню этого дня будет удалено.', [
@@ -220,7 +237,13 @@ export function MealPlanScreen() {
                     <View key={it.id} style={styles.itemRow}>
                       <Text style={styles.itemEmoji}>{it.emoji}</Text>
                       <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
-                      <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)}</Text>
+                      <Pressable
+                        onPress={() => setGramsFor({ dayIdx: idx, mealId, itemId: it.id })}
+                        style={styles.itemMetaBtn}
+                        accessibilityLabel={`Изменить порцию: ${it.name}`}
+                      >
+                        <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)}</Text>
+                      </Pressable>
                       <Pressable onPress={() => removeItem(idx, mealId, it.id)} style={styles.itemDel} accessibilityLabel="Убрать блюдо">
                         <X size={13} color={colors.text3} />
                       </Pressable>
@@ -235,6 +258,13 @@ export function MealPlanScreen() {
 
       {/* Окно добавления блюда */}
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
+
+      {/* Окно правки граммовки блюда */}
+      <GramsModal
+        item={gramsFor ? (week[gramsFor.dayIdx]?.[gramsFor.mealId] || []).find((x) => x.id === gramsFor.itemId) : null}
+        onClose={() => setGramsFor(null)}
+        onSave={saveGrams}
+      />
 
       {/* Окно копирования дня: куда */}
       <Modal visible={copyFrom !== null} transparent animationType="fade" onRequestClose={() => setCopyFrom(null)}>
@@ -322,7 +352,11 @@ const styles = {
   },
   itemEmoji: { fontSize: 14, width: 20, textAlign: 'center' },
   itemName: { ...type.body, color: colors.text, flex: 1, fontSize: 13 },
-  itemMeta: { fontSize: 11.5, fontWeight: '600', fontFamily: F[600], color: colors.text3 },
+  itemMetaBtn: {
+    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
+    borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3,
+  },
+  itemMeta: { fontSize: 11.5, fontWeight: '600', fontFamily: F[600], color: colors.text2 },
   itemDel: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
   copyBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   copySheet: {

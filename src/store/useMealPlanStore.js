@@ -127,6 +127,40 @@ export const useMealPlanStore = create(
         })
       },
 
+      /** Изменить граммовку блюда: ккал пересчитываются от калорийности
+       * на 100 г (kcal100). Границы 10…2000 г. Для «своего блюда»
+       * kcal100 — калорийность базовой порции (100 г), формула та же. */
+      updateGrams(weekKey, dayIdx, mealId, itemId, grams) {
+        const g = Math.max(10, Math.min(2000, Math.round(Number(grams) || 0)))
+        set((state) => {
+          const week = state.plans[weekKey]
+          const day = week?.[dayIdx]
+          if (!day) return state
+          const list = day[mealId] || []
+          if (!list.some((x) => x.id === itemId)) return state
+          return {
+            plans: {
+              ...state.plans,
+              [weekKey]: {
+                ...week,
+                [dayIdx]: {
+                  ...day,
+                  [mealId]: list.map((x) =>
+                    x.id === itemId
+                      ? {
+                          ...x,
+                          grams: g,
+                          kcal: Math.round(((Number(x.kcal100) || 0) * g) / 100 * 10) / 10,
+                        }
+                      : x,
+                  ),
+                },
+              },
+            },
+          }
+        })
+      },
+
       /** Копировать день (в т.ч. между неделями); id у копий новые */
       copyDay(fromWeekKey, fromIdx, toWeekKey, toIdx) {
         set((state) => {
