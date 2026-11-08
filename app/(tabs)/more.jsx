@@ -2,12 +2,18 @@
 // «Ещё» у MyFitnessPal/Yazio). Структура по отзывам Кати:
 //   Герой-профиль:   аватар, рост • вес, тап — редактирование
 //   ЗДОРОВЬЕ:        Цикл / Сон / Время пинка
-//   ДНЕВНИК И ЦЕЛИ:  Мои цели / Напоминания / Начать новый день
+//   ДНЕВНИК:         Напоминания / Начать новый день
+//                    («Мои цели» удалена — цели живут на вкладке «План»,
+//                    дублировать больше не будем — отзыв Кати 09.11)
 //   ПОДДЕРЖКА:       Поддержка и помощь
 //   ПРИЛОЖЕНИЕ:      Дневник питания / Шаги и здоровье / Вибрация /
 //                    Стиль пинков / Напоминание мишки / Приватность
+//                    (подсказки «экспорт · копия» и «политика ·
+//                    соглашение» убраны — обрезались в строке)
 //   Внизу — как в стандартных приложениях: Документы, О приложении
 //   и красная строка «Стереть все данные».
+// Тумблер «Вибрация»: при включении сразу короткая вибрация — видно
+// и слышно, что настройка работает (отзыв Кати 09.11).
 // Дубли удалены (отзыв Кати: «данные и статистику удалить — дубль»):
 // «Данные» и «Статистика» показывают то же, что вкладки Тело и
 // Активность. «Возвращать калории» — только в «Дневнике питания».
@@ -20,12 +26,12 @@
 import { useEffect, useState } from 'react'
 import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as Haptics from 'expo-haptics'
 import { Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { CycleCard } from '@/components/more/CycleCard'
 import { SleepDashboardCard, KickTimeCard } from '@/components/more/PokeCards'
-import { GoalPicker } from '@/components/more/GoalPicker'
 import { NotificationsSection } from '@/components/more/NotificationsSection'
 import { SupportCard } from '@/components/more/SupportCard'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
@@ -38,11 +44,8 @@ import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BodyChip } from '@/components/ui/BodyChip'
 import { useCycleStore, daysToNext } from '@/store/useCycleStore'
 import { useActivityStore } from '@/store/useActivityStore'
-import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
-import { getDailyTarget } from '@/lib/data/goals'
-import { formatNum } from '@/lib/format'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 
@@ -108,10 +111,6 @@ export default function MoreScreen() {
     sleep.enabled,
   ].filter(Boolean).length
 
-  // Мои цели: дневная норма ккал по выбранной цели
-  const goal = useFoodStore((s) => s.goal)
-  const goalValue = `${formatNum(getDailyTarget(goal))} ккал`
-
   // Дневник питания: режим остатка
   const countBurned = useGoalsStore((s) => Boolean(s.goals.countBurned))
 
@@ -122,6 +121,14 @@ export default function MoreScreen() {
   // Вибро-отклик, стиль пинков и порог «Напоминания мишки»
   const haptics = useUiPrefsStore((s) => s.haptics)
   const setHaptics = useUiPrefsStore((s) => s.setHaptics)
+  // Включили тумблер — тут же короткая вибрация: настройку можно
+  // проверить, не отходя от строки (отзыв Кати)
+  const changeHaptics = (v) => {
+    setHaptics(v)
+    if (v) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+    }
+  }
   const weighNudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
   const setWeighNudgeDays = useUiPrefsStore((s) => s.setWeighNudgeDays)
 
@@ -183,16 +190,8 @@ export default function MoreScreen() {
           </MenuRow>
         </MenuGroup>
 
-        {/* ── ДНЕВНИК И ЦЕЛИ ──────────────────────────────────────────── */}
-        <MenuGroup title="ДНЕВНИК И ЦЕЛИ">
-          <MenuRow
-            icon="🎯"
-            iconBg="rgba(167,139,250,0.16)"
-            title="Мои цели"
-            value={goalValue}
-          >
-            <GoalPicker embedded />
-          </MenuRow>
+        {/* ── ДНЕВНИК («Мои цели» теперь только на вкладке «План») ─── */}
+        <MenuGroup title="ДНЕВНИК">
           <MenuRow
             icon="🔔"
             iconBg="rgba(251,191,36,0.16)"
@@ -253,7 +252,7 @@ export default function MoreScreen() {
             icon="📳"
             iconBg="rgba(167,139,250,0.16)"
             title="Вибрация"
-            toggle={{ value: haptics, onChange: setHaptics, label: 'Вибро-отклик' }}
+            toggle={{ value: haptics, onChange: changeHaptics, label: 'Вибро-отклик' }}
           />
           <MenuRow
             icon="🐻"
@@ -285,7 +284,6 @@ export default function MoreScreen() {
             icon="🛡"
             iconBg="rgba(74,222,128,0.16)"
             title="Приватность и данные"
-            value="экспорт · копия"
           >
             <DataPortability embedded />
           </MenuRow>
@@ -298,7 +296,6 @@ export default function MoreScreen() {
             icon="📄"
             iconBg="rgba(96,165,250,0.16)"
             title="Документы"
-            value="политика · соглашение"
             onPress={() => setLegalOpen(true)}
           />
           <MenuRow

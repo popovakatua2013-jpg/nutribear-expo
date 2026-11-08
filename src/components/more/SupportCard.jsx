@@ -10,6 +10,10 @@
 // подсказка с адресом, адрес всегда виден и в самой карточке.
 // Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
 // и шапки — темы и адрес встраиваются в строку меню «Поддержка и помощь».
+// Окно письма — редизайн по отзыву Кати 09.11: шапка с чипом выбранной
+// темы, круглая кнопка закрытия, поле со счётчиком символов, крупная
+// кнопка «Отправить»; подсказка «Письмо уйдёт на …» убрана — адрес
+// и так виден в карточке, лишний текст в окне не нужен.
 
 import { useState } from 'react'
 import {
@@ -111,7 +115,9 @@ export function SupportCard({ embedded = false }) {
     </View>
   )
 
-  // Окно письма: тема + текст + отправка через почтовое приложение
+  // Окно письма: тема + текст + отправка через почтовое приложение.
+  // Без подсказки «Письмо уйдёт на …» (отзыв Кати): адрес и так виден
+  // в строке «Поддержка и помощь», а в окне — лишний текст
   const composeModal = (
     <Modal
       visible={composeOpen}
@@ -124,92 +130,117 @@ export function SupportCard({ embedded = false }) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 items-center justify-center bg-black/60 px-6"
       >
-        <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
-          <View className="flex-row items-center justify-between">
-            <Text className="font-bold text-[20px] text-bear-text">Написать нам</Text>
+        <View
+          accessibilityLabel="Окно письма в поддержку"
+          className="w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+        >
+          {/* Шапка: чип выбранной темы + заголовок + круглая кнопка закрытия */}
+          <View className="flex-row items-center gap-3 border-b border-white/[0.07] px-5 pb-4 pt-5">
+            <View
+              className="h-[42px] w-[42px] items-center justify-center rounded-[14px]"
+              style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
+            >
+              <Text className="text-[20px]">{topic.emoji}</Text>
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+                Написать нам
+              </Text>
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.15}
+                className="font-sans text-[13px] text-bear-dim"
+              >
+                {topic.label}
+              </Text>
+            </View>
             <Pressable
               onPress={() => setComposeOpen(false)}
               accessibilityLabel="Закрыть письмо"
               accessibilityRole="button"
-              className="p-1"
+              className="h-[30px] w-[30px] items-center justify-center rounded-full bg-white/10 active:bg-white/20"
             >
-              <X hitSlop={10} size={20} color="#A5AECB" />
+              <X size={16} color="#A5AECB" />
             </Pressable>
           </View>
 
-          {/* Темы — можно поменять прямо в окне */}
-          <View className="mt-3 flex-row flex-wrap gap-1.5">
-            {TOPICS.map((t) => {
-              const active = t.id === topic.id
-              return (
-                <Pressable
-                  key={t.id}
-                  onPress={() => setTopic(t)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={`Тема: ${t.label}`}
-                  className={`flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-80 ${
-                    active ? '' : 'border border-white/10 bg-white/[0.05]'
-                  }`}
-                  style={active ? { backgroundColor: '#7B6CF6' } : null}
-                >
-                  <Text className="text-[14px]">{t.emoji}</Text>
-                  <Text
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={1.15}
-                    className={`font-semibold text-[13.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+          <View className="p-5">
+            {/* Темы — можно поменять прямо в окне */}
+            <View className="flex-row flex-wrap gap-1.5">
+              {TOPICS.map((t) => {
+                const active = t.id === topic.id
+                return (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => setTopic(t)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`Тема: ${t.label}`}
+                    className={`flex-row items-center gap-1 rounded-full px-3 py-2 active:opacity-80 ${
+                      active ? '' : 'border border-white/10 bg-white/[0.05]'
+                    }`}
+                    style={active ? { backgroundColor: '#7B6CF6' } : null}
                   >
-                    {t.label}
-                  </Text>
-                </Pressable>
-              )
-            })}
+                    <Text className="text-[14px]">{t.emoji}</Text>
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.15}
+                      className={`font-semibold text-[13.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+                    >
+                      {t.label}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              autoFocus
+              maxLength={1500}
+              placeholder={
+                topic.id === 'bug'
+                  ? 'Что случилось? Что нажимали, что ожидали, что вышло…'
+                  : topic.id === 'idea'
+                    ? 'Расскажите вашу идею — что добавить или изменить?'
+                    : topic.id === 'pay'
+                      ? 'Опишите вопрос по оплате: что купили, что не работает…'
+                      : 'Ваш вопрос или сообщение…'
+              }
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Текст обращения в поддержку"
+              className="mt-3 min-h-[130px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
+              style={{ textAlignVertical: 'top' }}
+            />
+
+            {/* Счётчик символов — тихий, справа под полем */}
+            <Text
+              maxFontSizeMultiplier={1.1}
+              className="mt-1 text-right font-sans text-[12px] text-bear-dim"
+            >
+              {message.length} / 1500
+            </Text>
+
+            <Pressable
+              onPress={send}
+              accessibilityRole="button"
+              accessibilityLabel="Отправить письмо в поддержку"
+              className="mt-3 h-[50px] flex-row items-center justify-center gap-2 rounded-2xl active:opacity-80"
+              style={{ backgroundColor: '#7B6CF6' }}
+            >
+              <Send size={18} color="#FFFFFF" />
+              <Text className="font-bold text-[17px] text-white">Отправить</Text>
+            </Pressable>
+
+            <Text
+              maxFontSizeMultiplier={1.2}
+              className="mt-2.5 text-center font-sans text-[12.5px] leading-snug text-bear-dim"
+            >
+              Дальше откроется почта — там нажмите «Отправить»
+            </Text>
           </View>
-
-          <Text
-            numberOfLines={1}
-            maxFontSizeMultiplier={1.15}
-            className="mt-3 font-sans text-[13.5px] text-bear-dim"
-          >
-            Письмо уйдёт на {EMAIL}
-          </Text>
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            autoFocus
-            maxLength={1500}
-            placeholder={
-              topic.id === 'bug'
-                ? 'Что случилось? Что нажимали, что ожидали, что вышло…'
-                : topic.id === 'idea'
-                  ? 'Расскажите вашу идею — что добавить или изменить?'
-                  : topic.id === 'pay'
-                    ? 'Опишите вопрос по оплате: что купили, что не работает…'
-                    : 'Ваш вопрос или сообщение…'
-            }
-            placeholderTextColor="#8B96B8"
-            accessibilityLabel="Текст обращения в поддержку"
-            className="mt-1.5 min-h-[110px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-sans text-[16px] text-bear-text"
-            style={{ textAlignVertical: 'top' }}
-          />
-
-          <Pressable
-            onPress={send}
-            accessibilityRole="button"
-            accessibilityLabel="Отправить письмо в поддержку"
-            className="mt-4 h-[46px] flex-row items-center justify-center gap-2 rounded-2xl active:opacity-80"
-            style={{ backgroundColor: '#7B6CF6' }}
-          >
-            <Send size={17} color="#FFFFFF" />
-            <Text className="font-bold text-[17px] text-white">Отправить</Text>
-          </Pressable>
-          <Text
-            maxFontSizeMultiplier={1.2}
-            className="mt-2 text-center font-sans text-[12.5px] leading-snug text-bear-dim"
-          >
-            Откроется ваше почтовое приложение — останется нажать «Отправить»
-          </Text>
         </View>
       </KeyboardAvoidingView>
     </Modal>
