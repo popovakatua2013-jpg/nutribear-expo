@@ -11,14 +11,17 @@
 
 import React, { useEffect, useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
+import Svg, { G, Path } from 'react-native-svg'
 import Animated, {
-  cancelAnimation, Easing, useAnimatedStyle, useDerivedValue,
+  cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useDerivedValue,
   useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated'
 import { colors } from '../../theme'
 import {
-  buildTrack, demoPatternFor, DEMO_PATTERNS, RIG, samplePose, TRACK_N,
+  buildGuides, buildTrack, demoPatternFor, DEMO_PATTERNS, RIG, samplePose, TRACK_N,
 } from '../demoPatterns'
+
+const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 const NEAR = colors.text
 const FAR = '#4A5568'
@@ -46,18 +49,42 @@ function segStyle(s, len, th, color) {
   }
 }
 
+/** Дуга-траектория: квадратичная кривая из дуги-гайда */
+function arcD(g) {
+  const f = (v) => Math.round(v * 10) / 10
+  return `M ${f(g.x1)} ${f(g.y1)} Q ${f(g.cx)} ${f(g.cy)} ${f(g.x2)} ${f(g.y2)}`
+}
+
+/** Наконечник стрелки: треугольник по касательной к дуге в конце */
+function headD(g) {
+  const dx = g.x2 - g.cx
+  const dy = g.y2 - g.cy
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+  const px = -uy
+  const py = ux
+  const f = (v) => Math.round(v * 10) / 10
+  return `M ${f(g.x2 + ux * 5.5)} ${f(g.y2 + uy * 5.5)}`
+    + ` L ${f(g.x2 - ux * 1.5 + px * 3.4)} ${f(g.y2 - uy * 1.5 + py * 3.4)}`
+    + ` L ${f(g.x2 - ux * 1.5 - px * 3.4)} ${f(g.y2 - uy * 1.5 - py * 3.4)} Z`
+}
+
 export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
   const pattern = DEMO_PATTERNS[demoPatternFor(exercise)] ?? DEMO_PATTERNS.march
   const tracks = useMemo(() => buildTrack(pattern), [pattern])
+  const guides = useMemo(() => buildGuides(pattern), [pattern])
   const isBreath = pattern.kind === 'breath'
 
   // Цикл движения 0→1 и медленное «дыхание» статичных поз
   const p = useSharedValue(0)
   const b = useSharedValue(0)
+  const flow = useSharedValue(0)
   useEffect(() => {
     if (paused) {
       cancelAnimation(p)
       cancelAnimation(b)
+      cancelAnimation(flow)
       return undefined
     }
     p.value = withRepeat(
@@ -72,10 +99,21 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
         false,
       )
     }
+    // Бегущий пунктир стрелок-траекторий: один период штриха за такт
+    if (guides.length > 0) {
+      flow.value = withRepeat(
+        withTiming(-10, { duration: 900, easing: Easing.linear }),
+        -1,
+        false,
+      )
+    }
     return undefined
-  }, [paused, pattern, p, b])
+  }, [paused, pattern, guides.length, p, b, flow])
 
   const pose = useDerivedValue(() => samplePose(p.value, tracks, TRACK_N))
+
+  // Бегущий пунктир по всем дугам сразу (направление — к наконечнику)
+  const flowProps = useAnimatedProps(() => ({ strokeDashoffset: flow.value }))
 
   // Общий контейнер: смещение фигуры, «скручивание» (sx), дыхание
   const outerStyle = useAnimatedStyle(() => {
@@ -187,6 +225,36 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
         <Animated.View style={[styles.shadow, shadowStyle]} />
         <Animated.View style={outerStyle}>
           <Animated.View style={[styles.fig, figStyle]}>
+            {/* Стрелки-траектории под фигурой: пунктир течёт к наконечнику */}
+            {guides.length > 0 && (
+              <Svg
+                width={200}
+                height={152}
+                viewBox="-20 -14 200 152"
+                style={styles.guides}
+                pointerEvents="none"
+              >
+                {guides.map((g, i) => (
+                  <G key={i}>
+                    <AnimatedPath
+                      d={arcD(g)}
+                      stroke={g.color === 'accent' ? ACCENT : colors.cyan}
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                      strokeDasharray="4.5 5.5"
+                      fill="none"
+                      opacity={0.95}
+                      animatedProps={flowProps}
+                    />
+                    <Path
+                      d={headD(g)}
+                      fill={g.color === 'accent' ? ACCENT : colors.cyan}
+                      opacity={0.95}
+                    />
+                  </G>
+                ))}
+              </Svg>
+            )}
             <Animated.View style={arm2Style} />
             <Animated.View style={fore2Style} />
             <Animated.View style={thigh2Style} />
@@ -242,6 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   fig: { position: 'absolute', left: 0, top: 0, width: CANVAS_W, height: CANVAS_H },
+  guides: { position: 'absolute', left: -20, top: -14 },
   headCircle: {
     position: 'absolute',
     left: 0,

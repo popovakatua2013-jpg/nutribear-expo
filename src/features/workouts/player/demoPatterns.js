@@ -422,6 +422,50 @@ const DEMO_BY_TYPE = {
   stretch: 'fold',
 }
 
+/**
+ * Стрелки-траектории движения (как в референсе «домашних тренировок»):
+ * пунктирные дуги показывают путь кончика кисти (акцент) и стопы (циан).
+ * Строятся автоматически из паттерна: концы дуги — положения кончика в
+ * начале и середине цикла, выгиб — наружу от сустава-якоря (плеча/таза).
+ * Смещения короче 12px (опорная конечность) и длиннее 90px (редкие
+ * выбросы) дугу не дают. pattern.guide === false отключает стрелки.
+ * Чистая функция — используется компонентом, html-макетом и тестами.
+ */
+export function buildGuides(pattern) {
+  if (!pattern || pattern.kind === 'breath' || pattern.guide === false) return []
+  const tracks = buildTrack(pattern)
+  const at = (t) => samplePose(t, tracks, TRACK_N)
+  const tip = (seg, len) => ({
+    x: seg.x + len * Math.cos((seg.a * Math.PI) / 180),
+    y: seg.y + len * Math.sin((seg.a * Math.PI) / 180),
+  })
+  const a = at(0)
+  const b = at(0.5)
+  const arcs = []
+  const arc = (p, q, anchor, color) => {
+    const dx = q.x - p.x
+    const dy = q.y - p.y
+    const dist = Math.hypot(dx, dy)
+    if (dist < 12 || dist > 90) return
+    const mx = (p.x + q.x) / 2
+    const my = (p.y + q.y) / 2
+    let nx = -dy / dist
+    let ny = dx / dist
+    if ((mx - anchor.x) * nx + (my - anchor.y) * ny < 0) {
+      nx = -nx
+      ny = -ny
+    }
+    const bump = Math.min(26, Math.max(7, dist * 0.38))
+    arcs.push({
+      x1: p.x, y1: p.y, x2: q.x, y2: q.y,
+      cx: mx + nx * bump, cy: my + ny * bump, color,
+    })
+  }
+  arc(tip(a.fore, RIG.foreArm), tip(b.fore, RIG.foreArm), a.arm, 'accent')
+  arc(tip(a.foot, 11), tip(b.foot, 11), a.thigh, 'cyan')
+  return arcs
+}
+
 /** Паттерн демонстрации для упражнения (всегда валидный ключ) */
 export function demoPatternFor(exercise) {
   if (exercise) {
