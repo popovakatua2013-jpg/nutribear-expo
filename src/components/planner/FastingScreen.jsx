@@ -22,7 +22,7 @@ const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'и�
 const PLANS = [12, 14, 16, 18]
 const HOW_STEPS = [
   'Выберите окно еды: пресетом или часом начала',
-  'Нажмите «Начать голодание» — таймер посчитает часы без еды',
+  'Нажмите «Начать окно без еды» — таймер посчитает часы без еды',
   '«Завершить» запишет результат в историю — увидите среднюю длительность',
 ]
 
@@ -83,17 +83,17 @@ export function FastingScreen() {
     s.setWindowStart((((s.windowStart + d) % 24) + 24) % 24)
   }
 
-  // Блокировка «Начать голодание» сразу после «Завершить»: кнопка
+  // Блокировка «Начать окно без еды» сразу после «Завершить»: кнопка
   // встаёт на то же место — случайный второй тап (привычка нажимать
   // дважды) тут же запускал новый сеанс, и казалось, что выйти из
-  // голодания невозможно (отзыв Кати)
+  // режима невозможно (отзыв Кати)
   const [lockStart, setLockStart] = useState(false)
 
   const start = () => {
     useFastingStore.getState().start()
     setNow(Date.now())
     toast({
-      title: '▶ Голодание начато',
+      title: '▶ Окно без еды начато',
       description: `Цель — ${24 - windowHours} ч без еды. Вода не считается!`,
     })
   }
@@ -105,7 +105,7 @@ export function FastingScreen() {
     useFastingStore.getState().stop()
     setLockStart(true)
     setTimeout(() => setLockStart(false), 2500)
-    toast({ title: '⏹ Голодание завершено', description: `Длилось ${fmtDur(dur)}` })
+    toast({ title: '⏹ Окно без еды завершено', description: `Длилось ${fmtDur(dur)}` })
   }
 
   const avgMs = laps.length
@@ -127,7 +127,7 @@ export function FastingScreen() {
           <>
             <View style={styles.runHead}>
               <View style={styles.liveDot} />
-              <Text style={styles.runLabel}>Идёт голодание</Text>
+              <Text style={styles.runLabel}>Идёт окно без еды</Text>
               <Text style={styles.runGoal}>цель {fastHours} ч</Text>
             </View>
             <Text style={[styles.bigTimer, overGoal && { color: colors.orange }]}>{fmtHM(elapsed)}</Text>
@@ -144,7 +144,7 @@ export function FastingScreen() {
                 ? `Цель превышена на ${fmtDur(elapsed - goalMs)} — молодец!`
                 : `Осталось ${fmtDur(left)} из ${fastHours} ч`}
             </Text>
-            <Pressable onPress={stop} style={styles.stopBtn} accessibilityLabel="Завершить голодание">
+            <Pressable onPress={stop} style={styles.stopBtn} accessibilityLabel="Завершить окно без еды">
               <Square size={16} color={colors.orange} />
               <Text style={styles.stopText}>Завершить</Text>
             </Pressable>
@@ -156,16 +156,16 @@ export function FastingScreen() {
               <Text style={styles.runLabel}>Сейчас — окно питания</Text>
             </View>
             <Text style={styles.bigTimer}>{24 - windowHours} ч</Text>
-            <Text style={styles.progressHint}>Цель голодания при плане {24 - windowHours}/{windowHours}</Text>
+            <Text style={styles.progressHint}>Цель окна без еды при плане {24 - windowHours}/{windowHours}</Text>
             <Pressable
               onPress={start}
               disabled={lockStart}
               style={lockStart ? [styles.startBtn, styles.btnLocked] : styles.startBtn}
-              accessibilityLabel="Начать голодание"
+              accessibilityLabel="Начать окно без еды"
               accessibilityState={{ disabled: lockStart }}
             >
               <Play size={16} color={colors.accentInk} />
-              <Text style={styles.startText}>Начать голодание</Text>
+              <Text style={styles.startText}>Начать окно без еды</Text>
             </Pressable>
           </>
         )}
@@ -175,7 +175,7 @@ export function FastingScreen() {
       <View style={styles.planCard}>
         <Text style={styles.planTitle}>План: окно еды {windowHours} ч</Text>
         <Text style={styles.planHint}>
-          Едим с {fmtClock(windowStart)} до {fmtClock(windowEnd)}, остальное время — голодание
+          Едим с {fmtClock(windowStart)} до {fmtClock(windowEnd)}, остальное время — окно без еды
         </Text>
         <View style={styles.windowRow}>
           <Pressable onPress={() => shiftWindow(-1)} style={styles.stepBtn} accessibilityLabel="Окно на час раньше">

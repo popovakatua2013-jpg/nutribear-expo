@@ -38,6 +38,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native
 import { useFocusEffect } from 'expo-router'
 import { useExerciseStore, todayKey, syncHistoryBurned } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import {
   EXERCISES,
   CUSTOM_EMOJIS,
@@ -138,9 +139,12 @@ export function ExerciseSection({ flat = false }) {
   }, [logs])
   // Последние записи: сегодня сверху, дальше прошлые дни (до 6 штук)
   const recent = useMemo(() => recentWorkouts(logs, 14, 6), [logs])
-  // История прошлых дней — ВСЕГДА свёрнута при входе (просьба Кати):
-  // видно только сегодняшние записи, старые — по тапу «История · N»
-  const [histOpen, setHistOpen] = useState(false)
+  // История прошлых дней: свернутость/раскрытость ЗАПОМИНАЕТСЯ
+  // (просьба Кати: «пусть запоминает выбор, а не сворачивается каждый
+  // раз») — храним в useUiPrefsStore.expanded, переживает перезапуск
+  // приложения и возврат на вкладку. Дефолт — свёрнута.
+  const histOpen = useUiPrefsStore((s) => Boolean(s.expanded['workouts-history']))
+  const setHistOpen = (v) => useUiPrefsStore.getState().setExpanded('workouts-history', v)
   const todayRows = useMemo(() => recent.filter((e) => e.daysAgo === 0), [recent])
   const pastRows = useMemo(() => recent.filter((e) => e.daysAgo > 0), [recent])
   const [dynRange, setDynRange] = useState('7')
@@ -275,10 +279,10 @@ export function ExerciseSection({ flat = false }) {
         </View>
       )}
 
-      {/* История прошлых дней: свёрнута всегда при входе (просьба Кати) */}
+      {/* История прошлых дней: состояние помнится (useUiPrefsStore) */}
       {pastRows.length > 0 && (
         <Pressable
-          onPress={() => setHistOpen((v) => !v)}
+          onPress={() => setHistOpen(!histOpen)}
           accessibilityRole="button"
           accessibilityState={{ expanded: histOpen }}
           accessibilityLabel={histOpen ? 'Свернуть историю тренировок' : `Показать историю тренировок: ${pastRows.length} ${exNoun(pastRows.length)}`}

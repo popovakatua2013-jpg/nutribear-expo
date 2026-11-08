@@ -43,6 +43,28 @@ export function consumeScrollToWeight() {
   return was
 }
 
+// ─── Раскрыть «Напоминания» на вкладке «Ещё» (колокольчик в шапке
+// «Плана») ────────────────────────────────────────────────────────────
+// Тап по колокольчику ведёт на «Ещё» и сразу раскрывает строку
+// «Напоминания» — тот же двойной механизм: живое событие для уже
+// смонтированной вкладки + отложенный флаг на случай, когда «Ещё»
+// ещё лениво не смонтирована.
+let pendingReminders = false
+
+export function requestOpenReminders() {
+  pendingReminders = true
+  try {
+    DeviceEventEmitter.emit('nutribear/open-reminders')
+  } catch {}
+}
+
+// Возвращает true, если открытие запрашивалось (и сбрасывает флаг)
+export function consumeOpenReminders() {
+  const was = pendingReminders
+  pendingReminders = false
+  return was
+}
+
 // ─── Окно «Записать сон» (Отчёты → тап по карточке «Сон») ───────────
 // Тап по вечернему пинку «пора спать» ведёт на вкладку Активности и
 // сразу открывает окно записи сна. Тот же двойной механизм, что у веса:

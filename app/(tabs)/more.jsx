@@ -17,8 +17,8 @@
 // внутри неё).
 // Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
 
-import { useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
@@ -44,6 +44,7 @@ import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { getDailyTarget } from '@/lib/data/goals'
 import { formatNum } from '@/lib/format'
 import { BUILD_HASH } from '@/lib/version'
+import { consumeOpenReminders } from '@/lib/navEvents'
 
 // Стиль пинков медведя: мягко / с характером (дефолт) / с перцем
 const STYLE_LABEL = { soft: 'Мягко', bear: 'С характером', spicy: 'С перцем' }
@@ -60,6 +61,19 @@ export default function MoreScreen() {
   // Окно «Документы»: политика, соглашение и дисклеймер — как в
   // стандартных приложениях, внизу экрана
   const [legalOpen, setLegalOpen] = useState(false)
+
+  // «Напоминания» раскрыты извне: колокольчик в шапке «Плана» ведёт сюда
+  // и сразу открывает строку (двойной механизм navEvents: событие для
+  // смонтированной вкладки + отложенный флаг, т.к. вкладки монтируются
+  // лениво). Пользователь может свернуть строку обратно тапом.
+  const [remindersOpen, setRemindersOpen] = useState(false)
+  useEffect(() => {
+    if (consumeOpenReminders()) setRemindersOpen(true)
+    const sub = DeviceEventEmitter.addListener('nutribear/open-reminders', () => {
+      setRemindersOpen(true)
+    })
+    return () => sub.remove()
+  }, [])
 
   // ── Живые значения строк меню — из тех же сторов, что и виджеты ──
   // Цикл: «через N дн» / «ожидается сегодня» / «задержка N дн»
@@ -184,6 +198,8 @@ export default function MoreScreen() {
             iconBg="rgba(251,191,36,0.16)"
             title="Напоминания"
             value={remCount > 0 ? `${remCount} вкл` : 'выключены'}
+            open={remindersOpen}
+            onOpenChange={setRemindersOpen}
           >
             <NotificationsSection />
           </MenuRow>

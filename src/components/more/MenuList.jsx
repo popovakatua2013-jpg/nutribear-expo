@@ -98,6 +98,9 @@ export function PillPicker({ options, value, onChange, accessibilityLabel }) {
 // раскрытия (например, «Документы» открывает окно), шеврон остаётся
 // направленным вправо. Строка-переключатель: если задан toggle —
 // тап по строке двигает тумблер (как в iOS).
+// Управляемое раскрытие: если задан open — строка раскрыта извне
+// (колокольчик «Плана» открывает «Напоминания» на «Ещё»), тап
+// сообщает наружу через onOpenChange; без open — состояние локальное.
 export function MenuRow({
   icon,
   iconBg,
@@ -108,14 +111,21 @@ export function MenuRow({
   toggle,
   accessibilityLabel,
   bordered = false,
+  open: openProp,
+  onOpenChange,
 }) {
-  const [open, setOpen] = useState(false)
+  const [openLocal, setOpenLocal] = useState(false)
+  const open = openProp !== undefined ? openProp : openLocal
+  const setOpen = (v) => {
+    if (openProp === undefined) setOpenLocal(v)
+    onOpenChange?.(v)
+  }
 
   const handlePress = toggle
     ? () => toggle.onChange(!toggle.value)
     : onPress
       ? onPress
-      : () => setOpen((s) => !s)
+      : () => setOpen(!open)
 
   return (
     <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-white/[0.06]' : ''}>
@@ -174,7 +184,7 @@ export function MenuRow({
         )}
       </Pressable>
 
-      {open && <View className="px-4 pb-4">{children}</View>}
+      {open && children != null && <View className="px-4 pb-4">{children}</View>}
     </View>
   )
 }
