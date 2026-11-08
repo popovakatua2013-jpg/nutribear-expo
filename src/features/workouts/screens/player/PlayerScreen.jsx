@@ -99,6 +99,11 @@ export function PlayerScreen({ workout, onClose, onFinish }) {
   const next = plan[state.index + 1]
   const phaseColor = PHASE_COLOR[state.phase]
 
+  // Что показываем в центре: во время упражнения — текущее, в отдыхе —
+  // следующее (это единственный момент, когда подсказку успевают
+  // прочитать), в отсчёте — первое упражнение с его подсказкой
+  const focus = state.phase === 'rest' && next ? next : current
+
   const phaseLabel =
     state.phase === 'prepare' ? t('player.prepare')
     : state.phase === 'rest' ? t('player.rest')
@@ -106,9 +111,10 @@ export function PlayerScreen({ workout, onClose, onFinish }) {
     : t('player.exerciseOf', { i: state.index + 1, n })
 
   const centerTitle =
-    state.phase === 'prepare' ? current.name[lang]
-    : state.phase === 'rest' && next ? t('player.next', { name: next.name[lang] })
+    state.phase === 'rest' && next ? t('player.next', { name: next.name[lang] })
     : current.name[lang]
+
+  const centerTip = focus.tip?.[lang]
 
   return (
     <Modal visible animationType="fade" statusBarTranslucent onRequestClose={onRequestClose}>
@@ -153,9 +159,16 @@ export function PlayerScreen({ workout, onClose, onFinish }) {
               color={phaseColor}
               unitLabel={t('player.sec')}
             />
+            {/* Пиктограмма + название + подсказка: что именно делать */}
+            <Text style={styles.exerciseEmoji}>{focus.emoji ?? '💪'}</Text>
             <Text style={styles.exerciseName} numberOfLines={2}>
               {centerTitle}
             </Text>
+            {centerTip ? (
+              <Text style={styles.exerciseTip} numberOfLines={2}>
+                {centerTip}
+              </Text>
+            ) : null}
           </Animated.View>
 
           {/* Кнопки отдыха */}
@@ -250,7 +263,7 @@ function QueueList({ plan, index, phase, lang, doneLabel }) {
               ]}
               numberOfLines={1}
             >
-              {e.name[lang]}
+              {e.emoji ? `${e.emoji} ` : ''}{e.name[lang]}
             </Text>
             <Text style={[styles.queueMeta, isDone && { color: colors.text3 }]}>
               {isDone ? doneLabel : `${e.durationSec} ${lang === 'ru' ? 'сек' : 'sec'}`}
@@ -296,13 +309,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.l },
-  ringWrap: { alignItems: 'center', gap: spacing.xl },
+  ringWrap: { alignItems: 'center', gap: spacing.s },
+  exerciseEmoji: {
+    fontSize: 46,
+    lineHeight: 52,
+    textAlign: 'center',
+  },
   exerciseName: {
     ...type.title,
     fontSize: 19,
     color: colors.text,
     textAlign: 'center',
     paddingHorizontal: spacing.xxl,
+  },
+  exerciseTip: {
+    ...type.caption,
+    color: colors.text2,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xxl,
+    lineHeight: 17,
   },
   pill: {
     backgroundColor: colors.cyanSoft,

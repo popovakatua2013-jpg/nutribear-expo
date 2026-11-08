@@ -201,6 +201,16 @@ describe('плансбордер', () => {
     expect(JSON.stringify(buildPlan(w))).toBe(JSON.stringify(buildPlan(w)))
   })
 
+  test('упражнения плана несут пиктограмму и подсказку по технике', () => {
+    const plan = buildPlan(MOCK_WORKOUTS[0])
+    for (const e of plan) {
+      expect(typeof e.emoji).toBe('string')
+      expect(e.emoji.length).toBeGreaterThan(0)
+      expect(typeof e.tip?.ru).toBe('string')
+      expect(typeof e.tip?.en).toBe('string')
+    }
+  })
+
   test('явный список упражнений используется как есть (отдых последнего — 0)', () => {
     const w = {
       id: 'x', durationMin: 2, kcal: 50, type: 'yoga',
