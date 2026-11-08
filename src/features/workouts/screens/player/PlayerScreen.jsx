@@ -155,21 +155,24 @@ export function PlayerScreen({ workout, startIndex = 0, onClose, onFinish }) {
           />
         </View>
 
-        {/* Центральная зона: кольцо + название упражнения */}
+        {/* Центральная зона: кольцо с живой демонстрацией + название */}
         <View style={styles.center}>
           <Animated.View
             key={`${state.phase}-${state.index}`}
             entering={FadeInDown.duration(motion.list)}
             style={styles.ringWrap}
           >
+            {/* Весь интерьер кольца — сцена с фигурой, секунды — бейджем сверху */}
             <TimerRing
               secondsLeft={state.secondsLeft}
               phaseTotal={state.phaseTotal}
               color={phaseColor}
               unitLabel={t('player.sec')}
-            />
-            {/* Живая демонстрация + название + подсказка: что именно делать */}
-            <ExerciseDemo exercise={focus} paused={state.paused} scale={0.83} />
+              size={256}
+            >
+              <ExerciseDemo exercise={focus} paused={state.paused} scale={1.3} />
+            </TimerRing>
+            {/* Название + подсказка: что именно делать */}
             <Text style={styles.exerciseName} numberOfLines={2}>
               {centerTitle}
             </Text>

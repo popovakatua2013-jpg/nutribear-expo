@@ -6,6 +6,8 @@
 // отрисовка на reanimated — один общий цикл p ∈ [0, 1), поза считается
 // в worklet samplePose, каждый сегмент — интерполяция своего трека.
 // Пауза плеера замораживает демонстрацию, статичные позы «дышат».
+// В плеере компонент вложен в TimerRing: сцена занимает весь интерьер
+// кольца (scale ≈ 1.3), фигура стоит ногами у внутренней кромки дуги.
 
 import React, { useEffect, useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -20,7 +22,6 @@ import {
 
 const NEAR = colors.text
 const FAR = '#4A5568'
-const FLOOR = '#2A3547'
 const ACCENT = colors.accent
 const CANVAS_W = 160
 const CANVAS_H = 120
@@ -94,6 +95,18 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
   }))
 
   const torsoStyle = useAnimatedStyle(() => segStyle(pose.value.torso, RIG.torso, 13, NEAR))
+  // Поперечные «плечи» и «таз»: придают силуэту человеческую ширину
+  // (перпендикуляр к оси корпуса в точке плеча/таза)
+  const shoulderBarStyle = useAnimatedStyle(() =>
+    segStyle(
+      { x: pose.value.arm.x, y: pose.value.arm.y, a: pose.value.torso.a + 90 },
+      17, 6, NEAR,
+    ))
+  const hipBarStyle = useAnimatedStyle(() =>
+    segStyle(
+      { x: pose.value.thigh.x, y: pose.value.thigh.y, a: pose.value.torso.a + 90 },
+      15, 6.5, NEAR,
+    ))
   const thighStyle = useAnimatedStyle(() => segStyle(pose.value.thigh, RIG.thigh, 7, NEAR))
   const shinStyle = useAnimatedStyle(() => segStyle(pose.value.shin, RIG.shin, 6.5, NEAR))
   const footStyle = useAnimatedStyle(() => segStyle(pose.value.foot, 11, 5, NEAR))
@@ -116,6 +129,13 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
       { translateY: pose.value.head.y - RIG.headR },
       { rotate: `${pose.value.head.a}deg` },
     ],
+  }))
+
+  // Мягкая подсветка за фигурой и тень под ногами (едет вместе со
+  // смещением позы по горизонтали)
+  const shadowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: pose.value.x }],
+    opacity: 0.55 - Math.max(0, -pose.value.y) * 0.012,
   }))
 
   // Дыхательное упражнение: без фигуры — расходящиеся кольца
@@ -147,7 +167,7 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <View style={[styles.canvas, canvasScale(scale)]}>
+        <View style={[styles.canvas, { transform: [{ scale }] }]}>
           <Animated.View style={breathStyle} />
           <View style={styles.breathCore} />
         </View>
@@ -162,8 +182,9 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <View style={[styles.canvas, canvasScale(scale)]}>
-        <View style={styles.floor} />
+      <View style={[styles.canvas, { transform: [{ scale }] }]}>
+        <View style={styles.spot} />
+        <Animated.View style={[styles.shadow, shadowStyle]} />
         <Animated.View style={outerStyle}>
           <Animated.View style={[styles.fig, figStyle]}>
             <Animated.View style={arm2Style} />
@@ -171,7 +192,9 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
             <Animated.View style={thigh2Style} />
             <Animated.View style={shin2Style} />
             <Animated.View style={foot2Style} />
+            <Animated.View style={hipBarStyle} />
             <Animated.View style={torsoStyle} />
+            <Animated.View style={shoulderBarStyle} />
             <Animated.View style={headStyle}>
               <View style={styles.headCircle} />
               <View style={styles.nose} />
@@ -188,29 +211,35 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
   )
 }
 
-/** Холст 160×120, вписанный в сцену scale через transform (центр совпадает) */
-function canvasScale(scale) {
-  if (scale === 1) return null
-  return {
-    transform: [
-      { translateX: ((scale - 1) * CANVAS_W) / 2 },
-      { translateY: ((scale - 1) * CANVAS_H) / 2 },
-      { scale },
-    ],
-  }
-}
+/**
+ * Холст 160×120, отмасштабированный вокруг своего центра и отцентрованный
+ * в сцене (stage уже размером CANVAS×scale) — обычный flex-центр,
+ * без ручных смещений.
+ */
 
 const styles = StyleSheet.create({
-  stage: {},
-  canvas: { position: 'absolute', left: 0, top: 0, width: CANVAS_W, height: CANVAS_H },
-  floor: {
+  stage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  canvas: { position: 'relative', width: CANVAS_W, height: CANVAS_H },
+  spot: {
     position: 'absolute',
-    left: 20,
-    top: RIG.floor,
-    width: 120,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: FLOOR,
+    left: CANVAS_W / 2 - 58,
+    top: 60 - 58,
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    backgroundColor: colors.accentSoft,
+  },
+  shadow: {
+    position: 'absolute',
+    left: CANVAS_W / 2 - 26,
+    top: RIG.floor - 5,
+    width: 52,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   fig: { position: 'absolute', left: 0, top: 0, width: CANVAS_W, height: CANVAS_H },
   headCircle: {
