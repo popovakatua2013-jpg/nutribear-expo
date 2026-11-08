@@ -42,7 +42,7 @@ export function ShoppingListScreen() {
   const fromPlan = () => {
     const list = planToShopping(planWeek)
     if (!list.length) {
-      toast({ title: 'В плане этой недели пусто', description: 'Заполните меню в сегменте «Меню»' })
+      toast({ title: 'В плане этой недели пусто', description: 'Заполните меню во вкладке «План»' })
       return
     }
     Alert.alert(
@@ -240,11 +240,11 @@ const styles = {
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 11, height: 32,
+    borderRadius: 999, paddingHorizontal: 12, height: 36,
   },
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipEmoji: { fontSize: 12 },
-  chipText: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
+  chipEmoji: { fontSize: 13 },
+  chipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   chipTextActive: { color: colors.accentInk },
   addRow: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.m, alignItems: 'center' },
   input: {
@@ -260,13 +260,13 @@ const styles = {
   planBtn: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
     backgroundColor: colors.cyanSoft, borderColor: 'rgba(61,220,242,0.25)', borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 13, height: 32, marginTop: spacing.s,
+    borderRadius: 999, paddingHorizontal: 14, height: 36, marginTop: spacing.s,
   },
-  planBtnText: { fontSize: 12, fontWeight: '700', fontFamily: F[700] },
+  planBtnText: { fontSize: 13, fontWeight: '700', fontFamily: F[700] },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.l, marginBottom: 2 },
   sectionEmoji: { fontSize: 13 },
   sectionLabel: { ...type.caption, color: colors.text2, flex: 1 },
-  sectionCount: { fontSize: 11, fontWeight: '700', fontFamily: F[700], color: colors.text3 },
+  sectionCount: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text3 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.m,
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
@@ -289,13 +289,13 @@ const styles = {
   qtyBtn: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   qtyBtnOff: { opacity: 0.35 },
   qtyVal: { minWidth: 20, textAlign: 'center', fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text },
-  delBtn: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  delBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   clearBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: 999, height: 40, marginTop: spacing.l,
   },
-  clearText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700] },
+  clearText: { fontSize: 13, fontWeight: '700', fontFamily: F[700] },
   emptyCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.xxl, alignItems: 'center', marginTop: spacing.m,

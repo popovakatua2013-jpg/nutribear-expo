@@ -301,7 +301,7 @@ export function MealPlanScreen() {
                   >
                     <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)}</Text>
                   </Pressable>
-                  <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} accessibilityLabel="Убрать блюдо">
+                  <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} hitSlop={6} accessibilityLabel="Убрать блюдо">
                     <X size={13} color={colors.text3} />
                   </Pressable>
                 </View>
@@ -388,7 +388,7 @@ const styles = {
   },
   dayChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   dayChipToday: { borderColor: colors.accentBorder },
-  dayChipText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
+  dayChipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   dayChipTextActive: { color: colors.accentInk },
   dayDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: colors.line },
   dayDotFilled: { backgroundColor: colors.cyan },
@@ -400,12 +400,12 @@ const styles = {
   howTitle: { ...type.title, fontSize: 15, color: colors.text },
   howRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
   howNum: {
-    width: 20, height: 20, borderRadius: 10,
+    width: 22, height: 22, borderRadius: 11,
     backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  howNumText: { fontSize: 11, fontWeight: '800', fontFamily: F[700], color: colors.accent },
-  howText: { ...type.body, fontSize: 12.5, color: colors.text2, flex: 1, lineHeight: 18 },
+  howNumText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: colors.accent },
+  howText: { ...type.body, fontSize: 13, color: colors.text2, flex: 1, lineHeight: 19 },
   dayCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,
@@ -419,32 +419,32 @@ const styles = {
     backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1,
     borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3,
   },
-  kcalPillText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: colors.accent },
+  kcalPillText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accent },
   barTrack: { height: 5, borderRadius: 3, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
   barFill: { height: 5, borderRadius: 3 },
   dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.l, flexWrap: 'wrap' },
   dayAction: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.surface2, borderRadius: 999,
-    paddingHorizontal: 10, height: 28,
+    paddingHorizontal: 12, height: 32,
   },
-  dayActionText: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
+  dayActionText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   transferBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.accent, borderRadius: 999,
-    paddingHorizontal: 12, height: 28,
+    paddingHorizontal: 14, height: 32,
   },
-  transferText: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: colors.accentInk },
+  transferText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accentInk },
   mealBlock: { marginTop: spacing.m },
   mealHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, minHeight: 36 },
   mealEmoji: { fontSize: 16, width: 22, textAlign: 'center' },
   mealName: { ...type.body, color: colors.text, fontWeight: '700', fontFamily: F[700], fontSize: 13.5, flex: 1 },
   mealAdd: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: colors.accentSoft, borderRadius: 999,
-    paddingHorizontal: 9, height: 24,
+    paddingHorizontal: 11, height: 30,
   },
-  mealAddText: { fontSize: 11, fontWeight: '700', fontFamily: F[700], color: colors.accent },
+  mealAddText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accent },
   itemRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.s,
     backgroundColor: colors.surface2, borderRadius: radius.row,
@@ -456,8 +456,8 @@ const styles = {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3,
   },
-  itemMeta: { fontSize: 11.5, fontWeight: '600', fontFamily: F[600], color: colors.text2 },
-  itemDel: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
+  itemMeta: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: colors.text2 },
+  itemDel: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
   copyBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   copySheet: {
     backgroundColor: colors.surface2, borderColor: colors.line, borderWidth: 1,

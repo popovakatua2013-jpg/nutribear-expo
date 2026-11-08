@@ -21,6 +21,10 @@ import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useSessionsStore, usePrefsStore } from '@/features/workouts/store/useWorkoutsStore'
+import { useMealPlanStore } from '@/store/useMealPlanStore'
+import { useShoppingStore } from '@/store/useShoppingStore'
+import { useDayTypesStore } from '@/store/useDayTypesStore'
+import { useCycleStore } from '@/store/useCycleStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
@@ -70,6 +74,12 @@ export function DataActions({ embedded = false, variant = null }) {
     wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
+    // Планировщик: план питания и список покупок — персональные данные
+    useMealPlanStore.setState({ plans: {} })
+    useShoppingStore.setState({ items: [] })
+    // Особые дни (метки и прибавки) и трекер цикла — тоже персональные
+    useDayTypesStore.getState().resetAll()
+    useCycleStore.setState({ enabled: false, lastStart: null, length: 28, bleed: 5, history: [] })
     // Журнал модуля тренировок (сессии и настройки фильтров) — тоже данные
     useSessionsStore.setState({ sessions: [] })
     usePrefsStore.setState({ lang: 'ru', filterType: 'all', query: '' })
@@ -81,6 +91,10 @@ export function DataActions({ embedded = false, variant = null }) {
       'nutribear-organism-game-v1',
       '@app/workouts/sessions',
       '@app/workouts/prefs',
+      'nutribear-meal-plan',
+      'nutribear-shopping-list',
+      'nutribear-daytypes-v1',
+      'nutribear-cycle-v1',
     ])
     // Мелкие настройки интерфейса — к стартовым значениям
     useUiPrefsStore.setState({ expanded: {}, haptics: true, weighNudgeDays: 7 })

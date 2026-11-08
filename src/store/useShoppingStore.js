@@ -158,6 +158,11 @@ export const useShoppingStore = create(
         set((state) => ({ items: state.items.filter((it) => !it.done) }))
       },
     }),
-    { name: 'nutribear-shopping-list', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'nutribear-shopping-list',
+      storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (state) => state,
+    },
   ),
 )

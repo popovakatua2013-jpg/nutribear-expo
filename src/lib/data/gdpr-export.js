@@ -19,6 +19,8 @@ import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCycleStore } from '@/store/useCycleStore'
+import { useMealPlanStore } from '@/store/useMealPlanStore'
+import { useShoppingStore } from '@/store/useShoppingStore'
 import { collectPhotosForBackup } from '@/lib/photos'
 
 // Снимок всех данных приложения (персональные данные здоровья —
@@ -50,6 +52,9 @@ export async function collectAll() {
     // Трекер цикла: настройки и история — только локальные данные,
     // переносим вместе с остальными, чтобы не вводить заново
     cycle: useCycleStore.getState(),
+    // План питания на неделю и список покупок (вкладки «План»/«Покупки»)
+    mealPlan: useMealPlanStore.getState(),
+    shopping: useShoppingStore.getState(),
   }
 }
 

@@ -17,6 +17,8 @@ import { useCombosStore } from '@/store/useCombosStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCycleStore, normLength, normBleed } from '@/store/useCycleStore'
+import { useMealPlanStore } from '@/store/useMealPlanStore'
+import { useShoppingStore } from '@/store/useShoppingStore'
 import { restorePhotos } from '@/lib/photos'
 
 const MEAL_KEYS = { breakfast: [], lunch: [], dinner: [], snack: [] }
@@ -175,6 +177,38 @@ export async function applyBackup(data) {
     bleed: normBleed(cy.bleed),
     history: cyHistory,
   })
+
+  // ── План питания и список покупок (вкладки «План»/«Покупки»):
+  //    разделы появились позже первого формата копии — заливаем их
+  //    только если они в копии есть, чтобы старая копия не стирала
+  //    текущие планы. Недельные ключи проверяем на формат даты,
+  //    покупки чистим и ограничиваем (200 строк) ──
+  const mp = obj(data.mealPlan)
+  if (mp.plans && typeof mp.plans === 'object' && !Array.isArray(mp.plans)) {
+    const cleanPlans = {}
+    for (const [wk, week] of Object.entries(mp.plans)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(wk)) continue
+      if (!week || typeof week !== 'object' || Array.isArray(week)) continue
+      cleanPlans[wk] = week
+    }
+    useMealPlanStore.setState({ plans: cleanPlans })
+  }
+  const sh = obj(data.shopping)
+  if (Array.isArray(sh.items)) {
+    const mkId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+    const items = sh.items
+      .filter((it) => it && typeof it === 'object' && typeof it.name === 'string' && it.name.trim())
+      .slice(0, 200)
+      .map((it) => ({
+        id: typeof it.id === 'string' && it.id ? it.id : mkId(),
+        name: it.name.slice(0, 80),
+        done: Boolean(it.done),
+        qty: Math.min(99, Math.max(1, Math.round(Number(it.qty) || 1))),
+        category: typeof it.category === 'string' && it.category ? it.category : null,
+        createdAt: Number(it.createdAt) || Date.now(),
+      }))
+    useShoppingStore.setState({ items })
+  }
 
   return true
 }

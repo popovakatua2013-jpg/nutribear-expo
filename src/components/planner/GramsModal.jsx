@@ -151,11 +151,11 @@ const styles = {
   presets: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.s },
   preset: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 13, height: 32,
+    borderRadius: 999, paddingHorizontal: 13, height: 36,
     alignItems: 'center', justifyContent: 'center',
   },
   presetActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  presetText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
+  presetText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   presetTextActive: { color: colors.accentInk },
   saveBtn: {
     height: 46, borderRadius: radius.field, backgroundColor: colors.accent,

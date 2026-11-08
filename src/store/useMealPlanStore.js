@@ -213,6 +213,11 @@ export const useMealPlanStore = create(
         })
       },
     }),
-    { name: 'nutribear-meal-plan', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'nutribear-meal-plan',
+      storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (state) => state,
+    },
   ),
 )
