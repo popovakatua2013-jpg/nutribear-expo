@@ -1,24 +1,29 @@
 // src/features/workouts/player/components/ExerciseDemo.jsx
-// «Живая» демонстрация упражнения: анимированная фигурка повторяет
-// движение подхода, пока идёт отсчёт (и в отдыхе — для следующего
-// упражнения). Геометрия и позы — в player/demoPatterns.js (чистый
-// модуль: те же данные используют html-макет и тесты); здесь только
-// отрисовка на reanimated — один общий цикл p ∈ [0, 1), поза считается
-// в worklet samplePose, каждый сегмент — интерполяция своего трека.
-// Пауза плеера замораживает демонстрацию, статичные позы «дышат».
+// «Живая» демонстрация упражнения: анимированная фигурка-спортсменка
+// повторяет движение подхода, пока идёт отсчёт (и в отдыхе — для
+// следующего упражнения). Позы и геометрия тела — в player/demoPatterns.js
+// (чистый модуль: те же функции используют html-макет и тесты); здесь
+// только отрисовка на react-native-svg: тело собрано из сужающихся
+// «капсул» (конечности, корпус, шорты, кеды) + голова с хвостом —
+// человеческие пропорции вместо палочного силуэта. Цветовая роль:
+// дальняя сторона приглушённая, ближняя рука — акцентная (рабочая),
+// шорты и кеды — фирменный циан. Один общий цикл p ∈ [0, 1), поза
+// считается в worklet samplePose. Пауза плеера замораживает
+// демонстрацию, статичные позы «дышат».
 // В плеере компонент вложен в TimerRing: сцена занимает весь интерьер
 // кольца (scale ≈ 1.3), фигура стоит ногами у внутренней кромки дуги.
 
 import React, { useEffect, useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
-import Svg, { G, Path } from 'react-native-svg'
+import Svg, { Circle, G, Path } from 'react-native-svg'
 import Animated, {
   cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useDerivedValue,
   useSharedValue, withRepeat, withTiming,
 } from 'react-native-reanimated'
 import { colors } from '../../theme'
 import {
-  buildGuides, buildTrack, demoPatternFor, DEMO_PATTERNS, RIG, samplePose, TRACK_N,
+  buildGuides, buildTrack, cuffD, demoPatternFor, DEMO_PATTERNS, limbD, neckD,
+  RIG, samplePose, shoulderD, shortsD, sneakerD, TRACK_N, trunkD,
 } from '../demoPatterns'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
@@ -26,28 +31,20 @@ const AnimatedPath = Animated.createAnimatedComponent(Path)
 const NEAR = colors.text
 const FAR = '#4A5568'
 const ACCENT = colors.accent
+const CYAN = colors.cyan
+const FAR_CYAN = '#2E9FB6'
+const HAIR = '#B9C3D1'
 const CANVAS_W = 160
 const CANVAS_H = 120
 
-/** Сегмент конечности: поворот вокруг центра с компенсацией сочленения */
-function segStyle(s, len, th, color) {
-  'worklet'
-  const r = (s.a * Math.PI) / 180
-  return {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: len,
-    height: th,
-    borderRadius: th / 2,
-    backgroundColor: color,
-    transform: [
-      { translateX: s.x - (len / 2) * (1 - Math.cos(r)) },
-      { translateY: s.y - th / 2 + (len / 2) * Math.sin(r) },
-      { rotate: `${s.a}deg` },
-    ],
-  }
-}
+// Голова: квадратная группа с запасом под хвост, центр головы —
+// в центре группы (поворот головы идёт вокруг этой точки)
+const HEAD_BOX = 37
+const HEAD_C = HEAD_BOX / 2
+
+/** Хвост: локон от затылка вниз (координаты внутри головы 37×37) */
+const HAIR_D = 'M 14.5 10.5 C 8.5 9.5 5 13 4.8 17.5 C 4.6 22 6.5 25.5 10 26.5 '
+  + 'C 8.5 22.5 8.8 17.5 11 14.5 C 12.5 12.5 14.5 11.5 14.5 10.5 Z'
 
 /** Дуга-траектория: квадратичная кривая из дуги-гайда */
 function arcD(g) {
@@ -56,7 +53,7 @@ function arcD(g) {
 }
 
 /** Наконечник стрелки: треугольник по касательной к дуге в конце */
-function headD(g) {
+function arrowHeadD(g) {
   const dx = g.x2 - g.cx
   const dy = g.y2 - g.cy
   const len = Math.hypot(dx, dy) || 1
@@ -115,6 +112,24 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
   // Бегущий пунктир по всем дугам сразу (направление — к наконечнику)
   const flowProps = useAnimatedProps(() => ({ strokeDashoffset: flow.value }))
 
+  // ── Тело: 16 капсул, d каждой считается из позы на UI-потоке ──────────
+  const farArmProps = useAnimatedProps(() => ({ d: limbD(pose.value.arm2, RIG.upperArm, 6.4, 5.2) }))
+  const farForeProps = useAnimatedProps(() => ({ d: limbD(pose.value.fore2, RIG.foreArm, 5, 3.9) }))
+  const farThighProps = useAnimatedProps(() => ({ d: limbD(pose.value.thigh2, RIG.thigh, 8.2, 6.6) }))
+  const farCuffProps = useAnimatedProps(() => ({ d: cuffD(pose.value.thigh2) }))
+  const farShinProps = useAnimatedProps(() => ({ d: limbD(pose.value.shin2, RIG.shin, 6.2, 4.4) }))
+  const farFootProps = useAnimatedProps(() => ({ d: sneakerD(pose.value.foot2) }))
+  const neckProps = useAnimatedProps(() => ({ d: neckD(pose.value) }))
+  const trunkProps = useAnimatedProps(() => ({ d: trunkD(pose.value) }))
+  const shoulderProps = useAnimatedProps(() => ({ d: shoulderD(pose.value) }))
+  const shortsProps = useAnimatedProps(() => ({ d: shortsD(pose.value) }))
+  const thighProps = useAnimatedProps(() => ({ d: limbD(pose.value.thigh, RIG.thigh, 8.2, 6.6) }))
+  const cuffProps = useAnimatedProps(() => ({ d: cuffD(pose.value.thigh) }))
+  const shinProps = useAnimatedProps(() => ({ d: limbD(pose.value.shin, RIG.shin, 6.2, 4.4) }))
+  const footProps = useAnimatedProps(() => ({ d: sneakerD(pose.value.foot) }))
+  const armProps = useAnimatedProps(() => ({ d: limbD(pose.value.arm, RIG.upperArm, 6.4, 5.2) }))
+  const foreProps = useAnimatedProps(() => ({ d: limbD(pose.value.fore, RIG.foreArm, 5, 3.9) }))
+
   // Общий контейнер: смещение фигуры, «скручивание» (sx), дыхание
   const outerStyle = useAnimatedStyle(() => {
     const breathK = pattern.breath ? 1 + 0.02 * Math.sin(b.value * Math.PI * 2) : 1
@@ -132,39 +147,15 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
     transform: [{ rotate: `${pose.value.fig}deg` }],
   }))
 
-  const torsoStyle = useAnimatedStyle(() => segStyle(pose.value.torso, RIG.torso, 13, NEAR))
-  // Поперечные «плечи» и «таз»: придают силуэту человеческую ширину
-  // (перпендикуляр к оси корпуса в точке плеча/таза)
-  const shoulderBarStyle = useAnimatedStyle(() =>
-    segStyle(
-      { x: pose.value.arm.x, y: pose.value.arm.y, a: pose.value.torso.a + 90 },
-      17, 6, NEAR,
-    ))
-  const hipBarStyle = useAnimatedStyle(() =>
-    segStyle(
-      { x: pose.value.thigh.x, y: pose.value.thigh.y, a: pose.value.torso.a + 90 },
-      15, 6.5, NEAR,
-    ))
-  const thighStyle = useAnimatedStyle(() => segStyle(pose.value.thigh, RIG.thigh, 7, NEAR))
-  const shinStyle = useAnimatedStyle(() => segStyle(pose.value.shin, RIG.shin, 6.5, NEAR))
-  const footStyle = useAnimatedStyle(() => segStyle(pose.value.foot, 11, 5, NEAR))
-  const armStyle = useAnimatedStyle(() => segStyle(pose.value.arm, RIG.upperArm, 6, ACCENT))
-  const foreStyle = useAnimatedStyle(() => segStyle(pose.value.fore, RIG.foreArm, 5.5, ACCENT))
-  const thigh2Style = useAnimatedStyle(() => segStyle(pose.value.thigh2, RIG.thigh, 7, FAR))
-  const shin2Style = useAnimatedStyle(() => segStyle(pose.value.shin2, RIG.shin, 6.5, FAR))
-  const foot2Style = useAnimatedStyle(() => segStyle(pose.value.foot2, 11, 5, FAR))
-  const arm2Style = useAnimatedStyle(() => segStyle(pose.value.arm2, RIG.upperArm, 6, FAR))
-  const fore2Style = useAnimatedStyle(() => segStyle(pose.value.fore2, RIG.foreArm, 5.5, FAR))
-
   const headStyle = useAnimatedStyle(() => ({
     position: 'absolute',
     left: 0,
     top: 0,
-    width: RIG.headR * 2,
-    height: RIG.headR * 2,
+    width: HEAD_BOX,
+    height: HEAD_BOX,
     transform: [
-      { translateX: pose.value.head.x - RIG.headR },
-      { translateY: pose.value.head.y - RIG.headR },
+      { translateX: pose.value.head.x - HEAD_C },
+      { translateY: pose.value.head.y - HEAD_C },
       { rotate: `${pose.value.head.a}deg` },
     ],
   }))
@@ -225,53 +216,69 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
         <Animated.View style={[styles.shadow, shadowStyle]} />
         <Animated.View style={outerStyle}>
           <Animated.View style={[styles.fig, figStyle]}>
-            {/* Стрелки-траектории под фигурой: пунктир течёт к наконечнику */}
-            {guides.length > 0 && (
+            {/* Тело: стрелки-траектории под фигурой + 16 капсул */}
+            <Svg
+              width={200}
+              height={152}
+              viewBox="-20 -14 200 152"
+              style={styles.scene}
+              pointerEvents="none"
+            >
+              {guides.map((g, i) => (
+                <G key={i}>
+                  <AnimatedPath
+                    d={arcD(g)}
+                    stroke={g.color === 'accent' ? ACCENT : colors.cyan}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeDasharray="4.5 5.5"
+                    fill="none"
+                    opacity={0.95}
+                    animatedProps={flowProps}
+                  />
+                  <Path
+                    d={arrowHeadD(g)}
+                    fill={g.color === 'accent' ? ACCENT : colors.cyan}
+                    opacity={0.95}
+                  />
+                </G>
+              ))}
+              {/* Дальняя сторона: приглушённые конечности */}
+              <AnimatedPath animatedProps={farArmProps} fill={FAR} />
+              <AnimatedPath animatedProps={farForeProps} fill={FAR} />
+              <AnimatedPath animatedProps={farThighProps} fill={FAR} />
+              <AnimatedPath animatedProps={farCuffProps} fill={FAR_CYAN} />
+              <AnimatedPath animatedProps={farShinProps} fill={FAR} />
+              <AnimatedPath animatedProps={farFootProps} fill={FAR_CYAN} />
+              {/* Корпус: шея → футболка → плечи → шорты */}
+              <AnimatedPath animatedProps={neckProps} fill={NEAR} />
+              <AnimatedPath animatedProps={trunkProps} fill={NEAR} />
+              <AnimatedPath animatedProps={shoulderProps} fill={NEAR} />
+              <AnimatedPath animatedProps={shortsProps} fill={CYAN} />
+              {/* Ближняя сторона */}
+              <AnimatedPath animatedProps={thighProps} fill={NEAR} />
+              <AnimatedPath animatedProps={cuffProps} fill={CYAN} />
+              <AnimatedPath animatedProps={shinProps} fill={NEAR} />
+              <AnimatedPath animatedProps={footProps} fill={CYAN} />
+              {/* Рабочая рука — акцентная */}
+              <AnimatedPath animatedProps={armProps} fill={ACCENT} />
+              <AnimatedPath animatedProps={foreProps} fill={ACCENT} />
+            </Svg>
+            {/* Голова с хвостом: поворачивается вокруг центра головы */}
+            <Animated.View style={headStyle}>
               <Svg
-                width={200}
-                height={152}
-                viewBox="-20 -14 200 152"
-                style={styles.guides}
+                width={HEAD_BOX}
+                height={HEAD_BOX}
+                viewBox="-10 -10 37 37"
+                style={styles.headSvg}
                 pointerEvents="none"
               >
-                {guides.map((g, i) => (
-                  <G key={i}>
-                    <AnimatedPath
-                      d={arcD(g)}
-                      stroke={g.color === 'accent' ? ACCENT : colors.cyan}
-                      strokeWidth={2.5}
-                      strokeLinecap="round"
-                      strokeDasharray="4.5 5.5"
-                      fill="none"
-                      opacity={0.95}
-                      animatedProps={flowProps}
-                    />
-                    <Path
-                      d={headD(g)}
-                      fill={g.color === 'accent' ? ACCENT : colors.cyan}
-                      opacity={0.95}
-                    />
-                  </G>
-                ))}
+                <Path d={HAIR_D} fill={HAIR} />
+                <Circle cx={18.5} cy={18.5} r={RIG.headR} fill={NEAR} />
+                <Circle cx={12.5} cy={13} r={1.6} fill={ACCENT} />
+                <Circle cx={22.8} cy={16.8} r={1.25} fill={colors.bg} />
               </Svg>
-            )}
-            <Animated.View style={arm2Style} />
-            <Animated.View style={fore2Style} />
-            <Animated.View style={thigh2Style} />
-            <Animated.View style={shin2Style} />
-            <Animated.View style={foot2Style} />
-            <Animated.View style={hipBarStyle} />
-            <Animated.View style={torsoStyle} />
-            <Animated.View style={shoulderBarStyle} />
-            <Animated.View style={headStyle}>
-              <View style={styles.headCircle} />
-              <View style={styles.nose} />
             </Animated.View>
-            <Animated.View style={thighStyle} />
-            <Animated.View style={shinStyle} />
-            <Animated.View style={footStyle} />
-            <Animated.View style={armStyle} />
-            <Animated.View style={foreStyle} />
           </Animated.View>
         </Animated.View>
       </View>
@@ -282,7 +289,8 @@ export function ExerciseDemo({ exercise, paused = false, scale = 1 }) {
 /**
  * Холст 160×120, отмасштабированный вокруг своего центра и отцентрованный
  * в сцене (stage уже размером CANVAS×scale) — обычный flex-центр,
- * без ручных смещений.
+ * без ручных смещений. scene — общий svg фигуры и стрелок (запас по
+ * краям viewBox), headSvg — голова с хвостом.
  */
 
 const styles = StyleSheet.create({
@@ -310,25 +318,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   fig: { position: 'absolute', left: 0, top: 0, width: CANVAS_W, height: CANVAS_H },
-  guides: { position: 'absolute', left: -20, top: -14 },
-  headCircle: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: RIG.headR * 2,
-    height: RIG.headR * 2,
-    borderRadius: RIG.headR,
-    backgroundColor: NEAR,
-  },
-  nose: {
-    position: 'absolute',
-    left: RIG.headR + 4.5,
-    top: RIG.headR - 1.5,
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: colors.bg,
-  },
+  scene: { position: 'absolute', left: -20, top: -14, overflow: 'visible' },
+  headSvg: { position: 'absolute', left: 0, top: 0, overflow: 'visible' },
   breathCore: {
     position: 'absolute',
     left: CANVAS_W / 2 - 5,

@@ -653,3 +653,106 @@ export function samplePose(t, tracks, N) {
     arm2: farArm.arm, fore2: farArm.fore,
   }
 }
+
+// ── Геометрия тела фигуры ────────────────────────────────────────────────
+// Тело собрано из «капсул» — отрезков переменной ширины с круглыми
+// торцами. Сужение (бедро толще колена, плечо толще запястья, талия
+// уже бёдер и плеч) даёт человеческие пропорции вместо палочного
+// силуэта. Чистые функции: их используют компонент ExerciseDemo и
+// html-макет (единый источник геометрии).
+
+const f2 = (v) => Math.round(v * 100) / 100
+
+/** Конец сегмента {x, y, a} при длине len */
+export function segEnd(s, len) {
+  'worklet'
+  return {
+    x: s.x + len * Math.cos(s.a * DEG),
+    y: s.y + len * Math.sin(s.a * DEG),
+  }
+}
+
+/**
+ * Капсула с сужением из (x0,y0) в (x1,y1): ширина w0 у старта, w1 у
+ * конца, круглые торцы. Возвращает строку d для <path>.
+ */
+export function capsuleD(x0, y0, x1, y1, w0, w1) {
+  'worklet'
+  const dx = x1 - x0
+  const dy = y1 - y0
+  const L = Math.sqrt(dx * dx + dy * dy) || 1
+  const px = -dy / L
+  const py = dx / L
+  const r0 = w0 / 2
+  const r1 = w1 / 2
+  return `M ${f2(x0 + px * r0)} ${f2(y0 + py * r0)}`
+    + ` L ${f2(x1 + px * r1)} ${f2(y1 + py * r1)}`
+    + ` A ${f2(r1)} ${f2(r1)} 0 0 0 ${f2(x1 - px * r1)} ${f2(y1 - py * r1)}`
+    + ` L ${f2(x0 - px * r0)} ${f2(y0 - py * r0)}`
+    + ` A ${f2(r0)} ${f2(r0)} 0 0 0 ${f2(x0 + px * r0)} ${f2(y0 + py * r0)} Z`
+}
+
+/** Конечность из сегмента позы: капсула от сустава по углу seg.a */
+export function limbD(seg, len, w0, w1) {
+  'worklet'
+  const e = segEnd(seg, len)
+  return capsuleD(seg.x, seg.y, e.x, e.y, w0, w1)
+}
+
+/** Точка на оси корпуса: таз + d вдоль оси (к плечам) + w поперёк */
+export function axisPt(pose, d, w) {
+  'worklet'
+  const a = pose.torso.a * DEG
+  return {
+    x: pose.thigh.x + Math.cos(a) * d - Math.sin(a) * w,
+    y: pose.thigh.y + Math.sin(a) * d + Math.cos(a) * w,
+  }
+}
+
+/** Капсула вдоль оси корпуса между двумя станциями d0 → d1 */
+const axisCap = (pose, d0, d1, w0, w1) => {
+  'worklet'
+  const a = axisPt(pose, d0, 0)
+  const b = axisPt(pose, d1, 0)
+  return capsuleD(a.x, a.y, b.x, b.y, w0, w1)
+}
+
+/** Корпус-футболка: талия уже, к плечам шире (округлый грудной пояс) */
+export function trunkD(pose) {
+  'worklet'
+  return axisCap(pose, 5, 26, 10.6, 14)
+}
+
+/** Плечевой пояс: поперечная капсула — округлые покатые плечи */
+export function shoulderD(pose) {
+  'worklet'
+  const a = axisPt(pose, 24.5, -7.9)
+  const b = axisPt(pose, 24.5, 7.9)
+  return capsuleD(a.x, a.y, b.x, b.y, 6, 6)
+}
+
+/** Шорты: капсула поверх таза, чуть шире корпуса */
+export function shortsD(pose) {
+  'worklet'
+  return axisCap(pose, -3.5, 6, 15.6, 14.2)
+}
+
+/** Шея: от плеч вверх, прячется под голову */
+export function neckD(pose) {
+  'worklet'
+  return axisCap(pose, 29, 34.5, 4.8, 4.2)
+}
+
+/** Манжета шорт поверх верхней части бедра */
+export function cuffD(seg) {
+  'worklet'
+  const e = segEnd(seg, 8.5)
+  return capsuleD(seg.x, seg.y, e.x, e.y, 8.6, 7)
+}
+
+/** Кед: капсула от щиколотки вперёд, чуть уже стопы */
+export function sneakerD(seg) {
+  'worklet'
+  const e = segEnd(seg, 8.5)
+  return capsuleD(seg.x, seg.y, e.x, e.y, 5.4, 4.2)
+}

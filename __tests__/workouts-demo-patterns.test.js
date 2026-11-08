@@ -214,3 +214,51 @@ describe('demoPatterns: сквозной путь до плеера', () => {
     }
   })
 })
+
+describe('demoPatterns: геометрия тела (капсулы)', () => {
+  const {
+    axisPt, capsuleD, cuffD, limbD, neckD, shoulderD, shortsD, sneakerD, trunkD,
+  } = require('@/features/workouts/player/demoPatterns')
+
+  const validD = (d) => {
+    expect(typeof d).toBe('string')
+    expect(d.startsWith('M ')).toBe(true)
+    expect(d.endsWith(' Z')).toBe(true)
+    expect(d).not.toMatch(/NaN|Infinity|undefined/)
+    // две дуги-торца + прямые стороны
+    expect(d.split(' A ').length - 1).toBe(2)
+  }
+
+  test('капсула вырожденной длины не даёт NaN (деление на ноль)', () => {
+    validD(capsuleD(50, 50, 50, 50, 8, 6))
+  })
+
+  test('все капсулы стоячей позы — валидные пути без NaN', () => {
+    const tracks = buildTrack(DEMO_PATTERNS.squat)
+    for (const t of [0, 0.25, 0.5, 0.75]) {
+      const p = samplePose(t, tracks, TRACK_N)
+      validD(limbD(p.thigh, 26, 8.2, 6.6))
+      validD(limbD(p.shin2, 26, 6.2, 4.4))
+      validD(limbD(p.arm, 18, 6.4, 5.2))
+      validD(cuffD(p.thigh))
+      validD(sneakerD(p.foot))
+      validD(trunkD(p))
+      validD(shoulderD(p))
+      validD(shortsD(p))
+      validD(neckD(p))
+    }
+  })
+
+  test('осевая точка: w — чисто поперечное смещение оси корпуса', () => {
+    const tracks = buildTrack(DEMO_PATTERNS.march)
+    const p = samplePose(0.1, tracks, TRACK_N)
+    const mid = axisPt(p, 15, 0)
+    const off = axisPt(p, 15, 7)
+    // смещение длиной ровно w и перпендикулярно оси (при любом наклоне)
+    const a = p.torso.a * Math.PI / 180
+    const dx = off.x - mid.x
+    const dy = off.y - mid.y
+    expect(Math.hypot(dx, dy)).toBeCloseTo(7, 6)
+    expect(Math.abs(dx * Math.cos(a) + dy * Math.sin(a))).toBeCloseTo(0, 6)
+  })
+})
