@@ -1,51 +1,23 @@
-// Экран «План» — обзор питания по макетам Кати (все цифры реальные,
-// без заглушек). Разделы сверху вниз:
-//   Шапка — как в макете: аватар (мишка), заголовок «План» с
-//      подзаголовком, колокольчик (красная точка, пока не включено ни
-//      одного напоминания; тап ведёт на «Ещё» и сразу раскрывает
-//      «Напоминания») и шестерёнка (настройки — «Ещё»).
-//   1. «Цель» — карточки Похудение / Поддержка / Набор веса: активная
-//      цель берётся из дневника (useFoodStore.goal), норма ккал — сумма
-//      пресета (getDailyTarget). Тап применяет пресет через
-//      applyGoalChoice (единая точка смены цели, как в «Мои цели»).
-//   2. «Меню на неделю» — MealPlanScreen (полоса дней + карточка дня).
-//   3. «Сегодня» — ШЕСТЬ колец прогресса, как в макете («Недельный
-//      план питания»): Ккал, Белки, Жиры, Углеводы, Клетчатка, Сахар —
-//      по кольцу на показатель: дуга в свой цвет, % в центре, под
-//      кольцом «съедено / норма» и подпись. Съедено — живой дневник
-//      (useFoodStore.entries, sumNutrition), нормы — свои из целей
-//      (goals.macroNorms) или «тарелка» 20/30/50 % от нормы ккал;
-//      сахар — порог ВОЗ 50 г. Перебор нормы — дуга и цифры оранжевым.
-//   4. «Неделя» — ЛИНИЯ ТРЕНДА вместо столбиков (как в макете):
-//      плавная кривая по дням Пн–Вс из журнала дневника
-//      (useFood.history) с мягкой заливкой и точками, сегодняшний день
-//      подсвечен; пунктир нормы и переключатель показателя: Калории /
-//      Клетчатка (своя норма или 25 г ВОЗ) / Сахар (порог ВОЗ 50 г).
-//      Тап по дню — точное значение (вместо подписей над столбиками).
-//   5. «Список покупок» — как в макете: чек-лист предпросмотра,
-//      лаймовая кнопка «Открыть список» и иллюстрация с продуктами;
-//      тап — экран «Покупки» (отдельная страница app/shopping.jsx,
-//      не вкладка — решение Кати).
-//   6. «Интервальное питание» — план и идущий таймер из
-//      useFastingStore; тап открывает полный экран (PlanTab).
-// Кольца — react-native-svg, анимация как у колец «Главной» (KcalRing):
-// дуга «заливается» от нуля, % отсчитывается вверх, при каждом
-// возврате на вкладку повторяется (JS-драйвер — Reanimated ронял
-// SVG-экраны).
-// Стиль — дизайн-система вкладки (theme.js).
+// Вкладка «План» — 1:1 с макетом Кати от 08.11 (IMG_20261108_230729):
+//   шапка        — аватар, «План», колокольчик с красной точкой, шестерёнка
+//   цели         — крупные чипы «эмодзи + название + подпись», активный —
+//                  лаймовый с галочкой (у нас 4 цели — сеткой 2×2)
+//   меню         — MealPlanScreen (карточка «Меню на неделю»)
+//   прогресс     — кольцо % + легенда Калории/Белки/Жиры/Углеводы +
+//                  линия тренда за неделю (клетчатка/сахар — переключателем)
+//   покупки      — чек-лист слева, иллюстрация и лаймовая кнопка справа
+//   голодание    — кольцо «16:8», «Ваш режим», строки «Советы» / «Результаты»
+// Данные — только реальные, из сторов приложения. Палитра — planPalette.js
+// (макет), типографика и сетка — общая дизайн-система (theme.js).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, AppState, Easing, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, {
-  Circle,
-  Defs,
-  LinearGradient,
-  Line,
-  Path,
-  Stop,
-  Text as SvgText,
+  Circle, Defs, Line, LinearGradient, Path, Stop, SvgText,
 } from 'react-native-svg'
-import { Bell, Check, ChevronRight, Settings, ShoppingCart, Timer } from 'lucide-react-native'
+import {
+  BarChart3, Bell, Check, ChevronRight, Info, Settings, ShoppingCart, Timer,
+} from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum } from '@/lib/format'
 import { requestOpenReminders } from '@/lib/navEvents'
@@ -61,18 +33,27 @@ import { dayDate, weekKeyOf, WEEKDAYS } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { smoothPath } from '../ui/SvgAreaChart'
 import { MealPlanScreen } from './MealPlanScreen'
-import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
+import { P, goodsWord } from './planPalette'
+import { spacing, F, type } from '@/features/workouts/theme'
 
 const BEAR = require('../../../assets/images/bear.webp')
 const SHOP_BAG = require('../../../assets/images/shop-bag.webp')
+
+// Подписи чипов целей — как в макете («Дефицит калорий», «Рельеф и тонус»,
+// «Профицит калорий»); у четвёртой цели — «Норма калорий»
+const GOAL_HINTS = {
+  lose: 'Дефицит калорий',
+  cut: 'Рельеф и тонус',
+  maintain: 'Норма калорий',
+  gain: 'Профицит калорий',
+}
 
 const pad = (n) => String(n).padStart(2, '0')
 
 const dayKeyOfDate = (d) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
-// Нормы нутриентов от дневной нормы калорий — «классическая тарелка»,
-// ровно как в сводке «Съедено за сегодня» (DailySummary)
+// Нормы нутриентов от дневной нормы калорий — «классическая тарелка»
 function macroTargets(kcal) {
   return {
     p: Math.round((kcal * 0.2) / 4),
@@ -82,16 +63,7 @@ function macroTargets(kcal) {
   }
 }
 
-// 1 покупка / 2 покупки / 5 покупок
-function purchasesWord(n) {
-  const m10 = Math.abs(Math.round(n)) % 10
-  const m100 = Math.abs(Math.round(n)) % 100
-  if (m10 === 1 && m100 !== 11) return 'покупка'
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'покупки'
-  return 'покупок'
-}
-
-// Часы:минуты для таймера в карточке — «15:42»
+// Часы:минуты для живой строки таймера — «15:42»
 const fmtHM = (ms) => {
   const total = Math.max(0, Math.floor(ms / 60000))
   return `${Math.floor(total / 60)}:${pad(total % 60)}`
@@ -107,29 +79,25 @@ const fmtDur = (ms) => {
 
 const fmtClock = (h) => `${pad(((h % 24) + 24) % 24)}:00`
 
-// Показатели недельного графика: id → подпись; цвет линии — свой у
-// каждого показателя (калории — лаймовый, как в макете; клетчатка —
-// зелёный; сахар — розовый, как кольцо «Сахар» в «Сегодня»)
+// Показатели недельного графика: калории / клетчатка / сахар
 const METRICS = [
   ['kcal', 'Калории'],
   ['fib', 'Клетчатка'],
   ['sug', 'Сахар'],
 ]
-const METRIC_COLORS = { kcal: colors.accent, fib: '#34D399', sug: '#F472B6' }
+const METRIC_COLORS = { kcal: P.accent, fib: P.green, sug: P.pink }
 const METRIC_UNIT = { kcal: 'ккал', fib: 'г', sug: 'г' }
 
 // Кольцо прогресса — анимация как у колец «Главной» (KcalRing):
-// дуга «заливается» от нуля до текущего процента (Animated поверх
-// strokeDashoffset, JS-драйвер — Reanimated ронял SVG-экраны), % в
-// центре отсчитывается вверх; при каждом возврате на вкладку (runId
-// растёт в useFocusEffect) заливка повторяется. Размер и цвет —
-// параметры: большое кольцо и шесть мини-колец «Сегодня» сделаны
-// одним компонентом. Перебор нормы — оранжевым.
+// дуга «заливается» от нуля до процента, число в центре отсчитывается
+// вверх; при возврате на вкладку (runId растёт) заливка повторяется.
+// centerText — вместо процентов («16:8» в карточке голодания),
+// sub — подпись под числом («от цели», как в макете).
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
-function Ring({ pct, runId, size = 64, stroke = 7, color = colors.accent }) {
+function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, centerText }) {
   const over = pct > 1.05
-  // Дуга рисуется до 100% максимум; % в центре — реальный (может быть 112%)
+  // Дуга рисуется до 100% максимум; число в центре — реальное
   const frac = Math.max(0, Math.min(1, pct))
   const target = Math.max(0, pct * 100)
   const rc = (size - stroke) / 2
@@ -140,15 +108,12 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = colors.accent }) {
   const prevRun = useRef(runId)
   const firstRun = useRef(true)
 
-  // % в центре — зеркало анимированного значения
   useEffect(() => {
-    const sub = numVal.addListener(({ value: v }) => setNum(v))
-    return () => numVal.removeListener(sub)
+    const subL = numVal.addListener(({ value: v }) => setNum(v))
+    return () => numVal.removeListener(subL)
   }, [numVal])
 
   useEffect(() => {
-    // Возврат на вкладку (runId сменился) — заливка заново с нуля;
-    // обычное изменение значения — плавный перелив к новой доле
     if (prevRun.current !== runId) {
       prevRun.current = runId
       arcVal.setValue(0)
@@ -174,20 +139,19 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = colors.accent }) {
     return () => anim.stop()
   }, [target, frac, runId, arcVal, numVal])
 
-  // arcVal идёт 0…frac: смещение cc — дуга пустая, cc·(1−frac) — залита
-  // ровно на frac окружности (шаблон KcalRing)
   const dashOffset = arcVal.interpolate({ inputRange: [0, 1], outputRange: [cc, 0] })
+  const centerFs = Math.round(size * (centerText ? 0.21 : 0.25))
 
   return (
     <View style={styles.ringWrap}>
       <Svg width={size} height={size}>
-        <Circle cx={size / 2} cy={size / 2} r={rc} stroke={colors.line} strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={rc} stroke={P.tile} strokeWidth={stroke} fill="none" />
         {pct > 0 && (
           <AnimatedCircle
             cx={size / 2}
             cy={size / 2}
             r={rc}
-            stroke={over ? colors.orange : color}
+            stroke={over ? P.orange : color}
             strokeWidth={stroke}
             fill="none"
             strokeLinecap="round"
@@ -198,20 +162,18 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = colors.accent }) {
         )}
       </Svg>
       <View style={styles.ringCenter}>
-        <Text style={[styles.ringPct, size < 80 && styles.ringPctSm, over && { color: colors.orange }]}>
-          {Math.round(num)}%
+        <Text style={[styles.ringPct, { fontSize: centerFs }, over && !centerText && { color: P.orange }]}>
+          {centerText || `${Math.round(num)}%`}
         </Text>
+        {sub ? <Text style={styles.ringSub}>{sub}</Text> : null}
       </View>
     </View>
   )
 }
 
-// Линия тренда недели — как в макете («Прогресс»): плавная кривая
-// с точками и мягкой заливкой под линией вместо столбиков. Шкала от
-// нуля до max(норма, значения); пунктир нормы; сегодняшний день —
-// крупная точка и лаймовая подпись; дни без данных (нулевые и
-// будущие) — серые точки. Тап по дню — точное значение (вместо
-// подписей над столбиками, чтобы линия оставалась чистой).
+// Линия тренда недели — как в макете: плавная кривая с точками и
+// мягкой заливкой; пунктир нормы; сегодняшний день — крупная точка и
+// лаймовая подпись; дни без данных — серые точки. Тап по дню — значение.
 const CHART_H = 148
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
@@ -242,28 +204,24 @@ function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
             <Stop offset="1" stopColor={color} stopOpacity={0.02} />
           </LinearGradient>
         </Defs>
-        {/* Заливка под линией — «дымка» от цвета показателя */}
         <Path d={area} fill="url(#weekTrendFill)" />
-        {/* Пунктир нормы — на своём уровне шкалы */}
         {normY != null && (
           <Line
             x1={PAD_X}
             y1={normY}
             x2={w - PAD_X}
             y2={normY}
-            stroke={colors.text3}
+            stroke={P.text3}
             strokeWidth={1}
             strokeDasharray="4 4"
           />
         )}
-        {/* Сама линия тренда */}
         <Path d={line} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" />
-        {/* Точки по дням; сегодня — крупная, будущее/нули — серые */}
         {pts.map((p, i) => {
           const future = i > todayIdx
           const zero = !(values[i] > 0)
           if (future || zero) {
-            return <Circle key={`p${i}`} cx={p.x} cy={p.y} r={2.5} fill={colors.line} />
+            return <Circle key={`p${i}`} cx={p.x} cy={p.y} r={2.5} fill={P.tile} />
           }
           if (i === todayIdx) {
             return (
@@ -273,20 +231,19 @@ function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
                 cy={p.y}
                 r={5}
                 fill={color}
-                stroke={colors.bg}
+                stroke={P.card}
                 strokeWidth={2}
               />
             )
           }
           return <Circle key={`p${i}`} cx={p.x} cy={p.y} r={3.5} fill={color} />
         })}
-        {/* Подписи дней под точками; сегодняшний день — акцентом */}
         {values.map((_, i) => (
           <SvgText
             key={`l${i}`}
             x={x(i)}
             y={CHART_H - 7}
-            fill={i === todayIdx ? colors.accent : colors.text3}
+            fill={i === todayIdx ? P.accent : P.text3}
             fontSize={10.5}
             fontWeight={i === todayIdx ? 'bold' : 'normal'}
             textAnchor="middle"
@@ -295,7 +252,6 @@ function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
           </SvgText>
         ))}
       </Svg>
-      {/* Прозрачные колонки поверх графика: тап по дню — значение */}
       <View pointerEvents="box-only" style={styles.chartTouch}>
         {values.map((v, i) => (
           <Pressable key={`t${i}`} style={{ flex: 1 }} onPress={() => onPickDay(i, v)} />
@@ -309,7 +265,7 @@ export function PlanScreen({ onOpenFasting }) {
   const { toast } = useToast()
   const router = useRouter()
 
-  // Счётчик возвратов на вкладку — перезапускает заливку кольца (как на «Главной»)
+  // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
   useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
 
@@ -323,13 +279,11 @@ export function PlanScreen({ onOpenFasting }) {
   const fastStart = useFastingStore((s) => s.windowStart)
   const fastWindow = useFastingStore((s) => s.windowHours)
   const fastStartedAt = useFastingStore((s) => s.startedAt)
+  const fastHours = useFastingStore((s) => s.fastHours)
   const fastLastLap = useFastingStore((s) => s.laps[0])
-  // Напоминания — для точки на колокольчике в шапке
   const reminder = useActivityStore((s) => s.reminder)
 
-  // Тик 30 с — живой таймер в карточке голодания (только пока идёт сеанс);
-  // возврат приложения из фона — подтягиваем время сразу, иначе карточка
-  // показывала устаревшие минуты до следующего тика
+  // Тик 30 с — живой таймер в карточке голодания (только пока идёт сеанс)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!fastStartedAt) return undefined
@@ -387,22 +341,7 @@ export function PlanScreen({ onOpenFasting }) {
     }))
   }, [history, days])
 
-  // Средние за прошедшие дни недели (Пн…сегодня включительно)
-  const elapsed = Math.max(1, todayIdx + 1)
-  const avg = useMemo(() => {
-    const sum = weekStats.slice(0, elapsed).reduce(
-      (a, d) => ({ kcal: a.kcal + d.kcal, fib: a.fib + d.fib, sug: a.sug + d.sug }),
-      { kcal: 0, fib: 0, sug: 0 },
-    )
-    return {
-      kcal: Math.round(sum.kcal / elapsed),
-      fib: Math.round((sum.fib / elapsed) * 10) / 10,
-      sug: Math.round((sum.sug / elapsed) * 10) / 10,
-    }
-  }, [weekStats, elapsed])
-
-  // Показатель недельного графика: калории / клетчатка / сахар;
-  // линия нормы — своя у каждого показателя
+  // Показатель недельного графика: калории / клетчатка / сахар
   const [metric, setMetric] = useState('kcal')
   const weekValues = weekStats.map((d) => d[metric])
   const weekNorm = metric === 'kcal' ? kcalGoal : metric === 'fib' ? norms.fib : SUGAR_LIMIT
@@ -410,7 +349,7 @@ export function PlanScreen({ onOpenFasting }) {
   const metricColor = METRIC_COLORS[metric]
   const fmtVal = (v) => (metric === 'kcal' ? formatNum(v) : String(Math.round(v * 10) / 10))
 
-  // Смена цели — та же единая точка, что и в «Мои цели» на «Ещё»
+  // Смена цели — единая точка (applyGoalChoice), тост с нормой
   const pickGoal = (id) => {
     if (id === goalId) return
     applyGoalChoice(id)
@@ -421,18 +360,14 @@ export function PlanScreen({ onOpenFasting }) {
     })
   }
 
-  // Покупки: сводка реального списка
-  const shopLeft = shopItems.filter((i) => !i.done).length
-  // Предпросмотр чек-листа: некупленные сверху (как на экране «Покупки»),
-  // до 4 строк — купленные оседают вниз с зачёркиванием
+  // Покупки: сводка реального списка — некупленные сверху, до 5 строк
   const shopRows = useMemo(() => {
     const undone = shopItems.filter((i) => !i.done)
     const done = shopItems.filter((i) => i.done)
-    return [...undone, ...done].slice(0, 4)
+    return [...undone, ...done].slice(0, 5)
   }, [shopItems])
 
   // Колокольчик: красная точка, пока не включено ни одного напоминания
-  // (вода, еда, взвешивание, тренировка, сон) — сигнал «загляни в настройки»
   const remCount = [
     reminder?.enabled,
     reminder?.meals?.enabled,
@@ -441,15 +376,16 @@ export function PlanScreen({ onOpenFasting }) {
     reminder?.sleep?.enabled,
   ].filter(Boolean).length
 
-  // Голодание: строка состояния карточки
-  const fastPlan = `${24 - fastWindow}/${fastWindow}`
-  const fastSub = fastStartedAt
-    ? `Идёт окно без еды · ${fmtHM(now - fastStartedAt)}`
+  // Голодание: режим для кольца «16:8» и строки «Ваш режим»
+  const fastGoalH = fastStartedAt && fastHours ? fastHours : 24 - fastWindow
+  const fastPlan = `${fastGoalH}/${fastWindow}`
+  const fastStatus = fastStartedAt
+    ? `Сейчас идёт окно без еды · ${fmtHM(now - fastStartedAt)}`
     : fastLastLap
-      ? `${fastPlan} · последний сеанс — ${fmtDur((fastLastLap.to || 0) - (fastLastLap.from || 0))}`
-      : `${fastPlan} · окно еды с ${fmtClock(fastStart)}`
+      ? `Последний сеанс — ${fmtDur((fastLastLap.to || 0) - (fastLastLap.from || 0))}`
+      : `Окно еды с ${fmtClock(fastStart)}`
 
-  // Тап по дню на линии тренда — точное значение (вместо подписей над столбиками)
+  // Тап по дню на линии тренда — точное значение
   const pickDay = (i, v) => {
     toast({
       title: `${WEEKDAYS[i]}${i === todayIdx ? ' · сегодня' : ''} — ${fmtVal(v)} ${METRIC_UNIT[metric]}`,
@@ -457,25 +393,22 @@ export function PlanScreen({ onOpenFasting }) {
     })
   }
 
-  // Шесть колец «Сегодня» — как в макете: по кольцу на показатель;
-  // цвета — та же палитра, что была в полосах Б/Ж/У (Белки — голубой,
-  // Жиры — оранжевый, Углеводы — лайм, Клетчатка — зелёный, Сахар — розовый)
-  const todayRings = [
-    { key: 'kcal', label: 'Ккал', value: todaySum.kcal, norm: kcalGoal, color: colors.accent },
-    { key: 'p', label: 'Белки', value: todaySum.p, norm: norms.p, color: colors.cyan },
-    { key: 'f', label: 'Жиры', value: todaySum.f, norm: norms.f, color: colors.orange },
-    { key: 'c', label: 'Углеводы', value: todaySum.c, norm: norms.c, color: colors.accent },
-    { key: 'fib', label: 'Клетчатка', value: todaySum.fib, norm: norms.fib, color: '#34D399' },
-    { key: 'sug', label: 'Сахар', value: todaySum.sug, norm: SUGAR_LIMIT, color: '#F472B6' },
+  // Легенда «Прогресса» — как в макете: 4 строки с цветными точками
+  const legend = [
+    { key: 'kcal', label: 'Калории', color: P.accent, value: formatNum(todaySum.kcal), norm: formatNum(kcalGoal), unit: 'ккал' },
+    { key: 'p', label: 'Белки', color: P.blue, value: String(Math.round(todaySum.p)), norm: String(norms.p), unit: 'г' },
+    { key: 'f', label: 'Жиры', color: P.orange, value: String(Math.round(todaySum.f)), norm: String(norms.f), unit: 'г' },
+    { key: 'c', label: 'Углеводы', color: P.purple, value: String(Math.round(todaySum.c)), norm: String(norms.c), unit: 'г' },
   ]
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: P.bg }}
       contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: 48 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Шапка — как в макете: аватар, заголовок, колокольчик и шестерёнка */}
+      {/* Шапка — как в макете: аватар, заголовок, колокольчик с точкой,
+          шестерёнка; иконки без подложек */}
       <View style={styles.header}>
         <Pressable
           onPress={() => router.navigate('/more')}
@@ -487,7 +420,14 @@ export function PlanScreen({ onOpenFasting }) {
         </Pressable>
         <View style={styles.headerMain}>
           <Text style={styles.title}>План</Text>
-          <Text style={styles.subtitle}>Твой путь к цели — чёткий план на неделю</Text>
+          <Text
+            style={styles.subtitle}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
+            Твой путь к цели — чёткий план на неделю
+          </Text>
         </View>
         <Pressable
           onPress={() => {
@@ -502,7 +442,7 @@ export function PlanScreen({ onOpenFasting }) {
               : 'Напоминания выключены — открыть настройки напоминаний'
           }
         >
-          <Bell size={20} color={colors.text2} />
+          <Bell size={22} color={P.text2} />
           {remCount === 0 && <View style={styles.headDot} />}
         </Pressable>
         <Pressable
@@ -511,81 +451,85 @@ export function PlanScreen({ onOpenFasting }) {
           accessibilityRole="button"
           accessibilityLabel="Настройки — перейти в «Ещё»"
         >
-          <Settings size={20} color={colors.text2} />
+          <Settings size={22} color={P.text2} />
         </Pressable>
       </View>
 
-      {/* 1. Цель — пресеты с реальными нормами калорий */}
-      <Text style={styles.sectionTitle}>Цель</Text>
-      <View style={styles.goalRow}>
+      {/* 1. Цели — крупные чипы как в макете: эмодзи + название + подпись,
+          активный — лаймовый с галочкой (у нас 4 цели — сеткой 2×2) */}
+      <View style={styles.goalGrid}>
         {GOALS.map((g) => {
           const active = goalId === g.id
           return (
             <Pressable
               key={g.id}
               onPress={() => pickGoal(g.id)}
-              style={[styles.goalCard, active && styles.goalCardActive]}
+              style={[styles.goalChip, active && styles.goalChipOn]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={`Цель ${g.label}, норма ${formatNum(getDailyTarget(g.id))} ккал в день`}
             >
               <Text style={styles.goalEmoji}>{g.emoji}</Text>
-              <Text style={[styles.goalName, active && styles.goalNameActive]} numberOfLines={1}>
-                {g.label}
-              </Text>
-              <Text style={[styles.goalKcal, active && styles.goalKcalActive]}>
-                {formatNum(getDailyTarget(g.id))}
-              </Text>
-              <Text style={[styles.goalUnit, active && styles.goalUnitActive]}>ккал в день</Text>
+              <View style={styles.goalTexts}>
+                <Text numberOfLines={1} style={[styles.goalName, active && styles.goalNameOn]}>
+                  {g.label}
+                </Text>
+                <Text numberOfLines={1} style={[styles.goalHint, active && styles.goalHintOn]}>
+                  {GOAL_HINTS[g.id] || g.hint}
+                </Text>
+              </View>
+              {active && (
+                <View style={styles.goalCheck} pointerEvents="none">
+                  <View style={styles.goalCheckCircle}>
+                    <Check size={13} color={P.accent} strokeWidth={3.5} />
+                  </View>
+                </View>
+              )}
             </Pressable>
           )
         })}
       </View>
 
-      {/* 2. Меню на неделю — план блюд по дням: сразу после целей,
-          как в макете Кати (расположение блоков по макету) */}
+      {/* 2. Меню на неделю — карточка по макету (MealPlanScreen) */}
       <MealPlanScreen />
 
-      {/* 3. Сегодня: ШЕСТЬ колец прогресса — как в макете («Недельный
-          план питания»): по кольцу на показатель, % в центре, под
-          кольцом «съедено / норма» и подпись */}
-      <Text style={styles.sectionTitle}>Сегодня</Text>
+      {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда */}
       <View style={styles.card}>
-        <View style={styles.todayHead}>
-          <Text style={styles.todayTitle}>Съедено сегодня</Text>
-          <Text style={styles.todayKcal}>
-            {formatNum(todaySum.kcal)}
-            <Text style={styles.todayKcalNorm}> / {formatNum(kcalGoal)} ккал</Text>
-          </Text>
+        <View style={styles.cardHead}>
+          <View style={styles.iconTile}>
+            <BarChart3 size={18} color={P.accent} />
+          </View>
+          <Text style={styles.cardTitle}>Прогресс</Text>
+          <View style={styles.headRight}>
+            <Text style={styles.headLink}>За 7 дней</Text>
+            <ChevronRight size={15} color={P.text3} />
+          </View>
         </View>
-        <View style={styles.ringsGrid}>
-          {todayRings.map((r) => {
-            const pct = r.norm > 0 ? r.value / r.norm : 0
-            const over = r.norm > 0 && r.value > r.norm
-            return (
-              <View key={r.key} style={styles.ringCell}>
-                <Ring pct={pct} runId={runId} color={r.color} />
-                <Text
-                  style={[styles.ringVal, over && { color: colors.orange }]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.72}
-                >
-                  {formatNum(Math.round(r.value * 10) / 10)}
-                  <Text style={styles.ringNorm}> / {formatNum(r.norm)}</Text>
-                </Text>
-                <Text style={styles.ringLabel}>{r.label}</Text>
-              </View>
-            )
-          })}
-        </View>
-      </View>
 
-      {/* 4. Неделя: линия тренда (как в макете) по дням из журнала
-          дневника + пунктир нормы + средние; показатель — на выбор */}
-      <Text style={styles.sectionTitle}>Неделя</Text>
-      <View style={styles.card}>
-        {/* Переключатель показателя */}
+        <View style={styles.progressRow}>
+          <Ring
+            pct={kcalGoal > 0 ? todaySum.kcal / kcalGoal : 0}
+            runId={runId}
+            size={104}
+            stroke={10}
+            sub="от цели"
+          />
+          <View style={styles.legend}>
+            {legend.map((r) => (
+              <View key={r.key} style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: r.color }]} />
+                <View style={styles.legendTexts}>
+                  <Text numberOfLines={1} style={styles.legendLabel}>{r.label}</Text>
+                  <Text numberOfLines={1} style={styles.legendVal}>
+                    {r.value} / {r.norm} {r.unit}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Переключатель показателя графика: калории / клетчатка / сахар */}
         <View style={styles.segRow}>
           {METRICS.map(([id, label]) => {
             const active = metric === id
@@ -611,196 +555,232 @@ export function PlanScreen({ onOpenFasting }) {
           todayIdx={todayIdx}
           onPickDay={pickDay}
         />
-        <View style={styles.weekSummary}>
-          <View style={styles.wsRow}>
-            <Text style={[styles.wsLabel, metric === 'kcal' && styles.wsLabelOn]}>В среднем за день</Text>
-            <Text style={styles.wsValue}>
-              {formatNum(avg.kcal)} / {formatNum(kcalGoal)} ккал
-            </Text>
-          </View>
-          <View style={styles.wsRow}>
-            <Text style={[styles.wsLabel, metric === 'fib' && styles.wsLabelOn]}>Клетчатка</Text>
-            <Text style={styles.wsValue}>
-              {avg.fib} / {formatNum(norms.fib)} г
-            </Text>
-          </View>
-          <View style={styles.wsRow}>
-            <Text style={[styles.wsLabel, metric === 'sug' && styles.wsLabelOn]}>Сахар</Text>
-            <Text style={styles.wsValue}>
-              {avg.sug} / {SUGAR_LIMIT} г
-            </Text>
-          </View>
-        </View>
       </View>
 
-      {/* 5. Список покупок — как в макете: чек-лист предпросмотра,
-          лаймовая кнопка и иллюстрация; тап открывает экран «Покупки»
-          (отдельная страница app/shopping.jsx над вкладками) */}
+      {/* 4. Список покупок — чек-лист слева, иллюстрация и лаймовая кнопка
+          справа (как в макете); тап открывает экран «Покупки» */}
       <Pressable
         style={styles.card}
         onPress={() => router.push('/shopping')}
         accessibilityRole="button"
         accessibilityLabel="Открыть список покупок"
       >
-        <View style={styles.shopHead}>
-          <View style={styles.rowIcon}>
-            <Text style={{ fontSize: 17 }}>🛒</Text>
+        <View style={styles.cardHead}>
+          <View style={styles.iconTile}>
+            <ShoppingCart size={18} color={P.accent} />
           </View>
-          <Text style={styles.rowTitle}>Список покупок</Text>
-          {shopItems.length > 0 && (
-            <Text style={styles.shopCount}>
-              {shopItems.length} {purchasesWord(shopItems.length)}
-            </Text>
-          )}
-          <ChevronRight size={18} color={colors.text3} />
+          <Text style={styles.cardTitle}>Список покупок</Text>
+          <View style={styles.headRight}>
+            {shopItems.length > 0 && (
+              <Text style={styles.headLink}>
+                {shopItems.length} {goodsWord(shopItems.length)}
+              </Text>
+            )}
+            <ChevronRight size={15} color={P.text3} />
+          </View>
         </View>
-        {shopItems.length === 0 ? (
-          <Text style={styles.shopEmpty}>Пока пусто — добавьте из плана меню</Text>
-        ) : (
+
+        <View style={styles.shopBody}>
           <View style={styles.shopList}>
-            {shopRows.map((it) => (
-              <View key={it.id} style={styles.shopRow}>
-                <View style={[styles.shopCbx, it.done && styles.shopCbxOn]}>
-                  {it.done && <Check size={12} color={colors.accentInk} strokeWidth={3} />}
+            {shopItems.length === 0 ? (
+              <Text style={styles.shopEmpty}>Пока пусто — добавьте из плана меню</Text>
+            ) : (
+              shopRows.map((it) => (
+                <View key={it.id} style={styles.shopRow}>
+                  <View style={[styles.shopCbx, it.done && styles.shopCbxOn]}>
+                    {it.done && <Check size={12} color={P.accentInk} strokeWidth={3} />}
+                  </View>
+                  <Text numberOfLines={1} style={[styles.shopName, it.done && styles.shopNameDone]}>
+                    {it.name}
+                  </Text>
+                  {it.qty > 1 && <Text style={styles.shopQty}>× {it.qty}</Text>}
                 </View>
-                <Text numberOfLines={1} style={[styles.shopName, it.done && styles.shopNameDone]}>
-                  {it.name}
-                </Text>
-                {it.qty > 1 && <Text style={styles.shopQty}>× {it.qty}</Text>}
-              </View>
-            ))}
+              ))
+            )}
           </View>
-        )}
-        <View style={styles.shopBottom}>
-          <View style={styles.shopBtn}>
-            <ShoppingCart size={15} color={colors.accentInk} />
-            <Text style={styles.shopBtnText}>Открыть список</Text>
+          <View style={styles.shopSide}>
+            <Image
+              source={SHOP_BAG}
+              style={styles.shopArt}
+              resizeMode="contain"
+              accessibilityLabel="Иллюстрация: пакет с продуктами"
+            />
+            <View style={styles.shopBtn}>
+              <ShoppingCart size={14} color={P.accentInk} />
+              <Text numberOfLines={1} style={styles.shopBtnText}>Открыть список</Text>
+            </View>
           </View>
-          <Image
-            source={SHOP_BAG}
-            style={styles.shopArt}
-            resizeMode="contain"
-            accessibilityLabel="Иллюстрация: пакет с продуктами"
-          />
         </View>
       </Pressable>
 
-      {/* 6. Интервальное питание — состояние плана/сеанса; тап — полный экран */}
-      <Pressable
-        style={styles.card}
-        onPress={onOpenFasting}
-        accessibilityRole="button"
-        accessibilityLabel="Открыть интервальное питание"
-      >
-        <View style={styles.rowCard}>
-          <View style={[styles.rowIcon, { backgroundColor: colors.cyanSoft }]}>
-            <Timer size={17} color={colors.cyan} />
+      {/* 5. Интервальное питание — кольцо «16:8», «Ваш режим», строки
+          «Советы и рекомендации» и «Результаты» (как в макете); тап —
+          полный экран */}
+      <View style={styles.card}>
+        <View style={styles.cardHead}>
+          <View style={styles.iconTile}>
+            <Timer size={18} color={P.accent} />
           </View>
-          <View style={styles.rowMain}>
-            <Text style={styles.rowTitle}>Интервальное питание</Text>
-            <Text style={styles.rowSub}>{fastSub}</Text>
-          </View>
-          <ChevronRight size={18} color={colors.text3} />
+          <Text style={styles.cardTitle}>Интервальное питание</Text>
         </View>
-      </Pressable>
+
+        <Pressable
+          style={styles.fastRow}
+          onPress={onOpenFasting}
+          accessibilityRole="button"
+          accessibilityLabel="Открыть интервальное питание"
+        >
+          <Ring pct={fastGoalH / 24} size={84} stroke={8} centerText={fastPlan} />
+          <View style={styles.fastMode}>
+            <Text style={styles.fastModeTitle}>Ваш режим</Text>
+            <Text style={styles.fastModeLine}>{fastGoalH} часов голодания</Text>
+            <Text style={styles.fastModeLine}>{fastWindow} часов питание</Text>
+            <Text
+              style={[styles.fastStatus, fastStartedAt && styles.fastStatusLive]}
+              numberOfLines={1}
+            >
+              {fastStatus}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={P.text3} />
+        </Pressable>
+
+        <Pressable
+          style={styles.fastAction}
+          onPress={onOpenFasting}
+          accessibilityRole="button"
+          accessibilityLabel="Советы и рекомендации по интервальному питанию"
+        >
+          <Info size={16} color={P.text2} />
+          <Text style={styles.fastActionText}>Советы и рекомендации</Text>
+          <ChevronRight size={15} color={P.text3} />
+        </Pressable>
+        <Pressable
+          style={styles.fastAction}
+          onPress={onOpenFasting}
+          accessibilityRole="button"
+          accessibilityLabel="Результаты интервального питания"
+        >
+          <BarChart3 size={16} color={P.text2} />
+          <Text style={styles.fastActionText}>Результаты</Text>
+          <ChevronRight size={15} color={P.text3} />
+        </Pressable>
+      </View>
     </ScrollView>
   )
 }
 
 const styles = {
-  // Шапка: аватар + заголовок + колокольчик/шестерёнка (как в макете)
+  // Шапка: аватар + заголовок + иконки без подложек (как в макете)
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: spacing.l },
   avatarWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface2,
+    borderColor: P.line,
+    backgroundColor: P.tile,
   },
   avatar: { width: '100%', height: '100%' },
   headerMain: { flex: 1, minWidth: 0 },
-  title: { ...type.display, fontSize: 24, color: colors.text, letterSpacing: -0.3 },
-  subtitle: { ...type.body, fontSize: 12.5, color: colors.text2, marginTop: 1 },
-  headBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface2,
+  title: { ...type.display, fontSize: 26, color: P.text, letterSpacing: -0.3 },
+  subtitle: {
+    ...type.body,
+    fontSize: 12,
+    color: P.text2,
+    marginTop: 1,
   },
+  headBtn: { width: 34, height: 38, alignItems: 'center', justifyContent: 'center' },
   headDot: {
     position: 'absolute',
-    top: 7,
-    right: 7,
+    top: 6,
+    right: 5,
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF5A5A',
-    borderWidth: 1.5,
-    borderColor: colors.surface2,
+    backgroundColor: P.red,
   },
 
-  sectionTitle: {
-    ...type.title,
-    fontSize: 16,
-    color: colors.text,
-    letterSpacing: -0.2,
-    marginTop: spacing.l,
-    marginBottom: spacing.s,
-  },
-
-  // Цель
-  goalRow: { flexDirection: 'row', gap: spacing.s },
-  goalCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderColor: colors.line,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    alignItems: 'center',
-    paddingTop: spacing.m,
-    paddingBottom: spacing.m,
-    paddingHorizontal: 6,
-  },
-  goalCardActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  goalEmoji: { fontSize: 20 },
-  // 11.5px вместо 12.5: целей теперь четыре («Сушка» добавлена по отзыву
-  // Кати) — в ряду по 4 карточки подпись «Набор веса» иначе обрезается
-  goalName: {
-    ...type.caption,
-    fontSize: 11.5,
-    color: colors.text2,
-    marginTop: 5,
-  },
-  goalNameActive: { color: colors.accentInk },
-  goalKcal: { ...type.metric, fontSize: 19, color: colors.text, marginTop: 4 },
-  goalKcalActive: { color: colors.accentInk },
-  goalUnit: { ...type.caption, fontSize: 10.5, color: colors.text3, marginTop: 1 },
-  goalUnitActive: { color: 'rgba(16,20,0,0.65)' },
-
-  // Карточки разделов
-  card: {
-    backgroundColor: colors.card,
-    borderColor: colors.line,
-    borderWidth: 1,
-    borderRadius: radius.screen,
-    padding: spacing.l,
-  },
-
-  // Сегодня — шесть колец (как в макете)
-  todayHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  todayTitle: { ...type.title, fontSize: 15, color: colors.text },
-  todayKcal: { ...type.metric, fontSize: 17, color: colors.text },
-  todayKcalNorm: { ...type.caption, fontSize: 12.5, color: colors.text3 },
-  ringsGrid: {
+  // Цели — чипы 2×2 (как в макете, но 4 цели)
+  goalGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: spacing.m,
+    gap: 10,
+    marginTop: spacing.l,
   },
-  ringCell: { width: `${100 / 3}%`, alignItems: 'center' },
+  goalChip: {
+    flex: 1,
+    minWidth: '47%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+  },
+  goalChipOn: { backgroundColor: P.accent, borderColor: P.accent, paddingRight: 36 },
+  goalEmoji: { fontSize: 21 },
+  goalTexts: { flex: 1, minWidth: 0 },
+  goalName: {
+    fontSize: 14.5,
+    fontWeight: '800',
+    fontFamily: F[800],
+    color: P.text,
+  },
+  goalNameOn: { color: P.accentInk },
+  goalHint: { fontSize: 11, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 1 },
+  goalHintOn: { color: 'rgba(21,26,3,0.62)' },
+  goalCheck: {
+    position: 'absolute',
+    right: 11,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  goalCheckCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#181B26',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Карточка раздела: плитка-иконка + заголовок + правая ссылка
+  card: {
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: spacing.l,
+    marginTop: spacing.l,
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: P.tile,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
+  headRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  headLink: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
+
+  // Прогресс: кольцо + легенда
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: spacing.m },
+  legend: { flex: 1, minWidth: 0, gap: 9 },
+  legendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  legendDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+  legendTexts: { flex: 1, minWidth: 0 },
+  legendLabel: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  legendVal: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 1 },
   ringWrap: { position: 'relative' },
   ringCenter: {
     position: 'absolute',
@@ -811,27 +791,17 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ringPct: { ...type.metric, fontSize: 21, color: colors.text },
-  ringPctSm: { ...type.metric, fontSize: 12.5 },
-  ringVal: {
-    ...type.caption,
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: F[700],
-    color: colors.text,
-    marginTop: 6,
-    maxWidth: '100%',
-  },
-  ringNorm: { fontSize: 10.5, color: colors.text3, fontWeight: '600', fontFamily: F[600] },
-  ringLabel: { ...type.caption, fontSize: 10.5, color: colors.text3, marginTop: 1 },
+  ringPct: { fontWeight: '800', fontFamily: F[800], color: P.text, letterSpacing: -0.5 },
+  ringSub: { fontSize: 10.5, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: -1 },
 
-  // Неделя — линия тренда
+  // Переключатель показателя графика
   segRow: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
-    backgroundColor: colors.surface2,
+    backgroundColor: P.tile,
     borderRadius: 999,
     padding: 3,
+    marginTop: spacing.m,
     marginBottom: spacing.s,
   },
   segBtn: {
@@ -841,9 +811,9 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segBtnActive: { backgroundColor: colors.accent },
-  segText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
-  segTextActive: { color: colors.accentInk },
+  segBtnActive: { backgroundColor: P.accent },
+  segText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: P.text2 },
+  segTextActive: { color: P.accentInk },
   chartTouch: {
     position: 'absolute',
     left: 0,
@@ -852,60 +822,56 @@ const styles = {
     bottom: 0,
     flexDirection: 'row',
   },
-  weekSummary: { marginTop: spacing.m, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.s },
-  wsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 26 },
-  wsLabel: { ...type.body, fontSize: 13, color: colors.text2 },
-  wsLabelOn: { color: colors.text },
-  wsValue: { ...type.body, fontSize: 13, color: colors.text, fontWeight: '700', fontFamily: F[700] },
 
-  // Строки-карточки (покупки, голодание)
-  rowCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.m },
-  rowIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowMain: { flex: 1, minWidth: 0 },
-  rowTitle: { ...type.title, fontSize: 15, color: colors.text, flex: 1 },
-  rowSub: { ...type.caption, color: colors.text2, marginTop: 2 },
-
-  // Список покупок — как в макете: чек-лист + кнопка + иллюстрация
-  shopHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.m },
-  shopCount: { ...type.caption, fontSize: 12.5, color: colors.text2 },
-  shopEmpty: { ...type.caption, color: colors.text2, marginTop: spacing.m },
-  shopList: { marginTop: spacing.s, gap: 7 },
+  // Покупки: чек-лист слева + иллюстрация и кнопка справа
+  shopBody: { flexDirection: 'row', gap: 12, marginTop: spacing.m },
+  shopList: { flex: 1, minWidth: 0, gap: 9 },
+  shopEmpty: { ...type.body, fontSize: 13, color: P.text2 },
   shopRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   shopCbx: {
-    width: 19,
-    height: 19,
+    width: 20,
+    height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: colors.text3,
+    borderColor: P.text3,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shopCbxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  shopName: { ...type.body, fontSize: 13.5, color: colors.text, flex: 1, minWidth: 0 },
-  shopNameDone: { color: colors.text3, textDecorationLine: 'line-through' },
-  shopQty: { ...type.caption, fontSize: 12, color: colors.text3 },
-  shopBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.m,
-  },
+  shopCbxOn: { backgroundColor: P.accent, borderColor: P.accent },
+  shopName: { ...type.body, fontSize: 13.5, color: P.text, flex: 1, minWidth: 0 },
+  shopNameDone: { color: P.text3, textDecorationLine: 'line-through' },
+  shopQty: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text3 },
+  shopSide: { width: 140, alignItems: 'center' },
+  shopArt: { width: 118, height: 80, marginBottom: 2 },
   shopBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: P.accent,
     borderRadius: 999,
-    height: 40,
-    paddingHorizontal: 18,
+    height: 38,
+    paddingHorizontal: 10,
+    alignSelf: 'stretch',
   },
-  shopBtnText: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: colors.accentInk },
-  shopArt: { width: 88, height: 74, marginRight: -6 },
+  shopBtnText: { fontSize: 11.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
+
+  // Интервальное питание: кольцо «16:8» + режим + две строки-действия
+  fastRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: spacing.m },
+  fastMode: { flex: 1, minWidth: 0 },
+  fastModeTitle: { fontSize: 15, fontWeight: '800', fontFamily: F[800], color: P.text },
+  fastModeLine: { ...type.body, fontSize: 13, color: P.text2, marginTop: 1 },
+  fastStatus: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 5 },
+  fastStatusLive: { color: P.accent },
+  fastAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: P.tile,
+    borderRadius: 14,
+    height: 44,
+    paddingHorizontal: 13,
+    marginTop: 10,
+  },
+  fastActionText: { fontSize: 13.5, fontWeight: '600', fontFamily: F[600], color: P.text, flex: 1 },
 }

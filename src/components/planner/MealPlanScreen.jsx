@@ -1,29 +1,22 @@
 // Раздел «Меню на неделю» вкладки «План» — встраивается в общий скролл
-// PlanScreen (по макетам Кати), поэтому корень — View, а не ScrollView.
-// «Покупки» — экран с карточки на «Плане», отдельной вкладки больше нет.
-// Редизайн по отзыву Кати («дублируется
-// одно и то же Пн–Вс, непонятно как пользоваться»): вместо семи одинаковых
-// карточек — полоса дней Пн–Вс (чипы: заполненный день помечен точкой,
-// сегодня — обводкой) и ОДНА карточка выбранного дня с приёмами. Пока
-// неделя пустая, показывается карточка «Как это работает» с тремя шагами.
-// Тап по «+ добавить» — окно «Добавить блюдо» (база продуктов или
-// своё блюдо). Тап по пилюле «250 г · 220 ккал» — правка граммовки
-// (GramsModal), ккал пересчитываются от калорийности на 100 г.
-// В карточке дня — пилюля «по плану · N ккал»: именно план, чтобы не
-// путать со «съедено сегодня» из кольца «Сегодня» выше (отзыв Кати:
-// два одинаковых числа «N / норма» выглядели как дубль/противоречие);
-// отдельной полоски прогресса у дня нет — прогресс дня показывает
-// кольцо «Сегодня». Копирование дня, очистка; на сегодняшнем дне —
+// PlanScreen, поэтому корень — View, а не ScrollView.
+// Редизайн 1:1 с макетом Кати от 08.11 (IMG_20261108_230729): ОДНА
+// карточка с шапкой «плитка + заголовок + навигация недели ‹ 2–8 ноя ›»,
+// полоса дней Пн–Вс с датами (выбранный день — лаймовая рамка + точка),
+// приёмы пищи строками («эмодзи-плитка + название + блюда + ккал» и
+// лаймовый «+»), внизу «Показать все приёмы пищи ⌄» — раскрывает перекус
+// и действия дня. Заполненные дни помечены точкой. Пока неделя пустая —
+// карточка «Как это работает». Тап по «+» — окно «Добавить блюдо» (база
+// продуктов или своё блюдо, галочка «в покупки»). Тап по пилюле
+// «80 г · 200 ккал» — правка граммовки (GramsModal). Копирование дня,
+// очистка дня/недели, «взять меню прошлой недели»; на сегодняшнем дне —
 // «В дневник»: переносит блюда в дневник питания через
-// useFoodStore.addEntry (полный БЖУ по граммовке). Навигация по неделям ‹ ›;
-// «копировать прошлую неделю» и «очистить неделю» — иконки в шапке. Стиль —
-// дизайн-система вкладки (theme.js).
+// useFoodStore.addEntry (полный БЖУ по граммовке). Палитра —
+// planPalette.js (макет), сетка и шрифты — theme.js.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, Text, View } from 'react-native'
-import {
-  ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X,
-} from 'lucide-react-native'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -34,7 +27,8 @@ import {
 import { useToast } from '../ui/Toast'
 import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
-import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
+import { P } from './planPalette'
+import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 
@@ -43,11 +37,11 @@ const WEEKDAYS_FULL = ['Понедельник', 'Вторник', 'Среда',
 // Подсказка для пустой недели (исчезает, как только неделя заполнена)
 const HOW_STEPS = [
   'Выберите день в полосе Пн–Вс: заполненные дни помечены точкой',
-  '«+ добавить» у приёма — найдите продукт: порция и ккал считаются сами, галочка «в покупки» — для того, чего нет дома',
+  '«+» у приёма — найдите продукт: порция и ккал считаются сами, галочка «в покупки» — для того, чего нет дома',
   'Тап по названию приёма — показать/скрыть блюда; тап по «80 г · 200 ккал» — изменить порцию',
 ]
 
-// «1 блюдо / 2 блюда / 5 блюд» — для строки приёма
+// «1 блюдо / 2 блюда / 5 блюд» — для подписей доступности
 const dishWord = (n) => {
   const m10 = Math.abs(Math.round(n)) % 10
   const m100 = Math.abs(Math.round(n)) % 100
@@ -56,10 +50,9 @@ const dishWord = (n) => {
   return 'блюд'
 }
 
-const dayKeyOfDate = (d) => {
-  const p = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
+const pad = (n) => String(n).padStart(2, '0')
+
+const dayKeyOfDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
 const fmtDate = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]}`
 
@@ -70,9 +63,11 @@ export function MealPlanScreen() {
   const [picker, setPicker] = useState(null) // { dayIdx, mealId }
   const [copyFrom, setCopyFrom] = useState(null) // idx дня-источника
   const [gramsFor, setGramsFor] = useState(null) // { dayIdx, mealId, itemId }
-  // Раскрытые приёмы (по умолчанию все свёрнуты — видно название, число
-  // блюд и ккал; просьба Кати: сворачивать продукты после добавления)
+  // Раскрытые приёмы (после добавления сворачиваются — просьба Кати)
   const [openMeals, setOpenMeals] = useState({})
+  // «Показать все приёмы пищи»: перекус + действия дня; по умолчанию
+  // видно три строки (Завтрак / Обед / Ужин) — как в макете
+  const [showAll, setShowAll] = useState(false)
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
 
@@ -83,8 +78,7 @@ export function MealPlanScreen() {
     return idx // -1 — неделя без сегодня (листаем прошлое/будущее)
   }, [weekKey, todayKey])
 
-  // При входе в текущую неделю сразу открываем сегодняшний день;
-  // в прошлой/будущей неделе остаётся выбранный день недели
+  // При входе в текущую неделю сразу открываем сегодняшний день
   useEffect(() => {
     if (todayIdx >= 0) setSel(todayIdx)
   }, [todayIdx])
@@ -104,9 +98,10 @@ export function MealPlanScreen() {
     const a = dayDate(weekKey, 0)
     const b = dayDate(weekKey, 6)
     const sameMonth = a.getMonth() === b.getMonth()
+    // Компактный формат для шапки карточки: «2–8 ноя» / «29 сен–5 окт»
     return sameMonth
-      ? `${a.getDate()} – ${b.getDate()} ${MONTHS[b.getMonth()]}`
-      : `${fmtDate(a)} – ${fmtDate(b)}`
+      ? `${a.getDate()}–${b.getDate()} ${MONTHS[b.getMonth()]}`
+      : `${fmtDate(a)}–${fmtDate(b)}`
   }, [weekKey])
 
   const day = week[sel]
@@ -114,11 +109,12 @@ export function MealPlanScreen() {
   const dayDishes = countDay(sel)
   const isSelToday = sel === todayIdx
 
+  // Три приёма всегда, перекус и действия — за «Показать все»
+  const visibleMeals = showAll ? MEAL_IDS : MEAL_IDS.slice(0, 3)
+
   const onPick = (item) => {
     if (!picker) return
     store.getState().addItem(weekKey, picker.dayIdx, picker.mealId, item)
-    // После добавления приём сворачивается — карточка дня остаётся
-    // компактной (просьба Кати); итог виден в строке приёма и в тосте
     setOpenMeals((s) => ({ ...s, [picker.mealId]: false }))
     toast({
       title: `${item.emoji} ${item.name}`,
@@ -200,58 +196,66 @@ export function MealPlanScreen() {
   }
 
   return (
-    <View>
-      {/* Шапка */}
-      <Text style={styles.title}>Меню на неделю</Text>
-      <Text style={styles.subtitle}>Планируйте блюда по дням — и переносите день в дневник одним тапом</Text>
-
-      {/* Неделя: ‹ label › + иконки «копировать прошлую» / «очистить» */}
-      <View style={styles.weekRow}>
-        <View style={styles.weekBar}>
-          <Pressable onPress={() => setWeekKey(weekKeyShift(weekKey, -1))} style={styles.weekBtn} accessibilityLabel="Прошлая неделя">
-            <ChevronLeft size={18} color={colors.text2} />
+    <View style={styles.card}>
+      {/* Шапка карточки: плитка + заголовок + навигация недели */}
+      <View style={styles.cardHead}>
+        <View style={styles.iconTile}>
+          <CalendarDays size={18} color={P.accent} />
+        </View>
+        <Text style={styles.cardTitle} numberOfLines={1}>Меню на неделю</Text>
+        <View style={styles.weekNav}>
+          <Pressable
+            onPress={() => setWeekKey(weekKeyShift(weekKey, -1))}
+            style={styles.weekArrow}
+            accessibilityLabel="Прошлая неделя"
+          >
+            <ChevronLeft size={16} color={P.text2} />
           </Pressable>
-          <Text style={styles.weekLabel}>{weekLabel}</Text>
-          <Pressable onPress={() => setWeekKey(weekKeyShift(weekKey, 1))} style={styles.weekBtn} accessibilityLabel="Следующая неделя">
-            <ChevronRight size={18} color={colors.text2} />
+          <Text style={styles.weekLabel} numberOfLines={1}>{weekLabel}</Text>
+          <Pressable
+            onPress={() => setWeekKey(weekKeyShift(weekKey, 1))}
+            style={styles.weekArrow}
+            accessibilityLabel="Следующая неделя"
+          >
+            <ChevronRight size={16} color={P.text2} />
           </Pressable>
         </View>
-        <Pressable onPress={copyPrevWeek} style={styles.weekIconBtn} accessibilityLabel="Копировать меню прошлой недели">
-          <Copy size={15} color={colors.cyan} />
-        </Pressable>
-        <Pressable onPress={clearWeek} style={styles.weekIconBtn} accessibilityLabel="Очистить неделю">
-          <Trash2 size={15} color={colors.text3} />
-        </Pressable>
       </View>
 
-      {/* Полоса дней Пн–Вс вместо семи одинаковых карточек */}
+      {/* Полоса дней Пн–Вс с датами — как в макете: выбранный день в
+          лаймовой рамке с точкой, заполненные дни — с точкой */}
       <View style={styles.daysStrip}>
         {WEEKDAYS.map((label, idx) => {
           const active = idx === sel
           const filled = countDay(idx) > 0
           const isToday = idx === todayIdx
+          const d = dayDate(weekKey, idx)
           return (
             <Pressable
               key={idx}
               onPress={() => setSel(idx)}
-              style={[styles.dayChip, active && styles.dayChipActive, !active && isToday && styles.dayChipToday]}
-              accessibilityLabel={`${WEEKDAYS_FULL[idx]},${filled ? ' меню заполнено' : ' пусто'}`}
+              style={styles.dayCol}
+              accessibilityLabel={`${WEEKDAYS_FULL[idx]}, ${d.getDate()}.${d.getMonth() + 1},${filled ? ' меню заполнено' : ' пусто'}`}
               accessibilityState={{ selected: active }}
             >
-              <Text style={[styles.dayChipText, active && styles.dayChipTextActive]}>{label}</Text>
               <View
                 style={[
-                  styles.dayDot,
-                  filled && (active ? styles.dayDotOnActive : styles.dayDotFilled),
+                  styles.dayBox,
+                  active && styles.dayBoxOn,
+                  !active && isToday && styles.dayBoxToday,
                 ]}
-              />
+              >
+                <Text style={[styles.dayName, active && styles.dayNameOn]}>{label}</Text>
+                <Text style={[styles.dayNum, active && styles.dayNumOn]}>{d.getDate()}.{d.getMonth() + 1}</Text>
+              </View>
+              <View style={[styles.dayDot, filled && styles.dayDotOn]} />
             </Pressable>
           )
         })}
       </View>
 
       {/* Подсказка для пустой недели */}
-      {weekEmpty && (
+      {weekEmpty ? (
         <View style={styles.howCard}>
           <Text style={styles.howTitle}>💡 Как это работает</Text>
           {HOW_STEPS.map((s, i) => (
@@ -263,107 +267,131 @@ export function MealPlanScreen() {
             </View>
           ))}
         </View>
-      )}
-
-      {/* Карточка выбранного дня */}
-      <View style={[styles.dayCard, isSelToday && styles.dayCardToday]}>
-        <View style={styles.dayHead}>
-          <View style={styles.dayHeadLeft}>
-            <Text style={styles.dayName}>
+      ) : (
+        <>
+          {/* Шапка выбранного дня: название + план дня в ккал */}
+          <View style={styles.dayHead}>
+            <Text style={styles.dayName2} numberOfLines={1}>
               {WEEKDAYS_FULL[sel]}
               {isSelToday ? ' · сегодня' : ''}
             </Text>
-            <Text style={styles.dayDate}>{fmtDate(dayDate(weekKey, sel))}</Text>
+            {dayDishes > 0 && (
+              <View style={styles.kcalPill}>
+                {/* «по плану» — чтобы не путать план дня со «съедено» из «Прогресса» */}
+                <Text numberOfLines={1} style={styles.kcalPillText}>по плану · {formatNum(selKcal)} ккал</Text>
+              </View>
+            )}
           </View>
-          {dayDishes > 0 && (
-            <View style={styles.kcalPill}>
-              {/* «по плану» — чтобы не путать план дня со «съедено» из «Сегодня» */}
-              <Text style={styles.kcalPillText}>по плану · {formatNum(selKcal)} ккал</Text>
-            </View>
-          )}
-        </View>
 
-        {/* Приёмы пищи: свёрнуты по умолчанию, после добавления —
-            сворачиваются (просьба Кати). Тап по названию — раскрыть;
-            «+ добавить» — окно добавления */}
-        {MEAL_IDS.map((mealId) => {
-          const items = day?.[mealId] || []
-          const open = Boolean(openMeals[mealId])
-          const mealKcal = items.reduce((n, it) => n + (Number(it.kcal) || 0), 0)
-          return (
-            <View key={mealId} style={styles.mealBlock}>
-              <View style={styles.mealHead}>
+          {/* Приёмы пищи строками — как в макете; тап — раскрыть блюда,
+              «+» — добавить */}
+          {visibleMeals.map((mealId) => {
+            const items = day?.[mealId] || []
+            const open = Boolean(openMeals[mealId])
+            const mealKcal = items.reduce((n, it) => n + (Number(it.kcal) || 0), 0)
+            const summary = items.length
+              ? items.length === 1
+                ? items[0].name
+                : `${items[0].name} и ещё ${items.length - 1}`
+              : 'пусто'
+            return (
+              <View key={mealId} style={styles.mealBlock}>
                 <Pressable
                   onPress={() => setOpenMeals((s) => ({ ...s, [mealId]: !s[mealId] }))}
-                  style={styles.mealHeadMain}
+                  style={styles.mealRow}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: open }}
                   accessibilityLabel={
                     `${MEAL_NAMES[mealId]}: ${items.length ? `${items.length} ${dishWord(items.length)}, ${formatNum(mealKcal)} ккал` : 'пусто'}. Тап — ${open ? 'скрыть' : 'показать'} блюда`
                   }
                 >
-                  <Text style={styles.mealEmoji}>{MEAL_EMOJI[mealId]}</Text>
-                  <View style={styles.mealHeadText}>
-                    <Text style={styles.mealName}>{MEAL_NAMES[mealId]}</Text>
-                    <Text style={styles.mealSummary}>
-                      {items.length
-                        ? `${items.length} ${dishWord(items.length)} · ${formatNum(mealKcal)} ккал`
-                        : 'пусто'}
-                    </Text>
+                  <View style={styles.mealTile}>
+                    <Text style={{ fontSize: 17 }}>{MEAL_EMOJI[mealId]}</Text>
                   </View>
-                  {open ? (
-                    <ChevronUp size={15} color={colors.text3} />
-                  ) : (
-                    <ChevronDown size={15} color={colors.text3} />
+                  <View style={styles.mealTexts}>
+                    <Text style={styles.mealName}>{MEAL_NAMES[mealId]}</Text>
+                    <Text style={styles.mealSummary} numberOfLines={1}>{summary}</Text>
+                  </View>
+                  {items.length > 0 && (
+                    <Text style={styles.mealKcal}>{formatNum(mealKcal)} ккал</Text>
                   )}
+                  <Pressable
+                    onPress={() => setPicker({ dayIdx: sel, mealId })}
+                    style={styles.mealAdd}
+                    hitSlop={4}
+                    accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
+                  >
+                    <Plus size={14} color={P.accent} />
+                  </Pressable>
                 </Pressable>
-                <Pressable
-                  onPress={() => setPicker({ dayIdx: sel, mealId })}
-                  style={styles.mealAdd}
-                  accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
-                >
-                  <Plus size={13} color={colors.accent} />
-                  <Text style={styles.mealAddText}>добавить</Text>
+                {open && items.map((it) => (
+                  <View key={it.id} style={styles.itemRow}>
+                    <Text style={styles.itemEmoji}>{it.emoji}</Text>
+                    <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
+                    <Pressable
+                      onPress={() => setGramsFor({ dayIdx: sel, mealId, itemId: it.id })}
+                      style={styles.itemMetaBtn}
+                      accessibilityLabel={`Изменить порцию: ${it.name}`}
+                    >
+                      <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)} ккал</Text>
+                    </Pressable>
+                    <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} hitSlop={6} accessibilityLabel="Убрать блюдо">
+                      <X size={13} color={P.text3} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )
+          })}
+
+          {/* «Показать все приёмы пищи» — раскрывает перекус и действия */}
+          <Pressable
+            style={styles.showAll}
+            onPress={() => setShowAll((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showAll }}
+            accessibilityLabel={showAll ? 'Скрыть перекус и действия' : 'Показать все приёмы пищи'}
+          >
+            <Text style={styles.showAllText}>
+              {showAll ? 'Скрыть' : 'Показать все приёмы пищи'}
+            </Text>
+            {showAll
+              ? <ChevronUp size={15} color={P.text2} />
+              : <ChevronDown size={15} color={P.text2} />}
+          </Pressable>
+
+          {showAll && (
+            <View style={styles.actionsWrap}>
+              <View style={styles.dayActions}>
+                <Pressable onPress={() => setCopyFrom(sel)} style={styles.dayAction} accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
+                  <Copy size={14} color={P.text2} />
+                  <Text style={styles.dayActionText}>Копировать</Text>
+                </Pressable>
+                <Pressable onPress={clearDay} style={styles.dayAction} accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
+                  <Trash2 size={14} color={P.text3} />
+                  <Text style={styles.dayActionText}>Очистить</Text>
+                </Pressable>
+                {isSelToday && (
+                  <Pressable onPress={transferToDiary} style={styles.transferBtn} accessibilityLabel="Перенести меню в дневник">
+                    <ClipboardCheck size={14} color={P.accentInk} />
+                    <Text style={styles.transferText}>В дневник</Text>
+                  </Pressable>
+                )}
+              </View>
+              <View style={styles.dayActions}>
+                <Pressable onPress={copyPrevWeek} style={styles.dayAction} accessibilityLabel="Взять меню прошлой недели">
+                  <Copy size={14} color={P.text2} />
+                  <Text style={styles.dayActionText}>Меню прошлой недели</Text>
+                </Pressable>
+                <Pressable onPress={clearWeek} style={styles.dayAction} accessibilityLabel="Очистить всю неделю">
+                  <Trash2 size={14} color={P.text3} />
+                  <Text style={styles.dayActionText}>Очистить неделю</Text>
                 </Pressable>
               </View>
-              {open && items.map((it) => (
-                <View key={it.id} style={styles.itemRow}>
-                  <Text style={styles.itemEmoji}>{it.emoji}</Text>
-                  <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
-                  <Pressable
-                    onPress={() => setGramsFor({ dayIdx: sel, mealId, itemId: it.id })}
-                    style={styles.itemMetaBtn}
-                    accessibilityLabel={`Изменить порцию: ${it.name}`}
-                  >
-                    <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)} ккал</Text>
-                  </Pressable>
-                  <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} hitSlop={6} accessibilityLabel="Убрать блюдо">
-                    <X size={13} color={colors.text3} />
-                  </Pressable>
-                </View>
-              ))}
             </View>
-          )
-        })}
-
-        {/* Действия дня — одна строка внизу карточки */}
-        <View style={styles.dayActions}>
-          <Pressable onPress={() => setCopyFrom(sel)} style={styles.dayAction} accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
-            <Copy size={14} color={colors.text2} />
-            <Text style={styles.dayActionText}>Копировать</Text>
-          </Pressable>
-          <Pressable onPress={clearDay} style={styles.dayAction} accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
-            <Trash2 size={14} color={colors.text3} />
-            <Text style={styles.dayActionText}>Очистить</Text>
-          </Pressable>
-          {isSelToday && (
-            <Pressable onPress={transferToDiary} style={styles.transferBtn} accessibilityLabel="Перенести меню в дневник">
-              <ClipboardCheck size={14} color={colors.accentInk} />
-              <Text style={styles.transferText}>В дневник</Text>
-            </Pressable>
           )}
-        </View>
-      </View>
+        </>
+      )}
 
       {/* Окно добавления блюда */}
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
@@ -388,7 +416,7 @@ export function MealPlanScreen() {
                   style={[styles.copyPill, toIdx === copyFrom && styles.copyPillOff]}
                   disabled={toIdx === copyFrom}
                 >
-                  <Text style={[styles.copyPillText, toIdx === copyFrom && { color: colors.text3 }]}>{label}</Text>
+                  <Text style={[styles.copyPillText, toIdx === copyFrom && { color: P.text3 }]}>{label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -401,114 +429,207 @@ export function MealPlanScreen() {
 }
 
 const styles = {
-  // Заголовок раздела (внутри общего скролла «Плана») — уровень ниже шапки экрана
-  title: { ...type.title, fontSize: 16, color: colors.text, letterSpacing: -0.2, marginTop: spacing.l, marginBottom: spacing.s },
-  subtitle: { ...type.body, color: colors.text2, marginTop: 0, marginBottom: spacing.m },
-  weekRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  weekBar: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1,
-    borderRadius: 999, paddingLeft: 6, paddingRight: 6, height: 44,
+  // Карточка «Меню на неделю» — единый контейнер, как в макете
+  card: {
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: spacing.l,
+    marginTop: spacing.l,
   },
-  weekBtn: { width: 38, height: 34, alignItems: 'center', justifyContent: 'center' },
-  weekLabel: { ...type.title, fontSize: 15, color: colors.text },
-  weekIconBtn: {
-    width: 34, height: 34, borderRadius: 12,
-    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center',
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: P.tile,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  daysStrip: { flexDirection: 'row', gap: 4, marginTop: spacing.m },
-  dayChip: {
-    flex: 1, height: 44, borderRadius: 12, gap: 3,
-    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center',
+  cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
+  weekNav: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  weekArrow: { width: 24, height: 28, alignItems: 'center', justifyContent: 'center' },
+  weekLabel: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text2, minWidth: 52, textAlign: 'center' },
+
+  // Полоса дней: имя + дата в рамке у выбранного, точка у заполненных
+  daysStrip: { flexDirection: 'row', gap: 5, marginTop: spacing.m },
+  dayCol: { flex: 1, alignItems: 'center', gap: 5 },
+  dayBox: {
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
   },
-  dayChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  dayChipToday: { borderColor: colors.accentBorder },
-  dayChipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
-  dayChipTextActive: { color: colors.accentInk },
-  dayDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: colors.line },
-  dayDotFilled: { backgroundColor: colors.cyan },
-  dayDotOnActive: { backgroundColor: colors.accentInk },
+  dayBoxOn: { borderColor: P.accent, backgroundColor: 'rgba(198,251,75,0.09)' },
+  dayBoxToday: { borderColor: 'rgba(255,255,255,0.16)' },
+  dayName: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
+  dayNameOn: { color: P.accent },
+  dayNum: { fontSize: 10.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
+  dayNumOn: { color: P.text },
+  dayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+  },
+  dayDotOn: { backgroundColor: P.accent },
+
+  // Подсказка «Как это работает» — для пустой недели
   howCard: {
-    backgroundColor: colors.surface, borderColor: colors.accentBorder, borderWidth: 1,
-    borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,
+    backgroundColor: 'rgba(198,251,75,0.06)',
+    borderColor: P.accentBorder,
+    borderWidth: 1,
+    borderRadius: radius.screen,
+    padding: spacing.l,
+    marginTop: spacing.m,
   },
-  howTitle: { ...type.title, fontSize: 15, color: colors.text },
+  howTitle: { ...type.title, fontSize: 15, color: P.text },
   howRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
   howNum: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: P.accentSoft,
+    borderColor: P.accentBorder,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  howNumText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: colors.accent },
-  howText: { ...type.body, fontSize: 13, color: colors.text2, flex: 1, lineHeight: 19 },
-  dayCard: {
-    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,
+  howNumText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accent },
+  howText: { ...type.body, fontSize: 13, color: P.text2, flex: 1, lineHeight: 19 },
+
+  // Шапка дня: название + пилюля «по плану · N ккал»
+  dayHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.s,
+    marginTop: spacing.l,
   },
-  dayCardToday: { borderColor: colors.accentBorder, backgroundColor: colors.surface },
-  dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dayHeadLeft: { flex: 1 },
-  dayName: { ...type.title, fontSize: 17, color: colors.text },
-  dayDate: { ...type.caption, color: colors.text3, marginTop: 2 },
+  dayName2: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
   kcalPill: {
-    backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3,
+    backgroundColor: P.accentSoft,
+    borderColor: P.accentBorder,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
-  kcalPillText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accent },
-  dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.l, flexWrap: 'wrap' },
-  dayAction: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: colors.surface2, borderRadius: 999,
-    paddingHorizontal: 12, height: 32,
+  kcalPillText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: P.accent },
+
+  // Строки приёмов: плитка-эмодзи + название + блюда + ккал + «+»
+  mealBlock: { marginTop: 10 },
+  mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46 },
+  mealTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: P.tile,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dayActionText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
-  transferBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: colors.accent, borderRadius: 999,
-    paddingHorizontal: 14, height: 32,
-  },
-  transferText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accentInk },
-  mealBlock: { marginTop: spacing.m },
-  mealHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, minHeight: 36 },
-  mealHeadMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingVertical: 4 },
-  mealHeadText: { flex: 1 },
-  mealSummary: { ...type.caption, color: colors.text3, marginTop: 1 },
-  mealEmoji: { fontSize: 16, width: 22, textAlign: 'center' },
-  mealName: { ...type.body, color: colors.text, fontWeight: '700', fontFamily: F[700], fontSize: 13.5, flex: 1 },
+  mealTexts: { flex: 1, minWidth: 0 },
+  mealName: { fontSize: 14.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  mealSummary: { fontSize: 12, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
+  mealKcal: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: P.text },
   mealAdd: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.accentSoft, borderRadius: 999,
-    paddingHorizontal: 11, height: 30,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: P.accentSoft,
+    borderColor: P.accentBorder,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  mealAddText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accent },
   itemRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.s,
-    backgroundColor: colors.surface2, borderRadius: radius.row,
-    paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+    backgroundColor: P.tileSoft,
+    borderRadius: radius.row,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginTop: 6,
+    minHeight: 34,
   },
   itemEmoji: { fontSize: 14, width: 20, textAlign: 'center' },
-  itemName: { ...type.body, color: colors.text, flex: 1, fontSize: 13 },
+  itemName: { ...type.body, color: P.text, flex: 1, fontSize: 13 },
   itemMetaBtn: {
-    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
   },
-  itemMeta: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: colors.text2 },
+  itemMeta: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text2 },
   itemDel: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+
+  // «Показать все приёмы пищи» + действия (перекус, копирование, дневник)
+  showAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: P.tileSoft,
+    borderRadius: 12,
+    height: 42,
+    marginTop: 12,
+  },
+  showAllText: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: P.text2 },
+  actionsWrap: { gap: 8, marginTop: 10 },
+  dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, flexWrap: 'wrap' },
+  dayAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: P.tile,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    height: 32,
+  },
+  dayActionText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
+  transferBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: P.accent,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    height: 32,
+  },
+  transferText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.accentInk },
+
+  // Окно «куда скопировать день»
   copyBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   copySheet: {
-    backgroundColor: colors.surface2, borderColor: colors.line, borderWidth: 1,
-    borderRadius: radius.screen, padding: spacing.xl, width: '86%',
+    backgroundColor: '#232636',
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: radius.screen,
+    padding: spacing.xl,
+    width: '86%',
   },
-  copyTitle: { ...type.title, color: colors.text, textAlign: 'center' },
+  copyTitle: { ...type.title, color: P.text, textAlign: 'center' },
   copyGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.s, marginTop: spacing.l },
   copyPill: {
-    backgroundColor: colors.card, borderColor: colors.accentBorder, borderWidth: 1,
-    borderRadius: 999, paddingHorizontal: 16, height: 38,
-    alignItems: 'center', justifyContent: 'center', minWidth: 56,
+    backgroundColor: P.card,
+    borderColor: P.accentBorder,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 56,
   },
-  copyPillOff: { borderColor: colors.line, opacity: 0.5 },
-  copyPillText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: colors.text },
-  copyHint: { ...type.caption, color: colors.text3, textAlign: 'center', marginTop: spacing.m },
+  copyPillOff: { borderColor: P.line, opacity: 0.5 },
+  copyPillText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: P.text },
+  copyHint: { ...type.caption, color: P.text3, textAlign: 'center', marginTop: spacing.m },
 }
