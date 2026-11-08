@@ -1,4 +1,6 @@
-// Нижняя навигация: Главная / Дневник / Тело / План / Ещё.
+// Нижняя навигация: Главная / Дневник / Тело / План / Покупки / Ещё.
+// «План» — питание на неделю (маршрут /workouts сохранён), «Покупки» —
+// отдельная вкладка (вынесена из «Плана» по решению Кати).
 // Активная вкладка — иконка
 // в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
 // серые, без подложки: сразу видно, где вы находитесь.
@@ -6,16 +8,18 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, CalendarDays, House, Menu, PersonStanding } from 'lucide-react-native'
+import { BookOpen, CalendarDays, House, Menu, PersonStanding, ShoppingCart } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Дневник', Icon: BookOpen },
   { name: 'bmi', label: 'Тело', Icon: PersonStanding },
-  // «План»: меню на неделю + покупки (маршрут /workouts сохранён,
-  // чтобы не ломать возможные ссылки); иконка — календарь недели:
+  // «План»: меню на неделю (маршрут /workouts сохранён, чтобы не
+  // ломать возможные ссылки); иконка — календарь недели:
   // план-лист не понравился визуально (отзыв Кати)
   { name: 'workouts', label: 'План', Icon: CalendarDays },
+  // «Покупки»: список для магазина — отдельная вкладка (иконка-корзина)
+  { name: 'shopping', label: 'Покупки', Icon: ShoppingCart },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
@@ -58,7 +62,7 @@ export default function TabsLayout() {
           paddingBottom: 7 + insets.bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 12.5, fontFamily: 'Inter_600SemiBold' },
+        tabBarLabelStyle: { fontSize: 11.5, fontFamily: 'Inter_600SemiBold' },
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >
