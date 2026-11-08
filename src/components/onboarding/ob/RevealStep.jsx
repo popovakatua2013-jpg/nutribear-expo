@@ -2,6 +2,10 @@
 // градиентном кольце, карточка трёх главных цифр плана (калории,
 // тренировки, вода) и подробности по кнопке «Показать план» (БЖУ,
 // дата цели, прогноз веса). Кнопка «Далее» сохраняет план.
+// Медицинская подсказка (DISCLAIMER) отсюда убрана по отзыву Кати
+// («подсказку убрать, если разрешено законом»): юридически всё
+// покрыто разделом 3 «Медицинское предупреждение» Условий
+// использования (docs/terms.html), в приложении дублировать не нужно.
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -13,7 +17,6 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { calcPlan, planDoneText } from '@/lib/data/onboarding'
 import { WATER_BY_ANSWER, WORKOUT_OPTIONS } from '@/lib/data/onboarding-options'
 import { formatNum } from '@/lib/format'
-import { DISCLAIMER } from '@/lib/data/disclaimer'
 
 const SIZE = 92
 const R = 40
@@ -140,10 +143,6 @@ export function RevealStep({ onNext, onBack }) {
               </View>
             </View>
           ) : null}
-
-          <Text className="px-1 font-sans text-[15px] leading-relaxed text-bear-dim">
-            {DISCLAIMER}
-          </Text>
         </View>
       ) : null}
     </ObShell>

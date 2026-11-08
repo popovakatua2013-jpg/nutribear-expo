@@ -65,15 +65,22 @@ export function goalRewardAfterSave({
 }
 
 // Личная норма калорий под цель (Миффлин — Сан Жеор): дефицит ≈ 500 ккал
-// (≈ −0,5 кг/нед), профицит ≈ +300, поддержка — TDEE как есть.
+// (≈ −0,5 кг/нед), «сушка» — умеренный дефицит ≈ 400 ккал (белок выше —
+// см. macroSplit в onboarding.js), профицит ≈ +300, поддержка — TDEE как есть.
 // Ниже безопасного пола (1200/1500 ккал) и выше 4000 не выходим.
-// goalId: 'lose' | 'gain' | любой другой — поддержка.
+// goalId: 'lose' | 'cut' | 'gain' | любой другой — поддержка.
 export function recommendedKcal({ sex, age, heightCm, weightKg, activityId, goalId }) {
   const bmr = bmrMifflin(sex, age, heightCm, weightKg)
   const tdee = tdeeKcal(bmr, tdeeMult(activityId))
   const floor = sex === 'male' ? 1500 : 1200
   const raw =
-    goalId === 'lose' ? tdee - 500 : goalId === 'gain' ? tdee + 300 : tdee
+    goalId === 'lose'
+      ? tdee - 500
+      : goalId === 'gain'
+        ? tdee + 300
+        : goalId === 'cut'
+          ? tdee - 400
+          : tdee
   return Math.round(Math.max(floor, Math.min(4000, raw)) / 10) * 10
 }
 

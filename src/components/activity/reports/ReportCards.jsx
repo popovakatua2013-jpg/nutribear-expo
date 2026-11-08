@@ -28,7 +28,7 @@
 // «Сон» — полноценная карточка трекера сна (ввод «лёг/встал»): крупно
 // средний сон за ночь по записанным дням, спарклайн ночей, футер
 // «Цель: N/7 дн» (норма ≥ 7 ч). Пока ночей нет — приглашение
-// «Записать первый сон →», тап по пустой карточке открывает окно
+// «Записать сон →», тап по пустой карточке открывает окно
 // записи, тап по карточке с данными — окно истории показателя.
 
 import { useMemo } from 'react'
@@ -129,21 +129,23 @@ function CardBg({ color }) {
 }
 
 // Подпись-футер с иконкой календаря и тонкой линией сверху — как на
-// скрине-2. Текст краткий («Цель: 4/7 дн») — помещается всегда
-function CalFooter({ children, color = '#8B96B8', line = true }) {
+// скрине-2. Текст краткий («Цель: 4/7 дн») — помещается всегда.
+// big — крупный футер-приглашение к действию (отзыв Кати: кнопка
+// «Записать сон» была «очень мелко» — теперь 13px и полужирная)
+function CalFooter({ children, color = '#8B96B8', line = true, big = false }) {
   return (
     // mt-auto — футер прижат к нижнему краю карточки даже когда сосед
     // в ряду выше (растянутая карточка не оставляет футер в середине)
     <View className="mt-auto">
       {line && <View className="mt-1.5 h-px bg-white/[0.07]" />}
       <View className="mt-1 flex-row items-center gap-1">
-        <Calendar size={11} color={color} />
+        <Calendar size={big ? 13 : 11} color={color} />
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           maxFontSizeMultiplier={1.2}
-          className="min-w-0 flex-1 font-medium text-[10.5px]"
+          className={`min-w-0 flex-1 ${big ? 'font-semibold text-[13px]' : 'font-medium text-[10.5px]'}`}
           style={{ color }}
         >
           {children}
@@ -282,7 +284,9 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
 // Карточка «Сон» (нижний ряд): средний сон за ночь по записанным дням
 // периода — пустые дни среднее не топят.
 // Футер «Цель: N/7 дн» — ночи с нормой ≥ цели по сну (goals.sleepMin,
-// по умолчанию 7 ч). Пока ночей нет — приглашение «Записать первый сон →»:
+// по умолчанию 7 ч). Пока ночей нет — приглашение «Записать сон →»
+// (крупным шрифтом, отзыв Кати: прежнее «Записать первый сон» было
+// «очень мелко»):
 // тап по пустой карточке открывает окно записи, тап по карточке с
 // данными — окно истории показателя (как у остальных карточек)
 function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd = () => {} }) {
@@ -302,7 +306,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
       accessibilityLabel={
         nights
           ? `Сон: в среднем ${fmtSleep(avg)} за ночь. Тап — история показателя`
-          : 'Сон пока не записан. Тап — записать первый сон'
+          : 'Сон пока не записан. Тап — записать сон'
       }
       className="min-w-0 flex-1 active:opacity-90"
       style={{ borderRadius: 16 }}
@@ -363,7 +367,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
               пока нет записей
             </Text>
             <CardBand height={s.band} />
-            <CalFooter color="#8DABFF">Записать первый сон →</CalFooter>
+            <CalFooter color="#8DABFF" big>Записать сон →</CalFooter>
           </>
         )}
       </View>

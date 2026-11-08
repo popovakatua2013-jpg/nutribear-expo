@@ -85,7 +85,9 @@ export function ProfileStep({ onNext, onBack }) {
   const activityLabel = ACTIVITY_LEVELS.find((l) => l.id === a.activity)?.label ?? 'Не выбрана'
   const specialLabel = a.special.length === 0 ? 'Нет' : `Отмечено: ${a.special.length}`
 
-  const isGainLose = a.goalId === 'lose' || a.goalId === 'gain'
+  // «Сушка» тоже идёт с дефицитом — ей нужны цель по весу и темп,
+  // как у «Похудения» и «Набора»
+  const isGainLose = a.goalId === 'lose' || a.goalId === 'cut' || a.goalId === 'gain'
 
   return (
     <ObShell

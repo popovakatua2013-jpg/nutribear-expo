@@ -767,9 +767,11 @@ const styles = {
   },
   goalCardActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   goalEmoji: { fontSize: 20 },
+  // 11.5px вместо 12.5: целей теперь четыре («Сушка» добавлена по отзыву
+  // Кати) — в ряду по 4 карточки подпись «Набор веса» иначе обрезается
   goalName: {
     ...type.caption,
-    fontSize: 12.5,
+    fontSize: 11.5,
     color: colors.text2,
     marginTop: 5,
   },

@@ -3,6 +3,10 @@
 // набирай вес» УДАЛЕН по отзыву Кати («Похудей… — удалить»): остался
 // нейтральный подзаголовок. Выбор сразу пишется в стор, поэтому
 // отдельный шаг «Какая у вас цель?» из цепочки удалён.
+// Отзыв Кати: карточка «Поддерживать» была «кривая» — в один ряд из
+// трёх чипов слово не помещалось и рвалось посреди («Поддержива-ть»);
+// теперь чипы лежат сеткой 2×2 и подпись всегда в одну строку. Сюда
+// же добавлена четвёртая цель «Сушка» (отзыв Кати).
 
 import { Image, Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
@@ -13,9 +17,14 @@ const BEAR = require('../../../../assets/images/bear.webp')
 
 const CHIPS = [
   { id: 'lose', emoji: '🔥', label: 'Похудеть' },
+  { id: 'cut', emoji: '⚡', label: 'Сушка' },
   { id: 'maintain', emoji: '⚖️', label: 'Поддерживать' },
   { id: 'gain', emoji: '💪', label: 'Набрать вес' },
 ]
+
+// Чипы рядами по два (сетка 2×2): в ряд из трёх подпись «Поддерживать»
+// не влезала и переносилась посреди слова (отзыв Кати: «кривая»)
+const CHIP_ROWS = [CHIPS.slice(0, 2), CHIPS.slice(2, 4)]
 
 export function WelcomeStep({ onNext }) {
   const goalId = useOnboardingStore((s) => s.answers.goalId)
@@ -37,17 +46,21 @@ export function WelcomeStep({ onNext }) {
           Персональный план питания и тренировок под твои цели
         </Text>
 
-        {/* Карточка «Твоя цель» с тремя чипами */}
+        {/* Карточка «Твоя цель» с четырьмя чипами (сетка 2×2) */}
         <View className="mt-5 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
           <Text className="font-bold text-[17.5px] text-bear-sub2">Твоя цель</Text>
-          <View className="mt-3 flex-row gap-2.5">
-            {CHIPS.map((c) => (
-              <GoalChip
-                key={c.id}
-                chip={c}
-                active={goalId === c.id}
-                onPress={() => patch({ goalId: c.id })}
-              />
+          <View className="mt-3 gap-2.5">
+            {CHIP_ROWS.map((row, ri) => (
+              <View key={ri} className="flex-row gap-2.5">
+                {row.map((c) => (
+                  <GoalChip
+                    key={c.id}
+                    chip={c}
+                    active={goalId === c.id}
+                    onPress={() => patch({ goalId: c.id })}
+                  />
+                ))}
+              </View>
             ))}
           </View>
         </View>
@@ -76,7 +89,9 @@ function GoalChip({ chip, active, onPress }) {
         ) : null}
         <Text className="text-[26px]">{chip.emoji}</Text>
         <Text
-          numberOfLines={2}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
           className={`mt-1.5 text-center font-bold text-[15px] leading-[18px] ${
             active ? 'text-white' : 'text-bear-sub'
           }`}

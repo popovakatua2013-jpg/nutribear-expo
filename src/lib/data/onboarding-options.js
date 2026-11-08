@@ -6,6 +6,7 @@
 
 export const GOAL_OPTIONS = [
   { id: 'lose', emoji: '🔥', label: 'Похудеть', hint: 'мягкий дефицит калорий' },
+  { id: 'cut', emoji: '⚡', label: 'Сушка', hint: 'сохранить мышцы, убрать жир' },
   { id: 'maintain', emoji: '⚖️', label: 'Поддержать вес', hint: 'держать текущую форму' },
   { id: 'gain', emoji: '💪', label: 'Набрать вес', hint: 'профицит для роста мышц' },
 ]

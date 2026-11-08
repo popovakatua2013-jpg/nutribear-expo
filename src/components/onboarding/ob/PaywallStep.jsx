@@ -8,7 +8,7 @@ import { Check } from 'lucide-react-native'
 import { ObShell } from './ObShell'
 
 const PLANS = [
-  { id: 'trial', title: 'Триал 7 дней', price: 'Бесплатно', note: 'все функции Premium' },
+  { id: 'trial', title: 'Триал 3 дня', price: 'Бесплатно', note: 'все функции Premium' },
   { id: 'month', title: 'Месяц', price: '299 ₽', note: '' },
   { id: 'year', title: 'Год', price: '1 490 ₽', note: 'скидка 50%', best: true },
 ]

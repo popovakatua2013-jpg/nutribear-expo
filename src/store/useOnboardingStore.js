@@ -12,7 +12,7 @@ export const DEFAULT_ANSWERS = {
   age: '',
   heightCm: '',
   weightKg: '',
-  goalId: null, // lose | maintain | gain
+  goalId: null, // lose | cut | maintain | gain
   targetWeightKg: '',
   pace: 0.5, // кг в неделю
   why: [], // здоровье / уверенность / событие / энергия

@@ -57,7 +57,7 @@ import {
 } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { Droplet, Flame, Hexagon, Leaf, Pencil, Utensils, X } from 'lucide-react-native'
+import { Droplet, Flame, Hexagon, Leaf, Pencil, Sparkles, Utensils, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
 import { remainderOf } from '@/lib/data/remainder'
 import { FIBER_NORM } from '@/lib/data/nutrition'
@@ -451,20 +451,19 @@ export function DailySummary({
             accessibilityRole={onEditKcalGoal ? 'button' : undefined}
             accessibilityLabel={
               onEditKcalGoal
-                ? `Остаток ${rem == null ? 'неизвестен' : formatNum(Math.abs(rem))} килокалорий. Нажмите, чтобы изменить цель по калориям`
+                ? `Осталось ${rem == null ? 'неизвестно сколько' : formatNum(Math.abs(rem))} килокалорий. Нажмите, чтобы изменить цель по калориям`
                 : undefined
             }
             className="max-w-full"
           >
-            {/* «Остаток»: огонёк и подпись в строку, ниже — остаток
-                калорий на день. Подпись КРУПНЕЕ и без дожима шрифта
-                (отзыв Кати: «слово „остаток“ мелкий шрифт и криво встал»):
-                adjustsFontSizeToFit сжимал подпись сильнее, чем цифру, —
-                из-за этого строка с огоньком выглядела мельче и криво;
-                теперь фиксированные 15px, слово короткое — влезает */}
+            {/* «Осталось»: огонёк и подпись в строку, ниже — остаток
+                калорий на день. Слово «Остаток» заменили на «Осталось»
+                (отзыв Кати: слово «Остаток» криво) — так звучит естественнее;
+                подпись фиксированные 15px без дожима шрифта (прошлый отзыв
+                Кати: «мелкий шрифт и криво встал») */}
             <View
               accessibilityLabel={
-                `Остаток калорий на сегодня: ` +
+                `Осталось на сегодня: ` +
                 (rem == null
                   ? 'цель не задана'
                   : rem >= 0
@@ -481,7 +480,7 @@ export function DailySummary({
                   className="font-bold text-[15px] leading-tight"
                   style={{ color: remTone.text }}
                 >
-                  Остаток
+                  Осталось
                 </Text>
               </View>
               <Text
@@ -544,8 +543,11 @@ export function DailySummary({
 
       {/* Особый день — метка и перерасчёт нормы ТЕПЕРЬ ВИДНЫ (отзыв
           Кати: корректировку калорий в особые дни «нигде не фиксируется»).
+          Отзыв Кати: чип было «не видно» — теперь яркая иконка-искры
+          впереди, фиолетовая подложка/рамка и текст заметно светлее,
+          сам чип стоит ПО ЦЕНТРУ карточки (раньше был прижат слева).
           Есть метка — цветной чип «эмодзи Тип · норма N ккал (+M)»,
-          нет — пунктирный «+ Особый день». Тап открывает окно выбора;
+          нет — пунктирный «✨ Особый день». Тап открывает окно выбора;
           дни менструации подставляются сами из трекера цикла */}
       <Pressable
         onPress={() => setMarkOpen(true)}
@@ -555,8 +557,8 @@ export function DailySummary({
             ? `Особый день: ${markMeta.label}, норма ${formatNum(target)} килокалорий. Нажмите, чтобы изменить`
             : 'Отметить особый день: менструация, командировка или праздник'
         }
-        className={`mt-2.5 flex-row items-center gap-1.5 self-start rounded-full px-3 py-1.5 active:opacity-75 ${
-          dayMark ? '' : 'border border-dashed border-white/15'
+        className={`mt-2.5 flex-row items-center gap-1.5 self-center rounded-full px-3.5 py-2 active:opacity-75 ${
+          dayMark ? '' : 'border border-dashed border-[#A45BFF]/60 bg-[#A45BFF]/10'
         }`}
         style={
           dayMark
@@ -564,14 +566,18 @@ export function DailySummary({
             : null
         }
       >
-        <Text className="text-[14px] leading-none">{dayMark ? markMeta.emoji : '＋'}</Text>
+        {dayMark ? (
+          <Text className="text-[14px] leading-none">{markMeta.emoji}</Text>
+        ) : (
+          <Sparkles size={15} color="#C4B5FD" />
+        )}
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.8}
           maxFontSizeMultiplier={MAX}
           className="font-bold text-[13.5px] leading-tight"
-          style={{ color: dayMark ? markMeta.color : '#8B96B8' }}
+          style={{ color: dayMark ? markMeta.color : '#C4B5FD' }}
         >
           {dayMark
             ? `${markMeta.label} · норма ${formatNum(target)} ккал${
@@ -579,7 +585,7 @@ export function DailySummary({
               }`
             : 'Особый день'}
         </Text>
-        <ChevronDown size={14} color={dayMark ? markMeta.color : '#8B96B8'} />
+        <ChevronDown size={14} color={dayMark ? markMeta.color : '#C4B5FD'} />
       </Pressable>
 
       {/* нутриенты одной строкой в заданном порядке (Катя попросила

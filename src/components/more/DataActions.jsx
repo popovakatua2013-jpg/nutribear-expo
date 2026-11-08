@@ -50,7 +50,10 @@ export function DataActions({ embedded = false, variant = null }) {
     useFoodStore.setState({ goal: 'maintain', entries: { breakfast: [], lunch: [], dinner: [], snack: [] }, customMeals: [], history: [], dayKey: dayKeyOf() })
     useActivityStore.setState({ waterMl: 0, extraSteps: 0, lastWaterAt: 0, waterLog: [], pedometerSteps: 0, vessels: DEFAULT_VESSELS, dayKey: dayKeyOf() })
     // GDPR: пол, возраст, активность и цель по весу — тоже персональные
-    // данные, стираем вместе с остальным профилем
+    // данные, стираем вместе с остальным профилем. Замеры тела (грудь/
+    // талия/живот/попа/бёдра + свои замеры и скрытые ключи) — тоже
+    // персональные данные: раньше они переживали полное стирание
+    // (отзыв Кати: «при стирании данных замеры остаются?») — исправлено
     useProfileStore.setState({
       name: '',
       sex: 'female',
@@ -62,6 +65,10 @@ export function DataActions({ embedded = false, variant = null }) {
       goalWeightKg: null,
       goalReachedAt: null,
       weights: [],
+      measurements: {},
+      customMeasurements: [],
+      hiddenMeasurements: [],
+      lastBmiCat: null,
     })
     useGoalsStore.getState().reset()
     useExerciseStore.setState({ logs: {} })
@@ -109,7 +116,7 @@ export function DataActions({ embedded = false, variant = null }) {
   function confirmWipe() {
     Alert.alert(
       'Стереть все данные?',
-      'Полное удаление по GDPR: дневник, история, профиль, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
+      'Полное удаление по GDPR: дневник, история, профиль и замеры тела, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },

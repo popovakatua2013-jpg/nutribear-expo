@@ -93,7 +93,7 @@ export function GoalPicker({ embedded = false }) {
     const left = Math.abs(weightKg - goalWeightKg)
     barPct = total > 0 ? Math.max(0, Math.min(1, 1 - left / total)) : left < 0.05 ? 1 : 0
     barDone = Math.max(0, total - left)
-    const doneLabel = goal === 'lose' ? 'Сброшено' : 'Пройдено'
+    const doneLabel = goal === 'lose' || goal === 'cut' ? 'Сброшено' : 'Пройдено'
     barCaption =
       left < 0.05
         ? 'Цель по весу достигнута! 🎉'
