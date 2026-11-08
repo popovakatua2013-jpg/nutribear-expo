@@ -28,6 +28,7 @@ import Notifications from '@/lib/notifs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { ActivityStats } from '@/components/activity/ActivityStats'
+import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { WaterModal } from '@/components/home/WaterModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { SoftGlow } from '@/components/ui/SoftGlow'
@@ -312,11 +313,9 @@ export default function HomeScreen() {
         <CycleBadge />
 
         {/* Блок «Активность» — ряд плиток за сегодня (шаги, вода,
-            активность). Тренировки с главного убраны совсем — им посвящена
-            отдельная вкладка «Тренировки» (отзыв Кати). Тап по плитке
-            «Шаги» — записать шаги, тап по «Вода» — стаканы за день;
-            долгий тап по плиткам — правка целей; история по дням — во
-            вкладке «Дневник» */}
+            активность). Тап по плитке «Шаги» — записать шаги, тап по
+            «Вода» — стаканы за день; долгий тап по плиткам — правка
+            целей; история по дням — во вкладке «Дневник» */}
         <View className="rounded-3xl border border-bear-bodyLine bg-white/[0.02] p-3">
           <ActivityStats
             steps={extraSteps}
@@ -339,6 +338,13 @@ export default function HomeScreen() {
             onOpenStepsInput={() => setStepsOpen(true)}
           />
         </View>
+
+        {/* Блок «Тренировки» — прежний с главной, сразу после плиток
+            «шаги/вода/активность» (просьба Кати): каталог активностей
+            (ходьба, бег, велосипед…), ручная запись (вид, время, ккал —
+            пустые считаются по MET), неделя к норме ВОЗ, серия и динамика.
+            Во вкладке «Тренировки» живёт референсный каталог/плеер */}
+        <ExerciseSection />
 
         {/* Вечерняя подсказка: с 19:00 догоняем воду/калории, если отстаём */}
         <EveningNudge
