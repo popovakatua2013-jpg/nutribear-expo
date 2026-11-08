@@ -1,6 +1,7 @@
 // Раздел «Меню на неделю» вкладки «План» — встраивается в общий скролл
 // PlanScreen (по макетам Кати), поэтому корень — View, а не ScrollView.
-// «Покупки» — отдельная вкладка. Редизайн по отзыву Кати («дублируется
+// «Покупки» — экран с карточки на «Плане», отдельной вкладки больше нет.
+// Редизайн по отзыву Кати («дублируется
 // одно и то же Пн–Вс, непонятно как пользоваться»): вместо семи одинаковых
 // карточек — полоса дней Пн–Вс (чипы: заполненный день помечен точкой,
 // сегодня — обводкой) и ОДНА карточка выбранного дня с приёмами. Пока
@@ -8,11 +9,14 @@
 // Тап по «+ добавить» — окно «Добавить блюдо» (база продуктов или
 // своё блюдо). Тап по пилюле «250 г · 220 ккал» — правка граммовки
 // (GramsModal), ккал пересчитываются от калорийности на 100 г.
-// В карточке дня: сумма калорий против цели (пилюля + полоска),
-// копирование дня, очистка; на сегодняшнем дне — «В дневник»:
-// переносит блюда в дневник питания через useFoodStore.addEntry
-// (полный БЖУ по граммовке). Навигация по неделям ‹ ›; «копировать
-// прошлую неделю» и «очистить неделю» — иконки в шапке. Стиль —
+// В карточке дня — пилюля «по плану · N ккал»: именно план, чтобы не
+// путать со «съедено сегодня» из кольца «Сегодня» выше (отзыв Кати:
+// два одинаковых числа «N / норма» выглядели как дубль/противоречие);
+// отдельной полоски прогресса у дня нет — прогресс дня показывает
+// кольцо «Сегодня». Копирование дня, очистка; на сегодняшнем дне —
+// «В дневник»: переносит блюда в дневник питания через
+// useFoodStore.addEntry (полный БЖУ по граммовке). Навигация по неделям ‹ ›;
+// «копировать прошлую неделю» и «очистить неделю» — иконки в шапке. Стиль —
 // дизайн-система вкладки (theme.js).
 
 import { useEffect, useMemo, useState } from 'react'
@@ -22,7 +26,6 @@ import {
 } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
-import { useGoalsStore } from '@/store/useGoalsStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import {
   dayDate, dayKcal, MEAL_EMOJI, MEAL_IDS, MEAL_NAMES,
@@ -60,7 +63,6 @@ export function MealPlanScreen() {
   const [gramsFor, setGramsFor] = useState(null) // { dayIdx, mealId, itemId }
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
-  const goal = useGoalsStore((s) => s.goals.kcal)
 
   const store = useMealPlanStore
   const todayKey = dayKeyOfDate(new Date())
@@ -98,7 +100,6 @@ export function MealPlanScreen() {
   const day = week[sel]
   const selKcal = dayKcal(day)
   const dayDishes = countDay(sel)
-  const pct = goal > 0 ? selKcal / goal : 0
   const isSelToday = sel === todayIdx
 
   const onPick = (item) => {
@@ -257,18 +258,11 @@ export function MealPlanScreen() {
           </View>
           {dayDishes > 0 && (
             <View style={styles.kcalPill}>
-              <Text style={styles.kcalPillText}>
-                {goal > 0 ? `${formatNum(selKcal)} / ${formatNum(goal)}` : `${formatNum(selKcal)} ккал`}
-              </Text>
+              {/* «по плану» — чтобы не путать план дня со «съедено» из «Сегодня» */}
+              <Text style={styles.kcalPillText}>по плану · {formatNum(selKcal)} ккал</Text>
             </View>
           )}
         </View>
-        {/* Полоска к цели дня */}
-        {dayDishes > 0 && goal > 0 && (
-          <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: `${Math.min(pct, 1) * 100}%`, backgroundColor: pct > 1.05 ? colors.orange : colors.accent }]} />
-          </View>
-        )}
 
         {/* Приёмы пищи */}
         {MEAL_IDS.map((mealId) => {
@@ -418,8 +412,6 @@ const styles = {
     borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3,
   },
   kcalPillText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.accent },
-  barTrack: { height: 5, borderRadius: 3, backgroundColor: colors.line, marginTop: 10, overflow: 'hidden' },
-  barFill: { height: 5, borderRadius: 3 },
   dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.l, flexWrap: 'wrap' },
   dayAction: {
     flexDirection: 'row', alignItems: 'center', gap: 5,

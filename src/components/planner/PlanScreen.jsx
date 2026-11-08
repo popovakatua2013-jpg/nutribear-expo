@@ -4,16 +4,18 @@
 //      цель берётся из дневника (useFoodStore.goal), норма ккал — сумма
 //      пресета (getDailyTarget). Тап применяет пресет через
 //      applyGoalChoice (единая точка смены цели, как в «Мои цели»).
-//   2. «Сегодня» — кольцо % от нормы ккал и полосы Б/Ж/У/клетчатки.
-//      Съедено — живой дневник (useFoodStore.entries, sumNutrition),
-//      нормы — свои из целей (goals.macroNorms) или «тарелка»
-//      20/30/50 % от нормы ккал, как в сводке «Съедено за сегодня».
+//   2. «Сегодня» — кольцо % от нормы ккал и полосы Б/Ж/У/клетчатки/сахара
+//      (сахар — как в макете; порог ВОЗ 50 г). Съедено — живой дневник
+//      (useFoodStore.entries, sumNutrition), нормы — свои из целей
+//      (goals.macroNorms) или «тарелка» 20/30/50 % от нормы ккал,
+//      как в сводке «Съедено за сегодня».
 //   3. «Неделя» — столбики по дням Пн–Вс из журнала дневника
 //      (useFood.history) с переключателем показателя: Калории /
 //      Клетчатка (своя норма или 25 г ВОЗ) / Сахар (порог ВОЗ 50 г),
 //      линия нормы и средние за прошедшие дни.
 //   4. «Меню на неделю» — MealPlanScreen (полоса дней + карточка дня).
-//   5. «Список покупок» — сводка useShoppingStore; тап — вкладка «Покупки».
+//   5. «Список покупок» — сводка useShoppingStore; тап — экран «Покупки»
+//      (отдельной вкладки в нижней панели больше нет — решение Кати).
 //   6. «Интервальное голодание» — план и идущий таймер из
 //      useFastingStore; тап открывает полный экран (PlanTab).
 // Кольцо — react-native-svg, анимация как у колец «Главной» (KcalRing):
@@ -379,6 +381,7 @@ export function PlanScreen({ onOpenFasting }) {
           <MacroBar label="Жиры" value={todaySum.f} norm={norms.f} color={colors.orange} />
           <MacroBar label="Углеводы" value={todaySum.c} norm={norms.c} color={colors.accent} />
           <MacroBar label="Клетчатка" value={todaySum.fib} norm={norms.fib} color="#34D399" />
+          <MacroBar label="Сахар" value={todaySum.sug} norm={SUGAR_LIMIT} color="#F472B6" />
         </View>
       </View>
 
@@ -464,7 +467,8 @@ export function PlanScreen({ onOpenFasting }) {
       {/* 4. Меню на неделю — существующий раздел (полоса дней + день) */}
       <MealPlanScreen />
 
-      {/* 5. Список покупок — сводка; тап открывает вкладку «Покупки» */}
+      {/* 5. Список покупок — сводка; тап открывает экран «Покупки»
+          (маршрут /shopping скрыт из нижней панели) */}
       <Pressable
         style={styles.card}
         onPress={() => router.navigate('/shopping')}

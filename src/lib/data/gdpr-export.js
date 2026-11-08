@@ -52,7 +52,7 @@ export async function collectAll() {
     // Трекер цикла: настройки и история — только локальные данные,
     // переносим вместе с остальными, чтобы не вводить заново
     cycle: useCycleStore.getState(),
-    // План питания на неделю и список покупок (вкладки «План»/«Покупки»)
+    // План питания на неделю и список покупок (разделы «План» и «Покупки»)
     mealPlan: useMealPlanStore.getState(),
     shopping: useShoppingStore.getState(),
   }
