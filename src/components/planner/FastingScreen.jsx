@@ -10,7 +10,7 @@
 // (theme.js). Без медицинских рекомендаций — только констатация.
 
 import { useEffect, useState } from 'react'
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import { AppState, Pressable, ScrollView, Text, View } from 'react-native'
 import { Clock, History, Play, Square } from 'lucide-react-native'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
@@ -53,13 +53,21 @@ export function FastingScreen() {
   const startedAt = useFastingStore((s) => s.startedAt)
   const laps = useFastingStore((s) => s.laps)
 
-  // Тик 30 с: таймер живой, но не сжигает батарею помисекундно
+  // Тик каждую секунду: таймер живой, видно как идут минуты. Возврат из
+  // фона — системные таймеры спят, поэтому время подтягиваем сразу по
+  // AppState (иначе после сворачивания приложения таймер «замирал»)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!startedAt) return undefined
     setNow(Date.now())
-    const t = setInterval(() => setNow(Date.now()), 30000)
-    return () => clearInterval(t)
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') setNow(Date.now())
+    })
+    return () => {
+      clearInterval(t)
+      sub.remove()
+    }
   }, [startedAt])
 
   const running = Boolean(startedAt)
@@ -75,6 +83,12 @@ export function FastingScreen() {
     s.setWindowStart((((s.windowStart + d) % 24) + 24) % 24)
   }
 
+  // Блокировка «Начать голодание» сразу после «Завершить»: кнопка
+  // встаёт на то же место — случайный второй тап (привычка нажимать
+  // дважды) тут же запускал новый сеанс, и казалось, что выйти из
+  // голодания невозможно (отзыв Кати)
+  const [lockStart, setLockStart] = useState(false)
+
   const start = () => {
     useFastingStore.getState().start()
     setNow(Date.now())
@@ -84,18 +98,14 @@ export function FastingScreen() {
     })
   }
 
+  // «Завершить» — одним тапом, без подтверждающего окна (отзыв Кати:
+  // выйти из голодания не получалось). Результат сразу в историю
   const stop = () => {
-    Alert.alert('Завершить голодание?', 'Результат запишется в историю.', [
-      { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Завершить',
-        onPress: () => {
-          const dur = Math.max(0, Date.now() - startedAt)
-          useFastingStore.getState().stop()
-          toast({ title: '⏹ Голодание завершено', description: `Длилось ${fmtDur(dur)}` })
-        },
-      },
-    ])
+    const dur = Math.max(0, Date.now() - startedAt)
+    useFastingStore.getState().stop()
+    setLockStart(true)
+    setTimeout(() => setLockStart(false), 2500)
+    toast({ title: '⏹ Голодание завершено', description: `Длилось ${fmtDur(dur)}` })
   }
 
   const avgMs = laps.length
@@ -147,7 +157,13 @@ export function FastingScreen() {
             </View>
             <Text style={styles.bigTimer}>{24 - windowHours} ч</Text>
             <Text style={styles.progressHint}>Цель голодания при плане {24 - windowHours}/{windowHours}</Text>
-            <Pressable onPress={start} style={styles.startBtn} accessibilityLabel="Начать голодание">
+            <Pressable
+              onPress={start}
+              disabled={lockStart}
+              style={lockStart ? [styles.startBtn, styles.btnLocked] : styles.startBtn}
+              accessibilityLabel="Начать голодание"
+              accessibilityState={{ disabled: lockStart }}
+            >
               <Play size={16} color={colors.accentInk} />
               <Text style={styles.startText}>Начать голодание</Text>
             </Pressable>
@@ -256,6 +272,7 @@ const styles = {
     alignItems: 'center', justifyContent: 'center', marginTop: spacing.l,
   },
   startText: { fontSize: 14.5, fontWeight: '800', fontFamily: F[800], color: colors.accentInk },
+  btnLocked: { opacity: 0.5 },
   stopBtn: {
     flexDirection: 'row', gap: 7, alignSelf: 'stretch',
     backgroundColor: colors.card, borderColor: colors.orange, borderWidth: 1,

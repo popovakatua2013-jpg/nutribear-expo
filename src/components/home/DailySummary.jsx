@@ -457,12 +457,11 @@ export function DailySummary({
             className="max-w-full"
           >
             {/* «Остаток»: огонёк и подпись в строку, ниже — остаток
-                калорий на день. ЦИФРА КРУПНЕЕ (отзыв Кати: «остаток
-                очень мелко написан»): значение 27px, «ккал» мельче в той
-                же строке — раньше «1 016 ккал» одной строкой 22px не
-                влезало в узкий столбик между кольцами, дожим шрифта
-                (adjustsFontSizeToFit) сжимал её до ~15px; теперь число
-                короче и помещается без сжатия, мелкой строкой — пояснение */}
+                калорий на день. Подпись КРУПНЕЕ и без дожима шрифта
+                (отзыв Кати: «слово „остаток“ мелкий шрифт и криво встал»):
+                adjustsFontSizeToFit сжимал подпись сильнее, чем цифру, —
+                из-за этого строка с огоньком выглядела мельче и криво;
+                теперь фиксированные 15px, слово короткое — влезает */}
             <View
               accessibilityLabel={
                 `Остаток калорий на сегодня: ` +
@@ -474,14 +473,12 @@ export function DailySummary({
               }
               className="max-w-full items-center px-3 py-2"
             >
-              <View className="flex-row items-center gap-1">
-                <Flame size={15} color={remTone.text} />
+              <View className="flex-row items-center justify-center gap-1.5">
+                <Flame size={16} color={remTone.text} />
                 <Text
                   numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
                   maxFontSizeMultiplier={MAX}
-                  className="font-bold text-[13.5px] leading-tight"
+                  className="font-bold text-[15px] leading-tight"
                   style={{ color: remTone.text }}
                 >
                   Остаток

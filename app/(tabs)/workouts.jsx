@@ -8,8 +8,8 @@
 // «‹ План». Тренировки живут блоком на «Главной»; «Покупки» —
 // отдельная страница app/shopping.jsx, из нижней панели убраны (Кати).
 
-import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { BackHandler, Pressable, Text, View } from 'react-native'
 import { ChevronLeft } from 'lucide-react-native'
 import { PlanScreen } from '@/components/planner/PlanScreen'
 import { FastingScreen } from '@/components/planner/FastingScreen'
@@ -17,6 +17,18 @@ import { colors, spacing, F } from '@/features/workouts/theme'
 
 export default function PlanTab() {
   const [screen, setScreen] = useState('plan') // 'plan' | 'fasting'
+
+  // Системная кнопка/жест «назад» на экране интервального питания
+  // возвращает к обзору плана (отзыв Кати: с экрана было не выйти —
+  // раньше «назад» ничего не делал, экран не маршрут, а состояние)
+  useEffect(() => {
+    if (screen !== 'fasting') return undefined
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setScreen('plan')
+      return true
+    })
+    return () => sub.remove()
+  }, [screen])
 
   if (screen === 'fasting') {
     return (

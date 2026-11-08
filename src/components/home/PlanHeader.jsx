@@ -27,7 +27,7 @@ function IconButton({ onPress, label, Icon }) {
   )
 }
 
-export function PlanHeader({ onViewAll, onHistory }) {
+export function PlanHeader({ onViewAll, onHistory, onCopied }) {
   const [portionsOpen, setPortionsOpen] = useState(false)
   const [repeatOpen, setRepeatOpen] = useState(false)
 
@@ -87,7 +87,13 @@ export function PlanHeader({ onViewAll, onHistory }) {
       </View>
 
       <PortionsModal visible={portionsOpen} onClose={() => setPortionsOpen(false)} />
-      <RepeatDayModal visible={repeatOpen} onClose={() => setRepeatOpen(false)} />
+      {/* onCopied — приёмы, куда пришла еда после копирования дня:
+          карточка раскрывает их, чтобы результат был виден сразу */}
+      <RepeatDayModal
+        visible={repeatOpen}
+        onClose={() => setRepeatOpen(false)}
+        onCopied={onCopied}
+      />
     </View>
   )
 }

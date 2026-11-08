@@ -138,6 +138,11 @@ export function ExerciseSection({ flat = false }) {
   }, [logs])
   // Последние записи: сегодня сверху, дальше прошлые дни (до 6 штук)
   const recent = useMemo(() => recentWorkouts(logs, 14, 6), [logs])
+  // История прошлых дней — ВСЕГДА свёрнута при входе (просьба Кати):
+  // видно только сегодняшние записи, старые — по тапу «История · N»
+  const [histOpen, setHistOpen] = useState(false)
+  const todayRows = useMemo(() => recent.filter((e) => e.daysAgo === 0), [recent])
+  const pastRows = useMemo(() => recent.filter((e) => e.daysAgo > 0), [recent])
   const [dynRange, setDynRange] = useState('7')
   const dynData = useMemo(() => dynamicsSeries(logs, Number(dynRange)), [logs, dynRange])
   // График имеет смысл только когда есть ЧТО сравнивать: одна запись
@@ -216,10 +221,10 @@ export function ExerciseSection({ flat = false }) {
         </Pressable>
       </View>
 
-      {/* ── Записи: сегодня + последние дни, компактные строки ─────────── */}
-      {recent.length > 0 && (
+      {/* ── Записи: сегодня + ИСТОРИЯ ПРОШЛЫХ ДНЕЙ (свёрнута по умолчанию) ── */}
+      {todayRows.length > 0 && (
         <View className="mt-1.5 gap-0.5">
-          {recent.map((e) => {
+          {todayRows.map((e) => {
             const isToday = e.daysAgo === 0
             const editingThis = isToday && editId === e.id
             const RowWrap = isToday ? Pressable : View
@@ -267,6 +272,63 @@ export function ExerciseSection({ flat = false }) {
               </RowWrap>
             )
           })}
+        </View>
+      )}
+
+      {/* История прошлых дней: свёрнута всегда при входе (просьба Кати) */}
+      {pastRows.length > 0 && (
+        <Pressable
+          onPress={() => setHistOpen((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: histOpen }}
+          accessibilityLabel={histOpen ? 'Свернуть историю тренировок' : `Показать историю тренировок: ${pastRows.length} ${exNoun(pastRows.length)}`}
+          className="mt-0.5 flex-row items-center gap-1 self-start rounded-lg px-1.5 py-2 active:opacity-70"
+        >
+          <Text className="font-semibold text-[13.5px] text-[#8DABFF]">
+            {`История · ${pastRows.length}`}
+          </Text>
+          {histOpen ? (
+            <ChevronUp size={14} color="#8DABFF" />
+          ) : (
+            <ChevronDown size={14} color="#8DABFF" />
+          )}
+        </Pressable>
+      )}
+      {histOpen && pastRows.length > 0 && (
+        <View className="gap-0.5">
+          {pastRows.map((e) => (
+            <View
+              key={`${e.daysAgo}-${e.id}`}
+              className="flex-row items-center gap-2.5 rounded-xl px-1.5 py-1.5"
+            >
+              <View className="h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
+                <Text className="text-[16px]">{e.emoji}</Text>
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.1}
+                  className="font-bold text-[14.5px] leading-tight text-bear-text"
+                >
+                  {e.name}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.05}
+                  className="font-sans text-[12px] leading-tight text-bear-sub2"
+                >
+                  {`${e.minutes} мин · ${formatNum(e.kcal)} ккал`}
+                </Text>
+              </View>
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.05}
+                className="shrink-0 font-sans text-[12px] text-bear-dim"
+              >
+                {dayLabel(e.daysAgo)}
+              </Text>
+            </View>
+          ))}
         </View>
       )}
 

@@ -27,7 +27,7 @@
 // БЖУ. Поверхность — в стиле вкладки «Тело» (фиолетовая bear-bodyCard
 // + обводка bear-bodyLine).
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   Alert,
   Image,
@@ -306,17 +306,9 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
             </Text>
           )}
 
-          <Pressable
-            onPress={onAdd}
-            accessibilityRole="button"
-            accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-            className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
-          >
-            <Plus size={15} color="#8DABFF" />
-            <Text className="font-semibold text-[15px] text-[#8DABFF]">
-              Добавить блюдо
-            </Text>
-          </Pressable>
+          {/* Кнопка «Добавить блюдо» внизу секции убрана — дубль круглого
+              «+» справа в шапке секции (просьба Кати): добавляем только
+              через «+» */}
         </View>
       )}
     </View>
@@ -347,6 +339,18 @@ export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
   // Ручное сворачивание: по умолчанию все секции свёрнуты — видно только
   // шапку (отзыв Кати); тап запоминает выбор пользователя
   const [expanded, setExpanded] = useState({})
+
+  // После «Повторить день» раскрываем приёмы, куда пришла еда, —
+  // иначе результат копирования спрятан в свёрнутых секциях и кажется,
+  // что кнопка не сработала (отзыв Кати)
+  const expandCopiedMeals = useCallback((mealIds) => {
+    if (!Array.isArray(mealIds) || !mealIds.length) return
+    setExpanded((s) => {
+      const next = { ...s }
+      mealIds.forEach((id) => { next[id] = true })
+      return next
+    })
+  }, [])
 
   // Рекомендованные ккал по приёмам от дневной нормы
   const targets = targetsFromKcal(kcalGoal)
@@ -410,6 +414,7 @@ export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
       <PlanHeader
         onViewAll={onViewAll}
         onHistory={() => setHistoryOpen(true)}
+        onCopied={expandCopiedMeals}
       />
 
       {/* секции приёмов, одна под другой; после «Перекус/Полдник» —

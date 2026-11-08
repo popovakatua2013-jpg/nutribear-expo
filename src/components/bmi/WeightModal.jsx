@@ -100,16 +100,18 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
 
   function handleSave() {
     if (!valid || !goalValid) return
-    const weightChanged = w !== weight
-    // Рост в окне не меняем — он приходит из профиля (правка карандашом
-    // в карточке «Текущий вес»), onSave лишь передаёт его дальше
-    onSave({ heightCm: Math.round(hRaw), weightKg: w, weightChanged, goalKg: goalChanged ? goalKg : undefined })
-    let description = weightChanged
-      ? `${fmtDecimal(w)} кг · ИМТ обновлён`
-      : `Вес ${fmtDecimal(w)} кг`
+    // «Записать вес» — это взвешивание: запись в журнал ВСЕГДА, даже когда
+    // вес совпал с текущим (поле предзаполнено, и раньше такое сохранение
+    // молча не попадало ни в журнал, ни в «График веса» и отчёты —
+    // отзыв Кати: «добавляю вес — история не отображается»)
+    onSave({ heightCm: Math.round(hRaw), weightKg: w, weightChanged: true, goalKg: goalChanged ? goalKg : undefined })
+    const sameWeight = w === weight
+    let description = sameWeight
+      ? `${fmtDecimal(w)} кг — записан в журнал веса`
+      : `${fmtDecimal(w)} кг · ИМТ обновлён`
     if (goalChanged && goalKg != null) description += ` · цель ${fmtDecimal(goalKg)} кг`
     toast({
-      title: weightChanged ? '⚖️ Вес записан!' : '⚖️ Вес сохранён',
+      title: '⚖️ Вес записан!',
       description,
     })
     onClose()

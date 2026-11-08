@@ -32,7 +32,7 @@ function dayTitle(key) {
   return `${+d} ${['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'][+m - 1]}`
 }
 
-export function RepeatDayModal({ visible, onClose }) {
+export function RepeatDayModal({ visible, onClose, onCopied }) {
   const history = useFoodStore((s) => s.history)
   const entries = useFoodStore((s) => s.entries)
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -41,12 +41,17 @@ export function RepeatDayModal({ visible, onClose }) {
   const insets = useSafeAreaInsets()
   const [picked, setPicked] = useState(null)
 
-  // Дни с записями, новые сверху; сегодня не предлагаем повторять сам с собой.
-  // Если журнал пуст (записи велись до появления истории), но в сегодняшнем
-  // дневнике есть блюда — предлагаем повторить сегодняшний набор
+  const todayKey = dayKey(Date.now())
+
+  // Дни с записями, новые сверху. Сегодня НЕ предлагаем (повторять день
+  // сам в себя бессмысленно — так и задумано по комментарию выше),
+  // исключаем его из журнала. Если после этого список пуст, но в
+  // сегодняшнем дневнике есть блюда — предлагаем повторить сегодняшний
+  // набор (журнал мог не успеться у старых версий)
   const days = useMemo(() => {
     const map = new Map()
     for (const row of history) {
+      if (row.day === todayKey) continue
       if (!map.has(row.day)) map.set(row.day, { count: 0, kcal: 0 })
       const agg = map.get(row.day)
       agg.count += 1
@@ -55,7 +60,7 @@ export function RepeatDayModal({ visible, onClose }) {
     if (map.size === 0) {
       const todays = Object.values(entries || {}).flat()
       if (todays.length) {
-        map.set(dayKey(Date.now()), {
+        map.set(todayKey, {
           count: todays.length,
           kcal: todays.reduce((s, e) => s + (e.kcal || 0), 0),
         })
@@ -64,9 +69,7 @@ export function RepeatDayModal({ visible, onClose }) {
     return [...map.entries()]
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .map(([key, agg]) => ({ key, ...agg }))
-  }, [history, entries])
-
-  const todayKey = dayKey(Date.now())
+  }, [history, entries, todayKey])
 
   // Скопировать все записи выбранного дня в сегодняшний дневник.
   // Источник: журнал истории, а если он пуст — сегодняшние записи дневника.
@@ -105,6 +108,10 @@ export function RepeatDayModal({ visible, onClose }) {
         if (e?.id) added.push({ mealId: r.mealId, id: e.id })
       } catch {}
     })
+    // Приёмы, куда пришла еда, — карточка раскроет их, чтобы результат
+    // был виден сразу (иначе всё спрятано в свёрнутых секциях)
+    const mealIds = [...new Set(added.map((a) => a.mealId).filter(Boolean))]
+    if (mealIds.length && typeof onCopied === 'function') onCopied(mealIds)
     toast({
       title: '📋 День повторён',
       description: `Добавлено записей: ${added.length}`,
@@ -162,7 +169,7 @@ export function RepeatDayModal({ visible, onClose }) {
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {days.length === 0 ? (
               <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">
-                Пока нет записей — повторять нечего 🐻
+                {`Пока нет прошлых дней с записями — повторять нечего 🐻\nЗаписи появляются, когда добавляешь еду`}
               </Text>
             ) : (
               <View className="gap-1.5 pb-3">

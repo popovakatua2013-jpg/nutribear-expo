@@ -433,7 +433,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
           minimumFontScale={0.8}
           maxFontSizeMultiplier={1.15}
           className="font-sans leading-tight text-bear-dim"
-          style={{ fontSize: s.cap, color: delta != null ? tone : undefined }}
+          style={{ fontSize: s.cap, color: delta != null ? tone : '#8B96B8' }}
         >
           {delta == null
             ? 'последний замер'

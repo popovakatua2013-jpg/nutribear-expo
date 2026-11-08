@@ -27,7 +27,7 @@
 // Стиль — дизайн-система вкладки (theme.js).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native'
+import { Animated, AppState, Easing, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { ChevronRight, Timer } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
@@ -224,13 +224,21 @@ export function PlanScreen({ onOpenFasting }) {
   const fastStartedAt = useFastingStore((s) => s.startedAt)
   const fastLastLap = useFastingStore((s) => s.laps[0])
 
-  // Тик 30 с — живой таймер в карточке голодания (только пока идёт сеанс)
+  // Тик 30 с — живой таймер в карточке голодания (только пока идёт сеанс);
+  // возврат приложения из фона — подтягиваем время сразу, иначе карточка
+  // показывала устаревшие минуты до следующего тика
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!fastStartedAt) return undefined
     setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 30000)
-    return () => clearInterval(t)
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') setNow(Date.now())
+    })
+    return () => {
+      clearInterval(t)
+      sub.remove()
+    }
   }, [fastStartedAt])
 
   // Сегодня: суммы по живому дневнику (все приёмы, включая доп. перекусы)
