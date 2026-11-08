@@ -1,5 +1,11 @@
 // src/features/workouts/components/StatCard.jsx
 // Стат-карточка сетки прогресса; число анимируется от нуля.
+// Форматирование числа обязано работать на UI-потоке (useAnimatedProps —
+// worklet): вызывать оттуда обычные JS-функции (Intl в том числе) нельзя —
+// падает «Tried to synchronously call a Remote Function». Поэтому внутри
+// worklet число приводится к строке своими силами, а разделитель тысяч
+// вставляется вручную (неразрывный пробел, как у Intl для русского).
+// Проп format используется только для статичного текста на JS-потоке.
 
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
@@ -10,9 +16,26 @@ import { colors, radius, F } from '../theme'
 
 const AnimatedText = Animated.createAnimatedComponent(Text)
 
+const NBSP = '\u00A0'
+
+/** Разделитель тысяч без Intl — безопасно вызывать из worklet */
+function formatThousands(n) {
+  'worklet'
+  const s = String(Math.round(n))
+  let out = ''
+  for (let i = 0; i < s.length; i++) {
+    const fromEnd = s.length - i
+    out += s[i]
+    if (fromEnd > 1 && fromEnd % 3 === 1) out += NBSP
+  }
+  return out
+}
+
 export function StatCard({ icon, value, unit, label, format }) {
   const v = useSharedValue(0)
-  const fmt = format ?? ((n) => String(Math.round(n)))
+  // В worklet попадает только булев флаг — саму функцию-форматтер туда
+  // передавать нельзя (вызов из worklet = «remote function»)
+  const thousands = Boolean(format)
 
   useEffect(() => {
     v.value = withTiming(value, {
@@ -21,17 +44,20 @@ export function StatCard({ icon, value, unit, label, format }) {
     })
   }, [value, v])
 
-  const animatedProps = useAnimatedProps(() => ({
-    text: fmt(v.value),
-    defaultText: fmt(v.value),
-  }))
+  const animatedProps = useAnimatedProps(() => {
+    const s = thousands ? formatThousands(v.value) : String(Math.round(v.value))
+    return { text: s, defaultText: s }
+  })
+
+  // Статичный текст до старта анимации — на JS-потоке, здесь Intl доступен
+  const staticText = format ? format(value) : String(Math.round(value))
 
   return (
     <View style={styles.card}>
       <View style={styles.top}>{icon}</View>
       <View style={styles.valueRow}>
         <AnimatedText animatedProps={animatedProps} style={styles.value}>
-          {fmt(value)}
+          {staticText}
         </AnimatedText>
         {unit ? <Text style={styles.unit}>{unit}</Text> : null}
       </View>
