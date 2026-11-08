@@ -661,7 +661,13 @@ export function samplePose(t, tracks, N) {
 // силуэта. Чистые функции: их используют компонент ExerciseDemo и
 // html-макет (единый источник геометрии).
 
-const f2 = (v) => Math.round(v * 100) / 100
+// Округление до сотых. Помечено worklet: вызывается из capsuleD и других
+// геометрических функций на UI-потоке — без метки react-native-worklets
+// считает её «remote function» и роняет рендер красным экраном.
+const f2 = (v) => {
+  'worklet'
+  return Math.round(v * 100) / 100
+}
 
 /** Конец сегмента {x, y, a} при длине len */
 export function segEnd(s, len) {
