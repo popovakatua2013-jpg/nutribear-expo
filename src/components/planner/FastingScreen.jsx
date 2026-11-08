@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react'
 import { AppState, Pressable, ScrollView, Text, View } from 'react-native'
 import { Clock, History, Play, Square } from 'lucide-react-native'
-import { useFastingStore } from '@/store/useFastingStore'
+import { useFastingStore, FASTING_MIN_LAP_MS } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
 import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
 
@@ -99,13 +99,22 @@ export function FastingScreen() {
   }
 
   // «Завершить» — одним тапом, без подтверждающего окна (отзыв Кати:
-  // выйти из голодания не получалось). Результат сразу в историю
+  // выйти из голодания не получалось). Результат сразу в историю;
+  // случайный сеанс короче 2 минут в историю не пишется (стор) —
+  // тост честно объясняет, почему строка не появилась
   const stop = () => {
     const dur = Math.max(0, Date.now() - startedAt)
     useFastingStore.getState().stop()
     setLockStart(true)
     setTimeout(() => setLockStart(false), 2500)
-    toast({ title: '⏹ Окно без еды завершено', description: `Длилось ${fmtDur(dur)}` })
+    toast(
+      dur >= FASTING_MIN_LAP_MS
+        ? { title: '⏹ Окно без еды завершено', description: `Длилось ${fmtDur(dur)}` }
+        : {
+            title: '⏹ Окно без еды завершено',
+            description: 'Сеанс короче 2 минут — в историю не пишем',
+          },
+    )
   }
 
   const avgMs = laps.length

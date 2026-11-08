@@ -335,7 +335,7 @@ export function MealPlanScreen() {
                     style={styles.itemMetaBtn}
                     accessibilityLabel={`Изменить порцию: ${it.name}`}
                   >
-                    <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)}</Text>
+                    <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)} ккал</Text>
                   </Pressable>
                   <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} hitSlop={6} accessibilityLabel="Убрать блюдо">
                     <X size={13} color={colors.text3} />

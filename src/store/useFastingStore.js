@@ -6,6 +6,11 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+// Случайные сеансы короче 2 минут (двойной тап «начать-завершить»)
+// в историю не пишем: строка «0 мин в среднем» сбивала с толку
+// (скрин Кати 08.11 — сеанс 21:47 → 21:48, «0 мин»)
+export const FASTING_MIN_LAP_MS = 120000
+
 export const useFastingStore = create(
   persist(
     (set) => ({
@@ -24,13 +29,16 @@ export const useFastingStore = create(
         set((s) => ({ startedAt: Date.now(), fastHours: 24 - s.windowHours })),
 
       stop: () =>
-        set((s) => ({
-          laps: s.startedAt
-            ? [{ from: s.startedAt, to: Date.now() }, ...s.laps].slice(0, 30)
-            : s.laps,
-          startedAt: null,
-          fastHours: null,
-        })),
+        set((s) => {
+          if (!s.startedAt) return { startedAt: null, fastHours: null }
+          const to = Date.now()
+          // Короткий случайный сеанс — только сброс таймера, без записи
+          const laps =
+            to - s.startedAt >= FASTING_MIN_LAP_MS
+              ? [{ from: s.startedAt, to }, ...s.laps].slice(0, 30)
+              : s.laps
+          return { laps, startedAt: null, fastHours: null }
+        }),
     }),
     {
       name: 'nutribear-fasting-v1',

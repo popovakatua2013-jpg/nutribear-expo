@@ -47,11 +47,22 @@ describe('useFastingStore: интервальное голодание', () => {
 
   test('лимит истории — 30 сеансов, свежие сверху', () => {
     const old = Array.from({ length: 30 }, (_, i) => ({ from: i * 1000, to: i * 1000 + 500 }))
-    store.setState({ laps: old, startedAt: Date.now() - 60000, fastHours: 16 })
+    store.setState({ laps: old, startedAt: Date.now() - 3 * 60000, fastHours: 16 })
     store.getState().stop()
     const laps = store.getState().laps
     expect(laps).toHaveLength(30)
     expect(laps[0].to).toBeGreaterThanOrEqual(laps[1].to) // новый — первый
+  })
+
+  test('случайный сеанс короче 2 минут в историю не пишется (только сброс таймера)', () => {
+    // Скрин Кати: случайный старт-стоп за минуту дал строку «0 мин»
+    // и испортил среднее («0 мин в среднем»)
+    store.setState({ laps: [{ from: 1, to: 2 }], startedAt: Date.now() - 60000, fastHours: 16 })
+    store.getState().stop()
+    const s = store.getState()
+    expect(s.startedAt).toBeNull()
+    expect(s.fastHours).toBeNull()
+    expect(s.laps).toEqual([{ from: 1, to: 2 }]) // история не изменилась
   })
 
   test('стоп без активного старта историю не трогает', () => {
