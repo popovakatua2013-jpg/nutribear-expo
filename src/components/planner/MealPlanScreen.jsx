@@ -1,9 +1,10 @@
-// Экран «Меню на неделю» (вкладка «План»; «Покупки» — отдельная вкладка).
-// Редизайн по отзыву Кати («дублируется одно и то же Пн–Вс, непонятно
-// как пользоваться»): вместо семи одинаковых карточек — полоса дней
-// Пн–Вс (чипы: заполненный день помечен точкой, сегодня — обводкой)
-// и ОДНА карточка выбранного дня с приёмами. Пока неделя пустая,
-// показывается карточка «Как это работает» с тремя шагами.
+// Раздел «Меню на неделю» вкладки «План» — встраивается в общий скролл
+// PlanScreen (по макетам Кати), поэтому корень — View, а не ScrollView.
+// «Покупки» — отдельная вкладка. Редизайн по отзыву Кати («дублируется
+// одно и то же Пн–Вс, непонятно как пользоваться»): вместо семи одинаковых
+// карточек — полоса дней Пн–Вс (чипы: заполненный день помечен точкой,
+// сегодня — обводкой) и ОДНА карточка выбранного дня с приёмами. Пока
+// неделя пустая, показывается карточка «Как это работает» с тремя шагами.
 // Тап по «+ добавить» — окно «Добавить блюдо» (база продуктов или
 // своё блюдо). Тап по пилюле «250 г · 220 ккал» — правка граммовки
 // (GramsModal), ккал пересчитываются от калорийности на 100 г.
@@ -15,7 +16,7 @@
 // дизайн-система вкладки (theme.js).
 
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Alert, Modal, Pressable, Text, View } from 'react-native'
 import {
   ChevronLeft, ChevronRight, ClipboardCheck, Copy, Plus, Trash2, X,
 } from 'lucide-react-native'
@@ -179,11 +180,7 @@ export function MealPlanScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: 48 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View>
       {/* Шапка */}
       <Text style={styles.title}>Меню на неделю</Text>
       <Text style={styles.subtitle}>Планируйте блюда по дням — и переносите день в дневник одним тапом</Text>
@@ -360,13 +357,14 @@ export function MealPlanScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </ScrollView>
+    </View>
   )
 }
 
 const styles = {
-  title: { ...type.display, fontSize: 26, color: colors.text, letterSpacing: -0.3, marginTop: spacing.l },
-  subtitle: { ...type.body, color: colors.text2, marginTop: 4, marginBottom: spacing.l },
+  // Заголовок раздела (внутри общего скролла «Плана») — уровень ниже шапки экрана
+  title: { ...type.title, fontSize: 16, color: colors.text, letterSpacing: -0.2, marginTop: spacing.l, marginBottom: spacing.s },
+  subtitle: { ...type.body, color: colors.text2, marginTop: 0, marginBottom: spacing.m },
   weekRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
   weekBar: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

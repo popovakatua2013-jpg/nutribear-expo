@@ -1,70 +1,50 @@
 // Вкладка «План» (нижняя панель; маршрут /workouts сохранён, чтобы не
-// ломать возможные ссылки). Раньше это была вкладка «Тренировки» —
-// тренировочный контент убран по решению Кати: тренировки живут блоком
-// на «Главной», референсный модуль остался в features/workouts. Затем
-// здесь были «Меню | Покупки», но «Покупки» уехали в отдельную вкладку —
-// теперь переключатель «Меню | Голодание»: план питания на неделю и
-// интервальное голодание (components/planner).
+// ломать возможные ссылки). По макетам Кати вкладка стала обзором
+// питания одним экраном (PlanScreen): цели, прогресс дня, динамика
+// недели, меню на неделю, покупки и голодание. Раньше здесь были
+// сегменты «Меню | Голодание» — теперь полный экран интервального
+// голодания открывается с карточки «Голодание» и возвращается кнопкой
+// «‹ План». Тренировки живут блоком на «Главной», «Покупки» —
+// отдельная вкладка.
 
 import { useState } from 'react'
-import { Text, View } from 'react-native'
-import { PressableScale } from '@/features/workouts/components/PressableScale'
-import { MealPlanScreen } from '@/components/planner/MealPlanScreen'
+import { Pressable, Text, View } from 'react-native'
+import { ChevronLeft } from 'lucide-react-native'
+import { PlanScreen } from '@/components/planner/PlanScreen'
 import { FastingScreen } from '@/components/planner/FastingScreen'
-import { usePrefsStore } from '@/features/workouts/store/useWorkoutsStore'
 import { colors, spacing, F } from '@/features/workouts/theme'
 
 export default function PlanTab() {
-  const lang = usePrefsStore((s) => s.lang)
-  const [screen, setScreen] = useState('menu') // 'menu' | 'fasting'
+  const [screen, setScreen] = useState('plan') // 'plan' | 'fasting'
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* Сегменты «Меню / Голодание» — один таб, два экрана */}
-      <View style={styles.segWrap}>
-        {[
-          ['menu', lang === 'ru' ? 'Меню' : 'Menu'],
-          ['fasting', lang === 'ru' ? 'Голодание' : 'Fasting'],
-        ].map(([id, label]) => {
-          const active = screen === id
-          return (
-            <PressableScale
-              key={id}
-              onPress={() => setScreen(id)}
-              style={[styles.seg, active && styles.segActive]}
-              accessibilityState={{ selected: active }}
-            >
-              <Text style={[styles.segText, active && styles.segTextActive]}>
-                {label}
-              </Text>
-            </PressableScale>
-          )
-        })}
+  if (screen === 'fasting') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <Pressable
+          onPress={() => setScreen('plan')}
+          style={styles.back}
+          accessibilityRole="button"
+          accessibilityLabel="Назад к обзору плана"
+        >
+          <ChevronLeft size={18} color={colors.accent} />
+          <Text style={styles.backText}>План</Text>
+        </Pressable>
+        <FastingScreen />
       </View>
+    )
+  }
 
-      {screen === 'menu' ? <MealPlanScreen /> : <FastingScreen />}
-    </View>
-  )
+  return <PlanScreen onOpenFasting={() => setScreen('fasting')} />
 }
 
 const styles = {
-  segWrap: {
+  back: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderColor: colors.line,
-    borderWidth: 1,
-    borderRadius: 999,
-    padding: 4,
+    alignItems: 'center',
+    gap: 3,
     marginHorizontal: spacing.xl,
     marginTop: 10,
+    alignSelf: 'flex-start',
   },
-  seg: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 999,
-    alignItems: 'center',
-  },
-  segActive: { backgroundColor: colors.accent },
-  segText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
-  segTextActive: { color: colors.accentInk },
+  backText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: colors.accent },
 }
