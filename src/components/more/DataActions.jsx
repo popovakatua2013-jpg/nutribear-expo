@@ -70,12 +70,12 @@ export function DataActions({ embedded = false, variant = null }) {
     wipePhotoDir() // файлы снимков в папке приложения
     // История отчётов (шаги/ккал/вода/тренировки по дням) тоже под GDPR
     useHistoryStore.setState({ days: {} })
-    // Журнал вкладки «Тренировки» (сессии и настройки фильтров) — тоже данные
+    // Журнал модуля тренировок (сессии и настройки фильтров) — тоже данные
     useSessionsStore.setState({ sessions: [] })
     usePrefsStore.setState({ lang: 'ru', filterType: 'all', query: '' })
     // «Организм» и копилка монеток удалены из приложения — стираем их
     // старые ключи в хранилище, оставшиеся от прежних версий; туда же —
-    // ключи вкладки «Тренировки»
+    // ключи модуля тренировок
     AsyncStorage.multiRemove([
       'nutribear-shop-v1',
       'nutribear-organism-game-v1',
