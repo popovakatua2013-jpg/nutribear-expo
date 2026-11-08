@@ -1,16 +1,17 @@
 // Нижняя навигация: Главная / Дневник / Тело / План / Ещё.
 // «План» — питание на неделю (маршрут /workouts сохранён).
-// «Покупки» — НЕ вкладка (решение Кати: убрать отдельную вкладку с
-// нижней панели): маршрут /shopping остаётся, но скрыт из панели
-// (href: null) — экран открывается с карточки «Список покупок» на
-// вкладке «План». Активная вкладка — иконка
+// «Покупки» — НЕ вкладка: раньше её прятали через href: null, но
+// expo-router исключает такие экраны из linking и переход на /shopping
+// падал на «Главную» (баг Кати). Теперь «Покупки» — отдельная страница
+// app/shopping.jsx (стек над вкладками), открывается с карточки
+// «Список покупок» на «Плане». Активная вкладка — иконка
 // в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
 // серые, без подложки: сразу видно, где вы находитесь.
 
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, CalendarDays, House, Menu, PersonStanding, ShoppingCart } from 'lucide-react-native'
+import { BookOpen, CalendarDays, House, Menu, PersonStanding } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
@@ -20,9 +21,6 @@ const TABS = [
   // ломать возможные ссылки); иконка — календарь недели:
   // план-лист не понравился визуально (отзыв Кати)
   { name: 'workouts', label: 'План', Icon: CalendarDays },
-  // «Покупки»: маршрут остаётся (/shopping — с карточки на «Плане»),
-  // но из нижней панели убран по решению Кати (hidden → href: null)
-  { name: 'shopping', label: 'Покупки', Icon: ShoppingCart, hidden: true },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
@@ -69,14 +67,12 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: '#0A1020' },
       }}
     >
-      {TABS.map(({ name, label, Icon, hidden }) => (
+      {TABS.map(({ name, label, Icon }) => (
         <Tabs.Screen
           key={name}
           name={name}
           options={{
             title: label,
-            // hidden — маршрут жив, но иконки в панели нет («Покупки»)
-            ...(hidden ? { href: null } : {}),
             tabBarIcon: ({ color, focused }) => <TabIcon Icon={Icon} color={color} focused={focused} />,
           }}
         />

@@ -1,5 +1,5 @@
-// Экран «Голодание» (вкладка «План» → сегмент «Голодание»):
-// интервальное питание по плану «окно еды / голодание» (например 16/8).
+// Экран «Интервальное питание» (открывается с карточки на «Плане»):
+// режим «окно еды / голодание» (например 16/8).
 // Большой таймер идущего сеанса (обновление каждые 30 с), прогресс до
 // цели и «осталось»; цель фиксируется при старте (24 − окно еды) —
 // смена плана на ходу не искажает идущий таймер. Настройка окна:
@@ -108,8 +108,8 @@ export function FastingScreen() {
       contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: 48 }}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Голодание</Text>
-      <Text style={styles.subtitle}>Интервальное питание: окно еды и таймер без еды</Text>
+      <Text style={styles.title}>Интервальное питание</Text>
+      <Text style={styles.subtitle}>Окно еды и таймер без еды</Text>
 
       {/* Таймер: идущий сеанс или цель к старту */}
       <View style={[styles.mainCard, running && styles.mainCardActive]}>

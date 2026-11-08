@@ -17,8 +17,8 @@
 //      Клетчатка (своя норма или 25 г ВОЗ) / Сахар (порог ВОЗ 50 г),
 //      линия нормы и средние за прошедшие дни.
 //   5. «Список покупок» — сводка useShoppingStore; тап — экран «Покупки»
-//      (отдельной вкладки в нижней панели больше нет — решение Кати).
-//   6. «Интервальное голодание» — план и идущий таймер из
+//      (отдельная страница app/shopping.jsx, не вкладка — решение Кати).
+//   6. «Интервальное питание» — план и идущий таймер из
 //      useFastingStore; тап открывает полный экран (PlanTab).
 // Кольцо — react-native-svg, анимация как у колец «Главной» (KcalRing):
 // дуга «заливается» от нуля, % в центре отсчитывается вверх, при каждом
@@ -471,10 +471,10 @@ export function PlanScreen({ onOpenFasting }) {
       </View>
 
       {/* 5. Список покупок — сводка; тап открывает экран «Покупки»
-          (маршрут /shopping скрыт из нижней панели) */}
+          (отдельная страница app/shopping.jsx над вкладками) */}
       <Pressable
         style={styles.card}
-        onPress={() => router.navigate('/shopping')}
+        onPress={() => router.push('/shopping')}
         accessibilityRole="button"
         accessibilityLabel="Открыть список покупок"
       >
@@ -501,19 +501,19 @@ export function PlanScreen({ onOpenFasting }) {
         </View>
       </Pressable>
 
-      {/* 6. Интервальное голодание — состояние плана/сеанса; тап — полный экран */}
+      {/* 6. Интервальное питание — состояние плана/сеанса; тап — полный экран */}
       <Pressable
         style={styles.card}
         onPress={onOpenFasting}
         accessibilityRole="button"
-        accessibilityLabel="Открыть интервальное голодание"
+        accessibilityLabel="Открыть интервальное питание"
       >
         <View style={styles.rowCard}>
           <View style={[styles.rowIcon, { backgroundColor: colors.cyanSoft }]}>
             <Timer size={17} color={colors.cyan} />
           </View>
           <View style={styles.rowMain}>
-            <Text style={styles.rowTitle}>Интервальное голодание</Text>
+            <Text style={styles.rowTitle}>Интервальное питание</Text>
             <Text style={styles.rowSub}>{fastSub}</Text>
           </View>
           <ChevronRight size={18} color={colors.text3} />
