@@ -2,20 +2,24 @@
 // Модуль по референсу Кати (workouts-tab-code): каталог тренировок с
 // поиском/фильтрами и экран «Прогресс» (серия, неделя, календарь,
 // достижения) — переключаются сегментом внутри одной вкладки.
-// Тап по тренировке открывает экран занятия с таймером: «Завершить» —
-// сессия попадает в журнал прогресса И в дневник тренировок приложения
-// (сожжённые калории дня — сводка, отчёты, опыт), «Прервать» — только
-// в журнал как незавершённая. В конце каталога — строка «Своя
-// тренировка»: прежняя запись вручную (выбор, время, ккал) переехала
-// сюда с главной (отзыв Кати: «тренировки с главного экрана — убрать»).
+// Тап по тренировке открывает плеер по референсу (фазы «Приготовьтесь /
+// Упражнение / Отдых», пауза, пропуск, «+20 сек»): движение по фазам —
+// в чистом движке player/engine.js, экран — screens/player/PlayerScreen.
+// Когда план пройден или выход подтверждён, плеер один раз вызывает
+// onFinish: сессия пишется в журнал вкладки, завершённая — ещё и в
+// дневник тренировок приложения (сожжённые калории дня — сводка,
+// отчёты, опыт); поверх остаётся экран итогов, «Готово» закрывает окно.
+// В конце каталога — строка «Своя тренировка»: прежняя запись вручную
+// (выбор, время, ккал) переехала сюда с главной (отзыв Кати:
+// «тренировки с главного экрана — убрать»).
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { ChevronDown } from 'lucide-react-native'
 import { WorkoutsScreen } from '@/features/workouts/screens/WorkoutsScreen'
 import { ProgressScreen } from '@/features/workouts/screens/ProgressScreen'
-import { SessionPlayer } from '@/features/workouts/screens/SessionPlayer'
+import { PlayerScreen } from '@/features/workouts/screens/player/PlayerScreen'
 import { PressableScale } from '@/features/workouts/components/PressableScale'
 import {
   useSessionsStore,
@@ -34,6 +38,9 @@ export default function WorkoutsTab() {
   const [screen, setScreen] = useState('catalog') // 'catalog' | 'progress'
   // Идущая тренировка: { session, workout } — окно плеера
   const [player, setPlayer] = useState(null)
+  // Итог только что закончившейся сессии: тост показываем после закрытия
+  // плеера — под Modal он всё равно не виден
+  const finishedRef = useRef(null)
 
   const lang = usePrefsStore((s) => s.lang)
 
@@ -52,11 +59,13 @@ export default function WorkoutsTab() {
     setPlayer({ session: session, workout })
   }, [])
 
-  // Завершение/прерывание: журнал сессий + дневник тренировок приложения
+  // Плеер дошёл до конца (или выход подтверждён): журнал сессий + дневник
+  // тренировок приложения. Окно НЕ закрываем — остаётся экран итогов.
   const handleFinish = useCallback(
     (result) => {
       const { session, workout } = player
       useSessionsStore.getState().finishSession(session.id, result)
+      finishedRef.current = { workout, result }
       if (result.completed) {
         // Запись за сегодня — в общую копилку сожжённого: сводка, отчёты,
         // опыт дня считают её наравне с записями вручную
@@ -68,15 +77,23 @@ export default function WorkoutsTab() {
           kcal: result.kcal,
         })
         syncHistoryBurned(dayKeyOf())
-        toast({
-          title: '🔥 Тренировка завершена!',
-          description: `${workout.title.ru} · ${result.durationMin} мин · ${formatNum(result.kcal)} ккал`,
-        })
       }
-      setPlayer(null)
     },
-    [player, toast],
+    [player],
   )
+
+  // «Готово» на экране итогов (или тихий выход без активных секунд)
+  const handleClose = useCallback(() => {
+    const fin = finishedRef.current
+    finishedRef.current = null
+    setPlayer(null)
+    if (fin?.result.completed) {
+      toast({
+        title: '🔥 Тренировка завершена!',
+        description: `${fin.workout.title.ru} · ${fin.result.durationMin} мин · ${formatNum(fin.result.kcal)} ккал`,
+      })
+    }
+  }, [toast])
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -114,10 +131,9 @@ export default function WorkoutsTab() {
 
       {/* Экран идущей тренировки */}
       {player && (
-        <SessionPlayer
-          session={player.session}
+        <PlayerScreen
           workout={player.workout}
-          onClose={() => setPlayer(null)}
+          onClose={handleClose}
           onFinish={handleFinish}
         />
       )}

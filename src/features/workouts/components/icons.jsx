@@ -66,6 +66,30 @@ export const IconPlay = ({ size = 16, color = '#101400' }) => (
   </Svg>
 )
 
+/** Пауза — контрол плеера */
+export const IconPause = ({ size = 20, color = '#101400' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <Rect x={6} y={4} width={4.5} height={16} rx={1.5} />
+    <Rect x={13.5} y={4} width={4.5} height={16} rx={1.5} />
+  </Svg>
+)
+
+/** Крест — выход из плеера */
+export const IconClose = ({ size = 18, color = '#8B95A5' }) =>
+  base(size, color, <Path d="M6 6l12 12M18 6 6 18" />)
+
+/** Стрелка вперёд — пропуск упражнения/отдыха */
+export const IconSkip = ({ size = 20, color = '#F2F5F7' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <Path d="M5 5v14l9-7z" />
+    <Rect x={16} y={5} width={2.6} height={14} rx={1.3} />
+  </Svg>
+)
+
+/** Галочка — финиш и выполненные упражнения */
+export const IconCheck = ({ size = 18, color = '#C8FF3D' }) =>
+  base(size, color, <Path d="m4.5 12.5 5 5 10-11" />)
+
 /** Медаль — достижение */
 export const IconMedal = ({ size = 20, color = '#C8FF3D' }) =>
   base(size, color,
