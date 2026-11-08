@@ -6,15 +6,16 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, ClipboardList, House, Menu, PersonStanding } from 'lucide-react-native'
+import { BookOpen, CalendarDays, House, Menu, PersonStanding } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
   { name: 'activity', label: 'Дневник', Icon: BookOpen },
   { name: 'bmi', label: 'Тело', Icon: PersonStanding },
   // «План»: меню на неделю + покупки (маршрут /workouts сохранён,
-  // чтобы не ломать возможные ссылки); иконка — план-лист вместо гантели
-  { name: 'workouts', label: 'План', Icon: ClipboardList },
+  // чтобы не ломать возможные ссылки); иконка — календарь недели:
+  // план-лист не понравился визуально (отзыв Кати)
+  { name: 'workouts', label: 'План', Icon: CalendarDays },
   { name: 'more', label: 'Ещё', Icon: Menu },
 ]
 
