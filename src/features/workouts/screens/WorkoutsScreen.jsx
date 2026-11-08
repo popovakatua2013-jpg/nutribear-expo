@@ -10,17 +10,20 @@ import {
   selectResumeSession, selectSummary, usePrefsStore, useSessionsStore,
 } from '../store/useWorkoutsStore'
 import { MOCK_WORKOUTS } from '../data/mockWorkouts'
+import { buildPlan } from '../player/planBuilder'
 import { colors, motion, radius, spacing, type, F } from '../theme'
 import { formatDateLong, makeT, plural } from '../i18n'
 import { FilterChips } from '../components/FilterChips'
 import { SearchBar } from '../components/SearchBar'
 import { WorkoutCard } from '../components/WorkoutCard'
 import { WorkoutCardWide } from '../components/WorkoutCardWide'
+import { ProgramsSection } from '../components/ProgramsSection'
 import { ProgressRing } from '../components/ProgressRing'
 import { EmptyState } from '../components/EmptyState'
 import { SkeletonList } from '../components/Skeleton'
 import { PressableScale } from '../components/PressableScale'
 import { IconFlame, IconPlay } from '../components/icons'
+import { Volume2, VolumeX } from 'lucide-react-native'
 
 const FILTER_VALUES = ['all', 'strength', 'cardio', 'hiit', 'yoga', 'stretch']
 
@@ -45,6 +48,23 @@ export function WorkoutsScreen({ onStartWorkout, onResumeWorkout, footer }) {
 
   const summary = useMemo(() => selectSummary(sessions), [sessions])
   const resume = useMemo(() => selectResumeSession(sessions), [sessions])
+
+  // Точный остаток «Продолжить»: план детерминированный — считаем активные
+  // секунды до сохранённой позиции (позиция = индекс упражнения в плане)
+  const resumeInfo = useMemo(() => {
+    if (!resume) return null
+    const { session, workout } = resume
+    const plan = buildPlan(workout)
+    const pos = Math.min(session.position || 0, plan.length)
+    const doneSec = plan.slice(0, pos).reduce((a, e) => a + e.durationSec, 0)
+    const plannedSec = plan.reduce((a, e) => a + e.durationSec, 0)
+    const frac = plannedSec > 0 ? Math.min(1, doneSec / plannedSec) : 0
+    return {
+      frac,
+      leftMin: Math.max(1, Math.round((plannedSec - doneSec) / 60)),
+      fromExercise: pos > 0,
+    }
+  }, [resume])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -90,7 +110,10 @@ export function WorkoutsScreen({ onStartWorkout, onResumeWorkout, footer }) {
             <Text style={styles.date}>{today}</Text>
             <Text style={styles.title}>{t('catalog.title')}</Text>
           </View>
-          <LangButton />
+          <View style={styles.headerBtns}>
+            <SoundButton />
+            <LangButton />
+          </View>
         </View>
 
         {/* Серия */}
@@ -116,21 +139,24 @@ export function WorkoutsScreen({ onStartWorkout, onResumeWorkout, footer }) {
           </Animated.View>
         )}
 
+        {/* Программа недели */}
+        <ProgramsSection onStartWorkout={startWorkout} />
+
         {/* Продолжить */}
-        {resume && !isLoading && (
+        {resume && !isLoading && resumeInfo && (
           <View style={styles.continueCard}>
-            {/* Процент приходит из плеера: последние сохранённые минуты сессии */}
             <ProgressRing
-              progress={Math.min(1, (resume.session.durationMin || 0) / Math.max(1, resume.workout.durationMin))}
-              label={`${Math.round(Math.min(1, (resume.session.durationMin || 0) / Math.max(1, resume.workout.durationMin)) * 100)}%`}
+              progress={resumeInfo.frac}
+              label={`${Math.round(resumeInfo.frac * 100)}%`}
             />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.continueLabel}>{t('catalog.continue')}</Text>
               <Text style={styles.continueName} numberOfLines={1}>
                 {resume.workout.title[lang]}
               </Text>
-              <Text style={styles.continueMeta}>
-                {t('catalog.continueLeft', { min: Math.max(1, resume.workout.durationMin - (resume.session.durationMin || 0)) })}
+              <Text style={styles.continueMeta} numberOfLines={1}>
+                {t('catalog.continueLeft', { min: resumeInfo.leftMin })}
+                {resumeInfo.fromExercise ? ` · ${t('catalog.continueFrom')}` : ''}
               </Text>
             </View>
             <PressableScale
@@ -228,6 +254,25 @@ export function WorkoutsScreen({ onStartWorkout, onResumeWorkout, footer }) {
   )
 }
 
+/** Тумблер звуковых сигналов плеера */
+function SoundButton() {
+  const soundOn = usePrefsStore((s) => s.soundOn)
+  const setSoundOn = usePrefsStore((s) => s.setSoundOn)
+  return (
+    <PressableScale
+      style={styles.langBtn}
+      onPress={() => setSoundOn(!soundOn)}
+      accessibilityRole="switch"
+      accessibilityState={{ selected: soundOn }}
+      accessibilityLabel="Sound"
+    >
+      {soundOn
+        ? <Volume2 size={15} color={colors.accent} />
+        : <VolumeX size={15} color={colors.text3} />}
+    </PressableScale>
+  )
+}
+
 /** Переключатель языка: показывает целевой язык (RU -> EN, EN -> RU) */
 function LangButton() {
   const lang = usePrefsStore((s) => s.lang)
@@ -253,6 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   date: { ...type.caption, color: colors.text2 },
   title: { ...type.display, color: colors.text, marginTop: 4, letterSpacing: -0.4 },
   langBtn: {

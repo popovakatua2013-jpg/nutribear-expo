@@ -1,16 +1,17 @@
 // src/features/workouts/store/useWorkoutsStore.js
-// Состояние вкладки «Тренировки»: настройки (язык, фильтр) и журнал
-// сессий. persist синхронизирует данные с AsyncStorage
-// (ключи @app/workouts/prefs и @app/workouts/sessions).
+// Состояние вкладки «Тренировки»: настройки (язык, фильтр, звук сигналов,
+// активная программа) и журнал сессий. persist синхронизирует данные с
+// AsyncStorage (ключи @app/workouts/prefs и @app/workouts/sessions).
 
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CALENDAR_THRESHOLDS } from '../theme'
 import { MOCK_WORKOUTS } from '../data/mockWorkouts'
+import { PROGRAMS } from '../data/programs'
 
 // ============================================================
-// Настройки: язык, последний фильтр — ключ @app/workouts/prefs
+// Настройки: язык, последний фильтр, звук, программа — ключ @app/workouts/prefs
 // ============================================================
 export const usePrefsStore = create(
   persist(
@@ -18,9 +19,13 @@ export const usePrefsStore = create(
       lang: 'ru',
       filterType: 'all',
       query: '',
+      soundOn: true,
+      activeProgram: null, // { id, startedAt } — программа на неделю
       setLang: (lang) => set({ lang }),
       setFilterType: (filterType) => set({ filterType }),
       setQuery: (query) => set({ query }),
+      setSoundOn: (soundOn) => set({ soundOn }),
+      setActiveProgram: (activeProgram) => set({ activeProgram }),
       resetFilters: () => set({ filterType: 'all', query: '' }),
     }),
     {
@@ -73,7 +78,20 @@ export const useSessionsStore = create(
                   durationMin: result.durationMin,
                   kcal: result.kcal,
                   completed: result.completed,
+                  position: 0,
                 }
+              : s,
+          ),
+        }),
+
+      // Сохранить прогресс НЕзакрытой сессии: позиция плана для
+      // «Продолжить с того же упражнения» + активные минуты на данный момент.
+      // Сессия остаётся открытой — карточка «Продолжить» её подхватывает
+      progressSession: (sessionId, patch) =>
+        set({
+          sessions: get().sessions.map((s) =>
+            s.id === sessionId && !s.completed && !s.finishedAt
+              ? { ...s, ...patch }
               : s,
           ),
         }),
@@ -216,4 +234,78 @@ export function selectResumeSession(sessions) {
   if (!open) return null
   const workout = MOCK_WORKOUTS.find((w) => w.id === open.workoutId)
   return workout ? { session: open, workout } : null
+}
+
+// ============================================================
+// Программа на неделю: прогресс по журналу завершённых сессий.
+// День закрыт, если у его тренировки есть завершённая сессия за эту дату.
+// ============================================================
+
+const pad2 = (n) => String(n).padStart(2, '0')
+/** Ключ ЛОКАЛЬНОГО календарного дня (у журнала ключ по UTC — здесь нужен локальный) */
+const localDayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const DAY_MS = 86_400_000
+
+export function selectProgramState(activeProgram, sessions) {
+  if (!activeProgram?.id) return null
+  const program = PROGRAMS.find((p) => p.id === activeProgram.id)
+  if (!program) return null
+
+  const start = new Date(activeProgram.startedAt)
+  start.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dayN = Math.max(0, Math.round((today.getTime() - start.getTime()) / DAY_MS))
+
+  // Ключ дня → тренировка программы: завершена ли она в этот день
+  const doneByDay = new Map()
+  for (const s of sessions) {
+    if (!s.completed) continue
+    const key = localDayKey(new Date(s.startedAt))
+    const set = doneByDay.get(key) || new Set()
+    set.add(s.workoutId)
+    doneByDay.set(key, set)
+  }
+
+  // Текущая неделя: 7 дней от начала программы
+  const weekStart = Math.floor(dayN / 7) * 7
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const abs = weekStart + i
+    const item = program.days[abs % program.days.length]
+    const date = new Date(start)
+    date.setDate(start.getDate() + abs)
+    const isRest = Boolean(item.rest)
+    const done = !isRest && (doneByDay.get(localDayKey(date))?.has(item.workoutId) || false)
+    days.push({
+      kind: isRest ? 'rest' : 'workout',
+      workoutId: isRest ? null : item.workoutId,
+      done,
+      isToday: abs === dayN,
+      isPast: abs < dayN,
+    })
+  }
+
+  const todayItem = program.days[dayN % program.days.length]
+  const todayIsRest = Boolean(todayItem.rest)
+  const todayDone = todayIsRest
+    ? true
+    : (doneByDay.get(localDayKey(today))?.has(todayItem.workoutId) || false)
+  const todayWorkout = todayIsRest
+    ? null
+    : MOCK_WORKOUTS.find((w) => w.id === todayItem.workoutId) || null
+
+  const weekGoal = program.days.filter((d) => !d.rest).length
+  const weekDone = days.filter((d) => d.done).length
+
+  return {
+    program,
+    dayNumber: dayN + 1,
+    days,
+    todayWorkout,
+    todayDone,
+    todayIsRest,
+    weekDone,
+    weekGoal,
+  }
 }

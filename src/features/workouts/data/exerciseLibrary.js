@@ -98,3 +98,70 @@ export const LIBRARY = {
   yoga: YOGA,
   stretch: STRETCH,
 }
+
+// ── Дополнительные пулы для тренировок с индивидуальным набором ─────────
+
+/** Пресс и талия */
+export const CORE = [
+  ex('x-crunch', 'Скручивания', 'Crunches', 40, 15, '🎯',
+    'Руки за головой без рывков, шея свободна', 'Hands behind head, no pulling on the neck'),
+  ex('x-bicycle', 'Велосипед', 'Bicycle Crunches', 45, 15, '🚴',
+    'Локоть к противоположному колену', 'Elbow toward the opposite knee'),
+  ex('x-legraise', 'Подъёмы ног', 'Leg Raises', 40, 15, '↕️',
+    'Поясница прижата к полу', 'Lower back pressed to the floor'),
+  ex('x-russian', 'Русские скручивания', 'Russian Twists', 40, 15, '🔁',
+    'Поворот от корпуса, а не руками', 'Twist from the torso, not the arms'),
+  ex('x-sideplank', 'Боковая планка', 'Side Plank', 30, 10, '🧱',
+    'Тело в линию, таз не заваливается', 'Body in a line, hips do not drop'),
+  ex('x-deadbug', 'Мёртвый жук', 'Dead Bug', 40, 15, '🐞',
+    'Поясница прижата, движения медленные', 'Lower back down, move slowly'),
+]
+
+/** Спина и осанка */
+export const BACK = [
+  ex('b-birddog', 'Птица-собака', 'Bird-Dog', 40, 10, '🐦',
+    'Рука и нога — на одной линии', 'Arm and leg form one line'),
+  ex('b-cobra', 'Поза змеи', 'Cobra Pose', 40, 10, '🐍',
+    'Подъём за счёт спины, без давления руками', 'Lift with the back, do not push with hands'),
+  ex('b-reverseplank', 'Обратная планка', 'Reverse Plank', 30, 10, '🧘',
+    'Бёдра вверх, плечи раскрыты', 'Hips up, shoulders open'),
+  ex('b-chest', 'Раскрывание груди', 'Chest Opener', 35, 10, '🤗',
+    'Лопатки вместе, без прогиба поясницы', 'Shoulder blades together, no back arch'),
+]
+
+/** Лёгкий комплекс (подходит для беременных — всё плавно, без нагрузок на живот) */
+export const GENTLE = [
+  ex('p-pelvic', 'Наклоны таза', 'Pelvic Tilts', 45, 10, '🤰',
+    'Движение маленькое, дыхание спокойное', 'Small movement, calm breathing'),
+  ex('p-sideleg', 'Отведение ноги вбок', 'Side Leg Raise', 40, 10, '🦵',
+    'Нога прямая, корпус не заваливается', 'Leg straight, torso steady'),
+  ex('p-wallpushup', 'Отжимания от стены', 'Wall Push-ups', 40, 10, '🧍',
+    'Стопы подальше от стены, спина прямая', 'Feet away from the wall, back straight'),
+  ex('p-breath', 'Спокойное дыхание', 'Calm Breathing', 60, 0, '🌬️',
+    'Вдох носом, выдох медленно ртом', 'Inhale through the nose, exhale slowly'),
+]
+
+/** Универсальная разминка (3 упражнения, ~2 минуты) */
+export const WARMUP = [
+  ex('w-arms', 'Вращения руками', 'Arm Circles', 30, 5, '💫',
+    'Круги сначала маленькие, затем шире', 'Small circles first, then wider'),
+  ex('w-torso', 'Повороты корпуса', 'Torso Twists', 30, 5, '↔️',
+    'Ноги на ширине плеч, поворот плавный', 'Feet hip-width, smooth rotation'),
+  ex('w-marchl', 'Лёгкая ходьба на месте', 'Light March', 45, 0, '🚶',
+    'Темп спокойный, руки работают', 'Easy pace, arms swinging'),
+]
+
+/** Универсальная заминка (2 упражнения, ~1,5 минуты) */
+export const COOLDOWN = [
+  ex('d-hamstring', 'Растяжка бедра', 'Hamstring Stretch', 50, 5, '🙇',
+    'Тяните плавно, без боли', 'Stretch gently, no pain'),
+  ex('d-breath', 'Восстановление дыхания', 'Breathing Recovery', 40, 0, '🌬️',
+    'Вдох — на 4 счёта, выдох — на 6', 'Inhale for 4 counts, exhale for 6'),
+]
+
+/** Плоский индекс по id — для тренировок с собственным набором (exerciseIds) */
+export const EXERCISE_BY_ID = Object.fromEntries(
+  [...STRENGTH, ...CARDIO, ...HIIT, ...YOGA, ...STRETCH, ...CORE, ...BACK, ...GENTLE].map(
+    (e) => [e.id, e],
+  ),
+)

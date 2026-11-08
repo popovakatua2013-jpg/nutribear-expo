@@ -17,8 +17,13 @@ const {
   buildPlan,
   planActiveSec,
   planRestSec,
+  wantsWarmup,
+  wantsCooldown,
 } = require('@/features/workouts/player/planBuilder')
 const { MOCK_WORKOUTS } = require('@/features/workouts/data/mockWorkouts')
+const {
+  selectProgramState,
+} = require('@/features/workouts/store/useWorkoutsStore')
 
 const tick = (s, n = 1) => playerReducer(s, { type: 'tick', n })
 
@@ -28,6 +33,22 @@ describe('движок плеера: фазы', () => {
     expect(s.phase).toBe('prepare')
     expect(s.secondsLeft).toBe(PLAYER_TIMINGS.prepareSec)
     expect(s.activeSec).toBe(0)
+  })
+
+  test('startIndex > 0 — сразу упражнение с полным подходом', () => {
+    const plan = [
+      { id: 'a', name: { ru: 'А' }, durationSec: 30, restSec: 10 },
+      { id: 'b', name: { ru: 'Б' }, durationSec: 45, restSec: 0 },
+    ]
+    const s = initPlayerState(plan, Date.now(), 1)
+    expect(s.phase).toBe('exercise')
+    expect(s.index).toBe(1)
+    expect(s.secondsLeft).toBe(45)
+    expect(s.phaseTotal).toBe(45)
+    // некорректный индекс — безопасный старт с начала
+    const bad = initPlayerState(plan, Date.now(), 99)
+    expect(bad.phase).toBe('prepare')
+    expect(bad.index).toBe(0)
   })
 
   test('отсчёт → первое упражнение', () => {
@@ -186,14 +207,55 @@ describe('плансбордер', () => {
   test('каталог: план покрывает длительность тренировки, у последнего отдыха нет', () => {
     for (const w of MOCK_WORKOUTS) {
       const plan = buildPlan(w)
-      // последний подход добавляется целиком, поэтому план может быть
-      // чуть длиннее цели — но не короче и не более чем на один подход
+      // последний подход добавляется целиком + разминка (~105 сек) и
+      // заминка (~90 сек), поэтому план может быть заметно длиннее цели —
+      // но не короче её
       expect(planActiveSec(plan)).toBeGreaterThanOrEqual(w.durationMin * 60)
-      expect(planActiveSec(plan)).toBeLessThan(w.durationMin * 60 + 90)
+      expect(planActiveSec(plan)).toBeLessThan(w.durationMin * 60 + 220)
       expect(plan[plan.length - 1].restSec).toBe(0)
       expect(planRestSec(plan)).toBeGreaterThan(0) // между упражнениями отдых есть
       expect(plan.length).toBeGreaterThan(1)
     }
+  })
+
+  test('разминка/заминка: правила по типам и флагам', () => {
+    const strength = MOCK_WORKOUTS.find((w) => w.id === 'w-abs')
+    const plan = buildPlan(strength)
+    expect(plan[0].kind).toBe('warmup') // разминка в начале
+    expect(plan[plan.length - 1].kind).toBe('cooldown') // заминка в конце
+    expect(wantsWarmup(strength)).toBe(true)
+    expect(wantsCooldown(strength)).toBe(true)
+
+    // йога — сама мягкая: без разминки и заминки
+    const yoga = MOCK_WORKOUTS.find((w) => w.id === 'w-prenatal')
+    const yogaPlan = buildPlan(yoga)
+    expect(yogaPlan.some((e) => e.kind === 'warmup')).toBe(false)
+    expect(yogaPlan.some((e) => e.kind === 'cooldown')).toBe(false)
+
+    // растяжка — с разминкой, но без заминки
+    const stretch = MOCK_WORKOUTS.find((w) => w.type === 'stretch')
+    expect(wantsWarmup(stretch)).toBe(true)
+    expect(wantsCooldown(stretch)).toBe(false)
+
+    // «Утренняя зарядка» сама разминка — флаг noWarmup
+    const morning = MOCK_WORKOUTS.find((w) => w.id === 'w-morning')
+    expect(wantsWarmup(morning)).toBe(false)
+    expect(buildPlan(morning).some((e) => e.kind === 'warmup')).toBe(false)
+  })
+
+  test('индивидуальный набор (exerciseIds): только свои упражнения, id уникальны', () => {
+    const abs = MOCK_WORKOUTS.find((w) => w.id === 'w-abs')
+    const plan = buildPlan(abs)
+    const main = plan.filter((e) => e.kind === 'main')
+    for (const e of main) {
+      expect(e.id.startsWith('x-')).toBe(true) // только пул «пресс/талия»
+    }
+    const ids = new Set(plan.map((e) => e.id))
+    expect(ids.size).toBe(plan.length) // все id плана уникальны
+    // тип «strength» без набора — обычная библиотека силовых
+    const upper = MOCK_WORKOUTS.find((w) => w.id === 'w-upper')
+    const upperMain = buildPlan(upper).filter((e) => e.kind === 'main')
+    expect(upperMain.some((e) => e.id.startsWith('s-'))).toBe(true)
   })
 
   test('план детерминированный: два прогона дают одно и то же', () => {
@@ -223,5 +285,75 @@ describe('плансбордер', () => {
     expect(plan).toHaveLength(2)
     expect(plan[0].restSec).toBe(99)
     expect(plan[1].restSec).toBe(0)
+  })
+
+  test('buildResult: позиция для «Продолжить» (выход из отдыха — следующее упражнение)', () => {
+    const workout = { id: 'w', durationMin: 5, kcal: 300 }
+    const plan = [
+      { id: 'a', name: { ru: 'А' }, durationSec: 150, restSec: 20 },
+      { id: 'b', name: { ru: 'Б' }, durationSec: 150, restSec: 0 },
+    ]
+    // выход в середине первого упражнения — продолжаем с него же
+    let s = initPlayerState(plan)
+    s = tick(s, 10 + 60)
+    s = playerReducer(s, { type: 'quit' })
+    expect(buildResult(s, workout).position).toBe(0)
+    // выход из отдыха после первого — продолжаем со второго
+    s = tick(initPlayerState(plan), 10 + 150)
+    s = playerReducer(s, { type: 'quit' })
+    expect(buildResult(s, workout).position).toBe(1)
+    // завершённая — позиция не нужна
+    s = tick(initPlayerState(plan), 10_000)
+    expect(buildResult(s, workout).position).toBe(0)
+  })
+})
+
+describe('программа на неделю: selectProgramState', () => {
+  const DAY = 86_400_000
+  const iso = (daysAgo) => new Date(Date.now() - daysAgo * DAY).toISOString()
+
+  test('день закрыт завершённой сессией его тренировки; отдых закрыт всегда', () => {
+    // Программа «Старт»: день 0 — йога, день 1 — отдых, день 2 — ходьба
+    const activeProgram = { id: 'p-start', startedAt: iso(2) }
+    const sessions = [
+      { workoutId: 'w-morning-yoga', completed: true, startedAt: iso(2) },
+    ]
+    const st = selectProgramState(activeProgram, sessions)
+    expect(st).not.toBeNull()
+    expect(st.program.id).toBe('p-start')
+    expect(st.dayNumber).toBe(3) // день 3 (прошло два дня)
+    expect(st.days[0].done).toBe(true) // йога два дня назад закрыта
+    expect(st.days[1].kind).toBe('rest') // день отдыха
+    expect(st.todayWorkout.id).toBe('w-cardio-walk') // сегодняшний день
+    expect(st.todayDone).toBe(false)
+    expect(st.weekGoal).toBe(3)
+    expect(st.weekDone).toBe(1)
+  })
+
+  test('сегодняшняя тренировка закрыта — todayDone', () => {
+    const activeProgram = { id: 'p-start', startedAt: iso(0) }
+    const sessions = [
+      { workoutId: 'w-morning-yoga', completed: true, startedAt: iso(0) },
+    ]
+    const st = selectProgramState(activeProgram, sessions)
+    expect(st.days[0].done).toBe(true)
+    expect(st.todayDone).toBe(true)
+    expect(st.weekDone).toBe(1)
+  })
+
+  test('незавершённые сессии день не закрывают; чужая тренировка — тоже', () => {
+    const activeProgram = { id: 'p-start', startedAt: iso(0) }
+    const sessions = [
+      { workoutId: 'w-morning-yoga', completed: false, startedAt: iso(0) },
+      { workoutId: 'w-hiit-burn', completed: true, startedAt: iso(0) },
+    ]
+    const st = selectProgramState(activeProgram, sessions)
+    expect(st.days[0].done).toBe(false)
+    expect(st.todayDone).toBe(false)
+  })
+
+  test('без активной программы селектор возвращает null', () => {
+    expect(selectProgramState(null, [])).toBeNull()
+    expect(selectProgramState({ id: 'нет-такой', startedAt: iso(0) }, [])).toBeNull()
   })
 })

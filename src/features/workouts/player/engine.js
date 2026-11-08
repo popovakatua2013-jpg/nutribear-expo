@@ -22,8 +22,29 @@ export const PLAYER_TIMINGS = {
   maxCatchUpSec: 3600,
 }
 
-/** Начальное состояние: фаза «Приготовьтесь» */
-export function initPlayerState(plan, startedAt = Date.now()) {
+/**
+ * Начальное состояние. Без startIndex — фаза «Приготовьтесь».
+ * С startIndex > 0 (продолжение сохранённой сессии) — сразу фаза
+ * «Упражнение» с указанного индекса, с полной длительностью подхода.
+ */
+export function initPlayerState(plan, startedAt = Date.now(), startIndex = 0) {
+  const idx =
+    Number.isInteger(startIndex) && startIndex > 0 && startIndex < plan.length
+      ? startIndex
+      : 0
+  if (idx > 0) {
+    const item = plan[idx]
+    return {
+      plan,
+      index: idx,
+      phase: 'exercise',
+      secondsLeft: item.durationSec,
+      phaseTotal: item.durationSec,
+      paused: false,
+      activeSec: 0,
+      startedAt,
+    }
+  }
   return {
     plan,
     index: 0,
@@ -192,5 +213,13 @@ export function buildResult(state, workout) {
     kcal: state.completed ? workout.kcal : Math.round(workout.kcal * fraction),
     completed: Boolean(state.completed),
     exercisesDone: countDone(state),
+    // Позиция для «Продолжить с того же упражнения»: при выходе из отдыха
+    // текущее упражнение уже сделано — продолжать надо со следующего
+    position: state.completed
+      ? 0
+      : Math.min(
+          state.quitFrom === 'rest' ? state.index + 1 : state.index,
+          state.plan.length,
+        ),
   }
 }

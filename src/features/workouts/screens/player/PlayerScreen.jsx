@@ -3,9 +3,11 @@
 // плеера, раздел 5). Логика переходов — в чистом движке player/engine.js,
 // здесь только экран. Когда план пройден или пользователь подтвердил выход,
 // сессия уходит наверх один раз через onFinish(result) — вкладка пишет
-// журнал и дневник; плеер показывает итоговый экран FinishScreen,
-// закрытие окна — onClose(). Открытие сессии «Продолжить» приходит уже
-// созданной: план детерминированный, таймер начинает заново с «Приготовьтесь».
+// журнал (незавершённая остаётся открытой с позицией для «Продолжить»),
+// поверх остаётся экран итогов FinishScreen, закрытие окна — onClose().
+// startIndex > 0 — продолжение сохранённой сессии: сразу с упражнения,
+// без отсчёта. Разминка/заминка в плане помечены kind — в шапке фазы
+// показывается «Разминка»/«Заминка» вместо номера упражнения.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Modal, ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -30,12 +32,12 @@ const PHASE_COLOR = {
   done: colors.accent,
 }
 
-export function PlayerScreen({ workout, onClose, onFinish }) {
+export function PlayerScreen({ workout, startIndex = 0, onClose, onFinish }) {
   const lang = usePrefsStore((s) => s.lang)
   const t = useMemo(() => makeT(lang), [lang])
 
   const plan = useMemo(() => buildPlan(workout), [workout])
-  const { state, dispatch } = usePlayerEngine(plan)
+  const { state, dispatch } = usePlayerEngine(plan, true, startIndex)
 
   // ── Финиш: одна запись в журнал ──────────────────────────────────────
   const [result, setResult] = useState(null)
@@ -104,11 +106,17 @@ export function PlayerScreen({ workout, onClose, onFinish }) {
   // прочитать), в отсчёте — первое упражнение с его подсказкой
   const focus = state.phase === 'rest' && next ? next : current
 
+  // Подпись фазы: у разминки/заминки — своё название, у основного блока — номер
+  const kindLabel =
+    focus.kind === 'warmup' ? t('player.warmup')
+    : focus.kind === 'cooldown' ? t('player.cooldown')
+    : null
+
   const phaseLabel =
     state.phase === 'prepare' ? t('player.prepare')
     : state.phase === 'rest' ? t('player.rest')
     : state.paused ? t('player.paused')
-    : t('player.exerciseOf', { i: state.index + 1, n })
+    : kindLabel || t('player.exerciseOf', { i: state.index + 1, n })
 
   const centerTitle =
     state.phase === 'rest' && next ? t('player.next', { name: next.name[lang] })

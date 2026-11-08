@@ -51,6 +51,39 @@ export const MOCK_WORKOUTS = [
     type: 'hiit', durationMin: 10, kcal: 120, level: 'intermediate',
     gradient: ['#5A4A2E', '#262014'], recommended: false,
   },
+  // ── Расширение каталога (отзыв Кати: «больше тренировок») ────────────
+  {
+    id: 'w-abs',
+    title: { ru: 'Живот и талия', en: 'Abs & Waist' },
+    type: 'strength', durationMin: 20, kcal: 200, level: 'intermediate',
+    gradient: ['#4A2E2E', '#241414'], recommended: true,
+    // Индивидуальный набор: только упражнения на пресс и талию
+    exerciseIds: ['x-crunch', 'x-bicycle', 'x-legraise', 'x-russian', 'x-sideplank', 'x-deadbug'],
+  },
+  {
+    id: 'w-back',
+    title: { ru: 'Спина и осанка', en: 'Back & Posture' },
+    type: 'strength', durationMin: 25, kcal: 210, level: 'intermediate',
+    gradient: ['#3E4A2E', '#1C2414'], recommended: false,
+    exerciseIds: ['s-superman', 'b-birddog', 'y-cat-cow', 'b-cobra', 'b-reverseplank', 'b-chest', 's-bridge'],
+  },
+  {
+    id: 'w-morning',
+    title: { ru: 'Утренняя зарядка', en: 'Morning Warm-Up' },
+    type: 'cardio', durationMin: 5, kcal: 35, level: 'beginner',
+    gradient: ['#3E5A2E', '#1C2614'], recommended: true,
+    // Лёгкий набор без прыжков; флаг noWarmup — зарядка сама и есть разминка
+    noWarmup: true,
+    exerciseIds: ['c-march', 'c-step-touch', 'c-jack', 'c-shuffle'],
+  },
+  {
+    id: 'w-prenatal',
+    title: { ru: 'Для беременных: лёгкая', en: 'Prenatal: Gentle' },
+    type: 'yoga', durationMin: 15, kcal: 60, level: 'beginner',
+    gradient: ['#4A3E5A', '#241C29'], recommended: false,
+    // Мягкий набор без нагрузки на живот; йога — без авто-разминки/заминки
+    exerciseIds: ['p-pelvic', 'y-cat-cow', 'p-sideleg', 'p-wallpushup', 'y-child', 'p-breath'],
+  },
 ]
 
 /** Эмодзи типа — для записи в дневник тренировок приложения */

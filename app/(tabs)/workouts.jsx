@@ -13,8 +13,8 @@
 // (выбор, время, ккал) переехала сюда с главной (отзыв Кати:
 // «тренировки с главного экрана — убрать»).
 
-import { useCallback, useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { DeviceEventEmitter, Pressable, Text, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { ChevronDown } from 'lucide-react-native'
 import { WorkoutsScreen } from '@/features/workouts/screens/WorkoutsScreen'
@@ -22,10 +22,12 @@ import { ProgressScreen } from '@/features/workouts/screens/ProgressScreen'
 import { PlayerScreen } from '@/features/workouts/screens/player/PlayerScreen'
 import { PressableScale } from '@/features/workouts/components/PressableScale'
 import {
+  selectProgramState,
+  selectResumeSession,
   useSessionsStore,
   usePrefsStore,
 } from '@/features/workouts/store/useWorkoutsStore'
-import { TYPE_EMOJI } from '@/features/workouts/data/mockWorkouts'
+import { TYPE_EMOJI, MOCK_WORKOUTS } from '@/features/workouts/data/mockWorkouts'
 import { colors, spacing, F } from '@/features/workouts/theme'
 import { useExerciseStore, syncHistoryBurned } from '@/store/useExerciseStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
@@ -53,20 +55,50 @@ export default function WorkoutsTab() {
     if (session) setPlayer({ session, workout })
   }, [])
 
-  // «Продолжить» — открываем ИДУЩУЮ сессию как есть: таймер продолжает
-  // считать от её старта, без сброса
+  // «Продолжить» — открываем ИДУЩУЮ сессию: плеер стартует с сохранённого
+  // упражнения (session.position), без отсчёта заново
   const resumeWorkout = useCallback((workout, session) => {
     setPlayer({ session: session, workout })
   }, [])
 
+  // Тап по уведомлению о тренировке: сразу к занятию — открытая сессия,
+  // тренировка дня программы или первая из «Рекомендуем»
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      'nutribear/workouts/open-player',
+      () => {
+        const resume = selectResumeSession(useSessionsStore.getState().sessions)
+        if (resume) {
+          resumeWorkout(resume.workout, resume.session)
+          return
+        }
+        const { activeProgram } = usePrefsStore.getState()
+        const program = selectProgramState(
+          activeProgram,
+          useSessionsStore.getState().sessions,
+        )
+        const workout =
+          program?.todayWorkout && !program.todayDone
+            ? program.todayWorkout
+            : MOCK_WORKOUTS.find((w) => w.recommended) || MOCK_WORKOUTS[0]
+        startWorkout(workout)
+      },
+    )
+    return () => sub.remove()
+  }, [resumeWorkout, startWorkout])
+
   // Плеер дошёл до конца (или выход подтверждён): журнал сессий + дневник
   // тренировок приложения. Окно НЕ закрываем — остаётся экран итогов.
+  // Завершённая — закрываем сессию и пишем в дневник; прерванная с активным
+  // временем — остаётся открытой с позицией плана («Продолжить с того же
+  // упражнения»); пустой выход (до первого упражнения) — просто закрываем.
   const handleFinish = useCallback(
     (result) => {
       const { session, workout } = player
-      useSessionsStore.getState().finishSession(session.id, result)
-      finishedRef.current = { workout, result }
+      const store = useSessionsStore.getState()
       if (result.completed) {
+        store.finishSession(session.id, result)
+        finishedRef.current = { workout, result }
         // Запись за сегодня — в общую копилку сожжённого: сводка, отчёты,
         // опыт дня считают её наравне с записями вручную
         useExerciseStore.getState().addLog(dayKeyOf(), {
@@ -77,6 +109,14 @@ export default function WorkoutsTab() {
           kcal: result.kcal,
         })
         syncHistoryBurned(dayKeyOf())
+      } else if (result.activeSec > 0) {
+        store.progressSession(session.id, {
+          position: result.position || 0,
+          durationMin: result.durationMin,
+        })
+        finishedRef.current = { workout, result }
+      } else {
+        store.finishSession(session.id, { ...result, durationMin: 0, kcal: 0 })
       }
     },
     [player],
@@ -133,6 +173,7 @@ export default function WorkoutsTab() {
       {player && (
         <PlayerScreen
           workout={player.workout}
+          startIndex={player.session.position || 0}
           onClose={handleClose}
           onFinish={handleFinish}
         />

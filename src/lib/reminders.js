@@ -570,8 +570,11 @@ function handleNotificationTap(data) {
       // собрался взвешиваться, не заставляем искать кнопку «+»
       requestOpenWeightModal()
     } else if (kind === 'exercise') {
-      // Тап по пинку о тренировке — сразу в дневник тренировок
-      router.navigate('/activity')
+      // Тап по пинку о тренировке — сразу на вкладку «Тренировки» и к
+      // началу занятия: открытая сессия, тренировка дня программы или
+      // «Рекомендуем» (событие слушает вкладка workouts)
+      router.navigate('/workouts')
+      DeviceEventEmitter.emit('nutribear/workouts/open-player')
     } else if (kind === 'sleep') {
       // Тап по пинку «пора спать» — сразу окно «Записать сон» (сон
       // за прошлую ночь удобно записать с утра, а вечером — просто лечь)
