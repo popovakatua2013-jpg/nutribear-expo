@@ -13,7 +13,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, AppState, Easing, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, {
-  Circle, Defs, Line, LinearGradient, Path, Stop, SvgText,
+  Circle, Defs, Line, LinearGradient, Path, Stop,
+  // В react-native-svg v15 алиас SvgText удалён — элемент называется
+  // Text; импорт несуществующего SvgText давал undefined и ронял вкладку
+  // («Cannot read property 'displayName' of undefined» внутри css-interop)
+  Text as SvgText,
 } from 'react-native-svg'
 import {
   BarChart3, Bell, Check, ChevronRight, Info, Settings, ShoppingCart, Timer,
