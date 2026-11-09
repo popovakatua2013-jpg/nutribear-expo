@@ -10,11 +10,10 @@
 // Под секциями — ОДНА раскрывающаяся кнопка «Добавить еду» вместо трёх
 // отдельных блоков (отзыв Кати: «Добавить блюдо / Добавить перекус /
 // Только калории — переделаем в раскрывающий список»), и первым в
-// списке — «Только калории». В списке три пункта: быстрая запись
-// калорий, добавление блюда (окно поиска/сканера/ИИ) и «Добавить
-// рецепт» — отдельное окно своих рецептов (создание + список уже
-// добавленных — перенесено из окна «Добавить приём пищи», где были
-// блоки с ИИ-распознаванием). Отдельной кнопки «+ Добавить перекус»
+// списке — «Только калории». В списке два пункта: быстрая запись
+// калорий и добавление блюда (окно поиска/сканера/ИИ). Третий пункт,
+// «Добавить рецепт», переехал на вкладку «План» — в карточку «Меню на
+// неделю» (просьба Кати). Отдельной кнопки «+ Добавить перекус»
 // больше нет (отзыв Кати: «Перекус 2/3/4 туда не добавлять») — свои
 // перекусы создаются в окне «Все приёмы пищи», а в уже созданные
 // блюда добавляются через «+» их секции.
@@ -40,7 +39,6 @@ import {
   View,
 } from 'react-native'
 import {
-  ChefHat,
   Check,
   ChevronDown,
   ChevronRight,
@@ -54,7 +52,6 @@ import {
 } from 'lucide-react-native'
 import { PlanHeader } from './PlanHeader'
 import { HistoryModal } from './HistoryModal'
-import { RecipesModal } from '../food/RecipesModal'
 import { EditEntryModal } from '../food/EditEntryModal'
 import { MealTabs } from '../food/MealTabs'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -315,7 +312,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
   )
 }
 
-export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
+export function MealPlanCard({ onAdd, onViewAll }) {
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -332,9 +329,6 @@ export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
   const [qMealId, setQMealId] = useState('snack')
   const [qKcal, setQKcal] = useState('')
   const [qName, setQName] = useState('')
-  // Окно рецептов: создание своих рецептов + список уже добавленных
-  // (перенесено из окна «Добавить приём пищи» — отзыв Кати)
-  const [recipesOpen, setRecipesOpen] = useState(false)
   const removeCustomMeal = useFoodStore((s) => s.removeCustomMeal)
   // Ручное сворачивание: по умолчанию все секции свёрнуты — видно только
   // шапку (отзыв Кати); тап запоминает выбор пользователя
@@ -490,32 +484,7 @@ export function MealPlanCard({ onAdd, onViewAll, onAddRecipe = () => {} }) {
               onAdd('snack')
             }}
           />
-          {/* 3. Добавить рецепт — отдельное окно своих рецептов: создание
-              + список уже добавленных (перенесено из окна «Добавить
-              приём пищи», отзыв Кати) */}
-          <MenuRow
-            icon={<ChefHat size={17} color="#4ADE80" />}
-            tile="#22C55E22"
-            title="Добавить рецепт"
-            sub="Свой рецепт · мои рецепты"
-            onPress={() => {
-              setMenuOpen(false)
-              setRecipesOpen(true)
-            }}
-          />
         </View>
-      )}
-
-      {/* Окно рецептов: монтируется только открытым — каждый раз
-          стартует со списка (или формы, если рецептов ещё нет) */}
-      {recipesOpen && (
-        <RecipesModal
-          onClose={() => setRecipesOpen(false)}
-          onLogRecipe={(item) => {
-            setRecipesOpen(false)
-            onAddRecipe(item)
-          }}
-        />
       )}
 
       {/* окно быстрой записи: пилюли приёмов + калории + название */}

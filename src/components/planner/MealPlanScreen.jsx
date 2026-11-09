@@ -11,12 +11,16 @@
 // «80 г · 200 ккал» — правка граммовки (GramsModal). Копирование дня,
 // очистка дня/недели, «взять меню прошлой недели»; на сегодняшнем дне —
 // «В дневник»: переносит блюда в дневник питания через
-// useFoodStore.addEntry (полный БЖУ по граммовке). Палитра —
-// planPalette.js (макет), сетка и шрифты — theme.js.
+// useFoodStore.addEntry (полный БЖУ по граммовке).
+// Внизу карточки — кнопка «Добавить рецепт» (переехала с Главной —
+// просьба Кати): окно своих рецептов — создание, список, правка;
+// «Записать» рецепта открывает то же окно добавления еды, что и на
+// Главной — сразу на экране порции рецепта, прямо на «Плане».
+// Палитра — planPalette.js (макет), сетка и шрифты — theme.js.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, Text, View } from 'react-native'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
+import { CalendarDays, ChefHat, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -28,6 +32,8 @@ import { useToast } from '../ui/Toast'
 import { HintBox } from '../ui/HintBox'
 import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
+import { RecipesModal } from '../food/RecipesModal'
+import { AddFoodModal } from '../food/AddFoodModal'
 import { P } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
@@ -69,6 +75,13 @@ export function MealPlanScreen() {
   // «Показать все приёмы пищи»: перекус + действия дня; по умолчанию
   // видно три строки (Завтрак / Обед / Ужин) — как в макете
   const [showAll, setShowAll] = useState(false)
+  // «Добавить рецепт» (переехал с Главной — просьба Кати): окно своих
+  // рецептов; «Записать» рецепта открывает окно добавления еды
+  // (экран порции) прямо на «Плане»
+  const [recipesOpen, setRecipesOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addMealId, setAddMealId] = useState('snack')
+  const [recipePick, setRecipePick] = useState(null)
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
 
@@ -387,6 +400,25 @@ export function MealPlanScreen() {
           )}
       </>
 
+      {/* «Добавить рецепт» — переехал с Главной (просьба Кати): окно
+          своих рецептов — создание, список, правка; виден всегда,
+          независимо от выбранного дня и раскрытия «Показать все» */}
+      <Pressable
+        onPress={() => setRecipesOpen(true)}
+        style={styles.recipeRow}
+        accessibilityRole="button"
+        accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
+      >
+        <View style={styles.recipeTile}>
+          <ChefHat size={17} color="#4ADE80" />
+        </View>
+        <View style={styles.recipeTexts}>
+          <Text style={styles.recipeName} numberOfLines={1}>Добавить рецепт</Text>
+          <Text style={styles.recipeSub} numberOfLines={1}>Свой рецепт · мои рецепты</Text>
+        </View>
+        <ChevronRight size={16} color={P.text3} />
+      </Pressable>
+
       {/* Окно добавления блюда */}
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
 
@@ -395,6 +427,35 @@ export function MealPlanScreen() {
         item={gramsFor ? (day?.[gramsFor.mealId] || []).find((x) => x.id === gramsFor.itemId) : null}
         onClose={() => setGramsFor(null)}
         onSave={saveGrams}
+      />
+
+      {/* Окно рецептов: монтируется только открытым — каждый раз
+          стартует со списка (или формы, если рецептов ещё нет) */}
+      {recipesOpen && (
+        <RecipesModal
+          onClose={() => setRecipesOpen(false)}
+          onLogRecipe={(item) => {
+            setRecipesOpen(false)
+            setRecipePick(item)
+            setAddMealId('snack')
+            setAddOpen(true)
+          }}
+        />
+      )}
+
+      {/* Запись рецепта в дневник — то же окно добавления еды, что и на
+          Главной: открывается сразу на экране порции рецепта (приём
+          пищи по умолчанию — перекус, меняется пилюлями в окне) */}
+      <AddFoodModal
+        open={addOpen}
+        onClose={() => {
+          setAddOpen(false)
+          setRecipePick(null)
+        }}
+        mealId={addMealId}
+        onMealIdChange={setAddMealId}
+        initialPick={recipePick}
+        onPickConsumed={() => setRecipePick(null)}
       />
 
       {/* Окно копирования дня: куда */}
@@ -553,6 +614,30 @@ const styles = {
     marginTop: 12,
   },
   showAllText: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: P.text2 },
+
+  // «Добавить рецепт» — строка внизу карточки (зелёная плитка — как
+  // выглядел пункт на Главной)
+  recipeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: P.tileSoft,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    marginTop: 12,
+  },
+  recipeTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(34,197,94,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recipeTexts: { flex: 1, minWidth: 0 },
+  recipeName: { fontSize: 14.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  recipeSub: { fontSize: 12, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
   actionsWrap: { gap: 8, marginTop: 10 },
   dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, flexWrap: 'wrap' },
   dayAction: {
