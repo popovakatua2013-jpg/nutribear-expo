@@ -3,7 +3,8 @@
 //   цели         — крупные чипы «эмодзи + название + подпись», активный —
 //                  лаймовый с галочкой (у нас 4 цели — сеткой 2×2)
 //   меню         — MealPlanScreen (слева) + карточка «Интервальное
-//                  питание» (справа) РЯДОМ — макет Кати от 09.11
+//                  питание» (справа) РЯДОМ, под ней — блок «Добавить
+//                  рецепт» (макет Кати от 09.11 + отзыв 09.11)
 //   прогресс     — кольцо % + легенда Калории/Белки/Жиры/Углеводы +
 //                  линия тренда за неделю (клетчатка/сахар — переключателем)
 //   покупки      — чек-лист слева, иллюстрация и лаймовая кнопка справа
@@ -21,7 +22,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import {
-  BarChart3, Bell, Check, ChevronRight, Hourglass, Settings, ShoppingCart,
+  BarChart3, Bell, ChefHat, Check, ChevronRight, Hourglass, Settings, ShoppingCart,
 } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum } from '@/lib/format'
@@ -38,6 +39,8 @@ import { dayDate, weekKeyOf, WEEKDAYS } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { smoothPath } from '../ui/SvgAreaChart'
 import { MealPlanScreen } from './MealPlanScreen'
+import { RecipesModal } from '../food/RecipesModal'
+import { AddFoodModal } from '../food/AddFoodModal'
 import { P, goodsWord } from './planPalette'
 import { spacing, F, type } from '@/features/workouts/theme'
 
@@ -164,7 +167,7 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, center
 
 // Линия тренда недели — как в макете: плавная кривая с точками и
 // мягкой заливкой; пунктир нормы; сегодняшний день — крупная точка и
-// лаймовая подпись; дни без данных — серые точки. Тап по дню — значение.
+// акцентная подпись; дни без данных — серые точки. Тап по дню — значение.
 const CHART_H = 148
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
@@ -259,6 +262,15 @@ export function PlanScreen({ onOpenFasting }) {
   // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
   useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
+
+  // «Добавить рецепт» — блок в правой колонке под «Интервальным
+  // питанием» (просьба Кати 09.11: вынести из карточки меню в пустое
+  // место справа): окно своих рецептов — создание, список, правка;
+  // «Записать» рецепта открывает окно добавления еды (экран порции)
+  const [recipesOpen, setRecipesOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addMealId, setAddMealId] = useState('snack')
+  const [recipePick, setRecipePick] = useState(null)
 
   // — Данные: всё из сторов приложения, никаких заглушек —
   const goalId = useFoodStore((s) => s.goal)
@@ -430,8 +442,9 @@ export function PlanScreen({ onOpenFasting }) {
         </Pressable>
       </View>
 
-      {/* 1. Цели — крупные чипы как в макете: эмодзи + название + подпись,
-          активный — лаймовый с галочкой (у нас 4 цели — сеткой 2×2) */}
+      {/* 1. Цели — крупные чипы: эмодзи + название + подпись, активный —
+          фиолетовый с белой галочкой — один цвет с кнопками приложения
+          (у нас 4 цели — сеткой 2×2) */}
       <View style={styles.goalGrid}>
         {GOALS.map((g) => {
           const active = goalId === g.id
@@ -456,7 +469,7 @@ export function PlanScreen({ onOpenFasting }) {
               {active && (
                 <View style={styles.goalCheck} pointerEvents="none">
                   <View style={styles.goalCheckCircle}>
-                    <Check size={13} color={P.accent} strokeWidth={3.5} />
+                    <Check size={13} color={P.accentInk} strokeWidth={3.5} />
                   </View>
                 </View>
               )}
@@ -465,67 +478,92 @@ export function PlanScreen({ onOpenFasting }) {
         })}
       </View>
 
-      {/* 2. Меню на неделю + Интервальное питание — РЯДОМ, два блока
-          (макет Кати от 09.11): слева компактная карточка меню,
-          справа — кольцо режима, легенда окна/голодания и кнопка
-          «Подробнее»; тап по карточке открывает окно голодания */}
+      {/* 2. Меню на неделю + Интервальное питание — РЯДОМ (макет Кати от
+          09.11); справа под карточкой голодания — блок «Добавить рецепт»
+          (просьба Кати 09.11: вынести его из карточки меню в пустое
+          место в правой колонке) */}
       <View style={styles.menuRow}>
         <View style={styles.menuLeft}>
           <MealPlanScreen compact />
         </View>
 
-        <Pressable
-          style={styles.fastCard}
-          onPress={onOpenFasting}
-          accessibilityRole="button"
-          accessibilityLabel="Интервальное питание — открыть подробнее"
-        >
-          <Text
-            style={styles.fastTitle}
-            numberOfLines={2}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
+        <View style={styles.fastCol}>
+          <Pressable
+            style={styles.fastCard}
+            onPress={onOpenFasting}
+            accessibilityRole="button"
+            accessibilityLabel="Интервальное питание — открыть подробнее"
           >
-            Интервальное питание
-          </Text>
-          <View style={styles.fastRingWrap}>
-            <Ring
-              pct={fastGoalH / 24}
-              runId={runId}
-              size={64}
-              stroke={7}
-              centerText={fastPlan}
-              sub="Режим"
-            />
-          </View>
-          <View style={styles.fastLegend}>
-            <View style={styles.fastLegendRow}>
-              <View style={[styles.fastDot, { backgroundColor: P.accent }]} />
-              <View style={styles.fastLegendTexts}>
-                <Text style={styles.fastLegendLabel}>Окно питания</Text>
-                <Text style={styles.fastLegendVal}>{fastEatFrom} – {fastEatTo}</Text>
+            <Text
+              style={styles.fastTitle}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
+              Интервальное питание
+            </Text>
+            <View style={styles.fastRingWrap}>
+              <Ring
+                pct={fastGoalH / 24}
+                runId={runId}
+                size={64}
+                stroke={7}
+                centerText={fastPlan}
+                sub="Режим"
+              />
+            </View>
+            <View style={styles.fastLegend}>
+              <View style={styles.fastLegendRow}>
+                <View style={[styles.fastDot, { backgroundColor: P.accentText }]} />
+                <View style={styles.fastLegendTexts}>
+                  <Text style={styles.fastLegendLabel}>Окно питания</Text>
+                  <Text style={styles.fastLegendVal}>{fastEatFrom} – {fastEatTo}</Text>
+                </View>
+              </View>
+              <View style={styles.fastLegendRow}>
+                <View style={[styles.fastDot, { backgroundColor: P.text3 }]} />
+                <View style={styles.fastLegendTexts}>
+                  <Text style={styles.fastLegendLabel}>Голодание</Text>
+                  <Text style={styles.fastLegendVal}>{fastEatTo} – {fastEatFrom}</Text>
+                </View>
               </View>
             </View>
-            <View style={styles.fastLegendRow}>
-              <View style={[styles.fastDot, { backgroundColor: P.text3 }]} />
-              <View style={styles.fastLegendTexts}>
-                <Text style={styles.fastLegendLabel}>Голодание</Text>
-                <Text style={styles.fastLegendVal}>{fastEatTo} – {fastEatFrom}</Text>
-              </View>
+            <View style={styles.fastMore} pointerEvents="none">
+              <Text style={styles.fastMoreText}>Подробнее</Text>
+              <ChevronRight size={13} color={P.accentInk} />
             </View>
-          </View>
-          <View style={styles.fastMore} pointerEvents="none">
-            <Text style={styles.fastMoreText}>Подробнее</Text>
-            <ChevronRight size={13} color={P.accentInk} />
-          </View>
-        </Pressable>
+          </Pressable>
+
+          {/* «Добавить рецепт» — отдельный блок в правой колонке: окно
+              своих рецептов — создание, список, правка; «Записать»
+              рецепта открывает окно добавления еды (экран порции) */}
+          <Pressable
+            onPress={() => setRecipesOpen(true)}
+            style={styles.recipeCard}
+            accessibilityRole="button"
+            accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
+          >
+            <View style={styles.recipeTile}>
+              <ChefHat size={20} color={P.accentText} />
+            </View>
+            <Text
+              style={styles.recipeName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              Добавить рецепт
+            </Text>
+            <Text style={styles.recipeSub} numberOfLines={1}>Свой рецепт · мои рецепты</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда */}
       <View style={styles.card}>
         <View style={styles.cardHead}>
           <View style={styles.iconTile}>
-            <BarChart3 size={18} color={P.accent} />
+            <BarChart3 size={18} color={P.accentText} />
           </View>
           <Text style={styles.cardTitle}>Прогресс</Text>
           <View style={styles.headRight}>
@@ -595,7 +633,7 @@ export function PlanScreen({ onOpenFasting }) {
       >
         <View style={styles.cardHead}>
           <View style={styles.iconTile}>
-            <ShoppingCart size={18} color={P.accent} />
+            <ShoppingCart size={18} color={P.accentText} />
           </View>
           <Text style={styles.cardTitle}>Список покупок</Text>
           <View style={styles.headRight}>
@@ -640,6 +678,35 @@ export function PlanScreen({ onOpenFasting }) {
           </View>
         </View>
       </Pressable>
+
+      {/* Окно рецептов: монтируется только открытым — каждый раз
+          стартует со списка (или формы, если рецептов ещё нет) */}
+      {recipesOpen && (
+        <RecipesModal
+          onClose={() => setRecipesOpen(false)}
+          onLogRecipe={(item) => {
+            setRecipesOpen(false)
+            setRecipePick(item)
+            setAddMealId('snack')
+            setAddOpen(true)
+          }}
+        />
+      )}
+
+      {/* Запись рецепта в дневник — то же окно добавления еды, что и на
+          Главной: открывается сразу на экране порции рецепта (приём
+          пищи по умолчанию — перекус, меняется пилюлями в окне) */}
+      <AddFoodModal
+        open={addOpen}
+        onClose={() => {
+          setAddOpen(false)
+          setRecipePick(null)
+        }}
+        mealId={addMealId}
+        onMealIdChange={setAddMealId}
+        initialPick={recipePick}
+        onPickConsumed={() => setRecipePick(null)}
+      />
 
     </ScrollView>
   )
@@ -708,7 +775,7 @@ const styles = {
   },
   goalNameOn: { color: P.accentInk },
   goalHint: { fontSize: 11, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 1 },
-  goalHintOn: { color: 'rgba(21,26,3,0.62)' },
+  goalHintOn: { color: 'rgba(255,255,255,0.72)' },
   goalCheck: {
     position: 'absolute',
     right: 11,
@@ -721,7 +788,7 @@ const styles = {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#181B26',
+    backgroundColor: '#0C1327',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -831,11 +898,13 @@ const styles = {
   },
   shopBtnText: { fontSize: 11.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 
-  // Меню + интервальное питание — РЯДОМ (макет Кати от 09.11)
+  // Меню + интервальное питание — РЯДОМ (макет Кати от 09.11);
+  // «Добавить рецепт» — под голоданием, в правой колонке (fastCol)
   menuRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   menuLeft: { width: '60%' },
   fastCard: {
-    flex: 1,
+    // Без flex:1 — карточка стоит в колонке fastCol своей высоты,
+    // а пустое место под ней заполняет блок «Добавить рецепт»
     backgroundColor: P.card,
     borderColor: P.line,
     borderWidth: 1,
@@ -870,4 +939,35 @@ const styles = {
     alignSelf: 'stretch',
   },
   fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
+
+  // Правая колонка: «Интервальное питание» + под ним «Добавить рецепт».
+  // alignSelf: 'stretch' растягивает колонку на высоту ряда (как у
+  // карточки меню), recipeCard с flex:1 заполняет пустое место под ней
+  fastCol: { flex: 1, alignSelf: 'stretch' },
+
+  // «Добавить рецепт» — отдельный блок в правой колонке (просьба Кати
+  // от 09.11: вынести из карточки меню в пустое место под голоданием);
+  // контент по центру — блок читается как большая кнопка
+  recipeCard: {
+    flex: 1,
+    marginTop: 10,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  recipeTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: P.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recipeName: { fontSize: 14.5, fontWeight: '800', fontFamily: F[800], color: P.text },
+  recipeSub: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, textAlign: 'center' },
 }

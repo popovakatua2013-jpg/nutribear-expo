@@ -20,7 +20,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { PlanScreen } from '@/components/planner/PlanScreen'
 import { FastingScreen } from '@/components/planner/FastingScreen'
-import { colors, spacing } from '@/features/workouts/theme'
+import { spacing } from '@/features/workouts/theme'
+// Фон вкладки и окна голодания — палитра приложения (planPalette):
+// вкладка «План» одного цвета с остальным приложением (просьба Кати 09.11),
+// раньше здесь был фон design-системы «Тренировок» (#0A0C10)
+import { P } from '@/components/planner/planPalette'
 
 export default function PlanTab() {
   const [fastOpen, setFastOpen] = useState(false)
@@ -28,7 +32,7 @@ export default function PlanTab() {
   const closeRowStyle = [styles.closeRow, { paddingTop: insets.top + 6 }]
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: P.bg }}>
       {/* Обзор плана — всегда остаётся под окном голодания */}
       <PlanScreen onOpenFasting={() => setFastOpen(true)} />
 
@@ -39,7 +43,7 @@ export default function PlanTab() {
         statusBarTranslucent
         onRequestClose={() => setFastOpen(false)}
       >
-        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <View style={{ flex: 1, backgroundColor: P.bg }}>
           <View style={closeRowStyle}>
             <Pressable
               onPress={() => setFastOpen(false)}
@@ -48,7 +52,7 @@ export default function PlanTab() {
               accessibilityLabel="Закрыть интервальное питание"
               hitSlop={8}
             >
-              <X size={20} color={colors.text2} />
+              <X size={20} color={P.text2} />
             </Pressable>
           </View>
           <FastingScreen />

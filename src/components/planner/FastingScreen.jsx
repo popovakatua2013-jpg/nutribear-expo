@@ -17,7 +17,11 @@ import { Clock, History, Play, Square } from 'lucide-react-native'
 import { useFastingStore, FASTING_MIN_LAP_MS } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
 import { HintBox } from '../ui/HintBox'
-import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
+// Палитра — planPalette (цвета приложения): вкладка «План» одного
+// цвета с остальным приложением, включая кнопки (просьба Кати 09.11).
+// Ключи те же, что у design-системы «Тренировок», значения — bear.*
+import { spacing, radius, F, type } from '@/features/workouts/theme'
+import { C as colors } from './planPalette'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 

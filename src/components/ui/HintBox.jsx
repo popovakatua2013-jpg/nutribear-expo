@@ -4,8 +4,8 @@
 // («💡 Как это работает» + шеврон) — тап раскрывает шаги; крестик в
 // раскрытом виде закрывает подсказку насовсем и запоминает это в
 // useUiPrefsStore.closedHints — после перезапуска она не вернётся.
-// Шаги — список строк с номерами в лаймовых кружках (стиль бокса
-// подсказок «Меню на неделю», палитра planPalette).
+// Шаги — список строк с номерами в акцентных кружках (стиль бокса
+// подсказок «Меню на неделю», палитра planPalette — цвета приложения).
 
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -65,7 +65,7 @@ export function HintBox({ id, title = 'Как это работает', steps = 
 
 const S = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(198,251,75,0.06)',
+    backgroundColor: 'rgba(123,108,246,0.08)',
     borderColor: P.accentBorder,
     borderWidth: 1,
     borderRadius: radius.screen,
@@ -93,6 +93,6 @@ const S = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accent },
+  numText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accentText },
   text: { ...type.body, fontSize: 13, color: P.text2, flex: 1, lineHeight: 19 },
 })
