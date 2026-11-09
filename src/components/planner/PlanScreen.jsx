@@ -7,6 +7,8 @@
 //                  рецепт» (макет Кати от 09.11 + отзыв 09.11)
 //   прогресс     — кольцо % + легенда Калории/Белки/Жиры/Углеводы +
 //                  линия тренда за неделю (клетчатка/сахар — переключателем)
+//                  + прогноз цели по весу (просьба Кати 10.11): дефицит
+//                  по дневнику за 2 недели → темп кг/нед → дата цели
 //   покупки      — чек-лист слева, иллюстрация и лаймовая кнопка справа
 //   голодание    — кольцо «16:8», «Ваш режим», строки «Советы» / «Результаты»
 // Данные — только реальные, из сторов приложения. Палитра — planPalette.js
@@ -22,16 +24,18 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import {
-  BarChart3, Bell, ChefHat, Check, ChevronRight, Hourglass, Settings, ShoppingCart,
+  BarChart3, Bell, ChefHat, Check, ChevronRight, Hourglass, Settings, ShoppingCart, Target,
 } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import { formatNum } from '@/lib/format'
+import { formatNum, pluralDays } from '@/lib/format'
 import { requestOpenReminders } from '@/lib/navEvents'
 import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { GOALS } from '@/lib/data/goals'
 import { FIBER_NORM, SUGAR_LIMIT, sumNutrition } from '@/lib/data/nutrition'
+import { goalForecast } from '@/lib/data/forecast'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useProfileStore } from '@/store/useProfileStore'
 import { useShoppingStore } from '@/store/useShoppingStore'
 import { useFastingStore } from '@/store/useFastingStore'
 import { useActivityStore } from '@/store/useActivityStore'
@@ -42,7 +46,7 @@ import { MealPlanScreen } from './MealPlanScreen'
 import { RecipesModal } from '../food/RecipesModal'
 import { AddFoodModal } from '../food/AddFoodModal'
 import { P, goodsWord } from './planPalette'
-import { spacing, F, type } from '@/features/workouts/theme'
+import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 const BEAR = require('../../../assets/images/bear.webp')
 const SHOP_BAG = require('../../../assets/images/shop-bag.webp')
@@ -81,6 +85,56 @@ const METRICS = [
 ]
 const METRIC_COLORS = { kcal: P.accent, fib: P.green, sug: P.pink }
 const METRIC_UNIT = { kcal: 'ккал', fib: 'г', sug: 'г' }
+
+// Месяцы в родительном падеже — дата прогноза цели («20 декабря»)
+const MONTHS_GEN = [
+  'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+]
+
+// Тексты блока прогноза цели (данные — goalForecast из lib/data/forecast.js)
+function forecastTexts(f) {
+  if (f.reason === 'ok') {
+    const d = f.date
+    const year = f.daysLeft > 365 ? ` ${d.getFullYear()}` : ''
+    const dateStr = `~${d.getDate()} ${MONTHS_GEN[d.getMonth()]}${year}`
+    const rate = Math.abs(f.rateKgWeek).toFixed(1).replace('.', ',')
+    const kcal = formatNum(Math.abs(f.deficitKcal))
+    const isDeficit = f.deficitKcal >= 0
+    const mark = isDeficit ? '−' : '+'
+    const word = isDeficit ? 'дефиците' : 'профиците'
+    return {
+      title: `К цели по весу придёшь ${dateStr}`,
+      sub: `При твоём текущем ${word} ${mark}${rate} кг/нед (${mark}${kcal} ккал/день)`,
+    }
+  }
+  if (f.reason === 'need-data') {
+    const n = f.needDays
+    return {
+      title: 'Прогноз цели — совсем скоро',
+      sub: `Заполни дневник ещё ${n} ${pluralDays(n)} — дефицит считается по записям за 2 недели`,
+    }
+  }
+  if (f.reason === 'no-goal') {
+    return {
+      title: 'Прогноз цели по весу',
+      sub: 'Поставь цель по весу в разделе «Тело» — здесь появится дата',
+    }
+  }
+  if (f.reason === 'reached') {
+    return { title: 'Цель по весу достигнута 🎉', sub: 'Держи темп — прогноз больше не нужен' }
+  }
+  if (f.reason === 'wrong-dir') {
+    return {
+      title: 'Цель по весу пока не приближается',
+      sub: 'Рацион сейчас уводит от цели — прогноз появится, когда направление совпадёт',
+    }
+  }
+  return {
+    title: 'Дефицит почти нулевой',
+    sub: 'Темп меньше 0,05 кг/нед — даты цели пока не видно',
+  }
+}
 
 // Кольцо прогресса — анимация как у колец «Главной» (KcalRing):
 // дуга «заливается» от нуля до процента, число в центре отсчитывается
@@ -278,6 +332,10 @@ export function PlanScreen({ onOpenFasting }) {
   const history = useFoodStore((s) => s.history)
   const kcalGoal = useGoalsStore((s) => s.goals.kcal)
   const macroNorms = useGoalsStore((s) => s.goals.macroNorms)
+  // Прогноз цели по весу (просьба Кати 10.11): вес и цель — из профиля,
+  // дефицит — из дневника; показывается в карточке «Прогресс»
+  const weightKg = useProfileStore((s) => s.weightKg)
+  const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const shopItems = useShoppingStore((s) => s.items)
   const fastStart = useFastingStore((s) => s.windowStart)
   const fastWindow = useFastingStore((s) => s.windowHours)
@@ -290,6 +348,14 @@ export function PlanScreen({ onOpenFasting }) {
     () => sumNutrition(Object.values(entries || {}).flat()),
     [entries],
   )
+
+  // Прогноз цели по весу: дефицит по дневнику (за 2 недели) → темп
+  // кг/нед → дата цели. Пересчёт — при смене дневника/нормы/веса/цели
+  const forecast = useMemo(
+    () => goalForecast({ history, kcalGoal, weightKg, goalWeightKg }),
+    [history, kcalGoal, weightKg, goalWeightKg],
+  )
+  const forecastText = useMemo(() => forecastTexts(forecast), [forecast])
 
   // Нормы: свои из целей (0 = авто) или «тарелка» от нормы ккал
   const norms = useMemo(() => {
@@ -621,6 +687,19 @@ export function PlanScreen({ onOpenFasting }) {
           todayIdx={todayIdx}
           onPickDay={pickDay}
         />
+
+        {/* Прогноз цели по весу — дефицит считается по дневнику (просьба
+            Кати 10.11): «при твоём текущем дефиците −0,5 кг/нед, к цели
+            по весу придёшь ~20 декабря» */}
+        <View style={styles.forecast}>
+          <View style={styles.forecastIcon}>
+            <Target size={15} color={P.accentText} />
+          </View>
+          <View style={styles.forecastTexts}>
+            <Text numberOfLines={1} style={styles.forecastTitle}>{forecastText.title}</Text>
+            <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
+          </View>
+        </View>
       </View>
 
       {/* 4. Список покупок — чек-лист слева, иллюстрация и лаймовая кнопка
@@ -835,6 +914,29 @@ const styles = {
   },
   ringPct: { fontWeight: '800', fontFamily: F[800], color: P.text, letterSpacing: -0.5 },
   ringSub: { fontSize: 10.5, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: -1 },
+
+  // Прогноз цели по весу — строка под графиком недели
+  forecast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: P.tileSoft,
+    borderRadius: radius.row,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: spacing.m,
+  },
+  forecastIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: P.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  forecastTexts: { flex: 1, minWidth: 0 },
+  forecastTitle: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  forecastSub: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
 
   // Переключатель показателя графика
   segRow: {

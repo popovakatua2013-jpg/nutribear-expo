@@ -2,6 +2,10 @@
 // Хранение: plans[weekKey][dayIdx][mealId] = [items], где weekKey —
 // дата понедельника недели 'YYYY-MM-DD' (недели с понедельника, как в
 // календарях отчётов), dayIdx 0…6, mealId — приёмы из MEAL_IDS.
+// templates — шаблоны дней (просьба Кати 10.11): [{ id, name, day,
+// kcal, dishes, createdAt }], «day» — тот же пустой день { breakfast:
+// [], lunch: [], dinner: [], snack: [] }; сохранённый любимый день
+// вставляется в любой день одним тапом.
 // Элемент меню — выжимка из buildFood (продукт базы или «своё блюдо»)
 // + граммовка и ккал порции: этого достаточно, чтобы «В дневник»
 // записал блюдо через useFoodStore.addEntry с полным БЖУ.
@@ -79,6 +83,7 @@ export const useMealPlanStore = create(
   persist(
     (set, get) => ({
       plans: {},
+      templates: [], // шаблоны дней меню — см. шапку файла
 
       /** Добавить блюдо в приём: item — buildFood-подобный объект + grams */
       addItem(weekKey, dayIdx, mealId, item) {
@@ -161,6 +166,95 @@ export const useMealPlanStore = create(
         })
       },
 
+      /** Заменить блюдо в приёме другим (замены «похожее по ккал»,
+       * просьба Кати 10.11): новый item встаёт на то же место, у копии
+       * новый id. Форма planItem — как в addItem */
+      replaceItem(weekKey, dayIdx, mealId, itemId, item) {
+        set((state) => {
+          const week = state.plans[weekKey]
+          const day = week?.[dayIdx]
+          if (!day) return state
+          const list = day[mealId] || []
+          if (!list.some((x) => x.id === itemId)) return state
+          const planItem = {
+            id: makeId(),
+            name: String(item.name || 'Блюдо').slice(0, 80),
+            emoji: item.emoji || '🍽️',
+            grams: Math.round(item.grams || 100),
+            kcal: Math.round((Number(item.kcal) || 0) * 10) / 10,
+            kcal100: item.kcal100 ?? item.kcal ?? 100,
+            p: item.p, f: item.f, c: item.c,
+            source: item.source || 'local',
+          }
+          return {
+            plans: {
+              ...state.plans,
+              [weekKey]: {
+                ...week,
+                [dayIdx]: {
+                  ...day,
+                  [mealId]: list.map((x) => (x.id === itemId ? planItem : x)),
+                },
+              },
+            },
+          }
+        })
+      },
+
+      // ─── Шаблоны дней («сохраняешь любимый день меню и вставляешь
+      // его на любой день одним тапом», просьба Кати 10.11) ───
+
+      /** Сохранить меню дня как шаблон. Пустой день — null (сохранять
+       * нечего). Имя — до 30 символов, без имени — «Шаблон N» */
+      saveDayAsTemplate(weekKey, dayIdx, name) {
+        const src = get().plans[weekKey]?.[dayIdx]
+        const day = emptyDay()
+        let dishes = 0
+        if (src) {
+          for (const mealId of MEAL_IDS) {
+            day[mealId] = (src[mealId] || []).map((it) => ({ ...it, id: makeId() }))
+            dishes += day[mealId].length
+          }
+        }
+        if (dishes === 0) return null
+        const clean = String(name || '').trim().slice(0, 30)
+        const tpl = {
+          id: makeId(),
+          name: clean || `Шаблон ${get().templates.length + 1}`,
+          day,
+          kcal: dayKcal(day),
+          dishes,
+          createdAt: Date.now(),
+        }
+        set((state) => ({ templates: [...state.templates, tpl] }))
+        return tpl
+      },
+
+      /** Вставить шаблон в день (меню дня заменяется, как при
+       * копировании); id у блюд новые. false — шаблона нет */
+      applyTemplate(templateId, weekKey, dayIdx) {
+        const tpl = get().templates.find((t) => t.id === templateId)
+        if (!tpl) return false
+        set((state) => {
+          const week = state.plans[weekKey] || {}
+          const day = emptyDay()
+          for (const mealId of MEAL_IDS) {
+            day[mealId] = (tpl.day[mealId] || []).map((it) => ({ ...it, id: makeId() }))
+          }
+          return { plans: { ...state.plans, [weekKey]: { ...week, [dayIdx]: day } } }
+        })
+        return true
+      },
+
+      /** Удалить шаблон. false — шаблона не было */
+      removeTemplate(templateId) {
+        const before = get().templates.length
+        set((state) => ({
+          templates: state.templates.filter((t) => t.id !== templateId),
+        }))
+        return get().templates.length < before
+      },
+
       /** Копировать день (в т.ч. между неделями); id у копий новые */
       copyDay(fromWeekKey, fromIdx, toWeekKey, toIdx) {
         set((state) => {
@@ -216,7 +310,9 @@ export const useMealPlanStore = create(
     {
       name: 'nutribear-meal-plan',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 1,
+      // v2 — шаблоны дней: у старых хранилищ поля templates нет, merge
+      // оставит начальный [] — ничего не ломает, миграция не нужна
+      version: 2,
       migrate: (state) => state,
     },
   ),

@@ -9,8 +9,12 @@
 // и действия дня. Заполненные дни помечены точкой. Пока неделя пустая —
 // карточка «Как это работает». Тап по «+» — окно «Добавить блюдо» (база
 // продуктов или своё блюдо, галочка «в покупки»). Тап по пилюле
-// «80 г · 200 ккал» — правка граммовки (GramsModal). Копирование дня,
-// очистка дня/недели, «взять меню прошлой недели»; на сегодняшнем дне —
+// «80 г · 200 ккал» — правка граммовки (GramsModal). Тап по названию
+// блюда — замены «похожее по ккал» из базы продуктов (SwapDishModal,
+// просьба Кати 10.11). «Шаблоны» — сохранить любимый день меню и
+// вставить его в любой день одним тапом (просьба Кати 10.11).
+// Копирование дня, очистка дня/недели, «взять меню прошлой недели»;
+// на сегодняшнем дне —
 // «В дневник»: переносит блюда в дневник питания через
 // useFoodStore.addEntry (полный БЖУ по граммовке).
 // Режим compact — узкая колонка: «Меню на неделю» стоит РЯДОМ с
@@ -23,8 +27,8 @@
 // Палитра — planPalette.js (цвета приложения), сетка и шрифты — theme.js.
 
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Modal, Pressable, Text, View } from 'react-native'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
+import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -36,10 +40,14 @@ import { useToast } from '../ui/Toast'
 import { HintBox } from '../ui/HintBox'
 import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
+import { SwapDishModal } from './SwapDishModal'
 import { P } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+
+// Максимум шаблонов дней: без ограничителя список растёт бесконечно
+const MAX_TPL = 12
 
 const WEEKDAYS_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
@@ -77,8 +85,16 @@ export function MealPlanScreen({ compact = false }) {
   // «Показать все приёмы пищи»: перекус + действия дня; по умолчанию
   // видно три строки (Завтрак / Обед / Ужин) — как в макете
   const [showAll, setShowAll] = useState(false)
+  // Замены блюда («похожее по ккал», просьба Кати 10.11): тап по
+  // названию блюда открывает окно замен из базы продуктов
+  const [swapFor, setSwapFor] = useState(null) // { mealId, itemId }
+  // Шаблоны дней (просьба Кати 10.11): сохранить любимый день меню
+  // и вставить его в любой день одним тапом
+  const [tplOpen, setTplOpen] = useState(false)
+  const [tplName, setTplName] = useState('')
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
+  const templates = useMealPlanStore((s) => s.templates)
 
   const store = useMealPlanStore
   const todayKey = dayKeyOfDate(new Date())
@@ -179,6 +195,55 @@ export function MealPlanScreen({ compact = false }) {
       { text: 'Отмена', style: 'cancel' },
       { text: 'Очистить', style: 'destructive', onPress: () => store.getState().clearWeek(weekKey) },
     ])
+  }
+
+  // ─── Шаблоны дней: сохранить выбранный день / вставить шаблон ───
+  const saveTemplate = () => {
+    if (countDay(sel) === 0) {
+      toast({ title: 'День пустой', description: 'Сначала добавьте блюда — потом сохраните день в шаблон' })
+      return
+    }
+    if (templates.length >= MAX_TPL) {
+      toast({ title: 'Шаблоны заполнены', description: `Максимум ${MAX_TPL} — удалите лишний крестиком` })
+      return
+    }
+    const tpl = store.getState().saveDayAsTemplate(weekKey, sel, tplName)
+    if (!tpl) return
+    setTplName('')
+    toast({
+      title: `💾 «${tpl.name}» — в шаблонах`,
+      description: 'Вставить в любой день: кнопка «Шаблоны» — один тап',
+    })
+  }
+
+  const applyTemplate = (tpl) => {
+    const ok = store.getState().applyTemplate(tpl.id, weekKey, sel)
+    if (!ok) return
+    toast({
+      title: '🗓️ Шаблон вставлен',
+      description: `${tpl.name} → ${WEEKDAYS_FULL[sel].toLowerCase()}, меню дня заменено`,
+    })
+    setTplOpen(false)
+  }
+
+  const delTemplate = (tpl) => {
+    Alert.alert(`Удалить шаблон «${tpl.name}»?`, 'Меню в днях недели останется — удалится только шаблон.', [
+      { text: 'Отмена', style: 'cancel' },
+      { text: 'Удалить', style: 'destructive', onPress: () => store.getState().removeTemplate(tpl.id) },
+    ])
+  }
+
+  // ─── Замены блюда: тап по названию → окно «похожее по ккал» ───
+  const onSwapReplace = (newItem) => {
+    if (!swapFor) return
+    const { mealId, itemId } = swapFor
+    const old = (day?.[mealId] || []).find((x) => x.id === itemId)
+    store.getState().replaceItem(weekKey, sel, mealId, itemId, newItem)
+    toast({
+      title: '🔁 Блюдо заменено',
+      description: `${old?.name || 'Блюдо'} → ${newItem.name}: ${newItem.grams} г · ${formatNum(newItem.kcal)} ккал`,
+    })
+    setSwapFor(null)
   }
 
   const transferToDiary = () => {
@@ -352,7 +417,13 @@ export function MealPlanScreen({ compact = false }) {
                 {open && items.map((it) => (
                   <View key={it.id} style={styles.itemRow}>
                     <Text style={styles.itemEmoji}>{it.emoji}</Text>
-                    <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
+                    <Pressable
+                      onPress={() => setSwapFor({ mealId, itemId: it.id })}
+                      style={styles.itemNameBtn}
+                      accessibilityLabel={`${it.name}: заменить на похожее по ккал`}
+                    >
+                      <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
+                    </Pressable>
                     <Pressable
                       onPress={() => setGramsFor({ dayIdx: sel, mealId, itemId: it.id })}
                       style={[styles.itemMetaBtn, compact && styles.itemMetaBtnC]}
@@ -411,6 +482,10 @@ export function MealPlanScreen({ compact = false }) {
                   <Copy size={14} color={P.text2} />
                   <Text style={styles.dayActionText}>Копировать</Text>
                 </Pressable>
+                <Pressable onPress={() => setTplOpen(true)} style={styles.dayAction} accessibilityLabel="Шаблоны дней: сохранить выбранный день или вставить шаблон">
+                  <Bookmark size={14} color={P.text2} />
+                  <Text style={styles.dayActionText}>Шаблоны</Text>
+                </Pressable>
                 <Pressable onPress={clearDay} style={styles.dayAction} accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
                   <Trash2 size={14} color={P.text3} />
                   <Text style={styles.dayActionText}>Очистить</Text>
@@ -446,6 +521,15 @@ export function MealPlanScreen({ compact = false }) {
         onSave={saveGrams}
       />
 
+      {/* Окно замен блюда: «похожее по ккал» из базы — тап по названию
+          блюда (просьба Кати 10.11); порция замены подгоняется под те
+          же ккал, что у текущего блюда */}
+      <SwapDishModal
+        item={swapFor ? (day?.[swapFor.mealId] || []).find((x) => x.id === swapFor.itemId) : null}
+        onClose={() => setSwapFor(null)}
+        onReplace={onSwapReplace}
+      />
+
       {/* Окно копирования дня: куда */}
       <Modal visible={copyFrom !== null} transparent animationType="fade" onRequestClose={() => setCopyFrom(null)}>
         <Pressable style={styles.copyBackdrop} onPress={() => setCopyFrom(null)}>
@@ -464,6 +548,72 @@ export function MealPlanScreen({ compact = false }) {
               ))}
             </View>
             <Text style={styles.copyHint}>Меню выбранного дня будет заменено</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Окно шаблонов дней: список + сохранение выбранного дня.
+          Тап по шаблону — вставить в выбранный день одним тапом
+          (просьба Кати 10.11: «сохраняешь любимый день меню и вставляешь
+          его на любой день одним тапом») */}
+      <Modal visible={tplOpen} transparent animationType="fade" onRequestClose={() => setTplOpen(false)}>
+        <Pressable style={styles.copyBackdrop} onPress={() => setTplOpen(false)}>
+          <Pressable style={styles.tplSheet} onPress={() => {}}>
+            <Text style={styles.copyTitle}>Шаблоны дней</Text>
+            <Text style={styles.tplHint}>
+              Тап по шаблону — вставить в {WEEKDAYS_FULL[sel].toLowerCase()}, меню дня заменится
+            </Text>
+            {templates.length === 0 ? (
+              <Text style={styles.tplEmpty}>
+                Пока нет шаблонов — заполни день и сохрани его внизу: любимое меню вставится в любой день одним тапом
+              </Text>
+            ) : (
+              <View style={styles.tplList}>
+                {templates.map((t) => (
+                  <View key={t.id} style={styles.tplRow}>
+                    <Pressable
+                      onPress={() => applyTemplate(t)}
+                      style={styles.tplMain}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Вставить шаблон «${t.name}» в ${WEEKDAYS_FULL[sel].toLowerCase()}`}
+                    >
+                      <Text style={styles.tplName} numberOfLines={1}>{t.name}</Text>
+                      <Text style={styles.tplMeta} numberOfLines={1}>
+                        {formatNum(t.kcal)} ккал · {t.dishes} {dishWord(t.dishes)}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => delTemplate(t)}
+                      style={styles.tplDel}
+                      hitSlop={6}
+                      accessibilityLabel={`Удалить шаблон «${t.name}»`}
+                    >
+                      <Trash2 size={14} color={P.text3} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
+            <View style={styles.tplSaveRow}>
+              <TextInput
+                style={styles.tplInput}
+                placeholder="Название шаблона"
+                placeholderTextColor={P.text3}
+                value={tplName}
+                onChangeText={setTplName}
+                maxLength={30}
+                accessibilityLabel="Название шаблона, например Любимый день"
+              />
+              <Pressable
+                onPress={saveTemplate}
+                style={styles.tplSaveBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Сохранить меню выбранного дня как шаблон"
+              >
+                <BookmarkPlus size={15} color={P.accentInk} />
+                <Text style={styles.tplSaveText}>Сохранить день</Text>
+              </Pressable>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -592,7 +742,9 @@ const styles = {
     minHeight: 34,
   },
   itemEmoji: { fontSize: 14, width: 20, textAlign: 'center' },
-  itemName: { ...type.body, color: P.text, flex: 1, fontSize: 13 },
+  // тап по названию блюда — окно замен «похожее по ккал» (просьба Кати 10.11)
+  itemNameBtn: { flex: 1, minWidth: 0 },
+  itemName: { ...type.body, color: P.text, fontSize: 13 },
   itemMetaBtn: {
     backgroundColor: P.card,
     borderColor: P.line,
@@ -671,4 +823,56 @@ const styles = {
   copyPillOff: { borderColor: P.line, opacity: 0.5 },
   copyPillText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: P.text },
   copyHint: { ...type.caption, color: P.text3, textAlign: 'center', marginTop: spacing.m },
+
+  // Окно шаблонов дней (список + сохранение выбранного дня)
+  tplSheet: {
+    backgroundColor: P.tile,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: radius.screen,
+    padding: spacing.xl,
+    width: '86%',
+    gap: spacing.m,
+  },
+  tplHint: { ...type.caption, color: P.text3, textAlign: 'center' },
+  tplEmpty: { ...type.caption, color: P.text2, textAlign: 'center', paddingVertical: spacing.s },
+  tplList: { gap: 6 },
+  tplRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: radius.row,
+    paddingRight: 6,
+  },
+  tplMain: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 8 },
+  tplName: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  tplMeta: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
+  tplDel: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  tplSaveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.xs },
+  tplInput: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: radius.field,
+    paddingHorizontal: 12,
+    height: 42,
+    color: P.text,
+    fontSize: 14,
+    fontFamily: F[400],
+  },
+  tplSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: P.accent,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    height: 42,
+  },
+  tplSaveText: { fontSize: 12.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 }
