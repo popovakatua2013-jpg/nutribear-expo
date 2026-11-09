@@ -26,7 +26,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum } from '@/lib/format'
 import { requestOpenReminders } from '@/lib/navEvents'
 import { applyGoalChoice } from '@/lib/data/goals-apply'
-import { GOALS, getDailyTarget } from '@/lib/data/goals'
+import { GOALS } from '@/lib/data/goals'
 import { FIBER_NORM, SUGAR_LIMIT, sumNutrition } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -353,14 +353,17 @@ export function PlanScreen({ onOpenFasting }) {
   const metricColor = METRIC_COLORS[metric]
   const fmtVal = (v) => (metric === 'kcal' ? formatNum(v) : String(Math.round(v * 10) / 10))
 
-  // Смена цели — единая точка (applyGoalChoice), тост с нормой
+  // Выбор цели — вариант 3 (выбор Кати): план «хранит» выбор цели, а
+  // норму калорий НЕ меняем — её считает калькулятор (Тело/онбординг).
+  // goalId и норма меняются вместе (applyGoalChoice), поэтому передаём
+  // текущую норму kcalOverride — она остаётся прежней
   const pickGoal = (id) => {
     if (id === goalId) return
-    applyGoalChoice(id)
+    applyGoalChoice(id, kcalGoal)
     const g = GOALS.find((x) => x.id === id)
     toast({
       title: `${g.emoji} Цель: ${g.label}`,
-      description: `Дневная норма — ${formatNum(getDailyTarget(id))} ккал`,
+      description: `Норма без изменений — ${formatNum(kcalGoal)} ккал (её считает калькулятор)`,
     })
   }
 
@@ -471,7 +474,7 @@ export function PlanScreen({ onOpenFasting }) {
               style={[styles.goalChip, active && styles.goalChipOn]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={`Цель ${g.label}, норма ${formatNum(getDailyTarget(g.id))} ккал в день`}
+              accessibilityLabel={`Цель ${g.label}${active ? ', активна' : ''}, выбор цели норму калорий не меняет`}
             >
               <Text style={styles.goalEmoji}>{g.emoji}</Text>
               <View style={styles.goalTexts}>
