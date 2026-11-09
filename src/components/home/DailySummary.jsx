@@ -67,7 +67,7 @@ import { DAY_TYPES } from '@/lib/data/dayContext'
 import { dayKeyOf as cycleDayKeyOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
-import { Check, ChevronDown, RotateCcw } from 'lucide-react-native'
+import { Check, RotateCcw } from 'lucide-react-native'
 
 const MAX = 1.25
 const RING = 84
@@ -133,7 +133,11 @@ function VDivider() {
 // strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
 // число в центре отсчитывается вверх. runId приходит из DailySummary и
 // растёт при каждом возврате на вкладку «Главная» — заливка повторяется.
-function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23 }) {
+// editable — рисуем маленький карандашик-бейдж на краю кольца (отзыв
+// Кати: «сделай каждый блок редактируемый (на карандашик)» — сейчас
+// правка цели была только по невидимому тапу, её невозможно найти).
+// Бейдж pointerEvents="none" — тап ловит сам родительский Pressable
+function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23, editable = false }) {
   // size — диаметр (у обоих колец одинаковый 84); толщина дуги и радиус
   // считаются от диаметра, шрифт числа — свой
   const sw = size === RING ? SW : Math.max(7, Math.round((SW * size) / RING))
@@ -222,6 +226,13 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             />
           )}
         </Svg>
+        {editable && (
+          <View pointerEvents="none" style={{ position: 'absolute', top: -3, right: -3 }}>
+            <View className="h-[24px] w-[24px] items-center justify-center rounded-full border border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.09)' }}>
+              <Pencil size={12} color="#A5AECB" />
+            </View>
+          </View>
+        )}
         <View className="absolute inset-0 items-center justify-center">
           <Text
             adjustsFontSizeToFit
@@ -317,6 +328,30 @@ export function DailySummary({
   // Окно правки своих норм нутриентов (карандашик в строке нутриентов)
   const [normsOpen, setNormsOpen] = useState(false)
   const [normsDraft, setNormsDraft] = useState({ p: '', f: '', c: '', fib: '' })
+
+  // Окно правки прибавки особого дня (карандашик на строке типа в окне
+  // «Особый день» — отзыв Кати: править прибавку прямо здесь, без хода
+  // в «Ещё → Дневник питания»). deltaEdit — тип дня, deltaDraft — ввод
+  const setDeltaStore = useDayTypesStore((s) => s.setDelta)
+  const [deltaEdit, setDeltaEdit] = useState(null)
+  const [deltaDraft, setDeltaDraft] = useState('')
+
+  function openDeltaEdit(type) {
+    setDeltaDraft(String(dayDeltas[type] ?? 0))
+    setDeltaEdit(type)
+  }
+
+  function saveDelta() {
+    // Границы как в «Ещё → Дневник питания»: 0…1000 ккал, 0 — без прибавки
+    const kcal = Math.min(1000, Math.max(0, Math.round(Number(String(deltaDraft).replace(',', '.')) || 0)))
+    const meta = DAY_TYPES[deltaEdit]
+    setDeltaStore(deltaEdit, kcal)
+    setDeltaEdit(null)
+    toast({
+      title: `${meta.emoji} ${meta.label}: +${formatNum(kcal)} ккал`,
+      description: kcal > 0 ? 'Прибавка обновлена' : 'Прибавка убрана — день без перерасчёта',
+    })
+  }
 
   function openNormsEdit() {
     // В полях — только свои значения; авто-нормы видны в подсказках
@@ -435,6 +470,7 @@ export function DailySummary({
             pct={pct}
             gradient
             runId={runId}
+            editable
             accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
           />
         </Row>
@@ -482,6 +518,9 @@ export function DailySummary({
                 >
                   Осталось
                 </Text>
+                {/* Карандашик — подсказка редактируемости (отзыв Кати:
+                    «каждый блок — на карандашик»); тап ловит Row вокруг */}
+                <Pencil size={12} color="#8B96B8" />
               </View>
               <Text
                 numberOfLines={1}
@@ -495,21 +534,6 @@ export function DailySummary({
                 <Text className="font-bold" style={{ fontSize: 13, color: '#8B96B8' }}>
                   {' ккал'}
                 </Text>
-              </Text>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-                maxFontSizeMultiplier={MAX}
-                className="mt-0.5 font-sans text-[11px] leading-tight text-bear-sub2"
-              >
-                {rem == null
-                  ? 'цель не задана'
-                  : rem >= 0
-                    ? countBurned
-                      ? 'с учётом сожжённых'
-                      : 'без учёта сожжённых'
-                    : 'съедено больше нормы'}
               </Text>
             </View>
           </Row>
@@ -536,6 +560,7 @@ export function DailySummary({
             pct={burnPct}
             color="#34D399"
             runId={runId}
+            editable
             accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
           />
         </BurnZone>
@@ -585,7 +610,10 @@ export function DailySummary({
               }`
             : 'Особый день'}
         </Text>
-        <ChevronDown size={14} color={dayMark ? markMeta.color : '#C4B5FD'} />
+        <Pencil
+          size={14}
+          color={dayMark ? markMeta.color : '#C4B5FD'}
+        />
       </Pressable>
 
       {/* нутриенты одной строкой в заданном порядке (Катя попросила
@@ -654,10 +682,6 @@ export function DailySummary({
                   <X hitSlop={10} size={22} color="#A5AECB" />
                 </Pressable>
               </View>
-              <Text className="mt-1 font-sans text-[15px] leading-relaxed text-bear-sub">
-                Граммы в день. Пустое поле — считать от цели по калориям
-                (тарелка 20/30/50 %, клетчатка 25 г)
-              </Text>
               <View className="mt-3 flex-row gap-2.5">
                 <NormInput
                   label="Белки, г"
@@ -734,9 +758,6 @@ export function DailySummary({
                 <X hitSlop={10} size={22} color="#A5AECB" />
               </Pressable>
             </View>
-            <Text className="mt-1 font-sans text-[15px] leading-relaxed text-bear-sub">
-              В особый день норма калорий пересчитывается с прибавкой: остаток на Главной, кольцо «съедено» и «Цель: N/7 дн» в отчётах считают по норме этого дня.
-            </Text>
             <View className="mt-3 gap-2">
               {Object.keys(DAY_TYPES).map((t) => {
                 const meta = DAY_TYPES[t]
@@ -765,6 +786,18 @@ export function DailySummary({
                         {`+${formatNum(dayDeltas[t] || 0)} ккал к норме`}
                       </Text>
                     </View>
+                    {/* Карандашик — правка прибавки прямо здесь (отзыв
+                        Кати: «каждый блок — на карандашик»); тап не меняет
+                        метку дня, только открывает окно прибавки */}
+                    <Pressable
+                      onPress={() => openDeltaEdit(t)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Изменить прибавку для «${meta.label}»`}
+                      hitSlop={8}
+                      className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+                    >
+                      <Pencil size={14} color="#AEB9D9" />
+                    </Pressable>
                     {active && (
                       <View
                         className="h-6 w-6 shrink-0 items-center justify-center rounded-full"
@@ -794,14 +827,73 @@ export function DailySummary({
                 <Text className="font-bold text-[16px] text-bear-soft">Вернуть обычный день</Text>
               </Pressable>
             )}
-            <Text className="mt-2.5 font-sans text-[13px] leading-snug text-bear-dim">
-              🌙 Дни менструации отмечаются сами, если включён трекер цикла
-              («Ещё» → «Цикл»). Размер прибавок — «Ещё» → «Дневник питания» →
-              «Особые дни».
-              {!(target > 0) ? ' Норма калорий не задана — прибавка заработает, когда зададите цель.' : ''}
-            </Text>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Окно правки прибавки особого дня (открылось по карандашику на
+          строке типа): поле 0…1000 ккал, 0 — день без перерасчёта.
+          Границы те же, что в «Ещё → Дневник питания» */}
+      <Modal
+        visible={deltaEdit != null}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setDeltaEdit(null)}
+      >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
+          <Pressable
+            className="flex-1 items-center justify-center bg-black/60 px-8"
+            onPress={() => setDeltaEdit(null)}
+          >
+            <Pressable
+              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              onPress={() => {}}
+              accessibilityLabel="Прибавка особого дня"
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="min-w-0 flex-row items-center gap-2">
+                  {deltaEdit ? <Text className="text-[22px]">{DAY_TYPES[deltaEdit].emoji}</Text> : null}
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={MAX}
+                    className="font-bold text-[18px] text-bear-text"
+                  >
+                    {deltaEdit ? DAY_TYPES[deltaEdit].label : ''}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setDeltaEdit(null)}
+                  accessibilityLabel="Закрыть"
+                  className="p-1"
+                >
+                  <X hitSlop={10} size={22} color="#A5AECB" />
+                </Pressable>
+              </View>
+              <TextInput
+                value={deltaDraft}
+                onChangeText={(t) => setDeltaDraft(t.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={4}
+                autoFocus
+                selectTextOnFocus
+                accessibilityLabel="Прибавка, килокалорий в день"
+                className="mt-3 rounded-2xl border border-white/10 bg-white/5 py-3 text-center font-bold text-[22px] text-bear-text"
+                placeholder="0"
+                placeholderTextColor="#8B96B8"
+              />
+              <Pressable
+                onPress={saveDelta}
+                accessibilityRole="button"
+                accessibilityLabel="Сохранить прибавку"
+                className="mt-4 rounded-2xl py-3 active:opacity-80"
+                style={{ backgroundColor: '#7B6CF6' }}
+              >
+                <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )
