@@ -25,6 +25,7 @@ import {
   useMealPlanStore, weekKeyOf, weekKeyShift, WEEKDAYS,
 } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
+import { HintBox } from '../ui/HintBox'
 import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
 import { P } from './planPalette'
@@ -254,19 +255,10 @@ export function MealPlanScreen() {
         })}
       </View>
 
-      {/* Подсказка для пустой недели */}
+      {/* Подсказка для пустой недели — свернута в строку по умолчанию,
+          тап раскрывает шаги, крестик закрывает насовсем (отзыв Кати) */}
       {weekEmpty ? (
-        <View style={styles.howCard}>
-          <Text style={styles.howTitle}>💡 Как это работает</Text>
-          {HOW_STEPS.map((s, i) => (
-            <View key={i} style={styles.howRow}>
-              <View style={styles.howNum}>
-                <Text style={styles.howNumText}>{i + 1}</Text>
-              </View>
-              <Text style={styles.howText}>{s}</Text>
-            </View>
-          ))}
-        </View>
+        <HintBox id="mealplan-how" steps={HOW_STEPS} />
       ) : (
         <>
           {/* Шапка выбранного дня: название + план дня в ккал */}
@@ -478,30 +470,6 @@ const styles = {
     backgroundColor: 'rgba(255,255,255,0.10)',
   },
   dayDotOn: { backgroundColor: P.accent },
-
-  // Подсказка «Как это работает» — для пустой недели
-  howCard: {
-    backgroundColor: 'rgba(198,251,75,0.06)',
-    borderColor: P.accentBorder,
-    borderWidth: 1,
-    borderRadius: radius.screen,
-    padding: spacing.l,
-    marginTop: spacing.m,
-  },
-  howTitle: { ...type.title, fontSize: 15, color: P.text },
-  howRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
-  howNum: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: P.accentSoft,
-    borderColor: P.accentBorder,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  howNumText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accent },
-  howText: { ...type.body, fontSize: 13, color: P.text2, flex: 1, lineHeight: 19 },
 
   // Шапка дня: название + пилюля «по плану · N ккал»
   dayHead: {

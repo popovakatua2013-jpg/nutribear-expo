@@ -13,13 +13,17 @@
 // сожжённое не возвращается (отзыв Кати: «строгий остаток по
 // умолчанию»); переключатель «с учётом сожжённых» включает прежнюю
 // формулу цель − съедено + сожжено (remainderOf в lib/data/remainder).
-// Кольцо анимируется как
+// Кольца БЕЗ карандашиков (отзыв Кати 09.11: карандашики — только у
+// особых дней и норм нутриентов); правка целей осталась на коротком
+// тапе по кольцу, как было до бейджа. Кольцо анимируется как
 // донат ИМТ (BmiDonut): при открытии вкладки дуга «заливается» от нуля,
 // число в центре отсчитывается вверх — и всё это повторяется при каждом
 // возврате на «Главную» (запрос пользователя).
 // Короткий тап по левой половине — изменить цель по калориям, по блоку
 // «сожжено» — цель «сжечь за день» (короткий тап вместо долгого —
-// отзыв Кати; карточка «Калории» с
+// отзыв Кати; карандашики у колец и у «Осталось» убраны по отзыву
+// Кати 09.11 — редактируются только особые дни и нормы нутриентов;
+// карточка «Калории» с
 // главной убрана как дубликат, её единственная уникальная функция
 // переехала сюда). Обычный тап нигде не открывает историю: по решению
 // пользователя «Главная» — только сегодня, история по дням живёт во
@@ -133,11 +137,10 @@ function VDivider() {
 // strokeDashoffset, JS-драйвер — без Reanimated: тот ронял SVG-экраны),
 // число в центре отсчитывается вверх. runId приходит из DailySummary и
 // растёт при каждом возврате на вкладку «Главная» — заливка повторяется.
-// editable — рисуем маленький карандашик-бейдж на краю кольца (отзыв
-// Кати: «сделай каждый блок редактируемый (на карандашик)» — сейчас
-// правка цели была только по невидимому тапу, её невозможно найти).
-// Бейдж pointerEvents="none" — тап ловит сам родительский Pressable
-function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23, editable = false }) {
+// Карандашик-бейдж на краю кольца убран (отзыв Кати 09.11:
+// карандашики — только у особых дней и норм нутриентов); правка
+// цели остаётся на коротком тапе по кольцу (родительский Pressable)
+function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23 }) {
   // size — диаметр (у обоих колец одинаковый 84); толщина дуги и радиус
   // считаются от диаметра, шрифт числа — свой
   const sw = size === RING ? SW : Math.max(7, Math.round((SW * size) / RING))
@@ -226,13 +229,6 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             />
           )}
         </Svg>
-        {editable && (
-          <View pointerEvents="none" style={{ position: 'absolute', top: -3, right: -3 }}>
-            <View className="h-[24px] w-[24px] items-center justify-center rounded-full border border-white/10" style={{ backgroundColor: 'rgba(255,255,255,0.09)' }}>
-              <Pencil size={12} color="#A5AECB" />
-            </View>
-          </View>
-        )}
         <View className="absolute inset-0 items-center justify-center">
           <Text
             adjustsFontSizeToFit
@@ -470,7 +466,6 @@ export function DailySummary({
             pct={pct}
             gradient
             runId={runId}
-            editable
             accessibilityLabel={`Съедено ${formatNum(consumed)} из ${formatNum(target)} килокалорий, ${Math.round(pct)} процентов дневной нормы`}
           />
         </Row>
@@ -518,9 +513,9 @@ export function DailySummary({
                 >
                   Осталось
                 </Text>
-                {/* Карандашик — подсказка редактируемости (отзыв Кати:
-                    «каждый блок — на карандашик»); тап ловит Row вокруг */}
-                <Pencil size={12} color="#8B96B8" />
+                {/* Карандашик убран (отзыв Кати 09.11: редактируются
+                    только особые дни и нормы нутриентов); тап по блоку
+                    «Осталось» по-прежнему правит цель калорий */}
               </View>
               <Text
                 numberOfLines={1}
@@ -560,7 +555,6 @@ export function DailySummary({
             pct={burnPct}
             color="#34D399"
             runId={runId}
-            editable
             accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
           />
         </BurnZone>

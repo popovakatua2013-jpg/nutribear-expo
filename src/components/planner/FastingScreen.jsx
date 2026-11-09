@@ -16,6 +16,7 @@ import { AppState, Pressable, ScrollView, Text, View } from 'react-native'
 import { Clock, History, Play, Square } from 'lucide-react-native'
 import { useFastingStore, FASTING_MIN_LAP_MS } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
+import { HintBox } from '../ui/HintBox'
 import { colors, spacing, radius, F, type } from '@/features/workouts/theme'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
@@ -221,19 +222,10 @@ export function FastingScreen() {
         )}
       </View>
 
-      {/* Подсказка — пока сеансов нет */}
+      {/* Подсказка — пока сеансов нет: свернута в строку по умолчанию,
+          тап раскрывает шаги, крестик закрывает насовсем (отзыв Кати) */}
       {!running && laps.length === 0 && (
-        <View style={styles.howCard}>
-          <Text style={styles.howTitle}>💡 Как это работает</Text>
-          {HOW_STEPS.map((s, i) => (
-            <View key={i} style={styles.howRow}>
-              <View style={styles.howNum}>
-                <Text style={styles.howNumText}>{i + 1}</Text>
-              </View>
-              <Text style={styles.howText}>{s}</Text>
-            </View>
-          ))}
-        </View>
+        <HintBox id="fasting-how" steps={HOW_STEPS} />
       )}
 
       {/* История сеансов */}
@@ -315,19 +307,6 @@ const styles = {
   planChipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   planChipTextActive: { color: colors.accentInk },
   planNote: { ...type.caption, color: colors.text3, marginTop: spacing.s, lineHeight: 16 },
-  howCard: {
-    backgroundColor: colors.surface, borderColor: colors.accentBorder, borderWidth: 1,
-    borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,
-  },
-  howTitle: { ...type.title, fontSize: 15, color: colors.text },
-  howRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
-  howNum: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderWidth: 1,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  howNumText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: colors.accent },
-  howText: { ...type.body, fontSize: 13, color: colors.text2, flex: 1, lineHeight: 19 },
   historyCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,

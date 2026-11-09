@@ -18,7 +18,7 @@
 
 import { useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
-import { ChevronDown, Minus, Plus, Utensils } from 'lucide-react-native'
+import { ChevronDown, Minus, Plus, Utensils, X } from 'lucide-react-native'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useDayTypesStore, DELTA_MIN, DELTA_MAX, DELTA_STEP } from '@/store/useDayTypesStore'
 import { DAY_TYPES } from '@/lib/data/dayContext'
@@ -75,11 +75,13 @@ export function DiarySettingsCard({ embedded = false }) {
           <Text className="font-semibold text-[13.5px] text-bear-bright">
             {moreOpen ? 'Свернуть' : 'Как это работает'}
           </Text>
-          <ChevronDown
-            size={14}
-            color="#C4B5FD"
-            style={{ transform: [{ rotate: moreOpen ? '180deg' : '0deg' }] }}
-          />
+          {/* Раскрыта — крестик (отзыв Кати: подсказки закрываются
+              крестиком); свернута — шеврон */}
+          {moreOpen ? (
+            <X size={14} color="#C4B5FD" />
+          ) : (
+            <ChevronDown size={14} color="#C4B5FD" />
+          )}
         </Pressable>
         {moreOpen && (
           <View className="gap-2 rounded-2xl bg-white/[0.03] p-3">
@@ -182,11 +184,13 @@ export function DiarySettingsCard({ embedded = false }) {
         <Text className="font-semibold text-[13.5px] text-bear-bright">
           {moreOpen ? 'Свернуть' : 'Как это работает'}
         </Text>
-        <ChevronDown
-          size={14}
-          color="#C4B5FD"
-          style={{ transform: [{ rotate: moreOpen ? '180deg' : '0deg' }] }}
-        />
+        {/* Раскрыта — крестик (отзыв Кати: подсказки закрываются
+            крестиком); свернута — шеврон */}
+        {moreOpen ? (
+          <X size={14} color="#C4B5FD" />
+        ) : (
+          <ChevronDown size={14} color="#C4B5FD" />
+        )}
       </Pressable>
       {moreOpen && (
         <View className="mt-2 gap-2 rounded-2xl bg-white/[0.03] p-3">
