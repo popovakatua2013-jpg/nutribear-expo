@@ -12,6 +12,10 @@
 // очистка дня/недели, «взять меню прошлой недели»; на сегодняшнем дне —
 // «В дневник»: переносит блюда в дневник питания через
 // useFoodStore.addEntry (полный БЖУ по граммовке).
+// Режим compact — узкая колонка: «Меню на неделю» стоит РЯДОМ с
+// «Интервальным питанием» (макет Кати от 09.11): дни без месяца,
+// ккал по приёму столбиком, сокращённые пилюли блюд; вся
+// функциональность сохранена.
 // Внизу карточки — кнопка «Добавить рецепт» (переехала с Главной —
 // просьба Кати): окно своих рецептов — создание, список, правка;
 // «Записать» рецепта открывает то же окно добавления еды, что и на
@@ -63,7 +67,7 @@ const dayKeyOfDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d
 
 const fmtDate = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]}`
 
-export function MealPlanScreen() {
+export function MealPlanScreen({ compact = false }) {
   const { toast } = useToast()
   const [weekKey, setWeekKey] = useState(() => weekKeyOf(new Date()))
   const [sel, setSel] = useState(0) // выбранный день 0…6
@@ -211,12 +215,21 @@ export function MealPlanScreen() {
 
   return (
     <View style={styles.card}>
-      {/* Шапка карточки: плитка + заголовок + навигация недели */}
+      {/* Шапка карточки: плитка + заголовок + навигация недели.
+          В компактном режиме навигация недели переносится на строку
+          под заголовком (flexWrap: заголовку хватает ширины) */}
       <View style={styles.cardHead}>
         <View style={styles.iconTile}>
-          <CalendarDays size={18} color={P.accent} />
+          <CalendarDays size={compact ? 16 : 18} color={P.accent} />
         </View>
-        <Text style={styles.cardTitle} numberOfLines={1}>Меню на неделю</Text>
+        <Text
+          style={[styles.cardTitle, compact && styles.cardTitleC]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+        >
+          Меню на неделю
+        </Text>
         <View style={styles.weekNav}>
           <Pressable
             onPress={() => setWeekKey(weekKeyShift(weekKey, -1))}
@@ -255,12 +268,17 @@ export function MealPlanScreen() {
               <View
                 style={[
                   styles.dayBox,
+                  compact && styles.dayBoxC,
                   active && styles.dayBoxOn,
                   !active && isToday && styles.dayBoxToday,
                 ]}
               >
                 <Text style={[styles.dayName, active && styles.dayNameOn]}>{label}</Text>
-                <Text style={[styles.dayNum, active && styles.dayNumOn]}>{d.getDate()}.{d.getMonth() + 1}</Text>
+                <Text style={[styles.dayNum, active && styles.dayNumOn]}>
+                  {/* в компактном режиме — только число: месяц виден в
+                      надписи недели «2–8 ноя» */}
+                  {compact ? d.getDate() : `${d.getDate()}.${d.getMonth() + 1}`}
+                </Text>
               </View>
               <View style={[styles.dayDot, filled && styles.dayDotOn]} />
             </Pressable>
@@ -306,30 +324,38 @@ export function MealPlanScreen() {
               <View key={mealId} style={styles.mealBlock}>
                 <Pressable
                   onPress={() => setOpenMeals((s) => ({ ...s, [mealId]: !s[mealId] }))}
-                  style={styles.mealRow}
+                  style={[styles.mealRow, compact && styles.mealRowC]}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: open }}
                   accessibilityLabel={
                     `${MEAL_NAMES[mealId]}: ${items.length ? `${items.length} ${dishWord(items.length)}, ${formatNum(mealKcal)} ккал` : 'пусто'}. Тап — ${open ? 'скрыть' : 'показать'} блюда`
                   }
                 >
-                  <View style={styles.mealTile}>
-                    <Text style={{ fontSize: 17 }}>{MEAL_EMOJI[mealId]}</Text>
+                  <View style={[styles.mealTile, compact && styles.mealTileC]}>
+                    <Text style={{ fontSize: compact ? 15 : 17 }}>{MEAL_EMOJI[mealId]}</Text>
                   </View>
                   <View style={styles.mealTexts}>
-                    <Text style={styles.mealName}>{MEAL_NAMES[mealId]}</Text>
-                    <Text style={styles.mealSummary} numberOfLines={1}>{summary}</Text>
+                    <Text numberOfLines={1} style={[styles.mealName, compact && styles.mealNameC]}>{MEAL_NAMES[mealId]}</Text>
+                    <Text numberOfLines={1} style={[styles.mealSummary, compact && styles.mealSummaryC]}>{summary}</Text>
                   </View>
                   {items.length > 0 && (
-                    <Text style={styles.mealKcal}>{formatNum(mealKcal)} ккал</Text>
+                    compact ? (
+                      /* компактно: ккал столбиком — число + «ккал» */
+                      <View style={styles.mealKcalCol}>
+                        <Text style={styles.mealKcalVal}>{formatNum(mealKcal)}</Text>
+                        <Text style={styles.mealKcalUnit}>ккал</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.mealKcal}>{formatNum(mealKcal)} ккал</Text>
+                    )
                   )}
                   <Pressable
                     onPress={() => setPicker({ dayIdx: sel, mealId })}
-                    style={styles.mealAdd}
+                    style={[styles.mealAdd, compact && styles.mealAddC]}
                     hitSlop={4}
                     accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
                   >
-                    <Plus size={14} color={P.accent} />
+                    <Plus size={compact ? 12 : 14} color={P.accent} />
                   </Pressable>
                 </Pressable>
                 {open && items.map((it) => (
@@ -338,12 +364,26 @@ export function MealPlanScreen() {
                     <Text style={styles.itemName} numberOfLines={1}>{it.name}</Text>
                     <Pressable
                       onPress={() => setGramsFor({ dayIdx: sel, mealId, itemId: it.id })}
-                      style={styles.itemMetaBtn}
+                      style={[styles.itemMetaBtn, compact && styles.itemMetaBtnC]}
                       accessibilityLabel={`Изменить порцию: ${it.name}`}
                     >
-                      <Text style={styles.itemMeta}>{it.grams} г · {formatNum(it.kcal)} ккал</Text>
+                      {/* компактно — только граммы: ккал по приёму видны
+                          столбиком справа от названия приёма */}
+                      <Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.75}
+                        style={[styles.itemMeta, compact && styles.itemMetaC]}
+                      >
+                        {compact ? `${it.grams} г` : `${it.grams} г · ${formatNum(it.kcal)} ккал`}
+                      </Text>
                     </Pressable>
-                    <Pressable onPress={() => removeItem(mealId, it.id)} style={styles.itemDel} hitSlop={6} accessibilityLabel="Убрать блюдо">
+                    <Pressable
+                      onPress={() => removeItem(mealId, it.id)}
+                      style={[styles.itemDel, compact && styles.itemDelC]}
+                      hitSlop={6}
+                      accessibilityLabel="Убрать блюдо"
+                    >
                       <X size={13} color={P.text3} />
                     </Pressable>
                   </View>
@@ -360,7 +400,12 @@ export function MealPlanScreen() {
             accessibilityState={{ expanded: showAll }}
             accessibilityLabel={showAll ? 'Скрыть перекус и действия' : 'Показать все приёмы пищи'}
           >
-            <Text style={styles.showAllText}>
+            <Text
+              style={styles.showAllText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+            >
               {showAll ? 'Скрыть' : 'Показать все приёмы пищи'}
             </Text>
             {showAll
@@ -413,7 +458,14 @@ export function MealPlanScreen() {
           <ChefHat size={17} color="#4ADE80" />
         </View>
         <View style={styles.recipeTexts}>
-          <Text style={styles.recipeName} numberOfLines={1}>Добавить рецепт</Text>
+          <Text
+            style={styles.recipeName}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
+            Добавить рецепт
+          </Text>
           <Text style={styles.recipeSub} numberOfLines={1}>Свой рецепт · мои рецепты</Text>
         </View>
         <ChevronRight size={16} color={P.text3} />
@@ -493,7 +545,7 @@ const styles = {
     padding: spacing.l,
     marginTop: spacing.l,
   },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   iconTile: {
     width: 34,
     height: 34,
@@ -503,6 +555,9 @@ const styles = {
     justifyContent: 'center',
   },
   cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
+  // компактный режим: заголовок ужается сам, навигация недели
+  // переносится под него (minWidth выталкивает её на новую строку)
+  cardTitleC: { fontSize: 14, minWidth: 110 },
   weekNav: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   weekArrow: { width: 24, height: 28, alignItems: 'center', justifyContent: 'center' },
   weekLabel: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text2, minWidth: 52, textAlign: 'center' },
@@ -521,6 +576,7 @@ const styles = {
     gap: 1,
   },
   dayBoxOn: { borderColor: P.accent, backgroundColor: 'rgba(198,251,75,0.09)' },
+  dayBoxC: { height: 40 },
   dayBoxToday: { borderColor: 'rgba(255,255,255,0.16)' },
   dayName: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
   dayNameOn: { color: P.accent },
@@ -556,6 +612,8 @@ const styles = {
   // Строки приёмов: плитка-эмодзи + название + блюда + ккал + «+»
   mealBlock: { marginTop: 10 },
   mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46 },
+  // компактный режим: ужаться, чтобы строка поместилась в узкую колонку
+  mealRowC: { gap: 6, minHeight: 42 },
   mealTile: {
     width: 38,
     height: 38,
@@ -564,9 +622,12 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mealTileC: { width: 28, height: 28, borderRadius: 9 },
   mealTexts: { flex: 1, minWidth: 0 },
   mealName: { fontSize: 14.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  mealNameC: { fontSize: 13 },
   mealSummary: { fontSize: 12, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
+  mealSummaryC: { fontSize: 11 },
   mealKcal: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: P.text },
   mealAdd: {
     width: 28,
@@ -578,6 +639,11 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mealAddC: { width: 24, height: 24, borderRadius: 12 },
+  // ккал по приёму столбиком (компактный режим)
+  mealKcalCol: { alignItems: 'flex-end', flexShrink: 0 },
+  mealKcalVal: { fontSize: 12.5, fontWeight: '800', fontFamily: F[800], color: P.text, fontVariant: ['tabular-nums'] },
+  mealKcalUnit: { fontSize: 9, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: -1 },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -599,8 +665,11 @@ const styles = {
     paddingHorizontal: 9,
     paddingVertical: 3,
   },
+  itemMetaBtnC: { paddingHorizontal: 7, paddingVertical: 2 },
   itemMeta: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text2 },
+  itemMetaC: { fontSize: 11 },
   itemDel: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  itemDelC: { width: 22, height: 22 },
 
   // «Показать все приёмы пищи» + действия (перекус, копирование, дневник)
   showAll: {

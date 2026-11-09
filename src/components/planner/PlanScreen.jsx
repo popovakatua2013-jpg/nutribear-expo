@@ -2,7 +2,8 @@
 //   шапка        — аватар, «План», колокольчик с красной точкой, шестерёнка
 //   цели         — крупные чипы «эмодзи + название + подпись», активный —
 //                  лаймовый с галочкой (у нас 4 цели — сеткой 2×2)
-//   меню         — MealPlanScreen (карточка «Меню на неделю»)
+//   меню         — MealPlanScreen (слева) + карточка «Интервальное
+//                  питание» (справа) РЯДОМ — макет Кати от 09.11
 //   прогресс     — кольцо % + легенда Калории/Белки/Жиры/Углеводы +
 //                  линия тренда за неделю (клетчатка/сахар — переключателем)
 //   покупки      — чек-лист слева, иллюстрация и лаймовая кнопка справа
@@ -11,7 +12,7 @@
 // (макет), типографика и сетка — общая дизайн-система (theme.js).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, AppState, Easing, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { Animated, Easing, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import Svg, {
   Circle, Defs, Line, LinearGradient, Path, Stop,
   // В react-native-svg v15 алиас SvgText удалён — элемент называется
@@ -20,7 +21,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import {
-  BarChart3, Bell, Check, ChevronRight, Info, Settings, ShoppingCart, Timer,
+  BarChart3, Bell, Check, ChevronRight, Hourglass, Settings, ShoppingCart,
 } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum } from '@/lib/format'
@@ -65,20 +66,6 @@ function macroTargets(kcal) {
     c: Math.round((kcal * 0.5) / 4),
     fib: FIBER_NORM,
   }
-}
-
-// Часы:минуты для живой строки таймера — «15:42»
-const fmtHM = (ms) => {
-  const total = Math.max(0, Math.floor(ms / 60000))
-  return `${Math.floor(total / 60)}:${pad(total % 60)}`
-}
-
-// Длительность: «15 ч 42 мин» / «42 мин»
-const fmtDur = (ms) => {
-  const total = Math.max(0, Math.floor(ms / 60000))
-  const h = Math.floor(total / 60)
-  const m = total % 60
-  return h > 0 ? `${h} ч ${pad(m)} мин` : `${m} мин`
 }
 
 const fmtClock = (h) => `${pad(((h % 24) + 24) % 24)}:00`
@@ -284,23 +271,7 @@ export function PlanScreen({ onOpenFasting }) {
   const fastWindow = useFastingStore((s) => s.windowHours)
   const fastStartedAt = useFastingStore((s) => s.startedAt)
   const fastHours = useFastingStore((s) => s.fastHours)
-  const fastLastLap = useFastingStore((s) => s.laps[0])
   const reminder = useActivityStore((s) => s.reminder)
-
-  // Тик 30 с — живой таймер в карточке голодания (только пока идёт сеанс)
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!fastStartedAt) return undefined
-    setNow(Date.now())
-    const t = setInterval(() => setNow(Date.now()), 30000)
-    const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'active') setNow(Date.now())
-    })
-    return () => {
-      clearInterval(t)
-      sub.remove()
-    }
-  }, [fastStartedAt])
 
   // Сегодня: суммы по живому дневнику (все приёмы, включая доп. перекусы)
   const todaySum = useMemo(
@@ -383,14 +354,11 @@ export function PlanScreen({ onOpenFasting }) {
     reminder?.sleep?.enabled,
   ].filter(Boolean).length
 
-  // Голодание: режим для кольца «16:8» и строки «Ваш режим»
+  // Голодание: режим для кольца «16:8» и легенды окна/голодания
   const fastGoalH = fastStartedAt && fastHours ? fastHours : 24 - fastWindow
   const fastPlan = `${fastGoalH}/${fastWindow}`
-  const fastStatus = fastStartedAt
-    ? `Сейчас идёт окно без еды · ${fmtHM(now - fastStartedAt)}`
-    : fastLastLap
-      ? `Последний сеанс — ${fmtDur((fastLastLap.to || 0) - (fastLastLap.from || 0))}`
-      : `Окно еды с ${fmtClock(fastStart)}`
+  const fastEatFrom = fmtClock(fastStart)
+  const fastEatTo = fmtClock(((fastStart + fastWindow) % 24 + 24) % 24)
 
   // Тап по дню на линии тренда — точное значение
   const pickDay = (i, v) => {
@@ -497,8 +465,61 @@ export function PlanScreen({ onOpenFasting }) {
         })}
       </View>
 
-      {/* 2. Меню на неделю — карточка по макету (MealPlanScreen) */}
-      <MealPlanScreen />
+      {/* 2. Меню на неделю + Интервальное питание — РЯДОМ, два блока
+          (макет Кати от 09.11): слева компактная карточка меню,
+          справа — кольцо режима, легенда окна/голодания и кнопка
+          «Подробнее»; тап по карточке открывает окно голодания */}
+      <View style={styles.menuRow}>
+        <View style={styles.menuLeft}>
+          <MealPlanScreen compact />
+        </View>
+
+        <Pressable
+          style={styles.fastCard}
+          onPress={onOpenFasting}
+          accessibilityRole="button"
+          accessibilityLabel="Интервальное питание — открыть подробнее"
+        >
+          <Text
+            style={styles.fastTitle}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            Интервальное питание
+          </Text>
+          <View style={styles.fastRingWrap}>
+            <Ring
+              pct={fastGoalH / 24}
+              runId={runId}
+              size={64}
+              stroke={7}
+              centerText={fastPlan}
+              sub="Режим"
+            />
+          </View>
+          <View style={styles.fastLegend}>
+            <View style={styles.fastLegendRow}>
+              <View style={[styles.fastDot, { backgroundColor: P.accent }]} />
+              <View style={styles.fastLegendTexts}>
+                <Text style={styles.fastLegendLabel}>Окно питания</Text>
+                <Text style={styles.fastLegendVal}>{fastEatFrom} – {fastEatTo}</Text>
+              </View>
+            </View>
+            <View style={styles.fastLegendRow}>
+              <View style={[styles.fastDot, { backgroundColor: P.text3 }]} />
+              <View style={styles.fastLegendTexts}>
+                <Text style={styles.fastLegendLabel}>Голодание</Text>
+                <Text style={styles.fastLegendVal}>{fastEatTo} – {fastEatFrom}</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.fastMore} pointerEvents="none">
+            <Text style={styles.fastMoreText}>Подробнее</Text>
+            <ChevronRight size={13} color={P.accentInk} />
+          </View>
+        </Pressable>
+      </View>
 
       {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда */}
       <View style={styles.card}>
@@ -620,59 +641,6 @@ export function PlanScreen({ onOpenFasting }) {
         </View>
       </Pressable>
 
-      {/* 5. Интервальное питание — кольцо «16:8», «Ваш режим», строки
-          «Советы и рекомендации» и «Результаты» (как в макете); тап —
-          полный экран */}
-      <View style={styles.card}>
-        <View style={styles.cardHead}>
-          <View style={styles.iconTile}>
-            <Timer size={18} color={P.accent} />
-          </View>
-          <Text style={styles.cardTitle}>Интервальное питание</Text>
-        </View>
-
-        <Pressable
-          style={styles.fastRow}
-          onPress={onOpenFasting}
-          accessibilityRole="button"
-          accessibilityLabel="Открыть интервальное питание"
-        >
-          <Ring pct={fastGoalH / 24} size={84} stroke={8} centerText={fastPlan} />
-          <View style={styles.fastMode}>
-            <Text style={styles.fastModeTitle}>Ваш режим</Text>
-            <Text style={styles.fastModeLine}>{fastGoalH} часов голодания</Text>
-            <Text style={styles.fastModeLine}>{fastWindow} часов питание</Text>
-            <Text
-              style={[styles.fastStatus, fastStartedAt && styles.fastStatusLive]}
-              numberOfLines={1}
-            >
-              {fastStatus}
-            </Text>
-          </View>
-          <ChevronRight size={18} color={P.text3} />
-        </Pressable>
-
-        <Pressable
-          style={styles.fastAction}
-          onPress={onOpenFasting}
-          accessibilityRole="button"
-          accessibilityLabel="Советы и рекомендации по интервальному питанию"
-        >
-          <Info size={16} color={P.text2} />
-          <Text style={styles.fastActionText}>Советы и рекомендации</Text>
-          <ChevronRight size={15} color={P.text3} />
-        </Pressable>
-        <Pressable
-          style={styles.fastAction}
-          onPress={onOpenFasting}
-          accessibilityRole="button"
-          accessibilityLabel="Результаты интервального питания"
-        >
-          <BarChart3 size={16} color={P.text2} />
-          <Text style={styles.fastActionText}>Результаты</Text>
-          <ChevronRight size={15} color={P.text3} />
-        </Pressable>
-      </View>
     </ScrollView>
   )
 }
@@ -863,22 +831,43 @@ const styles = {
   },
   shopBtnText: { fontSize: 11.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 
-  // Интервальное питание: кольцо «16:8» + режим + две строки-действия
-  fastRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: spacing.m },
-  fastMode: { flex: 1, minWidth: 0 },
-  fastModeTitle: { fontSize: 15, fontWeight: '800', fontFamily: F[800], color: P.text },
-  fastModeLine: { ...type.body, fontSize: 13, color: P.text2, marginTop: 1 },
-  fastStatus: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 5 },
-  fastStatusLive: { color: P.accent },
-  fastAction: {
+  // Меню + интервальное питание — РЯДОМ (макет Кати от 09.11)
+  menuRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  menuLeft: { width: '60%' },
+  fastCard: {
+    flex: 1,
+    backgroundColor: P.card,
+    borderColor: P.line,
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 12,
+    marginTop: spacing.l,
+  },
+  fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
+  fastRingWrap: { alignItems: 'center', marginTop: 12 },
+  fastLegend: { gap: 8, marginTop: 12, alignSelf: 'stretch' },
+  fastLegendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
+  fastDot: { width: 7, height: 7, borderRadius: 4, marginTop: 4 },
+  fastLegendTexts: { flex: 1, minWidth: 0 },
+  fastLegendLabel: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  fastLegendVal: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    fontFamily: F[600],
+    color: P.text3,
+    marginTop: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  fastMore: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: P.tile,
-    borderRadius: 14,
-    height: 44,
-    paddingHorizontal: 13,
-    marginTop: 10,
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: P.accent,
+    borderRadius: 999,
+    height: 34,
+    marginTop: 12,
+    alignSelf: 'stretch',
   },
-  fastActionText: { fontSize: 13.5, fontWeight: '600', fontFamily: F[600], color: P.text, flex: 1 },
+  fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 }
