@@ -1,63 +1,70 @@
 // Вкладка «План» (нижняя панель; маршрут /workouts сохранён, чтобы не
 // ломать возможные ссылки). По макетам Кати вкладка стала обзором
 // питания одним экраном (PlanScreen): цели, прогресс дня, динамика
-// недели, меню на неделю, покупки и интервальное питание. Раньше здесь
-// были сегменты «Меню | Голодание» — теперь полный экран интервального
-// питания (название по просьбе Кати) открывается с карточки
-// «Интервальное питание» и возвращается кнопкой
-// «‹ План». Тренировки живут блоком на «Главной»; «Покупки» —
-// отдельная страница app/shopping.jsx, из нижней панели убраны (Кати).
+// недели, меню на неделю, покупки и интервальное питание. Полный экран
+// интервального питания (название по просьбе Кати) открывается с
+// карточки «Интервальное питание» ОКНОМ ПОВЕРХ ПЛАНА — отзыв Кати:
+// «при нажатии на интервальное питание пропадает остальной план»
+// (страница с покупками), раньше экран подменял собой всю вкладку и
+// план терялся; теперь план остаётся на месте, окно закрывается
+// крестиком (как все окна в приложении) и системной кнопкой «назад».
+// Тренировки живут блоком на «Главной»; «Покупки» — отдельная страница
+// app/shopping.jsx, из нижней панели убраны (Кати).
 
-import { useEffect, useState } from 'react'
-import { BackHandler, Pressable, Text, View } from 'react-native'
-import { ChevronLeft } from 'lucide-react-native'
+import { useState } from 'react'
+import { Modal, Pressable, View } from 'react-native'
+import { X } from 'lucide-react-native'
 import { PlanScreen } from '@/components/planner/PlanScreen'
 import { FastingScreen } from '@/components/planner/FastingScreen'
-import { colors, spacing, F } from '@/features/workouts/theme'
+import { colors, spacing } from '@/features/workouts/theme'
 
 export default function PlanTab() {
-  const [screen, setScreen] = useState('plan') // 'plan' | 'fasting'
+  const [fastOpen, setFastOpen] = useState(false)
 
-  // Системная кнопка/жест «назад» на экране интервального питания
-  // возвращает к обзору плана (отзыв Кати: с экрана было не выйти —
-  // раньше «назад» ничего не делал, экран не маршрут, а состояние)
-  useEffect(() => {
-    if (screen !== 'fasting') return undefined
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      setScreen('plan')
-      return true
-    })
-    return () => sub.remove()
-  }, [screen])
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {/* Обзор плана — всегда остаётся под окном голодания */}
+      <PlanScreen onOpenFasting={() => setFastOpen(true)} />
 
-  if (screen === 'fasting') {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Pressable
-          onPress={() => setScreen('plan')}
-          style={styles.back}
-          accessibilityRole="button"
-          accessibilityLabel="Назад к обзору плана"
-        >
-          <ChevronLeft size={18} color={colors.accent} />
-          <Text style={styles.backText}>План</Text>
-        </Pressable>
-        <FastingScreen />
-      </View>
-    )
-  }
-
-  return <PlanScreen onOpenFasting={() => setScreen('fasting')} />
+      {/* Интервальное питание — окно поверх плана (план не пропадает) */}
+      <Modal
+        visible={fastOpen}
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setFastOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.bg }}>
+          <View style={styles.closeRow}>
+            <Pressable
+              onPress={() => setFastOpen(false)}
+              style={styles.xbtn}
+              accessibilityRole="button"
+              accessibilityLabel="Закрыть интервальное питание"
+              hitSlop={8}
+            >
+              <X size={20} color={colors.text2} />
+            </Pressable>
+          </View>
+          <FastingScreen />
+        </View>
+      </Modal>
+    </View>
+  )
 }
 
 const styles = {
-  back: {
+  closeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginHorizontal: spacing.xl,
-    marginTop: 10,
-    alignSelf: 'flex-start',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.xl,
+    paddingTop: 12,
   },
-  backText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: colors.accent },
+  xbtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
 }
