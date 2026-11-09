@@ -8,11 +8,15 @@
 // (страница с покупками), раньше экран подменял собой всю вкладку и
 // план терялся; теперь план остаётся на месте, окно закрывается
 // крестиком (как все окна в приложении) и системной кнопкой «назад».
+// Крестик — под статус-баром (insets.top): Modal statusBarTranslucent
+// рисует контент с нулевой координаты, без отступа кнопка уезжала
+// В САМ статус-бар и ложилась на индикатор батареи (отзыв Кати 09.11).
 // Тренировки живут блоком на «Главной»; «Покупки» — отдельная страница
 // app/shopping.jsx, из нижней панели убраны (Кати).
 
 import { useState } from 'react'
 import { Modal, Pressable, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 import { PlanScreen } from '@/components/planner/PlanScreen'
 import { FastingScreen } from '@/components/planner/FastingScreen'
@@ -20,6 +24,8 @@ import { colors, spacing } from '@/features/workouts/theme'
 
 export default function PlanTab() {
   const [fastOpen, setFastOpen] = useState(false)
+  const insets = useSafeAreaInsets()
+  const closeRowStyle = [styles.closeRow, { paddingTop: insets.top + 6 }]
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -34,7 +40,7 @@ export default function PlanTab() {
         onRequestClose={() => setFastOpen(false)}
       >
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
-          <View style={styles.closeRow}>
+          <View style={closeRowStyle}>
             <Pressable
               onPress={() => setFastOpen(false)}
               style={styles.xbtn}
@@ -57,7 +63,6 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: spacing.xl,
-    paddingTop: 12,
   },
   xbtn: {
     width: 34,
