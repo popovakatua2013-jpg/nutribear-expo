@@ -8,7 +8,7 @@
 import '../global.css'
 
 import { useEffect, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import {
@@ -41,10 +41,17 @@ function useOnboardingHydrated() {
 }
 
 function SplashBear() {
-  // Нейтральный экран, пока восстанавливаются данные (без мигания)
+  // Нейтральный экран, пока восстанавливаются данные (без мигания).
+  // Колесико загрузки — по отзыву Кати: чтобы при запуске было видно,
+  // что приложение грузится, а не зависло.
   return (
     <View className="flex-1 items-center justify-center bg-bear-bg">
       <Text className="text-[56px]">🐻</Text>
+      <ActivityIndicator
+        size="large"
+        color="#6C8CFF"
+        style={{ marginTop: 28 }}
+      />
     </View>
   )
 }
