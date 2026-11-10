@@ -559,6 +559,18 @@ function authHeaders(extra = {}) {
   return headers
 }
 
+// Ошибка — «нет сети»? Фото-режим по этому признаку убирает снимок в
+// очередь (usePhotoQueueStore) вместо страшной красной ошибки. Сетевые
+// сбои приходят в двух видах: сырой RN-текст «Network request failed» и
+// наш человекочитаемый текст из postJson ниже
+export function isOfflineError(e) {
+  const msg = String(e?.message || e)
+  return (
+    msg === 'Network request failed' ||
+    /Нет интернета|Network request failed|network|internet|соединен/i.test(msg)
+  )
+}
+
 // POST JSON к OpenAI-совместимому API → распарсенный ответ
 async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
   assertConfigured()
@@ -579,8 +591,9 @@ async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
         throw new Error(`ИИ не ответил за ${Math.round(timeoutMs / 1000)} секунд — попробуйте ещё раз`)
       if (e?.message === 'Network request failed' || /network|internet|соединен/i.test(String(e?.message)))
         throw new Error(
-          'Нет интернета — фото и голос распознать не получится. ' +
-            'Дневник, база из ~85 блюд и отчёты работают офлайн; попробуйте ввести название блюда текстом'
+          'Нет интернета — распознавание требует сети. ' +
+            'Дневник, база из ~85 блюд и отчёты работают офлайн. ' +
+            'В сканере еды фото само уйдёт в очередь и распознается, когда сеть появится'
         )
       throw e
     }
@@ -676,6 +689,10 @@ export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
                 type: 'text',
                 text:
                   'Определи основное блюдо на фотографии. Пищевую ценность укажи НА 100 ГРАММ готового продукта. ' +
+                  'Внимательно ищи ингредиенты ВНУТРИ блюда, а не только сверху: сыр внутри омлета или ' +
+                  'бутерброда, масло для жарки, соус, ветчина, начинка. Такие скрытые добавки учитывай ' +
+                  'в калорийности и КБЖУ и упоминай в названии (например, «Омлет с двумя видами сыра», ' +
+                  'а не просто «Омлет»). ' +
                   'Ответь строго JSON-массивом из одного объекта:\n' +
                   '[{"name":"название по-русски","emoji":"один эмодзи","kcal100":число,"p":число,"f":число,"c":число,"fib":число,"sug":число,"defaultGrams":число}]\n' +
                   'fib — клетчатка (г) и sug — сахара (г) на 100 г — оцени приблизительно. ' +

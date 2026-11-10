@@ -4,21 +4,43 @@
 // При первом входе в «Сканер еды» показывается обучающее окно
 // «Как фотографировать еду» (образец — окно конкурента, скриншот Кати
 // от 11.11): от качества фото зависит точность распознавания.
+// ОФЛАЙН-ОЧЕРЕДЬ (отзыв Кирилла из RuStore, скриншот Кати от 11.11:
+// «опять прошу программу поддерживала офлайн съёмку, после подключения
+// к сети чтобы фото автоматически отправлялись на анализ»): если сети
+// нет, фото уходит в usePhotoQueueStore — как только интернет
+// появляется, первое фото из очереди распознаётся само, без тапа,
+// и открывается обычное окно подтверждения порции. Приоритет — у фото,
+// снятого вручную прямо сейчас; очередь обрабатывается по одному
+// фото за вход, чтобы не заваливать пользователя горой результатов.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { Camera, Images, Info, RefreshCcw, ScanSearch } from 'lucide-react-native'
+import { Camera, CloudUpload, Images, Info, RefreshCcw, ScanSearch } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { scanFoodImage } from '@/lib/food-ai'
+import { scanFoodImage, isOfflineError } from '@/lib/food-ai'
 import { openSettingsSoon } from '@/lib/appSettings'
+import { useIsOnline } from '@/lib/useIsOnline'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { usePhotoQueueStore, MAX_ATTEMPTS } from '@/store/usePhotoQueueStore'
 import { PhotoGuideModal } from './PhotoGuideModal'
 
 export function PhotoMode({ source, onPick }) {
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // Мягкое синее сообщение о работе очереди — отдельно от красных ошибок
+  const [note, setNote] = useState('')
+
+  // Живой статус сети и очередь офлайн-фото
+  const online = useIsOnline()
+  const queued = usePhotoQueueStore((s) => s.items)
+  const addToQueue = usePhotoQueueStore((s) => s.add)
+  const removeQueued = usePhotoQueueStore((s) => s.remove)
+  const markFailedQueued = usePhotoQueueStore((s) => s.markFailed)
+  // Защита от двойного запуска автопрогонки (эффект перезапускается
+  // на каждое изменение очереди/сети/занятости)
+  const runningRef = useRef(false)
 
   // Обучающее окно «Как фотографировать еду»
   const photoGuideSeen = useUiPrefsStore((s) => s.photoGuideSeen)
@@ -70,15 +92,92 @@ export function PhotoMode({ source, onPick }) {
     if (!photo || busy) return
     setBusy(true)
     setError('')
+    setNote('')
     try {
       const items = await scanFoodImage(photo)
       onPick(items[0])
     } catch (e) {
-      setError(String(e?.message || e))
+      if (isOfflineError(e)) {
+        // Сети нет: снимок не пропадает — уходит в очередь и распознается
+        // сам при появлении интернета (отзыв Кирилла из RuStore)
+        const added = addToQueue(photo)
+        setPhoto(null)
+        setNote(
+          added
+            ? 'Нет интернета — фото сохранено в очередь. Как только сеть появится, приложение само его распознает.'
+            : 'Нет интернета — это фото уже ждёт в очереди. Приложение само распознает его при появлении сети.'
+        )
+      } else {
+        setError(String(e?.message || e))
+      }
     } finally {
       setBusy(false)
     }
   }
+
+  // Автопрогонка очереди: экран пуст, сеть есть, в очереди есть фото,
+  // которому пора на распознавание → распознаём само, без тапа. Один
+  // успех за вход: onPick открывает окно подтверждения порции, остальные
+  // фото дождутся следующего входа в сканер. Сетевая ошибка попытку не
+  // тратит — фото просто остаётся в очереди до возвращения сети;
+  // прочие ошибки считаем в attempts и откладываем повтор на полторы
+  // минуты (каждый запрос стоит денег — тем же фото не долбим), после
+  // MAX_ATTEMPTS фото покидает очередь
+  const [queueTick, setQueueTick] = useState(0)
+
+  useEffect(() => {
+    if (!online || busy || photo || runningRef.current) return
+    if (!queued.length) return
+    // первое фото, которому пора (после не-сетевой ошибки повтор
+    // разрешён не раньше nextAttemptAt)
+    const now = Date.now()
+    const next = queued.find((it) => !it.nextAttemptAt || now >= it.nextAttemptAt)
+    if (!next) {
+      // все фото «пержат» — самый ранний retry дёрнет тик, и эффект
+      // пересмотрит очередь
+      const earliest = Math.min(
+        ...queued.map((it) => it.nextAttemptAt || 0).filter(Boolean)
+      )
+      const timer = setTimeout(
+        () => setQueueTick((x) => x + 1),
+        Math.max(1000, earliest - now)
+      )
+      return () => clearTimeout(timer)
+    }
+    runningRef.current = true
+    ;(async () => {
+      try {
+        setPhoto(next.uri)
+        setNote('Распознаём фото из очереди…')
+        try {
+          const items = await scanFoodImage(next.uri)
+          removeQueued(next.id)
+          setNote('')
+          onPick(items[0])
+        } catch (e) {
+          if (isOfflineError(e)) {
+            // сеть пропала во время распознавания — фото остаётся в очереди
+            setPhoto(null)
+            setNote('Интернет пропал — фото осталось в очереди, распознаем при появлении сети')
+          } else {
+            markFailedQueued(next.id)
+            if ((next.attempts || 0) + 1 >= MAX_ATTEMPTS) {
+              removeQueued(next.id)
+              setPhoto(null)
+              setNote('')
+              setError(`Фото из очереди не удалось распознать (${String(e?.message || e)}) — оно удалено из очереди`)
+            } else {
+              setPhoto(null)
+              setNote('Фото из очереди пока не распозналось — попробуем ещё раз через минуту-другую')
+            }
+          }
+        }
+      } finally {
+        runningRef.current = false
+      }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, queued, photo, busy, queueTick])
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
@@ -126,6 +225,25 @@ export function PhotoMode({ source, onPick }) {
       {error ? (
         <Text className="mt-3 text-[16.5px] leading-[19px] text-[#f87171]">{error}</Text>
       ) : null}
+      {note ? (
+        <Text className="mt-3 text-[15.5px] leading-[19px] text-[#93C5FD]">{note}</Text>
+      ) : null}
+
+      {/* Очередь офлайн-фото: сколько ждёт и что с ней будет (отзыв
+          Кирилла из RuStore — «офлайн съёмка, после подключения к сети
+          чтобы фото автоматически отправлялись на анализ») */}
+      {queued.length > 0 && (
+        <View className="mt-3 flex-row items-center gap-2 rounded-2xl border border-[#7B6CF6]/30 bg-[#7B6CF6]/10 px-3.5 py-2.5">
+          <CloudUpload size={16} color="#C4B5FD" />
+          <Text
+            numberOfLines={3}
+            maxFontSizeMultiplier={1.2}
+            className="min-w-0 flex-1 font-sans text-[14px] leading-[18px] text-bear-sub"
+          >
+            {`В очереди: ${queued.length} фото — распознаем автоматически, как только появится интернет`}
+          </Text>
+        </View>
+      )}
 
       <View className="mt-4 flex-row gap-2">
         <Pressable
@@ -170,8 +288,9 @@ export function PhotoMode({ source, onPick }) {
       </View>
 
       <Text className="mt-3 text-[15px] leading-[18px] text-bear-sub">
-        Фото отправляется нейросети прямо с телефона — нужен интернет.
-        Ключ хранится в файле .env в корне проекта и не публикуется на GitHub.
+        Фото отправляется нейросети прямо с телефона. Нет интернета — фото
+        сохранится в очередь: приложение само распознает его, когда сеть
+        появится.
       </Text>
 
       {/* Обучающее окно «Как фотографировать еду» */}
