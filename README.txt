@@ -15,8 +15,8 @@ NutriBear — заплатка от 25.10 (39 файлов)
 
 ДОБАВИТЬ (их не было):
   .env.example
-  public/privacy.html
-  public/terms.html
+  docs/privacy.html
+  docs/terms.html
   src/components/more/LegalModal.jsx
   src/lib/data/legal.js
   src/lib/rollover.js
