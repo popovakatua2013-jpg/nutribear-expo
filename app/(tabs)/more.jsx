@@ -10,8 +10,10 @@
 //                    Стиль пинков / Напоминание мишки / Приватность
 //                    (подсказки «экспорт · копия» и «политика ·
 //                    соглашение» убраны — обрезались в строке)
-//   Внизу — как в стандартных приложениях: Документы, О приложении
-//   и красная строка «Стереть все данные».
+//   Внизу — как в стандартных приложениях: три правовых документа
+//   отдельными строками (тап — экран с названием в шапке и текстом),
+//   О приложении, красная строка «Стереть все данные» и строка версии
+//   (как в чужом приложении по скринам Кати от 10.11).
 // Тумблер «Вибрация»: при включении сразу короткая вибрация — видно
 // и слышно, что настройка работает (отзыв Кати 09.11).
 // Дубли удалены (отзыв Кати: «данные и статистику удалить — дубль»):
@@ -27,6 +29,7 @@ import { useEffect, useState } from 'react'
 import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
+import Constants from 'expo-constants'
 import { Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
@@ -39,7 +42,7 @@ import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { AboutCard } from '@/components/more/AboutCard'
-import { LegalModal } from '@/components/more/LegalModal'
+import { LegalDocModal } from '@/components/more/LegalDocModal'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BodyChip } from '@/components/ui/BodyChip'
 import { useCycleStore, daysToNext } from '@/store/useCycleStore'
@@ -59,11 +62,15 @@ const STYLE_OPTIONS = [
 // Порог «Напоминания мишки»: сколько дней без записи веса
 const NUDGE_OPTIONS = [5, 7, 10].map((n) => ({ key: n, label: `${n} дней` }))
 
+// Версия приложения из app.json — строкой внизу экрана «Ещё»
+// (как в чужом приложении по скрину Кати: «Версия …» + «ID: …»)
+const VERSION = Constants?.expoConfig?.version || '1.0'
+
 export default function MoreScreen() {
   const insets = useSafeAreaInsets()
-  // Окно «Документы»: политика, соглашение и дисклеймер — как в
-  // стандартных приложениях, внизу экрана
-  const [legalOpen, setLegalOpen] = useState(false)
+  // Правовые документы: каждый — отдельной строкой внизу «Ещё», тап
+  // открывает экран с названием документа в шапке и его текстом
+  const [legalDoc, setLegalDoc] = useState(null)
 
   // «Напоминания» раскрыты извне: колокольчик в шапке «Плана» ведёт сюда
   // и сразу открывает строку (двойной механизм navEvents: событие для
@@ -289,14 +296,27 @@ export default function MoreScreen() {
           </MenuRow>
         </MenuGroup>
 
-        {/* ── Документы и О приложении — внизу, как в стандартных
-               приложениях; ниже — красная строка стирания данных ── */}
+        {/* ── Документы отдельными строками и О приложении — внизу, как
+               в стандартных приложениях; ниже — красная строка стирания
+               данных и версия ── */}
         <MenuGroup>
+          <MenuRow
+            icon="🔒"
+            iconBg="rgba(96,165,250,0.16)"
+            title="Политика конфиденциальности"
+            onPress={() => setLegalDoc('privacy')}
+          />
           <MenuRow
             icon="📄"
             iconBg="rgba(96,165,250,0.16)"
-            title="Документы"
-            onPress={() => setLegalOpen(true)}
+            title="Пользовательское соглашение"
+            onPress={() => setLegalDoc('terms')}
+          />
+          <MenuRow
+            icon="🩺"
+            iconBg="rgba(74,222,128,0.16)"
+            title="Медицинский дисклеймер"
+            onPress={() => setLegalDoc('medical')}
           />
           <MenuRow
             icon="🐻"
@@ -311,11 +331,25 @@ export default function MoreScreen() {
         {/* Стереть все данные: красная строка отдельно, как в стандартных
             приложениях; подтверждение — в диалоге */}
         <DataActions embedded variant="wipe" />
+
+        {/* Версия и ID сборки — маленькой строкой внизу экрана, как в
+            стандартных приложениях (скрин Кати от 10.11) */}
+        <View className="items-center" style={{ gap: 2 }}>
+          <Text maxFontSizeMultiplier={1.25} className="font-sans text-[13px] text-bear-dim">
+            Версия {VERSION}
+          </Text>
+          <Text
+            maxFontSizeMultiplier={1.25}
+            className="font-sans text-[12px] text-bear-dim"
+            style={{ opacity: 0.7 }}
+          >
+            ID: {BUILD_HASH || 'dev'}
+          </Text>
+        </View>
       </ScrollView>
 
-      {/* Документы: политика конфиденциальности, пользовательское
-          соглашение и медицинский дисклеймер — одно окно */}
-      <LegalModal open={legalOpen} onClose={() => setLegalOpen(false)} />
+      {/* Правовой документ: экран с названием в шапке и текстом */}
+      <LegalDocModal doc={legalDoc} onClose={() => setLegalDoc(null)} />
     </View>
   )
 }
