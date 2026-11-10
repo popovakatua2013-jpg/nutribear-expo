@@ -27,7 +27,10 @@ export function RecipesModal({ onClose = () => {}, onLogRecipe = () => {} }) {
         <View className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
           {/* Шапка окна — в стиле «Базы продуктов» */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
-            <View className="min-w-0 flex-row items-center gap-2">
+            {/* flex-1: длинный подзаголовок распирал строку и выталкивал
+                крестик за паддинг — он прижимался к краю окна и обрезался
+                пополам (отзыв Кати от 10.11: «уехал крестик») */}
+            <View className="min-w-0 flex-1 flex-row items-center gap-2">
               <View
                 className="h-9 w-9 items-center justify-center rounded-lg"
                 style={{ backgroundColor: '#22C55E' }}

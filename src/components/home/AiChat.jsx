@@ -1,8 +1,12 @@
 // ИИ-чат «конвертик»: плавающая кнопка на главной (крупная, заметная)
 // и модалка диалога с ИИ-нутрициологом (порт веб-версии AiChat.jsx).
-// Клавиатура не перекрывает чат: на Android весь контейнер сжимается
-// (behavior height — внутри модалки системный resize не работает),
-// при открытии клавиатуры список доскроллливается к вводу.
+// Клавиатура не перекрывает чат: на Android behavior height внутри
+// RN-Modal не срабатывает (окно модалки не ресайзится под клавиатуру,
+// отзыв Кати от 10.11: «поле ввода закрывает Клавиатура») — высоту
+// клавиатуры берём из события keyboardDidShow и отдаём контейнеру в
+// paddingBottom, поле ввода поднимается над клавиатурой; на iOS —
+// стандартный behavior padding. При открытии клавиатуры список
+// доскроллливается к вводу.
 // Сообщения — полноценные блоки: пузырь не уже 110px у ОБОИХ сторон,
 // шрифт 14px; переносы строк из ответа ИИ сохраняются (ответ рендерится
 // построчно). В шапке — кнопка «Очистить чат»: начать диалог заново.
@@ -58,6 +62,9 @@ function MessageText({ content, className }) {
 
 export function AiChat() {
   const [open, setOpen] = useState(false)
+  // Высота клавиатуры на Android — отдаётся контейнеру чата в paddingBottom
+  // (behavior height внутри модалки не работает), 0 — клавиатура закрыта
+  const [kbPad, setKbPad] = useState(0)
   const [messages, setMessages] = useState([GREETING])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -112,6 +119,21 @@ export function AiChat() {
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }))
     )
     return () => sub.remove()
+  }, [open])
+
+  // Android: behavior height не работает внутри RN-Modal — окно модалки
+  // не ресайзится, поле ввода оставалось за клавиатурой. Высоту клавиатуры
+  // берём из события и отдаём контейнеру в paddingBottom (см. шапку файла)
+  useEffect(() => {
+    if (!open || Platform.OS !== 'android') return undefined
+    const show = Keyboard.addListener('keyboardDidShow', (e) =>
+      setKbPad(e?.endCoordinates?.height || 0)
+    )
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKbPad(0))
+    return () => {
+      show.remove()
+      hide.remove()
+    }
   }, [open])
 
   async function send() {
@@ -190,9 +212,9 @@ export function AiChat() {
         onRequestClose={() => setOpen(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1 bg-[#131e3a]"
-          style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+          style={{ paddingTop: insets.top, paddingBottom: kbPad > 0 ? kbPad : insets.bottom }}
         >
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-white/5 px-5 pb-3.5 pt-4">

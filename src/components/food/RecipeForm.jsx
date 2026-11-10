@@ -5,6 +5,8 @@
 // необязательно — если не указать, они будут оценены по калорийности.
 // На выходе — значения на 100 г для дневника; порция по умолчанию
 // при добавлении в приём пищи равна выходу, делённому на число порций.
+// Серые подсказки в форме убраны (отзыв Кати от 10.11: «убрать все
+// подсказки») — остались только поля, расчёт «≈ ккал / 100 г» и кнопки.
 
 import { useState } from 'react'
 import { Image, Pressable, Text, TextInput, View } from 'react-native'
@@ -219,15 +221,12 @@ export function RecipeForm({ onDone, initial, onCancel }) {
         </Pressable>
       </View>
       {photo && (
-        <View className="mt-1.5 flex-row items-center gap-2 px-1">
-          <Text className="min-w-0 flex-1 font-sans text-[15px] text-bear-dim">
-            Фото прикреплено — появится рядом с рецептом в списке
-          </Text>
+        <View className="mt-1.5 flex-row items-center px-1">
           <Pressable
             onPress={dropPhoto}
             accessibilityRole="button"
             accessibilityLabel="Убрать фото"
-            className="flex-row items-center gap-1 rounded p-1"
+            className="flex-row items-center gap-1 rounded p-1 active:opacity-70"
           >
             <Trash2 size={14} color="#98A2C2" />
             <Text className="font-sans text-[15px] text-bear-sub">убрать</Text>
@@ -259,9 +258,6 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             {estBusy ? 'Считаем…' : 'Посчитать КБЖУ по составу'}
           </Text>
         </Pressable>
-        <Text className="mt-1 px-1 font-sans text-[15px] leading-[18px] text-bear-dim">
-          Сначала считаем сами по базе продуктов, незнакомый состав оценит ИИ
-        </Text>
       </View>
 
       {/* Общий выход + число порций */}
@@ -286,10 +282,6 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           className={`${field} flex-1`}
         />
       </View>
-      <Text className="mt-1 px-1 font-sans text-[15px] leading-[18px] text-bear-dim">
-        Выход — вес готового блюда после варки/жарки: крупа разваривается,
-        суп упаривается. Калории считаем от готового веса — порции честные.
-      </Text>
       <View className="mt-2 flex-row gap-2">
         <TextInput
           value={kcal}
@@ -332,14 +324,15 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       </View>
       <View className="mt-3 flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
-          <Text className="font-sans text-[15px] text-bear-sub">
-            {per100
-              ? `≈ ${per100} ккал / 100 г${sv > 1 ? ` · ${perServing} ккал / порция (${gramsPerServing({ grams: g, servings: sv })} г)` : ''}`
-              : 'Укажите выход и калории'}
-          </Text>
-          <Text className="font-sans text-[15px] text-bear-dim">
-            БЖУ — по желанию, иначе оценим по калориям
-          </Text>
+          {per100 ? (
+            <Text className="font-sans text-[15px] text-bear-sub">
+              {`≈ ${per100} ккал / 100 г${
+                sv > 1
+                  ? ` · ${perServing} ккал / порция (${gramsPerServing({ grams: g, servings: sv })} г)`
+                  : ''
+              }`}
+            </Text>
+          ) : null}
         </View>
         <Pressable
           onPress={handleSave}
