@@ -20,6 +20,7 @@ import { Camera, ChevronDown, ChevronRight, Trash2, X } from 'lucide-react-nativ
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { deletePhotoFile, savePhoto } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
+import { toastAndOpenSettings } from '@/lib/appSettings'
 
 const MAX = 1.25
 
@@ -63,7 +64,8 @@ export function ProgressPhotos() {
           ? await ImagePicker.requestCameraPermissionsAsync()
           : await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (!perm?.granted) {
-        toast({
+        // Тост + автоматический переход в настройки телефона
+        toastAndOpenSettings(toast, {
           title: 'Нужно разрешение',
           description:
             source === 'camera'

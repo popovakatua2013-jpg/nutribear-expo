@@ -13,6 +13,7 @@ import { Mic, Square } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { recognizeVoiceAudio, recognizeVoiceText } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
+import { openSettingsSoon } from '@/lib/appSettings'
 
 export function VoiceMode({ onPick }) {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
@@ -36,6 +37,8 @@ export function VoiceMode({ onPick }) {
       const perm = await requestRecordingPermissionsAsync()
       if (!perm.granted) {
         setError('Нужно разрешение на микрофон (Настройки → Приложения → Expo Go)')
+        // Сами открываем настройки телефона (отзыв Кати: переход сразу)
+        openSettingsSoon()
         return
       }
       await setAudioModeAsync({

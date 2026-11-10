@@ -9,6 +9,7 @@ import { Bell, BellOff, Check, Pencil, X } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
+import { toastAndOpenSettings } from '@/lib/appSettings'
 
 // Только колокольчик, без переключателя — ставится в шапку окна «Вода».
 // Тап — включить/выключить: обычный колокольчик — включено,
@@ -24,7 +25,8 @@ export function ReminderToggle() {
     if (next) {
       const ok = await requestNotifPermission()
       if (!ok) {
-        toast({
+        // Тост + автоматический переход в настройки телефона
+        toastAndOpenSettings(toast, {
           title: '🔔 Нужно разрешение',
           description: 'Разрешите уведомления NutriBear в настройках телефона',
         })

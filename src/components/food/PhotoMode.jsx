@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { Camera, Images, RefreshCcw, ScanSearch } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { scanFoodImage } from '@/lib/food-ai'
+import { openSettingsSoon } from '@/lib/appSettings'
 
 export function PhotoMode({ source, onPick }) {
   const [photo, setPhoto] = useState(null)
@@ -26,6 +27,8 @@ export function PhotoMode({ source, onPick }) {
       setError(isCamera
         ? 'Нужно разрешение на камеру (Настройки → Приложения → Expo Go)'
         : 'Нужно разрешение на фото (Настройки → Приложения → Expo Go)')
+      // Сами открываем настройки телефона (отзыв Кати: переход сразу)
+      openSettingsSoon()
       return
     }
     const res = isCamera

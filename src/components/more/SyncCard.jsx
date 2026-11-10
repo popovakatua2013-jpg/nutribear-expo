@@ -28,6 +28,7 @@ import {
 } from '@/lib/healthConnect'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
+import { toastAndOpenSettings, openAppSettings } from '@/lib/appSettings'
 
 const ROWS = [
   { key: 'gfit', label: 'Google Fit', hint: 'шаги и тренировки (Android)' },
@@ -67,7 +68,9 @@ export function SyncCard({ embedded = false }) {
         }
         const perm = await Pedometer.requestPermissionsAsync()
         if (!perm?.granted) {
-          toast({
+          // Отказали в разрешении — показываем тост и сами открываем
+          // настройки телефона (отзыв Кати: переход сразу, автоматически)
+          toastAndOpenSettings(toast, {
             title: '👟 Нужно разрешение',
             description: 'Разрешите доступ к физической активности в настройках телефона',
           })
@@ -125,6 +128,12 @@ export function SyncCard({ embedded = false }) {
           title: '🩺 Нужно разрешение',
           description: 'Разрешите чтение шагов в окне Health Connect (данные не покидают телефон)',
         })
+        // Разрешение «Шаги» живёт в настройках самого Health Connect —
+        // открываем их автоматически; не получилось — настройки телефона
+        setTimeout(async () => {
+          const opened = await hcOpenSettings()
+          if (!opened) openAppSettings()
+        }, 900)
         return
       }
       setHealthConnectEnabled(true)

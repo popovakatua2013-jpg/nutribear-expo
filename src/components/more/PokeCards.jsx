@@ -18,6 +18,7 @@ import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
 import { TimeField } from './TimeField'
+import { toastAndOpenSettings } from '@/lib/appSettings'
 
 const SWITCH_COLORS = { true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }
 
@@ -130,7 +131,8 @@ function usePokeToggle() {
     if (on) {
       const ok = await requestNotifPermission()
       if (!ok) {
-        toast({
+        // Тост + автоматический переход в настройки телефона
+        toastAndOpenSettings(toast, {
           title: '🔔 Нужно разрешение',
           description: 'Разрешите уведомления NutriBear в настройках телефона',
         })

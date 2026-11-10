@@ -23,6 +23,7 @@ import { TimeField } from './TimeField'
 import { useActivityStore } from '@/store/useActivityStore'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
+import { toastAndOpenSettings } from '@/lib/appSettings'
 
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const INTERVALS = [30, 60, 90, 120].map((n) => ({ key: n, label: `${n} мин` }))
@@ -103,7 +104,8 @@ export function NotificationsSection() {
     if (on) {
       const ok = await requestNotifPermission()
       if (!ok) {
-        toast({
+        // Тост + автоматический переход в настройки телефона
+        toastAndOpenSettings(toast, {
           title: '🔔 Нужно разрешение',
           description: 'Разрешите уведомления NutriBear в настройках телефона',
         })

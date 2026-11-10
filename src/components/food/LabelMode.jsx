@@ -9,6 +9,7 @@ import { Camera, Images, RefreshCcw, ScanSearch } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { scanNutritionLabel } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
+import { openSettingsSoon } from '@/lib/appSettings'
 
 export function LabelMode({ onPick }) {
   const { toast } = useToast()
@@ -27,6 +28,8 @@ export function LabelMode({ onPick }) {
           ? 'Нужно разрешение на камеру (Настройки → Приложения → Expo Go)'
           : 'Нужно разрешение на фото (Настройки → Приложения → Expo Go)'
       )
+      // Сами открываем настройки телефона (отзыв Кати: переход сразу)
+      openSettingsSoon()
       return
     }
     const res = useCamera

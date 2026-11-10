@@ -13,6 +13,7 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useToast } from '../../ui/Toast'
 import { applyOnboarding } from '@/lib/data/onboarding-apply'
+import { openSettingsSoon } from '@/lib/appSettings'
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
 const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
@@ -54,6 +55,10 @@ export function PermissionsStep({ onBack }) {
             title: '👟 Шагомер недоступен',
             description: 'На этом устройстве нет счётчика шагов или нет разрешения',
           })
+          // Если датчик есть, а разрешения нет — настройки телефона
+          // открываем сами (отзыв Кати: переход сразу, автоматически);
+          // нет датчика — в настройках делать нечего
+          if (available) openSettingsSoon()
           return
         }
       } catch {

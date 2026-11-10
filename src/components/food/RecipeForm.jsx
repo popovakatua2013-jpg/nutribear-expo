@@ -15,6 +15,7 @@ import { saveRecipePhoto, deletePhotoFile } from '@/lib/photos'
 import { estimateFromDescription, estimateCompositionByAi } from '@/lib/food-ai'
 import { toRecipeTotals, recipeItemsLine } from '@/lib/data/recipe-est'
 import { useToast } from '../ui/Toast'
+import { toastAndOpenSettings } from '@/lib/appSettings'
 
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
 
@@ -63,7 +64,8 @@ export function RecipeForm({ onDone, initial, onCancel }) {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (!perm?.granted) {
-        toast({
+        // Тост + автоматический переход в настройки телефона
+        toastAndOpenSettings(toast, {
           title: '📷 Нужно разрешение',
           description: 'Разрешите доступ к фото в настройках телефона',
         })
