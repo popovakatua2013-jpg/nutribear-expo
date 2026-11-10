@@ -1,19 +1,42 @@
 // Живой режим «Сканер» и «Галерея»: фото блюда → нейросеть напрямую
 // (ключ и адрес — в src/lib/ai-config.js) → результат в SelectedFood.
 // source: 'camera' — камера, 'library' — галерея телефона.
+// При первом входе в «Сканер еды» показывается обучающее окно
+// «Как фотографировать еду» (образец — окно конкурента, скриншот Кати
+// от 11.11): от качества фото зависит точность распознавания.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { Camera, Images, RefreshCcw, ScanSearch } from 'lucide-react-native'
+import { Camera, Images, Info, RefreshCcw, ScanSearch } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { scanFoodImage } from '@/lib/food-ai'
 import { openSettingsSoon } from '@/lib/appSettings'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { PhotoGuideModal } from './PhotoGuideModal'
 
 export function PhotoMode({ source, onPick }) {
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  // Обучающее окно «Как фотографировать еду»
+  const photoGuideSeen = useUiPrefsStore((s) => s.photoGuideSeen)
+  const setPhotoGuideSeen = useUiPrefsStore((s) => s.setPhotoGuideSeen)
+  const [guideOpen, setGuideOpen] = useState(false)
+
+  // Автопоказ — один раз на устройство, только при входе в «Сканер еды»
+  // (подсказки про съёмку; в галерее их вызывают кнопкой ниже). Флаг в
+  // useUiPrefsStore — переживает перезапуск приложения.
+  useEffect(() => {
+    if (source === 'camera' && !photoGuideSeen) setGuideOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function closeGuide() {
+    setGuideOpen(false)
+    setPhotoGuideSeen(true) // больше не показываем автоматически
+  }
 
   const isCamera = source === 'camera'
   const Icon = isCamera ? Camera : Images
@@ -84,6 +107,19 @@ export function PhotoMode({ source, onPick }) {
           <Text className="mt-2 px-6 text-center text-[16.5px] text-bear-sub">
             Сфотографируйте блюдо — ИИ определит продукт и калорийность
           </Text>
+          {/* Кнопка повторного вызова обучающего окна (отзыв Кати:
+              подсказки со скриншота конкурента должны быть всегда доступны) */}
+          <Pressable
+            onPress={() => setGuideOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Как фотографировать еду: открыть подсказку"
+            className="mt-2.5 flex-row items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 active:bg-white/10"
+          >
+            <Info size={14} color="#7DD3FC" />
+            <Text className="font-semibold text-[14.5px] text-bear-sub">
+              Как фотографировать?
+            </Text>
+          </Pressable>
         </View>
       )}
 
@@ -137,6 +173,9 @@ export function PhotoMode({ source, onPick }) {
         Фото отправляется нейросети прямо с телефона — нужен интернет.
         Ключ хранится в файле .env в корне проекта и не публикуется на GitHub.
       </Text>
+
+      {/* Обучающее окно «Как фотографировать еду» */}
+      <PhotoGuideModal visible={guideOpen} onClose={closeGuide} />
     </ScrollView>
   )
 }

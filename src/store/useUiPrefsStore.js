@@ -34,6 +34,12 @@ export const useUiPrefsStore = create(
       // «все подсказки закрываются на крестик»): { [id]: true } —
       // переживают перезапуск и больше не показываются
       closedHints: {},
+      // Обучающее окно «Как фотографировать еду» уже показывали: оно
+      // само открывается один раз при первом входе в «Сканер еды»
+      // (образец — окно конкурента, скриншот Кати от 11.11); после
+      // закрытия не показывается снова, вернуть — кнопка
+      // «Как фотографировать?» на пустом экране режима
+      photoGuideSeen: false,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -56,6 +62,8 @@ export const useUiPrefsStore = create(
 
       closeHint: (id) =>
         set((s) => ({ closedHints: { ...s.closedHints, [id]: true } })),
+
+      setPhotoGuideSeen: (value) => set({ photoGuideSeen: !!value }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',
