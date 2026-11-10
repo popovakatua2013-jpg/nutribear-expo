@@ -21,6 +21,7 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { RANGES, xpForDay } from '@/lib/data/activity'
+import { AiChat } from '@/components/home/AiChat'
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets()
@@ -92,6 +93,9 @@ export default function ActivityScreen() {
           onRangeChange={setRangeId}
         />
       </ScrollView>
+
+      {/* Конвертик ИИ-чата — на всех вкладках (просьба Кати от 11.11) */}
+      <AiChat />
     </View>
   )
 }

@@ -53,6 +53,7 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
+import { AiChat } from '@/components/home/AiChat'
 
 // Стиль пинков медведя: мягко / с характером (дефолт) / с перцем
 const STYLE_LABEL = { soft: 'Мягко', bear: 'С характером', spicy: 'С перцем' }
@@ -348,6 +349,9 @@ export default function MoreScreen() {
 
       {/* Окно «Написать нам»: выбор темы, сообщение, отправка на почту */}
       <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
+
+      {/* Конвертик ИИ-чата — на всех вкладках (просьба Кати от 11.11) */}
+      <AiChat />
     </View>
   )
 }

@@ -25,6 +25,7 @@ import { spacing } from '@/features/workouts/theme'
 // вкладка «План» одного цвета с остальным приложением (просьба Кати 09.11),
 // раньше здесь был фон design-системы «Тренировок» (#0A0C10)
 import { P } from '@/components/planner/planPalette'
+import { AiChat } from '@/components/home/AiChat'
 
 export default function PlanTab() {
   const [fastOpen, setFastOpen] = useState(false)
@@ -58,6 +59,9 @@ export default function PlanTab() {
           <FastingScreen />
         </View>
       </Modal>
+
+      {/* Конвертик ИИ-чата — на всех вкладках (просьба Кати от 11.11) */}
+      <AiChat />
     </View>
   )
 }

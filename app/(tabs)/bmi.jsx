@@ -31,6 +31,7 @@ import { NormCongrats } from '@/components/bmi/NormCongrats'
 import { WeightNudge } from '@/components/bmi/WeightNudge'
 import { StreakHistoryModal } from '@/components/bmi/StreakHistoryModal'
 import { consumeScrollToWeight } from '@/lib/navEvents'
+import { AiChat } from '@/components/home/AiChat'
 
 // Мягкое неоновое свечение (дымка как на макете) — SoftGlow переехал
 // в ui/SoftGlow.jsx: ту же дымку получают шапки всех страниц
@@ -316,6 +317,9 @@ export default function BmiScreen() {
         weights={weights}
         heightCm={heightCm}
       />
+
+      {/* Конвертик ИИ-чата — на всех вкладках (просьба Кати от 11.11) */}
+      <AiChat />
     </View>
   )
 }
