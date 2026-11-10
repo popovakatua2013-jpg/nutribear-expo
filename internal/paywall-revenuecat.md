@@ -23,6 +23,13 @@ Amazon и Web Billing — RuStore в списке магазинов нет.
   а для RuStore — отдельный путь через RuStore Pay SDK (два
   независимых пути активации, один entitlement `premium` в коде).
 
+**✅ Выбрано (Катя, 10.11): сценарий «Google Play + RuStore».**
+RevenueCat — для Google Play, RuStore Pay SDK — отдельно для
+RuStore; в коде приложения один общий флаг Premium
+(`useProStore`), куда оба пути активации приходят одинаково.
+Когда берёмся за настоящий paywall — начинаем с RevenueCat
+(шаги ниже), затем отдельной задачей RuStore Pay SDK.
+
 Также: в RuStore триал настраивается в консоли RuStore (как и
 в Google Play — не в RevenueCat); подписки RuStore не проходят
 через RevenueCat, их срок действия проверяем сами
