@@ -18,6 +18,13 @@
 // «ввожу повторно данные — где хранится история?») — теперь в футере
 // таблицы кнопка «История»: все записи по дням, запись с опечаткой
 // можно удалить (MeasurementHistoryModal).
+// Крестик секции (отзыв Кати: «добавь возможность закрыть на крестик»):
+// в шапке отдельная круглая кнопка — развёрнута: крестик сворачивает
+// блок, свёрнута: шеврон вниз разворачивает обратно; тап по всей шапке
+// работал и раньше. Обрезанные шапки (отзыв Кати: «Общий прогресс
+// шапка обрезана»): подзаголовок секции и заголовок карточки прогресса
+// переносятся на 2 строки, у описания баллов лимит строк снят — текст
+// всегда виден целиком.
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -26,7 +33,6 @@ import {
   ArrowUp,
   Check,
   ChevronDown,
-  ChevronUp,
   Donut,
   Heart,
   Hourglass,
@@ -105,7 +111,7 @@ export function MeasurementsCard() {
   // Окно истории записей (кнопка в футере таблицы)
   const [histOpen, setHistOpen] = useState(false)
   // Секция развёрнута по умолчанию (отзыв Кати) — не храним в сторe:
-  // состояние локальное, свернуть можно тапом по шапке
+  // состояние локальное, свернуть можно тапом по шапке или крестиком в ней
   const [secOpen, setSecOpen] = useState(true)
   const items = useMemo(
     () => allItems(customs).filter((m) => !hiddenKeys.includes(m.key)),
@@ -210,7 +216,7 @@ export function MeasurementsCard() {
             Измерения тела
           </Text>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             maxFontSizeMultiplier={1.2}
             className="mt-0.5 font-sans text-[15px] text-bear-sub"
           >
@@ -225,12 +231,22 @@ export function MeasurementsCard() {
         >
           <Text className="font-bold text-[15px] text-[#8DABFF]">+ Добавить</Text>
         </Pressable>
-        {/* Шеврон состояния секции — по умолчанию развёрнута */}
-        {secOpen ? (
-          <ChevronUp size={17} color="#A5AECB" />
-        ) : (
-          <ChevronDown size={17} color="#A5AECB" />
-        )}
+        {/* Крестик секции (просьба Кати: «добавь возможность закрыть
+            на крестик») — отдельная круглая кнопка: развёрнута — крестик
+            сворачивает блок, свёрнута — шеврон вниз разворачивает */}
+        <Pressable
+          onPress={() => setSecOpen((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
+          hitSlop={6}
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
+        >
+          {secOpen ? (
+            <X size={16} color="#A5AECB" />
+          ) : (
+            <ChevronDown size={17} color="#A5AECB" />
+          )}
+        </Pressable>
       </Pressable>
 
       {secOpen && (
@@ -408,7 +424,7 @@ export function MeasurementsCard() {
             Общий прогресс
           </Text>
           <Text
-            numberOfLines={1}
+            numberOfLines={2}
             maxFontSizeMultiplier={1.2}
             className="mt-0.5 font-bold text-[20px] text-bear-text"
           >
@@ -416,7 +432,6 @@ export function MeasurementsCard() {
           </Text>
           <Stars value={stars} />
           <Text
-            numberOfLines={3}
             maxFontSizeMultiplier={1.25}
             className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim"
           >
