@@ -164,7 +164,7 @@ export function SupportModal({ open = false, onClose }) {
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              colors={['#8B5CF6', '#6D5AE6']}
+              colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
               style={{ borderRadius: 16 }}
             >
               {/* раскладку ведёт обычный View — LinearGradient на Android
@@ -224,7 +224,7 @@ export function SupportModal({ open = false, onClose }) {
                           <LinearGradient
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
-                            colors={['#8B5CF6', '#6D5AE6']}
+                            colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
                             style={{ borderRadius: 999 }}
                           >
                             <View className="flex-row items-center justify-center gap-2 px-2 py-3">
@@ -338,7 +338,7 @@ export function SupportModal({ open = false, onClose }) {
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                colors={['#8B5CF6', '#6D28D9']}
+                colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
                 style={{ flex: 1, borderRadius: 999 }}
               >
                 <View className="h-[54px] flex-row items-center justify-center gap-2">

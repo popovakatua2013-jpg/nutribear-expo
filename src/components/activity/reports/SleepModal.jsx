@@ -171,8 +171,8 @@ function SleepBody({ onClose }) {
             </Text>
             <Pills
               items={[
-                { id: 0, label: 'Сегодня', color: '#c084fc' },
-                { id: 1, label: 'Вчера', color: '#c084fc' },
+                { id: 0, label: 'Сегодня' },
+                { id: 1, label: 'Вчера' },
               ]}
               value={dayOff}
               onChange={setDayOff}

@@ -217,7 +217,7 @@ export function BmiCalculator() {
                   style={{ borderColor: active ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,0.10)' }}
                 >
                   {active ? (
-                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#6D5AE6', '#8B5CF6']}>
+                    <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
                       <View className="flex-row items-center justify-center gap-1.5 py-2.5">
                         <Text className="text-[17.5px]">{glyph}</Text>
                         <Text className="font-bold text-[17px] text-white">{label}</Text>
@@ -247,7 +247,7 @@ export function BmiCalculator() {
             accessibilityLabel="Рассчитать и сохранить индекс массы тела"
             className="mt-3 overflow-hidden rounded-2xl"
           >
-            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6']}>
+            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
               <View className="flex-row items-center justify-center gap-2 py-3.5">
                 <Calculator size={18} color="#FFFFFF" />
                 <Text className="font-bold text-[19px] text-white">Рассчитать</Text>

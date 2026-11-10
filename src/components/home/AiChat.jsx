@@ -199,7 +199,7 @@ export function AiChat() {
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          colors={['#4D7CFE', '#A45BFF']}
+          colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
           style={[StyleSheet.absoluteFillObject, { borderRadius: 30 }]}
         />
         <Mail size={28} color="#FFFFFF" strokeWidth={2.2} />
@@ -276,7 +276,7 @@ export function AiChat() {
                   <LinearGradient
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    colors={['#4D7CFE', '#A45BFF']}
+                    colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
                     className="min-w-[110px] rounded-2xl rounded-br-md px-3.5 py-2.5"
                     style={{ maxWidth: '85%' }}
                   >
@@ -332,7 +332,7 @@ export function AiChat() {
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                colors={['#4D7CFE', '#A45BFF']}
+                colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
                 style={[StyleSheet.absoluteFillObject]}
               />
               <Send size={19} color="#FFFFFF" />

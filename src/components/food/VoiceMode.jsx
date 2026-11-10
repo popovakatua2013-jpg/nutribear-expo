@@ -126,7 +126,7 @@ export function VoiceMode({ onPick }) {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            colors={recording ? ['#EF4444', '#B91C1C'] : ['#4D7CFE', '#A45BFF']}
+            colors={recording ? ['#EF4444', '#B91C1C'] : ['#4D7CFE', '#8B5CF6', '#A45BFF']}
             style={{ transform: [{ scale: busy ? 0.9 : 1 }] }}
           >
             <View className="h-[76px] w-[76px] items-center justify-center rounded-full">

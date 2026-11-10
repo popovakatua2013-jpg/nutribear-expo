@@ -188,7 +188,7 @@ export function ProgressPhotos() {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            colors={['#A855F7', '#7C3AED']}
+            colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
             style={[StyleSheet.absoluteFillObject, { borderRadius: 22 }]}
           />
           <Camera size={23} color="#FFFFFF" strokeWidth={2.2} />

@@ -111,7 +111,7 @@ export function PhotoMode({ source, onPick }) {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            colors={['#4D7CFE', '#A45BFF']}
+            colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
             style={{
               flex: 1,
               flexDirection: 'row',

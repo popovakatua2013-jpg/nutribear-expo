@@ -55,13 +55,17 @@ import { dishesWord, formatNum } from '@/lib/format'
 import { useToast } from '../ui/Toast'
 
 // 5 плиток — один компактный ряд (отзыв Кати: блоки 3×2 были крупными;
-// «Рецепты» переехали в отдельное окно — отзыв Кати)
+// «Рецепты» переехали в отдельное окно — отзыв Кати).
+// Единый цвет всех плиток — #7B6CF6 (отзыв Кати от 11.11: все кнопки
+// и выборы — одного цвета; раньше у каждой плитки был свой цвет:
+// #4D7CFE, #38BDF8, #A45BFF, #0EA5E9, #F59E0B)
+const TILE_COLOR = '#7B6CF6'
 const TILES = [
-  { id: 'barcode', label: 'Сканер', Icon: Barcode, color: '#4D7CFE' },
-  { id: 'scan', label: 'Фото', Icon: Camera, color: '#38BDF8' },
-  { id: 'voice', label: 'Голос', Icon: Mic, color: '#A45BFF' },
-  { id: 'gallery', label: 'Галерея', Icon: Images, color: '#0EA5E9' },
-  { id: 'label', label: 'Этикетка', Icon: ScanSearch, color: '#F59E0B' },
+  { id: 'barcode', label: 'Сканер', Icon: Barcode, color: TILE_COLOR },
+  { id: 'scan', label: 'Фото', Icon: Camera, color: TILE_COLOR },
+  { id: 'voice', label: 'Голос', Icon: Mic, color: TILE_COLOR },
+  { id: 'gallery', label: 'Галерея', Icon: Images, color: TILE_COLOR },
+  { id: 'label', label: 'Этикетка', Icon: ScanSearch, color: TILE_COLOR },
 ]
 
 export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {

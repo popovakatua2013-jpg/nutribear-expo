@@ -35,8 +35,10 @@ const ROWS = [
   { key: 'ahealth', label: 'Apple Health', hint: 'шаги и тренировки (iOS)' },
 ]
 
+// Единый акцент всех переключателей — #7B6CF6 (унификация цвета
+// по отзыву Кати от 11.11)
 const SWITCH_COLORS = {
-  true: '#4D7CFE',
+  true: '#7B6CF6',
   false: 'rgba(255,255,255,0.15)',
 }
 

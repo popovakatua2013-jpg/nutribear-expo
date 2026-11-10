@@ -837,10 +837,10 @@ export function MetricHistoryModal({
                     <LinearGradient
                       start={{ x: 0, y: 0 }}
                       end={{ x: 0, y: 1 }}
-                      colors={['#B3A5F2', '#8A73E6']}
+                      colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
                       style={{ paddingVertical: 13, alignItems: 'center' }}
                     >
-                      <Text className="font-extrabold text-[17.5px] text-[#231A47]">Закрыть</Text>
+                      <Text className="font-extrabold text-[17.5px] text-white">Закрыть</Text>
                     </LinearGradient>
                   </Pressable>
                 </View>

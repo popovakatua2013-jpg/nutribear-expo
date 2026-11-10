@@ -980,7 +980,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           accessibilityLabel={editing ? 'Сохранить изменения' : 'Записать тренировку'}
           className="shrink-0 overflow-hidden rounded-xl active:opacity-80"
         >
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#7B6CF6', '#A45BFF']}>
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
             <Text className="px-4 py-2 text-center font-bold text-[15.5px] text-white">
               {editing ? 'Сохранить' : 'Записать'}
             </Text>
