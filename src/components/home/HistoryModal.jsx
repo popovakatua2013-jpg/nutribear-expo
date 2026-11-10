@@ -6,7 +6,7 @@
 // «Перекус 3»…, в том числе уже удалённые). Кнопка «+» у блюда —
 // записать его снова в любой приём пищи. Кнопка скачивания — экспорт в CSV.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Download, History, Plus, Search, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -14,6 +14,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '@/components/ui/Toast'
 import { MEALS } from '@/lib/data/meals'
 import { readdRow } from '@/lib/data/readd'
+import { tapGuard } from '@/lib/tap-guard'
 import { formatNum } from '@/lib/format'
 import { buildCsv, shareCsv } from '@/lib/data/diary-export'
 
@@ -56,15 +57,20 @@ export function HistoryModal({ visible, onClose }) {
   const [reAddId, setReAddId] = useState(null) // блюдо, для которого открыт выбор приёма
   const [query, setQuery] = useState('') // поиск по названию блюда
   const [mealFilter, setMealFilter] = useState('all') // фильтр по приёму пищи
+  // Защита от двойного тапа — иначе успевали записаться дубли
+  // (урок из отзывов конкурента)
+  const reAddOnce = useRef(tapGuard()).current
 
   // Записать блюдо из журнала снова — в выбранный приём пищи
   function reAdd(row, meal) {
-    readdRow(addEntry, meal.id, row)
-    toast({
-      title: `${row.emoji || '🍽️'} ${row.name} — в «${meal.name}»`,
-      description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал`,
+    reAddOnce(() => {
+      readdRow(addEntry, meal.id, row)
+      toast({
+        title: `${row.emoji || '🍽️'} ${row.name} — в «${meal.name}»`,
+        description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал`,
+      })
+      setReAddId(null)
     })
-    setReAddId(null)
   }
 
   // Группировка по дням, новые сверху. Поиск фильтрует по названию,

@@ -11,7 +11,7 @@
 // дневника — запрос Кати), тут остались «Прошлый раз» и тонкая строка
 // «База продуктов» — отдельное окно со своими продуктами.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -51,6 +51,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { getMeal } from '@/lib/data/meals'
 import { readdRow } from '@/lib/data/readd'
+import { tapGuard } from '@/lib/tap-guard'
 import { dishesWord, formatNum } from '@/lib/format'
 import { useToast } from '../ui/Toast'
 
@@ -174,35 +175,51 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   }, [history, mealId])
 
   // Добавить запись из журнала с той же граммовкой (1 тап по чипу).
-  // dayOff — выбранный в шапке день (сегодня/вчера)
+  // dayOff — выбранный в шапке день (сегодня/вчера).
+  // Защита от двойного тапа: чипы не закрывают окно, и повторный тап
+  // успевал добавить дубль (урок из отзывов конкурента — отзыв Елены:
+  // «сохраняются сразу три дублирующиеся записи»); намеренный повтор
+  // возможен — окно пропуска в 1,2 с истекает
+  const addOnce = useRef(tapGuard()).current
+
   function addFromRow(row, silent) {
-    readdRow(addEntry, mealId, row, dayOff)
-    if (!silent) {
+    if (silent) {
+      // из repeatLast — он уже под защитой, дублировать её не надо
+      readdRow(addEntry, mealId, row, dayOff)
+      return
+    }
+    addOnce(() => {
+      readdRow(addEntry, mealId, row, dayOff)
       toast({
         title: `${row.emoji || '🍽️'} ${row.name} — в «${mealName}»`,
         description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал${
           dayOff ? ' · записано за вчера' : ''
         }`,
       })
-    }
+    })
   }
 
   function repeatLast() {
     if (!lastMeal) return
-    lastMeal.list.forEach((row) => addFromRow(row, true))
-    const [, m, d] = lastMeal.day.split('-')
-    toast({
-      title: `↻ Повторён прошлый «${mealName}»`,
-      description: `${lastMeal.list.length} блюд(а) · ${d}.${m}`,
+    addOnce(() => {
+      lastMeal.list.forEach((row) => addFromRow(row, true))
+      const [, m, d] = lastMeal.day.split('-')
+      toast({
+        title: `↻ Повторён прошлый «${mealName}»`,
+        description: `${lastMeal.list.length} блюд(а) · ${d}.${m}`,
+      })
     })
   }
 
-  // Комбо: весь набор одним тапом; долгий тап по чипу — удалить
+  // Комбо: весь набор одним тапом; долгий тап по чипу — удалить.
+  // Тоже под защитой от двойного тапа — иначе комбо задваивалось
   function addCombo(combo) {
-    combo.items.forEach((row) => readdRow(addEntry, mealId, row, dayOff))
-    toast({
-      title: `${combo.emoji} ${combo.name} — в «${mealName}»`,
-      description: `${combo.items.length} блюд(а) из комбо${dayOff ? ' · записано за вчера' : ''}`,
+    addOnce(() => {
+      combo.items.forEach((row) => readdRow(addEntry, mealId, row, dayOff))
+      toast({
+        title: `${combo.emoji} ${combo.name} — в «${mealName}»`,
+        description: `${combo.items.length} блюд(а) из комбо${dayOff ? ' · записано за вчера' : ''}`,
+      })
     })
   }
 

@@ -6,13 +6,14 @@
 // «добавить к имеющимся?», а в тосте «День повторён» есть кнопка
 // «Отменить» — убирает только что скопированные блюда.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { CalendarDays, Check, Copy, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '@/components/ui/Toast'
 import { readdRow } from '@/lib/data/readd'
+import { tapGuard } from '@/lib/tap-guard'
 import { formatNum } from '@/lib/format'
 
 const DAY_MS = 86400000
@@ -99,28 +100,34 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
     doCopy(rows)
   }
 
+  // Защита от двойного тапа — двойной тап по «Повторить день» успевал
+  // скопировать весь день второй раз (урок из отзывов конкурента)
+  const copyOnce = useRef(tapGuard()).current
+
   function doCopy(rows) {
-    // Собираем id только что добавленных записей — по ним работает «Отменить»
-    const added = []
-    rows.forEach((r) => {
-      try {
-        const e = readdRow(addEntry, r.mealId, r)
-        if (e?.id) added.push({ mealId: r.mealId, id: e.id })
-      } catch {}
+    copyOnce(() => {
+      // Собираем id только что добавленных записей — по ним работает «Отменить»
+      const added = []
+      rows.forEach((r) => {
+        try {
+          const e = readdRow(addEntry, r.mealId, r)
+          if (e?.id) added.push({ mealId: r.mealId, id: e.id })
+        } catch {}
+      })
+      // Приёмы, куда пришла еда, — карточка раскроет их, чтобы результат
+      // был виден сразу (иначе всё спрятано в свёрнутых секциях)
+      const mealIds = [...new Set(added.map((a) => a.mealId).filter(Boolean))]
+      if (mealIds.length && typeof onCopied === 'function') onCopied(mealIds)
+      toast({
+        title: '📋 День повторён',
+        description: `Добавлено записей: ${added.length}`,
+        action: added.length
+          ? { label: 'Отменить', onPress: () => undoCopy(added) }
+          : undefined,
+      })
+      setPicked(null)
+      onClose()
     })
-    // Приёмы, куда пришла еда, — карточка раскроет их, чтобы результат
-    // был виден сразу (иначе всё спрятано в свёрнутых секциях)
-    const mealIds = [...new Set(added.map((a) => a.mealId).filter(Boolean))]
-    if (mealIds.length && typeof onCopied === 'function') onCopied(mealIds)
-    toast({
-      title: '📋 День повторён',
-      description: `Добавлено записей: ${added.length}`,
-      action: added.length
-        ? { label: 'Отменить', onPress: () => undoCopy(added) }
-        : undefined,
-    })
-    setPicked(null)
-    onClose()
   }
 
   // «Отменить» в тосте: убираем только что скопированные блюда —

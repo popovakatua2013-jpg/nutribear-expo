@@ -2,7 +2,7 @@
 // Для распознанного ИИ (фото/голос/открытая база) — кнопка ✏️ «Исправить»:
 // окно правки названия/ккал/БЖУ на 100 г, если распознавание ошиблось.
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, Pencil, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,6 +10,7 @@ import { kcalForPortion } from '@/lib/data/foods'
 import { buildFood } from '@/lib/data/pick'
 import { bjuForPortion, bjuLine } from '@/lib/data/bju'
 import { formatNum } from '@/lib/format'
+import { tapGuard } from '@/lib/tap-guard'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '../ui/Toast'
 import { GramsPicker } from '../home/GramsPicker'
@@ -26,6 +27,10 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const [grams, setGrams] = useState(String(item.defaultGrams || 100))
+  // Защита от двойного тапа: второй тап успевал сработать до перерисовки
+  // — в дневнике оказывались дубли (урок из отзывов конкурента, отзыв
+  // Елены: «сохраняются сразу три дублирующиеся записи»)
+  const addOnce = useRef(tapGuard()).current
 
   // Рецепты и внешние источники уже в формате kcal100, база — в формате kcal
   const baseItem = item.kcal100 != null ? item : toBuildItem(item)
@@ -60,14 +65,16 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
   }
 
   function handleAdd() {
-    addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc }, dayOff)
-    toast({
-      title: `${food.emoji} ${food.name} — в «${meal.name}»`,
-      description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(
-        previewBju
-      )}${dayOff ? ' · записано за вчера' : ''}`,
+    addOnce(() => {
+      addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc }, dayOff)
+      toast({
+        title: `${food.emoji} ${food.name} — в «${meal.name}»`,
+        description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(
+          previewBju
+        )}${dayOff ? ' · записано за вчера' : ''}`,
+      })
+      onClose()
     })
-    onClose()
   }
 
   return (

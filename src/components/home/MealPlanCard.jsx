@@ -26,7 +26,7 @@
 // БЖУ. Поверхность — в стиле вкладки «Тело» (фиолетовая bear-bodyCard
 // + обводка bear-bodyLine).
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   Alert,
   Image,
@@ -58,6 +58,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { MEALS, customMealCard, getMeal } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
+import { tapGuard } from '@/lib/tap-guard'
 import { animateExpandCollapse } from '@/lib/anim'
 import { targetsFromKcal } from '@/lib/data/goals'
 import { useToast } from '../ui/Toast'
@@ -379,25 +380,31 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   }
 
   // Быстрая запись: только калории в выбранный пилюлей приём. Пишем
-  // за сегодня — окно открывается с главной, дневник «сегодня»
+  // за сегодня — окно открывается с главной, дневник «сегодня».
+  // Защита от двойного тапа — иначе успевали записаться дубли
+  // (урок из отзывов конкурента). Валидация — ДО защиты: неудачная
+  // попытка не должна съедать следующую
+  const quickOnce = useRef(tapGuard()).current
   function submitQuick() {
     const kcal = Math.round(Number(String(qKcal).replace(',', '.')) || 0)
     if (kcal < 10 || kcal > 3000) {
       toast({ title: '⚡ Укажите калории', description: 'От 10 до 3000 ккал, например 250' })
       return
     }
-    const name = qName.trim().slice(0, 40) || 'Быстрая запись'
-    const mealName = getMeal(qMealId, customMeals).name
-    addEntry(qMealId, {
-      food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
-      grams: 0,
-      kcal,
-      desc: '',
+    quickOnce(() => {
+      const name = qName.trim().slice(0, 40) || 'Быстрая запись'
+      const mealName = getMeal(qMealId, customMeals).name
+      addEntry(qMealId, {
+        food: { id: 'quick', name, emoji: '⚡', kcal, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
+        grams: 0,
+        kcal,
+        desc: '',
+      })
+      toast({ title: `⚡ ${kcal} ккал — в «${mealName}»`, description: name })
+      setQuickOpen(false)
+      setQKcal('')
+      setQName('')
     })
-    toast({ title: `⚡ ${kcal} ккал — в «${mealName}»`, description: name })
-    setQuickOpen(false)
-    setQKcal('')
-    setQName('')
   }
 
   return (

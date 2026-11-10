@@ -28,10 +28,11 @@
 // 09.11); окно рецептов и запись рецепта теперь тоже живут там же.
 // Палитра — planPalette.js (цвета приложения), сетка и шрифты — theme.js.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { tapGuard } from '@/lib/tap-guard'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
 import {
@@ -249,27 +250,35 @@ export function MealPlanScreen({ compact = false }) {
     setSwapFor(null)
   }
 
+  // Перенос меню в дневник: защита от двойного тапа — двойной тап
+  // переносил всё меню дважды (урок из отзывов конкурента).
+  // Проверка «меню пустое» — ДО защиты: неудачная попытка не должна
+  // съедать следующую
+  const transferOnce = useRef(tapGuard()).current
   const transferToDiary = () => {
     if (!day) return
-    let n = 0
-    for (const mealId of MEAL_IDS) {
-      for (const it of day[mealId] || []) {
-        useFoodStore.getState().addEntry(mealId, {
-          food: buildFood({
-            id: it.source === 'custom' ? undefined : it.id,
-            name: it.name, emoji: it.emoji, kcal100: it.kcal100,
-            p: it.p, f: it.f, c: it.c, source: it.source,
-          }),
-          grams: it.grams, kcal: it.kcal, desc: '',
-        })
-        n += 1
-      }
+    const total = MEAL_IDS.reduce((acc, m) => acc + (day[m]?.length || 0), 0)
+    if (!total) {
+      toast({ title: 'Меню дня пустое', description: 'Сначала добавьте блюда' })
+      return
     }
-    toast(
-      n
-        ? { title: '🍽️ Меню перенесено в дневник', description: `Сегодня: ${n} блюд` }
-        : { title: 'Меню дня пустое', description: 'Сначала добавьте блюда' },
-    )
+    transferOnce(() => {
+      let n = 0
+      for (const mealId of MEAL_IDS) {
+        for (const it of day[mealId] || []) {
+          useFoodStore.getState().addEntry(mealId, {
+            food: buildFood({
+              id: it.source === 'custom' ? undefined : it.id,
+              name: it.name, emoji: it.emoji, kcal100: it.kcal100,
+              p: it.p, f: it.f, c: it.c, source: it.source,
+            }),
+            grams: it.grams, kcal: it.kcal, desc: '',
+          })
+          n += 1
+        }
+      }
+      toast({ title: '🍽️ Меню перенесено в дневник', description: `Сегодня: ${n} блюд` })
+    })
   }
 
   return (
