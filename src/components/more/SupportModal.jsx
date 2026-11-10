@@ -17,6 +17,16 @@
 // поле «Ваше сообщение» со счётчиком 0/2000; крупная градиентная кнопка
 // «Отправить» с самолётиком; внизу пометка «Ваше обращение в
 // безопасности» с замком.
+//
+// 10.11, отзыв Кати: «при нажатии на выбрать тему кнопки съезжают» —
+// у активной плитки и «Отправить» иконка с текстом вставали столбиком
+// и вылезали за пилюлю. Причина: expo-linear-gradient на Android не
+// удерживает flex-раскладку своих детей (нативный LinearGradientView —
+// не ViewGroup). Теперь градиент везде только фон-подложка
+// (absoluteFillObject внутри обычного View), раскладку ведёт обычный
+// View — как в ProfileEditor и BodyChip; у плитки в обоих состояниях
+// одно дерево и одинаковая рамка (у выбранной — прозрачная), поэтому
+// при выборе ничего не прыгает.
 
 import { useState } from 'react'
 import {
@@ -25,6 +35,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -106,9 +117,12 @@ export function SupportModal({ open = false, onClose }) {
               end={{ x: 1, y: 1 }}
               colors={['#8B5CF6', '#6D5AE6']}
               style={{ borderRadius: 16 }}
-              className="h-[52px] w-[52px] items-center justify-center"
             >
-              <Lightbulb size={26} color="#FFD66B" />
+              {/* раскладку ведёт обычный View — LinearGradient на Android
+                  не удерживает выравнивание детей */}
+              <View className="h-[52px] w-[52px] items-center justify-center">
+                <Lightbulb size={26} color="#FFD66B" />
+              </View>
             </LinearGradient>
             <View className="min-w-0 flex-1">
               <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
@@ -152,35 +166,38 @@ export function SupportModal({ open = false, onClose }) {
                         accessibilityLabel={`Тема: ${t.label}`}
                         className="flex-1 active:opacity-80"
                       >
-                        {active ? (
-                          <LinearGradient
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            colors={['#8B5CF6', '#6D5AE6']}
-                            style={{ borderRadius: 999 }}
-                            className="flex-row items-center justify-center gap-2 px-2 py-3"
+                        {/* Пилюля — обычный View: дерево одно в обоих состояниях
+                            и рамка всегда 1px (у выбранной — прозрачная), при
+                            выборе ничего не пересобирается и не съезжает.
+                            Градиент у выбранной — фон-подложка absoluteFill:
+                            LinearGradient на Android не удерживает раскладку
+                            своих детей (иконка и текст вставали столбиком) */}
+                        <View
+                          className={`flex-row items-center justify-center gap-2 overflow-hidden rounded-full border px-2 py-3 ${
+                            active
+                              ? 'border-transparent'
+                              : 'border-white/[0.12] bg-white/[0.04]'
+                          }`}
+                        >
+                          {active ? (
+                            <LinearGradient
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                              colors={['#8B5CF6', '#6D5AE6']}
+                              style={StyleSheet.absoluteFillObject}
+                            />
+                          ) : null}
+                          <Icon size={17} color={active ? '#FFFFFF' : '#8D97BC'} />
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.15}
+                            className={`font-semibold text-[14.5px] ${
+                              active ? 'text-white' : 'text-bear-sub'
+                            }`}
                           >
-                            <Icon size={17} color="#FFFFFF" />
-                            <Text
-                              numberOfLines={1}
-                              maxFontSizeMultiplier={1.15}
-                              className="font-semibold text-[14.5px] text-white"
-                            >
-                              {t.label}
-                            </Text>
-                          </LinearGradient>
-                        ) : (
-                          <View className="flex-row items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-3">
-                            <Icon size={17} color="#8D97BC" />
-                            <Text
-                              numberOfLines={1}
-                              maxFontSizeMultiplier={1.15}
-                              className="font-semibold text-[14.5px] text-bear-sub"
-                            >
-                              {t.label}
-                            </Text>
-                          </View>
-                        )}
+                            {t.label}
+                          </Text>
+                        </View>
                       </Pressable>
                     )
                   })}
@@ -221,16 +238,18 @@ export function SupportModal({ open = false, onClose }) {
               accessibilityLabel="Отправить письмо в поддержку"
               className="mt-2 h-[54px] flex-row active:opacity-80"
             >
-              <LinearGradient
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                colors={['#8B5CF6', '#6D28D9']}
-                style={{ borderRadius: 999 }}
-                className="flex-1 flex-row items-center justify-center gap-2"
-              >
+              {/* градиент — фон-подложка, раскладку ведёт обычный View
+                  (LinearGradient на Android не удерживает детей) */}
+              <View className="flex-1 flex-row items-center justify-center gap-2 overflow-hidden rounded-full">
+                <LinearGradient
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  colors={['#8B5CF6', '#6D28D9']}
+                  style={StyleSheet.absoluteFillObject}
+                />
                 <Send size={19} color="#FFFFFF" />
                 <Text className="font-bold text-[17px] text-white">Отправить</Text>
-              </LinearGradient>
+              </View>
             </Pressable>
 
             {/* Пометка о безопасности — как на скрине Кати */}
