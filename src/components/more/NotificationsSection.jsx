@@ -1,11 +1,14 @@
 // Секция «Напоминания» — по схеме Кати: «Уведомление — раскрывающий
 // список: тренировка, вода, взвешивание и т.д. — тумблер вкл/выкл,
-// окно времени». Каждый тип — одна строка компактного списка:
-//   🏋️ Тренировка  — тумблер + поле времени прямо в строке
-//   💧 Вода        — тумблер + чип «каждые N мин» (тап — выбор интервала)
-//   ⚖️ Взвешивание — тумблер + чип «Сб · 08:00» (тап — день и время)
-//   🍽 Еда         — тумблер + чип с тремя временами (завтрак/обед/ужин)
-//   🌙 Сон         — тумблер + поле времени прямо в строке
+// окно времени». Каждый тип — одна строка компактного списка, и ВСЕ
+// пять окон времени выглядят ОДИНАКОВО (отзыв Кати 10.11: «окна
+// времени выглядят везде по разному, сделать одинаково»): серый чип
+// со значением и шевроном — тап раскрывает выбор под строкой:
+//   🏋️ Тренировка  — чип «18:00» → поле времени
+//   💧 Вода        — чип «каждые N мин» → выбор интервала
+//   ⚖️ Взвешивание — чип «Сб · 08:00» → день недели и время
+//   🍽 Еда         — чип с тремя временами → завтрак/обед/ужин
+//   🌙 Сон         — чип «22:30» → поле времени
 // Никаких подсказок и пояснений (отзыв Кати: «все подсказки убрать
 // в напоминаниях»), никаких вложенных карточек и плиток — только
 // список. «Возвращать калории» отсюда убрано: дубль настройки в
@@ -29,7 +32,8 @@ const MEALS = [
   { key: 'dinner', label: 'Ужин' },
 ]
 
-// Чип «окно времени»: текущее значение + шеврон, тап раскрывает выбор
+// Чип «окно времени» — единый вид для всех пяти напоминаний:
+// текущее значение + шеврон, тап раскрывает выбор под строкой
 function TimeChip({ text, open, onPress }) {
   return (
     <Pressable
@@ -111,17 +115,27 @@ export function NotificationsSection() {
 
   return (
     <View accessibilityLabel="Уведомления" className="gap-1.5">
-      {/* Тренировка: время прямо в строке */}
+      {/* Тренировка: чип времени → раскрытие с полем — как у всех окон */}
       <ReminderRow
         icon="🏋️"
         title="Тренировка"
         enabled={Boolean(exercise.enabled)}
         onToggle={(on) => toggle((v) => ({ exercise: { ...exercise, enabled: v } }), on)}
         timeEl={
-          <TimeField
-            value={exercise.time}
-            onChange={(t) => setReminder({ exercise: { ...exercise, time: t } })}
+          <TimeChip
+            text={exercise.time}
+            open={openKey === 'exercise'}
+            onPress={() => flip('exercise')}
           />
+        }
+        expanded={openKey === 'exercise'}
+        expand={
+          <View className="flex-row items-center justify-end">
+            <TimeField
+              value={exercise.time}
+              onChange={(t) => setReminder({ exercise: { ...exercise, time: t } })}
+            />
+          </View>
         }
       />
 
@@ -218,17 +232,27 @@ export function NotificationsSection() {
         }
       />
 
-      {/* Сон: время прямо в строке */}
+      {/* Сон: чип времени → раскрытие с полем — как у всех окон */}
       <ReminderRow
         icon="🌙"
         title="Сон"
         enabled={Boolean(sleep.enabled)}
         onToggle={(on) => toggle((v) => ({ sleep: { ...sleep, enabled: v } }), on)}
         timeEl={
-          <TimeField
-            value={sleep.time}
-            onChange={(t) => setReminder({ sleep: { ...sleep, time: t } })}
+          <TimeChip
+            text={sleep.time}
+            open={openKey === 'sleep'}
+            onPress={() => flip('sleep')}
           />
+        }
+        expanded={openKey === 'sleep'}
+        expand={
+          <View className="flex-row items-center justify-end">
+            <TimeField
+              value={sleep.time}
+              onChange={(t) => setReminder({ sleep: { ...sleep, time: t } })}
+            />
+          </View>
         }
       />
     </View>
