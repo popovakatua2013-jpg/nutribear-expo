@@ -142,14 +142,15 @@ const styles = StyleSheet.create({
     color: '#98A2C2',
     lineHeight: 17,
   },
-  wheels: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 },
+  wheels: { flexDirection: 'row', justifyContent: 'center', gap: 20 },
   wheelCol: { alignItems: 'center' },
+  // Подписи крупнее и светлее — по отзыву Кати 10.11 «не видно подписи»
   wheelLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',
-    color: '#8B96B8',
-    marginBottom: 6,
+    color: '#A7B1D0',
+    marginBottom: 4,
   },
   kcal: {
     textAlign: 'center',
