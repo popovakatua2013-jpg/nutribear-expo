@@ -23,7 +23,8 @@
         "backgroundColor": "#0A1020"
       },
       "permissions": [
-        "android.permission.health.READ_STEPS"
+        "android.permission.health.READ_STEPS",
+        "android.permission.ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
