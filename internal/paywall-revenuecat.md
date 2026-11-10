@@ -4,18 +4,41 @@
 `src/components/onboarding/ob/PaywallStep.jsx`): цены показываются,
 но покупки не проводятся. Ниже — пошаговый план подключения
 настоящей подписки. **Важно: в Expo Go SDK RevenueCat не работает** —
-нужна dev-сборка (см. `docs/eas-build.md`, профиль `development`).
+нужна dev-сборка (см. `internal/eas-build.md`, профиль `development`).
+
+## ⚠️ RuStore и RevenueCat — НЕ совместимы (проверено 10.11)
+
+RevenueCat поддерживает только App Store, Google Play, Stripe,
+Amazon и Web Billing — RuStore в списке магазинов нет.
+Значит, для продаж через RuStore нужен **собственный Pay SDK RuStore**
+(<https://www.rustore.ru/help/sdk/pay>): есть обёртка под React Native,
+продукты и подписки создаются в RuStore Console, триалы — там же.
+
+**Решение ДО проектирования пейволла (отзыв Кати от 10.11):**
+
+- публикуемся только в RuStore → RevenueCat вообще не нужен:
+  оплата напрямую через RuStore Pay SDK (или пока без продаж —
+  макет остаётся демо);
+- публикуемся и в Google Play → RevenueCat закрывает Google Play,
+  а для RuStore — отдельный путь через RuStore Pay SDK (два
+  независимых пути активации, один entitlement `premium` в коде).
+
+Также: в RuStore триал настраивается в консоли RuStore (как и
+в Google Play — не в RevenueCat); подписки RuStore не проходят
+через RevenueCat, их срок действия проверяем сами
+(по ответам Pay SDK о статусе покупки).
 
 ## Цены и продукты (как задумано)
 
 | Продукт            | Цена      | Условие                  |
 | ------------------ | --------- | ------------------------ |
 | `premium.monthly`  | 299 ₽/мес | —                        |
-| `premium.yearly`   | 1 490 ₽/год | 7 дней бесплатно (триал) |
+| `premium.yearly`   | 1 490 ₽/год | 3 дня бесплатно (триал — как в приложении, отзыв Кати) |
 
 Триал настраивается НЕ в RevenueCat, а в консолях магазинов:
-- App Store Connect → подписка → Introductory offer → Free trial 7 days;
-- Google Play Console → подписка → Free trial 7 days.
+- App Store Connect → подписка → Introductory offer → Free trial 3 days;
+- Google Play Console → подписка → Free trial 3 days;
+- RuStore Console → продукт → триал 3 дня (см. раздел выше).
 
 ## Шаги
 
