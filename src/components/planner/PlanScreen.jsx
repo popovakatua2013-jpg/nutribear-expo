@@ -222,7 +222,9 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, center
 // Линия тренда недели — как в макете: плавная кривая с точками и
 // мягкой заливкой; пунктир нормы; сегодняшний день — крупная точка и
 // акцентная подпись; дни без данных — серые точки. Тап по дню — значение.
-const CHART_H = 148
+// Высота снижена со 148 — блок «Прогресс» компактнее (отзыв Кати 10.11:
+// «очень громоздкие блоки»)
+const CHART_H = 116
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
   const [w, setW] = useState(0)
@@ -446,7 +448,9 @@ export function PlanScreen({ onOpenFasting }) {
     })
   }
 
-  // Легенда «Прогресса» — как в макете: 4 строки с цветными точками
+  // Легенда «Прогресса» — 4 строки в одну линию: точка + название +
+  // значения справа (компактнее — отзыв Кати 10.11: «очень громоздкие
+  // блоки»)
   const legend = [
     { key: 'kcal', label: 'Калории', color: P.accent, value: formatNum(todaySum.kcal), norm: formatNum(kcalGoal), unit: 'ккал' },
     { key: 'p', label: 'Белки', color: P.blue, value: String(Math.round(todaySum.p)), norm: String(norms.p), unit: 'г' },
@@ -642,20 +646,18 @@ export function PlanScreen({ onOpenFasting }) {
           <Ring
             pct={kcalGoal > 0 ? todaySum.kcal / kcalGoal : 0}
             runId={runId}
-            size={104}
-            stroke={10}
+            size={88}
+            stroke={9}
             sub="от цели"
           />
           <View style={styles.legend}>
             {legend.map((r) => (
               <View key={r.key} style={styles.legendRow}>
                 <View style={[styles.legendDot, { backgroundColor: r.color }]} />
-                <View style={styles.legendTexts}>
-                  <Text numberOfLines={1} style={styles.legendLabel}>{r.label}</Text>
-                  <Text numberOfLines={1} style={styles.legendVal}>
-                    {r.value} / {r.norm} {r.unit}
-                  </Text>
-                </View>
+                <Text numberOfLines={1} style={styles.legendLabel}>{r.label}</Text>
+                <Text numberOfLines={1} style={styles.legendVal}>
+                  {r.value} / {r.norm} {r.unit}
+                </Text>
               </View>
             ))}
           </View>
@@ -894,14 +896,27 @@ const styles = {
   headRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   headLink: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
 
-  // Прогресс: кольцо + легенда
+  // Прогресс: кольцо + легенда (строки в одну линию — компактнее,
+  // отзыв Кати 10.11)
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: spacing.m },
-  legend: { flex: 1, minWidth: 0, gap: 9 },
-  legendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  legendDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
-  legendTexts: { flex: 1, minWidth: 0 },
-  legendLabel: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
-  legendVal: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3, marginTop: 1 },
+  legend: { flex: 1, minWidth: 0, gap: 7 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendLabel: {
+    flexShrink: 1,
+    fontSize: 13.5,
+    fontWeight: '700',
+    fontFamily: F[700],
+    color: P.text,
+  },
+  legendVal: {
+    marginLeft: 'auto',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: F[600],
+    color: P.text3,
+    fontVariant: ['tabular-nums'],
+  },
   ringWrap: { position: 'relative' },
   ringCenter: {
     position: 'absolute',
@@ -968,8 +983,9 @@ const styles = {
   },
 
   // Покупки: чек-лист слева + иллюстрация и кнопка справа
+  // (иллюстрация и кнопка меньше — блок компактнее, отзыв Кати 10.11)
   shopBody: { flexDirection: 'row', gap: 12, marginTop: spacing.m },
-  shopList: { flex: 1, minWidth: 0, gap: 9 },
+  shopList: { flex: 1, minWidth: 0, gap: 8 },
   shopEmpty: { ...type.body, fontSize: 13, color: P.text2 },
   shopRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   shopCbx: {
@@ -985,8 +1001,8 @@ const styles = {
   shopName: { ...type.body, fontSize: 13.5, color: P.text, flex: 1, minWidth: 0 },
   shopNameDone: { color: P.text3, textDecorationLine: 'line-through' },
   shopQty: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text3 },
-  shopSide: { width: 140, alignItems: 'center' },
-  shopArt: { width: 118, height: 80, marginBottom: 2 },
+  shopSide: { width: 112, alignItems: 'center' },
+  shopArt: { width: 94, height: 58, marginBottom: 2 },
   shopBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -994,11 +1010,11 @@ const styles = {
     gap: 4,
     backgroundColor: P.accent,
     borderRadius: 999,
-    height: 38,
+    height: 32,
     paddingHorizontal: 10,
     alignSelf: 'stretch',
   },
-  shopBtnText: { fontSize: 11.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
+  shopBtnText: { fontSize: 11, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 
   // Меню + интервальное питание — РЯДОМ (макет Кати от 09.11);
   // «Добавить рецепт» — под голоданием, в правой колонке (fastCol)
