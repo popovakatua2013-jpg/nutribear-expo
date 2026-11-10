@@ -9,7 +9,9 @@
 //             записи — изменить; справа день для прошлых записей);
 //             если за сегодня пусто — кнопка «Повторить вчера …»
 //   добавить: форма ВСЕГДА видна и занимает две строки —
-//             [🚶 Выбрать ▾][мин][ккал] + [Сегодня|Вчера] [Записать];
+//             [🚶 Выбрать ▾][мин — счётчик][ккал] + [Сегодня|Вчера] [Записать];
+//             тап по «мин» — окно с барабанами «интенсивность + время»
+//             (как в DietAI, просьба Кати 10.11), ккал считаются сами;
 //             список тренировок и форма своей — раскрываются под ней;
 //             тап по сегодняшней записи превращает эту же форму в режим
 //             изменения («Сохранить», корзина, перенос за вчера)
@@ -21,7 +23,7 @@
 // «Тренировок» на главной.
 
 import { useCallback, useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import {
   BarChart3,
   Check,
@@ -58,6 +60,7 @@ import {
 import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { useToast } from '../ui/Toast'
 import { Pills } from '../ui/Pills'
+import { WheelTimeModal } from './WheelTimeModal'
 import { BodyChip } from '../ui/BodyChip'
 import { formatNum, makeId } from '@/lib/format'
 
@@ -437,6 +440,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
   const [kcalStr, setKcalStr] = useState(editing && editing.manual ? String(editing.kcal) : '')
   // Выпадающий список тренировок: раскрыт/свёрнут
   const [listOpen, setListOpen] = useState(false)
+  // Счётчик «время + интенсивность» — барабаны как в приложении-эталоне
+  // (скриншот Кати 10.11): тап по полю времени открывает окно
+  const [wheelOpen, setWheelOpen] = useState(false)
 
   // Форма своей тренировки (внутри списка)
   const [creating, setCreating] = useState(false)
@@ -560,6 +566,15 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
     removeCustom(ex.id)
     setExId(null)
     toast({ title: '🗑 Удалено', description: `«${ex.name}» больше не в списке` })
+  }
+
+  // Счётчик «время + интенсивность» (просьба Кати 10.11): «Готово»
+  // пишет минуты в поле времени, ккал — от выбранной интенсивности
+  // (в поле ккал цифру можно потом поправить — как и раньше)
+  function applyWheel({ minutes, kcal }) {
+    setMinutesStr(String(minutes))
+    if (kcal) setKcalStr(String(kcal))
+    setWheelOpen(false)
   }
 
   // Записать: проверяем поля и добавляем/сохраняем запись
@@ -686,16 +701,25 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             <ChevronDown size={16} color="#A5AECB" />
           )}
         </Pressable>
-        <TextInput
-          value={minutesStr}
-          onChangeText={setMinutesStr}
-          keyboardType="number-pad"
-          maxLength={3}
-          placeholder="мин"
-          placeholderTextColor="#8B96B8"
-          accessibilityLabel="Время тренировки в минутах"
-          className="w-[54px] shrink-0 rounded-xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[16px] text-bear-text"
-        />
+        {/* Время — открывает счётчик-барабаны (интенсивность + минуты,
+            ккал считаются сами — как в DietAI, скриншот Кати 10.11) */}
+        <Pressable
+          onPress={() => setWheelOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            minutesNum > 0
+              ? `Время тренировки ${minutesNum} минут — открыть счётчик`
+              : 'Время тренировки — открыть счётчик'
+          }
+          className="w-[68px] shrink-0 flex-row items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2 active:opacity-70"
+        >
+          <Text
+            numberOfLines={1}
+            className={`font-bold text-[13.5px] ${minutesNum > 0 ? 'text-bear-text' : 'text-bear-dim'}`}
+          >
+            {minutesNum > 0 ? `${minutesNum} мин` : 'мин'}
+          </Text>
+        </Pressable>
         <TextInput
           value={kcalStr}
           onChangeText={setKcalStr}
@@ -999,6 +1023,17 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           </Pressable>
         </View>
       )}
+
+      {/* Счётчик «время + интенсивность»: два барабана, живой расчёт ккал
+          от интенсивности, «Готово» переносит выбор в форму */}
+      <WheelTimeModal
+        open={wheelOpen}
+        onClose={() => setWheelOpen(false)}
+        exercise={ex}
+        weightKg={weightKg}
+        initialMinutes={minutesNum}
+        onApply={applyWheel}
+      />
     </View>
   )
 }
