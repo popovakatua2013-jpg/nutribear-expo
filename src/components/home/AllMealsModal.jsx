@@ -20,9 +20,11 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { targetsFromKcal } from '@/lib/data/goals'
 import { useToast } from '@/components/ui/Toast'
 import { EditEntryModal } from '../food/EditEntryModal'
+import { confirmRemoveEntry } from '@/lib/confirm-remove'
 
 function EntryRow({ mealId, mealName, entry, onEdit }) {
   const removeEntry = useFoodStore((s) => s.removeEntry)
+  const { toast } = useToast()
 
   return (
     <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-3 py-2">
@@ -46,7 +48,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         <Pencil size={15} color="#8B96B8" />
       </Pressable>
       <Pressable
-        onPress={() => removeEntry(mealId, entry.id)}
+        onPress={() => confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast })}
         accessibilityLabel={`Удалить «${entry.name}» из «${mealName}»`}
         accessibilityRole="button"
         className="shrink-0 rounded p-1"

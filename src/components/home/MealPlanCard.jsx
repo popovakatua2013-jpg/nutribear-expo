@@ -61,6 +61,7 @@ import { dishesWord, formatNum } from '@/lib/format'
 import { tapGuard } from '@/lib/tap-guard'
 import { animateExpandCollapse } from '@/lib/anim'
 import { targetsFromKcal } from '@/lib/data/goals'
+import { confirmRemoveEntry } from '@/lib/confirm-remove'
 import { useToast } from '../ui/Toast'
 
 const MAX = 1.2
@@ -133,6 +134,7 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
 // перекусов он свой), корзина — удалить
 function DishRow({ mealId, mealName, entry, onEdit }) {
   const removeEntry = useFoodStore((s) => s.removeEntry)
+  const { toast } = useToast()
 
   return (
     <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-2.5 py-2">
@@ -164,7 +166,7 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
         <Pencil size={14} color="#8B96B8" />
       </Pressable>
       <Pressable
-        onPress={() => removeEntry(mealId, entry.id)}
+        onPress={() => confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast })}
         accessibilityLabel={`Удалить «${entry.name}» из «${mealName}»`}
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
