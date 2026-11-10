@@ -1,7 +1,7 @@
 // Карточка «Профиль» — hero-блок вкладки «Ещё» (редизайн по шаблону
 // Катиного референса: большой круглый аватар, «178 см • 99,0 кг» и чип
-// «Как тебя зовут?» с карандашом). Тап по карточке раскрывает прежнюю
-// форму (имя, рост, вес) — логика сохранения не менялась.
+// «Изменить имя» с карандашом). Тап по карточке раскрывает прежнюю
+// форму (имя, рост, вес); сохранение сворачивает форму сразу.
 
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
@@ -53,6 +53,9 @@ export function ProfileEditor() {
     setProfile({ name: current.name.trim().slice(0, 24), heightCm: h })
     if (weightChanged) addWeight(w)
     setForm(null)
+    // Сворачиваем форму сразу после сохранения (отзыв Кати:
+    // «нажать сохранить профиль — должно сразу сворачивать»)
+    setOpen(false)
     toast({
       title: '✅ Профиль сохранён',
       description:
@@ -98,15 +101,15 @@ export function ProfileEditor() {
           >
             {heightCm} см • {fmtDecimal(weightKg)} кг
           </Text>
-          {/* Чип с именем: до ввода — приглашение «Как тебя зовут? ✏️»,
-              после — «Изменить имя» (имя уже в заголовке) */}
+          {/* Чип с именем: всегда «Изменить имя» — надпись «Как тебя
+              зовут?» удалена по отзыву Кати от 10.11 */}
           <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-white/[0.08] px-3 py-1.5">
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.15}
               className="max-w-[150px] font-semibold text-[13.5px] text-bear-bright"
             >
-              {name ? 'Изменить имя' : 'Как тебя зовут?'}
+              Изменить имя
             </Text>
             <Pencil size={12.5} color="#C4B5FD" />
           </View>
@@ -125,8 +128,6 @@ export function ProfileEditor() {
           <TextInput
             value={current.name}
             onChangeText={(v) => patch({ name: v })}
-            placeholder="Как тебя зовут?"
-            placeholderTextColor="#8B96B8"
             className={FIELD}
           />
           <View className="mt-3 flex-row gap-3">

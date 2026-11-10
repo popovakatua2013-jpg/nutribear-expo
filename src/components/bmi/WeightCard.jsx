@@ -53,7 +53,6 @@ import {
   NotebookText,
   Pencil,
   Plus,
-  ThumbsDown,
   ThumbsUp,
   Trash2,
   TrendingDown,
@@ -721,11 +720,11 @@ export function WeightCard() {
                 {strip.text}
               </Text>
             </View>
-            {strip.tone === 'bad' ? (
-              <ThumbsDown size={22} color="#FBBF24" />
-            ) : strip.tone === 'push' ? (
+            {/* Правая иконка-тонус. «Палец вниз» удалён по отзыву Кати
+                от 10.11 («удалить палец вниз») — при тоне bad иконки нет */}
+            {strip.tone === 'push' ? (
               <ThumbsUp size={22} color="#FBBF24" />
-            ) : strip.tone === 'info' ? null : (
+            ) : strip.tone === 'info' ? null : strip.tone === 'bad' ? null : (
               <ThumbsUp size={22} color="#4ADE80" />
             )}
           </View>

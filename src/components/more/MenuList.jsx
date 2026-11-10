@@ -152,8 +152,11 @@ export function MenuRow({
           <Text className="text-[18px]">{icon}</Text>
         </View>
 
+        {/* Без numberOfLines: длинные заголовки («Поддержка и помощь»)
+            обрезались многоточием (отзыв Кати от 10.11) — пусть
+            переносятся на вторую строку; короткие строки выглядят
+            как раньше, высота растёт только когда не влезает */}
         <Text
-          numberOfLines={1}
           maxFontSizeMultiplier={1.1}
           className="min-w-0 flex-1 font-bold text-[16.5px] text-bear-text"
         >
