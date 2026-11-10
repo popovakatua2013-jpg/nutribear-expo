@@ -22,25 +22,34 @@
 // у активной плитки и «Отправить» иконка с текстом вставали столбиком
 // и вылезали за пилюлю. Причина: expo-linear-gradient на Android не
 // удерживает flex-раскладку своих детей (нативный LinearGradientView —
-// не ViewGroup). Теперь градиент везде только фон-подложка
-// (absoluteFillObject внутри обычного View), раскладку ведёт обычный
-// View — как в ProfileEditor и BodyChip; у плитки в обоих состояниях
-// одно дерево и одинаковая рамка (у выбранной — прозрачная), поэтому
-// при выборе ничего не прыгает.
+// не ViewGroup), классы flex-row/items-center на нём не срабатывают.
+// Рабочий шаблон на её устройстве (проверено скринами): градиент —
+// родитель, у которого в className только размеры/рамка в style, а
+// раскладку ведёт внутренний обычный View (лампочка в шапке, аватар
+// в ProfileEditor). Подложка absoluteFill внутри обычного View на её
+// устройстве не отрисовалась — не используем.
+//
+// 10.11, отзыв Кати: «добавить возможность прикрепить файлы» — под
+// полем сообщения кнопка со скрепкой открывает системный выбор файлов
+// (expo-document-picker — любые файлы: скрин, видео, лог), выбранные
+// файлы — чипы с именем и крестиком. Письмо собирает
+// expo-mail-composer (mailto вложения не умеет): тема, текст,
+// подпись и файлы едут вместе; если почты на телефоне нет — прежний
+// тост с адресом. Сам адрес всегда есть в политике конфиденциальности.
 
 import { useState } from 'react'
 import {
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
 import Constants from 'expo-constants'
+import * as DocumentPicker from 'expo-document-picker'
+import * as MailComposer from 'expo-mail-composer'
 import { LinearGradient } from 'expo-linear-gradient'
 import {
   Bug,
@@ -49,6 +58,7 @@ import {
   Lightbulb,
   Lock,
   MessageCircle,
+  Paperclip,
   Send,
   X,
 } from 'lucide-react-native'
@@ -75,21 +85,60 @@ function signature() {
 // помощь» на «Ещё» открывает его сразу по тапу
 export function SupportModal({ open = false, onClose }) {
   const { toast } = useToast()
-  // Выбранная тема и текст обращения — черновик сохраняется, пока
-  // приложение живо: случайно закрыли — текст не потерялся
+  // Выбранная тема, текст и вложения — черновик сохраняется, пока
+  // приложение живо: случайно закрыли — текст и файлы не потерялись
   const [topic, setTopic] = useState(TOPICS[0])
   const [message, setMessage] = useState('')
+  const [files, setFiles] = useState([])
 
+  // Выбор файлов: системный проводник (любые файлы — скрины, видео,
+  // логи), несколько сразу; повтор — дубликаты по пути не добавляем
+  async function pickFiles() {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        multiple: true,
+        copyToCacheDirectory: true,
+      })
+      if (res.canceled || !res.assets?.length) return
+      const picked = res.assets.map((a) => ({
+        uri: a.uri,
+        name: a.name || 'файл',
+      }))
+      setFiles((prev) => {
+        const seen = new Set(prev.map((f) => f.uri))
+        return [...prev, ...picked.filter((f) => !seen.has(f.uri))]
+      })
+    } catch {
+      toast({ title: 'Не удалось открыть выбор файлов' })
+    }
+  }
+
+  function removeFile(uri) {
+    setFiles((prev) => prev.filter((f) => f.uri !== uri))
+  }
+
+  // Письмо собирает expo-mail-composer — только он умеет вкладывать
+  // файлы (mailto не может). Если почта не настроена/не открылась —
+  // прежний тост с адресом (тексты не менялись)
   function send() {
     const text = message.trim()
     const body = `${text || 'Опишите, пожалуйста, подробнее.'}${signature()}`
-    const url = `mailto:${EMAIL}?subject=${encodeURIComponent(`[NutriBear] ${topic.subject}`)}&body=${encodeURIComponent(body)}`
-    Linking.openURL(url).catch(() => {
+    const fail = () =>
       toast({
         title: '📮 Почта не открылась',
         description: `Напишите нам сами: ${EMAIL}`,
       })
-    })
+    MailComposer.isAvailableAsync()
+      .then((available) => {
+        if (!available) return fail()
+        return MailComposer.composeAsync({
+          recipients: [EMAIL],
+          subject: `[NutriBear] ${topic.subject}`,
+          body,
+          attachments: files.map((f) => f.uri),
+        }).catch(fail)
+      })
+      .catch(fail)
     onClose?.()
   }
 
@@ -166,38 +215,41 @@ export function SupportModal({ open = false, onClose }) {
                         accessibilityLabel={`Тема: ${t.label}`}
                         className="flex-1 active:opacity-80"
                       >
-                        {/* Пилюля — обычный View: дерево одно в обоих состояниях
-                            и рамка всегда 1px (у выбранной — прозрачная), при
-                            выборе ничего не пересобирается и не съезжает.
-                            Градиент у выбранной — фон-подложка absoluteFill:
-                            LinearGradient на Android не удерживает раскладку
-                            своих детей (иконка и текст вставали столбиком) */}
-                        <View
-                          className={`flex-row items-center justify-center gap-2 overflow-hidden rounded-full border px-2 py-3 ${
-                            active
-                              ? 'border-transparent'
-                              : 'border-white/[0.12] bg-white/[0.04]'
-                          }`}
-                        >
-                          {active ? (
-                            <LinearGradient
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 0 }}
-                              colors={['#8B5CF6', '#6D5AE6']}
-                              style={StyleSheet.absoluteFillObject}
-                            />
-                          ) : null}
-                          <Icon size={17} color={active ? '#FFFFFF' : '#8D97BC'} />
-                          <Text
-                            numberOfLines={1}
-                            maxFontSizeMultiplier={1.15}
-                            className={`font-semibold text-[14.5px] ${
-                              active ? 'text-white' : 'text-bear-sub'
-                            }`}
+                        {/* Рабочий шаблон (проверено на устройстве Кати):
+                            у градиента — только рамка в style, раскладку
+                            ведёт внутренний обычный View с теми же
+                            классами, что у невыбранной пилюли, — размеры
+                            совпадают и при выборе ничего не прыгает */}
+                        {active ? (
+                          <LinearGradient
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            colors={['#8B5CF6', '#6D5AE6']}
+                            style={{ borderRadius: 999 }}
                           >
-                            {t.label}
-                          </Text>
-                        </View>
+                            <View className="flex-row items-center justify-center gap-2 px-2 py-3">
+                              <Icon size={17} color="#FFFFFF" />
+                              <Text
+                                numberOfLines={1}
+                                maxFontSizeMultiplier={1.15}
+                                className="font-semibold text-[14.5px] text-white"
+                              >
+                                {t.label}
+                              </Text>
+                            </View>
+                          </LinearGradient>
+                        ) : (
+                          <View className="flex-row items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-3">
+                            <Icon size={17} color="#8D97BC" />
+                            <Text
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.15}
+                              className="font-semibold text-[14.5px] text-bear-sub"
+                            >
+                              {t.label}
+                            </Text>
+                          </View>
+                        )}
                       </Pressable>
                     )
                   })}
@@ -231,25 +283,69 @@ export function SupportModal({ open = false, onClose }) {
               {message.length} / 2000
             </Text>
 
-            {/* Отправить — крупная градиентная кнопка с самолётиком */}
+            {/* Вложения — кнопка со скрепкой открывает выбор файлов,
+                выбранные — чипы с именем и крестиком (отзыв Кати от
+                10.11: «добавить возможность прикрепить файлы») */}
+            <View className="mt-2 flex-row flex-wrap items-center gap-2">
+              <Pressable
+                onPress={pickFiles}
+                accessibilityRole="button"
+                accessibilityLabel="Прикрепить файл"
+                className="flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-2 active:opacity-80"
+              >
+                <Paperclip size={14} color="#8D97BC" />
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  className="font-semibold text-[13px] text-bear-sub"
+                >
+                  Прикрепить файл
+                </Text>
+              </Pressable>
+              {files.map((f) => (
+                <View
+                  key={f.uri}
+                  className="max-w-[210px] flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.06] px-3 py-2"
+                >
+                  <Paperclip size={13} color="#8D97BC" />
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.15}
+                    className="shrink text-[13px] text-bear-sub"
+                  >
+                    {f.name}
+                  </Text>
+                  <Pressable
+                    onPress={() => removeFile(f.uri)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Убрать файл ${f.name}`}
+                    hitSlop={8}
+                    className="ml-0.5"
+                  >
+                    <X size={14} color="#A5AECB" />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+
+            {/* Отправить — крупная градиентная кнопка с самолётиком
+                (градиент — родитель, раскладку ведёт внутренний View) */}
             <Pressable
               onPress={send}
               accessibilityRole="button"
               accessibilityLabel="Отправить письмо в поддержку"
               className="mt-2 h-[54px] flex-row active:opacity-80"
             >
-              {/* градиент — фон-подложка, раскладку ведёт обычный View
-                  (LinearGradient на Android не удерживает детей) */}
-              <View className="flex-1 flex-row items-center justify-center gap-2 overflow-hidden rounded-full">
-                <LinearGradient
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  colors={['#8B5CF6', '#6D28D9']}
-                  style={StyleSheet.absoluteFillObject}
-                />
-                <Send size={19} color="#FFFFFF" />
-                <Text className="font-bold text-[17px] text-white">Отправить</Text>
-              </View>
+              <LinearGradient
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                colors={['#8B5CF6', '#6D28D9']}
+                style={{ flex: 1, borderRadius: 999 }}
+              >
+                <View className="h-[54px] flex-row items-center justify-center gap-2">
+                  <Send size={19} color="#FFFFFF" />
+                  <Text className="font-bold text-[17px] text-white">Отправить</Text>
+                </View>
+              </LinearGradient>
             </Pressable>
 
             {/* Пометка о безопасности — как на скрине Кати */}
