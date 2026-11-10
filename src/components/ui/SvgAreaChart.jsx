@@ -111,9 +111,17 @@ export function SvgAreaChart({
   const x = (i) => PAD_L + (iw * i) / Math.max(1, data.length - 1)
   const y = (v) => PAD_T + ih - ((v - lo) / (hi - lo)) * ih
 
-  const pts = data.map((d, i) => ({ x: x(i), y: y(d.value) }))
+  // Одна точка — рисуем по центру без линии и заливки (отзыв Кати
+  // от 10.11: «добавила вес — график в дневнике не фиксирует данные»:
+  // раньше одна запись давала пустой путь линии и вырожденную область,
+  // поэтому график требовал минимум два взвешивания). Первое взвешивание
+  // теперь сразу видно на графике точкой; линия — с двух записей
+  const single = data.length === 1
+  const pts = data.map((d, i) => ({ x: single ? PAD_L + iw / 2 : x(i), y: y(d.value) }))
   const line = smoothPath(pts)
-  const area = `${line} L ${pts[pts.length - 1].x} ${PAD_T + ih} L ${pts[0].x} ${PAD_T + ih} Z`
+  const area = single
+    ? ''
+    : `${line} L ${pts[pts.length - 1].x} ${PAD_T + ih} L ${pts[0].x} ${PAD_T + ih} Z`
 
   // Пунктир цели: линия прижимается к краю, если цель вне шкалы;
   // у прижатой линии подпись со значением («цель 93»), чтобы позиция
@@ -169,8 +177,10 @@ export function SvgAreaChart({
               {yFmt(t)}
             </SvgText>
           ))}
-        <Path d={area} fill="url(#fill)" />
-        <Path d={line} stroke={color} strokeWidth={spark ? 2 : 2.5} fill="none" />
+        {area ? <Path d={area} fill="url(#fill)" /> : null}
+        {line ? (
+          <Path d={line} stroke={color} strokeWidth={spark ? 2 : 2.5} fill="none" />
+        ) : null}
         {hasGoal && (
           <>
             <Line
@@ -217,7 +227,7 @@ export function SvgAreaChart({
           (() => {
             const t = yFmt(data[data.length - 1].value)
             const bw = Math.min(90, t.length * 6.6 + 12)
-            const bx = Math.min(Math.max(x(data.length - 1) - bw / 2, 2), w - bw - 2)
+            const bx = Math.min(Math.max(pts[data.length - 1].x - bw / 2, 2), w - bw - 2)
             const by = Math.max(2, y(data[data.length - 1].value) - 27)
             return (
               <>
@@ -240,11 +250,11 @@ export function SvgAreaChart({
             i % skip === 0 || i === data.length - 1 ? (
               <SvgText
                 key={`x${i}`}
-                x={x(i)}
+                x={pts[i].x}
                 y={height - 6}
                 fill={AXIS}
                 fontSize={9}
-                textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
+                textAnchor={single ? 'middle' : i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
               >
                 {d.label}
               </SvgText>
