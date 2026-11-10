@@ -10,10 +10,13 @@
 // подсказка с адресом, адрес всегда виден и в самой карточке.
 // Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
 // и шапки — темы и адрес встраиваются в строку меню «Поддержка и помощь».
-// Окно письма — редизайн по отзыву Кати 09.11: шапка с чипом выбранной
-// темы, круглая кнопка закрытия, поле со счётчиком символов, крупная
-// кнопка «Отправить»; подсказка «Письмо уйдёт на …» убрана — адрес
-// и так виден в карточке, лишний текст в окне не нужен.
+// Окно письма — по скрину чужого приложения от Кати 10.11 («сделай
+// так»): шапка с лампочкой в градиентном чипе, заголовок «Написать
+// нам» и подзаголовок; темы — плитки 2×2 с иконками (выбранная —
+// градиентная); поле «Ваше сообщение» со счётчиком 0/2000; крупная
+// градиентная кнопка «Отправить» с самолётиком; внизу пометка
+// «Ваше обращение в безопасности» с замком. Отправка по-прежнему
+// открывает почтовое приложение (mailto) — адрес виден в карточке.
 
 import { useState } from 'react'
 import {
@@ -27,19 +30,30 @@ import {
   View,
 } from 'react-native'
 import Constants from 'expo-constants'
-import { Mail, Send, X } from 'lucide-react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+import {
+  Bug,
+  CircleQuestionMark,
+  CreditCard,
+  Lightbulb,
+  Lock,
+  Mail,
+  MessageCircle,
+  Send,
+  X,
+} from 'lucide-react-native'
 import { OPERATOR } from '@/lib/data/legal'
 import { BodyChip } from '../ui/BodyChip'
 import { useToast } from '../ui/Toast'
 
 const EMAIL = OPERATOR.email
 
-// Темы обращения: subject — готовая тема письма
+// Темы обращения: subject — готовая тема письма; icon — иконка плитки
 const TOPICS = [
-  { id: 'idea', emoji: '💡', label: 'Предложение', subject: 'Предложение по приложению' },
-  { id: 'bug', emoji: '🐞', label: 'Баг или ошибка', subject: 'Баг или ошибка в приложении' },
-  { id: 'pay', emoji: '💳', label: 'Оплата и чеки', subject: 'Вопрос по оплате и чекам' },
-  { id: 'other', emoji: '❓', label: 'Другое', subject: 'Вопрос в поддержку NutriBear' },
+  { id: 'idea', emoji: '💡', label: 'Предложение', subject: 'Предложение по приложению', icon: MessageCircle },
+  { id: 'bug', emoji: '🐞', label: 'Баг или ошибка', subject: 'Баг или ошибка в приложении', icon: Bug },
+  { id: 'pay', emoji: '💳', label: 'Оплата и чеки', subject: 'Вопрос по оплате и чекам', icon: CreditCard },
+  { id: 'other', emoji: '❓', label: 'Другое', subject: 'Вопрос в поддержку NutriBear', icon: CircleQuestionMark },
 ]
 
 // Служебная подпись письма: версия и платформа — чтобы отвечать быстрее
@@ -134,112 +148,148 @@ export function SupportCard({ embedded = false }) {
           accessibilityLabel="Окно письма в поддержку"
           className="w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
         >
-          {/* Шапка: чип выбранной темы + заголовок + круглая кнопка закрытия */}
-          <View className="flex-row items-center gap-3 border-b border-white/[0.07] px-5 pb-4 pt-5">
-            <View
-              className="h-[42px] w-[42px] items-center justify-center rounded-[14px]"
-              style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
+          {/* Шапка: лампочка в градиентном чипе + заголовок с подзаголовком
+              + круглая кнопка закрытия (по скрину Кати от 10.11) */}
+          <View className="flex-row items-center gap-3 px-5 pb-4 pt-5">
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              colors={['#8B5CF6', '#6D5AE6']}
+              style={{ borderRadius: 16 }}
+              className="h-[52px] w-[52px] items-center justify-center"
             >
-              <Text className="text-[20px]">{topic.emoji}</Text>
-            </View>
+              <Lightbulb size={26} color="#FFD66B" />
+            </LinearGradient>
             <View className="min-w-0 flex-1">
-              <Text className="font-extrabold text-[19px] tracking-tight text-bear-text">
+              <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
                 Написать нам
               </Text>
               <Text
-                numberOfLines={1}
                 maxFontSizeMultiplier={1.15}
-                className="font-sans text-[13px] text-bear-dim"
+                className="font-sans text-[13px] leading-snug text-bear-dim"
               >
-                {topic.label}
+                Поделитесь своей идеей или предложением
               </Text>
             </View>
             <Pressable
               onPress={() => setComposeOpen(false)}
               accessibilityLabel="Закрыть письмо"
               accessibilityRole="button"
-              className="h-[30px] w-[30px] items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-[34px] w-[34px] items-center justify-center rounded-full bg-white/10 active:bg-white/20"
             >
-              <X size={16} color="#A5AECB" />
+              <X size={18} color="#A5AECB" />
             </Pressable>
           </View>
 
           <View className="p-5">
-            {/* Темы — можно поменять прямо в окне */}
-            <View className="flex-row flex-wrap gap-1.5">
-              {TOPICS.map((t) => {
-                const active = t.id === topic.id
-                return (
-                  <Pressable
-                    key={t.id}
-                    onPress={() => setTopic(t)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={`Тема: ${t.label}`}
-                    className={`flex-row items-center gap-1 rounded-full px-3 py-2 active:opacity-80 ${
-                      active ? '' : 'border border-white/10 bg-white/[0.05]'
-                    }`}
-                    style={active ? { backgroundColor: '#7B6CF6' } : null}
-                  >
-                    <Text className="text-[14px]">{t.emoji}</Text>
-                    <Text
-                      numberOfLines={1}
-                      maxFontSizeMultiplier={1.15}
-                      className={`font-semibold text-[13.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
-                    >
-                      {t.label}
-                    </Text>
-                  </Pressable>
-                )
-              })}
+            {/* Выбор темы — плитки 2×2 с иконками, выбранная — градиентная
+                (по скрину Кати от 10.11); тему можно поменять прямо в окне */}
+            <Text maxFontSizeMultiplier={1.15} className="font-bold text-[15px] text-bear-text">
+              Выберите тему:
+            </Text>
+            <View className="mt-2 gap-2">
+              {[0, 2].map((row) => (
+                <View key={row} className="flex-row gap-2">
+                  {TOPICS.slice(row, row + 2).map((t) => {
+                    const active = t.id === topic.id
+                    const Icon = t.icon
+                    return (
+                      <Pressable
+                        key={t.id}
+                        onPress={() => setTopic(t)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={`Тема: ${t.label}`}
+                        className="flex-1 active:opacity-80"
+                      >
+                        {active ? (
+                          <LinearGradient
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            colors={['#8B5CF6', '#6D5AE6']}
+                            style={{ borderRadius: 999 }}
+                            className="flex-row items-center justify-center gap-2 px-2 py-3"
+                          >
+                            <Icon size={17} color="#FFFFFF" />
+                            <Text
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.15}
+                              className="font-semibold text-[14.5px] text-white"
+                            >
+                              {t.label}
+                            </Text>
+                          </LinearGradient>
+                        ) : (
+                          <View className="flex-row items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-3">
+                            <Icon size={17} color="#8D97BC" />
+                            <Text
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.15}
+                              className="font-semibold text-[14.5px] text-bear-sub"
+                            >
+                              {t.label}
+                            </Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    )
+                  })}
+                </View>
+              ))}
             </View>
 
+            {/* Сообщение: поле с единым плейсхолдером и лимитом 2000 —
+                как на скрине Кати */}
+            <Text maxFontSizeMultiplier={1.15} className="mt-4 font-bold text-[15px] text-bear-text">
+              Ваше сообщение:
+            </Text>
             <TextInput
               value={message}
               onChangeText={setMessage}
               multiline
               autoFocus
-              maxLength={1500}
-              placeholder={
-                topic.id === 'bug'
-                  ? 'Что случилось? Что нажимали, что ожидали, что вышло…'
-                  : topic.id === 'idea'
-                    ? 'Расскажите вашу идею — что добавить или изменить?'
-                    : topic.id === 'pay'
-                      ? 'Опишите вопрос по оплате: что купили, что не работает…'
-                      : 'Ваш вопрос или сообщение…'
-              }
+              maxLength={2000}
+              placeholder="Расскажите, что вы думаете…"
               placeholderTextColor="#8B96B8"
               accessibilityLabel="Текст обращения в поддержку"
-              className="mt-3 min-h-[130px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
+              className="mt-2 min-h-[120px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
               style={{ textAlignVertical: 'top' }}
             />
 
-            {/* Счётчик символов — тихий, справа под полем */}
+            {/* Счётчик символов — справа под полем, «N / 2000» как на скрине */}
             <Text
               maxFontSizeMultiplier={1.1}
-              className="mt-1 text-right font-sans text-[12px] text-bear-dim"
+              className="mt-1 text-right font-sans text-[12.5px] text-bear-dim"
             >
-              {message.length} / 1500
+              {message.length} / 2000
             </Text>
 
+            {/* Отправить — крупная градиентная кнопка с самолётиком */}
             <Pressable
               onPress={send}
               accessibilityRole="button"
               accessibilityLabel="Отправить письмо в поддержку"
-              className="mt-3 h-[50px] flex-row items-center justify-center gap-2 rounded-2xl active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              className="mt-2 h-[54px] flex-row active:opacity-80"
             >
-              <Send size={18} color="#FFFFFF" />
-              <Text className="font-bold text-[17px] text-white">Отправить</Text>
+              <LinearGradient
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                colors={['#8B5CF6', '#6D28D9']}
+                style={{ borderRadius: 999 }}
+                className="flex-1 flex-row items-center justify-center gap-2"
+              >
+                <Send size={19} color="#FFFFFF" />
+                <Text className="font-bold text-[17px] text-white">Отправить</Text>
+              </LinearGradient>
             </Pressable>
 
-            <Text
-              maxFontSizeMultiplier={1.2}
-              className="mt-2.5 text-center font-sans text-[12.5px] leading-snug text-bear-dim"
-            >
-              Дальше откроется почта — там нажмите «Отправить»
-            </Text>
+            {/* Пометка о безопасности — как на скрине Кати */}
+            <View className="mt-2.5 flex-row items-center justify-center gap-1.5">
+              <Lock size={14} color="#8D97BC" />
+              <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-dim">
+                Ваше обращение в безопасности
+              </Text>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
