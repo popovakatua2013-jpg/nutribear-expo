@@ -40,6 +40,16 @@ export function kcalBurned(met, weightKg, minutes) {
   return Math.round(((met * 3.5 * weightKg) / 200) * minutes)
 }
 
+// Разобрать вписанное вручную число калорий (просьба Кати 11.11: «править
+// ккал вручную» в окне счётчика). Строка или число → целое от 1 до max;
+// пусто, мусор или выход за диапазон → null (значит «автоподсчёт»).
+// Запятая принимается как разделитель дробной части, результат округляется.
+export function parseManualKcal(v, max = 10000) {
+  const n = Math.round(Number(String(v ?? '').trim().replace(',', '.')) || 0)
+  if (!Number.isFinite(n) || n < 1 || n > max) return null
+  return n
+}
+
 export function getExercise(id) {
   return EXERCISES.find((e) => e.id === id) || EXERCISES[0]
 }
