@@ -5,7 +5,10 @@
 //   ДНЕВНИК:         Напоминания / Начать новый день
 //                    («Мои цели» удалена — цели живут на вкладке «План»,
 //                    дублировать больше не будем — отзыв Кати 09.11)
-//   ПОДДЕРЖКА:       Поддержка и помощь
+//   ПОДДЕРЖКА:       Поддержка и помощь — тап сразу открывает окно
+//                    «Написать нам» (отзыв Кати от 10.11: «да, сразу
+//                    открывалась»; кнопки-темы и адрес из строки
+//                    убраны — выбор темы в самом окне)
 //   ПРИЛОЖЕНИЕ:      Дневник питания / Шаги и здоровье / Вибрация /
 //                    Стиль пинков / Напоминание мишки / Приватность
 //                    (подсказки «экспорт · копия» и «политика ·
@@ -36,7 +39,7 @@ import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { CycleCard } from '@/components/more/CycleCard'
 import { SleepDashboardCard, KickTimeCard } from '@/components/more/PokeCards'
 import { NotificationsSection } from '@/components/more/NotificationsSection'
-import { SupportCard } from '@/components/more/SupportCard'
+import { SupportModal } from '@/components/more/SupportModal'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
 import { SyncCard } from '@/components/more/SyncCard'
 import { DataPortability } from '@/components/more/DataPortability'
@@ -70,6 +73,9 @@ export default function MoreScreen() {
   // Правовые документы: каждый — отдельной строкой внизу «Ещё», тап
   // открывает экран с названием документа в шапке и его текстом
   const [legalDoc, setLegalDoc] = useState(null)
+
+  // Окно «Написать нам»: открывается сразу по тапу на строку поддержки
+  const [supportOpen, setSupportOpen] = useState(false)
 
   // «Напоминания» раскрыты извне: колокольчик в шапке «Плана» ведёт сюда
   // и сразу открывает строку (двойной механизм navEvents: событие для
@@ -218,16 +224,15 @@ export default function MoreScreen() {
           </MenuRow>
         </MenuGroup>
 
-        {/* ── ПОДДЕРЖКА ───────────────────────────────────────────────── */}
+        {/* ── ПОДДЕРЖКА: тап по строке — сразу окно «Написать нам» ──── */}
         <MenuGroup title="ПОДДЕРЖКА">
           <MenuRow
             icon="💬"
             iconBg="rgba(52,211,153,0.16)"
             title="Поддержка и помощь"
             value="написать нам"
-          >
-            <SupportCard embedded />
-          </MenuRow>
+            onPress={() => setSupportOpen(true)}
+          />
         </MenuGroup>
 
         {/* ── ПРИЛОЖЕНИЕ ──────────────────────────────────────────────── */}
@@ -340,6 +345,9 @@ export default function MoreScreen() {
 
       {/* Правовой документ: экран с названием в шапке и текстом */}
       <LegalDocModal doc={legalDoc} onClose={() => setLegalDoc(null)} />
+
+      {/* Окно «Написать нам»: выбор темы, сообщение, отправка на почту */}
+      <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </View>
   )
 }
