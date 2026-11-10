@@ -1,12 +1,14 @@
 // ИИ-чат «конвертик»: плавающая кнопка на главной (крупная, заметная)
 // и модалка диалога с ИИ-нутрициологом (порт веб-версии AiChat.jsx).
-// Клавиатура не перекрывает чат: на Android behavior height внутри
-// RN-Modal не срабатывает (окно модалки не ресайзится под клавиатуру,
-// отзыв Кати от 10.11: «поле ввода закрывает Клавиатура») — высоту
-// клавиатуры берём из события keyboardDidShow и отдаём контейнеру в
-// paddingBottom, поле ввода поднимается над клавиатурой; на iOS —
-// стандартный behavior padding. При открытии клавиатуры список
-// доскроллливается к вводу.
+// Клавиатура не перекрывает чат — два механизма без задвоения
+// (отзыв Кати от 11.11: «клавиатура по прежнему закрывает чат»):
+// 1) нативное ужатие окна модалки (adjustResize) — ловим по onLayout:
+//    если высота контейнера уменьшилась при открытой клавиатуре, окно
+//    ужалось само и ручной паддинг не нужен (как у модалки воды);
+// 2) ручной паддинг из keyboardDidShow — работает, если окно НЕ
+//    ужалось (события клавиатуры внутри RN-Modal приходят не всегда,
+//    поэтому раньше фикс не срабатывал). iOS — стандартный behavior
+//    padding. При открытии клавиатуры список доскроллливается к вводу.
 // Сообщения — полноценные блоки: пузырь не уже 110px у ОБОИХ сторон,
 // шрифт 14px; переносы строк из ответа ИИ сохраняются (ответ рендерится
 // построчно). В шапке — кнопка «Очистить чат»: начать диалог заново.
@@ -62,9 +64,27 @@ function MessageText({ content, className }) {
 
 export function AiChat() {
   const [open, setOpen] = useState(false)
-  // Высота клавиатуры на Android — отдаётся контейнеру чата в paddingBottom
-  // (behavior height внутри модалки не работает), 0 — клавиатура закрыта
+  // Высота клавиатуры на Android — отдаётся контейнеру чата в paddingBottom,
+  // 0 — клавиатура закрыта или окно ужалось само (нативный resize)
   const [kbPad, setKbPad] = useState(0)
+  // true — окно модалки ужалось под клавиатуру само: нативный механизм
+  // работает, ручной паддинг не добавляем (иначе задвоим высоту)
+  const [winShrunk, setWinShrunk] = useState(false)
+  // Зеркала для слушателей клавиатуры (замыкание видит свежие значения)
+  const shrunkRef = useRef(false)
+  const lastH = useRef(null)
+
+  // Android: следим за высотой контейнера — ужатие/возврат окна означает,
+  // что клавиатуру обработала система (adjustResize)
+  const onRootLayout = (e) => {
+    const h = Math.round(e.nativeEvent.layout.height)
+    const prev = lastH.current
+    lastH.current = h
+    if (prev == null || Math.abs(h - prev) < 40) return
+    shrunkRef.current = h < prev
+    setWinShrunk(shrunkRef.current)
+    setKbPad(0)
+  }
   const [messages, setMessages] = useState([GREETING])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -121,14 +141,18 @@ export function AiChat() {
     return () => sub.remove()
   }, [open])
 
-  // Android: behavior height не работает внутри RN-Modal — окно модалки
-  // не ресайзится, поле ввода оставалось за клавиатурой. Высоту клавиатуры
-  // берём из события и отдаём контейнеру в paddingBottom (см. шапку файла)
+  // Android: высоту клавиатуры берём из события и отдаём контейнеру в
+  // paddingBottom — ТОЛЬКО если окно не ужалось само (winShrunk: тогда
+  // система уже подняла поле ввода, и ручной паддинг задвоил бы высоту)
   useEffect(() => {
     if (!open || Platform.OS !== 'android') return undefined
-    const show = Keyboard.addListener('keyboardDidShow', (e) =>
-      setKbPad(e?.endCoordinates?.height || 0)
-    )
+    lastH.current = null
+    shrunkRef.current = false
+    setWinShrunk(false)
+    setKbPad(0)
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      if (!shrunkRef.current) setKbPad(e?.endCoordinates?.height || 0)
+    })
     const hide = Keyboard.addListener('keyboardDidHide', () => setKbPad(0))
     return () => {
       show.remove()
@@ -213,8 +237,15 @@ export function AiChat() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          onLayout={Platform.OS === 'android' ? onRootLayout : undefined}
           className="flex-1 bg-[#131e3a]"
-          style={{ paddingTop: insets.top, paddingBottom: kbPad > 0 ? kbPad : insets.bottom }}
+          style={{
+            paddingTop: insets.top,
+            // Окно ужалось само — системе больше ничего не нужно; иначе
+            // ручной паддинг = высота клавиатуры, а без клавиатуры — отступ
+            // под жестовую панель навигации
+            paddingBottom: winShrunk ? 0 : kbPad > 0 ? kbPad : insets.bottom,
+          }}
         >
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-white/5 px-5 pb-3.5 pt-4">
