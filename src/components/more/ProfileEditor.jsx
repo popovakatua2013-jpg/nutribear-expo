@@ -1,12 +1,23 @@
-// Карточка «Профиль» — hero-блок вкладки «Ещё» (редизайн по шаблону
-// Катиного референса: большой круглый аватар, «178 см • 99,0 кг» и чип
-// «Изменить имя» с карандашом). Тап по карточке раскрывает прежнюю
-// форму (имя, рост, вес); сохранение сворачивает форму сразу.
+// Карточка «Профиль» — компактный герой-блок вкладки «Ещё».
+// Отзыв Кати от 11.11: блок сделать компактнее («уже»), убрать
+// «выпадающее окно» (раскрытие формы внутри карточки). Теперь тап
+// по блоку сразу открывает отдельное окно редактирования — как
+// «Записать вес» на «Теле»: поля «Имя / Рост / Вес» и закреплённая
+// внизу кнопка «Сохранить профиль». Сохранение сворачивает окно сразу.
 
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { ChevronDown, Pencil, UserRound } from 'lucide-react-native'
+import { Pencil, UserRound, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { fmtDecimal } from '@/lib/data/bmi'
@@ -18,25 +29,101 @@ export function ProfileEditor() {
   const name = useProfileStore((s) => s.name)
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
+
+  const [open, setOpen] = useState(false)
+
+  // Буква имени в аватаре, пока имени нет — человечек
+  const initial = (name || '').trim().charAt(0).toUpperCase()
+
+  return (
+    <View
+      accessibilityLabel="Профиль"
+      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
+    >
+      {/* Компактная шапка: аватар + имя + рост • вес + карандаш.
+          Никакого раскрытия внутри блока — тап сразу открывает
+          отдельное окно редактирования (отзыв Кати от 11.11) */}
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Редактировать профиль: имя, рост, вес"
+        className="flex-row items-center gap-3 px-4 py-3.5 active:opacity-80"
+      >
+        <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full">
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#8B5CF6', '#6D28D9']}>
+            <View className="h-12 w-12 items-center justify-center">
+              {initial ? (
+                <Text className="font-extrabold text-[21px] text-white">{initial}</Text>
+              ) : (
+                <UserRound size={22} color="#FFFFFF" />
+              )}
+            </View>
+          </LinearGradient>
+        </View>
+
+        <View className="min-w-0 flex-1">
+          {/* Имя — в заголовок блока; без имени — «Профиль» */}
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="font-extrabold text-[19px] tracking-tight text-bear-text"
+          >
+            {name || 'Профиль'}
+          </Text>
+          <Text
+            maxFontSizeMultiplier={1.2}
+            className="font-sans text-[15px] text-bear-sub"
+          >
+            {heightCm} см • {fmtDecimal(weightKg)} кг
+          </Text>
+        </View>
+
+        {/* Карандаш «изменить» — как у тренировок на «Главной» */}
+        <Pencil size={20} color="#6C8CFF" />
+      </Pressable>
+
+      <ProfileModal open={open} onClose={() => setOpen(false)} />
+    </View>
+  )
+}
+
+// Окно редактирования: тот же шаблон, что «Записать вес» (дно экрана,
+// затемнение, клавиатура не перекрывает поля на iOS, ключ сбрасывает
+// форму при каждом открытии). Сохранение сворачивает окно сразу
+// (отзыв Кати: «нажать сохранить профиль — должно сразу сворачивать»).
+function ProfileModal({ open, onClose }) {
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 justify-end bg-black/60 px-3 pb-3"
+      >
+        {open && <ProfileBody onClose={onClose} />}
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
+function ProfileBody({ onClose }) {
+  const name = useProfileStore((s) => s.name)
+  const heightCm = useProfileStore((s) => s.heightCm)
+  const weightKg = useProfileStore((s) => s.weightKg)
   const setProfile = useProfileStore((s) => s.setProfile)
   const addWeight = useProfileStore((s) => s.addWeight)
   const { toast } = useToast()
 
-  const [form, setForm] = useState(null)
-  const [open, setOpen] = useState(false)
-
-  const current = form || {
+  const [form, setForm] = useState({
     name: name || '',
     heightCm: String(heightCm),
     weightKg: String(weightKg),
-  }
-  const patch = (p) => setForm({ ...current, ...p })
+  })
+  const patch = (p) => setForm((f) => ({ ...f, ...p }))
 
   function save() {
     // Русская запятая тоже десятичный разделитель: «72,5» → 72.5
     const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
-    const hRaw = parseNum(current.heightCm)
-    const wRaw = parseNum(current.weightKg)
+    const hRaw = parseNum(form.heightCm)
+    const wRaw = parseNum(form.weightKg)
     if (
       !Number.isFinite(hRaw) || hRaw < 80 || hRaw > 250 ||
       !Number.isFinite(wRaw) || wRaw < 25 || wRaw > 300
@@ -50,116 +137,84 @@ export function ProfileEditor() {
     const h = Math.round(hRaw)
     const w = Math.round(wRaw * 10) / 10
     const weightChanged = w !== weightKg
-    setProfile({ name: current.name.trim().slice(0, 24), heightCm: h })
+    setProfile({ name: form.name.trim().slice(0, 24), heightCm: h })
     if (weightChanged) addWeight(w)
-    setForm(null)
-    // Сворачиваем форму сразу после сохранения (отзыв Кати:
-    // «нажать сохранить профиль — должно сразу сворачивать»)
-    setOpen(false)
+    // Окно сворачивается сразу после сохранения
+    onClose()
     toast({
       title: '✅ Профиль сохранён',
       description:
         weightChanged
           ? `Вес ${fmtDecimal(w)} кг`
-          : `${current.name.trim() || 'Без имени'} · ${h} см · ${fmtDecimal(weightKg)} кг`,
+          : `${form.name.trim() || 'Без имени'} · ${h} см · ${fmtDecimal(weightKg)} кг`,
     })
   }
 
-  // Буква имени в аватаре, пока имени нет — человечек
-  const initial = (name || '').trim().charAt(0).toUpperCase()
-
   return (
-    <View accessibilityLabel="Профиль" className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
-      {/* Шапка-герой: аватар + «Профиль» + рост • вес + чип с именем */}
-      <Pressable
-        onPress={() => setOpen((s) => !s)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={open ? 'Свернуть профиль' : 'Редактировать профиль'}
-        className="flex-row items-center gap-3.5 px-4 py-4 active:opacity-80"
-      >
-        <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-full">
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#8B5CF6', '#6D28D9']}>
-            <View className="h-16 w-16 items-center justify-center">
-              {initial ? (
-                <Text className="font-extrabold text-[26px] text-white">{initial}</Text>
-              ) : (
-                <UserRound size={28} color="#FFFFFF" />
-              )}
-            </View>
-          </LinearGradient>
-        </View>
-
+    <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+      <View className="flex-row items-center justify-between">
         <View className="min-w-0 flex-1">
-          {/* Имя — в заголовок героя (как на шаблоне); без имени — «Профиль» */}
-          <Text numberOfLines={1} className="font-extrabold text-[21px] tracking-tight text-bear-text">
-            {name || 'Профиль'}
+          <Text className="font-bold text-[20px] text-bear-text">Редактировать профиль</Text>
+          <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
+            Рост и вес влияют на ИМТ и расчёты
           </Text>
-          <Text
-            maxFontSizeMultiplier={1.2}
-            className="font-sans text-[15.5px] text-bear-sub"
-          >
-            {heightCm} см • {fmtDecimal(weightKg)} кг
-          </Text>
-          {/* Чип с именем: всегда «Изменить имя» — надпись «Как тебя
-              зовут?» удалена по отзыву Кати от 10.11 */}
-          <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-white/[0.08] px-3 py-1.5">
-            <Text
-              numberOfLines={1}
-              maxFontSizeMultiplier={1.15}
-              className="max-w-[150px] font-semibold text-[13.5px] text-bear-bright"
-            >
-              Изменить имя
-            </Text>
-            <Pencil size={12.5} color="#C4B5FD" />
-          </View>
         </View>
+        <Pressable onPress={onClose} accessibilityLabel="Закрыть профиль" className="p-1">
+          <X hitSlop={10} size={22} color="#A5AECB" />
+        </Pressable>
+      </View>
 
-        <ChevronDown
-          size={20}
-          color="#A5AECB"
-          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+      {/* Поля прокручиваются, кнопка закреплена внизу окна */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ flexShrink: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text className="mt-4 font-medium text-[16px] text-bear-sub">Имя</Text>
+        <TextInput
+          value={form.name}
+          onChangeText={(v) => patch({ name: v })}
+          textAlign="center"
+          maxLength={24}
+          accessibilityLabel="Имя"
+          className={FIELD}
         />
-      </Pressable>
 
-      {open && (
-        <View className="px-4 pb-4">
-          <Text className="font-medium text-[16px] text-bear-sub">Имя</Text>
-          <TextInput
-            value={current.name}
-            onChangeText={(v) => patch({ name: v })}
-            className={FIELD}
-          />
-          <View className="mt-3 flex-row gap-3">
-            <View className="flex-1">
-              <Text className="font-medium text-[16px] text-bear-sub">Рост, см</Text>
-              <TextInput
-                value={current.heightCm}
-                onChangeText={(v) => patch({ heightCm: v })}
-                keyboardType="number-pad"
-                className={FIELD}
-              />
-            </View>
-            <View className="flex-1">
-              <Text className="font-medium text-[16px] text-bear-sub">Вес, кг</Text>
-              <TextInput
-                value={current.weightKg}
-                onChangeText={(v) => patch({ weightKg: v })}
-                keyboardType="decimal-pad"
-                className={FIELD}
-              />
-            </View>
+        <View className="mt-3 flex-row gap-3">
+          <View className="min-w-0 flex-1">
+            <Text className="font-medium text-[16px] text-bear-sub">Рост, см</Text>
+            <TextInput
+              value={form.heightCm}
+              onChangeText={(v) => patch({ heightCm: v })}
+              keyboardType="number-pad"
+              textAlign="center"
+              accessibilityLabel="Рост в сантиметрах"
+              className={FIELD}
+            />
           </View>
-
-          <Pressable onPress={save} className="mt-4 overflow-hidden rounded-2xl">
-            <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-              <Text className="py-3 text-center font-bold text-[17.5px] text-white">
-                Сохранить профиль
-              </Text>
-            </LinearGradient>
-          </Pressable>
+          <View className="min-w-0 flex-1">
+            <Text className="font-medium text-[16px] text-bear-sub">Вес, кг</Text>
+            <TextInput
+              value={form.weightKg}
+              onChangeText={(v) => patch({ weightKg: v })}
+              keyboardType="decimal-pad"
+              textAlign="center"
+              accessibilityLabel="Вес в килограммах"
+              className={FIELD}
+            />
+          </View>
         </View>
-      )}
+      </ScrollView>
+
+      {/* Сохранить — закреплено внизу: видна всегда, даже когда
+          клавиатура открыта */}
+      <Pressable onPress={save} className="mt-3 overflow-hidden rounded-2xl">
+        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+          <Text className="py-3.5 text-center font-bold text-[19px] text-white">
+            Сохранить профиль
+          </Text>
+        </LinearGradient>
+      </Pressable>
     </View>
   )
 }
