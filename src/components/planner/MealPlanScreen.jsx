@@ -279,7 +279,7 @@ export function MealPlanScreen({ compact = false }) {
           под заголовком (flexWrap: заголовку хватает ширины) */}
       <View style={styles.cardHead}>
         <View style={styles.iconTile}>
-          <CalendarDays size={compact ? 16 : 18} color={P.accentText} />
+          <CalendarDays size={compact ? 14 : 16} color={P.accentText} />
         </View>
         <Text
           style={[styles.cardTitle, compact && styles.cardTitleC]}
@@ -314,25 +314,25 @@ export function MealPlanScreen({ compact = false }) {
           дня, «в дневник» (только на сегодняшнем дне), меню прошлой
           недели, очистка недели */}
       <View style={styles.headActions}>
-        <Pressable onPress={() => setCopyFrom(sel)} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
-          <Copy size={15} color={P.text2} />
+        <Pressable onPress={() => setCopyFrom(sel)} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
+          <Copy size={13} color={P.text2} />
         </Pressable>
-        <Pressable onPress={() => setTplOpen(true)} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Шаблоны дней: сохранить выбранный день или вставить шаблон">
-          <Bookmark size={15} color={P.text2} />
+        <Pressable onPress={() => setTplOpen(true)} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Шаблоны дней: сохранить выбранный день или вставить шаблон">
+          <Bookmark size={13} color={P.text2} />
         </Pressable>
-        <Pressable onPress={clearDay} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
-          <Eraser size={15} color={P.text2} />
+        <Pressable onPress={clearDay} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
+          <Eraser size={13} color={P.text2} />
         </Pressable>
         {isSelToday && (
-          <Pressable onPress={transferToDiary} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Перенести меню дня в дневник">
-            <ClipboardCheck size={15} color={P.text2} />
+          <Pressable onPress={transferToDiary} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Перенести меню дня в дневник">
+            <ClipboardCheck size={13} color={P.text2} />
           </Pressable>
         )}
-        <Pressable onPress={copyPrevWeek} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Взять меню прошлой недели">
-          <History size={15} color={P.text2} />
+        <Pressable onPress={copyPrevWeek} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Взять меню прошлой недели">
+          <History size={13} color={P.text2} />
         </Pressable>
-        <Pressable onPress={clearWeek} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Очистить всю неделю">
-          <Trash2 size={15} color={P.text2} />
+        <Pressable onPress={clearWeek} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Очистить всю неделю">
+          <Trash2 size={13} color={P.text2} />
         </Pressable>
       </View>
 
@@ -419,7 +419,7 @@ export function MealPlanScreen({ compact = false }) {
                   }
                 >
                   <View style={[styles.mealTile, compact && styles.mealTileC]}>
-                    <Text style={{ fontSize: compact ? 15 : 17 }}>{MEAL_EMOJI[mealId]}</Text>
+                    <Text style={{ fontSize: compact ? 13 : 15 }}>{MEAL_EMOJI[mealId]}</Text>
                   </View>
                   <View style={styles.mealTexts}>
                     <Text numberOfLines={1} style={[styles.mealName, compact && styles.mealNameC]}>{MEAL_NAMES[mealId]}</Text>
@@ -439,10 +439,10 @@ export function MealPlanScreen({ compact = false }) {
                   <Pressable
                     onPress={() => setPicker({ dayIdx: sel, mealId })}
                     style={[styles.mealAdd, compact && styles.mealAddC]}
-                    hitSlop={4}
+                    hitSlop={6}
                     accessibilityLabel={`${MEAL_NAMES[mealId]}: добавить блюдо`}
                   >
-                    <Plus size={compact ? 12 : 14} color={P.accentText} />
+                    <Plus size={compact ? 11 : 13} color={P.accentText} />
                   </Pressable>
                 </Pressable>
                 {open && items.map((it) => (
@@ -500,8 +500,8 @@ export function MealPlanScreen({ compact = false }) {
               {showAll ? 'Скрыть' : compact ? 'Все приёмы пищи' : 'Показать все приёмы пищи'}
             </Text>
             {showAll
-              ? <ChevronUp size={15} color={P.text2} />
-              : <ChevronDown size={15} color={P.text2} />}
+              ? <ChevronUp size={13} color={P.text2} />
+              : <ChevronDown size={13} color={P.text2} />}
           </Pressable>
       </>
 
@@ -627,28 +627,28 @@ const styles = {
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   iconTile: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     backgroundColor: P.tile,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
+  cardTitle: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
   // компактный режим: заголовок ужается сам, навигация недели
   // переносится под него (minWidth выталкивает её на новую строку)
-  cardTitleC: { fontSize: 14, minWidth: 110 },
+  cardTitleC: { fontSize: 13.5, minWidth: 100 },
   weekNav: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   weekArrow: { width: 24, height: 28, alignItems: 'center', justifyContent: 'center' },
   weekLabel: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text2, minWidth: 52, textAlign: 'center' },
 
   // Полоса дней: имя + дата в рамке у выбранного, точка у заполненных
-  daysStrip: { flexDirection: 'row', gap: 5, marginTop: spacing.m },
-  dayCol: { flex: 1, alignItems: 'center', gap: 5 },
+  daysStrip: { flexDirection: 'row', gap: 4, marginTop: 10 },
+  dayCol: { flex: 1, alignItems: 'center', gap: 3 },
   dayBox: {
     width: '100%',
-    height: 46,
-    borderRadius: 14,
+    height: 40,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: 'transparent',
     alignItems: 'center',
@@ -656,11 +656,11 @@ const styles = {
     gap: 1,
   },
   dayBoxOn: { borderColor: P.accentText, backgroundColor: 'rgba(123,108,246,0.14)' },
-  dayBoxC: { height: 40 },
+  dayBoxC: { height: 34 },
   dayBoxToday: { borderColor: 'rgba(255,255,255,0.16)' },
-  dayName: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
+  dayName: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
   dayNameOn: { color: P.accentText },
-  dayNum: { fontSize: 10.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
+  dayNum: { fontSize: 10, fontWeight: '600', fontFamily: F[600], color: P.text3 },
   dayNumOn: { color: P.text },
   dayDot: {
     width: 4,
@@ -676,7 +676,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.s,
-    marginTop: spacing.l,
+    marginTop: spacing.m,
   },
   dayName2: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
   kcalPill: {
@@ -690,19 +690,19 @@ const styles = {
   kcalPillText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: P.accentText },
 
   // Строки приёмов: плитка-эмодзи + название + блюда + ккал + «+»
-  mealBlock: { marginTop: 10 },
-  mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 46 },
+  mealBlock: { marginTop: 8 },
+  mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 42 },
   // компактный режим: ужаться, чтобы строка поместилась в узкую колонку
-  mealRowC: { gap: 6, minHeight: 42 },
+  mealRowC: { gap: 5, minHeight: 36 },
   mealTile: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 11,
     backgroundColor: P.tile,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mealTileC: { width: 28, height: 28, borderRadius: 9 },
+  mealTileC: { width: 24, height: 24, borderRadius: 8 },
   mealTexts: { flex: 1, minWidth: 0 },
   mealName: { fontSize: 14.5, fontWeight: '700', fontFamily: F[700], color: P.text },
   mealNameC: { fontSize: 13 },
@@ -710,16 +710,16 @@ const styles = {
   mealSummaryC: { fontSize: 11 },
   mealKcal: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: P.text },
   mealAdd: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: P.accentSoft,
     borderColor: P.accentBorder,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mealAddC: { width: 24, height: 24, borderRadius: 12 },
+  mealAddC: { width: 22, height: 22, borderRadius: 11 },
   // ккал по приёму столбиком (компактный режим)
   mealKcalCol: { alignItems: 'flex-end', flexShrink: 0 },
   mealKcalVal: { fontSize: 12.5, fontWeight: '800', fontFamily: F[800], color: P.text, fontVariant: ['tabular-nums'] },
@@ -731,9 +731,9 @@ const styles = {
     backgroundColor: P.tileSoft,
     borderRadius: radius.row,
     paddingHorizontal: 10,
-    paddingVertical: 7,
-    marginTop: 6,
-    minHeight: 34,
+    paddingVertical: 6,
+    marginTop: 5,
+    minHeight: 32,
   },
   itemEmoji: { fontSize: 14, width: 20, textAlign: 'center' },
   // тап по названию блюда — окно замен «похожее по ккал» (просьба Кати 10.11)
@@ -761,26 +761,29 @@ const styles = {
     justifyContent: 'center',
     gap: 6,
     backgroundColor: P.tileSoft,
-    borderRadius: 12,
-    height: 42,
-    marginTop: 12,
+    borderRadius: 10,
+    height: 34,
+    marginTop: 8,
   },
-  showAllText: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: P.text2 },
+  showAllText: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text2 },
 
   // Действия дня/недели — серые значки без подписей под шапкой
-  // (просьба Кати 09.11); переносятся в два ряда на узкой карточке
+  // (просьба Кати 09.11); ВСЕГДА в одну строку — чипы ужаты и
+  // растягиваются равными долями, без переноса (отзыв Кати 10.11:
+  // «серые чипы установить в одну строчку»)
   headActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.s,
+    gap: 4,
+    marginTop: 6,
   },
   headAction: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+    flex: 1,
+    maxWidth: 26,
+    aspectRatio: 1,
+    borderRadius: 9,
     backgroundColor: P.tile,
     alignItems: 'center',
     justifyContent: 'center',

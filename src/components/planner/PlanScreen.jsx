@@ -576,8 +576,8 @@ export function PlanScreen({ onOpenFasting }) {
               <Ring
                 pct={fastGoalH / 24}
                 runId={runId}
-                size={64}
-                stroke={7}
+                size={56}
+                stroke={6}
                 centerText={fastPlan}
                 sub="Режим"
               />
@@ -614,7 +614,7 @@ export function PlanScreen({ onOpenFasting }) {
             accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
           >
             <View style={styles.recipeTile}>
-              <ChefHat size={20} color={P.accentText} />
+              <ChefHat size={17} color={P.accentText} />
             </View>
             <Text
               style={styles.recipeName}
@@ -1026,13 +1026,13 @@ const styles = {
     backgroundColor: P.card,
     borderColor: P.line,
     borderWidth: 1,
-    borderRadius: 22,
-    padding: 12,
+    borderRadius: 20,
+    padding: 10,
     marginTop: spacing.l,
   },
   fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
-  fastRingWrap: { alignItems: 'center', marginTop: 12 },
-  fastLegend: { gap: 8, marginTop: 12, alignSelf: 'stretch' },
+  fastRingWrap: { alignItems: 'center', marginTop: 8 },
+  fastLegend: { gap: 7, marginTop: 8, alignSelf: 'stretch' },
   fastLegendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
   fastDot: { width: 7, height: 7, borderRadius: 4, marginTop: 4 },
   fastLegendTexts: { flex: 1, minWidth: 0 },
@@ -1052,8 +1052,8 @@ const styles = {
     gap: 4,
     backgroundColor: P.accent,
     borderRadius: 999,
-    height: 34,
-    marginTop: 12,
+    height: 30,
+    marginTop: 8,
     alignSelf: 'stretch',
   },
   fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
@@ -1072,20 +1072,20 @@ const styles = {
     backgroundColor: P.card,
     borderColor: P.line,
     borderWidth: 1,
-    borderRadius: 22,
-    padding: 12,
+    borderRadius: 20,
+    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
   recipeTile: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: P.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recipeName: { fontSize: 14.5, fontWeight: '800', fontFamily: F[800], color: P.text },
-  recipeSub: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, textAlign: 'center' },
+  recipeName: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: P.text },
+  recipeSub: { fontSize: 11, fontWeight: '400', fontFamily: F[400], color: P.text3, textAlign: 'center' },
 }
