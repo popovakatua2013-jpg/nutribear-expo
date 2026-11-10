@@ -9,10 +9,11 @@ import { Animated, PanResponder, Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
 
-const ToastContext = createContext({ toast: () => {} })
+const ToastActions = createContext({ toast: () => {} })
+const ToastState = createContext({ items: [], dismiss: () => {} })
 
 export function useToast() {
-  return useContext(ToastContext)
+  return useContext(ToastActions)
 }
 
 // Один тост: свайп в любую сторону или крестик — закрыть.
@@ -96,6 +97,30 @@ function ToastItem({ item, onDismiss }) {
   )
 }
 
+// Слой тостов — рисуется в корне приложения И внутри открытых окон
+// <Modal>: нативное окно Modal перекрывает слой корня, поэтому без
+// своего слоя тосты в открытых окнах не видны (отзыв Кати от 10.11:
+// «топаю на быструю запись — нет уведомления „добавлено“» — тост
+// всплывал ПОД окном «Воды»). Слоя два, но виден всегда один:
+// при открытом окне — слой внутри него, в остальное время — корневой
+export function ToastLayer() {
+  const { items, dismiss } = useContext(ToastState)
+  if (!items.length) return null
+  return (
+    <SafeAreaView
+      pointerEvents="box-none"
+      edges={['bottom']}
+      className="absolute inset-x-0 bottom-0 z-50 items-center px-4"
+    >
+      <View pointerEvents="box-none" className="w-full max-w-[380px] gap-2 pb-20">
+        {items.map((t) => (
+          <ToastItem key={t.id} item={t} onDismiss={dismiss} />
+        ))}
+      </View>
+    </SafeAreaView>
+  )
+}
+
 export function ToastProvider({ children }) {
   const [items, setItems] = useState([])
   const seq = useRef(0)
@@ -114,21 +139,13 @@ export function ToastProvider({ children }) {
   }, [])
 
   return (
-    <ToastContext.Provider value={{ toast }}>
-      {children}
-      {/* box-none: сам слой касания не ловит, а тосты внутри — кликабельны
-          (раньше стоял pointerEvents="none" и крестик был бы мёртвым) */}
-      <SafeAreaView
-        pointerEvents="box-none"
-        edges={['bottom']}
-        className="absolute inset-x-0 bottom-0 z-50 items-center px-4"
-      >
-        <View pointerEvents="box-none" className="w-full max-w-[380px] gap-2 pb-20">
-          {items.map((t) => (
-            <ToastItem key={t.id} item={t} onDismiss={dismiss} />
-          ))}
-        </View>
-      </SafeAreaView>
-    </ToastContext.Provider>
+    // Два контекста: действия стабильны (useToast не перерисовывает
+    // потребителей при каждом тосте), состояние — только для слоя
+    <ToastActions.Provider value={{ toast }}>
+      <ToastState.Provider value={{ items, dismiss }}>
+        {children}
+        <ToastLayer />
+      </ToastState.Provider>
+    </ToastActions.Provider>
   )
 }

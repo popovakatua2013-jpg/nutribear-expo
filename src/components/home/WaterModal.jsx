@@ -1,16 +1,20 @@
 // Окно «Вода»: hero-карточка «Выпито сегодня» (крупная цифра, цель,
-// полоса прогресса + кольцо «% цели»), пилюли напоминаний, «Быстро
-// добавить» — плитки ёмкостей 2×2, сразу под ними записи за сегодня
-// (развёрнуты по умолчанию; тап по записи — правка мл/времени прямо
-// в строке, корзина — удаление), внизу «Последние 7 дней» — среднее,
-// Δ к прошлой неделе и мини-бары. Дубль-график «Динамика за 7 дней»
-// и плашка-поддержка («Хороший темп!») удалены по запросу пользователя.
+// полоса прогресса + кольцо «% цели»), «Быстро добавить» — плитки
+// ёмкостей 2×2, записи за сегодня (свернуты по умолчанию — отзыв
+// Кати от 10.11 «записи за сегодня всегда сворачивать»; тап по
+// записи — правка мл/времени прямо в строке, корзина — удаление).
+// По отзыву Кати от 10.11 убрано: колокольчик и пилюли интервала
+// напоминаний (настройки уже есть в «Ещё → Уведомления») и блок
+// «Последние 7 дней» (дубль графика воды в «Отчётах» дневника).
+// Тосты внутри окна видны: в модалке отрисован свой слой ToastLayer
+// (нативное окно Modal перекрывает слой корня — раньше тост
+// «добавлено» всплывал ПОД окном и был не виден).
 // Строка правки записи — карточкой в два ряда: поля сверху, явные
 // кнопки «Сохранить»/«Отмена» снизу (отзыв Кати: галочка уезжала
 // за край, кнопку «Сохранить» было не видно); при старте правки
 // журнал докручивается к строке, клавиатура её не перекрывает.
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import {
@@ -22,16 +26,13 @@ import {
   Pencil,
   Target,
   Trash2,
-  Trophy,
   X,
 } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { VesselCard } from './VesselCard'
-import { ReminderToggle, ReminderIntervals } from './WaterReminder'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
-import { useToast } from '../ui/Toast'
+import { useToast, ToastLayer } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
 import { ProgressBar } from '../ui/ProgressBar'
 import { BodyChip } from '../ui/BodyChip'
@@ -40,14 +41,8 @@ import { fontFamilies } from './ring-font'
 const nowTime = () =>
   new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 
-// Цвет столба за день (отзыв Кати): норма выпита — зелёный, половина и
-// больше — оранжевый, мало — красный, нет статистики — серый
-function dayBarColor(value, goalMl) {
-  if (!value || value <= 0) return 'rgba(139,150,184,0.38)'
-  if (goalMl > 0 && value >= goalMl) return '#4ADE80'
-  if (goalMl > 0 && value >= goalMl / 2) return '#FB923C'
-  return '#F87171'
-}
+// Цвет столба за день (отзыв Кати) — убран вместе с блоком
+// «Последние 7 дней» (дубль графика в «Отчётах»)
 
 // «14:30», «14.30», «1430», «9» → «ЧЧ:ММ»; не разобрали — null
 function normalizeTime(text) {
@@ -125,36 +120,25 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const editWaterLog = useActivityStore((s) => s.editWaterLog)
   const removeWaterLog = useActivityStore((s) => s.removeWaterLog)
   const waterLog = useActivityStore((s) => s.waterLog)
-  const reminder = useActivityStore((s) => s.reminder)
   const goals = useGoalsStore((s) => s.goals)
-  const historyDays = useHistoryStore((s) => s.days)
   const { toast } = useToast()
 
   const [editingId, setEditingId] = useState(null) // запись журнала на изменении
   const [editMl, setEditMl] = useState('')
   const [editTime, setEditTime] = useState('')
-  const [logOpen, setLogOpen] = useState(true) // записи за сегодня сразу на виду
-  const [weekOpen, setWeekOpen] = useState(true) // «Последние 7 дней»
+  const [logOpen, setLogOpen] = useState(false) // записи за сегодня свёрнуты (отзыв Кати: «всегда сворачивать»)
   const scrollRef = useRef(null)
   const editRowY = useRef(0) // Y строки правки в содержимом журнала
 
-  // Окно закрыто — черновик правки записи сбрасывается: повторное
-  // открытие показывает журнал, а не застаревшую строку в режиме правки
+  // Окно закрыто — черновик правки записи сбрасывается, записи за
+  // сегодня сворачиваются: окно ВСЕГДА открывается свёрнутым
   useEffect(() => {
     if (!open) {
       setEditingId(null)
       setEditMl('')
       setEditTime('')
-      // При следующем открытии записи снова на виду — не заставляем
-      // искать их в конце списка
-      setLogOpen(true)
-      return
+      setLogOpen(false)
     }
-    // «Последние 7 дней» больше НЕ схлопывается сам (отзыв Кати:
-    // «раздел по дням недели по-прежнему схлопнут») — окно каждый раз
-    // открывается с развёрнутой неделей, даже пока вода не ведётся;
-    // свернуть можно тапом по шапке вручную
-    setWeekOpen(true)
   }, [open])
 
   // Старт правки — докручиваем журнал так, чтобы строка правки и
@@ -168,36 +152,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   }, [editingId])
 
   const pct = Math.min(100, Math.round((ml / Math.max(1, goalMl)) * 100))
-
-  // Последние 7 дней (из дневной истории) — среднее и мини-бары
-  const week = useMemo(() => {
-    const labels = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
-    const out = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000)
-      const key = dayKeyOf(d)
-      out.push({
-        key,
-        label: labels[d.getDay()],
-        value: historyDays[key]?.waterMl || 0,
-        today: i === 0,
-      })
-    }
-    return out
-  }, [historyDays])
-  const weekMax = Math.max(500, ...week.map((d) => d.value))
-  const weekAvg = Math.round(week.reduce((s, d) => s + d.value, 0) / 7)
-
-  // Δ к прошлой неделе: среднее за предыдущие 7 дней (8–14 дней назад)
-  const prevAvg = useMemo(() => {
-    let sum = 0
-    for (let i = 13; i >= 7; i--) {
-      const key = dayKeyOf(new Date(Date.now() - i * 86400000))
-      sum += historyDays[key]?.waterMl || 0
-    }
-    return Math.round(sum / 7)
-  }, [historyDays])
-  const delta = prevAvg > 0 ? Math.round(((weekAvg - prevAvg) / prevAvg) * 100) : null
 
   // Ёмкости по 2 в ряд (на узком экране 4 в ряд не читаются)
   const vesselRows = vessels.reduce((rows, v) => {
@@ -273,18 +227,17 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ paddingBottom: 14 }}
             >
-              {/* Шапка: чип-иконка + название, колокольчик напоминаний, крестик */}
+              {/* Шапка: чип-иконка + название, крестик. Колокольчик и
+                  интервал напоминаний убраны (отзыв Кати от 10.11):
+                  настройки уведомлений — в «Ещё → Уведомления» */}
               <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-2.5 pt-3.5">
                 <View className="flex-row items-center gap-2.5">
                   <BodyChip icon={<Droplets />} size={34} />
                   <Text className="font-bold text-[20px] text-bear-text">Вода</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <ReminderToggle />
-                  <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-                    <X hitSlop={10} size={22} color="#A5AECB" />
-                  </Pressable>
-                </View>
+                <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
+                  <X hitSlop={10} size={22} color="#A5AECB" />
+                </Pressable>
               </View>
 
               <View className="px-4 pt-3">
@@ -312,12 +265,6 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   <GoalRing pct={pct} />
                 </View>
 
-                {reminder.enabled && (
-                  <View className="pt-3">
-                    <ReminderIntervals />
-                  </View>
-                )}
-
                 {/* Быстро добавить: ёмкости по 2 в ряд, карандашик — правка */}
                 <View className="mt-3 flex-row items-center gap-1.5">
                   <CirclePlus size={16} color="#7DD3FC" />
@@ -335,9 +282,9 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   ))}
                 </View>
 
-                {/* Журнал за сегодня: развёрнут по умолчанию и стоит сразу
-                    после «Быстро добавить» — записи всегда на виду; тап по
-                    шапке — свернуть, тап по записи — правка в строке */}
+                {/* Журнал за сегодня: ВСЕГДА свёрнут при открытии окна
+                    (отзыв Кати от 10.11); тап по шапке — развернуть,
+                    тап по записи — правка в строке */}
                 <Pressable
                   onPress={() => setLogOpen((v) => !v)}
                   accessibilityRole="button"
@@ -473,99 +420,16 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     </View>
                   ))}
 
-                {/* Последние 7 дней: среднее за неделю, Δ к прошлой неделе
-                    и мини-бары по дням — единственный график недели
-                    (дубль «Динамика за 7 дней» убран по запросу).
-                    Сворачивается тапом по шапке; без данных за неделю
-                    свёрнуто по умолчанию (отзыв Кати) */}
-                <Pressable
-                  onPress={() => setWeekOpen((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    weekOpen ? 'Свернуть статистику по дням' : 'Развернуть статистику по дням'
-                  }
-                  className="mt-3 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:opacity-80"
-                >
-                  <View className="flex-row items-center gap-1.5">
-                    <Trophy size={15} color="#FBBF24" />
-                    <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text">
-                      Последние 7 дней
-                    </Text>
-                    {weekOpen ? (
-                      <ChevronUp size={17} color="#8B96B8" />
-                    ) : (
-                      <ChevronDown size={17} color="#8B96B8" />
-                    )}
-                  </View>
-                  {weekOpen && (
-                    <>
-                  <View className="mt-1.5 flex-row flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <Text className="font-extrabold text-[21px] tracking-tight text-bear-text">
-                      {formatNum(weekAvg)}
-                    </Text>
-                    <Text className="font-sans text-[15px] text-bear-sub">мл/день</Text>
-                    {delta != null && Math.abs(delta) >= 1 && (
-                      <View
-                        className="rounded-md px-1.5 py-0.5"
-                        style={{
-                          backgroundColor:
-                            delta > 0 ? 'rgba(52,211,153,0.15)' : 'rgba(248,113,113,0.15)',
-                        }}
-                      >
-                        <Text
-                          className="font-semibold text-[14.5px]"
-                          style={{ color: delta > 0 ? '#34D399' : '#F87171' }}
-                        >
-                          {delta > 0 ? '↑' : '↓'} {delta > 0 ? '+' : '−'}
-                          {Math.abs(delta)}%
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <View className="mt-2 flex-row items-end gap-1" style={{ height: 44 }}>
-                    {week.map((d) => (
-                      <View
-                        key={d.key}
-                        accessibilityLabel={
-                          d.today
-                            ? `Сегодня: ${formatNum(d.value)} мл`
-                            : `${d.label}: ${formatNum(d.value)} мл`
-                        }
-                        className="flex-1 items-center justify-end"
-                        style={{ height: '100%' }}
-                      >
-                        <View
-                          className="w-full rounded-t-[4px]"
-                          style={{
-                            height: d.value > 0 ? `${Math.max(10, Math.round((d.value / weekMax) * 100))}%` : '10%',
-                            backgroundColor: dayBarColor(d.value, goalMl),
-                            opacity: d.today ? 1 : 0.55,
-                          }}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                  <View className="mt-1 flex-row gap-1">
-                    {week.map((d) => (
-                      <Text
-                        key={d.key}
-                        className={`flex-1 text-center font-sans text-[13px] ${
-                          d.today ? 'font-semibold text-bear-bright' : 'text-bear-dim'
-                        }`}
-                      >
-                        {d.label}
-                      </Text>
-                    ))}
-                  </View>
-                    </>
-                  )}
-                </Pressable>
               </View>
             </ScrollView>
           </LinearGradient>
         </Pressable>
       </Pressable>
       </KeyboardAvoidingView>
+      {/* Слой тостов внутри окна: нативное окно Modal перекрывает
+          слой корня — без этого тост «добавлено» не виден
+          (отзыв Кати от 10.11) */}
+      <ToastLayer />
     </Modal>
   )
 }

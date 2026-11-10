@@ -31,6 +31,7 @@ import { X } from 'lucide-react-native'
 import { ActivityStats } from '@/components/activity/ActivityStats'
 import { ExerciseSection } from '@/components/activity/ExerciseSection'
 import { WaterModal } from '@/components/home/WaterModal'
+import { ActivityBreakdownModal } from '@/components/home/ActivityBreakdownModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { Greeting } from '@/components/home/Greeting'
@@ -64,6 +65,8 @@ export default function HomeScreen() {
   const [addOpen, setAddOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
   const [waterOpen, setWaterOpen] = useState(false)
+  // Тап по плитке «Активность» — окно «что посчитано»: тренировки + шаги
+  const [activityOpen, setActivityOpen] = useState(false)
   const [mealId, setMealId] = useState('breakfast')
   // Ручной ввод шагов (тап по карточке «Шаги»)
   const [stepsOpen, setStepsOpen] = useState(false)
@@ -197,6 +200,7 @@ export default function HomeScreen() {
         setAllOpen(false)
         setWaterOpen(false)
         setStepsOpen(false)
+        setActivityOpen(false)
       },
       []
     )
@@ -324,6 +328,7 @@ export default function HomeScreen() {
               openGoalEdit({ field: 'waterMl', title: 'Цель по воде', unit: 'мл', min: 500, max: 6000 })
             }
             onOpenStepsInput={() => setStepsOpen(true)}
+            onOpenActivity={() => setActivityOpen(true)}
           />
         </View>
 
@@ -379,6 +384,17 @@ export default function HomeScreen() {
         onClose={() => setWaterOpen(false)}
         goalMl={goals.waterMl}
         ml={waterMl}
+      />
+
+      {/* Активность: что именно посчитано (тренировки + шаги) — тап по
+          плитке «Активность» (отзыв Кати от 10.11) */}
+      <ActivityBreakdownModal
+        open={activityOpen}
+        onClose={() => setActivityOpen(false)}
+        logs={exLogs[dayKeyOf()] || []}
+        steps={extraSteps}
+        burned={burned}
+        burnGoal={goals.burnKcal}
       />
 
       {/* Ручной ввод шагов: та же копилка, что и «+»; открывается
