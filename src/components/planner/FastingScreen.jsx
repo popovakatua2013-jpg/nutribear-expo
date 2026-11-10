@@ -8,12 +8,15 @@
 // (− 1 ч +) и пресеты плана 12/12, 14/10, 16/8, 18/6.
 // «Завершить» записывает сеанс в историю (laps, до 30 записей, свежие
 // сверху) и показывает среднюю длительность. Подсказка «как это
-// работает» — пока сеансов нет. Стиль — дизайн-система вкладки
-// (theme.js). Без медицинских рекомендаций — только констатация.
+// работает» — пока сеансов нет. Ниже — карточка «Как это работает и
+// в чём плюсы»: принцип простыми словами + польза списком (просьба
+// Кати 09.11), по общедоступным обзорам — без медицинских обещаний,
+// с напоминанием спросить врача. Стиль — дизайн-система вкладки
+// (theme.js).
 
 import { useEffect, useState } from 'react'
 import { AppState, Pressable, ScrollView, Text, View } from 'react-native'
-import { Clock, History, Play, Square } from 'lucide-react-native'
+import { Clock, History, Info, Play, Square } from 'lucide-react-native'
 import { useFastingStore, FASTING_MIN_LAP_MS } from '@/store/useFastingStore'
 import { useToast } from '../ui/Toast'
 import { HintBox } from '../ui/HintBox'
@@ -31,6 +34,16 @@ const HOW_STEPS = [
   'Выберите окно еды: пресетом или часом начала',
   'Нажмите «Начать окно без еды» — таймер посчитает часы без еды',
   '«Завершить» запишет результат в историю — увидите среднюю длительность',
+]
+
+// Плюсы интервального питания — по общедоступным обзорам (материалы
+// вроде вики-обзора из скриншота Кати): формулировки нейтральные,
+// без медицинских обещаний; про аутофагию — честная оговорка
+const PROS = [
+  ['Вес', 'тело активнее расходует запасы, калорий за день обычно меньше'],
+  ['Сахар', 'чувствительность к инсулину улучшается, уровень сахара держится ровнее'],
+  ['Давление', 'артериальное давление может снижаться'],
+  ['Аутофагия', 'при долгом голоде клетки запускают «уборку» — у людей эффект пока изучен недостаточно'],
 ]
 
 const pad = (n) => String(n).padStart(2, '0')
@@ -226,6 +239,31 @@ export function FastingScreen() {
         )}
       </View>
 
+      {/* Как это работает и в чём плюсы (просьба Кати 09.11): принцип
+          и польза простыми словами, всегда видно — не подсказка,
+          а содержание экрана */}
+      <View style={styles.infoCard}>
+        <View style={styles.infoHead}>
+          <Info size={16} color={colors.cyan} />
+          <Text style={styles.infoTitle}>Как это работает и в чём плюсы</Text>
+        </View>
+        <Text style={styles.infoText}>
+          Еда — только в выбранное окно (например, с 9:00 до 19:00), в остальное время — вода, чай и кофе без сахара. За часы без еды организм сначала тратит запасы гликогена, а затем активнее берёт энергию из жира. Окно короче — за день обычно выходит меньше калорий, поэтому вес снижается.
+        </Text>
+        <Text style={styles.infoSub}>Чем полезно</Text>
+        {PROS.map(([name, text]) => (
+          <View key={name} style={styles.infoRow}>
+            <View style={styles.infoDot} />
+            <Text style={styles.infoRowText}>
+              <Text style={styles.infoRowName}>{name}</Text> — {text}
+            </Text>
+          </View>
+        ))}
+        <Text style={styles.infoNote}>
+          Подходит не всем: при болезнях, беременности и приёме лекарств — сначала спросите врача.
+        </Text>
+      </View>
+
       {/* Подсказка — пока сеансов нет: свернута в строку по умолчанию,
           тап раскрывает шаги, крестик закрывает насовсем (отзыв Кати) */}
       {!running && laps.length === 0 && (
@@ -311,6 +349,19 @@ const styles = {
   planChipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   planChipTextActive: { color: colors.accentInk },
   planNote: { ...type.caption, color: colors.text3, marginTop: spacing.s, lineHeight: 16 },
+  infoCard: {
+    backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
+    borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,
+  },
+  infoHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.s },
+  infoTitle: { ...type.title, fontSize: 15, color: colors.text, flex: 1 },
+  infoText: { ...type.caption, color: colors.text2, lineHeight: 17 },
+  infoSub: { fontSize: 13, fontWeight: '800', fontFamily: F[800], color: colors.text, marginTop: spacing.m },
+  infoRow: { flexDirection: 'row', gap: 8, marginTop: 6, alignItems: 'flex-start' },
+  infoDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.accent, marginTop: 6 },
+  infoRowText: { ...type.caption, color: colors.text2, flex: 1, lineHeight: 17 },
+  infoRowName: { color: colors.text, fontWeight: '700', fontFamily: F[700] },
+  infoNote: { ...type.caption, color: colors.text3, marginTop: spacing.m, lineHeight: 15 },
   historyCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,

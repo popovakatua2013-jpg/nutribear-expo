@@ -2,10 +2,11 @@
 // (та же база, что в добавлении еды) + «своё блюдо» (название и ккал).
 // По отзыву Кати тап по продукту больше не добавляет сразу и молча:
 // открывается ЭТАП ПОРЦИИ — граммовка правится, ккал считаются
-// автоматически (ккал/100 г × граммы) и при желании правятся вручную,
-// а галочка «Нет дома — в покупки» сразу кладёт блюдо в список покупок
-// (например, «Бутерброд с сыром» — сыра дома нет, галочка — и он в
-// покупках). Стиль — дизайн-система вкладки «Тренировок» (theme.js):
+// автоматически (ккал/100 г × граммы), а галочка «Добавить в покупки»
+// сразу кладёт блюдо в список покупок (например, «Бутерброд с сыром» —
+// сыра дома нет, галочка — и он в покупках). Подпись без «нет дома» —
+// отзыв Кати 09.11: осталась только галочка + корзина + «Добавить в
+// покупки». Стиль — дизайн-система вкладки «Тренировок» (theme.js):
 // тёмные карточки, лаймовый акцент.
 
 import { useMemo, useState } from 'react'
@@ -35,7 +36,7 @@ export function AddDishModal({ open, onClose, onPick }) {
   // Этап порции: { raw, grams, kcal, manualKcal } — граммовку и ккал
   // можно править, ккал пересчитываются от калорийности на 100 г
   const [picked, setPicked] = useState(null)
-  // Галочка «Нет дома — в покупки»: блюдо уйдёт в список покупок
+  // Галочка «Добавить в покупки»: блюдо уйдёт в список покупок
   const [toShop, setToShop] = useState(false)
 
   const results = useMemo(() => {
@@ -211,7 +212,8 @@ export function AddDishModal({ open, onClose, onPick }) {
                     : 'Ккал считаются автоматически — можно исправить вручную'}
                 </Text>
 
-                {/* Галочка «в покупки»: то, чего нет дома, — сразу в список */}
+                {/* Галочка «в покупки»: корзина и подпись без «нет дома»
+                    (отзыв Кати 09.11) */}
                 <Pressable
                   onPress={() => setToShop((v) => !v)}
                   style={styles.shopRow}
@@ -223,7 +225,7 @@ export function AddDishModal({ open, onClose, onPick }) {
                     {toShop && <Check size={13} color={colors.accentInk} strokeWidth={3} />}
                   </View>
                   <ShoppingCart size={15} color={colors.cyan} />
-                  <Text style={styles.shopText}>Нет дома — добавить в покупки</Text>
+                  <Text style={styles.shopText}>Добавить в покупки</Text>
                 </Pressable>
 
                 <Pressable
@@ -311,7 +313,7 @@ export function AddDishModal({ open, onClose, onPick }) {
                   {toShop && <Check size={13} color={colors.accentInk} strokeWidth={3} />}
                 </View>
                 <ShoppingCart size={15} color={colors.cyan} />
-                <Text style={styles.shopText}>Нет дома — добавить в покупки</Text>
+                <Text style={styles.shopText}>Добавить в покупки</Text>
               </Pressable>
             </>
           )}

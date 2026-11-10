@@ -5,8 +5,10 @@
 // полоса дней Пн–Вс с датами (выбранный день — фиолетовая рамка + точка
 // — как активная вкладка), приёмы пищи строками («эмодзи-плитка +
 // название + блюда + ккал» и фиолетовый «+»), внизу «Показать все
-// приёмы пищи ⌄» — раскрывает перекус
-// и действия дня. Заполненные дни помечены точкой. Пока неделя пустая —
+// приёмы пищи ⌄» — раскрывает перекус. Действия дня и недели — серые
+// значки БЕЗ подписей под шапкой карточки (просьба Кати 09.11:
+// выпадающий список с подписями раздувал низ карточки).
+// Заполненные дни помечены точкой. Пока неделя пустая —
 // карточка «Как это работает». Тап по «+» — окно «Добавить блюдо» (база
 // продуктов или своё блюдо, галочка «в покупки»). Тап по пилюле
 // «80 г · 200 ккал» — правка граммовки (GramsModal). Тап по названию
@@ -28,7 +30,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
-import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Plus, Trash2, X } from 'lucide-react-native'
+import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
@@ -134,7 +136,8 @@ export function MealPlanScreen({ compact = false }) {
   const dayDishes = countDay(sel)
   const isSelToday = sel === todayIdx
 
-  // Три приёма всегда, перекус и действия — за «Показать все»
+  // Три приёма всегда, перекус — за «Показать все» (действия теперь
+  // — серые значки под шапкой, просьба Кати 09.11)
   const visibleMeals = showAll ? MEAL_IDS : MEAL_IDS.slice(0, 3)
 
   const onPick = (item) => {
@@ -305,6 +308,34 @@ export function MealPlanScreen({ compact = false }) {
         </View>
       </View>
 
+      {/* Действия дня и недели — серые значки БЕЗ подписей под шапкой
+          (просьба Кати 09.11: выпадающий список с подписями раздувал
+          низ карточки). Поведение то же: копия дня, шаблоны, очистка
+          дня, «в дневник» (только на сегодняшнем дне), меню прошлой
+          недели, очистка недели */}
+      <View style={styles.headActions}>
+        <Pressable onPress={() => setCopyFrom(sel)} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
+          <Copy size={15} color={P.text2} />
+        </Pressable>
+        <Pressable onPress={() => setTplOpen(true)} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Шаблоны дней: сохранить выбранный день или вставить шаблон">
+          <Bookmark size={15} color={P.text2} />
+        </Pressable>
+        <Pressable onPress={clearDay} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
+          <Eraser size={15} color={P.text2} />
+        </Pressable>
+        {isSelToday && (
+          <Pressable onPress={transferToDiary} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Перенести меню дня в дневник">
+            <ClipboardCheck size={15} color={P.text2} />
+          </Pressable>
+        )}
+        <Pressable onPress={copyPrevWeek} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Взять меню прошлой недели">
+          <History size={15} color={P.text2} />
+        </Pressable>
+        <Pressable onPress={clearWeek} style={styles.headAction} hitSlop={4} accessibilityRole="button" accessibilityLabel="Очистить всю неделю">
+          <Trash2 size={15} color={P.text2} />
+        </Pressable>
+      </View>
+
       {/* Полоса дней Пн–Вс с датами — как в макете: выбранный день в
           лаймовой рамке с точкой, заполненные дни — с точкой */}
       <View style={styles.daysStrip}>
@@ -454,61 +485,24 @@ export function MealPlanScreen({ compact = false }) {
             )
           })}
 
-          {/* «Показать все приёмы пищи» — раскрывает перекус и действия */}
+          {/* «Показать все приёмы пищи» — раскрывает перекус (действия
+              переехали под шапку). Ровная строка (отзыв Кати 09.11):
+              без сжатия шрифта — на узкой карточке подпись короче
+              («Все приёмы пищи»), чтобы влезала целиком и не съезжала */}
           <Pressable
             style={styles.showAll}
             onPress={() => setShowAll((v) => !v)}
             accessibilityRole="button"
             accessibilityState={{ expanded: showAll }}
-            accessibilityLabel={showAll ? 'Скрыть перекус и действия' : 'Показать все приёмы пищи'}
+            accessibilityLabel={showAll ? 'Скрыть перекус' : 'Показать все приёмы пищи'}
           >
-            <Text
-              style={styles.showAllText}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.72}
-            >
-              {showAll ? 'Скрыть' : 'Показать все приёмы пищи'}
+            <Text style={styles.showAllText} numberOfLines={1}>
+              {showAll ? 'Скрыть' : compact ? 'Все приёмы пищи' : 'Показать все приёмы пищи'}
             </Text>
             {showAll
               ? <ChevronUp size={15} color={P.text2} />
               : <ChevronDown size={15} color={P.text2} />}
           </Pressable>
-
-          {showAll && (
-            <View style={styles.actionsWrap}>
-              <View style={styles.dayActions}>
-                <Pressable onPress={() => setCopyFrom(sel)} style={styles.dayAction} accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
-                  <Copy size={14} color={P.text2} />
-                  <Text style={styles.dayActionText}>Копировать</Text>
-                </Pressable>
-                <Pressable onPress={() => setTplOpen(true)} style={styles.dayAction} accessibilityLabel="Шаблоны дней: сохранить выбранный день или вставить шаблон">
-                  <Bookmark size={14} color={P.text2} />
-                  <Text style={styles.dayActionText}>Шаблоны</Text>
-                </Pressable>
-                <Pressable onPress={clearDay} style={styles.dayAction} accessibilityLabel={`Очистить ${WEEKDAYS_FULL[sel]}`}>
-                  <Trash2 size={14} color={P.text3} />
-                  <Text style={styles.dayActionText}>Очистить</Text>
-                </Pressable>
-                {isSelToday && (
-                  <Pressable onPress={transferToDiary} style={styles.transferBtn} accessibilityLabel="Перенести меню в дневник">
-                    <ClipboardCheck size={14} color={P.accentInk} />
-                    <Text style={styles.transferText}>В дневник</Text>
-                  </Pressable>
-                )}
-              </View>
-              <View style={styles.dayActions}>
-                <Pressable onPress={copyPrevWeek} style={styles.dayAction} accessibilityLabel="Взять меню прошлой недели">
-                  <Copy size={14} color={P.text2} />
-                  <Text style={styles.dayActionText}>Меню прошлой недели</Text>
-                </Pressable>
-                <Pressable onPress={clearWeek} style={styles.dayAction} accessibilityLabel="Очистить всю неделю">
-                  <Trash2 size={14} color={P.text3} />
-                  <Text style={styles.dayActionText}>Очистить неделю</Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
       </>
 
       {/* Окно добавления блюда */}
@@ -759,7 +753,8 @@ const styles = {
   itemDel: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
   itemDelC: { width: 22, height: 22 },
 
-  // «Показать все приёмы пищи» + действия (перекус, копирование, дневник)
+  // «Показать все приёмы пищи» — ровная строка: текст по центру без
+  // сжатия, шеврон по середине; подпись на узкой карточке короче
   showAll: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -772,30 +767,24 @@ const styles = {
   },
   showAllText: { fontSize: 13, fontWeight: '600', fontFamily: F[600], color: P.text2 },
 
-  // «Добавить рецепт» переехал в правую колонку PlanScreen (под
-  // «Интервальным питанием») — просьба Кати 09.11; стили — там же
-  actionsWrap: { gap: 8, marginTop: 10 },
-  dayActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, flexWrap: 'wrap' },
-  dayAction: {
+  // Действия дня/недели — серые значки без подписей под шапкой
+  // (просьба Кати 09.11); переносятся в два ряда на узкой карточке
+  headActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 5,
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: spacing.s,
+  },
+  headAction: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     backgroundColor: P.tile,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    height: 32,
-  },
-  dayActionText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
-  transferBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: P.accent,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    height: 32,
+    justifyContent: 'center',
   },
-  transferText: { fontSize: 12.5, fontWeight: '700', fontFamily: F[700], color: P.accentInk },
 
   // Окно «куда скопировать день»
   copyBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
