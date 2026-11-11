@@ -36,7 +36,7 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Pandroid.compileSdkVersion=37
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
