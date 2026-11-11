@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { makeId } from '@/lib/format'
 import { dayKeyOf, useHistoryStore } from './useHistoryStore'
 import { KCAL_PER_STEP } from '@/lib/data/activity'
+import { metFromKcal } from '@/lib/data/exercises'
 
 // Ключ дня «ГГГГ-ММ-ДД» по локальным часам (единый с историей)
 export const todayKey = dayKeyOf
@@ -128,4 +129,30 @@ export function syncHistoryBurned(dayKey) {
       burned: Math.max(hist.burned || 0, Math.round(burned)),
     })
   } catch {}
+}
+
+// Калибровка «Моей тренировки» по вписанной вручную цифре калорий
+// (просьба Кати 11.11: «чтобы ручная цифра запоминалась для
+// "Моих тренировок", как калорий за 30 мин»). Из ручных ккал за N минут
+// выводим MET тренировки и запоминаем его — следующий автоподсчёт для
+// этой тренировки начнётся с откалиброванной интенсивности, а редактор
+// тренировки покажет режим «ккал за 30 мин» с готовой цифрой.
+// Возвращает новый MET (округлённый до сотых) или null, если менять
+// ничего не нужно: тренировка не из «Моих», вес не указан, цифра даёт
+// абсурдную интенсивность или совпадает с текущей (в пределах 2% —
+// погрешность округления формулы).
+export function calibrateCustomFromKcal(exId, kcal, minutes, weightKg) {
+  const ex = useExerciseStore.getState().custom.find((c) => c.id === exId)
+  if (!ex) return null
+  const met = metFromKcal(kcal, weightKg, minutes)
+  if (met === null || met < 1 || met > 25) return null
+  const rounded = Math.round(met * 100) / 100
+  const old = Number(ex.met) || 0
+  if (old > 0 && Math.abs(rounded - old) / old < 0.02) return null
+  useExerciseStore.setState({
+    custom: useExerciseStore
+      .getState()
+      .custom.map((c) => (c.id === exId ? { ...c, met: rounded } : c)),
+  })
+  return rounded
 }

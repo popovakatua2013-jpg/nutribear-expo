@@ -39,7 +39,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Circle, Defs, LinearGradient as SvgGrad, Stop } from 'react-native-svg'
 import { useFocusEffect } from 'expo-router'
-import { useExerciseStore, todayKey, syncHistoryBurned } from '@/store/useExerciseStore'
+import { useExerciseStore, todayKey, syncHistoryBurned, calibrateCustomFromKcal } from '@/store/useExerciseStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import {
@@ -579,6 +579,19 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
     setWheelOpen(false)
   }
 
+  // Калибровка «Моих тренировок» по ручной цифре (просьба Кати 11.11:
+  // «чтобы ручная цифра запоминалась»): после успешной записи с вписанными
+  // вручную калориями своя тренировка запоминает новую интенсивность —
+  // следующий расчёт и редактор тренировки покажут её. Возвращает добавку
+  // к описанию тоста или пустую строку, если калибровать не было причин.
+  function maybeCalibrate(isManual, kcalValue) {
+    if (!isManual || !ex.id.startsWith('custom-')) return ''
+    const newMet = calibrateCustomFromKcal(ex.id, kcalValue, minutesNum, weightKg)
+    if (newMet === null) return ''
+    const kcal30 = kcalBurned(newMet, weightKg, 30)
+    return ` · запомнено: ≈ ${formatNum(kcal30)} ккал за 30 мин`
+  }
+
   // Записать: проверяем поля и добавляем/сохраняем запись
   function save() {
     if (!ex) {
@@ -627,7 +640,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
         syncHistoryBurned(todayKey())
         toast({
           title: `${ex.emoji} ${ex.name} — за вчера`,
-          description: `${minutesNum} мин · ${formatNum(kcal)} ккал · запись перенесена`,
+          description: `${minutesNum} мин · ${formatNum(kcal)} ккал · запись перенесена${maybeCalibrate(manual, kcal)}`,
         })
       } else {
         updateLog(todayKey(), editing.id, payload)
@@ -636,7 +649,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           title: `${ex.emoji} ${ex.name} — изменено`,
           description: `${minutesNum} мин · ${formatNum(kcal)} ккал${
             manual ? ' · вручную' : ''
-          }`,
+          }${maybeCalibrate(manual, kcal)}`,
         })
       }
       onDone?.()
@@ -653,7 +666,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
         title: `${ex.emoji} ${ex.name} — ${minutesNum} мин`,
         description: `Сожжено ${formatNum(kcal)} ккал · записано${
           dayOff ? ' за вчера' : ''
-        }`,
+        }${maybeCalibrate(manual, kcal)}`,
       })
       resetFields()
     }

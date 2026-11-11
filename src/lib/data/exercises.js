@@ -40,6 +40,19 @@ export function kcalBurned(met, weightKg, minutes) {
   return Math.round(((met * 3.5 * weightKg) / 200) * minutes)
 }
 
+// Обратная задача формулы MET: какую интенсивность (MET) имеет тренировка,
+// которая сожгла kcal за minutes минут при весе weightKg. Применяется для
+// калибровки «Моих тренировок» по вписанной вручную цифре калорий
+// (просьба Кати 11.11: «чтобы ручная цифра запоминалась»). null — если
+// посчитать нельзя (нет веса/минут/калорий).
+export function metFromKcal(kcal, weightKg, minutes) {
+  const w = Number(weightKg) || 0
+  const m = Number(minutes) || 0
+  const k = Number(kcal) || 0
+  if (w <= 0 || m < 1 || k < 1) return null
+  return k / ((3.5 * w) / 200) / m
+}
+
 // Разобрать вписанное вручную число калорий (просьба Кати 11.11: «править
 // ккал вручную» в окне счётчика). Строка или число → целое от 1 до max;
 // пусто, мусор или выход за диапазон → null (значит «автоподсчёт»).
