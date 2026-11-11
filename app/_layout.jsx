@@ -8,7 +8,7 @@
 import '../global.css'
 
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import {
@@ -17,6 +17,7 @@ import {
   Inter_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/inter'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ToastProvider } from '@/components/ui/Toast'
 import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
@@ -111,6 +112,55 @@ export function ErrorBoundary({ error, retry }) {
     (error && (error.message || String(error))) || 'Неизвестная ошибка'
   const steps = hintsForError(message)
 
+  // «Сбросить данные» — крайняя мера, когда цикл падает на одной и
+  // той же ошибке при запуске (битый стор в AsyncStorage). Стираем
+  // все ключи NutriBear и перезапускаем — онбординг покажется заново,
+  // но у пользователя остаётся рабочее приложение, а не «Мишка споткнулся»
+  // навсегда. Состояние покупки (useProStore) при этом НЕ трогаем —
+  // см. правило проекта: «Состояние покупки не сбрасывается "Стереть
+  // все данные"». Фото в файловой системе не затрагиваем — они не в
+  // AsyncStorage
+  const [resetting, setResetting] = useState(false)
+  function wipeAndRetry() {
+    Alert.alert(
+      'Сбросить данные приложения?',
+      'Это крайняя мера — если приложение постоянно падает при запуске. '
+        + 'Сотрутся дневник, история, вода, вес, тренировки. Онбординг '
+        + 'показывается заново. Покупка Premium сохраняется. Фотографии '
+        + 'на устройстве не затрагиваются. Действие нельзя отменить.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Сбросить и перезапустить',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setResetting(true)
+              const keys = await AsyncStorage.getAllKeys()
+              // Удаляем все ключи приложения, КРОМЕ покупки (useProStore).
+              // Ключи покупки — nutribear-pro-v1 и любой persistent-флаг
+              // покупки. Состояние стора в памяти не трогаем — persist
+              // сам перечитает с диска
+              const toRemove = (keys || []).filter(
+                (k) => typeof k === 'string'
+                  && k.startsWith('nutribear-')
+                  && k !== 'nutribear-pro-v1'
+              )
+              if (toRemove.length) {
+                await AsyncStorage.multiRemove(toRemove)
+              }
+            } catch (e) {
+              console.warn('Не удалось сбросить данные:', e)
+            } finally {
+              setResetting(false)
+              retry()
+            }
+          },
+        },
+      ]
+    )
+  }
+
   return (
     <View className="flex-1 bg-bear-bg" style={{ paddingTop: 72, paddingHorizontal: 20 }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -142,7 +192,23 @@ export function ErrorBoundary({ error, retry }) {
           className="mt-5 items-center rounded-2xl px-4 py-3.5 active:opacity-80"
           style={{ backgroundColor: '#4D7CFE' }}
         >
-          <Text className="font-bold text-[19px] text-white">Попробовать снова</Text>
+          <Text className="font-bold text-[19px] text-white">
+            {resetting ? 'Сбрасываем…' : 'Попробовать снова'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={wipeAndRetry}
+          accessibilityRole="button"
+          accessibilityLabel="Сбросить данные приложения"
+          className="mt-2 items-center rounded-2xl border border-white/10 px-4 py-3 active:opacity-80"
+        >
+          <Text className="font-bold text-[17px] text-bear-sub2">
+            Сбросить данные и перезапустить
+          </Text>
+          <Text className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
+            крайняя мера — дневник и история удалятся, Premium сохранится
+          </Text>
         </Pressable>
 
         <View className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3.5">

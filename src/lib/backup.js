@@ -135,8 +135,61 @@ export async function applyBackup(data) {
 
   // ── Остальные сторы: тренировки, голодание, рецепты, продукты,
   //    комбо, дневная история ─────────────────────────────────────
+  // Тренировки (useExerciseStore): валидируем структуру logs — объект
+  // по датам «ГГГГ-ММ-ДД» → массив записей. Раньше цикл ниже
+  // пропускал любой мусор в data.exercise, и битая копия могла
+  // подсунуть строку в logs и сломать рендер журнала. Теперь чистим:
+  // - ключи дня в формате даты (остальные долой)
+  // - значение — массив; не-массив → пустой массив
+  // - записи без kcal/minutes пропускаем, но не выбрасываем весь день
+  // - обрезаем до 210 дней (MAX_LOG_DAYS в сторе), иначе копия с
+  //   длинной историей распирала AsyncStorage на новом телефоне
+  const ex = obj(data.exercise)
+  const exClean = { logs: {} }
+  if (ex.logs && typeof ex.logs === 'object' && !Array.isArray(ex.logs)) {
+    const dayKeys = Object.keys(ex.logs)
+      .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k))
+      .sort()
+      .slice(-210)
+    for (const k of dayKeys) {
+      const arr = Array.isArray(ex.logs[k]) ? ex.logs[k] : []
+      const cleanArr = arr
+        .filter((e) => e && typeof e === 'object')
+        .slice(0, 50) // лимит записей в дне — защита от аномальной копии
+        .map((e) => ({
+          id: typeof e.id === 'string' && e.id ? e.id : `r${Math.random().toString(36).slice(2, 10)}`,
+          exId: typeof e.exId === 'string' ? e.exId : 'unknown',
+          name: typeof e.name === 'string' ? e.name.slice(0, 60) : 'Тренировка',
+          emoji: typeof e.emoji === 'string' ? e.emoji.slice(0, 4) : '🏋️',
+          minutes: Math.min(600, Math.max(0, Math.round(Number(e.minutes) || 0))),
+          kcal: Math.min(5000, Math.max(0, Math.round(Number(e.kcal) || 0))),
+          ...(e.manual ? { manual: true } : {}),
+        }))
+      if (cleanArr.length) exClean.logs[k] = cleanArr
+    }
+  }
+  if (Array.isArray(ex.custom)) {
+    exClean.custom = ex.custom
+      .filter((c) => c && typeof c === 'object' && typeof c.id === 'string')
+      .slice(0, 100)
+      .map((c) => ({
+        id: c.id,
+        name: typeof c.name === 'string' ? c.name.slice(0, 60) : 'Моя тренировка',
+        emoji: typeof c.emoji === 'string' ? c.emoji.slice(0, 4) : '💪',
+        met: Math.min(25, Math.max(1, Math.round(Number(c.met) * 100) / 100 || 5)),
+      }))
+  }
+  // setState только если есть что-то новое — иначе пустой exClean.logs
+  // затирал бы существующие тренировки (например, при восстановлении
+  // старой копии без раздела exercise)
+  if (Object.keys(exClean.logs).length || exClean.custom !== undefined) {
+    const patch = {}
+    if (Object.keys(exClean.logs).length) patch.logs = exClean.logs
+    if (exClean.custom !== undefined) patch.custom = exClean.custom
+    useExerciseStore.setState(patch)
+  }
+
   const simple = [
-    [useExerciseStore, data.exercise],
     [useFastingStore, data.fasting],
     [useRecipesStore, data.recipes],
     [useUserFoodsStore, data.userFoods],

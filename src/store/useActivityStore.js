@@ -109,8 +109,12 @@ export const useActivityStore = create(
         }),
 
       addSteps: (n) => {
-        // Санитизация: NaN/мусор → 0, минус не отнимает чужие шаги
-        const add = Math.max(0, Math.round(Number(n) || 0))
+        // Санитизация: NaN/Infinity/мусор → 0, минус не отнимает чужие шаги.
+        // Number.isFinite ловит Infinity (который проходит через `|| 0`
+        // потому что Infinity truthy) — раньше addSteps(Infinity)
+        // упирался в лимит 50000 вместо сброса в 0
+        const v = Number(n)
+        const add = Number.isFinite(v) ? Math.max(0, Math.round(v)) : 0
         set((s) => ({ extraSteps: Math.min(50000, s.extraSteps + add) }))
       },
 

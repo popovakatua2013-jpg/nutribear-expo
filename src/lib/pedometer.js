@@ -155,7 +155,8 @@ function stopHealthConnect() {
 // приложение было свёрнуто — переподписываемся (publish держит максимум,
 // сумма не упадёт), на iOS сразу опрашиваем шаги с полуночи, HC — тоже.
 export function startPedometerAgent() {
-  if (started) return
+  // Уже запущен — отдаём no-op, чтобы useEffect не упал на undefined
+  if (started) return () => {}
   started = true
   const appSub = AppState.addEventListener('change', (st) => {
     if (st !== 'active') return

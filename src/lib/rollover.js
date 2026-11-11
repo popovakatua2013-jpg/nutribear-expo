@@ -23,6 +23,10 @@ import { xpForDay } from '@/lib/data/activity'
 // графики и отчёты). Максимум с уже записанным — чтобы не затереть
 // большее значение меньшим (сторы могут быть ещё не полностью
 // гидратированы — тогда просто останется прежняя запись).
+//
+// Пустой день (всё по нулям) НЕ пишем — иначе в истории появлялись
+// нулевые записи за дни, когда приложение не открывали, и графики
+// казались «ведёнными», а стрики ломались на пустых днях.
 function archiveOutgoingDay(key, food, act) {
   try {
     const hist = useHistoryStore.getState().days[key] || {}
@@ -36,6 +40,13 @@ function archiveOutgoingDay(key, food, act) {
     const waterMl = act.waterMl || 0
     const burned = totalBurned(useExerciseStore.getState().logs, key, steps)
     const xp = xpForDay({ steps, waterMl, mealCount, burned })
+    // Если в сторах пусто и в истории ничего не было — не плодим
+    // нулевую запись (иначе графики показывают «ведённый» пустой
+    // день, а стрик ломается). Уже записанное в историю оставляем —
+    // это могла быть честная запись, валим её только свежим бо́льшим
+    const hasNewData = kcal > 0 || waterMl > 0 || steps > 0 || burned > 0 || xp > 0
+    const hasOldData = hist && (hist.kcal > 0 || hist.waterMl > 0 || hist.steps > 0 || hist.burned > 0 || hist.xp > 0)
+    if (!hasNewData && !hasOldData) return
     useHistoryStore.getState().record(key, {
       kcal: Math.max(hist.kcal || 0, kcal),
       waterMl: Math.max(hist.waterMl || 0, waterMl),

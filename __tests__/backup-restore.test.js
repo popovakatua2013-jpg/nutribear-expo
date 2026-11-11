@@ -120,3 +120,185 @@ describe('рецепты: КБЖУ на 100 г при битом выходе', 
     expect(r.kcal100).toBeGreaterThan(0)
   })
 })
+
+// Тесты журнала тренировок при копии (аудит 12.11.2026): Катя
+// жаловалась, что копия на новый телефон теряет журнал тренировок.
+// Проверяем полный цикл «экспорт → JSON round-trip → applyBackup»:
+//   • logs сохраняются с правильной структурой (объект по датам)
+//   • custom-тренировки сохраняются
+//   • битые ключи дат отфильтровываются (защита от мусорной копии)
+//   • аномально длинные логи обрезаются до 210 дней (как в сторе)
+//   • мусорные записи в дне не ломают весь день
+describe('applyBackup: журнал тренировок переносится без потерь', () => {
+  let applyBackup, useExerciseStore
+
+  beforeAll(() => {
+    ;({ applyBackup } = require('@/lib/backup'))
+    ;({ useExerciseStore } = require('@/store/useExerciseStore'))
+  })
+
+  beforeEach(() => {
+    useExerciseStore.setState({ logs: {}, custom: [] })
+  })
+
+  test('logs и custom восстанавливаются из копии', async () => {
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: {
+        logs: {
+          '2026-11-10': [
+            { id: 'e1', exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 30, kcal: 150 },
+            { id: 'e2', exId: 'run', name: 'Бег', emoji: '🏃', minutes: 20, kcal: 220 },
+          ],
+          '2026-11-09': [
+            { id: 'e3', exId: 'yoga', name: 'Йога', emoji: '🧘', minutes: 45, kcal: 100 },
+          ],
+        },
+        custom: [
+          { id: 'custom-1', name: 'Моя тренировка', emoji: '💪', met: 6 },
+        ],
+      },
+    })
+    const s = useExerciseStore.getState()
+    expect(s.logs['2026-11-10']).toHaveLength(2)
+    expect(s.logs['2026-11-10'][0]).toMatchObject({ name: 'Ходьба', kcal: 150 })
+    expect(s.logs['2026-11-09']).toHaveLength(1)
+    expect(s.custom).toHaveLength(1)
+    expect(s.custom[0]).toMatchObject({ name: 'Моя тренировка', met: 6 })
+  })
+
+  test('мусорные ключи дат (не «ГГГГ-ММ-ДД») отфильтровываются', async () => {
+    // Битая копия могла подсунуть строковые ключи или объекты — раньше
+    // это ломало рендер журнала и не давало загрузить приложение
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: {
+        logs: {
+          '2026-11-10': [{ id: 'e1', exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 30, kcal: 150 }],
+          'bad-key': [{ id: 'e2', exId: 'run', name: 'Бег', emoji: '🏃', minutes: 20, kcal: 220 }],
+          'не дата': [{ id: 'e3', name: 'Мусор' }],
+        },
+        custom: [],
+      },
+    })
+    const logs = useExerciseStore.getState().logs
+    expect(Object.keys(logs)).toEqual(['2026-11-10'])
+    expect(logs['2026-11-10']).toHaveLength(1)
+  })
+
+  test('записи-не-объекты в дне не ломают весь день', async () => {
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: {
+        logs: {
+          '2026-11-10': [
+            null,
+            'не объект',
+            { id: 'e1', exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 30, kcal: 150 },
+            { name: 'без id' }, // id сгенерируется автоматически
+            undefined,
+          ],
+        },
+        custom: [],
+      },
+    })
+    const arr = useExerciseStore.getState().logs['2026-11-10']
+    expect(arr).toHaveLength(2)
+    expect(arr[0]).toMatchObject({ name: 'Ходьба' })
+    expect(arr[1].id).toMatch(/^r/) // сгенерированный id
+  })
+
+  test('аномально большие значения kcal/minutes ограничиваются', async () => {
+    // Битая копия могла принести kcal=1000000 — это сломало бы графики
+    // и нелогично в UI. Ограничиваем до 5000 ккал и 600 минут
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: {
+        logs: {
+          '2026-11-10': [
+            { id: 'e1', exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 9999, kcal: 99999 },
+          ],
+        },
+        custom: [],
+      },
+    })
+    const e = useExerciseStore.getState().logs['2026-11-10'][0]
+    expect(e.kcal).toBe(5000)
+    expect(e.minutes).toBe(600)
+  })
+
+  test('история длиннее 210 дней обрезается до 210', async () => {
+    // Лимит в сторе MAX_LOG_DAYS=210 — копия с длинной историей не
+    // должна распирать AsyncStorage на новом телефоне
+    const logs = {}
+    for (let i = 0; i < 250; i++) {
+      const d = new Date(2026, 0, 1 + i)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      logs[key] = [{ id: `e${i}`, exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 30, kcal: 150 }]
+    }
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: { logs, custom: [] },
+    })
+    const saved = useExerciseStore.getState().logs
+    expect(Object.keys(saved).length).toBeLessThanOrEqual(210)
+  })
+
+  test('custom-тренировки без id отфильтровываются', async () => {
+    // id нужен для редактирования и удаления — без него тренировка
+    // в каталоге «зависнет» и не даст её изменить
+    await applyBackup({
+      app: 'NutriBear',
+      exercise: {
+        logs: {},
+        custom: [
+          { id: 'c1', name: 'A', emoji: '💪', met: 5 },
+          { name: 'без id' }, // отфильтруется
+          null,
+          { id: 'c2', name: 'B', emoji: '🏋️', met: 7 },
+        ],
+      },
+    })
+    const custom = useExerciseStore.getState().custom
+    expect(custom).toHaveLength(2)
+    expect(custom.map((c) => c.id).sort()).toEqual(['c1', 'c2'])
+  })
+
+  test('копия без раздела exercise не трогает текущие тренировки', async () => {
+    // Старая копия (до появления раздела exercise) не должна
+    // стирать существующие логи пользователя
+    useExerciseStore.setState({
+      logs: { '2026-11-10': [{ id: 'e1', exId: 'walk', name: 'Старая', emoji: '🚶', minutes: 30, kcal: 150 }] },
+      custom: [{ id: 'c1', name: 'Старая', emoji: '💪', met: 5 }],
+    })
+    await applyBackup({ app: 'NutriBear', profile: {} })
+    const s = useExerciseStore.getState()
+    expect(s.logs['2026-11-10']).toHaveLength(1)
+    expect(s.logs['2026-11-10'][0].name).toBe('Старая')
+    expect(s.custom).toHaveLength(1)
+  })
+
+  test('полный цикл: getState → JSON.stringify → applyBackup возвращает те же данные', async () => {
+    // Эталонный тест: берем реальный стор, экспортируем в JSON
+    // (как делает gdpr-export.collectAll), парсим обратно (как
+    // DataPortability при выборе файла) и заливаем в чистый стор
+    useExerciseStore.setState({ logs: {}, custom: [] })
+    useExerciseStore.getState().addLog('2026-11-10', { exId: 'walk', name: 'Ходьба', emoji: '🚶', minutes: 30, kcal: 150 })
+    useExerciseStore.getState().addLog('2026-11-10', { exId: 'run', name: 'Бег', emoji: '🏃', minutes: 20, kcal: 220, manual: true })
+    useExerciseStore.getState().addCustom({ id: 'custom-1', name: 'Моя', emoji: '💪', met: 6 })
+
+    const exported = JSON.parse(JSON.stringify({
+      app: 'NutriBear',
+      exercise: useExerciseStore.getState(),
+    }))
+
+    useExerciseStore.setState({ logs: {}, custom: [] })
+    await applyBackup(exported)
+
+    const s = useExerciseStore.getState()
+    expect(s.logs['2026-11-10']).toHaveLength(2)
+    expect(s.logs['2026-11-10'][0]).toMatchObject({ name: 'Бег', kcal: 220, manual: true })
+    expect(s.logs['2026-11-10'][1]).toMatchObject({ name: 'Ходьба', kcal: 150 })
+    expect(s.custom[0]).toMatchObject({ name: 'Моя', met: 6 })
+  })
+})

@@ -36,6 +36,15 @@ const CORS = {
 // Расширяется переменной AI_ALLOWED_MODELS («model1,model2»)
 const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
 
+// Лимиты на вход /chat: без них любой, кто нашёл адрес воркера, мог
+// прислать огромный массив messages (1000+ записей по 100 КБ) —
+// баланс ключа утекал бы одним запросом. Реальные клиенты NutriBear
+// присылают 1–12 коротких сообщений; лимит оставляет запас.
+const MAX_CHAT_MESSAGES = 20
+const MAX_MESSAGE_LEN = 4000          // символы в content
+const MAX_BODY_BYTES = 256 * 1024     // жёсткий потолок тела запроса
+const ALLOWED_ROLES = new Set(['system', 'user', 'assistant'])
+
 // Простейший rate limit в памяти изолята: 30 POST-запросов в минуту
 // на IP. Изоляты перезапускаются, лимит не идеален — но наивный
 // дренаж баланса ключа останавливает
@@ -48,6 +57,25 @@ function rateLimited(ip) {
   hits.set(ip, win)
   if (hits.size > 5000) hits.clear() // страховка от роста карты
   return win.length > RATE_LIMIT
+}
+
+// Очистить и валидировать массив messages для /chat: пропускаем
+// только записи с разрешённой role и непустой строковой content.
+// Длина каждой content ограничена MAX_MESSAGE_LEN. Возвращает
+// безопасный массив (м.б. пустой) — пустой означает «ничего не
+// спрашивать», воркер ответит ошибкой 400 ниже
+function sanitizeMessages(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  for (const m of raw.slice(0, MAX_CHAT_MESSAGES)) {
+    if (!m || typeof m !== 'object' || Array.isArray(m)) continue
+    const role = typeof m.role === 'string' ? m.role : 'user'
+    if (!ALLOWED_ROLES.has(role)) continue
+    const content = typeof m.content === 'string' ? m.content : String(m.content ?? '')
+    if (!content) continue
+    out.push({ role, content: content.slice(0, MAX_MESSAGE_LEN) })
+  }
+  return out
 }
 
 // Системный промпт чата NutriBear (можно заменить переменной AI_SYSTEM)
@@ -80,6 +108,15 @@ export default {
 
     if (request.method !== 'POST') return json({ error: 'Метод не поддерживается' }, 405)
 
+    // Жёсткий потолок размера тела: раньше любой, кто нашёл адрес
+    // воркера, мог прислать тело в десятки мегабайт и положить
+    // изолят (или хотя бы потратить процесс). Реальные запросы
+    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио
+    const cl = Number(request.headers.get('content-length') || 0)
+    if (cl && cl > MAX_BODY_BYTES) {
+      return json({ error: 'Тело запроса слишком большое' }, 413)
+    }
+
     const key = env.AI_KEY
     if (!key) {
       return json(
@@ -104,7 +141,18 @@ export default {
     // ── 1. Чат NutriBear: { messages } → { reply } ────────────────
     if (path === '/chat') {
       try {
-        const { messages = [] } = await request.json()
+        const raw = await request.json().catch(() => ({}))
+        // Валидация messages: только массив объектов с разрешённой
+        // role и непустым content, лимит на длину и количество —
+        // иначе одна прокси-запрос мог слить баланс огромным
+        // промптом. Пустой массив после очистки — ошибка 400
+        const messages = sanitizeMessages(raw?.messages)
+        if (!messages.length) {
+          return json(
+            { error: 'Поле messages пустое или не содержит валидных записей' },
+            400
+          )
+        }
         const res = await fetch(`${upstream}/chat/completions`, {
           method: 'POST',
           headers: {

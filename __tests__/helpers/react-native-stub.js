@@ -17,5 +17,12 @@ module.exports = {
     removeAllListeners() {}
     remove() {}
   },
+  // Share нужен diary-export.test.js — фолбэк shareCsv на больших данных
+  // вызывает Share.share. В тестах — no-op, ничего не делает
+  Share: {
+    share: jest.fn(async () => ({ action: 'shared' })),
+    shareAction: 'shared',
+    dismissSheetAction: 'dismissed',
+  },
 }
 
