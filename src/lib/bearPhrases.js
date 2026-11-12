@@ -28,6 +28,11 @@
 //   soft  — «Мягко»: спокойные напоминания без шуток
 //   bear  — «С характером 🐻»: медвежьи пинки (дефолт)
 //   spicy — «С перцем 🌶»: пинки + дерзкая серия с драмой и мемами
+//
+//  Помощник (companionId из useCompanionStore): добавляет signature
+//  пулов фраз — Pro (Фит) включает spicy-серию, Premium (Топаз/
+//  Бусинка) добавляет расширенные фразы. Free (Кедр/Кира) — базовый
+//  пул. Параметр опциональный, для обратной совместимости.
 
 // Локальная дата «ГГГГ-ММ-ДД» — точь-в-точь как dayKeyOf в
 // useHistoryStore, но без импорта стора (модуль чистый).
@@ -120,7 +125,13 @@ export function pickTone({ loggedToday = false, missedToday = false, missedStrea
 //         токен «{name}, » отрезается вместе с запятой, а первое слово
 //         получает заглавную — тексты остаются прежними.
 // По умолчанию мужской род без имени — совместимость со старым поведением.
-export function mealPokeMessage({ mealId = 'lunch', tone = 'soft', streak = 0, gender = 'm', name = '', style = 'bear', random = Math.random }) {
+//
+// companionTier — 'free' | 'premium' | 'pro' (из useCompanionStore):
+//   • free    — только базовый пул (Кедр/Кира)
+//   • premium — + PREMIUM_POOLS (Топаз/Бусинка)
+//   • pro     — + SPICY_POOLS, как при style='spicy' (Фит)
+// Параметр опциональный — обратная совместимость со старым вызовом
+export function mealPokeMessage({ mealId = 'lunch', tone = 'soft', streak = 0, gender = 'm', name = '', style = 'bear', companionTier, random = Math.random }) {
   const label = MEAL_LABEL[mealId] || 'приём пищи'
   const fem = gender === 'f'
   const who = String(name || '').trim().split(/\s+/)[0].slice(0, 24)
@@ -150,12 +161,42 @@ export function mealPokeMessage({ mealId = 'lunch', tone = 'soft', streak = 0, g
   if (tone === 'soft') {
     return { title: TITLES.soft[mealId] || '🐻 Напоминание', body: fill(POOLS.soft[mealId] || POOLS.soft.lunch) }
   }
-  // Стиль «С перцем»: к медвежьему пулу добавляется дерзкая серия
-  // (вторая серия пользователя) — механика тонов та же
+  // Стиль «С перцем» ИЛИ помощник Pro (Фит): к медвежьему пулу
+  // добавляется дерзкая серия (SPICY_POOLS). Стиль имеет приоритет —
+  // если пользователь выбрал «С перцем» в настройках, spicy включается
+  // независимо от помощника
   const basePool = POOLS[tone] || []
-  const spicyExtra = style === 'spicy' && SPICY_POOLS[tone] ? SPICY_POOLS[tone] : []
-  const pool = spicyExtra.length ? [...basePool, ...spicyExtra] : basePool
+  const spicyByStyle = style === 'spicy' && SPICY_POOLS[tone] ? SPICY_POOLS[tone] : []
+  const spicyByCompanion = companionTier === 'pro' && SPICY_POOLS[tone] ? SPICY_POOLS[tone] : []
+  const spicyExtra = [...spicyByStyle, ...spicyByCompanion]
+  // Premium-помощник (Топаз/Бусинка) добавляет расширенный пул
+  const premiumExtra = companionTier === 'premium' && PREMIUM_POOLS[tone] ? PREMIUM_POOLS[tone] : []
+  // Дедупликация — на случай пересечения пулов
+  const pool = [...basePool, ...premiumExtra, ...spicyExtra]
   return { title: fill(TITLES[tone] || '🐻 Напоминание'), body: fill(pickPhrase(pool, random)) }
+}
+
+// 💎 Расширенные фразы для Premium-помощников (Топаз/Бусинка):
+// добавляются к базовому пулу при tone=praise/cheer/tease/firm —
+// больше вариантов, более конкретные советы. Pro (Фит) использует
+// spicy-серию (см. SPICY_POOLS ниже) — отдельный характер
+const PREMIUM_POOLS = {
+  praise: [
+    'Записал{m:|а} быстрее меня! Я было моргнул — а ты уже в дневнике 👏🐻',
+    'Дневник блестит, как моя шерсть после душа. Продолжай 🐻✨',
+  ],
+  cheer: [
+    'Серия {streak}! Я аплодирую всеми лапами 🐻👏',
+    'Так держать! {streak} подряд — это уровень. Я горжусь 🐻💪',
+  ],
+  tease: [
+    'Я тут подумал: может, ты не записал{m:|а} {meal}, потому что забыл{m:|а}? Я напомню 🐻',
+    '{meal} скучает. Я тоже немного. Давай уже, отметь — и я отстану 🐻',
+  ],
+  firm: [
+    '{name}, второй день без {meal}. Я в тебя верю, но вера без действий — это просто оптимизм 🐻',
+    '{meal} снова не записан. Я молчу, но дневник уже плачет. Вернись 🐻',
+  ],
 }
 
 // ═══════════════════════════════════════════════════════════════

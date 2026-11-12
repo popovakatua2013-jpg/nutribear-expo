@@ -22,6 +22,7 @@ import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
+import { useCompanionStore } from '@/store/useCompanionStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
 import { requestOpenWeightModal, requestOpenSleepModal } from '@/lib/navEvents'
@@ -239,6 +240,9 @@ function mealPokeText(mealId, meals) {
   // Пол и имя из профиля: фразы подстраиваются («Куда пропал?» /
   // «Куда пропала?», «Катя, булочки?»)
   const { name, sex } = useProfileStore.getState()
+  // Помощник: Pro (Фит) включает spicy-серию, Premium (Топаз/Бусинка)
+  // — расширенный пул. Free (Кедр/Кира) — базовые фразы
+  const companionTier = useCompanionStore.getState().getCurrent()?.tier
   return mealPokeMessage({
     mealId,
     tone,
@@ -247,6 +251,7 @@ function mealPokeText(mealId, meals) {
     gender: sex === 'female' ? 'f' : 'm',
     name,
     style: meals?.style || 'bear',
+    companionTier,
   })
 }
 
@@ -285,6 +290,7 @@ async function maybePraiseNow(state, prev) {
     gender: sex === 'female' ? 'f' : 'm',
     name,
     style: 'bear',
+    companionTier: useCompanionStore.getState().getCurrent()?.tier,
   })
   try {
     await Notifications.scheduleNotificationAsync({

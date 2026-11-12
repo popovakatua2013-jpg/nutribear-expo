@@ -42,6 +42,7 @@ import { NotificationsSection } from '@/components/more/NotificationsSection'
 import { SupportModal } from '@/components/more/SupportModal'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
 import { SyncCard } from '@/components/more/SyncCard'
+import { CompanionCard } from '@/components/more/CompanionCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { LegalDocModal } from '@/components/more/LegalDocModal'
@@ -51,6 +52,7 @@ import { useCycleStore, daysToNext } from '@/store/useCycleStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useCompanionStore } from '@/store/useCompanionStore'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
@@ -145,6 +147,15 @@ export default function MoreScreen() {
   const weighNudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
   const setWeighNudgeDays = useUiPrefsStore((s) => s.setWeighNudgeDays)
 
+  // Помощник: имя текущего напарника для строки меню
+  const companion = useCompanionStore((s) =>
+    // простой хук без пересоздания объекта — берём только id и ищем сами
+    s.companionId
+  )
+  const companionName =
+    // лёгкий поиск без импорта COMPANIONS в этот файл (он в CompanionCard)
+    ({ kedr: 'Кедр', kira: 'Кира', topaz: 'Топаз', businka: 'Бусинка', fit: 'Фит' })[companion] || 'Кедр'
+
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
@@ -200,6 +211,18 @@ export default function MoreScreen() {
             value={exercise.enabled ? exercise.time : 'выкл'}
           >
             <KickTimeCard embedded />
+          </MenuRow>
+        </MenuGroup>
+
+        {/* ── ПОМОЩНИК: выбор медведя-напарника ────────────────────── */}
+        <MenuGroup title="ПОМОЩНИК">
+          <MenuRow
+            icon="🐻"
+            iconBg="rgba(16,185,129,0.16)"
+            title="Напарник"
+            value={companionName}
+          >
+            <CompanionCard embedded />
           </MenuRow>
         </MenuGroup>
 

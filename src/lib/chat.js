@@ -14,6 +14,7 @@
 
 import Constants from 'expo-constants'
 import { AI_CONFIG } from './ai-config'
+import { useCompanionStore, companionSystemPrompt } from '@/store/useCompanionStore'
 
 export function getChatApiUrl() {
   // Режим прокси: { messages } → { reply } на /chat воркера
@@ -35,8 +36,21 @@ function normalizeReply(s) {
   return String(s).replace(/\r\n/g, '\n').replace(/\\n/g, '\n').trim()
 }
 
-// Реальный ИИ: POST { messages } → { reply } (как в веб-версии)
-export async function askNutritionist(messages, timeoutMs = 8000) {
+// Системный промпт по текущему помощнику: Pro (Фит) — дерзкий,
+// Premium (Топаз/Бусинка) — расширенный, Free (Кедр/Кира) — базовый.
+// Если помощник не выбран — null, воркер использует свой DEFAULT_SYSTEM
+function currentCompanionSystemPrompt() {
+  try {
+    const companionId = useCompanionStore.getState().companionId
+    return companionSystemPrompt(companionId)
+  } catch {
+    return null
+  }
+}
+
+// Реальный ИИ: POST { messages, system? } → { reply } (как в веб-версии).
+// system — системный промпт помощника; если не передан, берём из стора
+export async function askNutritionist(messages, timeoutMs = 8000, systemOverride = null) {
   const url = getChatApiUrl()
   if (!url) throw new Error('no-server')
 
@@ -46,10 +60,13 @@ export async function askNutritionist(messages, timeoutMs = 8000) {
     const headers = { 'Content-Type': 'application/json' }
     // Общий секрет прокси (если настроен на воркере — NB_SECRET)
     if (AI_CONFIG.proxySecret) headers['X-NB-Secret'] = AI_CONFIG.proxySecret
+    // Системный промпт: приоритет у явного параметра, иначе — помощник
+    const system = systemOverride ?? currentCompanionSystemPrompt()
+    const body = system ? { messages, system } : { messages }
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify(body),
       signal: ctrl.signal,
     })
     const data = await res.json()

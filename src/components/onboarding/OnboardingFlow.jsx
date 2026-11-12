@@ -12,11 +12,12 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { ObProgress } from './ob/ObProgress'
 import { WelcomeStep } from './ob/WelcomeStep'
 import { ProfileStep } from './ob/ProfileStep'
+import { CompanionStep } from './ob/CompanionStep'
 import { RevealStep } from './ob/RevealStep'
 import { PaywallStep } from './ob/PaywallStep'
 import { PermissionsStep } from './ob/PermissionsStep'
 
-const STEPS = [WelcomeStep, ProfileStep, RevealStep, PaywallStep, PermissionsStep]
+const STEPS = [WelcomeStep, ProfileStep, CompanionStep, RevealStep, PaywallStep, PermissionsStep]
 
 export function OnboardingFlow() {
   const insets = useSafeAreaInsets()

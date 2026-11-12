@@ -138,7 +138,7 @@ export default {
       return json({ error: 'Слишком много запросов, попробуйте позже' }, 429)
     }
 
-    // ── 1. Чат NutriBear: { messages } → { reply } ────────────────
+    // ── 1. Чат NutriBear: { messages, system? } → { reply } ────────
     if (path === '/chat') {
       try {
         const raw = await request.json().catch(() => ({}))
@@ -153,6 +153,12 @@ export default {
             400
           )
         }
+        // Системный промпт: приложение присылает свой — по выбранному
+        // помощнику (Кедр/Кира/Топаз/Бусинка/Фит). Если не передан —
+        // используем дефолтный. Лимит 2000 символов — защита от сливания
+        // баланса гигантским промптом
+        let system = typeof raw?.system === 'string' ? raw.system.slice(0, 2000) : ''
+        if (!system.trim()) system = env.AI_SYSTEM || DEFAULT_SYSTEM
         const res = await fetch(`${upstream}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -161,7 +167,7 @@ export default {
           },
           body: JSON.stringify({
             model,
-            messages: [{ role: 'system', content: env.AI_SYSTEM || DEFAULT_SYSTEM }, ...messages],
+            messages: [{ role: 'system', content: system }, ...messages],
             temperature: 0.7,
             max_tokens: 600,
           }),
