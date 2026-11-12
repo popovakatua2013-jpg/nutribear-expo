@@ -18,10 +18,13 @@ Expo-приложение (Android, готовится публикация в R
 ```bash
 npm ci                  # установка зависимостей (Windows: update.bat / update.ps1)
 npx expo start          # запуск в Expo Go
-npm run apk             # preview-сборка APK (EAS)
-npm run aab             # production-сборка AAB для Google Play
-npx jest                # все тесты (48 наборов)
+npx jest                # все тесты (50 наборов, 636 тестов)
 ```
+
+Сборка APK — только через GitHub Actions (Actions → Build APK →
+Run workflow); команды `npm run apk` / `npm run aab` остались от EAS
+и больше не используются. CI на каждый push сам гоняет
+check-syntax и тесты (Actions → CI).
 
 ## Сборка для магазинов
 
@@ -39,7 +42,7 @@ npx jest                # все тесты (48 наборов)
 | `app/`                | экраны и вкладки (expo-router)                     |
 | `src/components/`     | UI-компоненты по вкладкам                          |
 | `src/lib/`            | расчёты, ИИ, Health Connect, документы (`data/`)   |
-| `src/store/`          | Zustand-сторы (persist в AsyncStorage)             |
+| `src/store/`          | Zustand-сторы (persist в AsyncStorage; чувствительные — в SecureStore) |
 | `docs/`               | публичные юридические документы (страница GitHub Pages) |
 | `internal/`           | внутренние заметки: аудиты, backlog, план paywall, EAS |
 | `server/`             | Cloudflare Worker — ИИ-прокси (`server/README.md`) |
@@ -52,8 +55,10 @@ npx jest                # все тесты (48 наборов)
    воркера; всё с префиксом `EXPO_PUBLIC_` попадает в бандл.
 2. Обновления для Владельца — через `update.bat` / `update.ps1`
    (ps1 сам делает `npm install`).
-3. Состояние покупки не сбрасывается «Стереть все данные»
-   (см. `src/store/useProStore.js`).
+3. Данные здоровья (профиль, цикл) лежат в защищённом хранилище
+   платформы (Android Keystore) через `src/lib/secure-storage.js`;
+   «Стереть все данные» чистит и AsyncStorage, и SecureStore,
+   и файлы фото прогресса.
 4. Перед коммитом: `node scripts/check-syntax.js <файлы>` и `npx jest`.
 5. GitHub Pages публикует только каталог `docs/` (политика и
    соглашение): <https://popovakatua2013-jpg.github.io/nutribear-expo/privacy.html>

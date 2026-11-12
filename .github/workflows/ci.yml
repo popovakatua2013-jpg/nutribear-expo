@@ -1,0 +1,23 @@
+# CI NutriBear: на каждый push (и PR) — проверка синтаксиса и все тесты.
+# Аудит 13.11: раньше тесты не запускались автоматически, сломанный
+# коммит мог попасть в main незамеченным. Сборка APK — отдельный
+# workflow build-apk.yml (запускается вручную).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node scripts/check-syntax.js
+      - run: npx jest --ci
