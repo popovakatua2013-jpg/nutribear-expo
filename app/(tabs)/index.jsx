@@ -147,8 +147,14 @@ export default function HomeScreen() {
     100,
     Math.round((waterMl / Math.max(1, goals.waterMl)) * 100)
   )
-  // Активность (минуты): ~100 шагов ≈ 1 минута ходьбы (как в dashboard.js)
-  const minutes = Math.round(extraSteps / 100)
+  // Активность (минуты): ходьба (100 шагов ≈ 1 минута) + тренировки за сегодня.
+  // Раньше учитывались только шаги, и пользователь с записанной тренировкой
+  // видел «0 мин» — теперь минуты тренировок прибавляются (как в dashboard.js)
+  const exMinToday = (exLogs[dayKeyOf()] || []).reduce(
+    (s, e) => s + (Number(e.minutes) || 0),
+    0
+  )
+  const minutes = Math.round(extraSteps / 100) + exMinToday
   const minutesPct = Math.min(
     100,
     Math.round((minutes / Math.max(1, goals.minutes)) * 100)
