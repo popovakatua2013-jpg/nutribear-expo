@@ -15,7 +15,11 @@
 //   npx wrangler secret put AI_KEY      — ключ ИИ (sk-…)
 //   npx wrangler secret put NB_SECRET   — общий секрет приложения
 //     (необязательно, но НАСТОЯТЕЛЬНО: без него POST может слать кто угодно,
-//      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET)
+//      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET.
+//      Важно (аудит 12.11): секрет с префиксом EXPO_PUBLIC_ зашивается в бандл
+//      APK и извлекается реверс-инжинирингом — он затрудняет использование
+//      воркера в обход приложения, но не делает его невозможным. Реальные
+//      границы расходов — белый список моделей, лимиты тела/rate-limit)
 //   [vars] в wrangler.toml              — AI_UPSTREAM, AI_MODEL
 //                                         AI_ALLOWED_MODELS — белый список
 //                                         моделей через запятую (по умолчанию
@@ -31,6 +35,17 @@ const CORS = {
   'Access-Control-Max-Age': '86400',
 }
 
+// CORS только для своих клиентов (аудит 12.11): родное приложение
+// (React Native) вообще не шлёт Origin, а в браузере воркер открывается
+// только с localhost (отладка) и с самой страницы workers.dev. Любой
+// другой сайт получает ответ БЕЗ CORS-заголовков и код 403 — чужая
+// веб-страница больше не может гонять POST-запросы на воркер
+function isOriginAllowed(origin) {
+  if (!origin || origin === 'null') return true // нативное приложение, webview
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin)
+    || /https:\/\/[\w.-]+\.workers\.dev(\/|$)/.test(origin)
+}
+
 // Белый список моделей для passthrough: клиент больше не выбирает
 // произвольную модель (раньше мог уйти в дорогую и слить баланс).
 // Расширяется переменной AI_ALLOWED_MODELS («model1,model2»)
@@ -43,7 +58,11 @@ const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
 const MAX_CHAT_MESSAGES = 20
 const MAX_MESSAGE_LEN = 4000          // символы в content
 const MAX_BODY_BYTES = 256 * 1024     // жёсткий потолок тела запроса
-const ALLOWED_ROLES = new Set(['system', 'user', 'assistant'])
+// Аудит 12.11: role 'system' убран из пользовательских сообщений —
+// через него возможен prompt injection в обход системного промпта
+// «Не назначай лечение». Системный промпт передаётся отдельным полем
+// system и накладывается воркером сверху (см. маршрут /chat)
+const ALLOWED_ROLES = new Set(['user', 'assistant'])
 
 // Простейший rate limit в памяти изолята: 30 POST-запросов в минуту
 // на IP. Изоляты перезапускаются, лимит не идеален — но наивный
@@ -60,11 +79,11 @@ function rateLimited(ip) {
 }
 
 // Очистить и валидировать массив messages для /chat: пропускаем
-// только записи с разрешённой role и непустой строковой content.
-// Длина каждой content ограничена MAX_MESSAGE_LEN. Возвращает
-// безопасный массив (м.б. пустой) — пустой означает «ничего не
-// спрашивать», воркер ответит ошибкой 400 ниже
-function sanitizeMessages(raw) {
+// только записи с разрешённой ролью (user/assistant) и непустым
+// строковым content. Длина каждой content ограничена MAX_MESSAGE_LEN.
+// Возвращает безопасный массив (м.б. пустой) — пустой означает
+// «ничего не спрашивать», воркер ответит ошибкой 400 ниже
+export function sanitizeMessages(raw) {
   if (!Array.isArray(raw)) return []
   const out = []
   for (const m of raw.slice(0, MAX_CHAT_MESSAGES)) {
@@ -84,6 +103,13 @@ const DEFAULT_SYSTEM =
   'Отвечай кратко, по-русски, с конкретными советами про питание, воду, шаги и привычки. ' +
   'Не назначай лечение; при медицинских вопросах советуй врача.'
 
+// Доступ к воркеру только своим клиентам (см. isOriginAllowed выше).
+// Экспортируем для тестов
+export { isOriginAllowed }
+
+// Лимиты — экспорт для тестов
+export const LIMITS = { MAX_CHAT_MESSAGES, MAX_MESSAGE_LEN, MAX_BODY_BYTES, RATE_LIMIT }
+
 // ── ответы ──────────────────────────────────────────────────────
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
@@ -91,10 +117,25 @@ const json = (obj, status = 200) =>
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS },
   })
 
+// Ответ без CORS-заголовков: чужой сайт его не прочитает
+const plain = (obj, status) =>
+  new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+  })
+
 // ── маршрутизация ───────────────────────────────────────────────
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
+    const origin = request.headers.get('origin')
+    if (request.method === 'OPTIONS') {
+      // Preflight отвечаем только своим клиентам: чужой сайт не
+      // получит CORS-заголовков и браузер сам не пошлёт POST
+      return new Response(null, {
+        status: 204,
+        headers: isOriginAllowed(origin) ? CORS : {},
+      })
+    }
 
     const url = new URL(request.url)
     // нормализуем путь: отрезаем /v1, если приложению так удобнее
@@ -108,10 +149,18 @@ export default {
 
     if (request.method !== 'POST') return json({ error: 'Метод не поддерживается' }, 405)
 
+    // Чужие сайты под запретом (см. isOriginAllowed) — без CORS-заголовков
+    if (!isOriginAllowed(origin)) {
+      return plain({ error: 'Запросы из браузеров не поддерживаются' }, 403)
+    }
+
     // Жёсткий потолок размера тела: раньше любой, кто нашёл адрес
     // воркера, мог прислать тело в десятки мегабайт и положить
     // изолят (или хотя бы потратить процесс). Реальные запросы
-    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио
+    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио. Аудит 12.11:
+    // заголовку Content-Length клиент не верит — он подделывается;
+    // реальный размер проверяем после чтения тела (см. /chat и
+    // /chat/completions ниже), здесь — быстрый ранний отсев
     const cl = Number(request.headers.get('content-length') || 0)
     if (cl && cl > MAX_BODY_BYTES) {
       return json({ error: 'Тело запроса слишком большое' }, 413)
@@ -126,8 +175,9 @@ export default {
     }
 
     // Общий секрет приложения: если задан, POST без заголовка
-    // x-nb-secret отклоняется — воркер нельзя найти и использовать
-    // в обход приложения
+    // x-nb-secret отклоняется. Секрет живёт в бандле приложения
+    // (EXPO_PUBLIC_*), поэтому это заслон от случайного использования,
+    // а не абсолютная защита от реверс-инжиниринга (аудит 12.11)
     if (env.NB_SECRET && request.headers.get('x-nb-secret') !== env.NB_SECRET) {
       return json({ error: 'Требуется секрет приложения' }, 401)
     }
@@ -141,11 +191,20 @@ export default {
     // ── 1. Чат NutriBear: { messages, system? } → { reply } ────────
     if (path === '/chat') {
       try {
-        const raw = await request.json().catch(() => ({}))
+        // Честный лимит тела (аудит 12.11): читаем текстом и меряем
+        // сами, а не верим Content-Length
+        const text = await request.text()
+        if (text.length > MAX_BODY_BYTES) {
+          return json({ error: 'Тело запроса слишком большое' }, 413)
+        }
+        let raw = {}
+        try {
+          raw = JSON.parse(text || '{}')
+        } catch {}
         // Валидация messages: только массив объектов с разрешённой
-        // role и непустым content, лимит на длину и количество —
-        // иначе одна прокси-запрос мог слить баланс огромным
-        // промптом. Пустой массив после очистки — ошибка 400
+        // ролью (user/assistant) и непустым content, лимит на длину
+        // и количество — иначе один прокси-запрос мог слить баланс
+        // огромным промптом. Пустой массив после очистки — ошибка 400
         const messages = sanitizeMessages(raw?.messages)
         if (!messages.length) {
           return json(
@@ -197,6 +256,11 @@ export default {
       if (path === '/chat/completions') {
         // Белый список моделей: модель приходит в JSON-теле
         const text = await request.text()
+        // Честный лимит тела (аудит 12.11): Content-Length подделывается,
+        // проверяем фактический размер после чтения
+        if (text.length > MAX_BODY_BYTES) {
+          return json({ error: 'Тело запроса слишком большое' }, 413)
+        }
         let parsed = {}
         try {
           parsed = JSON.parse(text || '{}')

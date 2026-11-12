@@ -3,10 +3,13 @@
 // в разделах «Тело» (бывш. «ИМТ») и «Ещё».
 // Биоданные нужны калькулятору ИМТ: базовый обмен и суточная норма
 // считаются по полу, возрасту и уровню активности.
+// Хранится профиль в защищённом хранилище платформы (Android Keystore /
+// iOS Keychain): рост, вес, история взвешиваний и замеры тела — данные
+// о здоровье, открытому AsyncStorage им не место (аудит 12.11, блокер 2).
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { secureStorage } from '@/lib/secure-storage'
 import { makeId } from '@/lib/format'
 
 // Встроенные замеры тела — единый реестр для карточки «Замеры» и
@@ -186,7 +189,7 @@ export const useProfileStore = create(
       name: 'nutribear-profile-v1',
       version: 1,
       migrate: (state) => state, // схема меняется — здесь появится миграция
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
       partialize: (s) => ({
         name: s.name,
         sex: s.sex,

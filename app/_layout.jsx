@@ -22,6 +22,8 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { wipePhotoDir } from '@/lib/photos'
+import { secureStorage } from '@/lib/secure-storage'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
 import { startPedometerAgent } from '@/lib/pedometer'
@@ -113,21 +115,24 @@ export function ErrorBoundary({ error, retry }) {
   const steps = hintsForError(message)
 
   // «Сбросить данные» — крайняя мера, когда цикл падает на одной и
-  // той же ошибке при запуске (битый стор в AsyncStorage). Стираем
+  // той же ошибке при запуске (битый стор в хранилище). Стираем
   // все ключи NutriBear и перезапускаем — онбординг покажется заново,
   // но у пользователя остаётся рабочее приложение, а не «Мишка споткнулся»
   // навсегда. Состояние покупки (useProStore) при этом НЕ трогаем —
   // см. правило проекта: «Состояние покупки не сбрасывается "Стереть
-  // все данные"». Фото в файловой системе не затрагиваем — они не в
-  // AsyncStorage
+  // все данные"». Файлы фото прогресса удаляются вместе со списком
+  // (аудит 12.11: раньше оставались в папке приложения до удаления
+  // приложения — пользователь думал, что стёр всё). Ключи чувствительных
+  // сторов (цикл, профиль) чистятся и в защищённом хранилище — обычное
+  // multiRemove AsyncStorage их не достаёт
   const [resetting, setResetting] = useState(false)
   function wipeAndRetry() {
     Alert.alert(
       'Сбросить данные приложения?',
       'Это крайняя мера — если приложение постоянно падает при запуске. '
-        + 'Сотрутся дневник, история, вода, вес, тренировки. Онбординг '
-        + 'показывается заново. Покупка Premium сохраняется. Фотографии '
-        + 'на устройстве не затрагиваются. Действие нельзя отменить.',
+        + 'Сотрутся дневник, история, вода, вес, тренировки, профиль и '
+        + 'фотографии прогресса. Онбординг показывается заново. Покупка '
+        + 'Premium сохраняется. Действие нельзя отменить.',
       [
         { text: 'Отмена', style: 'cancel' },
         {
@@ -149,6 +154,14 @@ export function ErrorBoundary({ error, retry }) {
               if (toRemove.length) {
                 await AsyncStorage.multiRemove(toRemove)
               }
+              // Файлы фото прогресса: список в AsyncStorage уже стёрт,
+              // сами снимки лежат в папке приложения — удаляем папку
+              await wipePhotoDir()
+              // Цикл и профиль живут в защищённом хранилище
+              // (Android Keystore / iOS Keychain) — чистим и там;
+              // removeItem адаптера заодно чистит остатки в AsyncStorage
+              await secureStorage.removeItem('nutribear-cycle-v1')
+              await secureStorage.removeItem('nutribear-profile-v1')
             } catch (e) {
               console.warn('Не удалось сбросить данные:', e)
             } finally {

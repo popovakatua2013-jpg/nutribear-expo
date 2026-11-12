@@ -42,7 +42,7 @@ export function CompanionStep({ onBack, onNext }) {
 
   return (
     <ObShell
-      sub="Шаг 3 из 6"
+      sub="Шаг 3 из 5"
       title="Напарник"
       onBack={onBack}
       onNext={onNext}

@@ -19,9 +19,18 @@ Expo-приложение (Android, готовится публикация в R
 npm ci                  # установка зависимостей (Windows: update.bat / update.ps1)
 npx expo start          # запуск в Expo Go
 npm run apk             # preview-сборка APK (EAS)
-npm run aab             # production-сборка AAB для RuStore
-npx jest                # все тесты (34 набора, 486 тестов)
+npm run aab             # production-сборка AAB для Google Play
+npx jest                # все тесты (48 наборов)
 ```
+
+## Сборка для магазинов
+
+- **RuStore** принимает **APK** — собирается через GitHub Actions: вкладка
+  Actions → «Build APK» → Run workflow. Готовый файл — в блоке Artifacts
+  запуска (NutriBear-APK.zip, внутри app-release.apk).
+- **Google Play** принимает **AAB** (команда `npm run aab` или EAS).
+- AAB не заливается в RuStore, APK без пересборки не заливается в
+  Google Play — форматы разные, одна и та же сборка не подходит обоим.
 
 ## Структура
 

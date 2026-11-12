@@ -1,9 +1,12 @@
 // Онбординг NutriBear: быстрый запуск в 5 шагов (по витринному
 // макету): «Твоя цель» → «Расскажи о себе» → «Отлично!» (план) →
-// пейволл → разрешения. Цель выбирается чипом на первом экране,
+// разрешения. Цель выбирается чипом на первом экране,
 // анкета собрана в один экран строками-карточками, финальный шаг
 // «Всё готово!» удалён: план применяется сразу после разрешений,
 // а первый завтрак пользователь добавит с Главной (подсказка).
+// Пейволл убран из онбординга (аудит 12.11, блокер 1): рекламные
+// цены без реальной оплаты — обман на модерации магазина; подписка
+// подключится позже через RevenueCat, тогда появится честный экран.
 // Ответы хранятся анонимно на устройстве.
 
 import { View } from 'react-native'
@@ -14,10 +17,9 @@ import { WelcomeStep } from './ob/WelcomeStep'
 import { ProfileStep } from './ob/ProfileStep'
 import { CompanionStep } from './ob/CompanionStep'
 import { RevealStep } from './ob/RevealStep'
-import { PaywallStep } from './ob/PaywallStep'
 import { PermissionsStep } from './ob/PermissionsStep'
 
-const STEPS = [WelcomeStep, ProfileStep, CompanionStep, RevealStep, PaywallStep, PermissionsStep]
+const STEPS = [WelcomeStep, ProfileStep, CompanionStep, RevealStep, PermissionsStep]
 
 export function OnboardingFlow() {
   const insets = useSafeAreaInsets()

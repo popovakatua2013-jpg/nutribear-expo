@@ -20,6 +20,25 @@ import { useToast } from '../ui/Toast'
 export function DataPortability({ embedded = false }) {
   const { toast } = useToast()
 
+  // Предупреждение перед выгрузкой (аудит 12.11, блокер 3): копия —
+  // открытый JSON со всеми данными о здоровье (профиль, замеры, цикл,
+  // фото). Пользователь должен знать об этом ДО того, как отправит
+  // файл в мессенджер или почту. Шифрование копии (пароль → AES) —
+  // отдельная задача после релиза, сейчас честное предупреждение
+  function confirmExport() {
+    Alert.alert(
+      'Файл копии не зашифрован',
+      'Копия сохраняется открытым текстом и содержит все данные о здоровье: '
+        + 'дневник, вес и замеры, трекер цикла, фото. Храните файл только '
+        + 'у себя — например, в личном облаке или на диске телефона. '
+        + 'Не отправляйте его в чаты и почту.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Продолжить', onPress: exportAll },
+      ]
+    )
+  }
+
   async function exportAll() {
     try {
       const data = await collectAll()
@@ -91,7 +110,7 @@ export function DataPortability({ embedded = false }) {
   const content = (
     <>
       <Pressable
-        onPress={exportAll}
+        onPress={confirmExport}
         accessibilityRole="button"
         accessibilityLabel="Сохранить копию данных в JSON-файл"
         className="mt-3 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"

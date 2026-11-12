@@ -2,11 +2,14 @@
 // в разные фазы разный аппетит»). Принцип как у особых состояний
 // онбординга: БЕЗ медицинских рекомендаций — только констатация фазы,
 // прогноз следующего цикла и мягкие подсказки про аппетит и вес.
-// Все данные — только на устройстве (zustand persist, AsyncStorage).
+// Все данные — только на устройстве (zustand persist), причём хранятся
+// в защищённом хранилище платформы (Android Keystore / iOS Keychain):
+// даты месячных — специальная категория персональных данных (ст. 10
+// 152-ФЗ), открытому AsyncStorage им не место (аудит 12.11, блокер 2).
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { secureStorage } from '@/lib/secure-storage'
 
 // Ключ дня 'ГГГГ-ММ-ДД' из Date
 function keyOf(d) {
@@ -197,7 +200,7 @@ export const useCycleStore = create(
     }),
     {
       name: 'nutribear-cycle-v1',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
       partialize: (s) => ({
         enabled: s.enabled,
         lastStart: s.lastStart,

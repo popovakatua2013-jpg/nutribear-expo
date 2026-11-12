@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.nutribear.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "userInterfaceStyle": "dark",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -70,7 +70,8 @@
           }
         }
       ],
-      "expo-mail-composer"
+      "expo-mail-composer",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": false

@@ -9,8 +9,16 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// Триал — 3 дня с момента активации (отзыв Кати: «Триал — 3 дня»)
+// Сроки планов (аудит 12.11: раньше месяц/год не имели срока —
+// время активации хранилось, но проверялся только триал). До RevenueCat
+// активация локальная (демо), но таймер планов честный, чтобы после
+// подключения оплаты логика не менялась: месяц и год отсчитываются
+// от activatedAt и истекают сами
 const TRIAL_MS = 3 * 24 * 60 * 60 * 1000
+const MONTH_MS = 31 * 24 * 60 * 60 * 1000
+const YEAR_MS = 366 * 24 * 60 * 60 * 1000
+
+const PLAN_MS = { trial: TRIAL_MS, month: MONTH_MS, year: YEAR_MS }
 
 export const PRO_PLANS = [
   { id: 'trial', title: 'Триал 3 дня', price: 'Бесплатно', note: 'все функции Premium' },
@@ -28,16 +36,18 @@ export const useProStore = create(
       activate: (plan) => set({ pro: true, plan, activatedAt: Date.now() }),
       deactivate: () => set({ pro: false, plan: null, activatedAt: null }),
 
-      // Проверить срок триала при старте приложения: раньше «3 дня»
-      // включались навсегда — время активации хранилось, но нигде
-      // не проверялось. Месяц/год не трогаем (до RevenueCat они тоже
-      // бессрочные — проверка оплаты появится вместе с оплатой)
+      // Проверить срок плана при старте приложения: триал — 3 дня,
+      // месяц — 31 день, год — 366 дней (запас на високосный).
+      // Истёкший план гасится: pro=false, план сбрасывается
       refresh: () =>
-        set((s) =>
-          s.pro && s.plan === 'trial' && s.activatedAt && Date.now() - s.activatedAt > TRIAL_MS
+        set((s) => {
+          if (!s.pro || !s.activatedAt) return {}
+          const ms = PLAN_MS[s.plan]
+          if (!ms) return {}
+          return Date.now() - s.activatedAt > ms
             ? { pro: false, plan: null, activatedAt: null }
             : {}
-        ),
+        }),
     }),
     {
       name: 'nutribear-pro-v1',
