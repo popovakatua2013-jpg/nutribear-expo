@@ -7,8 +7,9 @@
 //
 //  Что умеет:
 //   POST /v1/chat              — чат NutriBear: { messages } → { reply }
-//   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы) как есть
-//   POST /v1/audio/transcriptions — голосовой ввод (multipart) как есть
+//   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы), с капом
+//   max_tokens и вырезкой stream/n (аудит 13.11)
+//   POST /v1/audio/transcriptions — голосовой ввод (multipart, ≤ 5 МБ)
 //   GET  /                     — проверка «жив ли воркер» из браузера
 //
 //  Настройка (после деплоя):
@@ -57,7 +58,15 @@ const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
 // присылают 1–12 коротких сообщений; лимит оставляет запас.
 const MAX_CHAT_MESSAGES = 20
 const MAX_MESSAGE_LEN = 4000          // символы в content
-const MAX_BODY_BYTES = 256 * 1024     // жёсткий потолок тела запроса
+const MAX_BODY_BYTES = 256 * 1024     // жёсткий потолок JSON-тела
+// Аудио (/audio/transcriptions) тяжелее JSON: минута MP3 ~480 КБ,
+// прежний общий лимит 256 КБ не пускал записи длиннее ~25 секунд
+// (аудит 13.11 №5). 5 МБ покрывают запись на несколько минут
+const MAX_AUDIO_BYTES = 5 * 1024 * 1024
+// Аудит 13.11 №4: кап max_tokens в passthrough — в 256 КБ JSON помещается
+// max_tokens: 128000, один такой запрос стоил бы ~$0.50. Реальные запросы
+// NutriBear шлют 200–250 токенов, 1000 — с запасом
+const MAX_TOKENS_CAP = 1000
 // Аудит 12.11: role 'system' убран из пользовательских сообщений —
 // через него возможен prompt injection в обход системного промпта
 // «Не назначай лечение». Системный промпт передаётся отдельным полем
@@ -74,7 +83,16 @@ function rateLimited(ip) {
   const win = (hits.get(ip) || []).filter((t) => now - t < 60000)
   win.push(now)
   hits.set(ip, win)
-  if (hits.size > 5000) hits.clear() // страховка от роста карты
+  // Страховка от роста карты (аудит 13.11 iOS-15): прежний hits.clear()
+  // при 5000 уникальных IP обнулял лимит и для честных пользователей —
+  // атакующий с ботнетом сбрасывал его одним заходом. Теперь выкидываем
+  // только устаревшие записи; полный сброс — крайний случай
+  if (hits.size > 5000) {
+    for (const [k, arr] of hits) {
+      if (!arr.some((t) => now - t < 60000)) hits.delete(k)
+    }
+    if (hits.size > 5000) hits.clear()
+  }
   return win.length > RATE_LIMIT
 }
 
@@ -97,6 +115,63 @@ export function sanitizeMessages(raw) {
   return out
 }
 
+// Аудит 13.11 №4: passthrough /chat/completions больше не пересылает
+// клиентские параметры расхода баланса как есть. Вырезаем stream
+// (стрим держит соединение открытым и обходил бы rate limit), n
+// (несколько ответов за один запрос), логи вероятностей и tools;
+// max_tokens капаем потолком; temperature прижимаем к допустимым
+// границам OpenAI (0–2). Остальное тело проходит без изменений
+export function sanitizeChatParams(parsed) {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+  const out = { ...parsed }
+  const mt = Number(out.max_tokens)
+  out.max_tokens = Math.min(
+    Number.isFinite(mt) && mt > 0 ? Math.floor(mt) : 600,
+    MAX_TOKENS_CAP
+  )
+  for (const k of [
+    'stream', 'n', 'logprobs', 'top_logprobs', 'best_of', 'echo',
+    'logit_bias', 'tools', 'tool_choice', 'functions',
+  ]) {
+    delete out[k]
+  }
+  const t = Number(out.temperature)
+  if (Number.isFinite(t)) out.temperature = Math.min(Math.max(t, 0), 2)
+  else delete out.temperature
+  return out
+}
+
+// Аудит 13.11 №5: аудио принимаем только multipart/form-data —
+// произвольный бинарник не должен доходить до Whisper (баланс
+// списывается за транскрипцию ошибки)
+export function isAudioRequest(contentType) {
+  return String(contentType || '')
+    .toLowerCase()
+    .startsWith('multipart/form-data')
+}
+
+// Аудит 13.11 №9: сравнение секрета в постоянном времени — хэшируем
+// обе строки и сравниваем дайджесты XOR-ом без раннего выхода.
+// Для статического секрета атака по времени незначима, но это
+// бесплатная best practice
+export async function secretMatch(provided, secret) {
+  if (!provided || !secret) return false
+  try {
+    const enc = new TextEncoder()
+    const [a, b] = await Promise.all([
+      crypto.subtle.digest('SHA-256', enc.encode(String(provided))),
+      crypto.subtle.digest('SHA-256', enc.encode(String(secret))),
+    ])
+    const va = new Uint8Array(a)
+    const vb = new Uint8Array(b)
+    let diff = 0
+    for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i]
+    return diff === 0
+  } catch {
+    return false
+  }
+}
+
 // Системный промпт чата NutriBear (можно заменить переменной AI_SYSTEM)
 const DEFAULT_SYSTEM =
   'Ты — дружелюбный ИИ-нутрициолог приложения NutriBear (маскот — медвежонок). ' +
@@ -108,7 +183,14 @@ const DEFAULT_SYSTEM =
 export { isOriginAllowed }
 
 // Лимиты — экспорт для тестов
-export const LIMITS = { MAX_CHAT_MESSAGES, MAX_MESSAGE_LEN, MAX_BODY_BYTES, RATE_LIMIT }
+export const LIMITS = {
+  MAX_CHAT_MESSAGES,
+  MAX_MESSAGE_LEN,
+  MAX_BODY_BYTES,
+  MAX_AUDIO_BYTES,
+  MAX_TOKENS_CAP,
+  RATE_LIMIT,
+}
 
 // ── ответы ──────────────────────────────────────────────────────
 const json = (obj, status = 200) =>
@@ -154,15 +236,13 @@ export default {
       return plain({ error: 'Запросы из браузеров не поддерживаются' }, 403)
     }
 
-    // Жёсткий потолок размера тела: раньше любой, кто нашёл адрес
-    // воркера, мог прислать тело в десятки мегабайт и положить
-    // изолят (или хотя бы потратить процесс). Реальные запросы
-    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио. Аудит 12.11:
-    // заголовку Content-Length клиент не верит — он подделывается;
-    // реальный размер проверяем после чтения тела (см. /chat и
-    // /chat/completions ниже), здесь — быстрый ранний отсев
+    // Ранний отсев по Content-Length (аудит 12.11 + 13.11): для аудио
+    // потолок 5 МБ, для JSON — 256 КБ. Заголовку клиент не верит — он
+    // подделывается, поэтому фактический размер проверяем после чтения
+    // тела (см. /chat, /chat/completions и аудио-ветку ниже)
     const cl = Number(request.headers.get('content-length') || 0)
-    if (cl && cl > MAX_BODY_BYTES) {
+    const earlyLimit = path === '/audio/transcriptions' ? MAX_AUDIO_BYTES : MAX_BODY_BYTES
+    if (cl && cl > earlyLimit) {
       return json({ error: 'Тело запроса слишком большое' }, 413)
     }
 
@@ -178,7 +258,7 @@ export default {
     // x-nb-secret отклоняется. Секрет живёт в бандле приложения
     // (EXPO_PUBLIC_*), поэтому это заслон от случайного использования,
     // а не абсолютная защита от реверс-инжиниринга (аудит 12.11)
-    if (env.NB_SECRET && request.headers.get('x-nb-secret') !== env.NB_SECRET) {
+    if (env.NB_SECRET && !(await secretMatch(request.headers.get('x-nb-secret'), env.NB_SECRET))) {
       return json({ error: 'Требуется секрет приложения' }, 401)
     }
 
@@ -253,6 +333,19 @@ export default {
       })
 
       let body = request.body
+      if (path === '/audio/transcriptions') {
+        // Аудит 13.11 №5: только multipart, реальный размер после чтения
+        // (Content-Length подделывается) и потолок 5 МБ вместо общих
+        // 256 КБ, на которых минутная голосовая запись не помещалась
+        if (!isAudioRequest(request.headers.get('content-type'))) {
+          return json({ error: 'Ожидается multipart/form-data с аудиофайлом' }, 415)
+        }
+        const buf = await request.arrayBuffer()
+        if (buf.byteLength > MAX_AUDIO_BYTES) {
+          return json({ error: 'Аудио слишком большое (лимит 5 МБ)' }, 413)
+        }
+        body = buf
+      }
       if (path === '/chat/completions') {
         // Белый список моделей: модель приходит в JSON-теле
         const text = await request.text()
@@ -276,7 +369,9 @@ export default {
             400
           )
         }
-        body = text // буферизованное тело — поток уже прочитан
+        // Аудит 13.11 №4: кап max_tokens, вырезка stream/n/logprobs/tools —
+        // клиент больше не управляет расходом баланса этими полями
+        body = JSON.stringify(sanitizeChatParams(parsed)) // буферизованное тело
       }
 
       const res = await fetch(`${upstream}${path}`, {

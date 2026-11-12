@@ -2,7 +2,7 @@
 # Имя воркера = часть адреса: https://nutribear-ai.<ваш-аккаунт>.workers.dev
 name = "nutribear-ai"
 main = "cloudflare-worker.js"
-compatibility_date = "2025-01-01"
+compatibility_date = "2025-11-01"
 
 [vars]
 # Куда пересылать запросы (OpenAI-совместимый API). ProxyAPI по умолчанию;
