@@ -105,7 +105,22 @@ export async function collectPhotosForBackup(items) {
 // и подменяем список в сторе (массив из копии — источник истины,
 // даже если он пустой). Ошибка отдельного снимка не срывает
 // восстановление остального. Старые файлы удаляются.
-export async function restorePhotos(list) {
+// Защита от двойного запуска (аудит 13.11 баг-2): если «Восстановить»
+// нажали дважды, второй запуск мог удалить файлы, которые первый только
+// что записал (они уже попали в стор к моменту удаления старых).
+// Мьютекс делает второй вызов ожиданием первого, а повторное
+// восстановление после завершения — штатной заменой того же списка
+let restoreInFlight = null
+
+export function restorePhotos(list) {
+  if (restoreInFlight) return restoreInFlight
+  restoreInFlight = doRestorePhotos(list).finally(() => {
+    restoreInFlight = null
+  })
+  return restoreInFlight
+}
+
+async function doRestorePhotos(list) {
   if (!Array.isArray(list)) return // копия без фото (старый формат) — не трогаем
   await ensureDir()
   const items = []

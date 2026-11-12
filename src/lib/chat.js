@@ -17,9 +17,19 @@ import { AI_CONFIG } from './ai-config'
 import { useCompanionStore, companionSystemPrompt } from '@/store/useCompanionStore'
 
 export function getChatApiUrl() {
-  // Режим прокси: { messages } → { reply } на /chat воркера
+  // Режим прокси: { messages } → { reply } на /chat воркера.
+  // Аудит 13.11 №8: адрес прокси обязан быть https:// — конфиг с
+  // http:// отправлял бы переписку и фото в открытом виде. Некорректное
+  // значение игнорируем: приложение откатится на dev-режим или
+  // офлайн-помощника, а не станет слать данные в небезопасный канал
   const proxy = (AI_CONFIG.proxyUrl || '').replace(/\/+$/, '')
-  if (proxy) return `${proxy}/chat`
+  if (proxy && !/^https:\/\//i.test(proxy)) {
+    console.warn(
+      '[chat] EXPO_PUBLIC_AI_PROXY_URL должен начинаться с https:// — значение игнорируется'
+    )
+  } else if (proxy) {
+    return `${proxy}/chat`
+  }
 
   // Режим разработки: веб-версия на том же ПК, где запущен Expo
   const hostUri = Constants.expoConfig?.hostUri
