@@ -14,6 +14,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { recognizeVoiceAudio, recognizeVoiceText } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
 import { openSettingsSoon } from '@/lib/appSettings'
+import { useProStore } from '@/store/useProStore'
+import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
+import { FREE_LIMITS } from '@/lib/entitlements'
 
 export function VoiceMode({ onPick }) {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
@@ -27,12 +30,30 @@ export function VoiceMode({ onPick }) {
   const [phrase, setPhrase] = useState('')
   const { toast } = useToast()
 
+  // Дневной лимит голосовых распознаваний (этап 1 монетизации):
+  // 10 записей в день бесплатно, Premium — безлимит. ЛИМИТИТСЯ ТОЛЬКО
+  // ЗАПИСЬ: распознавание напечатанной фразы не трогаем — там есть
+  // бесплатный путь разбора простых фраз, и дневник остаётся
+  // полноценным без ИИ (матрица 14.11)
+  const pro = useProStore((s) => s.pro)
+  const voiceLeft = useAiUsageStore((s) => aiRemaining(s, 'voice', pro))
+
   useEffect(() => () => clearInterval(timerRef.current), [])
 
   async function startRecording() {
     setError('')
     setResults([])
     setHeard('')
+    // Лимит проверяем ДО записи — чтобы не записывать зря: фразы всё
+    // равно можно ввести текстом ниже (без ИИ-затрат на аудио)
+    if (!useAiUsageStore.getState().canUse('voice', pro)) {
+      setError(
+        'Дневной лимит бесплатных голосовых распознаваний исчерпан (' +
+          FREE_LIMITS.voice + ' в день). Premium снимает лимит — а ввести фразу ' +
+          'текстом ниже можно всегда.'
+      )
+      return
+    }
     try {
       const perm = await requestRecordingPermissionsAsync()
       if (!perm.granted) {
@@ -79,6 +100,8 @@ export function VoiceMode({ onPick }) {
         })
 
         const data = await recognizeVoiceAudio(audioBase64)
+        // Списываем ТОЛЬКО успешное распознавание
+        useAiUsageStore.getState().record('voice')
         setHeard(data.text || '')
         setResults(data.items || [])
         if (data.grams) toast({ title: `⚖️ Распознан вес: ${data.grams} г` })
@@ -181,6 +204,16 @@ export function VoiceMode({ onPick }) {
       <Text className="mt-3 text-[15px] leading-[18px] text-bear-sub">
         Голос распознаёт нейросеть. Если кнопка не сработала — введите фразу текстом ниже.
       </Text>
+
+      {/* Остаток дневного лимита голоса: только для бесплатного тарифа;
+          текстовый ввод ниже не лимитирован — дневник работает всегда */}
+      {!pro ? (
+        <Text className="mt-2 text-[13.5px] leading-[17px] text-bear-dim">
+          {voiceLeft > 0
+            ? `Голосовых распознаваний осталось сегодня: ${voiceLeft} из ${FREE_LIMITS.voice} · Premium — безлимит`
+            : 'Дневной лимит голоса исчерпан — Premium — безлимит. Ввод текстом ниже работает как всегда.'}
+        </Text>
+      ) : null}
       <TextInput
         value={phrase}
         onChangeText={setPhrase}

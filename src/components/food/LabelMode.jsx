@@ -10,12 +10,19 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { scanNutritionLabel } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
 import { openSettingsSoon } from '@/lib/appSettings'
+import { useProStore } from '@/store/useProStore'
+import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 
 export function LabelMode({ onPick }) {
   const { toast } = useToast()
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  // Дневной лимит ИИ-фото — общий пул с PhotoMode (блюдо + этикетка,
+  // бесплатно 3 в день); Premium — безлимит
+  const pro = useProStore((s) => s.pro)
+  const photoLeft = useAiUsageStore((s) => aiRemaining(s, 'photo', pro))
 
   async function pickPhoto(useCamera) {
     setError('')
@@ -46,10 +53,20 @@ export function LabelMode({ onPick }) {
   }
 
   async function recognize(uri) {
+    const usage = useAiUsageStore.getState()
+    if (!usage.canUse('photo', pro)) {
+      setError(
+        'Дневной лимит бесплатных распознаваний фото исчерпан (3 в день) — общий для фото блюда и этикетки. ' +
+          'Premium снимает лимит. Распознанный продукт сохраняется в «Свои продукты» и дальше добавляется без ИИ.'
+      )
+      return
+    }
     setBusy(true)
     setError('')
     try {
       const item = await scanNutritionLabel(uri)
+      // Списываем ТОЛЬКО успешное распознавание
+      useAiUsageStore.getState().record('photo')
       toast({
         title: '🏷️ Этикетка распознана',
         description: `${item.name}: ${item.kcal100} ккал / 100 г — проверьте значения`,
@@ -68,6 +85,15 @@ export function LabelMode({ onPick }) {
         Сфотографируйте таблицу пищевой ценности с упаковки — калории и БЖУ на 100 г
         подставятся сами. Распознанные значения можно поправить перед добавлением.
       </Text>
+
+      {/* Остаток дневного лимита ИИ-фото: только для бесплатного тарифа */}
+      {!pro ? (
+        <Text className="mt-2 px-1 text-[13.5px] leading-[17px] text-bear-dim">
+          {photoLeft > 0
+            ? `ИИ-распознаваний фото осталось сегодня: ${photoLeft} из 3 (общий пул с фото блюда)`
+            : 'Дневной лимит ИИ-фото исчерпан — Premium — безлимит.'}
+        </Text>
+      ) : null}
 
       {!photo ? (
         <View className="mt-3 gap-2">

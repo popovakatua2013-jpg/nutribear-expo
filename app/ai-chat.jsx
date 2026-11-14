@@ -38,6 +38,8 @@ import { useOffline } from '@/lib/useOffline'
 import { askNutritionist, buildCompanionSystem, offlineReply } from '@/lib/chat'
 import { useAiChatStore, AI_GREETING } from '@/store/useAiChatStore'
 import { useCompanionStore, COMPANIONS } from '@/store/useCompanionStore'
+import { useProStore } from '@/store/useProStore'
+import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -90,6 +92,12 @@ export default function AiChatScreen() {
   // характера, системный промпт с личным контекстом (см. buildCompanionSystem)
   const companionId = useCompanionStore((s) => s.companionId)
   const companion = COMPANIONS.find((c) => c.id === companionId) || COMPANIONS[0]
+
+  // Лимит бесплатного тарифа (этап 1 монетизации): 15 сообщений ИИ в день.
+  // Premium снимает лимит; офлайн-помощник лимитам не подчиняется —
+  // ответы по дневнику доступны всегда
+  const pro = useProStore((s) => s.pro)
+  const chatLeft = useAiUsageStore((s) => aiRemaining(s, 'chat', pro))
 
   // Свежее приветствие характера: если в диалоге пока только дефолтное
   // приветствие (новая сессия или сразу после «Очистить»), подставляем
@@ -186,15 +194,28 @@ export default function AiChatScreen() {
       // Офлайн-ответ помечаем — под пузырём видна подпись «🧸 офлайн-режим»,
       // чтобы не путать встроенного помощника с настоящим ИИ
       let isOffline = false
+      // Сработал дневной лимит бесплатного тарифа (отдельная подпись —
+      // «лимит исчерпан», не путать с «нет сети»)
+      let limitHit = false
       if (offline) {
         // Сети нет — сразу офлайн-помощник, без зависающей попытки запроса
         reply = offlineReply(content, buildContext())
         isOffline = true
+      } else if (!useAiUsageStore.getState().canUse('chat', pro)) {
+        // Лимит исчерпан — дневник не блокируем: отвечает встроенный
+        // помощник по дневнику (бесплатно), настоящий ИИ вернётся завтра
+        // или с Premium. Запрос не списывается — он и не уходил
+        reply = offlineReply(content, buildContext())
+        isOffline = true
+        limitHit = true
       } else {
         try {
           // Системный промпт: характер медведя + цифры дня (имя, калории,
           // вода, шаги, вес) — онлайн-ИИ отвечает лично про твой дневник
           reply = await askNutritionist(next, 25000, buildCompanionSystem(buildContext()))
+          // Списываем ТОЛЬКО успешный запрос — сгоревший на ошибке сети
+          // запрос денег не стоит
+          useAiUsageStore.getState().record('chat')
         } catch {
           reply = offlineReply(content, buildContext())
           isOffline = true
@@ -202,7 +223,12 @@ export default function AiChatScreen() {
       }
       setMessages([
         ...next,
-        { role: 'assistant', content: reply, ...(isOffline ? { offline: true } : {}) },
+        {
+          role: 'assistant',
+          content: reply,
+          ...(isOffline ? { offline: true } : {}),
+          ...(limitHit ? { limit: true } : {}),
+        },
       ])
     } catch {
       setMessages([
@@ -340,7 +366,11 @@ export default function AiChatScreen() {
                       className="text-[19px] leading-[22px] text-[#dbe3f8]"
                     />
                   </View>
-                  {item.offline ? (
+                  {item.limit ? (
+                    <Text className="mt-1 px-1 text-[12.5px] leading-[16px] text-[#5c668a]">
+                      🧸 дневной лимит ИИ исчерпан — отвечает встроенный помощник. Premium — безлимит
+                    </Text>
+                  ) : item.offline ? (
                     <Text className="mt-1 px-1 text-[12.5px] text-[#5c668a]">
                       🧸 офлайн-режим — отвечает встроенный помощник по дневнику
                     </Text>
@@ -358,6 +388,23 @@ export default function AiChatScreen() {
           ) : null
         }
       />
+
+      {/* Остаток дневного лимита ИИ: только для бесплатного тарифа и
+          только при сети (офлайн-помощник и так безлимитный) */}
+      {!pro && !offline ? (
+        <Text
+          accessibilityLabel={
+            chatLeft > 0
+              ? `Осталось сообщений ИИ сегодня: ${chatLeft}`
+              : 'Дневной лимит ИИ исчерпан'
+          }
+          className="mb-1 px-4 text-[12.5px] text-[#5c668a]"
+        >
+          {chatLeft > 0
+            ? `ИИ-чата осталось: ${chatLeft} сообщений сегодня · Premium — безлимит`
+            : 'Дневной лимит ИИ исчерпан — отвечает встроенный помощник · Premium — безлимит'}
+        </Text>
+      ) : null}
 
       {/* Ввод */}
       <View className="flex-row items-center gap-2 border-t border-white/5 p-4">

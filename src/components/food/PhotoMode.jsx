@@ -22,6 +22,8 @@ import { scanFoodImage, isOfflineError } from '@/lib/food-ai'
 import { openSettingsSoon } from '@/lib/appSettings'
 import { useIsOnline } from '@/lib/useIsOnline'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useProStore } from '@/store/useProStore'
+import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { usePhotoQueueStore, MAX_ATTEMPTS } from '@/store/usePhotoQueueStore'
 import { PhotoGuideModal } from './PhotoGuideModal'
 
@@ -46,6 +48,12 @@ export function PhotoMode({ source, onPick }) {
   const photoGuideSeen = useUiPrefsStore((s) => s.photoGuideSeen)
   const setPhotoGuideSeen = useUiPrefsStore((s) => s.setPhotoGuideSeen)
   const [guideOpen, setGuideOpen] = useState(false)
+
+  // Дневной лимит ИИ-фото (этап 1 монетизации): общий пул «блюдо +
+  // этикетка», бесплатно 3 в день; Premium — безлимит. Автопрогонка
+  // очереди тоже тратит запросы — подчиняется тому же лимиту
+  const pro = useProStore((s) => s.pro)
+  const photoLeft = useAiUsageStore((s) => aiRemaining(s, 'photo', pro))
 
   // Автопоказ — один раз на устройство, только при входе в «Сканер еды»
   // (подсказки про съёмку; в галерее их вызывают кнопкой ниже). Флаг в
@@ -90,11 +98,22 @@ export function PhotoMode({ source, onPick }) {
 
   async function recognize() {
     if (!photo || busy) return
+    const usage = useAiUsageStore.getState()
+    if (!usage.canUse('photo', pro)) {
+      setError(
+        'Дневной лимит бесплатных распознаваний фото исчерпан (3 в день). ' +
+          'Premium снимает лимит: безлимитный чат, фото и голос. ' +
+          'Записи в дневник без ИИ работают как всегда.'
+      )
+      return
+    }
     setBusy(true)
     setError('')
     setNote('')
     try {
       const items = await scanFoodImage(photo)
+      // Списываем ТОЛЬКО успешное распознавание
+      useAiUsageStore.getState().record('photo')
       onPick(items[0])
     } catch (e) {
       if (isOfflineError(e)) {
@@ -128,6 +147,9 @@ export function PhotoMode({ source, onPick }) {
   useEffect(() => {
     if (!online || busy || photo || runningRef.current) return
     if (!queued.length) return
+    // Лимит исчерпан (free) — очередь подождёт: каждый автозапрос стоит
+    // денег, завтра лимит обновится и очередь сама распознается
+    if (!useAiUsageStore.getState().canUse('photo', pro)) return
     // первое фото, которому пора (после не-сетевой ошибки повтор
     // разрешён не раньше nextAttemptAt)
     const now = Date.now()
@@ -177,7 +199,7 @@ export function PhotoMode({ source, onPick }) {
       }
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [online, queued, photo, busy, queueTick])
+  }, [online, queued, photo, busy, queueTick, pro, photoLeft])
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
@@ -227,6 +249,15 @@ export function PhotoMode({ source, onPick }) {
       ) : null}
       {note ? (
         <Text className="mt-3 text-[15.5px] leading-[19px] text-[#93C5FD]">{note}</Text>
+      ) : null}
+
+      {/* Остаток дневного лимита ИИ-фото: только для бесплатного тарифа */}
+      {!pro ? (
+        <Text className="mt-3 text-[14.5px] leading-[18px] text-bear-dim">
+          {photoLeft > 0
+            ? `ИИ-распознаваний фото осталось сегодня: ${photoLeft} из 3 · Premium — безлимит`
+            : 'Дневной лимит ИИ-фото исчерпан — Premium — безлимит. Ввод без ИИ (поиск, штрих-код, свои продукты) работает как всегда.'}
+        </Text>
       ) : null}
 
       {/* Очередь офлайн-фото: сколько ждёт и что с ней будет (отзыв
