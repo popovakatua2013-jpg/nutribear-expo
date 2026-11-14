@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   FlatList,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -34,8 +35,9 @@ import { ArrowLeft, Send, Trash2, WifiOff } from 'lucide-react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOffline } from '@/lib/useOffline'
-import { askNutritionist, offlineReply } from '@/lib/chat'
-import { useAiChatStore } from '@/store/useAiChatStore'
+import { askNutritionist, buildCompanionSystem, offlineReply } from '@/lib/chat'
+import { useAiChatStore, AI_GREETING } from '@/store/useAiChatStore'
+import { useCompanionStore, COMPANIONS } from '@/store/useCompanionStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -81,6 +83,23 @@ export default function AiChatScreen() {
   const goals = useGoalsStore((s) => s.goals)
   const weightKg = useProfileStore((s) => s.weightKg)
   const heightCm = useProfileStore((s) => s.heightCm)
+  const profileName = useProfileStore((s) => s.name)
+  const profileSex = useProfileStore((s) => s.sex)
+
+  // Выбранный медведь: аватар и имя в шапке/у ответов, приветствие его
+  // характера, системный промпт с личным контекстом (см. buildCompanionSystem)
+  const companionId = useCompanionStore((s) => s.companionId)
+  const companion = COMPANIONS.find((c) => c.id === companionId) || COMPANIONS[0]
+
+  // Свежее приветствие характера: если в диалоге пока только дефолтное
+  // приветствие (новая сессия или сразу после «Очистить»), подставляем
+  // текст выбранного медведя — начатый диалог не трогаем
+  useEffect(() => {
+    const s = useAiChatStore.getState()
+    if (s.messages.length === 1 && s.messages[0].content === AI_GREETING.content) {
+      s.setMessages([{ role: 'assistant', greeting: true, content: companion.greeting }])
+    }
+  }, [companionId])
 
   // Высота клавиатуры на Android — отдаётся контейнеру в paddingBottom.
   // RN отдаёт её БЕЗ полосы навигации (imeInsets − barInsets), навбар
@@ -149,6 +168,9 @@ export default function AiChatScreen() {
       weightKg,
       heightCm,
       bmi: bmiH ? Math.round((weightKg / (bmiH * bmiH)) * 10) / 10 : null,
+      // Имя и пол — медведь обращается по имени и в правильном роде
+      name: profileName,
+      sex: profileSex,
     }
   }
 
@@ -161,17 +183,27 @@ export default function AiChatScreen() {
     setBusy(true)
     try {
       let reply
+      // Офлайн-ответ помечаем — под пузырём видна подпись «🧸 офлайн-режим»,
+      // чтобы не путать встроенного помощника с настоящим ИИ
+      let isOffline = false
       if (offline) {
         // Сети нет — сразу офлайн-помощник, без зависающей попытки запроса
         reply = offlineReply(content, buildContext())
+        isOffline = true
       } else {
         try {
-          reply = await askNutritionist(next)
+          // Системный промпт: характер медведя + цифры дня (имя, калории,
+          // вода, шаги, вес) — онлайн-ИИ отвечает лично про твой дневник
+          reply = await askNutritionist(next, 25000, buildCompanionSystem(buildContext()))
         } catch {
           reply = offlineReply(content, buildContext())
+          isOffline = true
         }
       }
-      setMessages([...next, { role: 'assistant', content: reply }])
+      setMessages([
+        ...next,
+        { role: 'assistant', content: reply, ...(isOffline ? { offline: true } : {}) },
+      ])
     } catch {
       setMessages([
         ...next,
@@ -204,7 +236,7 @@ export default function AiChatScreen() {
         paddingBottom: winShrunk ? 0 : kbPad > 0 ? kbPad + insets.bottom : insets.bottom,
       }}
     >
-      {/* Шапка: назад, заголовок, очистить */}
+      {/* Шапка: назад, аватар и имя медведя, очистить */}
       <View className="flex-row items-center justify-between border-b border-white/5 px-3 pb-3.5 pt-2">
         <Pressable
           onPress={() => router.back()}
@@ -215,13 +247,25 @@ export default function AiChatScreen() {
         >
           <ArrowLeft size={20} color="#AEB9D9" />
         </Pressable>
-        <View className="min-w-0 flex-1 pl-2">
-          <Text className="font-extrabold text-[21px] text-bear-text">
-            ИИ-помощник
-          </Text>
-          <Text className="mt-0.5 text-[15px] text-[#8a94b3]">
-            Нутрициолог NutriBear — отвечает сразу
-          </Text>
+        <View className="min-w-0 flex-1 flex-row items-center gap-2.5 pl-2">
+          <Image
+            source={companion.image}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 14,
+              backgroundColor: `${companion.color}22`,
+            }}
+            accessibilityLabel={`${companion.name} — аватар помощника`}
+          />
+          <View className="min-w-0 flex-1">
+            <Text numberOfLines={1} className="font-extrabold text-[21px] text-bear-text">
+              {companion.name}
+            </Text>
+            <Text numberOfLines={1} className="mt-0.5 text-[15px] text-[#8a94b3]">
+              Нутрициолог NutriBear — отвечает сразу
+            </Text>
+          </View>
         </View>
         <Pressable
           onPress={clearChat}
@@ -276,17 +320,32 @@ export default function AiChatScreen() {
                 />
               </LinearGradient>
             ) : (
-              // Ответ ИИ: та же минимальная ширина пузыря, что у
-              // сообщений пользователя, и построчный рендер — переносы
-              // строк из ответа не теряются
-              <View
-                className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5"
-                style={{ maxWidth: '85%' }}
-              >
-                <MessageText
-                  content={item.content}
-                  className="text-[19px] leading-[22px] text-[#dbe3f8]"
+              // Ответ медведя: аватар напарника слева от пузыря, под
+              // пузырём — подпись «офлайн-режим» для офлайн-ответов
+              <View className="flex-row items-start gap-2" style={{ maxWidth: '88%' }}>
+                <Image
+                  source={companion.image}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 9,
+                    backgroundColor: `${companion.color}22`,
+                  }}
+                  accessibilityLabel={`${companion.name} — аватар ответа`}
                 />
+                <View className="min-w-0 flex-1">
+                  <View className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5">
+                    <MessageText
+                      content={item.content}
+                      className="text-[19px] leading-[22px] text-[#dbe3f8]"
+                    />
+                  </View>
+                  {item.offline ? (
+                    <Text className="mt-1 px-1 text-[12.5px] text-[#5c668a]">
+                      🧸 офлайн-режим — отвечает встроенный помощник по дневнику
+                    </Text>
+                  ) : null}
+                </View>
               </View>
             )}
           </View>

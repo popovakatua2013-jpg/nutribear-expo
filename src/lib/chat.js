@@ -58,9 +58,45 @@ function currentCompanionSystemPrompt() {
   }
 }
 
+// Системный промпт запроса с личным контекстом дневника: характер
+// медведя (по выбранному помощнику) + имя, пол и цифры дня (калории,
+// вода, шаги, вес/ИМТ) — иначе онлайн-ИИ отвечает абстрактно, хотя
+// офлайн-помощник знает дневник. Воркер режет system до 2000 символов
+// (аудит 13.11) — держим промпт компактным и режем сами с запасом
+export function buildCompanionSystem(ctx = null) {
+  const base = currentCompanionSystemPrompt() || ''
+  if (!ctx) return base || null
+  const lines = []
+  const who = String(ctx.name || '').trim().split(/\s+/)[0].slice(0, 24)
+  if (who) lines.push(`Пользователя зовут ${who}.`)
+  if (ctx.sex === 'female') lines.push('Пользователь — девушка (обращайся в женском роде).')
+  else if (ctx.sex) lines.push('Пользователь — мужчина.')
+  if (Number.isFinite(ctx.goal) && ctx.goal > 0) {
+    const eaten = Number.isFinite(ctx.eaten) ? Math.max(0, ctx.eaten) : 0
+    lines.push(`Сегодня съедено ${eaten} из ${ctx.goal} ккал, осталось ${Math.max(0, Math.round(ctx.goal - eaten))}.`)
+  }
+  if (Number.isFinite(ctx.waterGoal) && ctx.waterGoal > 0) {
+    lines.push(`Вода: ${Number.isFinite(ctx.waterMl) ? ctx.waterMl : 0} из ${ctx.waterGoal} мл.`)
+  }
+  if (Number.isFinite(ctx.stepsGoal) && ctx.stepsGoal > 0) {
+    lines.push(`Шаги: ${Number.isFinite(ctx.steps) ? ctx.steps : 0} из ${ctx.stepsGoal}.`)
+  }
+  if (ctx.bmi) lines.push(`Вес ${ctx.weightKg} кг, рост ${ctx.heightCm} см, ИМТ ${ctx.bmi}.`)
+  else if (Number.isFinite(ctx.weightKg) && ctx.weightKg > 0) lines.push(`Вес ${ctx.weightKg} кг.`)
+  if (!lines.length) return base || null
+  const sys =
+    base +
+    '\n\nДанные дневника пользователя на сегодня (используй, когда уместно, не пересылай дальше):\n' +
+    lines.map((l) => '- ' + l).join('\n')
+  return sys.slice(0, 2000)
+}
+
 // Реальный ИИ: POST { messages, system? } → { reply } (как в веб-версии).
-// system — системный промпт помощника; если не передан, берём из стора
-export async function askNutritionist(messages, timeoutMs = 8000, systemOverride = null) {
+// system — системный промпт помощника; если не передан, берём из стора.
+// Таймаут 25 с: модель на мобильной сети часто отвечает дольше 8 с —
+// прежний таймаут молчно отправлял пользователя к офлайн-ответам
+// (у фото и голоса свой потолок — 45 с в food-ai.js)
+export async function askNutritionist(messages, timeoutMs = 25000, systemOverride = null) {
   const url = getChatApiUrl()
   if (!url) throw new Error('no-server')
 
