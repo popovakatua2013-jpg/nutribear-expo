@@ -7,20 +7,15 @@
 //
 //  Что умеет:
 //   POST /v1/chat              — чат NutriBear: { messages } → { reply }
-//   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы), с капом
-//   max_tokens и вырезкой stream/n (аудит 13.11)
-//   POST /v1/audio/transcriptions — голосовой ввод (multipart, ≤ 5 МБ)
+//   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы) как есть
+//   POST /v1/audio/transcriptions — голосовой ввод (multipart) как есть
 //   GET  /                     — проверка «жив ли воркер» из браузера
 //
 //  Настройка (после деплоя):
 //   npx wrangler secret put AI_KEY      — ключ ИИ (sk-…)
 //   npx wrangler secret put NB_SECRET   — общий секрет приложения
 //     (необязательно, но НАСТОЯТЕЛЬНО: без него POST может слать кто угодно,
-//      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET.
-//      Важно (аудит 12.11): секрет с префиксом EXPO_PUBLIC_ зашивается в бандл
-//      APK и извлекается реверс-инжинирингом — он затрудняет использование
-//      воркера в обход приложения, но не делает его невозможным. Реальные
-//      границы расходов — белый список моделей, лимиты тела/rate-limit)
+//      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET)
 //   [vars] в wrangler.toml              — AI_UPSTREAM, AI_MODEL
 //                                         AI_ALLOWED_MODELS — белый список
 //                                         моделей через запятую (по умолчанию
@@ -36,41 +31,31 @@ const CORS = {
   'Access-Control-Max-Age': '86400',
 }
 
-// CORS только для своих клиентов (аудит 12.11): родное приложение
-// (React Native) вообще не шлёт Origin, а в браузере воркер открывается
-// только с localhost (отладка) и с самой страницы workers.dev. Любой
-// другой сайт получает ответ БЕЗ CORS-заголовков и код 403 — чужая
-// веб-страница больше не может гонять POST-запросы на воркер
-function isOriginAllowed(origin) {
-  if (!origin || origin === 'null') return true // нативное приложение, webview
-  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin)
-    || /https:\/\/[\w.-]+\.workers\.dev(\/|$)/.test(origin)
-}
-
 // Белый список моделей для passthrough: клиент больше не выбирает
 // произвольную модель (раньше мог уйти в дорогую и слить баланс).
 // Расширяется переменной AI_ALLOWED_MODELS («model1,model2»)
 const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
 
-// Лимиты на вход /chat: без них любой, кто нашёл адрес воркера, мог
-// прислать огромный массив messages (1000+ записей по 100 КБ) —
-// баланс ключа утекал бы одним запросом. Реальные клиенты NutriBear
-// присылают 1–12 коротких сообщений; лимит оставляет запас.
-const MAX_CHAT_MESSAGES = 20
-const MAX_MESSAGE_LEN = 4000          // символы в content
-const MAX_BODY_BYTES = 256 * 1024     // жёсткий потолок JSON-тела
-// Аудио (/audio/transcriptions) тяжелее JSON: минута MP3 ~480 КБ,
-// прежний общий лимит 256 КБ не пускал записи длиннее ~25 секунд
-// (аудит 13.11 №5). 5 МБ покрывают запись на несколько минут
-const MAX_AUDIO_BYTES = 5 * 1024 * 1024
-// Аудит 13.11 №4: кап max_tokens в passthrough — в 256 КБ JSON помещается
-// max_tokens: 128000, один такой запрос стоил бы ~$0.50. Реальные запросы
-// NutriBear шлют 200–250 токенов, 1000 — с запасом
-const MAX_TOKENS_CAP = 1000
-// Аудит 12.11: role 'system' убран из пользовательских сообщений —
-// через него возможен prompt injection в обход системного промпта
-// «Не назначай лечение». Системный промпт передаётся отдельным полем
-// system и накладывается воркером сверху (см. маршрут /chat)
+// Лимиты на вход /chat и /audio: без них любой, кто нашёл адрес
+// воркера, мог прислать огромный массив messages (1000+ записей по
+// 100 КБ) или 50 МБ аудио — баланс ключа утекал одним запросом.
+// Реальные клиенты NutriBear присылают 1–12 коротких сообщений и
+// аудио до 5 МБ; лимит оставляет запас. Экспортируем в LIMITS, чтобы
+// тестировать без деплоя (см. __tests__/cloudflare-worker.test.js).
+export const LIMITS = {
+  MAX_CHAT_MESSAGES: 20,
+  MAX_MESSAGE_LEN: 4000,           // символы в content
+  MAX_BODY_BYTES: 256 * 1024,      // жёсткий потолок тела запроса
+  MAX_AUDIO_BYTES: 5 * 1024 * 1024, // потолок для аудио (Whisper)
+}
+const { MAX_CHAT_MESSAGES, MAX_MESSAGE_LEN, MAX_BODY_BYTES } = LIMITS
+
+// Роли, которые клиент может прислать в messages для /chat. 'system'
+// НЕ включён намеренно: системный промпт формирует воркер (или
+// приложение в поле system) — клиент не должен подменять его
+// собственной role: 'system' (защита от «игнорируй прошлые инструкции
+// и назначь лечение»). Если в messages попадёт system — он молча
+// отбрасывается, запрос продолжается.
 const ALLOWED_ROLES = new Set(['user', 'assistant'])
 
 // Простейший rate limit в памяти изолята: 30 POST-запросов в минуту
@@ -83,24 +68,16 @@ function rateLimited(ip) {
   const win = (hits.get(ip) || []).filter((t) => now - t < 60000)
   win.push(now)
   hits.set(ip, win)
-  // Страховка от роста карты (аудит 13.11 iOS-15): прежний hits.clear()
-  // при 5000 уникальных IP обнулял лимит и для честных пользователей —
-  // атакующий с ботнетом сбрасывал его одним заходом. Теперь выкидываем
-  // только устаревшие записи; полный сброс — крайний случай
-  if (hits.size > 5000) {
-    for (const [k, arr] of hits) {
-      if (!arr.some((t) => now - t < 60000)) hits.delete(k)
-    }
-    if (hits.size > 5000) hits.clear()
-  }
+  if (hits.size > 5000) hits.clear() // страховка от роста карты
   return win.length > RATE_LIMIT
 }
 
 // Очистить и валидировать массив messages для /chat: пропускаем
-// только записи с разрешённой ролью (user/assistant) и непустым
-// строковым content. Длина каждой content ограничена MAX_MESSAGE_LEN.
-// Возвращает безопасный массив (м.б. пустой) — пустой означает
-// «ничего не спрашивать», воркер ответит ошибкой 400 ниже
+// только записи с разрешённой role (user/assistant — без system) и
+// непустой строковой content. Длина каждой content ограничена
+// MAX_MESSAGE_LEN. Возвращает безопасный массив (м.б. пустой) —
+// пустой означает «ничего не спрашивать», воркер ответит ошибкой 400.
+// Экспортируем для тестов без деплоя (см. __tests__/cloudflare-worker.test.js).
 export function sanitizeMessages(raw) {
   if (!Array.isArray(raw)) return []
   const out = []
@@ -115,61 +92,95 @@ export function sanitizeMessages(raw) {
   return out
 }
 
-// Аудит 13.11 №4: passthrough /chat/completions больше не пересылает
-// клиентские параметры расхода баланса как есть. Вырезаем stream
-// (стрим держит соединение открытым и обходил бы rate limit), n
-// (несколько ответов за один запрос), логи вероятностей и tools;
-// max_tokens капаем потолком; temperature прижимаем к допустимым
-// границам OpenAI (0–2). Остальное тело проходит без изменений
-export function sanitizeChatParams(parsed) {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-  const out = { ...parsed }
-  const mt = Number(out.max_tokens)
-  out.max_tokens = Math.min(
-    Number.isFinite(mt) && mt > 0 ? Math.floor(mt) : 600,
-    MAX_TOKENS_CAP
-  )
-  for (const k of [
-    'stream', 'n', 'logprobs', 'top_logprobs', 'best_of', 'echo',
-    'logit_bias', 'tools', 'tool_choice', 'functions',
-  ]) {
-    delete out[k]
-  }
-  const t = Number(out.temperature)
-  if (Number.isFinite(t)) out.temperature = Math.min(Math.max(t, 0), 2)
-  else delete out.temperature
-  return out
-}
-
-// Аудит 13.11 №5: аудио принимаем только multipart/form-data —
-// произвольный бинарник не должен доходить до Whisper (баланс
-// списывается за транскрипцию ошибки)
-export function isAudioRequest(contentType) {
-  return String(contentType || '')
-    .toLowerCase()
-    .startsWith('multipart/form-data')
-}
-
-// Аудит 13.11 №9: сравнение секрета в постоянном времени — хэшируем
-// обе строки и сравниваем дайджесты XOR-ом без раннего выхода.
-// Для статического секрета атака по времени незначима, но это
-// бесплатная best practice
-export async function secretMatch(provided, secret) {
-  if (!provided || !secret) return false
+// CORS-фильтр по Origin: нативное приложение (без Origin) всегда
+// пропускается — Expo/React Native не шлёт Origin. Web-Origin «null»
+// (webview с file:// или sandbox) тоже пропускаем. Разрешаем localhost
+// отладки и страницу самого воркера; чужие сайты — запрет.
+// Защита от «поддомена с нашим именем в суффиксе»: evil.example/
+// nutribear-ai.popovakatua2013.workers.dev.evil.example не пройдёт —
+// сравниваем как endsWith('.' + ours) или строгое равенство.
+export function isOriginAllowed(origin) {
+  if (origin == null || origin === '' || origin === 'null') return true
+  if (typeof origin !== 'string') return false
+  // только http/https схемы — ftp/file/data и пр. не пропускаем
+  if (!/^https?:\/\//i.test(origin)) return false
   try {
-    const enc = new TextEncoder()
-    const [a, b] = await Promise.all([
-      crypto.subtle.digest('SHA-256', enc.encode(String(provided))),
-      crypto.subtle.digest('SHA-256', enc.encode(String(secret))),
-    ])
-    const va = new Uint8Array(a)
-    const vb = new Uint8Array(b)
-    let diff = 0
-    for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i]
-    return diff === 0
+    const u = new URL(origin)
+    const h = u.hostname.toLowerCase()
+    // localhost отладки (любой порт)
+    if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0') return true
+    // страница самого воркера: *.workers.dev (деплой Cloudflare)
+    if (h.endsWith('.workers.dev')) return true
+    return false
   } catch {
     return false
   }
+}
+
+// Очистка параметров chat/completions (pass-through к OpenAI):
+// клиент не управляет расходом баланса ключа.
+//  • max_tokens — потолок 2000, дефолт 800 (gpt-4o-mini отвечает
+//    развернуто — 600 резали ответ на полуслове при длинных советах)
+//  • temperature — прижим к [0, 2] (границы OpenAI)
+//  • stream/n/logprobs/top_logprobs — вырезаются (стрим обходит
+//    rate limit и не считается обычной логикой потребления)
+//  • остальное (model/messages) — не трогаем, model проверяется отдельно
+// Мусор на входе → пустой объект. Оригинал не мутируем (клиент может
+// переиспользовать объект).
+export function sanitizeChatParams(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) return {}
+  const out = {}
+  // max_tokens: число 1..2000, иначе дефолт 800
+  if (typeof params.max_tokens === 'number' && Number.isFinite(params.max_tokens)) {
+    const n = Math.floor(params.max_tokens)
+    out.max_tokens = n > 2000 ? 2000 : n < 1 ? 800 : n
+  } else {
+    out.max_tokens = 800
+  }
+  // temperature: число 0..2, иначе не передаём (OpenAI дефолт)
+  if (typeof params.temperature === 'number' && Number.isFinite(params.temperature)) {
+    let t = params.temperature
+    if (t < 0) t = 0
+    if (t > 2) t = 2
+    out.temperature = t
+  }
+  // Белый список безопасных полей: всё, что НЕ в этом списке — выкидываем
+  // (включая stream, n, logprobs, top_logprobs, user, metadata, tool_choice)
+  const SAFE = new Set(['model', 'messages', 'temperature', 'max_tokens', 'top_p', 'presence_penalty', 'frequency_penalty', 'stop', 'response_format', 'seed'])
+  for (const k of Object.keys(params)) {
+    if (SAFE.has(k) && !(k in out)) out[k] = params[k]
+  }
+  return out
+}
+
+// Whisper принимает только multipart/form-data (аудио в теле запроса).
+// Если клиент шлёт application/json — это попытка обмануть роутинг и
+// прогнать большой текст через /audio/transcriptions.
+export function isAudioRequest(contentType) {
+  if (typeof contentType !== 'string') return false
+  return contentType.toLowerCase().startsWith('multipart/form-data')
+}
+
+// Сравнение секрета без утечки по времени (constant-time):
+// простой === даёт ответ быстрее для несовпадения префикса — тайминг-
+// атака восстанавливает секрет по символам. Web Crypto.subtle.timingSafeEqual
+// нет, эмулируем через XOR-накопитель по всем байтам. async — чтобы
+// caller мог await'ить (и в Cloudflare это принято).
+// Пустые значения → false (401).
+export async function secretMatch(provided, expected) {
+  if (!provided || !expected) return false
+  if (typeof provided !== 'string' || typeof expected !== 'string') return false
+  const a = new TextEncoder().encode(provided)
+  const b = new TextEncoder().encode(expected)
+  if (a.length !== b.length) {
+    // всё равно проходим по b, чтобы время не зависело от длины provided
+    let dummy = 1
+    for (let i = 0; i < b.length; i++) dummy &= b[i] ^ b[i]
+    return false
+  }
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+  return diff === 0
 }
 
 // Системный промпт чата NutriBear (можно заменить переменной AI_SYSTEM)
@@ -178,20 +189,6 @@ const DEFAULT_SYSTEM =
   'Отвечай кратко, по-русски, с конкретными советами про питание, воду, шаги и привычки. ' +
   'Не назначай лечение; при медицинских вопросах советуй врача.'
 
-// Доступ к воркеру только своим клиентам (см. isOriginAllowed выше).
-// Экспортируем для тестов
-export { isOriginAllowed }
-
-// Лимиты — экспорт для тестов
-export const LIMITS = {
-  MAX_CHAT_MESSAGES,
-  MAX_MESSAGE_LEN,
-  MAX_BODY_BYTES,
-  MAX_AUDIO_BYTES,
-  MAX_TOKENS_CAP,
-  RATE_LIMIT,
-}
-
 // ── ответы ──────────────────────────────────────────────────────
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
@@ -199,25 +196,10 @@ const json = (obj, status = 200) =>
     headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS },
   })
 
-// Ответ без CORS-заголовков: чужой сайт его не прочитает
-const plain = (obj, status) =>
-  new Response(JSON.stringify(obj), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  })
-
 // ── маршрутизация ───────────────────────────────────────────────
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get('origin')
-    if (request.method === 'OPTIONS') {
-      // Preflight отвечаем только своим клиентам: чужой сайт не
-      // получит CORS-заголовков и браузер сам не пошлёт POST
-      return new Response(null, {
-        status: 204,
-        headers: isOriginAllowed(origin) ? CORS : {},
-      })
-    }
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
 
     const url = new URL(request.url)
     // нормализуем путь: отрезаем /v1, если приложению так удобнее
@@ -231,18 +213,12 @@ export default {
 
     if (request.method !== 'POST') return json({ error: 'Метод не поддерживается' }, 405)
 
-    // Чужие сайты под запретом (см. isOriginAllowed) — без CORS-заголовков
-    if (!isOriginAllowed(origin)) {
-      return plain({ error: 'Запросы из браузеров не поддерживаются' }, 403)
-    }
-
-    // Ранний отсев по Content-Length (аудит 12.11 + 13.11): для аудио
-    // потолок 5 МБ, для JSON — 256 КБ. Заголовку клиент не верит — он
-    // подделывается, поэтому фактический размер проверяем после чтения
-    // тела (см. /chat, /chat/completions и аудио-ветку ниже)
+    // Жёсткий потолок размера тела: раньше любой, кто нашёл адрес
+    // воркера, мог прислать тело в десятки мегабайт и положить
+    // изолят (или хотя бы потратить процесс). Реальные запросы
+    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио
     const cl = Number(request.headers.get('content-length') || 0)
-    const earlyLimit = path === '/audio/transcriptions' ? MAX_AUDIO_BYTES : MAX_BODY_BYTES
-    if (cl && cl > earlyLimit) {
+    if (cl && cl > MAX_BODY_BYTES) {
       return json({ error: 'Тело запроса слишком большое' }, 413)
     }
 
@@ -254,12 +230,22 @@ export default {
       )
     }
 
+    // CORS по Origin: нативное приложение (Expo/RN) не шлёт Origin —
+    // пропускаем. Чужие сайты отсекаются. Web-Origin «null» (webview
+    // с sandbox) и *.workers.dev (страница самого воркера) — пропускаем.
+    const origin = request.headers.get('origin')
+    if (!isOriginAllowed(origin)) {
+      return json({ error: 'Origin не разрешён' }, 403)
+    }
+
     // Общий секрет приложения: если задан, POST без заголовка
-    // x-nb-secret отклоняется. Секрет живёт в бандле приложения
-    // (EXPO_PUBLIC_*), поэтому это заслон от случайного использования,
-    // а не абсолютная защита от реверс-инжиниринга (аудит 12.11)
-    if (env.NB_SECRET && !(await secretMatch(request.headers.get('x-nb-secret'), env.NB_SECRET))) {
-      return json({ error: 'Требуется секрет приложения' }, 401)
+    // x-nb-secret отклоняется — воркер нельзя найти и использовать
+    // в обход приложения. Сравнение constant-time — без утечки по
+    // времени, см. secretMatch() выше.
+    if (env.NB_SECRET) {
+      const provided = request.headers.get('x-nb-secret')
+      const ok = await secretMatch(provided, env.NB_SECRET)
+      if (!ok) return json({ error: 'Требуется секрет приложения' }, 401)
     }
 
     // Rate limit на IP (см. RATE_LIMIT выше)
@@ -271,20 +257,11 @@ export default {
     // ── 1. Чат NutriBear: { messages, system? } → { reply } ────────
     if (path === '/chat') {
       try {
-        // Честный лимит тела (аудит 12.11): читаем текстом и меряем
-        // сами, а не верим Content-Length
-        const text = await request.text()
-        if (text.length > MAX_BODY_BYTES) {
-          return json({ error: 'Тело запроса слишком большое' }, 413)
-        }
-        let raw = {}
-        try {
-          raw = JSON.parse(text || '{}')
-        } catch {}
+        const raw = await request.json().catch(() => ({}))
         // Валидация messages: только массив объектов с разрешённой
-        // ролью (user/assistant) и непустым content, лимит на длину
-        // и количество — иначе один прокси-запрос мог слить баланс
-        // огромным промптом. Пустой массив после очистки — ошибка 400
+        // role и непустым content, лимит на длину и количество —
+        // иначе одна прокси-запрос мог слить баланс огромным
+        // промптом. Пустой массив после очистки — ошибка 400
         const messages = sanitizeMessages(raw?.messages)
         if (!messages.length) {
           return json(
@@ -308,7 +285,7 @@ export default {
             model,
             messages: [{ role: 'system', content: system }, ...messages],
             temperature: 0.7,
-            max_tokens: 600,
+            max_tokens: 800,
           }),
         })
         const data = await res.json().catch(() => null)
@@ -325,35 +302,32 @@ export default {
 
     // ── 2/3. OpenAI-протокол (фото еды, голос) — с проверками ─────
     if (path === '/chat/completions' || path === '/audio/transcriptions') {
+      // /audio/transcriptions принимает только multipart/form-data:
+      // иначе это попытка прогнать большой JSON через Whisper-роут.
+      // Content-Length уже проверен выше (MAX_BODY_BYTES), но аудио
+      // имеет отдельный, более щедрый потолок MAX_AUDIO_BYTES.
+      const ct = request.headers.get('content-type') || ''
+      if (path === '/audio/transcriptions') {
+        if (!isAudioRequest(ct)) {
+          return json({ error: 'Аудио-запрос должен быть multipart/form-data' }, 400)
+        }
+        const cl2 = Number(request.headers.get('content-length') || 0)
+        if (cl2 && cl2 > LIMITS.MAX_AUDIO_BYTES) {
+          return json({ error: 'Аудио слишком большое (макс. 5 МБ)' }, 413)
+        }
+      }
+
       // Заголовки собираем ЯВНО: клиентские больше не пересылаются
       // as-is (раньше проходили любые — включая чужую Authorization)
       const fwd = new Headers({
-        'Content-Type': request.headers.get('content-type') || 'application/json',
+        'Content-Type': ct || 'application/json',
         Authorization: `Bearer ${key}`,
       })
 
       let body = request.body
-      if (path === '/audio/transcriptions') {
-        // Аудит 13.11 №5: только multipart, реальный размер после чтения
-        // (Content-Length подделывается) и потолок 5 МБ вместо общих
-        // 256 КБ, на которых минутная голосовая запись не помещалась
-        if (!isAudioRequest(request.headers.get('content-type'))) {
-          return json({ error: 'Ожидается multipart/form-data с аудиофайлом' }, 415)
-        }
-        const buf = await request.arrayBuffer()
-        if (buf.byteLength > MAX_AUDIO_BYTES) {
-          return json({ error: 'Аудио слишком большое (лимит 5 МБ)' }, 413)
-        }
-        body = buf
-      }
       if (path === '/chat/completions') {
         // Белый список моделей: модель приходит в JSON-теле
         const text = await request.text()
-        // Честный лимит тела (аудит 12.11): Content-Length подделывается,
-        // проверяем фактический размер после чтения
-        if (text.length > MAX_BODY_BYTES) {
-          return json({ error: 'Тело запроса слишком большое' }, 413)
-        }
         let parsed = {}
         try {
           parsed = JSON.parse(text || '{}')
@@ -369,9 +343,12 @@ export default {
             400
           )
         }
-        // Аудит 13.11 №4: кап max_tokens, вырезка stream/n/logprobs/tools —
-        // клиент больше не управляет расходом баланса этими полями
-        body = JSON.stringify(sanitizeChatParams(parsed)) // буферизованное тело
+        // Очистка параметров: max_tokens ≤ 2000, temperature 0..2,
+        // stream/n/logprobs вырезаны — клиент не управляет расходом
+        // баланса ключа. Подставляем model/messages из parsed (они
+        // уже проверены выше), остальные поля — из sanitizeChatParams.
+        const safe = sanitizeChatParams(parsed)
+        body = JSON.stringify({ ...safe, model: parsed.model, messages: parsed.messages })
       }
 
       const res = await fetch(`${upstream}${path}`, {

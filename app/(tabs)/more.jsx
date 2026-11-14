@@ -33,6 +33,7 @@ import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import Constants from 'expo-constants'
+import { router } from 'expo-router'
 import { Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
@@ -43,7 +44,6 @@ import { SupportModal } from '@/components/more/SupportModal'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
 import { SyncCard } from '@/components/more/SyncCard'
 import { CompanionCard } from '@/components/more/CompanionCard'
-import { PremiumCard, premiumStatusValue } from '@/components/more/PremiumCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { LegalDocModal } from '@/components/more/LegalDocModal'
@@ -54,7 +54,6 @@ import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCompanionStore } from '@/store/useCompanionStore'
-import { useProStore } from '@/store/useProStore'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
@@ -158,10 +157,6 @@ export default function MoreScreen() {
     // лёгкий поиск без импорта COMPANIONS в этот файл (он в CompanionCard)
     ({ kedr: 'Кедр', kira: 'Кира', topaz: 'Топаз', businka: 'Бусинка', fit: 'Фит' })[companion] || 'Кедр'
 
-  // Премиум: статус подписки для строки меню (карточка — PremiumCard)
-  const pro = useProStore((s) => s.pro)
-  const plan = useProStore((s) => s.plan)
-
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
@@ -191,6 +186,24 @@ export default function MoreScreen() {
 
         {/* ── Герой-профиль: аватар, рост • вес, тап — редактирование ── */}
         <ProfileEditor />
+
+        {/* ── ПРИВЫЧКИ: чек-лист на день с серией дней ──────────────── */}
+        <MenuGroup title="ПРИВЫЧКИ">
+          <MenuRow
+            icon="✅"
+            iconBg="rgba(74,222,128,0.16)"
+            title="Привычки"
+            value="Чек-лист на день"
+            onPress={() => router.push('/habits')}
+          />
+          <MenuRow
+            icon="📊"
+            iconBg="rgba(56,189,248,0.16)"
+            title="Виджет дня"
+            value="Крупные цифры"
+            onPress={() => router.push('/widget')}
+          />
+        </MenuGroup>
 
         {/* ── ЗДОРОВЬЕ ────────────────────────────────────────────────── */}
         <MenuGroup title="ЗДОРОВЬЕ">
@@ -229,14 +242,6 @@ export default function MoreScreen() {
             value={companionName}
           >
             <CompanionCard embedded />
-          </MenuRow>
-          <MenuRow
-            icon="👑"
-            iconBg="rgba(251,191,36,0.16)"
-            title="Премиум"
-            value={premiumStatusValue(pro, plan)}
-          >
-            <PremiumCard embedded />
           </MenuRow>
         </MenuGroup>
 

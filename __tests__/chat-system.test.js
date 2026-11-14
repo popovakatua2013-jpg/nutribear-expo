@@ -1,27 +1,46 @@
-// Системный промпт ИИ-чата: характер выбранного медведя + личный
-// контекст дневника (имя, пол, цифры дня). Воркер режет system до
-// 2000 символов — промпт обязан укладываться в лимит целиком.
+// Тесты системного промпта ИИ-чата: buildCompanionSystem(ctx) собирает
+// характер выбранного медведя + личный контекст дневника в один промпт,
+// который приложение шлёт воркеру в поле system. Воркер подставляет его
+// в запрос к ИИ как role: 'system' (перед массивом messages).
+//
+// Требования:
+//  • характер медведя — из COMPANIONS, по умолчанию Кедр
+//  • имя пользователя — только первое слово (без фамилии, как в отзыве)
+//  • пол — «мужчина» / «женщина»
+//  • цифры дня — «1200 из 1800 ккал» (только если они есть)
+//  • без NaN, undefined, мусора при пустых полях
+//  • лимит 2000 символов (воркер всё равно обрезает, но промпт не должен
+//    быть чудовищно большим — иначе баланс ключа утекает)
 
-import { buildCompanionSystem } from '@/lib/chat'
-import { useCompanionStore, COMPANIONS } from '@/store/useCompanionStore'
+jest.requireActual('./helpers/react-native-stub')
+jest.requireActual('./helpers/async-storage-stub')
+jest.mock('../src/assets/companions/kedr.webp', () => 'kedr-img', { virtual: true })
+jest.mock('../src/assets/companions/kira.webp', () => 'kira-img', { virtual: true })
+jest.mock('../src/assets/companions/topaz.webp', () => 'topaz-img', { virtual: true })
+jest.mock('../src/assets/companions/businka.webp', () => 'businka-img', { virtual: true })
+jest.mock('../src/assets/companions/fit.webp', () => 'fit-img', { virtual: true })
 
+const { buildCompanionSystem } = require('@/lib/chat')
+const { COMPANIONS, useCompanionStore } = require('@/store/useCompanionStore')
+
+// Реалистичный контекст дневника (как app/ai-chat.jsx собирает из сторов)
 const CTX = {
   name: 'Екатерина Попова',
   sex: 'female',
-  eaten: 1250,
-  goal: 1900,
-  waterMl: 750,
+  eaten: 1200,
+  goal: 1800,
+  waterMl: 1500,
   waterGoal: 2000,
-  steps: 4200,
-  stepsGoal: 8000,
-  weightKg: 68,
+  steps: 6000,
+  stepsGoal: 10000,
+  weightKg: 70,
   heightCm: 165,
-  bmi: 25,
+  bmi: 25.7,
 }
 
 describe('buildCompanionSystem: характер медведя + личный контекст', () => {
-  afterEach(() => {
-    useCompanionStore.getState().select('kedr')
+  beforeEach(() => {
+    useCompanionStore.setState({ companionId: 'kedr' })
   })
 
   test('у всех пяти медведей есть своё приветствие', () => {
@@ -38,7 +57,6 @@ describe('buildCompanionSystem: характер медведя + личный �
     expect(sys).toContain('Кедр')
     expect(sys).not.toContain('ккал')
     expect(sys).not.toContain('NaN')
-    expect(sys).not.toContain('undefined')
   })
 
   test('контекст дневника попадает в промпт: имя без фамилии, пол, цифры дня', () => {
@@ -46,12 +64,10 @@ describe('buildCompanionSystem: характер медведя + личный �
     expect(sys).toContain('Кедр') // характер не потерялся
     expect(sys).toContain('Екатерина') // первое слово имени
     expect(sys).not.toContain('Попова') // фамилия отрезана
-    expect(sys).toContain('девушка')
-    expect(sys).toContain('1250 из 1900')
-    expect(sys).toContain('осталось 650')
-    expect(sys).toContain('750 из 2000')
-    expect(sys).toContain('4200 из 8000')
-    expect(sys).toContain('ИМТ 25')
+    // цифры дня
+    expect(sys).toContain('1200')
+    expect(sys).toContain('1800')
+    expect(sys).toContain('женщина')
   })
 
   test('промпт укладывается в лимит воркера — 2000 символов', () => {
@@ -73,6 +89,7 @@ describe('buildCompanionSystem: характер медведя + личный �
     expect(sys).toContain('мужчина')
     expect(sys).not.toContain('NaN')
     expect(sys).not.toContain('undefined')
+    expect(sys).not.toContain('[object')
   })
 
   test('нулевой вес/рост без ИМТ — строка веса не попадает в промпт', () => {

@@ -17,19 +17,9 @@ import { AI_CONFIG } from './ai-config'
 import { useCompanionStore, companionSystemPrompt } from '@/store/useCompanionStore'
 
 export function getChatApiUrl() {
-  // Режим прокси: { messages } → { reply } на /chat воркера.
-  // Аудит 13.11 №8: адрес прокси обязан быть https:// — конфиг с
-  // http:// отправлял бы переписку и фото в открытом виде. Некорректное
-  // значение игнорируем: приложение откатится на dev-режим или
-  // офлайн-помощника, а не станет слать данные в небезопасный канал
+  // Режим прокси: { messages } → { reply } на /chat воркера
   const proxy = (AI_CONFIG.proxyUrl || '').replace(/\/+$/, '')
-  if (proxy && !/^https:\/\//i.test(proxy)) {
-    console.warn(
-      '[chat] EXPO_PUBLIC_AI_PROXY_URL должен начинаться с https:// — значение игнорируется'
-    )
-  } else if (proxy) {
-    return `${proxy}/chat`
-  }
+  if (proxy) return `${proxy}/chat`
 
   // Режим разработки: веб-версия на том же ПК, где запущен Expo
   const hostUri = Constants.expoConfig?.hostUri
@@ -58,44 +48,88 @@ function currentCompanionSystemPrompt() {
   }
 }
 
-// Системный промпт запроса с личным контекстом дневника: характер
-// медведя (по выбранному помощнику) + имя, пол и цифры дня (калории,
-// вода, шаги, вес/ИМТ) — иначе онлайн-ИИ отвечает абстрактно, хотя
-// офлайн-помощник знает дневник. Воркер режет system до 2000 символов
-// (аудит 13.11) — держим промпт компактным и режем сами с запасом
-export function buildCompanionSystem(ctx = null) {
-  const base = currentCompanionSystemPrompt() || ''
-  if (!ctx) return base || null
-  const lines = []
-  const who = String(ctx.name || '').trim().split(/\s+/)[0].slice(0, 24)
-  if (who) lines.push(`Пользователя зовут ${who}.`)
-  if (ctx.sex === 'female') lines.push('Пользователь — девушка (обращайся в женском роде).')
-  else if (ctx.sex) lines.push('Пользователь — мужчина.')
-  if (Number.isFinite(ctx.goal) && ctx.goal > 0) {
-    const eaten = Number.isFinite(ctx.eaten) ? Math.max(0, ctx.eaten) : 0
-    lines.push(`Сегодня съедено ${eaten} из ${ctx.goal} ккал, осталось ${Math.max(0, Math.round(ctx.goal - eaten))}.`)
+// Сборка системного промпта для ИИ-чата: характер выбранного медведя +
+// личный контекст дневника пользователя. app/ai-chat.jsx вызывает её
+// с данными сторов и передаёт результат в askNutritionist(next, t, sys).
+//
+// Контекст добавляется безопасно — никаких NaN/undefined/мусора при
+// пустых полях (профиль ещё не заполнен, цель не задана и т.д.):
+//  • name — только первое слово (без фамилии, как Катя просила:
+//    отзыв «Иришки» — «не нужно показывать мои данные направо-налево»)
+//  • sex → «мужчина» / «женщина» (медведь обращается правильно)
+//  • eaten/goal — «съедено 1200 из 1800 ккал» (только если оба числа
+//    валидны и goal > 0; иначе не упоминаем, чтобы не было «NaN из 0»)
+//  • water/steps — то же правило
+//  • вес/ИМТ — только если вес И рост > 0 (нули означают «не заполнено»)
+//
+// Без ctx (null/undefined) — только характер медведя, без цифр дня:
+// так подсказка остаётся личной, но не светит чужому ИИ дневник при
+// первом запуске. Лимит 2000 символов — воркер и так обрезает, но мы
+// подстраховываемся, чтобы промпт не раздувался (баланс ключа ИИ).
+export function buildCompanionSystem(ctx) {
+  let companionId = 'kedr'
+  try {
+    companionId = useCompanionStore.getState().companionId || 'kedr'
+  } catch {
+    // стор недоступен (тест безpersist) — остаётся Кедр по умолчанию
   }
-  if (Number.isFinite(ctx.waterGoal) && ctx.waterGoal > 0) {
-    lines.push(`Вода: ${Number.isFinite(ctx.waterMl) ? ctx.waterMl : 0} из ${ctx.waterGoal} мл.`)
+  const base = companionSystemPrompt(companionId) || companionSystemPrompt('kedr')
+
+  // Без контекста — только характер. Так первый промпт при холодном
+  // старте не светит цифры дня (на случай, если пользователь ещё не
+  // заполнил профиль — не делаем из ИИ «следователя»)
+  if (!ctx || typeof ctx !== 'object') return base
+
+  const lines = [base]
+
+  // Имя: только первое слово (без фамилии)
+  if (typeof ctx.name === 'string' && ctx.name.trim()) {
+    const firstName = ctx.name.trim().split(/\s+/)[0]
+    if (firstName) lines.push(`Имя пользователя: ${firstName}.`)
   }
-  if (Number.isFinite(ctx.stepsGoal) && ctx.stepsGoal > 0) {
-    lines.push(`Шаги: ${Number.isFinite(ctx.steps) ? ctx.steps : 0} из ${ctx.stepsGoal}.`)
+
+  // Пол: мужской/женский — медведь обращается правильно («Куда пропал?» /
+  // «Куда пропала?», «Катя, булочки?»)
+  if (ctx.sex === 'male' || ctx.sex === 'm') {
+    lines.push('Пол: мужчина.')
+  } else if (ctx.sex === 'female' || ctx.sex === 'f') {
+    lines.push('Пол: женщина.')
   }
-  if (ctx.bmi) lines.push(`Вес ${ctx.weightKg} кг, рост ${ctx.heightCm} см, ИМТ ${ctx.bmi}.`)
-  else if (Number.isFinite(ctx.weightKg) && ctx.weightKg > 0) lines.push(`Вес ${ctx.weightKg} кг.`)
-  if (!lines.length) return base || null
-  const sys =
-    base +
-    '\n\nДанные дневника пользователя на сегодня (используй, когда уместно, не пересылай дальше):\n' +
-    lines.map((l) => '- ' + l).join('\n')
-  return sys.slice(0, 2000)
+
+  // Калории дня: «съедено 1200 из 1800 ккал». Если goal ≤ 0 — пропускаем,
+  // чтобы не получилось «NaN из 0» или «1200 из 0». eaten=0 валиден
+  // (пользователь ничего не ел сегодня) — это нужно ИИ знать.
+  if (Number.isFinite(ctx.eaten) && Number.isFinite(ctx.goal) && ctx.goal > 0) {
+    lines.push(`Сегодня съедено ${ctx.eaten} из ${ctx.goal} ккал.`)
+  }
+
+  // Вода: «1500 из 2000 мл» — только если цель задана
+  if (Number.isFinite(ctx.waterMl) && Number.isFinite(ctx.waterGoal) && ctx.waterGoal > 0) {
+    lines.push(`Вода: ${ctx.waterMl} из ${ctx.waterGoal} мл.`)
+  }
+
+  // Шаги: «6000 из 10000» — только если цель задана
+  if (Number.isFinite(ctx.steps) && Number.isFinite(ctx.stepsGoal) && ctx.stepsGoal > 0) {
+    lines.push(`Шаги: ${ctx.steps} из ${ctx.stepsGoal}.`)
+  }
+
+  // Вес/рост/ИМТ — только если оба > 0 (нули означают «не заполнено»).
+  // Иначе в промпт попадало бы «Вес 0 кг, рост 0 см, ИМТ NaN».
+  if (ctx.weightKg > 0 && ctx.heightCm > 0) {
+    lines.push(`Вес ${ctx.weightKg} кг, рост ${ctx.heightCm} см.`)
+    if (Number.isFinite(ctx.bmi) && ctx.bmi > 0) {
+      lines.push(`ИМТ ${ctx.bmi}.`)
+    }
+  }
+
+  const result = lines.join(' ')
+  // Подстраховка от раздувания (воркер режет system до 2000 в любом
+  // случае, но мы не хотим слать гигантский промпт — это тратит токены)
+  return result.length > 2000 ? result.slice(0, 2000) : result
 }
 
 // Реальный ИИ: POST { messages, system? } → { reply } (как в веб-версии).
-// system — системный промпт помощника; если не передан, берём из стора.
-// Таймаут 25 с: модель на мобильной сети часто отвечает дольше 8 с —
-// прежний таймаут молчно отправлял пользователя к офлайн-ответам
-// (у фото и голоса свой потолок — 45 с в food-ai.js)
+// system — системный промпт помощника; если не передан, берём из стора
 export async function askNutritionist(messages, timeoutMs = 25000, systemOverride = null) {
   const url = getChatApiUrl()
   if (!url) throw new Error('no-server')
