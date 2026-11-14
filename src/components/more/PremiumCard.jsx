@@ -33,7 +33,7 @@ export function PremiumCard({ embedded = false }) {
       description:
         id === 'trial'
           ? 'Триал 3 дня — все функции Premium без лимитов'
-          : 'Все лимиты сняты: чат, фото и голос — без ограничений',
+          : 'Лимиты сняты, а ИИ-меню на неделю и разбор недели уже ждут',
     })
   }
 
@@ -53,7 +53,8 @@ export function PremiumCard({ embedded = false }) {
             </Text>
             <Text className="mt-1 font-sans text-[13.5px] leading-snug text-bear-sub">
               План: {plan === 'trial' ? 'триал 3 дня' : plan === 'month' ? 'месяц — 299 ₽' : 'год — 1 490 ₽'}.{' '}
-              Лимиты сняты: чат, фото и голос — без ограничений.
+              Лимиты сняты: чат, фото и голос — без ограничений. Доступны ИИ-меню на неделю
+              и разбор недели от напарника.
             </Text>
           </View>
           <Pressable

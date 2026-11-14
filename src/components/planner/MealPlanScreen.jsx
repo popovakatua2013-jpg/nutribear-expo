@@ -30,7 +30,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
-import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Trash2, X } from 'lucide-react-native'
+import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Sparkles, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { tapGuard } from '@/lib/tap-guard'
 import { buildFood } from '@/lib/data/pick'
@@ -44,6 +44,7 @@ import { HintBox } from '../ui/HintBox'
 import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
 import { SwapDishModal } from './SwapDishModal'
+import { AiMenuModal } from './AiMenuModal'
 import { P } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
@@ -95,6 +96,8 @@ export function MealPlanScreen({ compact = false }) {
   // и вставить его в любой день одним тапом
   const [tplOpen, setTplOpen] = useState(false)
   const [tplName, setTplName] = useState('')
+  // Окно «Меню от ИИ» — Premium-функция этапа 2 монетизации
+  const [aiOpen, setAiOpen] = useState(false)
 
   const plan = useMealPlanStore((s) => s.plans[weekKey])
   const templates = useMealPlanStore((s) => s.templates)
@@ -323,6 +326,17 @@ export function MealPlanScreen({ compact = false }) {
           дня, «в дневник» (только на сегодняшнем дне), меню прошлой
           недели, очистка недели */}
       <View style={styles.headActions}>
+        {/* Меню от ИИ — Premium (этап 2): первый значок, акцентный цвет —
+            сразу отличим от серых действий дня/недели */}
+        <Pressable
+          onPress={() => setAiOpen(true)}
+          style={styles.headAction}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Меню от ИИ на неделю (Premium)"
+        >
+          <Sparkles size={13} color={P.accentText} />
+        </Pressable>
         <Pressable onPress={() => setCopyFrom(sel)} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Копировать меню ${WEEKDAYS_FULL[sel]}`}>
           <Copy size={13} color={P.text2} />
         </Pressable>
@@ -516,6 +530,15 @@ export function MealPlanScreen({ compact = false }) {
 
       {/* Окно добавления блюда */}
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
+
+      {/* Окно «Меню от ИИ» — Premium: генерация недели одним запросом,
+          для free — paywall с демо-активацией Premium */}
+      <AiMenuModal
+        open={aiOpen}
+        weekKey={weekKey}
+        weekDishes={weekDishes}
+        onClose={() => setAiOpen(false)}
+      />
 
       {/* Окно правки граммовки блюда */}
       <GramsModal

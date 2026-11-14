@@ -32,7 +32,9 @@ const VOICE_SYSTEM =
 //  ВСТРОЕННАЯ БАЗА ПОПУЛЯРНЫХ БЛЮД — на 100 грамм (бесплатно!)
 //  n — название, e — эмодзи, dg — обычная порция (г), al — синонимы
 // ═══════════════════════════════════════════════════════════════
-const LOCAL_DISHES = [
+// Экспортируется для офлайн-сборки ИИ-меню (menu-ai.js, этап 2 монетизации):
+// без сети меню собирается из этой же базы — честная подпись в тосте
+export const LOCAL_DISHES = [
   // Супы
   { n: 'Борщ', e: '🍲', kcal100: 49, p: 2.6, f: 2.9, c: 5.5, dg: 300, al: ['борщ украинский'], fib: 1.9, sug: 2.6 },
   { n: 'Борщ со свининой', e: '🍲', kcal100: 55, p: 2.8, f: 3.2, c: 5.8, dg: 300, fib: 1.8, sug: 2.5 },
@@ -571,8 +573,10 @@ export function isOfflineError(e) {
   )
 }
 
-// POST JSON к OpenAI-совместимому API → распарсенный ответ
-async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
+// POST JSON к OpenAI-совместимому API → распарсенный ответ.
+// Экспортируется для ИИ-меню на неделю (menu-ai.js) — тот же канал,
+// те же проверки: прокси-воркер режет max_tokens и модель, ключ не в бандле
+export async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
   assertConfigured()
   const { signal, done } = withTimeout(timeoutMs)
   try {
@@ -602,8 +606,9 @@ async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
   }
 }
 
-// Достаём JSON из ответа модели (терпит ```-обёртки и болтовню вокруг JSON)
-function parseAiJson(content) {
+// Достаём JSON из ответа модели (терпит ```-обёртки и болтовню вокруг JSON).
+// Экспортируется для menu-ai.js — там свой разбор недельного меню
+export function parseAiJson(content) {
   const raw = String(content || '').replace(/```(?:json)?/gi, '').trim()
   try {
     return JSON.parse(raw)

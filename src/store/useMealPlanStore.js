@@ -306,6 +306,30 @@ export const useMealPlanStore = create(
           return { plans }
         })
       },
+
+      /** Заменить меню недели целиком (ИИ-меню на неделю, этап 2
+       * монетизации): days — массив из 7 элементов (null или
+       * { breakfast, lunch, dinner, snack } с блюдами формата addItem).
+       * Один set вместо 28 addItem'ов — одна запись AsyncStorage вместо
+       * целой серии. Id у блюд проставляются новые — уникальные. */
+      setWeek(weekKey, days) {
+        set((state) => {
+          const week = {}
+          for (let i = 0; i < 7; i++) {
+            const day = { ...emptyDay(), ...(days?.[i] || {}) }
+            for (const mealId of MEAL_IDS) {
+              day[mealId] = (day[mealId] || []).map((it) => ({
+                ...it,
+                id: makeId(),
+                grams: Math.round(it.grams || 100),
+                kcal: Math.round((Number(it.kcal) || 0) * 10) / 10,
+              }))
+            }
+            week[i] = day
+          }
+          return { plans: { ...state.plans, [weekKey]: week } }
+        })
+      },
     }),
     {
       name: 'nutribear-meal-plan',

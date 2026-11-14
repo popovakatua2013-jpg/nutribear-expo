@@ -24,7 +24,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 import {
-  BarChart3, Bell, ChefHat, Check, ChevronRight, Hourglass, Settings, ShoppingCart, Target,
+  BarChart3, Bell, ChefHat, Check, ChevronRight, Hourglass, Settings, ShoppingCart, Sparkles, Target,
 } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum, pluralDays } from '@/lib/format'
@@ -43,6 +43,7 @@ import { dayDate, weekKeyOf, WEEKDAYS } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { smoothPath } from '../ui/SvgAreaChart'
 import { MealPlanScreen } from './MealPlanScreen'
+import { WeekReviewModal } from './WeekReviewModal'
 import { RecipesModal } from '../food/RecipesModal'
 import { AddFoodModal } from '../food/AddFoodModal'
 import { P, goodsWord } from './planPalette'
@@ -327,6 +328,8 @@ export function PlanScreen({ onOpenFasting }) {
   const [addOpen, setAddOpen] = useState(false)
   const [addMealId, setAddMealId] = useState('snack')
   const [recipePick, setRecipePick] = useState(null)
+  // Окно «Разбор недели» — Premium-функция этапа 2 монетизации
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   // — Данные: всё из сторов приложения, никаких заглушек —
   const goalId = useFoodStore((s) => s.goal)
@@ -702,6 +705,26 @@ export function PlanScreen({ onOpenFasting }) {
             <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
           </View>
         </View>
+
+        {/* Разбор недели от напарника — Premium (этап 2 монетизации):
+            строка в стиле прогноза, тап открывает окно разбора */}
+        <Pressable
+          style={styles.reviewRow}
+          onPress={() => setReviewOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Разбор недели от напарника — Premium"
+        >
+          <View style={styles.forecastIcon}>
+            <Sparkles size={15} color={P.accentText} />
+          </View>
+          <View style={styles.forecastTexts}>
+            <Text numberOfLines={1} style={styles.forecastTitle}>Разбор недели от напарника</Text>
+            <Text numberOfLines={1} style={styles.forecastSub}>
+              итоги и советы по дневнику · 👑 Premium
+            </Text>
+          </View>
+          <ChevronRight size={15} color={P.text3} />
+        </Pressable>
       </View>
 
       {/* 4. Список покупок — чек-лист слева, иллюстрация и лаймовая кнопка
@@ -788,6 +811,10 @@ export function PlanScreen({ onOpenFasting }) {
         initialPick={recipePick}
         onPickConsumed={() => setRecipePick(null)}
       />
+
+      {/* Разбор недели от напарника — Premium (этап 2 монетизации):
+          для free внутри честный paywall с демо-активацией */}
+      <WeekReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)} />
 
     </ScrollView>
   )
@@ -952,6 +979,20 @@ const styles = {
   forecastTexts: { flex: 1, minWidth: 0 },
   forecastTitle: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
   forecastSub: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
+  // Разбор недели — строка в стиле прогноза с рамкой сверху (граница
+  // «ИИ-блока» внутри карточки «Прогресс»)
+  reviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.m,
+    backgroundColor: 'rgba(123,108,246,0.08)',
+    borderColor: 'rgba(167,139,250,0.22)',
+    borderWidth: 1,
+    borderRadius: radius.row,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
 
   // Переключатель показателя графика
   segRow: {
