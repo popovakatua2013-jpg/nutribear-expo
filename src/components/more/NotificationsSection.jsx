@@ -1,19 +1,25 @@
 // Секция «Напоминания» — по схеме Кати: «Уведомление — раскрывающий
 // список: тренировка, вода, взвешивание и т.д. — тумблер вкл/выкл,
 // окно времени». Каждый тип — одна строка компактного списка, и ВСЕ
-// пять окон времени выглядят ОДИНАКОВО (отзыв Кати 10.11: «окна
+// окна времени выглядят ОДИНАКОВО (отзыв Кати 10.11: «окна
 // времени выглядят везде по разному, сделать одинаково»): серый чип
 // со значением и шевроном — тап раскрывает выбор под строкой:
-//   🏋️ Тренировка  — чип «18:00» → поле времени
+//   🏋️ Тренировка  — чип «18:00» → поле времени (бывшее «Время пинка»)
 //   💧 Вода        — чип «каждые N мин» → выбор интервала
 //   ⚖️ Взвешивание — чип «Сб · 08:00» → день недели и время
 //   🍽 Еда         — чип с тремя временами → завтрак/обед/ужин
 //   🌙 Сон         — чип «22:30» → поле времени
+//   🐻 Мишка пинает — чип «через N дн» → порог дней без записи веса
+//   📳 Вибро-отклик — тумблер без окна времени
+// Всё в ОДНОМ блоке — отзыв Кати 16.11: «Время пинка, напоминание мишки,
+// напоминание, стиль пинков — нужно объединить… не 100 строк и выбора,
+// а компактно и все в одном месте»: дубли «Сон» и «Время пинка» из
+// группы ЗДОРОВЬЕ (управляли теми же полями стора) удалены, «Напоминание
+// мишки» и «Вибрация» переехали из ПРИЛОЖЕНИЯ сюда.
 // Никаких подсказок и пояснений (отзыв Кати: «все подсказки убрать
 // в напоминаниях»), никаких вложенных карточек и плиток — только
 // список. «Возвращать калории» отсюда убрано: дубль настройки в
-// строке «Дневник питания». Стиль пинков и «Напоминание мишки»
-// переехали в группу «ПРИЛОЖЕНИЕ» — это не уведомления.
+// строке «Дневник питания».
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -21,6 +27,8 @@ import { ChevronDown } from 'lucide-react-native'
 import { MiniToggle, PillPicker } from './MenuList'
 import { TimeField } from './TimeField'
 import { useActivityStore } from '@/store/useActivityStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { hapticFeedback } from '@/lib/haptics'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings } from '@/lib/appSettings'
@@ -32,6 +40,9 @@ const MEALS = [
   { key: 'lunch', label: 'Обед' },
   { key: 'dinner', label: 'Ужин' },
 ]
+// Порог «Мишка пинает»: сколько дней без записи веса (бывший блок
+// «Напоминание мишки» из ПРИЛОЖЕНИЯ)
+const NUDGE_OPTIONS = [5, 7, 10].map((n) => ({ key: n, label: `${n} дней` }))
 
 // Чип «окно времени» — единый вид для всех пяти напоминаний:
 // текущее значение + шеврон, тап раскрывает выбор под строкой
@@ -88,6 +99,14 @@ export function NotificationsSection() {
   const { toast } = useToast()
   const reminder = useActivityStore((s) => s.reminder)
   const setReminder = useActivityStore((s) => s.setReminder)
+  // Вибро-отклик и «Мишка пинает» (тумблер + порог) — из prefs-стора:
+  // раньше висели отдельно в ПРИЛОЖЕНИИ, теперь в общем блоке
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  const setHaptics = useUiPrefsStore((s) => s.setHaptics)
+  const weighNudgeOn = useUiPrefsStore((s) => s.weighNudgeOn !== false)
+  const setWeighNudgeOn = useUiPrefsStore((s) => s.setWeighNudgeOn)
+  const weighNudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
+  const setWeighNudgeDays = useUiPrefsStore((s) => s.setWeighNudgeDays)
   // Раскрытый чип окна времени (один за раз — список остаётся компактным)
   const [openKey, setOpenKey] = useState(null)
   const flip = (key) => setOpenKey((k) => (k === key ? null : key))
@@ -256,6 +275,48 @@ export function NotificationsSection() {
             />
           </View>
         }
+      />
+
+      {/* Мишка пинает о весе: тумблер + порог дней без записи веса
+          (переехало из группы ПРИЛОЖЕНИЕ — отзыв Кати 16.11: все
+          напоминания в одном месте) */}
+      <ReminderRow
+        icon="🐻"
+        title="Мишка пинает"
+        enabled={weighNudgeOn}
+        onToggle={(on) => setWeighNudgeOn(on)}
+        timeEl={
+          weighNudgeOn ? (
+            <TimeChip
+              text={`через ${weighNudgeDays} дн`}
+              open={openKey === 'nudge'}
+              onPress={() => flip('nudge')}
+            />
+          ) : null
+        }
+        expanded={openKey === 'nudge'}
+        expand={
+          <PillPicker
+            options={NUDGE_OPTIONS}
+            value={weighNudgeDays}
+            onChange={setWeighNudgeDays}
+            accessibilityLabel="Через сколько дней напомнить о весе"
+          />
+        }
+      />
+
+      {/* Вибро-отклик: отклик приложения на касания (меню, тумблеры,
+          пилюли, плеер тренировок, кольца ИМТ) — общая точка
+          hapticFeedback. Включили — сразу тестовая вибрация: настройку
+          можно проверить, не отходя от строки */}
+      <ReminderRow
+        icon="📳"
+        title="Вибро-отклик"
+        enabled={haptics}
+        onToggle={(on) => {
+          setHaptics(on)
+          if (on) hapticFeedback('success')
+        }}
       />
     </View>
   )

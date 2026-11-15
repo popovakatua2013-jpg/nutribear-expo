@@ -5,7 +5,7 @@
 // playerReducer.
 import { useEffect, useReducer, useRef } from 'react'
 import { AppState } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { hapticFeedback } from '@/lib/haptics'
 import { initPlayerState, playerReducer } from './engine'
 import { playWorkoutSound } from './sounds'
 import { usePrefsStore } from '../store/useWorkoutsStore'
@@ -58,20 +58,16 @@ export function usePlayerEngine(plan, active = true, startIndex = 0) {
   const phaseTotal = state.phaseTotal
   useEffect(() => {
     if (phase === 'done') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+      hapticFeedback('success')
       if (soundOn) playWorkoutSound('done')
       return
     }
     if (secondsLeft === phaseTotal) {
       // только что началась новая фаза
-      Haptics.impactAsync(
-        phase === 'rest'
-          ? Haptics.ImpactFeedbackStyle.Light
-          : Haptics.ImpactFeedbackStyle.Medium,
-      ).catch(() => {})
+      hapticFeedback(phase === 'rest' ? 'light' : 'medium')
       if (soundOn && phase !== 'prepare') playWorkoutSound('switch')
     } else if (secondsLeft > 0 && secondsLeft <= 3) {
-      Haptics.selectionAsync().catch(() => {})
+      hapticFeedback('selection')
       if (soundOn) playWorkoutSound('count')
     }
   }, [phase, index, phaseTotal, secondsLeft, soundOn])

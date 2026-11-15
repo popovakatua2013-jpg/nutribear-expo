@@ -184,7 +184,7 @@ export async function scheduleMorningSummary() {
     const t = summaryTotalsFor(yKey)
     // Вчера ни одной записи — фраза «пропал из приложения» (вторая серия);
     // в мягком стиле остаётся стандартный текст «Новый день…»
-    const gone = t ? null : gonePokeBody({ style: useActivityStore.getState().reminder?.meals?.style || 'bear' })
+    const gone = t ? null : gonePokeBody({ style: useCompanionStore.getState().getPokeStyle() })
     const body = t
       ? `Вчера: ${formatNum(Math.round(t.kcal))} ккал, ${formatNum(Math.round(t.steps))} шагов. Хорошего дня! 🐻`
       : gone
@@ -229,7 +229,7 @@ function mealPokeText(mealId, meals) {
     missedToday: passed && !st.loggedToday,
     missedStreak: st.missedStreak,
     goodStreak: st.goodStreak,
-    style: meals?.style || 'bear',
+    style: useCompanionStore.getState().getPokeStyle(),
   })
   // Похвалу («Уже записано — оперативно!») нельзя показывать из
   // ежедневного пинка: к его срабатыванию приём либо уже записан (пинок
@@ -250,7 +250,7 @@ function mealPokeText(mealId, meals) {
     streak: st.goodStreak,
     gender: sex === 'female' ? 'f' : 'm',
     name,
-    style: meals?.style || 'bear',
+    style: useCompanionStore.getState().getPokeStyle(),
     companionTier,
   })
 }
@@ -269,7 +269,7 @@ const praisedAt = {} // mealId → dayKey последней похвалы
 async function maybePraiseNow(state, prev) {
   if (Platform.OS === 'web' || !Notifications) return
   const meals = useActivityStore.getState().reminder?.meals
-  if (!meals?.enabled || meals.style === 'soft') return
+  if (!meals?.enabled || useCompanionStore.getState().getPokeStyle() === 'soft') return
   const today = dayKeyOf()
   const prevIds = new Set((prev?.history || []).map((e) => e?.id))
   const added = (state.history || []).filter((e) => e && e.day === today && !prevIds.has(e.id))
@@ -377,7 +377,7 @@ async function scheduleWeigh(reminder) {
   const EXPO_WD = [2, 3, 4, 5, 6, 7, 1]
   const wd = EXPO_WD[Math.min(6, Math.max(0, Math.round(weigh.weekday ?? 5)))]
   if (!t) return
-  const weighMsg = weighPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  const weighMsg = weighPokeMessage({ style: useCompanionStore.getState().getPokeStyle() })
   try {
     await Notifications.scheduleNotificationAsync({
       identifier: 'weigh-weekly',
@@ -409,7 +409,7 @@ async function scheduleWorkout(reminder) {
   if (!exercise?.enabled) return
   const t = parseTime(exercise.time)
   if (!t) return
-  const workoutMsg = workoutPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  const workoutMsg = workoutPokeMessage({ style: useCompanionStore.getState().getPokeStyle() })
   try {
     await Notifications.scheduleNotificationAsync({
       identifier: 'workout-daily',
@@ -440,7 +440,7 @@ async function scheduleSleep(reminder) {
   if (!sleep?.enabled) return
   const t = parseTime(sleep.time)
   if (!t) return
-  const sleepMsg = sleepPokeMessage({ style: reminder?.meals?.style || 'bear' })
+  const sleepMsg = sleepPokeMessage({ style: useCompanionStore.getState().getPokeStyle() })
   try {
     await Notifications.scheduleNotificationAsync({
       identifier: 'sleep-daily',
@@ -485,7 +485,7 @@ export async function rescheduleReminders() {
     const everyMin = Math.min(720, Math.max(5, Math.round(reminder.everyMin || 60)))
     // Текст — ротация из второй серии при каждом перепланировании;
     // стиль «Мягко» оставляет прежний спокойный текст
-    const waterMsg = waterPokeMessage({ style: reminder?.meals?.style || 'bear' })
+    const waterMsg = waterPokeMessage({ style: useCompanionStore.getState().getPokeStyle() })
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: 'water-loop',

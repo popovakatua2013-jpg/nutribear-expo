@@ -4,7 +4,7 @@
 // пересчитываются пулы фраз в bearPhrases.js и системный промпт ИИ.
 //
 // Режим embedded: без своей шапки и карточки — содержимое встраивается
-// в строку меню «Помощник» (как CycleCard, SleepDashboardCard и пр.)
+// в строку меню «Помощник» (как CycleCard и прочие строки «Ещё»)
 
 import { Image, Pressable, Text, View } from 'react-native'
 import { Check, Lock } from 'lucide-react-native'

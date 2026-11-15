@@ -1,13 +1,15 @@
 // src/features/workouts/components/PressableScale.jsx
 // Единый отклик нажатия во всех карточках: масштаб 0,97 + лёгкий haptic
-// (150 мс, ease-in-out — по референсу вкладки).
+// (150 мс, ease-in-out — по референсу вкладки). Вибрация — через общий
+// hapticFeedback(): тумблер «Вибро-отклик» выключен — карточки молчат
+// (раньше вибрировали всегда, отзыв Кати 16.11).
 
 import React, { useCallback } from 'react'
 import { Pressable } from 'react-native'
 import Animated, {
   useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated'
-import * as Haptics from 'expo-haptics'
+import { hapticFeedback } from '@/lib/haptics'
 import { motion } from '../theme'
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -20,7 +22,7 @@ export function PressableScale({ children, onPressIn, style, ...rest }) {
   const handleIn = useCallback(
     (e) => {
       scale.value = withTiming(0.97, { duration: motion.press })
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
+      hapticFeedback('light')
       onPressIn?.(e)
     },
     [onPressIn, scale],

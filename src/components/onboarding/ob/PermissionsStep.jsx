@@ -2,11 +2,15 @@
 // шагомер, камера. Бывший 9-й шаг «Всё готово!» убран: кнопка
 // «Начать» сразу применяет план к целям/профилю и завершает онбординг.
 // Окно «Добавить приём пищи» после онбординга больше НЕ открывается:
-// после регистрации — сразу главная страница (отзыв Кати)
+// после регистрации — сразу главная страница (отзыв Кати).
+// Источники шагов — ПО ПЛАТФОРМЕ (отзыв Кати 16.11: «считывалось какой
+// телефон и уже от этого показывать ему функцию которой он может
+// пользоваться»): Android — Health Connect, iOS — Apple Health,
+// никаких «Google Fit / Apple Health» одним списком.
 
-import { Pressable, Switch, Text, View } from 'react-native'
+import { Platform, Pressable, Switch, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Bell, Watch, Camera, Footprints } from 'lucide-react-native'
+import { Bell, Watch, Camera, Footprints, HeartPulse } from 'lucide-react-native'
 import { Pedometer } from 'expo-sensors'
 import { ObShell } from './ObShell'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
@@ -17,6 +21,9 @@ import { openSettingsSoon } from '@/lib/appSettings'
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
 const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
+const IS_ANDROID = Platform.OS === 'android'
+const IS_IOS = Platform.OS === 'ios'
+const IS_WEB = Platform.OS === 'web'
 
 export function PermissionsStep({ onBack }) {
   const answers = useOnboardingStore((s) => s.answers)
@@ -104,43 +111,62 @@ export function PermissionsStep({ onBack }) {
           </Text>
         </View>
 
+        {/* Источник шагов — по платформе: Android → Health Connect,
+            iOS → Apple Health, web → только шагомер (датчика нет) */}
         <View className={row}>
-          <Watch size={22} color="#38bdf8" />
+          {IS_IOS ? (
+            <Watch size={22} color="#38bdf8" />
+          ) : (
+            <HeartPulse size={22} color="#F0ABFC" />
+          )}
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[17.5px] text-bear-text">Google Fit / Apple Health</Text>
+            <Text className="font-bold text-[17.5px] text-bear-text">
+              {IS_IOS ? 'Apple Health' : IS_ANDROID ? 'Health Connect' : 'Шаги'}
+            </Text>
             <Text className="font-sans text-[15px] text-bear-sub2">
-              Синхронизируйте шаги — активность дня всегда под рукой
+              {IS_IOS
+                ? 'Шаги с телефона и часов — включите тумблером ниже'
+                : IS_ANDROID
+                  ? 'Подключите после запуска: Ещё → Шаги и здоровье'
+                  : 'Шаги считаются в приложении на телефоне'}
             </Text>
           </View>
         </View>
 
-        <View className="gap-2.5 rounded-2xl border border-white/5 bg-bear-card/60 p-4">
-          {[['gfit', 'Google Fit'], ['ahealth', 'Apple Health']].map(([k, label]) => (
-            <View key={k} className="flex-row items-center justify-between">
-              <Text className="font-sans text-[17.5px] text-[#aab4d4]">{label}</Text>
+        {!IS_WEB && (
+          <View className="gap-2.5 rounded-2xl border border-white/5 bg-bear-card/60 p-4">
+            {/* iOS — Apple Health (локальный тумблер); на Android Health
+                Connect подключается после запуска (окно разрешения и
+                импорт истории — в «Ещё → Шаги и здоровье»), Google Fit
+                устарел и в списке не показывается (отзыв Кати 16.11:
+                «показывать чисто connect, встроенный шагомер») */}
+            {IS_IOS && (
+              <View className="flex-row items-center justify-between">
+                <Text className="font-sans text-[17.5px] text-[#aab4d4]">Apple Health</Text>
+                <Switch
+                  value={sync.ahealth}
+                  onValueChange={() => toggleSync('ahealth')}
+                  trackColor={SWITCH_COLORS}
+                  thumbColor="#FFFFFF"
+                  accessibilityLabel="Apple Health"
+                />
+              </View>
+            )}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-1.5">
+                <Footprints size={18} color="#EEF2FB" />
+                <Text className="font-sans text-[17.5px] text-[#aab4d4]">Встроенный шагомер</Text>
+              </View>
               <Switch
-                value={sync[k]}
-                onValueChange={() => toggleSync(k)}
+                value={pedometerEnabled}
+                onValueChange={togglePedometer}
                 trackColor={SWITCH_COLORS}
                 thumbColor="#FFFFFF"
-                accessibilityLabel={label}
+                accessibilityLabel="Встроенный шагомер"
               />
             </View>
-          ))}
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-1.5">
-              <Footprints size={18} color="#EEF2FB" />
-              <Text className="font-sans text-[17.5px] text-[#aab4d4]">Встроенный шагомер</Text>
-            </View>
-            <Switch
-              value={pedometerEnabled}
-              onValueChange={togglePedometer}
-              trackColor={SWITCH_COLORS}
-              thumbColor="#FFFFFF"
-              accessibilityLabel="Встроенный шагомер"
-            />
           </View>
-        </View>
+        )}
 
         <View className={row}>
           <Camera size={22} color="#a78bfa" />

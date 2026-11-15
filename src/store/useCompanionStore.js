@@ -3,16 +3,16 @@
 // ═══════════════════════════════════════════════════════════════
 //  Каталог из 5 помощников-медведей. Пользователь выбирает одного
 //  на онбординге (Кедр/Кира бесплатные, Фит доступен с триала).
-//  Помощник определяет тон пинков (bear/spicy), системный промпт
-//  ИИ-чата, пулы фраз для уведомлений и аватарку в UI.
+//  Помощник определяет тон пинков (pokeStyle: soft/bear/spicy),
+//  системный промпт ИИ-чата, пулы фраз для уведомлений и аватарку в UI.
 //
 //  Иерархия помощников:
 //   FREE:
 //    • Кедр    — мальчик, зелёный, повязка. Тон bear: тёплый, подкалывает
-//    • Кира    — девочка, розовая. Тон bear: мягкая, заботливая
+//    • Кира    — девочка, розовая. Тон soft: мягкая, спокойные напоминания
 //   PREMIUM (с покупки):
 //    • Топаз   — мальчик, шорты/худи. Тон bear+: расширенные фразы
-//    • Бусинка — девочка, шорты/худи. Тон bear+: расширенные фразы
+//    • Бусинка — девочка, шорты/худи. Тон soft: мягко, с женским теплом
 //   PRO (с триала):
 //    • Фит     — мальчик, чёрный, шейкер. Тон spicy: прямой, с перцем
 //
@@ -39,6 +39,7 @@ export const COMPANIONS = [
     name: 'Кедр',
     gender: 'm',
     tier: 'free',
+    pokeStyle: 'bear',
     emoji: '🐻',
     image: KEDR_IMG,
     color: '#10B981',
@@ -51,6 +52,7 @@ export const COMPANIONS = [
     name: 'Кира',
     gender: 'f',
     tier: 'free',
+    pokeStyle: 'soft',
     emoji: '🐻',
     image: KIRA_IMG,
     color: '#EC4899',
@@ -63,6 +65,7 @@ export const COMPANIONS = [
     name: 'Топаз',
     gender: 'm',
     tier: 'premium',
+    pokeStyle: 'bear',
     emoji: '🐻',
     image: TOPAZ_IMG,
     color: '#059669',
@@ -75,6 +78,7 @@ export const COMPANIONS = [
     name: 'Бусинка',
     gender: 'f',
     tier: 'premium',
+    pokeStyle: 'soft',
     emoji: '🐻',
     image: BUSINKA_IMG,
     color: '#DB2777',
@@ -87,6 +91,7 @@ export const COMPANIONS = [
     name: 'Фит',
     gender: 'm',
     tier: 'pro',
+    pokeStyle: 'spicy',
     emoji: '🐻',
     image: FIT_IMG,
     color: '#1F2937',
@@ -129,6 +134,16 @@ export const useCompanionStore = create(
       getCurrentStyle: () => {
         const c = get().getCurrent()
         return c?.tier === 'pro' ? 'spicy' : 'bear'
+      },
+
+      // Тон пинков УВЕДОМЛЕНИЙ — теперь у каждого медведя свой, отдельная
+      // настройка «Стиль пинков» убрана (отзыв Кати 16.11: «нужен ли блок
+      // стиль пинков? если это уже настраивается у медведей, либо объединить
+      // в медведи»). Мягко — Кира и Бусинка, с перцем — Фит, с характером —
+      // остальные. прежнее поле reminder.meals.style больше не читается
+      getPokeStyle: () => {
+        const c = get().getCurrent()
+        return c?.pokeStyle || 'bear'
       },
     }),
     {

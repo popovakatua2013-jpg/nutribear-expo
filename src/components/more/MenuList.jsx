@@ -8,13 +8,17 @@
 //                виджеты переиспользуются в режиме embedded. Вариант
 //                с toggle — строка-переключатель (как в iOS): тап по
 //                строке двигает тумблер, шеврона и раскрытия нет.
-//   MiniToggle — компактный тумблер вкл/выкл (для строк и плиток)
-//   PillPicker — ряд пилюль-чипов с выбором одного значения (стиль
-//                пинков, дни недели, интервал воды, порог мишки)
+//   MiniToggle — компактный тумблер вкл/выкл (для строк и плиток);
+//                переключение даёт вибро-отклик (если включён тумблер
+//                «Вибро-отклик» — отзыв Кати 16.11: тумблер «нигде
+//                не применяется» — теперь отклик слышен во всём меню)
+//   PillPicker — ряд пилюль-чипов с выбором одного значения (дни недели,
+//                интервал воды, порог мишки, дни командировки)
 
 import { Children, cloneElement, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
+import { hapticFeedback } from '@/lib/haptics'
 
 // Секция меню: заголовок-ярлык + скруглённый контейнер со строками.
 // Разделители между строками добавляются автоматически (первая — без).
@@ -46,7 +50,10 @@ export function MenuGroup({ title, children }) {
 export function MiniToggle({ value, onChange, label }) {
   return (
     <Pressable
-      onPress={() => onChange(!value)}
+      onPress={() => {
+        hapticFeedback('selection')
+        onChange(!value)
+      }}
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
       accessibilityLabel={label}
@@ -72,7 +79,10 @@ export function PillPicker({ options, value, onChange, accessibilityLabel }) {
         return (
           <Pressable
             key={String(o.key)}
-            onPress={() => onChange(o.key)}
+            onPress={() => {
+              hapticFeedback('selection')
+              onChange(o.key)
+            }}
             accessibilityRole="button"
             accessibilityLabel={o.a11y || o.label}
             accessibilityState={{ selected: active }}
@@ -122,10 +132,16 @@ export function MenuRow({
   }
 
   const handlePress = toggle
-    ? () => toggle.onChange(!toggle.value)
+    ? () => {
+        hapticFeedback('selection')
+        toggle.onChange(!toggle.value)
+      }
     : onPress
       ? onPress
-      : () => setOpen(!open)
+      : () => {
+          hapticFeedback('light')
+          setOpen(!open)
+        }
 
   return (
     <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-white/[0.06]' : ''}>

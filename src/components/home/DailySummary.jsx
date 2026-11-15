@@ -79,6 +79,24 @@ const SW = 9
 const R = (RING - SW) / 2
 const C = 2 * Math.PI * R
 
+// Ручные метки окна «Особый день»: только командировка и праздник
+// (отзыв Кати 16.11: «повышенный колораж должен быть только в
+// менструальный цикл» — прибавка для менструации приходит ИЗ трекера
+// цикла автоматически и вручную не ставится, поэтому опции «Менструация»
+// в окне больше нет). Командировка отмечается на несколько дней сразу
+const MANUAL_DAY_TYPES = ['trip', 'holiday']
+// На сколько дней можно отметить командировку (отзыв Кати: пользователь
+// должен указать, на сколько дней командировка, чтобы рассчитать колораж)
+const TRIP_DAYS = [1, 2, 3, 5, 7, 10, 14]
+
+// Сдвиг ключа дня 'ГГГГ-ММ-ДД' на n дней (локальная дата, как dayKeyOf)
+function shiftDayKey(key, n) {
+  const d = new Date(`${key}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  const p = (x) => String(x).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
 // Нормы нутриентов от дневной нормы калорий
 function macroTargets(kcal) {
   return {
@@ -304,8 +322,17 @@ export function DailySummary({
   const todayKeyStr = cycleDayKeyOf()
   const [markOpen, setMarkOpen] = useState(false)
   const markMeta = dayMark ? DAY_TYPES[dayMark.type] : null
+  // Шаг «на сколько дней?» для командировки: после тапа по строке
+  // командировки окно не закрывается — под строкой пилюли выбора дней
+  const [tripDaysOpen, setTripDaysOpen] = useState(false)
 
   function pickDayMark(type) {
+    // Командировка — сразу выбор длительности (сколько дней), метка
+    // ставится на все дни диапазона кнопкой
+    if (type === 'trip') {
+      setTripDaysOpen(true)
+      return
+    }
     const same = dayMark && dayMark.type === type && !dayMark.auto
     setDayMark(todayKeyStr, same ? null : type)
     setMarkOpen(false)
@@ -319,6 +346,40 @@ export function DailySummary({
         description: plus > 0 ? `Норма дня: +${formatNum(plus)} ккал к вашей цели` : 'Норма дня без прибавки (прибавка = 0)',
       })
     }
+  }
+
+  // Отметить командировку на n дней начиная с сегодняшнего: метка
+  // ставится на весь диапазон — колораж (+прибавка) работает каждый день
+  function applyTripDays(n) {
+    for (let i = 0; i < n; i++) setDayMark(shiftDayKey(todayKeyStr, i), 'trip')
+    setTripDaysOpen(false)
+    setMarkOpen(false)
+    const plus = dayDeltas.trip || 0
+    toast({
+      title: `✈️ Командировка на ${n} ${pluralDays(n)}`,
+      description:
+        plus > 0
+          ? `Норма каждого дня: +${formatNum(plus)} ккал к вашей цели`
+          : 'Норма дня без прибавки (прибавка = 0)',
+    })
+  }
+
+  // Снять ручную метку: командировка — весь подряд идущий диапазон,
+  // начиная с сегодняшнего дня; остальное — только сегодняшний день
+  function clearManualMark() {
+    if (dayMark && dayMark.type === 'trip') {
+      const marks = useDayTypesStore.getState().marks
+      let i = 0
+      while (marks[shiftDayKey(todayKeyStr, i)] === 'trip' && i < 62) {
+        setDayMark(shiftDayKey(todayKeyStr, i), null)
+        i++
+      }
+      toast({ title: '↩ Обычный день', description: `Командировка снята — ${i} ${pluralDays(i)} вернулись к базовой норме` })
+    } else {
+      setDayMark(todayKeyStr, null)
+      toast({ title: '↩ Обычный день', description: 'Метка снята — считаем по базовой норме' })
+    }
+    setMarkOpen(false)
   }
 
   // Окно правки своих норм нутриентов (карандашик в строке нутриентов)
@@ -574,7 +635,7 @@ export function DailySummary({
         accessibilityLabel={
           dayMark
             ? `Особый день: ${markMeta.label}, норма ${formatNum(target)} килокалорий. Нажмите, чтобы изменить`
-            : 'Отметить особый день: менструация, командировка или праздник'
+            : 'Отметить особый день: командировка или праздник'
         }
         className={`mt-2.5 flex-row items-center gap-1.5 self-center rounded-full px-3.5 py-2 active:opacity-75 ${
           dayMark ? '' : 'border border-dashed border-[#A45BFF]/60 bg-[#A45BFF]/10'
@@ -722,10 +783,12 @@ export function DailySummary({
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Окно «Особый день»: выбор типа дня; выбранный подсвечен своим
-          цветом с галочкой. Дни менструации приходят из трекера цикла
-          автоматически (footnote), командировку и праздник отмечает
-          сама. Прибавки правятся в «Ещё → Дневник питания» */}
+      {/* Окно «Особый день»: командировку и праздник отмечает сама.
+          Менструация — только из трекера цикла (отзыв Кати 16.11:
+          «повышенный колораж должен быть только в менструальный цикл»):
+          трекер включён — дни месячных отмечаются сами (строка ниже,
+          тапать нельзя), трекер выключен — опции нет вовсе. Прибавки
+          правятся карандашиком (как в «Ещё → Дневник питания») */}
       <Modal
         visible={markOpen}
         transparent
@@ -753,9 +816,56 @@ export function DailySummary({
               </Pressable>
             </View>
             <View className="mt-3 gap-2">
-              {Object.keys(DAY_TYPES).map((t) => {
+              {/* Менструация — только авто из трекера (не тапается):
+                  прибавка калоража работает только в отмеченные трекером дни */}
+              {dayMark && dayMark.type === 'cycle' && (
+                <View
+                  className="flex-row items-center gap-2.5 rounded-2xl border px-3 py-2.5"
+                  style={{
+                    borderColor: `${DAY_TYPES.cycle.color}66`,
+                    backgroundColor: `${DAY_TYPES.cycle.color}1A`,
+                  }}
+                  accessibilityLabel={
+                    dayMark.auto
+                      ? 'Менструация отмечена автоматически по трекеру цикла'
+                      : 'Менструация отмечена вручную ранее'
+                  }
+                >
+                  <Text className="text-[21px]">{DAY_TYPES.cycle.emoji}</Text>
+                  <View className="min-w-0 flex-1">
+                    <Text className="font-bold text-[16px] text-bear-text">{DAY_TYPES.cycle.label}</Text>
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={MAX}
+                      className="font-sans text-[13px] text-bear-sub2"
+                    >
+                      {dayMark.auto ? 'отмечается сама по трекеру цикла' : 'отмечена вручную — снять можно ниже'}
+                    </Text>
+                  </View>
+                  {/* Карандашик — править прибавку для дней менструации */}
+                  <Pressable
+                    onPress={() => openDeltaEdit('cycle')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Изменить прибавку для менструации"
+                    hitSlop={8}
+                    className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+                  >
+                    <Pencil size={14} color="#AEB9D9" />
+                  </Pressable>
+                  <View
+                    className="h-6 w-6 shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${DAY_TYPES.cycle.color}33` }}
+                  >
+                    <Check size={14} color={DAY_TYPES.cycle.color} />
+                  </View>
+                </View>
+              )}
+
+              {/* Ручные метки: командировка и праздник. Выбранный
+                  подсвечен своим цветом с галочкой */}
+              {MANUAL_DAY_TYPES.map((t) => {
                 const meta = DAY_TYPES[t]
-                const active = dayMark && dayMark.type === t
+                const active = dayMark && dayMark.type === t && !dayMark.auto
                 return (
                   <Pressable
                     key={t}
@@ -777,7 +887,9 @@ export function DailySummary({
                         maxFontSizeMultiplier={MAX}
                         className="font-sans text-[13px] text-bear-sub2"
                       >
-                        {`+${formatNum(dayDeltas[t] || 0)} ккал к норме`}
+                        {t === 'trip'
+                          ? `+${formatNum(dayDeltas[t] || 0)} ккал к норме · на несколько дней`
+                          : `+${formatNum(dayDeltas[t] || 0)} ккал к норме`}
                       </Text>
                     </View>
                     {/* Карандашик — правка прибавки прямо здесь (отзыв
@@ -803,16 +915,51 @@ export function DailySummary({
                   </Pressable>
                 )
               })}
+
+              {/* Командировка: сколько дней? — пилюли под строкой
+                  командировки (отзыв Кати 16.11: пользователь должен
+                  указать, на сколько дней командировка, чтобы рассчитать
+                  колораж). Метка ставится на весь диапазон */}
+              {tripDaysOpen && (
+                <View className="gap-2 rounded-2xl border border-[#38BDF8]/40 bg-[#38BDF8]/10 p-3">
+                  <Text
+                    maxFontSizeMultiplier={MAX}
+                    className="font-bold text-[15px] text-bear-text"
+                  >
+                    ✈️ На сколько дней командировка?
+                  </Text>
+                  <View className="flex-row flex-wrap gap-1.5">
+                    {TRIP_DAYS.map((n) => (
+                      <Pressable
+                        key={n}
+                        onPress={() => applyTripDays(n)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Отметить командировку на ${n} ${pluralDays(n)}`}
+                        className="rounded-full bg-white/[0.08] px-3 py-1.5 active:opacity-70"
+                      >
+                        <Text className="font-semibold text-[14px] text-bear-text">
+                          {n === 1 ? '1 день' : `${n} дн`}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  <Pressable
+                    onPress={() => setTripDaysOpen(false)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Отмена выбора дней командировки"
+                    className="self-start"
+                    hitSlop={6}
+                  >
+                    <Text className="font-sans text-[13.5px] text-bear-sub2">Отмена</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
-            {/* Снять ручную метку (авто-день цикла кнопкой не убирается —
-                он считается из трекера) */}
+            {/* Снять ручную метку: командировка — весь диапазон; авто-день
+                цикла кнопкой не убирается — он считается из трекера */}
             {dayMark && !dayMark.auto && (
               <Pressable
-                onPress={() => {
-                  setDayMark(todayKeyStr, null)
-                  setMarkOpen(false)
-                  toast({ title: '↩ Обычный день', description: 'Метка снята — считаем по базовой норме' })
-                }}
+                onPress={clearManualMark}
                 accessibilityRole="button"
                 accessibilityLabel="Вернуть обычный день"
                 className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-white/5 py-2.5 active:opacity-70"

@@ -1,44 +1,44 @@
 // Экран «Ещё» — компактное групповое меню (как в настройках iOS и в
-// «Ещё» у MyFitnessPal/Yazio). Структура по отзывам Кати:
+// «Ещё» у MyFitnessPal/Yazio). Структура по отзывам Кати (перестройка
+// 16.11: «напоминания в одном месте», «не 100 строк и выбора»):
 //   Герой-профиль:   аватар, рост • вес, тап — редактирование
-//   ЗДОРОВЬЕ:        Цикл / Сон / Время пинка
-//   ДНЕВНИК:         Напоминания / Начать новый день
-//                    («Мои цели» удалена — цели живут на вкладке «План»,
-//                    дублировать больше не будем — отзыв Кати 09.11)
+//   ПРИВЫЧКИ:        Привычки / Виджет дня
+//   ЗДОРОВЬЕ:        Цикл / Шаги и здоровье (переехало из ПРИЛОЖЕНИЯ —
+//                    это здоровье, а не настройка приложения)
+//   ПОМОЩНИК:        Напарник (стиль пинков теперь у медведей — отдельный
+//                    блок «Стиль пинков» удалён, отзыв Кати 16.11)
+//   НАПОМИНАНИЯ:     один блок: тренировка, вода, взвешивание, еда, сон,
+//                    мишка пинает, вибро-отклик (дубли «Сон» и «Время
+//                    пинка» из ЗДОРОВЬЯ удалены — управляли теми же
+//                    полями стора, что и строки блока)
+//   ДНЕВНИК:         Начать новый день
 //   ПОДДЕРЖКА:       Поддержка и помощь — тап сразу открывает окно
-//                    «Написать нам» (отзыв Кати от 10.11: «да, сразу
-//                    открывалась»; кнопки-темы и адрес из строки
-//                    убраны — выбор темы в самом окне)
-//   ПРИЛОЖЕНИЕ:      Дневник питания / Шаги и здоровье / Вибрация /
-//                    Стиль пинков / Напоминание мишки / Приватность
-//                    (подсказки «экспорт · копия» и «политика ·
-//                    соглашение» убраны — обрезались в строке)
+//                    «Написать нам»
+//   ПРИЛОЖЕНИЕ:      Дневник питания / Приватность и данные
+//                    («Вибрация», «Стиль пинков», «Напоминание мишки»
+//                    переехали в блок НАПОМИНАНИЯ)
 //   Внизу — как в стандартных приложениях: три правовых документа
-//   отдельными строками (тап — экран с названием в шапке и текстом),
-//   красная строка «Стереть все данные» и строка версии с ID сборки
-//   (как в чужом приложении по скринам Кати от 10.11; строка
-//   «О приложении» удалена — версия теперь внизу экрана).
-// Тумблер «Вибрация»: при включении сразу короткая вибрация — видно
-// и слышно, что настройка работает (отзыв Кати 09.11).
+//   отдельными строками, красная строка «Стереть все данные» и строка
+//   версии с ID сборки.
+// Тумблер «Вибро-отклик» теперь реально управляет вибрацией всего
+// приложения — все касания идут через lib/haptics.js (отзыв Кати:
+// «если положение включено это не где не применяется»). Тумблер и
+// «Мишка пинает» живут в NotificationsSection (строка «Напоминания»).
 // Дубли удалены (отзыв Кати: «данные и статистику удалить — дубль»):
 // «Данные» и «Статистика» показывают то же, что вкладки Тело и
 // Активность. «Возвращать калории» — только в «Дневнике питания».
-// Напоминания — раскрывающийся список: тренировка, вода, взвешивание,
-// еда, сон — тумблер вкл/выкл и окно времени, без подсказок.
 // Хэш сборки для проверки обновления — в строке «ID: …» внизу экрана.
 // Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
 
 import { useEffect, useState } from 'react'
 import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as Haptics from 'expo-haptics'
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { Settings } from 'lucide-react-native'
-import { MenuGroup, MenuRow, PillPicker } from '@/components/more/MenuList'
+import { MenuGroup, MenuRow } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { CycleCard } from '@/components/more/CycleCard'
-import { SleepDashboardCard, KickTimeCard } from '@/components/more/PokeCards'
 import { NotificationsSection } from '@/components/more/NotificationsSection'
 import { SupportModal } from '@/components/more/SupportModal'
 import { DiarySettingsCard } from '@/components/more/DiarySettingsCard'
@@ -52,21 +52,10 @@ import { BodyChip } from '@/components/ui/BodyChip'
 import { useCycleStore, daysToNext } from '@/store/useCycleStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
-import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useCompanionStore } from '@/store/useCompanionStore'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
-
-// Стиль пинков медведя: мягко / с характером (дефолт) / с перцем
-const STYLE_LABEL = { soft: 'Мягко', bear: 'С характером', spicy: 'С перцем' }
-const STYLE_OPTIONS = [
-  { key: 'soft', label: 'Мягко' },
-  { key: 'bear', label: 'С характером 🐻' },
-  { key: 'spicy', label: 'С перцем 🌶' },
-]
-// Порог «Напоминания мишки»: сколько дней без записи веса
-const NUDGE_OPTIONS = [5, 7, 10].map((n) => ({ key: n, label: `${n} дней` }))
 
 // Версия приложения из app.json — строкой внизу экрана «Ещё»
 // (как в чужом приложении по скрину Кати: «Версия …» + «ID: …»)
@@ -110,18 +99,15 @@ export default function MoreScreen() {
           ? 'ожидается сегодня'
           : `через ${left} дн`
 
-  // Напоминания: сколько включено (вода, еда, взвешивание, тренировка, сон)
+  // Напоминания: сколько включено (вода, еда, взвешивание, тренировка, сон).
+  // Значение строки «Напоминания» — счётчик не считает вибро-отклик и
+  // «Мишку» (они не пушат уведомления по расписанию)
   const reminder = useActivityStore((s) => s.reminder)
-  const setReminder = useActivityStore((s) => s.setReminder)
   const sleep = reminder?.sleep || { enabled: false, time: '22:30' }
   const exercise = reminder?.exercise || { enabled: false, time: '18:00' }
-  const meals =
-    reminder?.meals ||
-    { enabled: false, breakfast: '09:00', lunch: '13:00', dinner: '19:00', style: 'bear' }
-  const mealStyle = meals.style === 'soft' ? 'soft' : meals.style === 'spicy' ? 'spicy' : 'bear'
   const remCount = [
     reminder?.enabled,
-    meals.enabled,
+    reminder?.meals?.enabled,
     reminder?.weigh?.enabled,
     exercise.enabled,
     sleep.enabled,
@@ -133,20 +119,6 @@ export default function MoreScreen() {
   // Шаги и здоровье: что подключено
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
   const healthConnectEnabled = useActivityStore((s) => s.healthConnectEnabled)
-
-  // Вибро-отклик, стиль пинков и порог «Напоминания мишки»
-  const haptics = useUiPrefsStore((s) => s.haptics)
-  const setHaptics = useUiPrefsStore((s) => s.setHaptics)
-  // Включили тумблер — тут же короткая вибрация: настройку можно
-  // проверить, не отходя от строки (отзыв Кати)
-  const changeHaptics = (v) => {
-    setHaptics(v)
-    if (v) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
-    }
-  }
-  const weighNudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
-  const setWeighNudgeDays = useUiPrefsStore((s) => s.setWeighNudgeDays)
 
   // Помощник: имя текущего напарника для строки меню
   const companion = useCompanionStore((s) =>
@@ -205,7 +177,10 @@ export default function MoreScreen() {
           />
         </MenuGroup>
 
-        {/* ── ЗДОРОВЬЕ ────────────────────────────────────────────────── */}
+        {/* ── ЗДОРОВЬЕ: Цикл и Шаги — здоровье, а не настройка приложения
+               («Шаги и здоровье» переехало из ПРИЛОЖЕНИЯ; «Сон» и «Время
+               пинка» из ЗДОРОВЬЯ удалены — это напоминания, они в одном
+               блоке ниже; отзыв Кати 16.11) ─────────────────────────────── */}
         <MenuGroup title="ЗДОРОВЬЕ">
           <MenuRow
             icon="🌸"
@@ -216,20 +191,18 @@ export default function MoreScreen() {
             <CycleCard embedded />
           </MenuRow>
           <MenuRow
-            icon="🌙"
-            iconBg="rgba(129,140,248,0.16)"
-            title="Сон"
-            value={sleep.enabled ? sleep.time : 'выкл'}
+            icon="👟"
+            iconBg="rgba(56,189,248,0.16)"
+            title="Шаги и здоровье"
+            value={
+              pedometerEnabled
+                ? 'шагомер вкл'
+                : healthConnectEnabled
+                  ? 'Health Connect'
+                  : 'выключено'
+            }
           >
-            <SleepDashboardCard embedded />
-          </MenuRow>
-          <MenuRow
-            icon="👣"
-            iconBg="rgba(167,139,250,0.16)"
-            title="Время пинка"
-            value={exercise.enabled ? exercise.time : 'выкл'}
-          >
-            <KickTimeCard embedded />
+            <SyncCard embedded />
           </MenuRow>
         </MenuGroup>
 
@@ -245,8 +218,11 @@ export default function MoreScreen() {
           </MenuRow>
         </MenuGroup>
 
-        {/* ── ДНЕВНИК («Мои цели» теперь только на вкладке «План») ─── */}
-        <MenuGroup title="ДНЕВНИК">
+        {/* ── НАПОМИНАНИЯ: всё в одном блоке (отзыв Кати 16.11:
+               «Время пинка, напоминание мишки, напоминание, стиль
+               пинков — объединить… компактно и все в одном месте») —
+               тренировка/вода/взвешивание/еда/сон + мишка и вибрация ── */}
+        <MenuGroup title="НАПОМИНАНИЯ">
           <MenuRow
             icon="🔔"
             iconBg="rgba(251,191,36,0.16)"
@@ -257,6 +233,10 @@ export default function MoreScreen() {
           >
             <NotificationsSection />
           </MenuRow>
+        </MenuGroup>
+
+        {/* ── ДНЕВНИК ─────────────────────────────────────────────────── */}
+        <MenuGroup title="ДНЕВНИК">
           <MenuRow
             icon="🌅"
             iconBg="rgba(251,146,60,0.16)"
@@ -278,7 +258,9 @@ export default function MoreScreen() {
           />
         </MenuGroup>
 
-        {/* ── ПРИЛОЖЕНИЕ ──────────────────────────────────────────────── */}
+        {/* ── ПРИЛОЖЕНИЕ: Дневник питания + Приватность. «Вибрация»,
+               «Стиль пинков» и «Напоминание мишки» переехали в блок
+               НАПОМИНАНИЯ; стиль пинков вообще стал свойством медведя ── */}
         <MenuGroup title="ПРИЛОЖЕНИЕ">
           <MenuRow
             icon="🍽"
@@ -287,52 +269,6 @@ export default function MoreScreen() {
             value={countBurned ? 'возврат ккал' : 'строгий остаток'}
           >
             <DiarySettingsCard embedded />
-          </MenuRow>
-          <MenuRow
-            icon="👟"
-            iconBg="rgba(56,189,248,0.16)"
-            title="Шаги и здоровье"
-            value={
-              pedometerEnabled
-                ? 'шагомер вкл'
-                : healthConnectEnabled
-                  ? 'Health Connect'
-                  : 'выключено'
-            }
-          >
-            <SyncCard embedded />
-          </MenuRow>
-          <MenuRow
-            icon="📳"
-            iconBg="rgba(167,139,250,0.16)"
-            title="Вибрация"
-            toggle={{ value: haptics, onChange: changeHaptics, label: 'Вибро-отклик' }}
-          />
-          <MenuRow
-            icon="🐻"
-            iconBg="rgba(139,92,246,0.16)"
-            title="Стиль пинков"
-            value={STYLE_LABEL[mealStyle]}
-          >
-            <PillPicker
-              options={STYLE_OPTIONS}
-              value={mealStyle}
-              onChange={(k) => setReminder({ meals: { ...meals, style: k } })}
-              accessibilityLabel="Стиль напоминаний"
-            />
-          </MenuRow>
-          <MenuRow
-            icon="🐾"
-            iconBg="rgba(251,191,36,0.16)"
-            title="Напоминание мишки"
-            value={`через ${weighNudgeDays} дн`}
-          >
-            <PillPicker
-              options={NUDGE_OPTIONS}
-              value={weighNudgeDays}
-              onChange={setWeighNudgeDays}
-              accessibilityLabel="Через сколько дней напомнить о весе"
-            />
           </MenuRow>
           <MenuRow
             icon="🛡"

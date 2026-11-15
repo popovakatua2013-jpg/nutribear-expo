@@ -1,9 +1,13 @@
-// Шаги и здоровье: Google Fit, Apple Health, Health Connect и встроенный
-// шагомер. Шагомер настоящий: expo-sensors Pedometer читает системный
-// счётчик шагов (агент src/lib/pedometer.js опрашивает его раз в минуту).
-// Health Connect (Android) — системный «банк здоровья»: шаги собираются
-// в фоне даже при закрытом приложении, с историей и часами/браслетами.
-// Тумблеры внешних сервисов пока сохраняются локально.
+// Шаги и здоровье: источники — ПО ПЛАТФОРМЕ (отзыв Кати 16.11:
+// «чтобы считывалось какой телефон и уже от этого показывать ему
+// функцию которой он может пользоваться»): на Android — Health Connect
+// и встроенный шагомер (Google Fit устарел, его тумблер путал),
+// на iOS — Apple Health и встроенный шагомер, на web — ничего
+// внешнего (шагомер не читается). Шагомер настоящий: expo-sensors
+// Pedometer читает системный счётчик шагов (агент src/lib/pedometer.js
+// опрашивает его раз в минуту). Health Connect (Android) — системный
+// «банк здоровья»: шаги собираются в фоне даже при закрытом
+// приложении, с историей и часами/браслетами.
 // Длинное пояснение в сноске (офлайн, шагомер, Health Connect) убрано
 // по отзыву Кати («если эти данные по закону нужны — перепиши их в
 // документы»): хранение данных теперь описано в документе «Политика
@@ -30,10 +34,15 @@ import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings, openAppSettings } from '@/lib/appSettings'
 
-const ROWS = [
-  { key: 'gfit', label: 'Google Fit', hint: 'шаги и тренировки (Android)' },
-  { key: 'ahealth', label: 'Apple Health', hint: 'шаги и тренировки (iOS)' },
-]
+// Источники шагов по платформе: Android — только Health Connect
+// (строка ниже, не в ROWS), iOS — Apple Health; встроенный шагомер
+// общий для телефона (на web не читается — строка скрыта)
+const IS_ANDROID = Platform.OS === 'android'
+const IS_IOS = Platform.OS === 'ios'
+const IS_WEB = Platform.OS === 'web'
+const ROWS = IS_IOS
+  ? [{ key: 'ahealth', label: 'Apple Health', hint: 'шаги и тренировки с телефона и часов' }]
+  : []
 
 // Единый акцент всех переключателей — #7B6CF6 (унификация цвета
 // по отзыву Кати от 11.11)
@@ -196,26 +205,29 @@ export function SyncCard({ embedded = false }) {
         </View>
       )}
 
-      <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
-        <View className="min-w-0 flex-1">
-          <View className="flex-row items-center gap-1.5">
-            <Footprints size={18} color="#EEF2FB" />
-            <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
+      {/* Встроенный шагомер — только на телефоне (на web датчика нет) */}
+      {!IS_WEB && (
+        <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+          <View className="min-w-0 flex-1">
+            <View className="flex-row items-center gap-1.5">
+              <Footprints size={18} color="#EEF2FB" />
+              <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
+            </View>
+            <Text className="font-sans text-[15px] text-bear-sub2">
+              {pedometerEnabled
+                ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
+                : 'считает шаги сам, плюс ручные добавления'}
+            </Text>
           </View>
-          <Text className="font-sans text-[15px] text-bear-sub2">
-            {pedometerEnabled
-              ? `сегодня с датчика: ${pedometerSteps} шагов + ручные`
-              : 'считает шаги сам, плюс ручные добавления'}
-          </Text>
+          <Switch
+            value={pedometerEnabled}
+            onValueChange={togglePedometer}
+            trackColor={SWITCH_COLORS}
+            thumbColor="#FFFFFF"
+            accessibilityLabel="Встроенный шагомер"
+          />
         </View>
-        <Switch
-          value={pedometerEnabled}
-          onValueChange={togglePedometer}
-          trackColor={SWITCH_COLORS}
-          thumbColor="#FFFFFF"
-          accessibilityLabel="Встроенный шагомер"
-        />
-      </View>
+      )}
     </View>
   )
 

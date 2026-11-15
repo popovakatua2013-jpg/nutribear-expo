@@ -11,8 +11,12 @@ export const useUiPrefsStore = create(
   persist(
     (set) => ({
       expanded: {}, // { [storageKey]: true|false }
-      haptics: true, // вибро-отклик в приложении (тап по кольцу ИМТ и т.д.)
+      haptics: true, // вибро-отклик в приложении (меню, тумблеры, плеер, ИМТ)
       weighNudgeDays: 7, // порог напоминания мишки о взвешивании (5/7/10 дней)
+      // Само напоминание мишки: можно выключить целиком (тумблер в блоке
+      // «Напоминания» — отзыв Кати 16.11: один компактный блок вместо
+      // разбросанных строк). По умолчанию включено — как раньше
+      weighNudgeOn: true,
       // Ключ закрытой крестиком золотой карточки «Цель по весу достигнута»
       // («дата достижения|цель в кг»): переживёт перезапуск, а при смене
       // цели ключ изменится и карточка покажется снова
@@ -45,6 +49,8 @@ export const useUiPrefsStore = create(
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
 
       setHaptics: (value) => set({ haptics: !!value }),
+
+      setWeighNudgeOn: (value) => set({ weighNudgeOn: !!value }),
 
       setWeighNudgeDays: (n) =>
         set({ weighNudgeDays: [5, 7, 10].includes(n) ? n : 7 }),

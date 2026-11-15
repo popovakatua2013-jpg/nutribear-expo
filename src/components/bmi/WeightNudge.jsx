@@ -1,8 +1,8 @@
 // Мягкое напоминание мишки во вкладке Тело: если вес не записывался
-// дольше порога из настроек («Ещё» → «Напоминание мишки», 5/7/10 дней) —
-// тонкая полоска над «Динамикой веса» с медвежонком.
+// дольше порога из настроек (блок «Напоминания» → строка «Мишка пинает»:
+// тумблер + порог 5/7/10 дней) — тонкая полоска над «Динамикой веса».
 // Тап по полоске открывает окно записи веса. Пока вес свежий — полоски
-// нет вовсе, ничего не давит.
+// нет вовсе, ничего не давит. Тумблер выключен — полоски нет вообще.
 
 import { DeviceEventEmitter, Image, Pressable, Text, View } from 'react-native'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -14,10 +14,13 @@ const BEAR = require('../../../assets/images/bear.webp')
 
 export function WeightNudge() {
   const weights = useProfileStore((s) => s.weights)
-  // Порог настраивается в «Ещё» (карточка «Напоминание мишки»): 5/7/10 дней
+  // Тумблер и порог — из блока «Напоминания» на «Ещё» (строка «Мишка пинает»)
+  const nudgeOn = useUiPrefsStore((s) => s.weighNudgeOn !== false)
   const nudgeDays = useUiPrefsStore((s) => s.weighNudgeDays || 7)
 
-  // Нет записей — напоминать не о чем (вес только что заведён в онбординге)
+  // Выключено тумблером или нечего напоминать (вес только что заведён
+  // в онбординге)
+  if (!nudgeOn) return null
   if (!weights.length || !weights[0]?.date) return null
   const days = daysSince(weights[0].date)
   if (!(days > nudgeDays)) return null

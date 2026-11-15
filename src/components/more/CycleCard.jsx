@@ -1,7 +1,10 @@
 // Карточка «Цикл» на «Ещё» (редизайн по шаблону Катиного референса:
 // кольцо «7 дней / до след. цикла» слева, подписи справа, тап раскрывает
-// настройку). Внутри — прежние контролы: тумблер, длина цикла и месячных,
-// отметка начала последних месячных (степперы −/+ + «Началось сегодня»).
+// настройку). Внутри — тумблер, пресеты длины цикла, отметка начала
+// последних месячных (степперы −/+ + «Началось сегодня»).
+// Отзыв Кати 16.11: подпись «Включить трекер» и сноска «Без медицины…»
+// убраны (очевидно из тумблера; медицина — в дисклеймере), пилюля
+// «Включить» при выключенном трекере удалена — включение тумблером.
 // Без медицинских рекомендаций — только фазы, прогноз и мягкие подсказки.
 // Данные хранятся только на устройстве.
 // Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки и
@@ -183,22 +186,19 @@ export function CycleCard({ embedded = false }) {
   }
 
   // Настройка трекера: тумблер + степперы + удаление. В обычном режиме —
-  // по тапу на шапку, во встроенном — всегда (раскрытие на MenuRow)
+  // по тапу на шапку, во встроенном — всегда (раскрытие на MenuRow).
+  // Отзыв Кати 16.11: подпись «Включить трекер» и сноска «Без медицины…»
+  // занимают место — «и так понятно что делает тумблер», а «без медицины»
+  // уже есть в медицинском дисклеймере. Остался только тумблер
   const settingsBlock = (
     <View>
-      <View className="flex-row items-center justify-between gap-2">
-        <View className="min-w-0 flex-1">
-          <Text className="font-semibold text-[15px] text-bear-text">Включить трекер</Text>
-          <Text className="mt-0.5 font-sans text-[12.5px] leading-[17px] text-bear-sub">
-            Без медицины. Данные — только на этом телефоне.
-          </Text>
-        </View>
+      <View className="flex-row items-center justify-end">
         <Switch
           value={enabled}
           onValueChange={setEnabled}
           trackColor={SWITCH_COLORS}
           thumbColor="#fff"
-          accessibilityLabel="Включить трекер цикла"
+          accessibilityLabel="Трекер цикла вкл/выкл"
         />
       </View>
 
@@ -299,56 +299,36 @@ export function CycleCard({ embedded = false }) {
   )
 
   // Пилюли — как на шаблоне: быстрые пресеты длины цикла (активная
-  // подсвечена; точная подгонка — степпером внутри), а при выключенном
-  // трекере — одна яркая пилюля «Включить» прямо с карточки.
-  // Отступ слева — под колонку текста (кольцо 96px либо чип 44px)
-  const pillsRow = (
-    <View className={`mt-2.5 flex-row flex-wrap items-center gap-1.5 ${enabled ? 'pl-[126px]' : 'pl-[74px]'}`}>
-      {enabled ? (
-        [24, 28, 32].map((v) => {
-          const active = v === length
-          return (
-            <Pressable
-              key={v}
-              onPress={() => setSettings({ length: v })}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={`Длина цикла ${v} дней`}
-              hitSlop={4}
-              className="rounded-full px-2.5 py-1.5 active:opacity-80"
-              style={{ backgroundColor: active ? '#7B6CF6' : 'rgba(255,255,255,0.06)' }}
+  // подсвечена; точная подгонка — степпером внутри). При выключенном
+  // трекере пилюли нет: включение — тумблером под шапкой (отзыв Кати
+  // 16.11: дубль «Включить трекер» занимал место).
+  // Отступ слева — под колонку текста (кольцо 96px)
+  const pillsRow = enabled ? (
+    <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pl-[126px]">
+      {[24, 28, 32].map((v) => {
+        const active = v === length
+        return (
+          <Pressable
+            key={v}
+            onPress={() => setSettings({ length: v })}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`Длина цикла ${v} дней`}
+            hitSlop={4}
+            className="rounded-full px-2.5 py-1.5 active:opacity-80"
+            style={{ backgroundColor: active ? '#7B6CF6' : 'rgba(255,255,255,0.06)' }}
+          >
+            <Text
+              maxFontSizeMultiplier={1.05}
+              className={`font-semibold text-[12.5px] ${active ? 'text-white' : 'text-bear-dim'}`}
             >
-              <Text
-                maxFontSizeMultiplier={1.05}
-                className={`font-semibold text-[12.5px] ${active ? 'text-white' : 'text-bear-dim'}`}
-              >
-                {`${v} дн`}
-              </Text>
-            </Pressable>
-          )
-        })
-      ) : (
-        <Pressable
-          onPress={() => {
-            setEnabled(true)
-            toast({
-              title: '🌙 Трекер цикла включён',
-              description: 'Отметьте начало последних месячных — подсказки появятся сами',
-            })
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Включить трекер цикла"
-          hitSlop={4}
-          className="rounded-full px-3.5 py-1.5 active:opacity-80"
-          style={{ backgroundColor: 'rgba(244,114,182,0.16)' }}
-        >
-          <Text maxFontSizeMultiplier={1.1} className="font-bold text-[13px] text-[#F9A8D4]">
-            🌙 Включить трекер
-          </Text>
-        </Pressable>
-      )}
+              {`${v} дн`}
+            </Text>
+          </Pressable>
+        )
+      })}
     </View>
-  )
+  ) : null
 
   // Встроено в строку меню: шапка + пресеты + настройка (всегда раскрыта)
   if (embedded) {
