@@ -79,6 +79,22 @@ EXPO_PUBLIC_AI_PROXY_URL=https://nutribear-ai.ваш-аккаунт.workers.dev/
 
 ---
 
+## Обновление воркера (после первого деплоя)
+
+Код воркера меняется коммитами, но на Cloudflare он попадает только
+после повторного деплоя — он не запускается автоматически. На ПК, где
+уже выполнен `deploy-proxy.ps1`, обновление — один скрипт из корня
+проекта: `.\update-proxy.ps1` (git pull → `npx wrangler deploy` →
+проверка `/v1/status`). Секреты `AI_KEY` и `NB_SECRET` живут на
+Cloudflare и при деплое не сбрасываются — вводить их заново не нужно.
+
+Проверить, что живёт новая версия: откройте
+`https://nutribear-ai.popovakatua2013.workers.dev/v1/status` — ответ
+должен содержать `secret_required`, `key_set` и лимиты (у старой версии
+там только `{"ok":true,"service":"nutribear-ai"}`).
+
+---
+
 ## Проверка
 
 Откройте в браузере `https://nutribear-ai.ваш-аккаунт.workers.dev` —
