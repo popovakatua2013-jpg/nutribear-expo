@@ -100,7 +100,11 @@ export const useExerciseStore = create(
 
 // Сумма сожжённых калорий за день (только тренировки)
 export function dayBurned(logs, key) {
-  return (logs[key] || []).reduce((sum, e) => sum + (Number(e.kcal) || 0), 0)
+  // Страховка (регрессия 16.11 — виджет дня передал undefined вместо
+  // логов): не догидрированные логи — это пустой день (0 ккал),
+  // а не красный экран «Cannot convert undefined value to object»
+  const list = (logs && logs[key]) || []
+  return list.reduce((sum, e) => sum + (Number(e.kcal) || 0), 0)
 }
 
 // Вся активность за день: тренировки + шаги (≈ 0.04 ккал на шаг —

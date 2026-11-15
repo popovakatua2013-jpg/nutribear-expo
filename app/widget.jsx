@@ -17,6 +17,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
+import { dayKeyOf } from '@/store/useHistoryStore'
 import { totalConsumed } from '@/lib/data/diary'
 
 // Кольцо прогресса: SVG-подобный View с border + прозрачной серединой.
@@ -70,7 +71,10 @@ export default function WidgetScreen() {
   const entries = useFoodStore((s) => s.entries)
   const waterMl = useActivityStore((s) => s.waterMl)
   const steps = useActivityStore(selectTotalSteps)
-  const exercises = useExerciseStore((s) => s.exercises)
+  // Поле стора называется logs (регрессия 16.11: селектор s.exercises не
+  // существует — exercises приходил undefined, и totalBurned ронял экран
+  // красным «Cannot convert undefined value to object»)
+  const exLogs = useExerciseStore((s) => s.logs)
   const goals = useGoalsStore((s) => s.goals)
 
   // Тики обновления — раз в 30 сек перерисовываем цифры (на случай,
@@ -82,7 +86,9 @@ export default function WidgetScreen() {
   }, [])
 
   const eaten = totalConsumed(entries)
-  const burned = totalBurned(exercises)
+  // Вся активность за сегодня: тренировки за день + шаги — как на главной
+  // и «Активности» (второй аргумент — ключ дня, без него расчёт неверен)
+  const burned = totalBurned(exLogs, dayKeyOf(), steps)
   const kcalLeft = goals.kcal - eaten + burned
 
   const kcalPct = goals.kcal > 0 ? Math.round((eaten / goals.kcal) * 100) : 0
