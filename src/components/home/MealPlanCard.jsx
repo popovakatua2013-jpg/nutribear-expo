@@ -372,7 +372,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   function confirmRemove(meal) {
     Alert.alert(
       `Удалить «${meal.name}»?`,
-      'Записи этого перекуса уйдут из дневника за сегодня — журнал приёмов сохранится.',
+      'Записи этого перекуса уйдут из приёмов пищи за сегодня — журнал сохранится.',
       [
         { text: 'Отмена', style: 'cancel' },
         {

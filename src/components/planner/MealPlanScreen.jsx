@@ -280,7 +280,7 @@ export function MealPlanScreen({ compact = false }) {
           n += 1
         }
       }
-      toast({ title: '🍽️ Меню перенесено в дневник', description: `Сегодня: ${n} блюд` })
+      toast({ title: '🍽️ Меню перенесено в приёмы пищи', description: `Сегодня: ${n} блюд` })
     })
   }
 
@@ -347,7 +347,7 @@ export function MealPlanScreen({ compact = false }) {
           <Eraser size={13} color={P.text2} />
         </Pressable>
         {isSelToday && (
-          <Pressable onPress={transferToDiary} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Перенести меню дня в дневник">
+          <Pressable onPress={transferToDiary} style={styles.headAction} hitSlop={6} accessibilityRole="button" accessibilityLabel="Перенести меню дня в приёмы пищи">
             <ClipboardCheck size={13} color={P.text2} />
           </Pressable>
         )}

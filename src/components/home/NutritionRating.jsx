@@ -111,7 +111,7 @@ export function NutritionRating() {
   const noFiber = hasData && n.kcal > 0 && n.fib <= 0
   const caption =
     mode === 'day'
-      ? 'по записям дневника за сегодня'
+      ? 'по записям еды за сегодня'
       : `в среднем за день с записями · ${monthName} · ${n.days} дн.`
 
   // Полнота данных о витаминах (для развёрнутого вида)
@@ -277,7 +277,7 @@ export function NutritionRating() {
       ) : (
         <Text className="mt-3 font-sans text-[16.5px] leading-relaxed text-bear-dim">
           {mode === 'day'
-            ? 'Добавьте блюда в дневник — и мишка оценит рацион по клетчатке, сахару и балансу БЖУ 🐻'
+            ? 'Добавьте еду за сегодня — и мишка оценит рацион по клетчатке, сахару и балансу БЖУ 🐻'
             : `За ${monthName} записей ещё нет — переключитесь на «День» или добавьте блюда 🐻`}
         </Text>
       )}

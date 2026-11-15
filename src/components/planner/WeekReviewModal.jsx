@@ -80,7 +80,7 @@ export function WeekReviewModal({ open, onClose }) {
             title: res.source === 'ai' ? '🧸 Разбор недели готов' : '🧸 Разбор по правилам (без ИИ)',
             description:
               res.source === 'ai'
-                ? `${res.text.length > 120 ? 'Напарник посмотрел ваш дневник за 7 дней' : 'Готово'}`
+                ? `${res.text.length > 120 ? 'Напарник разобрал вашу неделю' : 'Готово'}`
                 : 'Нет сети — разбор посчитан по правилам нутрициологии',
           })
           setBusy(false)
@@ -143,14 +143,14 @@ export function WeekReviewModal({ open, onClose }) {
                   >
                     <RefreshCw size={14} color={P.accentInk} />
                     <Text style={styles.runBtnText}>
-                      {busy ? 'Медведь смотрит дневник…' : 'Обновить разбор'}
+                      {busy ? 'Медведь разбирает неделю…' : 'Обновить разбор'}
                     </Text>
                   </Pressable>
                 </>
               ) : (
                 <>
                   <Text style={styles.hint}>
-                    В дневнике есть записи за {stats.loggedDays} из 7 дней. Разбор посчитает среднюю
+                    Записи еды есть за {stats.loggedDays} из 7 дней. Разбор посчитает среднюю
                     калорийность, белок и подскажет, что улучшить на следующей неделе.
                   </Text>
                   <Pressable
@@ -158,11 +158,11 @@ export function WeekReviewModal({ open, onClose }) {
                     disabled={busy}
                     style={[styles.runBtn, busy && styles.runBtnBusy]}
                     accessibilityRole="button"
-                    accessibilityLabel={busy ? 'Медведь смотрит дневник' : 'Разобрать неделю'}
+                    accessibilityLabel={busy ? 'Медведь разбирает неделю' : 'Разобрать неделю'}
                   >
                     <Sparkles size={14} color={P.accentInk} />
                     <Text style={styles.runBtnText}>
-                      {busy ? 'Медведь смотрит дневник…' : 'Разобрать неделю'}
+                      {busy ? 'Медведь разбирает неделю…' : 'Разобрать неделю'}
                     </Text>
                   </Pressable>
                   <Text style={styles.note}>

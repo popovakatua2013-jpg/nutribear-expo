@@ -88,7 +88,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
     const hasFoodToday = Object.values(entries || {}).some((arr) => (arr || []).length > 0)
     if (hasFoodToday) {
       Alert.alert(
-        'В сегодняшнем дневнике уже есть еда',
+        'В сегодняшних приёмах уже есть еда',
         `Добавить ${rows.length} скопированных записей к имеющимся? Ничего не будет затёрто.`,
         [
           { text: 'Отмена', style: 'cancel' },
@@ -225,7 +225,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
               onPress={repeatPicked}
               disabled={!picked}
               accessibilityRole="button"
-              accessibilityLabel="Скопировать выбранный день в сегодняшний дневник"
+              accessibilityLabel="Скопировать выбранный день в сегодняшние приёмы пищи"
               accessibilityState={{ disabled: !picked }}
               className={`flex-row items-center justify-center gap-2 rounded-2xl py-3 ${
                 picked ? 'bg-[#5B7FFF] active:opacity-80' : 'bg-white/5'

@@ -113,7 +113,7 @@ function forecastTexts(f) {
     const n = f.needDays
     return {
       title: 'Прогноз цели — совсем скоро',
-      sub: `Заполни дневник ещё ${n} ${pluralDays(n)} — дефицит считается по записям за 2 недели`,
+      sub: `Добавьте еду ещё ${n} ${pluralDays(n)} — дефицит считается по записям за 2 недели`,
     }
   }
   if (f.reason === 'no-goal') {

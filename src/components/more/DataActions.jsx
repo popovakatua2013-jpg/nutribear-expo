@@ -42,7 +42,7 @@ export function DataActions({ embedded = false, variant = null }) {
     resetToday()
     toast({
       title: '🌅 Новый день начат!',
-      description: 'Дневник питания, вода и шаги обнулены.',
+      description: 'Приёмы пищи, вода и шаги обнулены.',
     })
   }
 
@@ -116,7 +116,7 @@ export function DataActions({ embedded = false, variant = null }) {
   function confirmWipe() {
     Alert.alert(
       'Стереть все данные?',
-      'Полное удаление по GDPR: дневник, история, профиль и замеры тела, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
+      'Полное удаление по GDPR: записи питания, история, профиль и замеры тела, план онбординга. Данные будут стёрты безвозвратно — приложение предложит пройти онбординг заново.',
       [
         { text: 'Отмена', style: 'cancel' },
         { text: 'Да, стереть', style: 'destructive', onPress: wipeAll },
@@ -137,8 +137,8 @@ export function DataActions({ embedded = false, variant = null }) {
             <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
             <Text className="font-sans text-[15px] text-bear-sub2">
               {kcal > 0
-                ? `Обнулит дневник (${formatNum(kcal)} ккал), воду и шаги`
-                : 'Обнулит дневник, воду и шаги'}
+                ? `Обнулит приёмы пищи (${formatNum(kcal)} ккал), воду и шаги`
+                : 'Обнулит приёмы пищи, воду и шаги'}
             </Text>
           </View>
         </Pressable>
