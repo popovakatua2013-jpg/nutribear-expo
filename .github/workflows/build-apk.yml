@@ -77,10 +77,19 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           chmod +x android/gradlew
+          STAGE="$GITHUB_WORKSPACE/apk-stage"
+          mkdir -p "$STAGE"
           cd android
           OUT=app/build/outputs/apk/release
           ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a -Pandroid.compileSdkVersion=37
-          if [ -f "$OUT/app-release.apk" ]; then cp "$OUT/app-release.apk" "$OUT/NutriBear-arm64.apk"; else cp "$OUT/app-release-unsigned.apk" "$OUT/NutriBear-arm64-unsigned.apk"; fi
+          # arm64 APK — сразу ВНЕ outputs (в apk-stage): второй прогон gradle
+          # вычищает из outputs всё, что не создано текущей сборкой
+          # (stale output cleaning AGP) — сборка №8 на этом упала
+          if [ -f "$OUT/app-release.apk" ]; then
+            cp "$OUT/app-release.apk" "$STAGE/NutriBear-arm64.apk"
+          else
+            cp "$OUT/app-release-unsigned.apk" "$STAGE/NutriBear-arm64-unsigned.apk"
+          fi
           ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Pandroid.compileSdkVersion=37
 
       # Контроль подписи: в логе виден сертификат. Красная сборка = APK
@@ -90,8 +99,10 @@ jobs:
         if: env.SIGN_MODE == 'secrets'
         run: |
           BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
-          OUT=android/app/build/outputs/apk/release
-          for APK in "$OUT/NutriBear-arm64.apk" "$OUT/app-release.apk"; do
+          STAGE="$GITHUB_WORKSPACE/apk-stage"
+          APK1="$STAGE/NutriBear-arm64.apk"
+          [ -f "$APK1" ] || APK1="$STAGE/NutriBear-arm64-unsigned.apk"
+          for APK in "$APK1" android/app/build/outputs/apk/release/app-release.apk; do
             "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "$APK"
             "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "$APK" | grep -q 'CN=NutriBear'
             echo "✅ $APK подписан релизным ключом (CN=NutriBear)"
@@ -102,7 +113,7 @@ jobs:
         with:
           name: NutriBear-APK
           path: |
-            android/app/build/outputs/apk/release/NutriBear-arm64.apk
+            apk-stage/NutriBear-arm64.apk
+            apk-stage/NutriBear-arm64-unsigned.apk
             android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/apk/release/NutriBear-arm64-unsigned.apk
             android/app/build/outputs/apk/release/app-release-unsigned.apk

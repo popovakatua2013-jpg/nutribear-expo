@@ -1,1 +1,1 @@
-build apk #8 versionCode 13 — 2026-11-15T20:15+03:00 (краш виджета дня исправлен: селектор logs + ключ дня в totalBurned)
+build apk #9 versionCode 13 — 2026-11-15T20:35+03:00 (arm64 APK в apk-stage вне outputs: AGP вычищает чужие файлы, сборка №8 упала)
