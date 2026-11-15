@@ -35,6 +35,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Диагностика отзыва Кати 16.11 («не работают ИИ-функции»): воркер
+      # закрыт общим секретом NB_SECRET, и если в репозитории не задан
+      # NB_PROXY_SECRET — приложение шлёт запросы без него и получает 401
+      # на ВСЕ ИИ-запросы (фото, голос, КБЖУ, чат). Значение секрета не
+      # выводим — только факт и длина. Красный шаг здесь не нужен:
+      # сборка ценна и без ИИ, но предупреждение должно быть заметным
+      - name: Check AI proxy secret
+        env:
+          NB_PROXY_SECRET: ${{ secrets.NB_PROXY_SECRET }}
+        run: |
+          if [ -z "$NB_PROXY_SECRET" ]; then
+            echo "::warning::NB_PROXY_SECRET не задан — ИИ-функции в APK вернут «Сервис ИИ не принял эту сборку». Задайте его: Settings → Secrets and variables → Actions → New repository secret, значение — строка EXPO_PUBLIC_AI_PROXY_SECRET из локального .env (тот же секрет, что в wrangler secret put NB_SECRET)"
+            {
+              echo "## ⚠️ ИИ-функции в этой сборке НЕ РАБОТАЮТ"
+              echo ""
+              echo "Секрет **NB_PROXY_SECRET** не задан в Settings → Secrets and variables → Actions."
+              echo "Воркер nutribear-ai закрыт общим секретом: без него все запросы (фото, голос, КБЖУ, чат) получают 401."
+              echo ""
+              echo "**Как починить:** откройте локальный файл \`.env\`, скопируйте строку \`EXPO_PUBLIC_AI_PROXY_SECRET=...\` (значение после =), залейте его как секрет \`NB_PROXY_SECRET\` и пересоберите."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "OK: NB_PROXY_SECRET задан (${#NB_PROXY_SECRET} символов) — приложение сможет ходить на воркер"
+          fi
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

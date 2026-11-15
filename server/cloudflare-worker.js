@@ -45,7 +45,11 @@ const DEFAULT_ALLOWED_MODELS = ['gpt-4o-mini', 'whisper-1', 'gpt-4o']
 export const LIMITS = {
   MAX_CHAT_MESSAGES: 20,
   MAX_MESSAGE_LEN: 4000,           // символы в content
-  MAX_BODY_BYTES: 256 * 1024,      // жёсткий потолок тела запроса
+  // 512 КБ для JSON (фото-распознавание шлёт JPEG в base64 внутри data URL:
+  // снимок 1280 px тянет ~150–250 КБ, а base64 раздувает его на треть —
+  // старый лимит 256 КБ отсекал ПОЛОВИНУ фото ошибкой 413, которую
+  // приложение показывало как «Сервис ИИ не отвечает»)
+  MAX_BODY_BYTES: 512 * 1024,
   MAX_AUDIO_BYTES: 5 * 1024 * 1024, // потолок для аудио (Whisper)
 }
 const { MAX_CHAT_MESSAGES, MAX_MESSAGE_LEN, MAX_BODY_BYTES } = LIMITS
@@ -209,17 +213,40 @@ export default {
     const model = env.AI_MODEL || 'gpt-4o-mini'
 
     // Живая проверка из браузера: https://…workers.dev/ → { ok: true }
-    if (request.method === 'GET') return json({ ok: true, service: 'nutribear-ai' })
+    if (request.method === 'GET') {
+      // Расширенный статус для диагностики: только booleans и лимиты,
+      // ни секрет, ни ключ тут не светятся. curl https://…/v1/status
+      if (path === '/status') {
+        return json({
+          ok: true,
+          service: 'nutribear-ai',
+          secret_required: Boolean(env.NB_SECRET),
+          key_set: Boolean(env.AI_KEY),
+          max_body_kb: Math.round(MAX_BODY_BYTES / 1024),
+          max_audio_mb: Math.round((LIMITS.MAX_AUDIO_BYTES / (1024 * 1024)) * 10) / 10,
+        })
+      }
+      return json({ ok: true, service: 'nutribear-ai' })
+    }
 
     if (request.method !== 'POST') return json({ error: 'Метод не поддерживается' }, 405)
 
-    // Жёсткий потолок размера тела: раньше любой, кто нашёл адрес
-    // воркера, мог прислать тело в десятки мегабайт и положить
-    // изолят (или хотя бы потратить процесс). Реальные запросы
-    // NutriBear — это 1–20 КБ JSON или <1 МБ аудио
+    // Жёсткий потолок размера тела: защита от «положить изолят»
+    // огромным телом. JSON-запросы (фото, чат) — 512 КБ, аудио — свой
+    // Голос (/audio/transcriptions) имеет свой щедрый потолок
+    // MAX_AUDIO_BYTES: общий лимит НЕ применяем — реальная минута речи
+    // (300–400 КБ m4a) умирала на общем лимите ещё до аудио-проверки
+    const isAudioRoute = path === '/audio/transcriptions'
     const cl = Number(request.headers.get('content-length') || 0)
-    if (cl && cl > MAX_BODY_BYTES) {
-      return json({ error: 'Тело запроса слишком большое' }, 413)
+    if (cl && cl > (isAudioRoute ? LIMITS.MAX_AUDIO_BYTES : MAX_BODY_BYTES)) {
+      return json(
+        {
+          error: isAudioRoute
+            ? 'Аудио слишком большое (макс. 5 МБ)'
+            : 'Тело запроса слишком большое',
+        },
+        413
+      )
     }
 
     const key = env.AI_KEY

@@ -106,7 +106,9 @@ describe('LIMITS: границы расхода баланса ИИ', () => {
   test('лимиты на месте', () => {
     expect(LIMITS.MAX_CHAT_MESSAGES).toBe(20)
     expect(LIMITS.MAX_MESSAGE_LEN).toBe(4000)
-    expect(LIMITS.MAX_BODY_BYTES).toBe(256 * 1024)
+    // 512 КБ: фото в base64 (data URL в JSON) тянет 200–400 КБ —
+    // старый лимит 256 КБ давал 413 на половине снимков (отзыв Кати 16.11)
+    expect(LIMITS.MAX_BODY_BYTES).toBe(512 * 1024)
     expect(LIMITS.MAX_AUDIO_BYTES).toBe(5 * 1024 * 1024)
   })
 })

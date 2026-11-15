@@ -17,6 +17,7 @@
 import { File, Paths } from 'expo-file-system'
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
 import { AI_CONFIG } from './ai-config'
+import { buildMultipartBody, decodeBase64ToBytes } from './multipart'
 
 const TIMEOUT_MS = 45000
 
@@ -511,30 +512,44 @@ function assertConfigured() {
 function httpError(status, extra = '') {
   // Детали (статусы, имена переменных) — только в консоль; в интерфейсе
   // объясняем по-человечески, без упоминаний .env и кодов
-  if (status === 401 || status === 403)
-    console.warn(`[food-ai] Ключ ИИ отклонён (${status}) — проверьте EXPO_PUBLIC_AI_KEY`)
-  else if (status === 404)
+  if (status === 401 || status === 403) {
+    console.warn(
+      `[food-ai] ${status}${extra ? `: ${extra}` : ''}` +
+        ' — если это «Требуется секрет», задайте NB_PROXY_SECRET в GitHub Secrets'
+    )
+  } else if (status === 404) {
     console.warn('[food-ai] 404 — проверьте EXPO_PUBLIC_AI_BASE_URL и EXPO_PUBLIC_AI_MODEL')
+  }
   let msg
-  if (status === 401 || status === 403)
-    msg = 'Сервис ИИ временно недоступен — попробуйте позже'
-  else if (status === 404)
+  if (status === 401 || status === 403) {
+    // Воркер с общим секретом отклоняет сборку без него — это настройка
+    // релиза (NB_PROXY_SECRET в GitHub Secrets), а не сбой сети
+    msg = /секрет/i.test(String(extra))
+      ? 'Сервис ИИ не принял эту сборку: не совпал секрет доступа (NB_PROXY_SECRET в GitHub)'
+      : 'Сервис ИИ временно недоступен — попробуйте позже'
+  } else if (status === 404) {
     msg = 'Сервис ИИ недоступен — попробуйте позже'
-  else if (status === 429)
+  } else if (status === 413) {
+    msg = 'Снимок слишком большой — попробуйте ещё раз'
+  } else if (status === 429) {
     msg = 'Слишком много запросов подряд — подождите минуту и повторите'
-  else if (status >= 500)
+  } else if (status >= 500) {
     msg = 'Сервис ИИ временно недоступен — попробуйте позже'
-  else
+  } else {
     msg = 'Сервис ИИ не отвечает — попробуйте позже'
+  }
   return new Error(msg)
 }
 
-// Читаем тело ответа сервера — при ошибках 400 там точная причина
+// Читаем тело ответа сервера — при ошибках 400 там точная причина.
+// Воркер возвращает { error: 'текст' } (строка) — тоже читаем
 async function apiError(res) {
   let extra = ''
   try {
     const j = await res.json()
-    extra = String(j?.error?.message || j?.message || '').slice(0, 300)
+    extra = String(
+      j?.error?.message || (typeof j?.error === 'string' ? j.error : '') || j?.message || ''
+    ).slice(0, 300)
   } catch {}
   return httpError(res.status, extra)
 }
@@ -651,21 +666,42 @@ function normalizeItem(it) {
 // ── Сканер и галерея: фото → блюдо ─────────────────────────────
 // Галерея может отдать HEIC/HEIF (новые Android-телефоны), а сервер
 // принимает только png/jpeg/gif/webp — конвертируем в JPEG и прижимаем
-// до 1280 px по большой стороне (быстрее и дешевле отправка).
+// по большой стороне до 1280 px.
+// ПОЧЕМУ НЕ ОДНО САЖАТИЕ: фото-запрос — это JSON с data URL, и снимок
+// 1280 px после base64 тянет 200–400 КБ. Старый лимит воркера (256 КБ)
+// отсекал половину фото ошибкой 413, которую интерфейс показывал как
+// «Сервис ИИ не отвечает». Прижимаем до целевого размера с усилением
+// (шагами) — тело запроса гарантированно влезает даже в старый лимит.
+const PHOTO_B64_LIMIT = 200000 // максимум символов base64 (≈150 КБ JPEG)
+const PHOTO_PRESETS = [
+  { maxSide: 1280, quality: 0.8 },
+  { maxSide: 1024, quality: 0.6 },
+  { maxSide: 820, quality: 0.45 },
+  { maxSide: 640, quality: 0.35 },
+]
+
 async function photoToJpegBase64(uri) {
   const first = await ImageManipulator.manipulate(uri).renderAsync()
   const big = Math.max(first.width, first.height)
-  const ref =
-    big > 1280
-      ? await ImageManipulator.manipulate(uri)
-          .resize({
-            width: Math.round((first.width * 1280) / big),
-            height: Math.round((first.height * 1280) / big),
-          })
-          .renderAsync()
-      : first
-  const saved = await ref.saveAsync({ format: SaveFormat.JPEG, quality: 0.8 })
-  return new File(saved.uri).base64()
+  let lastB64 = ''
+  for (const preset of PHOTO_PRESETS) {
+    const needsResize = big > preset.maxSide
+    const ref =
+      !needsResize && preset.maxSide >= 1280
+        ? first
+        : await ImageManipulator.manipulate(uri)
+            .resize({
+              width: Math.max(1, Math.round((first.width * preset.maxSide) / big)),
+              height: Math.max(1, Math.round((first.height * preset.maxSide) / big)),
+            })
+            .renderAsync()
+    const saved = await ref.saveAsync({ format: SaveFormat.JPEG, quality: preset.quality })
+    lastB64 = await new File(saved.uri).base64()
+    if (lastB64.length <= PHOTO_B64_LIMIT) return lastB64
+  }
+  // Даже самый мелкий пресет превысил лимит (почти не бывает) — отдаём
+  // то, что получили: 640 px/0.35 тянет десятки КБ
+  return lastB64
 }
 
 export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
@@ -982,6 +1018,12 @@ export async function estimateCompositionByAi(text, timeoutMs = 45000) {
 // ВАЖНО ПРО ДЕНЬГИ: распознавание записи стоит за КАЖДУЮ МИНУТУ аудио
 // (whisper-1 — 1,55 ₽/мин, gpt-4o-mini-transcribe — 0,77 ₽/мин).
 // Говорите коротко, а разбор фразы после этого чаще всего бесплатный.
+//
+// FormData здесь НЕ работает: в Expo SDK 58 fetch — winter-полифилл,
+// который не умеет RN-часть { uri, name, type } и падает с
+// «Unsupported FormDataPart implementation» ДО сети (отзыв Кати 16.11:
+// голосовой ввод не работал в rc1/rc2). Собираем multipart руками —
+// см. src/lib/multipart.js
 export async function recognizeVoiceAudio(audioBase64, timeoutMs = 30000) {
   if (!AI_CONFIG.voiceModel) {
     console.warn('[food-ai] Голос не настроен: добавьте EXPO_PUBLIC_AI_VOICE_MODEL в .env')
@@ -989,14 +1031,16 @@ export async function recognizeVoiceAudio(audioBase64, timeoutMs = 30000) {
   }
   assertConfigured()
 
-  // base64 → файл в кэше (FormData в React Native грузит файл по uri)
-  const voiceFile = new File(Paths.cache, 'nutribear-voice.m4a')
-  voiceFile.write(audioBase64, { encoding: 'base64' })
-  const fileUri = voiceFile.uri
+  const bytes = decodeBase64ToBytes(audioBase64)
+  if (!bytes.length)
+    throw new Error('Запись пустая — нажмите на микрофон и скажите блюдо ещё раз')
 
-  const form = new FormData()
-  form.append('file', { uri: fileUri, name: 'voice.m4a', type: 'audio/m4a' })
-  form.append('model', AI_CONFIG.voiceModel)
+  // whisper-1 понимает m4a; language=ru уменьшает шанс англ. текста
+  const { body, contentType } = buildMultipartBody([
+    { name: 'file', filename: 'voice.m4a', type: 'audio/m4a', bytes },
+    { name: 'model', value: AI_CONFIG.voiceModel },
+    { name: 'language', value: 'ru' },
+  ])
 
   const { signal, done } = withTimeout(timeoutMs)
   try {
@@ -1004,8 +1048,8 @@ export async function recognizeVoiceAudio(audioBase64, timeoutMs = 30000) {
     try {
       res = await fetch(apiUrl('/audio/transcriptions'), {
         method: 'POST',
-        headers: authHeaders(),
-        body: form,
+        headers: authHeaders({ 'Content-Type': contentType }),
+        body,
         signal,
       })
       if (!res.ok) throw await apiError(res)
