@@ -5,8 +5,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { Flashlight, FlashlightOff } from 'lucide-react-native'
+import { Flashlight, FlashlightOff, Info } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { BarcodeGuideModal } from './BarcodeGuideModal'
 
 const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product'
 
@@ -43,10 +45,28 @@ export function BarcodeMode({ onPick }) {
   const [torch, setTorch] = useState(false)
   const lastCode = useRef(null)
 
+  // Обучающее окно «Как сканировать штрихкод» — по образцу подсказки
+  // конкурента (скрин Кати 16.11): показывается один раз при входе в
+  // режим, вернуть — кнопка (i) рядом с фонариком
+  const barcodeGuideSeen = useUiPrefsStore((s) => s.barcodeGuideSeen)
+  const setBarcodeGuideSeen = useUiPrefsStore((s) => s.setBarcodeGuideSeen)
+  const [guideOpen, setGuideOpen] = useState(false)
+
   useEffect(() => {
     if (permission && !permission.granted) requestPermission()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permission?.granted])
+
+  // Автопоказ окна — один раз на устройство, при первом входе в режим
+  useEffect(() => {
+    if (!barcodeGuideSeen) setGuideOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function closeGuide() {
+    setGuideOpen(false)
+    setBarcodeGuideSeen(true) // больше не показываем автоматически
+  }
 
   async function lookup(code) {
     if (busy) return
@@ -147,8 +167,20 @@ export function BarcodeMode({ onPick }) {
           >
             {torch ? <Flashlight size={20} color="#FBBF24" /> : <FlashlightOff size={20} color="#AEB9D9" />}
           </Pressable>
+          {/* Подсказка «как сканировать» — вернуть окно вручную */}
+          <Pressable
+            onPress={() => setGuideOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Как сканировать штрихкод"
+            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
+          >
+            <Info size={20} color="#8DABFF" />
+          </Pressable>
         </View>
       </View>
+
+      {/* Обучающее окно «Как сканировать штрихкод» */}
+      <BarcodeGuideModal visible={guideOpen} onClose={closeGuide} />
     </View>
   )
 }

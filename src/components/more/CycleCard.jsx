@@ -8,10 +8,10 @@
 // Без медицинских рекомендаций — только фазы, прогноз и мягкие подсказки.
 // Данные хранятся только на устройстве.
 // Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки и
-// шапки-заголовка — кольцо, статус, пресеты и настройка встраиваются
-// в строку меню «Цикл» (настройка всегда раскрыта, раскрытие — на MenuRow).
+// шапки-заголовка — кольцо слева, пресеты длины справа, настройки в
+// свёрнутой строке «Настройки цикла» (компактно — отзыв Кати 16.11).
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from 'react-native-svg'
 import { ChevronDown, Trash2 } from 'lucide-react-native'
@@ -168,6 +168,14 @@ export function CycleCard({ embedded = false }) {
   const { toast } = useToast()
 
   const [open, setOpen] = useState(false)
+  // Компактный режим (отзыв Кати 16.11: «сделай вкладку цикл компактно»):
+  // настройки (тумблер, даты, длительность) свёрнуты в строку «Настройки
+  // цикла»; сама раскрывается, когда трекер выключен — чтобы тумблер
+  // был на виду, и сворачивается после включения
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  useEffect(() => {
+    setSettingsOpen(!enabled)
+  }, [enabled])
   const phase = enabled && lastStart ? phaseOf(lastStart, length, bleed) : null
   const ring = ringState(enabled, lastStart, length)
 
@@ -186,13 +194,13 @@ export function CycleCard({ embedded = false }) {
   }
 
   // Настройка трекера: тумблер + степперы + удаление. В обычном режиме —
-  // по тапу на шапку, во встроенном — всегда (раскрытие на MenuRow).
-  // Отзыв Кати 16.11: подпись «Включить трекер» и сноска «Без медицины…»
-  // занимают место — «и так понятно что делает тумблер», а «без медицины»
-  // уже есть в медицинском дисклеймере. Остался только тумблер
+  // по тапу на шапку, во встроенном — в свёрнутой строке «Настройки
+  // цикла» (отзыв Кати 16.11: «сделай компактно»). Тумблер с подписью
+  // в одной строке (раньше тумблер висел один, без названия)
   const settingsBlock = (
     <View>
-      <View className="flex-row items-center justify-end">
+      <View className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3">
+        <Text className="font-bold text-[16px] text-bear-text">Трекер цикла</Text>
         <Switch
           value={enabled}
           onValueChange={setEnabled}
@@ -203,7 +211,7 @@ export function CycleCard({ embedded = false }) {
       </View>
 
       {enabled && (
-        <View className="mt-1 gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+        <View className="mt-2 gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
           <Stepper
             label="Начало последних месячных"
             value={lastStart ? formatDateRu(lastStart) : 'не отмечено'}
@@ -299,13 +307,11 @@ export function CycleCard({ embedded = false }) {
   )
 
   // Пилюли — как на шаблоне: быстрые пресеты длины цикла (активная
-  // подсвечена; точная подгонка — степпером внутри). При выключенном
-  // трекере пилюли нет: включение — тумблером под шапкой (отзыв Кати
-  // 16.11: дубль «Включить трекер» занимал место).
-  // Отступ слева — под колонку текста (кольцо 96px)
-  const pillsRow = enabled ? (
-    <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pl-[126px]">
-      {[24, 28, 32].map((v) => {
+  // подсвечена; точная подгонка — степпером внутри настроек). Сам ряд
+  // без отступа — отступ даёт обёртка: в обычной карточке он под
+  // колонкой текста (кольцо 96px), во встроенном — справа от кольца
+  const pills = enabled
+    ? [24, 28, 32].map((v) => {
         const active = v === length
         return (
           <Pressable
@@ -326,17 +332,55 @@ export function CycleCard({ embedded = false }) {
             </Text>
           </Pressable>
         )
-      })}
-    </View>
+      })
+    : null
+
+  const pillsRow = enabled ? (
+    <View className="mt-2.5 flex-row flex-wrap items-center gap-1.5 pl-[126px]">{pills}</View>
   ) : null
 
-  // Встроено в строку меню: шапка + пресеты + настройка (всегда раскрыта)
+  // Встроено в строку меню — КОМПАКТНО (отзыв Кати 16.11): кольцо слева,
+  // пресеты длины справа; вся настройка (тумблер, даты, длительность,
+  // удаление) — в одной свёрнутой строке «Настройки цикла». Строка сама
+  // раскрыта, когда трекер выключен (тумблер на виду), и сворачивается
+  // после включения — см. settingsOpen в шапке компонента
   if (embedded) {
     return (
       <View accessibilityLabel="Цикл">
-        {headerInner}
-        {pillsRow}
-        <View className="mt-3">{settingsBlock}</View>
+        <View className="flex-row items-center gap-3.5">
+          {enabled ? (
+            <CycleRing value={ring.value} caption={ring.caption} progress={ring.progress} />
+          ) : (
+            <BodyChip icon={<Text className="text-[21px]">🌙</Text>} size={44} />
+          )}
+          {enabled ? (
+            <View className="min-w-0 flex-1 flex-row flex-wrap items-center gap-1.5">{pills}</View>
+          ) : (
+            <Text
+              maxFontSizeMultiplier={1.2}
+              className="min-w-0 flex-1 font-sans text-[13px] leading-[17px] text-bear-dim"
+            >
+              Включите — фазы и подсказки появятся на Главной
+            </Text>
+          )}
+        </View>
+
+        <Pressable
+          onPress={() => setSettingsOpen((s) => !s)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: settingsOpen }}
+          accessibilityLabel={settingsOpen ? 'Свернуть настройки цикла' : 'Настройки цикла'}
+          className="mt-2.5 flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-2.5 active:opacity-80"
+        >
+          <Text className="font-bold text-[15px] text-bear-text">Настройки цикла</Text>
+          <ChevronDown
+            size={18}
+            color="#A5AECB"
+            style={{ transform: [{ rotate: settingsOpen ? '180deg' : '0deg' }] }}
+          />
+        </Pressable>
+
+        {settingsOpen && <View className="mt-1">{settingsBlock}</View>}
       </View>
     )
   }

@@ -44,6 +44,11 @@ export const useUiPrefsStore = create(
       // закрытия не показывается снова, вернуть — кнопка
       // «Как фотографировать?» на пустом экране режима
       photoGuideSeen: false,
+      // Обучающие окна сканера штрихкода и режима «Этикетка» (по образцу
+      // «Как фотографировать еду»): показываются один раз при входе в
+      // режим, вернуть — кнопкой (Info) на экране сканера/ссылкой
+      barcodeGuideSeen: false,
+      labelGuideSeen: false,
 
       setExpanded: (key, value) =>
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
@@ -70,6 +75,10 @@ export const useUiPrefsStore = create(
         set((s) => ({ closedHints: { ...s.closedHints, [id]: true } })),
 
       setPhotoGuideSeen: (value) => set({ photoGuideSeen: !!value }),
+
+      setBarcodeGuideSeen: (value) => set({ barcodeGuideSeen: !!value }),
+
+      setLabelGuideSeen: (value) => set({ labelGuideSeen: !!value }),
     }),
     {
       name: 'nutribear-ui-prefs-v1',

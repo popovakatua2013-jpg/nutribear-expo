@@ -126,7 +126,6 @@ export function CompanionCard({ embedded = false }) {
       })}
 
       <Text className="mt-1 font-sans text-[12.5px] leading-relaxed text-bear-dim">
-        Фит доступен с триала — попробуй дерзкий характер.
         Можно менять в любой момент.
       </Text>
     </View>

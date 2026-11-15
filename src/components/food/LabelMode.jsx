@@ -2,22 +2,42 @@
 // нейросеть читает строки «на 100 г» → значения подставляются в
 // экран подтверждения порции. Точнее, чем распознавание всего блюда.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { Camera, Images, RefreshCcw, ScanSearch } from 'lucide-react-native'
+import { Camera, Images, Info, RefreshCcw, ScanSearch } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { scanNutritionLabel } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
 import { openSettingsSoon } from '@/lib/appSettings'
 import { useProStore } from '@/store/useProStore'
 import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { LabelGuideModal } from './LabelGuideModal'
 
 export function LabelMode({ onPick }) {
   const { toast } = useToast()
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  // Обучающее окно «Как снимать этикетку» — по образцу подсказок
+  // «тарелка» и «штрихкод» (просьба Кати 16.11): показывается один
+  // раз при входе в режим, вернуть — ссылка под описанием режима
+  const labelGuideSeen = useUiPrefsStore((s) => s.labelGuideSeen)
+  const setLabelGuideSeen = useUiPrefsStore((s) => s.setLabelGuideSeen)
+  const [guideOpen, setGuideOpen] = useState(false)
+
+  // Автопоказ окна — один раз на устройство, при первом входе в режим
+  useEffect(() => {
+    if (!labelGuideSeen) setGuideOpen(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function closeGuide() {
+    setGuideOpen(false)
+    setLabelGuideSeen(true) // больше не показываем автоматически
+  }
 
   // Дневной лимит ИИ-фото — общий пул с PhotoMode (блюдо + этикетка,
   // бесплатно 3 в день); Premium — безлимит
@@ -85,6 +105,19 @@ export function LabelMode({ onPick }) {
         Сфотографируйте таблицу пищевой ценности с упаковки — калории и БЖУ на 100 г
         подставятся сами. Распознанные значения можно поправить перед добавлением.
       </Text>
+
+      {/* Ссылка «как снимать этикетку» — вернуть обучающее окно вручную */}
+      <Pressable
+        onPress={() => setGuideOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Как снимать этикетку"
+        className="mt-0.5 ml-1 flex-row items-center gap-1.5 self-start p-1 active:opacity-70"
+      >
+        <Info size={14} color="#8DABFF" />
+        <Text className="font-semibold text-[13.5px] text-[#8DABFF]">
+          Как снимать этикетку?
+        </Text>
+      </Pressable>
 
       {/* Остаток дневного лимита ИИ-фото: только для бесплатного тарифа */}
       {!pro ? (
@@ -171,6 +204,9 @@ export function LabelMode({ onPick }) {
           </Pressable>
         </View>
       ) : null}
+
+      {/* Обучающее окно «Как снимать этикетку» */}
+      <LabelGuideModal visible={guideOpen} onClose={closeGuide} />
     </ScrollView>
   )
 }

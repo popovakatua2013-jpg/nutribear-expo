@@ -14,14 +14,15 @@
 //                    пинка» из ЗДОРОВЬЯ удалены — управляли теми же
 //                    полями стора, что и строки блока)
 //   ДНЕВНИК:         Начать новый день
-//   ПОДДЕРЖКА:       Поддержка и помощь — тап сразу открывает окно
+//   ПОДДЕРЖКА:       Поддержка — тап сразу открывает окно
 //                    «Написать нам»
-//   ПРИЛОЖЕНИЕ:      Дневник питания / Приватность и данные
+//   ПРИЛОЖЕНИЕ:      Дневник питания / Экспорт и импорт данных
 //                    («Вибрация», «Стиль пинков», «Напоминание мишки»
 //                    переехали в блок НАПОМИНАНИЯ)
-//   Внизу — как в стандартных приложениях: три правовых документа
-//   отдельными строками, красная строка «Стереть все данные» и строка
-//   версии с ID сборки.
+//   ДОКУМЕНТЫ:       один блок с выпадающим списком (отзыв Кати 16.11):
+//                    приватность и данные, соглашение, дисклеймер
+//   Внизу — красная строка «Стереть все данные» и строка версии с ID
+//   сборки.
 // Тумблер «Вибро-отклик» теперь реально управляет вибрацией всего
 // приложения — все касания идут через lib/haptics.js (отзыв Кати:
 // «если положение включено это не где не применяется»). Тумблер и
@@ -33,10 +34,10 @@
 // Шапка экрана — с мягкой неоновой дымкой, как на вкладке «Тело»
 
 import { useEffect, useState } from 'react'
-import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
+import { DeviceEventEmitter, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
-import { Settings } from 'lucide-react-native'
+import { ChevronRight, Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
 import { CycleCard } from '@/components/more/CycleCard'
@@ -235,7 +236,7 @@ export default function MoreScreen() {
           <MenuRow
             icon="💬"
             iconBg="rgba(52,211,153,0.16)"
-            title="Поддержка и помощь"
+            title="Поддержка"
             value="написать нам"
             onPress={() => setSupportOpen(true)}
           />
@@ -256,33 +257,45 @@ export default function MoreScreen() {
           <MenuRow
             icon="🛡"
             iconBg="rgba(74,222,128,0.16)"
-            title="Приватность и данные"
+            title="Экспорт и импорт данных"
+            value="перенос на другое устройство"
           >
             <DataPortability embedded />
           </MenuRow>
         </MenuGroup>
 
-        {/* ── Документы отдельными строками — внизу, как в стандартных
-               приложениях; ниже — красная строка стирания данных и версия ── */}
-        <MenuGroup>
+        {/* ── ДОКУМЕНТЫ: один блок с выпадающим списком (отзыв Кати
+               16.11: «сделай вкладку документы… из выпадающего списка —
+               приватность и данные, польз.соглашение и дисклеймер»);
+               каждый пункт открывает документ с названием в шапке ── */}
+        <MenuGroup title="ДОКУМЕНТЫ">
           <MenuRow
-            icon="🔒"
+            icon="📚"
             iconBg="rgba(96,165,250,0.16)"
-            title="Политика конфиденциальности"
-            onPress={() => setLegalDoc('privacy')}
-          />
-          <MenuRow
-            icon="📄"
-            iconBg="rgba(96,165,250,0.16)"
-            title="Пользовательское соглашение"
-            onPress={() => setLegalDoc('terms')}
-          />
-          <MenuRow
-            icon="🩺"
-            iconBg="rgba(74,222,128,0.16)"
-            title="Медицинский дисклеймер"
-            onPress={() => setLegalDoc('medical')}
-          />
+            title="Документы"
+            value="приватность · соглашение · дисклеймер"
+          >
+            <View className="gap-1">
+              {[
+                ['Приватность и данные', 'privacy'],
+                ['Пользовательское соглашение', 'terms'],
+                ['Медицинский дисклеймер', 'medical'],
+              ].map(([label, doc]) => (
+                <Pressable
+                  key={doc}
+                  onPress={() => setLegalDoc(doc)}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  className="flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-4 py-3 active:opacity-70"
+                >
+                  <ChevronRight size={15} color="#A5AECB" />
+                  <Text maxFontSizeMultiplier={1.2} className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text">
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </MenuRow>
         </MenuGroup>
 
         {/* Стереть все данные: красная строка отдельно, как в стандартных
