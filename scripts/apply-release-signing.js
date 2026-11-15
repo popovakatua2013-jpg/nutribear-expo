@@ -102,12 +102,50 @@ function matchingBrace(str, openIdx) {
   throw new Error('apply-release-signing: не найдена закрывающая } блока release')
 }
 
+// Режим «без секретов»: убрать строку подписи из buildTypes.release —
+// тогда gradle соберёт НЕПОДПИСАННЫЙ app-release-unsigned.apk вместо
+// debug-подписанного app-release.apk из шаблона. Неподписанный артефакт
+// честно ожидает подписи владельца, не притворяясь готовой сборкой.
+// Блок release ищем тем же сбалансированным способом (matchingBrace)
+function stripReleaseSigning(content) {
+  const btIdx = content.indexOf('buildTypes {')
+  if (btIdx === -1) {
+    throw new Error('apply-release-signing: не найден блок buildTypes { в build.gradle')
+  }
+  const head = content.slice(0, btIdx)
+  const tail = content.slice(btIdx)
+  const relStart = tail.indexOf('release {')
+  if (relStart === -1) {
+    throw new Error('apply-release-signing: в buildTypes не найден блок release {')
+  }
+  const relEnd = matchingBrace(tail, relStart)
+  const relBlock = tail.slice(relStart, relEnd)
+  const newRelBlock = relBlock
+    .split('\n')
+    .filter((line) => !line.includes('signingConfig signingConfigs.debug'))
+    .join('\n')
+  return { content: head + tail.slice(0, relStart) + newRelBlock + tail.slice(relEnd) }
+}
+
 function main() {
   const path = 'android/app/build.gradle'
   if (!fs.existsSync(path)) {
     throw new Error(`apply-release-signing: ${path} не найден — сначала expo prebuild`)
   }
   const before = fs.readFileSync(path, 'utf8')
+
+  // --unsigned: убрать подпись release, чтобы сборка без секретов выходила
+  // неподписанной (а не debug-подписанной из шаблона)
+  if (process.argv[2] === '--unsigned') {
+    const { content } = stripReleaseSigning(before)
+    const changed = content !== before
+    fs.writeFileSync(path, content)
+    console.log(changed
+      ? 'строка подписи удалена из buildTypes.release — APK выйдет неподписанным (app-release-unsigned.apk)'
+      : 'подпись release уже убрана — патч пропущен')
+    return
+  }
+
   const { content, addedConfig, switchedRelease } = patchGradle(before)
   fs.writeFileSync(path, content)
   if (addedConfig) console.log('signingConfigs.release добавлен (release.keystore + env-пароли)')
@@ -115,6 +153,6 @@ function main() {
   if (!addedConfig && !switchedRelease) console.log('подпись release уже настроена — патч пропущен')
 }
 
-module.exports = { patchGradle }
+module.exports = { patchGradle, stripReleaseSigning }
 
 if (require.main === module) main()

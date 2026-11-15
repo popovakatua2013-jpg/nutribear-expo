@@ -61,6 +61,7 @@ jobs:
             echo "SIGN_MODE=secrets" >> "$GITHUB_ENV"
             echo "Ключ декодирован, build.gradle настроен на release.keystore"
           else
+            node scripts/apply-release-signing.js --unsigned
             echo "SIGN_MODE=unsigned" >> "$GITHUB_ENV"
             echo "::warning::Секреты KEYSTORE_* не заданы — APK выйдет НЕПОДПИСАННЫМ (app-release-unsigned.apk)"
           fi

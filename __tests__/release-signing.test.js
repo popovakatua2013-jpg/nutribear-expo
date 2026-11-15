@@ -5,7 +5,7 @@
 // Патч строгий: не нашёл ожидаемое место в шаблоне — падает, сборка красная,
 // тихо debug-подписанный APK не выйдет.
 
-const { patchGradle } = require('../scripts/apply-release-signing')
+const { patchGradle, stripReleaseSigning } = require('../scripts/apply-release-signing')
 
 // Образец android/app/build.gradle в форме, которую генерирует expo prebuild
 // (подпись release на debug-ключе — то, из-за чего каждая сборка выходила
@@ -89,5 +89,32 @@ describe('apply-release-signing: патч build.gradle', () => {
 
   test('падает на файле без блока android', () => {
     expect(() => patchGradle('не gradle')).toThrow('build.gradle')
+  })
+})
+
+describe('stripReleaseSigning: режим сборки без секретов', () => {
+  test('убирает подпись только у release — debug остаётся на debug-ключе', () => {
+    const { content } = stripReleaseSigning(TEMPLATE)
+    const bt = content.slice(content.indexOf('buildTypes {'))
+
+    // у release больше нет строки подписи
+    const relStart = bt.indexOf('release {')
+    const relBlock = bt.slice(relStart, bt.indexOf('}', relStart))
+    expect(relBlock).not.toContain('signingConfig')
+
+    // у debug строка на месте
+    expect(bt).toContain('signingConfig signingConfigs.debug')
+    // gradle соберёт app-release-unsigned.apk вместо debug-подписанного app-release.apk
+  })
+
+  test('идемпотентен: повторный запуск ничего не ломает', () => {
+    const once = stripReleaseSigning(TEMPLATE).content
+    const twice = stripReleaseSigning(once)
+    expect(twice.content).toBe(once)
+    expect(once.split('signingConfig signingConfigs.debug').length - 1).toBe(1)
+  })
+
+  test('падает, если блока buildTypes нет', () => {
+    expect(() => stripReleaseSigning('не gradle')).toThrow('buildTypes')
   })
 })
