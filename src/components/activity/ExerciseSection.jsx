@@ -677,7 +677,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
     if (!editing) return
     removeLog(todayKey(), editing.id)
     syncHistoryBurned(todayKey())
-    toast({ title: '🗑 Удалено', description: `${editing.name} убрана из дневника` })
+    toast({ title: '🗑 Удалено', description: `${editing.name} удалена из записей` })
     onDone?.()
   }
 

@@ -596,7 +596,7 @@ export async function postJson(path, body, timeoutMs = TIMEOUT_MS) {
       if (e?.message === 'Network request failed' || /network|internet|соединен/i.test(String(e?.message)))
         throw new Error(
           'Нет интернета — распознавание требует сети. ' +
-            'Дневник, база из ~85 блюд и отчёты работают офлайн. ' +
+            'Записи, база из ~85 блюд и отчёты работают офлайн. ' +
             'В сканере еды фото само уйдёт в очередь и распознается, когда сеть появится'
         )
       throw e

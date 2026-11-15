@@ -70,7 +70,7 @@ export function weekFoodStats(history = [], dayKeys = []) {
 export function buildReviewPrompt({ name = '', sex = '', goal = '', kcalGoal = 0, norms = {}, stats, weekdays = WEEKDAYS }) {
   const who = String(name).trim().split(/\s+/)[0] || 'Пользователь'
   const lines = [
-    `${who} — данные дневника за эту неделю (Пн–Вс):`,
+    `${who} — данные питания за эту неделю (Пн–Вс):`,
     ...stats.byDay.map((d, i) =>
       `  ${weekdays[i]} — ${d.kcal} ккал${d.kcal > 0 ? ` (белки ${d.p} г, жиры ${d.f} г, углеводы ${d.c} г)` : ' — записей нет'}`,
     ),
@@ -92,8 +92,8 @@ export function offlineWeekReview({ kcalGoal = 0, norms = {}, stats, weekdays = 
   const lines = []
   if (!stats.loggedDays) {
     return (
-      '🧸 За эту неделю дневник пока пустой — разбирать нечего, и это самый важный вывод. ' +
-      'Записывайте еду хотя бы пару дней: даже прикидочный дневник работает лучше идеальных планов.'
+      '🧸 За эту неделю записей еды нет — разбирать нечего, и это самый важный вывод. ' +
+      'Записывайте еду хотя бы пару дней: даже прикидочный учёт работает лучше идеальных планов.'
     )
   }
   const missDays = stats.byDay
@@ -101,8 +101,8 @@ export function offlineWeekReview({ kcalGoal = 0, norms = {}, stats, weekdays = 
     .filter(Boolean)
   lines.push(
     stats.avgKcal
-      ? `🧸 Разбор недели (без ИИ — сеть недоступна, считаю по правилам). Дневник вели ${stats.loggedDays} из 7 дней, в среднем ${stats.avgKcal} ккал в день.`
-      : `🧸 Разбор недели (без ИИ — сеть недоступна, считаю по правилам). Дневник вели ${stats.loggedDays} из 7 дней.`,
+      ? `🧸 Разбор недели (без ИИ — сеть недоступна, считаю по правилам). Еду записывали ${stats.loggedDays} из 7 дней, в среднем ${stats.avgKcal} ккал в день.`
+      : `🧸 Разбор недели (без ИИ — сеть недоступна, считаю по правилам). Еду записывали ${stats.loggedDays} из 7 дней.`,
   )
   if (kcalGoal > 0) {
     const ratio = stats.avgKcal / Math.max(1, kcalGoal)

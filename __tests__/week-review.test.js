@@ -160,7 +160,7 @@ describe('offlineWeekReview — разбор по правилам без сет
 
   test('пустая неделя — честный «разбирать нечего»', () => {
     const text = offlineWeekReview({ kcalGoal: 2000, norms: {}, stats: weekFoodStats([], DAYS) })
-    expect(text).toContain('дневник пока пустой')
+    expect(text).toContain('записей еды нет')
   })
 
   test('без цели по ккал текст остаётся полезным', () => {

@@ -157,7 +157,7 @@ export function DayShareCard({ open, onClose }) {
               <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
                 <Flame size={15} color="#fb923c" />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#fdba74]">
-                  {`${streak} дн. дневника подряд 🔥`}
+                  {`${streak} дн. с записями подряд 🔥`}
                 </Text>
               </View>
             ) : null}

@@ -149,7 +149,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
               <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-[#4D7CFE]/15 px-3 py-1.5">
                 <BookOpen size={15} color="#8DABFF" />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#8DABFF]">
-                  {`вели дневник ${recorded} из ${days} дней`}
+                  {`дней с записями: ${recorded} из ${days}`}
                 </Text>
               </View>
             ) : null}

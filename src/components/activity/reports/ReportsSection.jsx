@@ -59,8 +59,8 @@ export function ReportsSection({
   const showLockHint = (days) => {
     setLockHint(
       days === 30
-        ? 'Период 30 дней откроется на 30-й день ведения дневника'
-        : `Период ${days} дней откроется на ${days}-й день ведения дневника`
+        ? 'Период 30 дней откроется на 30-й день с записями'
+        : `Период ${days} дней откроется на ${days}-й день с записями`
     )
     clearTimeout(hintTimer.current)
     hintTimer.current = setTimeout(() => setLockHint(null), 4000)
@@ -119,12 +119,10 @@ export function ReportsSection({
 
   return (
     <View accessibilityLabel="Отчёты" className="gap-3">
-      <View className="flex-row items-center justify-between gap-2">
-        <View className="min-w-0 flex-1">
-          <Text className="font-extrabold text-[20px] tracking-tight text-bear-text">
-            Отчёты
-          </Text>
-        </View>
+      {/* Заголовок «Отчёты» — в шапке экрана, здесь только шеринг:
+          «Итоги» — PNG-карточка периода, «День» — слепок дня (вместо
+          серии скриншотов тренеру — отзыв из Google Play) */}
+      <View className="flex-row items-center justify-end gap-2">
         <Pressable
           onPress={() => setShareOpen(true)}
           accessibilityRole="button"
@@ -149,7 +147,7 @@ export function ReportsSection({
 
       {/* Период — единственный переключатель на вкладке: управляет
         // карточками, дисциплиной, нутриентами, историей и шеринговым «Итогами».
-        // 30/90 — с замком, пока дневник не дожил до этих дней (отзыв Кати) */}
+        // 30/90 — с замком, пока записей не набралось на эти дни (отзыв Кати) */}
       <View>
         <Pills
           items={rangeItems}

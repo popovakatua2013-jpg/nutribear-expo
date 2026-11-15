@@ -84,7 +84,7 @@ export function NutrientsCard({ days }) {
       {cur.recorded === 0 ? (
         <Text className="mt-3 font-sans text-[15px] leading-snug text-bear-dim">
           Записей еды за период нет — белки, жиры, углеводы и клетчатка появятся
-          здесь, как только заполните дневник питания
+          здесь, как только добавите еду за день
         </Text>
       ) : (
         <>

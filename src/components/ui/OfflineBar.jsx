@@ -22,7 +22,7 @@ export function OfflineBar() {
     >
       <WifiOff size={14} color="#8B96B8" />
       <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-[#aeb9d9]">
-        Нет сети — дневник работает, ИИ отключён
+        Нет сети — записи и отчёты работают, ИИ отключён
       </Text>
     </View>
   )

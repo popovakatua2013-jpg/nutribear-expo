@@ -25,7 +25,7 @@ export function confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast
           if (toast)
             toast({
               title: '🗑 Запись удалена',
-              description: `${entry.name} больше не в дневнике`,
+              description: `${entry.name} больше не в записях`,
             })
         },
       },

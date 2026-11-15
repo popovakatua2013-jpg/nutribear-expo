@@ -1,4 +1,7 @@
-// Нижняя навигация: Главная / Дневник / Тело / План / Ещё.
+// Нижняя навигация: Главная / Отчёты / Тело / План / Ещё.
+// Вкладка «Отчёты» (была «Дневник», переименовано по аудиту Кати
+// 16.11: дневник питания живёт на «Главной», вкладка показывает
+// статистику периода — название должно совпадать с содержимым).
 // «План» — питание на неделю (маршрут /workouts сохранён).
 // «Покупки» — НЕ вкладка: раньше её прятали через href: null, но
 // expo-router исключает такие экраны из linking и переход на /shopping
@@ -11,11 +14,11 @@
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { BookOpen, CalendarDays, House, Menu, PersonStanding } from 'lucide-react-native'
+import { CalendarDays, ChartColumn, House, Menu, PersonStanding } from 'lucide-react-native'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
-  { name: 'activity', label: 'Дневник', Icon: BookOpen },
+  { name: 'activity', label: 'Отчёты', Icon: ChartColumn },
   { name: 'bmi', label: 'Тело', Icon: PersonStanding },
   // «План»: меню на неделю (маршрут /workouts сохранён, чтобы не
   // ломать возможные ссылки); иконка — календарь недели:

@@ -1,16 +1,17 @@
-// Экран «Активность» (вкладка «Дневник»): баннер с мишкой и отчёты.
-// Календарь и «Закономерности» удалены по решению, тренировки перенесены
-// на «Главную»: здесь осталась аналитика — «Отчёты» с итогами, дисциплиной,
+// Экран «Отчёты» (вкладка; была «Дневник» — переименовано по аудиту
+// Кати 16.11, дневник питания живёт на «Главной»): баннер с мишкой и
+// отчёты. Календарь и «Закономерности» удалены по решению, тренировки
+// перенесены на «Главную»: здесь осталась аналитика — дисциплина,
 // нутриентами и окном истории показателя (MetricHistoryModal — тап по
 // карточке-итогу). Все показатели дня автоматически пишутся в историю
 // (useHistoryStore) — поэтому графики и отчёты видят реальные данные,
-// где бы ни были записаны: на «Главной» или в «Отчётах».
-// Период (7/30/90) выбирается пилюлями в шапке «Отчётов».
+// где бы ни были записаны: на «Главной» или здесь.
+// Период (7/30/90) выбирается пилюлями в шапке.
 
 import { useEffect, useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Footprints } from 'lucide-react-native'
+import { ChartColumn } from 'lucide-react-native'
 import { MotivationBanner } from '@/components/activity/MotivationBanner'
 import { ReportsSection } from '@/components/activity/reports/ReportsSection'
 import { SoftGlow } from '@/components/ui/SoftGlow'
@@ -73,13 +74,13 @@ export default function ActivityScreen() {
       >
         {/* Шапка экрана: иконка-чип (стиль «Тела») + заголовок + подзаголовок */}
         <View className="flex-row items-center gap-3">
-          <BodyChip icon={<Footprints size={21} />} size={42} />
+          <BodyChip icon={<ChartColumn size={21} />} size={42} />
           <View className="min-w-0 flex-1">
             <Text className="font-extrabold text-[24px] tracking-tight text-bear-text">
-              Активность
+              Отчёты
             </Text>
             <Text maxFontSizeMultiplier={1.25} className="font-sans text-[16px] text-bear-dim">
-              Шаги, вода и тренировки
+              Средние за период и дисциплина
             </Text>
           </View>
         </View>

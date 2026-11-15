@@ -178,7 +178,7 @@ describe('mealPokeMessage: имя из профиля', () => {
     const m = mealPokeMessage({ mealId: 'lunch', tone: 'tease', random: () => 0.1 })
     expect(m.body).toBe('Обед в расписании, а тебя не было. Уже булочки потянуло? 🥐')
     const soft = mealPokeMessage({ mealId: 'breakfast', tone: 'soft' })
-    expect(soft.body).toBe('Самое время позавтракать — запиши приём в дневник 🐻')
+    expect(soft.body).toBe('Самое время позавтракать — не забудь записать приём 🐻')
   })
 
   test('цифры не капитализируются: «5 дней подряд», а не «5 Дней»', () => {
@@ -197,7 +197,7 @@ describe('mealPokeMessage: имя из профиля', () => {
   test('мягкий тон с именем и без', () => {
     const withName = mealPokeMessage({ mealId: 'breakfast', tone: 'soft', name: 'Катя' })
     expect(withName.title).toBe('🌅 Завтрак')
-    expect(withName.body).toBe('Катя, самое время позавтракать — запиши приём в дневник 🐻')
+    expect(withName.body).toBe('Катя, самое время позавтракать — не забудь записать приём 🐻')
     const noName = mealPokeMessage({ mealId: 'lunch', tone: 'soft' })
     expect(noName.body).toBe('Обеденный перерыв: не забудь поесть и записать 🐻')
   })

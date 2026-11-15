@@ -42,7 +42,7 @@ export function DisciplineCard({ rows }) {
           {/* Кратко «2/7 дн»: полная форма «2 из 7 дней» обрезалась
               на узких экранах (отзыв Кати) */}
           <Text className={`font-semibold text-[15px] ${tone.text}`}>
-            вели дневник {recorded}/{days} дн
+            дней с записями {recorded}/{days}
           </Text>
         </View>
       </View>

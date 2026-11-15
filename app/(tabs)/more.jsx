@@ -1,8 +1,10 @@
 // Экран «Ещё» — компактное групповое меню (как в настройках iOS и в
 // «Ещё» у MyFitnessPal/Yazio). Структура по отзывам Кати (перестройка
-// 16.11: «напоминания в одном месте», «не 100 строк и выбора»):
+// 16.11: «напоминания в одном месте», «не 100 строк и выбора»;
+// аудит дублей 16.11: «Привычки» и «Виджет дня» удалены — вода/шаги/
+// дневник дублируют плитки и приёмы пищи на «Главной», сон — карточка
+// в «Отчётах», вес — «Тело», серия — чип в сводке «Главной»):
 //   Герой-профиль:   аватар, рост • вес, тап — редактирование
-//   ПРИВЫЧКИ:        Привычки / Виджет дня
 //   ЗДОРОВЬЕ:        Цикл / Шаги и здоровье (переехало из ПРИЛОЖЕНИЯ —
 //                    это здоровье, а не настройка приложения)
 //   ПОМОЩНИК:        Напарник (стиль пинков теперь у медведей — отдельный
@@ -34,7 +36,6 @@ import { useEffect, useState } from 'react'
 import { DeviceEventEmitter, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
-import { router } from 'expo-router'
 import { Settings } from 'lucide-react-native'
 import { MenuGroup, MenuRow } from '@/components/more/MenuList'
 import { ProfileEditor } from '@/components/more/ProfileEditor'
@@ -158,24 +159,6 @@ export default function MoreScreen() {
 
         {/* ── Герой-профиль: аватар, рост • вес, тап — редактирование ── */}
         <ProfileEditor />
-
-        {/* ── ПРИВЫЧКИ: чек-лист на день с серией дней ──────────────── */}
-        <MenuGroup title="ПРИВЫЧКИ">
-          <MenuRow
-            icon="✅"
-            iconBg="rgba(74,222,128,0.16)"
-            title="Привычки"
-            value="Чек-лист на день"
-            onPress={() => router.push('/habits')}
-          />
-          <MenuRow
-            icon="📊"
-            iconBg="rgba(56,189,248,0.16)"
-            title="Виджет дня"
-            value="Крупные цифры"
-            onPress={() => router.push('/widget')}
-          />
-        </MenuGroup>
 
         {/* ── ЗДОРОВЬЕ: Цикл и Шаги — здоровье, а не настройка приложения
                («Шаги и здоровье» переехало из ПРИЛОЖЕНИЯ; «Сон» и «Время
