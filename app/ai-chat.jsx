@@ -20,6 +20,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   FlatList,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -35,7 +36,12 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOffline } from '@/lib/useOffline'
 import { askNutritionist, offlineReply, buildCompanionSystem } from '@/lib/chat'
-import { useAiChatStore } from '@/store/useAiChatStore'
+import { useAiChatStore, AI_GREETING } from '@/store/useAiChatStore'
+// Медведь-напарник: аватар и имя в шапке/у ответов, своё приветствие,
+// свой характер в системном промпте (buildCompanionSystem ниже)
+import { useCompanionStore, COMPANIONS } from '@/store/useCompanionStore'
+import { useProStore } from '@/store/useProStore'
+import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -85,6 +91,33 @@ export default function AiChatScreen() {
   // и правильно склоняет («Катя, куда пропала?» вместо «Куда пропал?»)
   const name = useProfileStore((s) => s.name)
   const sex = useProfileStore((s) => s.sex)
+
+  // Выбранный медведь (Фит/Топаз/Бусинка/Кедр/Кира): аватар и имя в шапке,
+  // аватар у каждого ответа, приветствие его характера
+  const companionId = useCompanionStore((s) => s.companionId)
+  const companion = COMPANIONS.find((c) => c.id === companionId) || COMPANIONS[0]
+
+  // Лимит бесплатного тарифа (этап 1 монетизации): 15 сообщений ИИ в день.
+  // Premium снимает лимит; офлайн-помощник лимитам не подчиняется —
+  // ответы по дневнику доступны всегда
+  const pro = useProStore((s) => s.pro)
+  const chatLeft = useAiUsageStore((s) => aiRemaining(s, 'chat', pro))
+
+  // Свежее приветствие характера: если в диалоге пока только приветствие
+  // (дефолтное из стора или после «Очистить»/смены медведя), подставляем
+  // текст выбранного медведя — начатый диалог не трогаем
+  useEffect(() => {
+    const s = useAiChatStore.getState()
+    const first = s.messages[0]
+    if (
+      s.messages.length === 1 &&
+      first &&
+      (first.greeting || first.content === AI_GREETING.content) &&
+      first.content !== companion.greeting
+    ) {
+      s.setMessages([{ role: 'assistant', greeting: true, content: companion.greeting }])
+    }
+  }, [companionId])
 
   // Высота клавиатуры на Android — отдаётся контейнеру в paddingBottom.
   // RN отдаёт её БЕЗ полосы навигации (imeInsets − barInsets), навбар
@@ -168,9 +201,23 @@ export default function AiChatScreen() {
     setBusy(true)
     try {
       let reply
+      // Офлайн-ответ помечаем — под пузырём видна подпись «🧸 офлайн-режим»,
+      // чтобы не путать встроенного помощника с настоящим ИИ
+      let isOffline = false
+      // Сработал дневной лимит бесплатного тарифа (отдельная подпись —
+      // «лимит исчерпан», не путать с «нет сети»)
+      let limitHit = false
       if (offline) {
         // Сети нет — сразу офлайн-помощник, без зависающей попытки запроса
         reply = offlineReply(content, buildContext())
+        isOffline = true
+      } else if (!useAiUsageStore.getState().canUse('chat', pro)) {
+        // Лимит исчерпан — дневник не блокируем: отвечает встроенный
+        // помощник по дневнику (бесплатно), настоящий ИИ вернётся завтра
+        // или с Premium. Запрос не списывается — он и не уходил
+        reply = offlineReply(content, buildContext())
+        isOffline = true
+        limitHit = true
       } else {
         try {
           // Системный промпт: характер выбранного медведя (Кедр/Кира/
@@ -181,11 +228,23 @@ export default function AiChatScreen() {
           // Таймаут 25 с: gpt-4o-mini через прокси иногда отвечает 8–15 с,
           // прежние 8 с обрывали ответ на полуслове («дневник,», «Лучше»).
           reply = await askNutritionist(next, 25000, buildCompanionSystem(buildContext()))
+          // Списываем ТОЛЬКО успешный запрос — сгоревший на ошибке сети
+          // запрос денег не стоит
+          useAiUsageStore.getState().record('chat')
         } catch {
           reply = offlineReply(content, buildContext())
+          isOffline = true
         }
       }
-      setMessages([...next, { role: 'assistant', content: reply }])
+      setMessages([
+        ...next,
+        {
+          role: 'assistant',
+          content: reply,
+          ...(isOffline ? { offline: true } : {}),
+          ...(limitHit ? { limit: true } : {}),
+        },
+      ])
     } catch {
       setMessages([
         ...next,
@@ -229,13 +288,25 @@ export default function AiChatScreen() {
         >
           <ArrowLeft size={20} color="#AEB9D9" />
         </Pressable>
-        <View className="min-w-0 flex-1 pl-2">
-          <Text className="font-extrabold text-[21px] text-bear-text">
-            ИИ-помощник
-          </Text>
-          <Text className="mt-0.5 text-[15px] text-[#8a94b3]">
-            Нутрициолог NutriBear — отвечает сразу
-          </Text>
+        <View className="min-w-0 flex-1 flex-row items-center gap-2.5 pl-2">
+          <Image
+            source={companion.image}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 14,
+              backgroundColor: `${companion.color}22`,
+            }}
+            accessibilityLabel={`${companion.name} — аватар помощника`}
+          />
+          <View className="min-w-0 flex-1">
+            <Text numberOfLines={1} className="font-extrabold text-[21px] text-bear-text">
+              {companion.name}
+            </Text>
+            <Text numberOfLines={1} className="mt-0.5 text-[15px] text-[#8a94b3]">
+              Нутрициолог NutriBear — отвечает сразу
+            </Text>
+          </View>
         </View>
         <Pressable
           onPress={clearChat}
@@ -290,17 +361,37 @@ export default function AiChatScreen() {
                 />
               </LinearGradient>
             ) : (
-              // Ответ ИИ: та же минимальная ширина пузыря, что у
-              // сообщений пользователя, и построчный рендер — переносы
-              // строк из ответа не теряются
-              <View
-                className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5"
-                style={{ maxWidth: '85%' }}
-              >
-                <MessageText
-                  content={item.content}
-                  className="text-[19px] leading-[22px] text-[#dbe3f8]"
+              // Ответ медведя: аватар напарника слева от пузыря, под
+              // пузырём — подпись «офлайн-режим» либо «лимит исчерпан»;
+              // построчный рендер — переносы строк из ответа не теряются
+              <View className="flex-row items-start gap-2" style={{ maxWidth: '88%' }}>
+                <Image
+                  source={companion.image}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 9,
+                    backgroundColor: `${companion.color}22`,
+                  }}
+                  accessibilityLabel={`${companion.name} — аватар ответа`}
                 />
+                <View className="min-w-0 flex-1">
+                  <View className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5">
+                    <MessageText
+                      content={item.content}
+                      className="text-[19px] leading-[22px] text-[#dbe3f8]"
+                    />
+                  </View>
+                  {item.limit ? (
+                    <Text className="mt-1 px-1 text-[12.5px] leading-[16px] text-[#5c668a]">
+                      🧸 дневной лимит ИИ исчерпан — отвечает встроенный помощник. Premium — безлимит
+                    </Text>
+                  ) : item.offline ? (
+                    <Text className="mt-1 px-1 text-[12.5px] text-[#5c668a]">
+                      🧸 офлайн-режим — отвечает встроенный помощник по дневнику
+                    </Text>
+                  ) : null}
+                </View>
               </View>
             )}
           </View>
@@ -313,6 +404,23 @@ export default function AiChatScreen() {
           ) : null
         }
       />
+
+      {/* Остаток дневного лимита ИИ: только для бесплатного тарифа и
+          только при сети (офлайн-помощник и так безлимитный) */}
+      {!pro && !offline ? (
+        <Text
+          accessibilityLabel={
+            chatLeft > 0
+              ? `Осталось сообщений ИИ сегодня: ${chatLeft}`
+              : 'Дневной лимит ИИ исчерпан'
+          }
+          className="mb-1 px-4 text-[12.5px] text-[#5c668a]"
+        >
+          {chatLeft > 0
+            ? `ИИ-чата осталось: ${chatLeft} сообщений сегодня · Premium — безлимит`
+            : 'Дневной лимит ИИ исчерпан — отвечает встроенный помощник · Premium — безлимит'}
+        </Text>
+      ) : null}
 
       {/* Ввод */}
       <View className="flex-row items-center gap-2 border-t border-white/5 p-4">
