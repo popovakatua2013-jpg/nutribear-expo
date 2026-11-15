@@ -1,7 +1,16 @@
 name: Build APK
 
+# Два способа запустить сборку:
+#   1. workflow_dispatch — кнопка «Run workflow» в Actions;
+#   2. пуш изменения файла .github/build-trigger (в нём просто отметка
+#      времени запуска). Триггер-файл появился 15.11: у личного токена
+#      владельца есть право push, но нет права Actions:write, поэтому
+#      запускать сборку через API он не может — а пуш может.
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/build-trigger'
 
 jobs:
   apk:
