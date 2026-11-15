@@ -13,6 +13,10 @@ jobs:
       EXPO_PUBLIC_AI_VOICE_MODEL: whisper-1
       EXPO_PUBLIC_AI_PROXY_URL: https://nutribear-ai.popovakatua2013.workers.dev/v1
       EXPO_PUBLIC_AI_PROXY_SECRET: ${{ secrets.NB_PROXY_SECRET }}
+      # Сборки для установки/магазина — релизный режим оплаты: демо-кнопка
+      # «активировать без оплаты» скрыта, Premium включается промокодом
+      # (локальные запуски без этой переменной остаются демо-режимом)
+      EXPO_PUBLIC_PAYMENTS_MODE: release
     steps:
       - uses: actions/checkout@v4
 
@@ -32,14 +36,50 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild -p android --no-install
 
+      # Блокер RuStore 15.11: без релизного ключа каждая сборка выходила
+      # с новой debug-подписью — не ставилась поверх установленной версии
+      # и не принималась магазином. Если секреты KEYSTORE_* заданы —
+      # подписываем релизным ключом прямо здесь; если нет — выкладываем
+      # НЕПОДПИСАННЫЙ APK (его подписывает владелец ключа отдельно)
+      - name: Prepare release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          if [ "$HAS_KEYSTORE" = "true" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+            node scripts/apply-release-signing.js
+            echo "SIGN_MODE=secrets" >> "$GITHUB_ENV"
+            echo "Ключ декодирован, build.gradle настроен на release.keystore"
+          else
+            echo "SIGN_MODE=unsigned" >> "$GITHUB_ENV"
+            echo "::warning::Секреты KEYSTORE_* не заданы — APK выйдет НЕПОДПИСАННЫМ (app-release-unsigned.apk)"
+          fi
+
       - name: Build release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           chmod +x android/gradlew
           cd android
           ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -Pandroid.compileSdkVersion=37
 
+      # Контроль подписи: в логе виден сертификат. Красная сборка = APK
+      # ушёл с debug-ключом, выпускать его в магазин нельзя
+      - name: Verify release signature
+        if: env.SIGN_MODE == 'secrets'
+        run: |
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "$APK" | grep -q 'CN=NutriBear'
+          echo "✅ APK подписан релизным ключом (CN=NutriBear)"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NutriBear-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
