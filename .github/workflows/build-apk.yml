@@ -6,11 +6,17 @@ name: Build APK
 #      времени запуска). Триггер-файл появился 15.11: у личного токена
 #      владельца есть право push, но нет права Actions:write, поэтому
 #      запускать сборку через API он не может — а пуш может.
+# Успешный прогон сам публикует предрелиз v{версия}-rc1 с двумя
+# подписанными APK (шаг «Publish release», встроенный GITHUB_TOKEN —
+# у него есть contents:write, артефакт по API личным токеном не скачать).
 on:
   workflow_dispatch:
   push:
     paths:
       - '.github/build-trigger'
+
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -117,3 +123,41 @@ jobs:
             apk-stage/NutriBear-arm64-unsigned.apk
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/apk/release/app-release-unsigned.apk
+
+      # Авто-релиз вместо ручной выкладки: предыдущие версии (rc1/rc2)
+      # выкладывались вручную, но у личного токена владельца нет права
+      # Actions:read — артефакт по API больше не скачать. Встроенный
+      # GITHUB_TOKEN с contents:write публикует предрелиз сам:
+      #   v{версия}-rc1 + два подписанных APK с именами вида
+      #   NutriBear-1.1.2-v15-arm64.apk / -universal.apk.
+      # Повторный прогон той же версии обновляет файлы (--clobber).
+      - name: Publish release (два APK)
+        if: env.SIGN_MODE == 'secrets'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          VCODE=$(node -p "require('./app.json').expo.android.versionCode")
+          TAG="v${VERSION}-rc1"
+          DIR="$GITHUB_WORKSPACE/release-apk"
+          mkdir -p "$DIR"
+          cp "$GITHUB_WORKSPACE/apk-stage/NutriBear-arm64.apk" "$DIR/NutriBear-${VERSION}-v${VCODE}-arm64.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$DIR/NutriBear-${VERSION}-v${VCODE}-universal.apk"
+          cat > "$DIR/notes.md" << 'NOTES'
+          ## Как установить
+          - **arm64** — для современных телефонов (Samsung и т.п.): файл вдвое меньше, качается быстрее
+          - **universal** — универсальный, если arm64-версия не установилась
+
+          versionCode ${VCODE}, коммит ${GITHUB_SHA:0:7}
+          NOTES
+          sed -i "s/\${VCODE}/$VCODE/g; s/\${GITHUB_SHA:0:7}/${GITHUB_SHA:0:7}/g" "$DIR/notes.md"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$DIR"/*.apk --clobber
+            echo "Релиз $TAG обновлён (файлы перезаписаны)"
+          else
+            gh release create "$TAG" "$DIR"/*.apk \
+              --title "NutriBear ${VERSION} (версия ${VCODE}) — вкладка «Отчёты», «Ещё» без дублей" \
+              --notes-file "$DIR/notes.md" \
+              --prerelease
+            echo "Релиз $TAG создан"
+          fi
