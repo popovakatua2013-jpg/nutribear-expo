@@ -54,7 +54,10 @@ describe('apply-release-signing: патч build.gradle', () => {
     expect(content).toContain("storeFile file('release.keystore')")
     expect(content).toContain("storePassword System.getenv('KEYSTORE_PASSWORD')")
     expect(content).toContain("keyAlias 'nutribear'")
-    expect(content).toContain("keyPassword System.getenv('KEY_PASSWORD')")
+    // один пароль на store и key (PKCS12); отдельный KEY_PASSWORD не нужен:
+    // в сборке №6 он оказался заполнен неверно и валил packageRelease
+    expect(content).toContain("keyPassword System.getenv('KEYSTORE_PASSWORD')")
+    expect(content).not.toContain("System.getenv('KEY_PASSWORD')")
     // и стоит ДО конфига debug (вставка сразу после signingConfigs {)
     expect(content.indexOf("storeFile file('release.keystore')")).toBeLessThan(
       content.indexOf("storeFile file('debug.keystore')")

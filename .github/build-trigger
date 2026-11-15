@@ -1,1 +1,1 @@
-build apk #6 versionCode 12 — 2026-11-15T21:00+03:00 (пузырь пользователя, смена напарника, добавить перекус)
+build apk #6 (повтор) versionCode 12 — 2026-11-15T19:20+03:00 (keyPassword из KEYSTORE_PASSWORD, KEY_PASSWORD не используется)

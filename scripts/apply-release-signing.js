@@ -8,7 +8,12 @@
 // android/app/release.keystore, пароли придут через env на шаге gradlew):
 //
 //   1. в signingConfigs добавляется конфиг release с file('release.keystore')
-//      и паролями из System.getenv('KEYSTORE_PASSWORD' / 'KEY_PASSWORD');
+//      и паролями из System.getenv('KEYSTORE_PASSWORD');
+//      сборка №6 (16.11): KEY_PASSWORD оказался заполнен неверно (хранилище
+//      открылось, ключ — нет: «bad key is used during decryption»), поэтому
+//      keyPassword берём из того же KEYSTORE_PASSWORD — PKCS12-ключ
+//      NutriBear создан с одним паролем на store и key, отдельный секрет
+//      больше не нужен (секрет KEY_PASSWORD в репозитории не используется);
 //   2. в buildTypes.release подпись переключается на signingConfigs.release
 //      (buildTypes.debug остаётся на debug-ключе — локальные отладочные
 //      сборки не должны требовать релизный keystore).
@@ -23,7 +28,7 @@ const KEYSTORE_BLOCK = [
   "            storeFile file('release.keystore')",
   "            storePassword System.getenv('KEYSTORE_PASSWORD')",
   "            keyAlias 'nutribear'",
-  "            keyPassword System.getenv('KEY_PASSWORD')",
+  "            keyPassword System.getenv('KEYSTORE_PASSWORD')",
   '        }',
 ].join('\n')
 
