@@ -18,7 +18,11 @@ const TRIAL_MS = 3 * 24 * 60 * 60 * 1000
 const MONTH_MS = 31 * 24 * 60 * 60 * 1000
 const YEAR_MS = 366 * 24 * 60 * 60 * 1000
 
-const PLAN_MS = { trial: TRIAL_MS, month: MONTH_MS, year: YEAR_MS }
+// Промо-план (релизный режим оплаты, Кате 15.11): Premium для первых
+// пользователей вместо демо-активации, срок как у годовой подписки.
+// Код не показывается покупкой в карточке — в PRO_PLANS его нет,
+// активация только через isValidPromoCode (src/lib/promo-codes.js)
+const PLAN_MS = { trial: TRIAL_MS, month: MONTH_MS, year: YEAR_MS, promo: YEAR_MS }
 
 export const PRO_PLANS = [
   { id: 'trial', title: 'Триал 3 дня', price: 'Бесплатно', note: 'все функции Premium' },
@@ -30,7 +34,7 @@ export const useProStore = create(
   persist(
     (set) => ({
       pro: false,
-      plan: null, // 'trial' | 'month' | 'year'
+      plan: null, // 'trial' | 'month' | 'year' | 'promo'
       activatedAt: null,
 
       activate: (plan) => set({ pro: true, plan, activatedAt: Date.now() }),

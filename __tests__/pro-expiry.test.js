@@ -51,6 +51,28 @@ describe('useProStore.refresh: сроки планов', () => {
     expect(useProStore.getState().pro).toBe(false)
   })
 
+  // Промо-план первых пользователей (релизный режим оплаты): срок как
+  // у годовой подписки — Premium по промокоду не становится вечным
+  test('промо жив до 366 дней, гаснет после', () => {
+    setPlan('promo', now - 365 * DAY)
+    useProStore.getState().refresh()
+    expect(useProStore.getState().pro).toBe(true)
+    expect(useProStore.getState().plan).toBe('promo')
+
+    setPlan('promo', now - 367 * DAY)
+    useProStore.getState().refresh()
+    expect(useProStore.getState().pro).toBe(false)
+    expect(useProStore.getState().plan).toBeNull()
+  })
+
+  test('activate() сохраняет промо-план как есть', () => {
+    useProStore.getState().activate('promo')
+    expect(useProStore.getState().pro).toBe(true)
+    expect(useProStore.getState().plan).toBe('promo')
+    expect(useProStore.getState().activatedAt).toBeGreaterThan(0)
+    useProStore.setState({ pro: false, plan: null, activatedAt: null })
+  })
+
   test('без активации refresh ничего не меняет', () => {
     useProStore.setState({ pro: false, plan: null, activatedAt: null })
     useProStore.getState().refresh()
