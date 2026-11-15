@@ -5,6 +5,9 @@ import { EXTRA_FOODS } from './foods-extra'
 import { MORE_FOODS } from './foods-more'
 import { REQUESTED_FOODS } from './foods-requests'
 import { BIG_FOODS } from './foods-big'
+import { XL_FOODS } from './foods-xl'
+import { XL2_FOODS } from './foods-xl2'
+import { XL3_FOODS } from './foods-xl3'
 import { MICROS } from './micros'
 
 const BASE_FOODS = [
@@ -61,7 +64,10 @@ const BASE_FOODS = [
 // (макароны, белый хлеб, булочки, суши и др.) + набор по запросам
 // (молочка разной жирности, торты, зелень, капуста и т.д.) + большой
 // набор (мясо, рыба, каши, овощи, фрукты, молочка, выпечка, фастфуд,
-// напитки — ~110 позиций с реалистичными дефолтными порциями).
+// напитки — с реалистичными дефолтными порциями) + три XL-набора
+// (мясо и готовые блюда, рыба/морепродукты, супы, каши, овощи/салаты,
+// фрукты, молочка и сыры, завтраки, выпечка, сладости/снеки, фастфуд,
+// соусы, напитки, консервы, веган/ЗОЖ) — база 247 → ~494 позиций.
 // Витамины/минералы (fe/ca/k/mg/vitc/vita) подмешиваются из micros.js —
 // их использует рейтинг питания.
 export const FOODS = [
@@ -70,6 +76,9 @@ export const FOODS = [
   ...MORE_FOODS,
   ...REQUESTED_FOODS,
   ...BIG_FOODS,
+  ...XL_FOODS,
+  ...XL2_FOODS,
+  ...XL3_FOODS,
 ].map((f) => (MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f))
 
 // Быстрый выбор граммовки в модалке добавления
