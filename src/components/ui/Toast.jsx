@@ -103,16 +103,20 @@ function ToastItem({ item, onDismiss }) {
 // «топаю на быструю запись — нет уведомления „добавлено“» — тост
 // всплывал ПОД окном «Воды»). Слоя два, но виден всегда один:
 // при открытом окне — слой внутри него, в остальное время — корневой
+// Позиция — ВВЕРХ экрана (отзыв Кати от 15.11: «при добавлении воды
+// уведомление сливается с блоком» — внизу тост ложился на тёмные
+// плитки воды и кнопку «Добавить еду» и сливался с ними; наверху
+// свободно от блоков и читается отдельно)
 export function ToastLayer() {
   const { items, dismiss } = useContext(ToastState)
   if (!items.length) return null
   return (
     <SafeAreaView
       pointerEvents="box-none"
-      edges={['bottom']}
-      className="absolute inset-x-0 bottom-0 z-50 items-center px-4"
+      edges={['top']}
+      className="absolute inset-x-0 top-0 z-50 items-center px-4"
     >
-      <View pointerEvents="box-none" className="w-full max-w-[380px] gap-2 pb-20">
+      <View pointerEvents="box-none" className="w-full max-w-[380px] gap-2 pt-3">
         {items.map((t) => (
           <ToastItem key={t.id} item={t} onDismiss={dismiss} />
         ))}

@@ -548,11 +548,15 @@ export function DailySummary({
             }
             className="max-w-full"
           >
-            {/* «Осталось»: огонёк и подпись в строку, ниже — остаток
+            {/* «Осталось»: подпись в строку, ниже — остаток
                 калорий на день. Слово «Остаток» заменили на «Осталось»
                 (отзыв Кати: слово «Остаток» криво) — так звучит естественнее;
                 подпись фиксированные 15px без дожима шрифта (прошлый отзыв
-                Кати: «мелкий шрифт и криво встал») */}
+                Кати: «мелкий шрифт и криво встал»). Огонёк убран (отзыв
+                Кати 15.11: «слово осталось и внизу цифра — выровнять»):
+                он сдвигал слово вправо, а «ккал» справа сдвигал число
+                влево — слово и цифра шли зигзагом; без огонька обе строки
+                центрируются на одной оси */}
             <View
               accessibilityLabel={
                 `Осталось на сегодня: ` +
@@ -564,20 +568,17 @@ export function DailySummary({
               }
               className="max-w-full items-center px-3 py-2"
             >
-              <View className="flex-row items-center justify-center gap-1.5">
-                <Flame size={16} color={remTone.text} />
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={MAX}
-                  className="font-bold text-[15px] leading-tight"
-                  style={{ color: remTone.text }}
-                >
-                  Осталось
-                </Text>
-                {/* Карандашик убран (отзыв Кати 09.11: редактируются
-                    только особые дни и нормы нутриентов); тап по блоку
-                    «Осталось» по-прежнему правит цель калорий */}
-              </View>
+              <Text
+                numberOfLines={1}
+                maxFontSizeMultiplier={MAX}
+                className="font-bold text-[15px] leading-tight"
+                style={{ color: remTone.text }}
+              >
+                Осталось
+              </Text>
+              {/* Карандашик убран (отзыв Кати 09.11: редактируются
+                  только особые дни и нормы нутриентов); тап по блоку
+                  «Осталось» по-прежнему правит цель калорий */}
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit

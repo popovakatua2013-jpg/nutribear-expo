@@ -5,10 +5,16 @@
 
 // В jest expo-secure-store без нативной части: либо импорт падает,
 // либо методы бросают — адаптер обязан откатиться на AsyncStorage.
-// Явно гарантируем это: мокаем пакет как «нативный модуль недоступен»
-jest.mock('expo-secure-store', () => {
-  throw new Error('native module not available (тестовое окружение)')
-})
+// Явно гарантируем это: мокаем пакет как «нативный модуль недоступен».
+// virtual: true — мок работает даже когда пакет не установлен локально
+// (в тестовом окружении он и не нужен нативно)
+jest.mock(
+  'expo-secure-store',
+  () => {
+    throw new Error('native module not available (тестовое окружение)')
+  },
+  { virtual: true }
+)
 
 const AsyncStorage = require('@react-native-async-storage/async-storage').default
 const { secureStorage } = require('../src/lib/secure-storage')

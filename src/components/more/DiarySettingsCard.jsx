@@ -59,7 +59,7 @@ export function DiarySettingsCard({ embedded = false }) {
 
   if (embedded) {
     return (
-      <View accessibilityLabel="Дневник питания" className="gap-1.5">
+      <View accessibilityLabel="Настройки дневника" className="gap-1.5">
         <View className="flex-row items-center justify-between gap-2">
           <Text className="min-w-0 flex-1 font-bold text-[15px] text-bear-text">{modeTitle}</Text>
           {switchEl}
@@ -167,9 +167,9 @@ export function DiarySettingsCard({ embedded = false }) {
   return (
     <CollapsibleCard
       storageKey="diary"
-      accessibilityLabel="Дневник питания"
+      accessibilityLabel="Настройки дневника"
       icon={<Utensils size={20} color="#C4B5FD" />}
-      title="Дневник питания"
+      title="Настройки дневника"
       right={switchEl}
     >
       <Text className="font-bold text-[15px] text-bear-text">{modeTitle}</Text>

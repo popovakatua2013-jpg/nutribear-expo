@@ -1,20 +1,20 @@
-// Карточка «График веса» — как на референсе дневника: заголовок со
-// значком, переключатель периода (7/30/90 дней) и сглаженная линия
-// измерений с заливкой. ПО ОДНОМУ ЗНАЧЕНИЮ НА ДЕНЬ (weightByDay —
-// последнее взвешивание дня): раньше несколько замеров за один день
-// давали «Сб Сб Сб Сб» в подписях и ломали масштаб (аудит по скрину
-// Кати). Подписи дней — числовые даты «7.11» (отзыв Кати: месяц
-// вместо точек). Золотой пунктир — цель по весу, если задана; шкалу
-// цель больше не растягивает (см. SvgAreaChart). Под замком ТОЛЬКО
-// 30/90 — пока дневник не дожил до этих дней; неделя открыта всегда
-// (отзыв Кати: замок на «7 д» в первые 7 дней выглядел как поломка).
-// Данные — журнал
+// Карточка «График веса» — оформление по отзыву Кати от 15.11
+// («график веса вообще не понятен, оформить по-другому»): над графиком
+// полоса «Сейчас / Цель / Осталось» — главные цифры видны сразу, без
+// чтения осей; при ОДНОЙ записи вместо голой точки на пустой оси —
+// строка списка с датой и весом + честная подсказка («линия появится
+// со второго взвешивания»); линия рисуется с двух записей.
+// ПО ОДНОМУ ЗНАЧЕНИЮ НА ДЕНЬ (weightByDay — последнее взвешивание
+// дня): раньше несколько замеров за один день давали «Сб Сб Сб Сб»
+// в подписях и ломали масштаб (аудит по скрину Кати). Подписи дней —
+// числовые даты «7.11» (отзыв Кати: месяц вместо точек). Золотой
+// пунктир — цель по весу, если задана; шкалу цель больше не
+// растягивает (см. SvgAreaChart). Плашка значения в шапке убрана —
+// дубль полосы «Сейчас». Под замком ТОЛЬКО 30/90 — пока дневник не
+// дожил до этих дней; неделя открыта всегда (отзыв Кати: замок на
+// «7 д» в первые 7 дней выглядел как поломка). Данные — журнал
 // взвешиваний из профиля; за период измерений нет — честная
-// подсказка. ОДНА запись — точка по центру со значением (отзыв
-// Кати от 10.11: «добавила вес — график в дневнике не фиксирует
-// данные»: требовать два взвешивания для первой точки — нечестно);
-// линия рисуется с двух записей. Тап по карточке открывает
-// вкладку ИМТ и докручивает
+// подсказка. Тап по карточке открывает вкладку ИМТ и докручивает
 // до большого графика «Динамика веса»
 
 import { useMemo, useState } from 'react'
@@ -61,8 +61,16 @@ export function WeightTrendCard() {
     return out
   }, [weights, days])
 
-  // Последнее измерение — для плашки значения в шапке
+  // Последнее измерение — для полосы «Сейчас / Цель / Осталось»
   const last = data.length ? data[data.length - 1] : null
+  const hasGoal = goalKg > 0
+  // Осталось до цели: положительное — сколько кг осталось, отрицательное —
+  // перебор (вес ушёл за цель). Ровно на цели — «0 кг»
+  let remainText = null
+  if (last && hasGoal) {
+    const diff = Math.round((goalKg - last.value) * 10) / 10
+    remainText = diff === 0 ? '0 кг' : `${diff > 0 ? '' : '−'}${fmtDecimal(Math.abs(diff))} кг`
+  }
 
   function pickDays(next) {
     const r = WEIGHT_RANGES.find((x) => x.id === next)
@@ -122,17 +130,8 @@ export function WeightTrendCard() {
           >
             График веса
           </Text>
-          {last ? (
-            <View className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1">
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.15}
-                className="font-bold text-[13px] text-bear-soft"
-              >
-                {`${fmtDecimal(last.value)} кг`}
-              </Text>
-            </View>
-          ) : null}
+          {/* Плашка значения в шапке убрана — теперь есть полоса
+              «Сейчас / Цель / Осталось» (отзыв Кати 15.11) */}
         </View>
 
         {/* Период: короткие чипы 7/30/90 — как на референсе; под замком
@@ -174,7 +173,22 @@ export function WeightTrendCard() {
           </Text>
         ) : null}
 
-        {data.length >= 1 ? (
+        {/* Полоса «Сейчас / Цель / Осталось»: главные цифры крупно и
+            сразу — график больше не единственный источник информации
+            (отзыв Кати 15.11: «график веса вообще не понятен») */}
+        {last ? (
+          <View className="mt-2.5 flex-row gap-2">
+            <StatCell label="Сейчас" value={`${fmtDecimal(last.value)} кг`} />
+            {hasGoal ? (
+              <StatCell label="Цель" value={`${fmtDecimal(goalKg)} кг`} />
+            ) : (
+              <StatCell label="Записей" value={String(data.length)} />
+            )}
+            {hasGoal ? <StatCell label="Осталось" value={remainText} /> : null}
+          </View>
+        ) : null}
+
+        {data.length >= 2 ? (
           <View className="mt-1">
             <SvgAreaChart
               data={data}
@@ -182,9 +196,38 @@ export function WeightTrendCard() {
               dotColor="#FFFFFF"
               dot={data.length <= 10}
               height={150}
-              goalLine={goalKg > 0 ? goalKg : null}
+              goalLine={hasGoal ? goalKg : null}
               yFmt={(v) => `${Math.round(v)}`}
             />
+          </View>
+        ) : data.length === 1 ? (
+          // ОДНА запись: строка списка вместо голой точки на пустой оси
+          // (отзыв Кати 15.11: график с одной точкой и осью 74–76 «вообще
+          // не понятен») + честная подсказка про второе взвешивание
+          <View className="mt-2.5 gap-1.5">
+            <View
+              accessibilityLabel={`Взвешивание ${data[0].label}: ${fmtDecimal(data[0].value)} килограммов`}
+              className="flex-row items-center justify-between rounded-xl bg-white/[0.05] px-3 py-2.5"
+            >
+              <Text
+                maxFontSizeMultiplier={1.2}
+                className="font-sans text-[13.5px] text-bear-sub"
+              >
+                {data[0].label}
+              </Text>
+              <Text
+                maxFontSizeMultiplier={1.15}
+                className="font-bold text-[14.5px] text-bear-text"
+              >
+                {`${fmtDecimal(data[0].value)} кг`}
+              </Text>
+            </View>
+            <Text
+              maxFontSizeMultiplier={1.2}
+              className="font-sans text-[12.5px] leading-snug text-bear-dim"
+            >
+              Линия появится со второго взвешивания — запишите вес ещё раз на вкладке «Тело»
+            </Text>
           </View>
         ) : (
           <View
@@ -201,5 +244,28 @@ export function WeightTrendCard() {
         )}
       </LinearGradient>
     </Pressable>
+  )
+}
+
+// Ячейка полосы «Сейчас / Цель / Осталось»: подпись сверху мелко,
+// значение снизу крупно — как мини-статы в отчётах
+function StatCell({ label, value }) {
+  return (
+    <View className="min-w-0 flex-1 rounded-xl bg-white/[0.05] px-2.5 py-1.5">
+      <Text
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.2}
+        className="font-sans text-[11px] text-bear-dim"
+      >
+        {label}
+      </Text>
+      <Text
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.15}
+        className="font-bold text-[14px] text-bear-text"
+      >
+        {value}
+      </Text>
+    </View>
   )
 }

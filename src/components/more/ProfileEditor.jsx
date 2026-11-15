@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pencil, UserRound, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
+import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 import { fmtDecimal } from '@/lib/data/bmi'
 
 const FIELD =
@@ -89,14 +90,19 @@ export function ProfileEditor() {
 
 // Окно редактирования: тот же шаблон, что «Записать вес» (дно экрана,
 // затемнение, клавиатура не перекрывает поля на iOS, ключ сбрасывает
-// форму при каждом открытии). Сохранение сворачивает окно сразу
-// (отзыв Кати: «нажать сохранить профиль — должно сразу сворачивать»).
+// форму при каждом открытии; на Android отступ под клавиатуру считает
+// useKeyboardGuard — окно Modal не ужмётся само). Сохранение сворачивает
+// окно сразу (отзыв Кати: «нажать сохранить профиль — должно сразу
+// сворачивать»).
 function ProfileModal({ open, onClose }) {
+  const kb = useKeyboardGuard()
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        onLayout={kb.onLayout}
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
+        style={kb.padBottom > 0 ? { paddingBottom: kb.padBottom + 12 } : null}
       >
         {open && <ProfileBody onClose={onClose} />}
       </KeyboardAvoidingView>

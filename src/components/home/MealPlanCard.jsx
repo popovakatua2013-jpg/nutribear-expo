@@ -475,11 +475,9 @@ export function MealPlanCard({ onAdd, onViewAll }) {
         <Text maxFontSizeMultiplier={MAX} className="font-bold text-[16px] text-white">
           Добавить еду
         </Text>
-        <ChevronDown
-          size={17}
-          color="#FFFFFF"
-          style={{ transform: [{ rotate: menuOpen ? '180deg' : '0deg' }] }}
-        />
+        {/* Шеврон справа убран (отзыв Кати 15.11: «слева + справа галочка —
+            оставить что-то одно») — на кнопке только «+», список раскрывается
+            тапом по всей кнопке */}
       </Pressable>
 
       {menuOpen && (

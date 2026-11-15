@@ -7,12 +7,16 @@
 // цели предлагаем пересчитать дневную норму калорий (дефицит/профицит).
 // Кнопка «Сохранить» закреплена внизу окна: прокручиваются только поля,
 // на небольшом экране кнопка не прячется за краем.
+// Клавиатура не закрывает поля и на Android: собственное окно Modal
+// не ужмётся само — отступ считает useKeyboardGuard (скрин Кати 15.11:
+// «клавиатура закрывает поля» в «Записать вес»).
 
 import { useState } from 'react'
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useToast } from '../ui/Toast'
+import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 import {
   fmtDecimal,
   healthyRange,
@@ -22,12 +26,17 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 
 export function WeightModal({ open, onClose, height, weight, goalWeight, onSave }) {
+  // Android: окно Modal не ужмётся под клавиатуру само — считаем отступ
+  const kb = useKeyboardGuard()
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      {/* Клавиатура не перекрывает поля и закреплённую «Сохранить» (iOS) */}
+    <Modal visible={open} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+      {/* Клавиатура не перекрывает поля и закреплённую «Сохранить» (iOS —
+          behavior="padding", Android — ручной отступ из useKeyboardGuard) */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        onLayout={kb.onLayout}
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
+        style={kb.padBottom > 0 ? { paddingBottom: kb.padBottom + 12 } : null}
       >
         {open && (
           <WeightBody

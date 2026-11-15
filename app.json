@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.nutribear.app",
-      "versionCode": 15,
+      "versionCode": 16,
       "userInterfaceStyle": "dark",
       "allowBackup": false,
       "adaptiveIcon": {
