@@ -52,6 +52,41 @@ describe('ai-chat.jsx: медведь-напарник не потерялся',
   })
 })
 
+describe('ai-chat.jsx: оформление как в мессенджере (отзыв Кати 15.11)', () => {
+  test('пока медведь думает — «{имя} печатает» с живыми точками', () => {
+    // Индикатор носит имя выбранного медведя (Фит/Кедр/Кира/…), а не
+    // безличное «Печатает…»
+    expect(SRC).toContain('{companion.name} печатает')
+    expect(SRC).not.toMatch(/^\s*Печатает…\s*$/m)
+    // Анимированные точки: нативный Animated, цикл, три точки
+    expect(SRC).toContain('function TypingDots()')
+    expect(SRC).toContain('Animated.loop(')
+    const dotViews = SRC.split('Animated.View').length - 1
+    expect(dotViews).toBeGreaterThanOrEqual(1)
+  })
+
+  test('пузыри узкие — по ширине текста, а не в столбик на весь экран', () => {
+    // У колонки ответа медведя больше нет flex-1 (растягивал пузырь
+    // на всю ширину) — вместо него flexShrink: 1 (длинный ответ
+    // переносится, короткий обнимает текст)
+    expect(SRC).toContain('flexShrink: 1')
+    // старый класс пузыря медведя на всю ширину исчез
+    expect(SRC).not.toContain('rounded-2xl rounded-bl-md')
+    expect(SRC).not.toContain('rounded-2xl rounded-br-md')
+    // Ограничение ширины: медведь до 85%, пользователь до 80% экрана
+    expect(SRC).toContain("maxWidth: '85%'")
+    expect(SRC).toContain("maxWidth: '80%'")
+  })
+
+  test('у пузырей «хвостик» — маленький радиус угла у отправителя', () => {
+    // Медведь слева — скруглён нижний левый, пользователь справа —
+    // нижний правый (Telegram/WhatsApp)
+    expect(SRC).toContain('rounded-[18px]')
+    expect(SRC).toContain('rounded-bl-[5px]')
+    expect(SRC).toContain('rounded-br-[5px]')
+  })
+})
+
 describe('приветствия и характеры всех медведей', () => {
   test('у всех пяти медведей непустое уникальное приветствие', () => {
     const greetings = COMPANIONS.map((c) => c.greeting)

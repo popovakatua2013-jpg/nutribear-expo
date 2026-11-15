@@ -19,6 +19,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
+  Animated,
   FlatList,
   Image,
   Keyboard,
@@ -61,6 +62,43 @@ function MessageText({ content, className }) {
         </Text>
       ))}
     </>
+  )
+}
+
+// Анимированные точки индикатора набора текста (как в Telegram): три
+// точки по очереди вспыхивают — цикл 600 мс, у точки i фаза сдвинута
+// на i·200 мс. Нативный Animated, без библиотек; useNativeDriver —
+// анимация на UI-потоке, не мешает скроллу
+function TypingDots() {
+  const dots = [
+    useRef(new Animated.Value(0.3)).current,
+    useRef(new Animated.Value(0.3)).current,
+    useRef(new Animated.Value(0.3)).current,
+  ]
+  useEffect(() => {
+    const anims = dots.map((d, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 200),
+          Animated.timing(d, { toValue: 1, duration: 200, useNativeDriver: true }),
+          Animated.timing(d, { toValue: 0.3, duration: 200, useNativeDriver: true }),
+        ])
+      )
+    )
+    anims.forEach((a) => a.start())
+    return () => anims.forEach((a) => a.stop())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <View className="ml-2.5 flex-row items-center gap-1">
+      {dots.map((d, i) => (
+        <Animated.View
+          key={i}
+          style={{ opacity: d }}
+          className="h-1.5 w-1.5 rounded-full bg-[#8a94b3]"
+        />
+      ))}
+    </View>
   )
 }
 
@@ -348,12 +386,15 @@ export default function AiChatScreen() {
             className={`flex-row ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {item.role === 'user' ? (
+              // Сообщение пользователя — как в Telegram: узкий пузырь
+              // справа, прижатый к краю, «хвостик» — маленький радиус
+              // нижнего правого угла, ширина по тексту (до 80% экрана)
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
-                className="min-w-[110px] rounded-2xl rounded-br-md px-3.5 py-2.5"
-                style={{ maxWidth: '85%' }}
+                className="min-w-[110px] rounded-[18px] rounded-br-[5px] px-3.5 py-2.5"
+                style={{ maxWidth: '80%' }}
               >
                 <MessageText
                   content={item.content}
@@ -361,10 +402,13 @@ export default function AiChatScreen() {
                 />
               </LinearGradient>
             ) : (
-              // Ответ медведя: аватар напарника слева от пузыря, под
-              // пузырём — подпись «офлайн-режим» либо «лимит исчерпан»;
-              // построчный рендер — переносы строк из ответа не теряются
-              <View className="flex-row items-start gap-2" style={{ maxWidth: '88%' }}>
+              // Ответ медведя — как в мессенджерах: узкий пузырь по ширине
+              // текста (не на весь экран), аватар напарника слева, «хвостик»
+              // — маленький радиус нижнего левого угла. flexShrink: 1 у
+              // колонки — длинный ответ переносится, короткий обнимает
+              // текст; под пузырём — подпись «офлайн-режим» либо «лимит
+              // исчерпан»; построчный рендер — переносы строк не теряются
+              <View className="flex-row items-start gap-2" style={{ maxWidth: '85%' }}>
                 <Image
                   source={companion.image}
                   style={{
@@ -375,8 +419,8 @@ export default function AiChatScreen() {
                   }}
                   accessibilityLabel={`${companion.name} — аватар ответа`}
                 />
-                <View className="min-w-0 flex-1">
-                  <View className="min-w-[110px] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5">
+                <View className="min-w-0" style={{ flexShrink: 1 }}>
+                  <View className="min-w-[110px] rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-2.5">
                     <MessageText
                       content={item.content}
                       className="text-[19px] leading-[22px] text-[#dbe3f8]"
@@ -398,9 +442,33 @@ export default function AiChatScreen() {
         )}
         ListFooterComponent={
           busy ? (
-            <Text className="px-1 pt-1 text-[15px] text-[#5c668a]">
-              Печатает…
-            </Text>
+            // Индикатор набора текста как в мессенджерах: аватар напарника
+            // слева, пузырь «{имя} печатает» с живыми точками — видно,
+            // кто именно думает (Фит/Кедр/Кира/Топаз/Бусинка)
+            <View
+              accessibilityLabel={`${companion.name} печатает`}
+              className="flex-row items-start gap-2"
+              style={{ maxWidth: '85%' }}
+            >
+              <Image
+                source={companion.image}
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 9,
+                  backgroundColor: `${companion.color}22`,
+                }}
+                accessibilityLabel={`${companion.name} — аватар`}
+              />
+              <View className="rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-3">
+                <View className="flex-row items-center">
+                  <Text className="text-[15px] text-[#8a94b3]">
+                    {companion.name} печатает
+                  </Text>
+                  <TypingDots />
+                </View>
+              </View>
+            </View>
           ) : null
         }
       />
