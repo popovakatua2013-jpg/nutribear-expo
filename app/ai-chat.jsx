@@ -26,7 +26,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -141,11 +140,18 @@ export default function AiChatScreen() {
   const pro = useProStore((s) => s.pro)
   const chatLeft = useAiUsageStore((s) => aiRemaining(s, 'chat', pro))
 
-  // Свежее приветствие характера: если в диалоге пока только приветствие
-  // (дефолтное из стора или после «Очистить»/смены медведя), подставляем
-  // текст выбранного медведя — начатый диалог не трогаем
+  // Диалог привязан к напарнику (жалоба Кати 15.11: «выбираю Бусинку —
+  // а сообщение от Фита»): если с последнего открытия чата медведя
+  // сменили (в «Ещё» или онбординге) — диалог начинается заново с
+  // приветствием нового характера, старые реплики другого медведя
+  // не остаются. Если напарник тот же — при самом первом запуске
+  // приложения подставляем его приветствие вместо дефолтного стора
   useEffect(() => {
     const s = useAiChatStore.getState()
+    if (s.companionId !== companionId) {
+      s.resetFor(companionId)
+      return
+    }
     const first = s.messages[0]
     if (
       s.messages.length === 1 &&
@@ -233,10 +239,23 @@ export default function AiChatScreen() {
   async function send() {
     const content = text.trim()
     if (!content || busy) return
-    const next = [...messages, { role: 'user', content }]
+    // Ответ адресуется конкретному диалогу: запоминаем его номер до
+    // запроса. Пока ИИ думает 3–20 секунд, пользователь может сменить
+    // напарника (resetFor) или нажать «Очистить» — запоздалая реплика
+    // прошлого диалога не вставится в новый и не убьёт чужой индикатор
+    const conv = useAiChatStore.getState().conversation
+    const next = [...useAiChatStore.getState().messages, { role: 'user', content }]
     setMessages(next)
     setText('')
     setBusy(true)
+    // Вставка ответа — только в диалог, которому он адресован; busy
+    // гасим только свой (иначе «очистка» во время запроса давала
+    // немую ленту — busy=false снимал чужой finally)
+    const finish = (message) => {
+      const s = useAiChatStore.getState()
+      if (s.conversation !== conv) return
+      s.append(message)
+    }
     try {
       let reply
       // Офлайн-ответ помечаем — под пузырём видна подпись «🧸 офлайн-режим»,
@@ -274,22 +293,17 @@ export default function AiChatScreen() {
           isOffline = true
         }
       }
-      setMessages([
-        ...next,
-        {
-          role: 'assistant',
-          content: reply,
-          ...(isOffline ? { offline: true } : {}),
-          ...(limitHit ? { limit: true } : {}),
-        },
-      ])
+      finish({
+        role: 'assistant',
+        content: reply,
+        ...(isOffline ? { offline: true } : {}),
+        ...(limitHit ? { limit: true } : {}),
+      })
     } catch {
-      setMessages([
-        ...next,
-        { role: 'assistant', content: '😅 Что-то пошло не так. Попробуйте ещё раз.' },
-      ])
+      finish({ role: 'assistant', content: '😅 Что-то пошло не так. Попробуйте ещё раз.' })
     } finally {
-      setBusy(false)
+      const s = useAiChatStore.getState()
+      if (s.conversation === conv) s.setBusy(false)
     }
   }
 
@@ -386,15 +400,27 @@ export default function AiChatScreen() {
             className={`flex-row ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {item.role === 'user' ? (
-              // Сообщение пользователя — как в Telegram: узкий пузырь
-              // справа, прижатый к краю, «хвостик» — маленький радиус
-              // нижнего правого угла, ширина по тексту (до 80% экрана)
+              // Сообщение пользователя — ТАКОЙ ЖЕ БЛОК, как у пузыря
+              // медведя (просьба Кати 15.11: «оформи таким же блоком,
+              // цвет оставь»): те же паддинги 14/10, тот же радиус 18
+              // с «хвостиком» 5 у нижнего правого угла (пользователь
+              // справа), ширина по тексту до 80% экрана. ВАЖНО: все
+              // размеры — явными style-пропсами, БЕЗ className:
+              // NativeWind игнорирует className на LinearGradient
+              // (expo-linear-gradient без cssInterop) — пузырь рендерился
+              // градиентом без паддингов и углов, «узкой строкой»
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
-                className="min-w-[110px] rounded-[18px] rounded-br-[5px] px-3.5 py-2.5"
-                style={{ maxWidth: '80%' }}
+                style={{
+                  minWidth: 110,
+                  maxWidth: '80%',
+                  borderRadius: 18,
+                  borderBottomRightRadius: 5,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                }}
               >
                 <MessageText
                   content={item.content}
@@ -507,15 +533,26 @@ export default function AiChatScreen() {
           onPress={send}
           disabled={busy || !text.trim()}
           accessibilityLabel="Отправить"
-          className={`h-[42px] w-[42px] items-center justify-center rounded-2xl overflow-hidden ${busy || !text.trim() ? 'opacity-50' : ''}`}
+          className={`items-center justify-center ${busy || !text.trim() ? 'opacity-50' : ''}`}
         >
+          {/* Градиент — явным размером, иконка ВНУТРИ него: заливка
+              «растяжкой на весь родитель» (absolute-инсеты) на устройстве
+              Кати не рендерилась — вместо кнопки была голая иконка
+              самолётика. Размер заливки всегда задаём явно */}
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
-            style={[StyleSheet.absoluteFillObject]}
-          />
-          <Send size={19} color="#FFFFFF" />
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 16,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Send size={19} color="#FFFFFF" />
+          </LinearGradient>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

@@ -79,11 +79,53 @@ describe('ai-chat.jsx: оформление как в мессенджере (о
   })
 
   test('у пузырей «хвостик» — маленький радиус угла у отправителя', () => {
-    // Медведь слева — скруглён нижний левый, пользователь справа —
-    // нижний правый (Telegram/WhatsApp)
+    // Медведь слева — скруглён нижний левый (className на View работает),
+    // пользователь справа — нижний правый. ВАЖНО (скриншот Кати 15.11:
+    // «ГОТОВ» — узкой строкой без паддингов и углов): на LinearGradient
+    // className игнорируется (expo-linear-gradient без cssInterop),
+    // поэтому у градиента пользователя ВСЕ размеры — явные style-пропсы
     expect(SRC).toContain('rounded-[18px]')
     expect(SRC).toContain('rounded-bl-[5px]')
-    expect(SRC).toContain('rounded-br-[5px]')
+    expect(SRC).toContain('borderRadius: 18')
+    expect(SRC).toContain('borderBottomRightRadius: 5')
+    expect(SRC).toContain('paddingHorizontal: 14')
+    expect(SRC).toContain('paddingVertical: 10')
+    expect(SRC).toContain('minWidth: 110')
+    // прежний вариант — классы на градиенте — не должен вернуться
+    expect(SRC).not.toContain('rounded-br-[5px]')
+  })
+
+  test('кнопка отправки и «конвертик» — градиент явным размером, без absoluteFill', () => {
+    // На устройстве Кати expo-linear-gradient не растягивается по
+    // inset-позиционированию (absoluteFillObject) — вместо кнопки была
+    // голая иконка самолётика, вместо конвертика на главной — голый
+    // конверт. Заливка обязана иметь явные width/height, иконка —
+    // внутри градиента
+    expect(SRC).toContain('width: 42')
+    expect(SRC).toContain('height: 42')
+    expect(SRC).toContain('<Send size={19} color="#FFFFFF" />')
+    const after = SRC.slice(SRC.indexOf("colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}", SRC.indexOf('Отправить')))
+    expect(after).toContain('<Send')
+    expect(SRC).not.toContain('absoluteFillObject')
+    const conv = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'home', 'AiChat.jsx'), 'utf8')
+    expect(conv).not.toContain('absoluteFillObject')
+    expect(conv).toContain('borderRadius: 30')
+    expect(conv).toContain('<Mail')
+  })
+})
+
+describe('ai-chat.jsx: смена напарника начинает диалог заново (отзыв Кати 15.11)', () => {
+  test('экран сверяет напарника диалога с выбранным и зовёт resetFor', () => {
+    expect(SRC).toContain('s.companionId !== companionId')
+    expect(SRC).toContain('s.resetFor(companionId)')
+    // приветствие выбранного медведя — в сторе, не хардкод
+    expect(SRC).toContain('companion.greeting')
+  })
+
+  test('запоздалый ответ ИИ адресуется диалогу: conversation + append', () => {
+    expect(SRC).toContain('useAiChatStore.getState().conversation')
+    expect(SRC).toContain('s.conversation !== conv')
+    expect(SRC).toContain('s.append(message)')
   })
 })
 

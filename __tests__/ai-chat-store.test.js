@@ -48,4 +48,54 @@ describe('useAiChatStore', () => {
     expect(after.text).toBe('')
     expect(after.busy).toBe(false)
   })
+
+  test('append добавляет сообщение к текущему диалогу', () => {
+    const s = useAiChatStore.getState()
+    const before = s.messages.length
+    s.append({ role: 'assistant', content: 'работаем' })
+    expect(useAiChatStore.getState().messages).toHaveLength(before + 1)
+    expect(useAiChatStore.getState().messages.at(-1).content).toBe('работаем')
+  })
+})
+
+describe('смена напарника — диалог начинается заново (отзыв Кати 15.11)', () => {
+  test('resetFor стирает диалог прошлого медведя и ставит его приветствие', () => {
+    const s = useAiChatStore.getState()
+    s.setMessages([
+      { role: 'assistant', content: 'Ну привет. Я Фит, твой дерзкий тренер' },
+      { role: 'user', content: 'ГОТОВ' },
+      { role: 'assistant', content: 'Отлично! Начнём с питания…' },
+    ])
+    s.setText('недописанный черновик')
+    s.setBusy(true)
+    s.resetFor('businka')
+    const after = useAiChatStore.getState()
+    expect(after.companionId).toBe('businka')
+    expect(after.messages).toHaveLength(1)
+    expect(after.messages[0].role).toBe('assistant')
+    // приветствие БУСИНКИ, а не реплика Фита («выбрала Бусинку —
+    // а сообщение от Фита»)
+    expect(after.messages[0].content).toContain('Бусинка')
+    expect(after.messages[0].content).not.toContain('Фит')
+    expect(after.messages[0].greeting).toBe(true)
+    expect(after.text).toBe('')
+    expect(after.busy).toBe(false)
+    // номер диалога вырос — на него сверяется запоздалый ответ ИИ
+    expect(after.conversation).toBe(s.conversation + 1)
+  })
+
+  test('resetFor с неизвестным id даёт приветствие Кедра (фолбэк)', () => {
+    useAiChatStore.getState().resetFor('unknown-bear')
+    const after = useAiChatStore.getState()
+    expect(after.companionId).toBe('unknown-bear')
+    expect(after.messages[0].content).toContain('Кедр')
+  })
+
+  test('reset после resetFor возвращает приветствие текущего медведя', () => {
+    useAiChatStore.getState().resetFor('fit')
+    useAiChatStore.getState().reset()
+    const after = useAiChatStore.getState()
+    expect(after.messages).toHaveLength(1)
+    expect(after.messages[0].content).toContain('Фит')
+  })
 })
