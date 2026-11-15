@@ -15,7 +15,7 @@
 // estimateFromDescription(text) — состав с граммовками → { kcal100, p, f, c }
 
 import { File, Paths } from 'expo-file-system'
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
+import { ImageManipulator, SaveFormat, manipulateAsync } from 'expo-image-manipulator'
 import { AI_CONFIG } from './ai-config'
 import { buildMultipartBody, decodeBase64ToBytes } from './multipart'
 
@@ -680,9 +680,23 @@ const PHOTO_PRESETS = [
   { maxSide: 640, quality: 0.35 },
 ]
 
-async function photoToJpegBase64(uri) {
+// Чтение base64 файла снимка — общий шаг обоих путей сжатия
+async function fileToBase64(uri) {
+  return await new File(uri).base64()
+}
+
+// Путь 1 — новый API ImageManipulator (renderAsync/saveAsync). На части
+// устройств (замечено на Samsung, скрин Кати 16.11 01:52) он может
+// дать некорректные размеры или не пожать файл до лимита: resize с NaN
+// молча возвращает исходный снимок, тело запроса выходит за 256 КБ и
+// воркер режет его ошибкой 413 — «Снимок слишком большой». Гард на
+// размеры превращает тихий сбой в исключение — включается резервный
+// путь ниже
+async function compressWithRenderApi(uri) {
   const first = await ImageManipulator.manipulate(uri).renderAsync()
   const big = Math.max(first.width, first.height)
+  if (!Number.isFinite(big) || big <= 0)
+    throw new Error('renderAsync вернул некорректный размер снимка')
   let lastB64 = ''
   for (const preset of PHOTO_PRESETS) {
     const needsResize = big > preset.maxSide
@@ -696,12 +710,52 @@ async function photoToJpegBase64(uri) {
             })
             .renderAsync()
     const saved = await ref.saveAsync({ format: SaveFormat.JPEG, quality: preset.quality })
-    lastB64 = await new File(saved.uri).base64()
+    lastB64 = await fileToBase64(saved.uri)
     if (lastB64.length <= PHOTO_B64_LIMIT) return lastB64
   }
-  // Даже самый мелкий пресет превысил лимит (почти не бывает) — отдаём
-  // то, что получили: 640 px/0.35 тянет десятки КБ
   return lastB64
+}
+
+// Путь 2 — легаси-API manipulateAsync: другая нативная реализация,
+// проверена годами — переживает сбои нового API. Плюс самый мелкий
+// пресет 480 px/0.25, которого в основном списке нет
+async function compressWithLegacyApi(uri) {
+  let lastB64 = ''
+  for (const preset of [...PHOTO_PRESETS, { maxSide: 480, quality: 0.25 }]) {
+    const saved = await manipulateAsync(
+      uri,
+      [{ resize: { width: preset.maxSide } }],
+      { compress: preset.quality, format: SaveFormat.JPEG }
+    )
+    lastB64 = await fileToBase64(saved.uri)
+    if (lastB64.length <= PHOTO_B64_LIMIT) return lastB64
+  }
+  return lastB64
+}
+
+async function photoToJpegBase64(uri) {
+  let best = ''
+  try {
+    best = (await compressWithRenderApi(uri)) || ''
+  } catch (e) {
+    console.warn('[food-ai] новый ImageManipulator не сработал, включаю резервный путь:', e?.message)
+  }
+  if (best.length > 0 && best.length <= PHOTO_B64_LIMIT) return best
+  try {
+    const b64 = await compressWithLegacyApi(uri)
+    if (b64 && (!best.length || b64.length < best.length)) best = b64
+  } catch (e) {
+    console.warn('[food-ai] резервный manipulateAsync тоже не сработал:', e?.message)
+  }
+  if (best.length > 0 && best.length <= PHOTO_B64_LIMIT) return best
+  // Оба пути не дали снимок в лимит — НЕ шлём огромное тело (воркер
+  // ответит 413): вместо этого понятная ошибка с подсказкой
+  console.warn(
+    '[food-ai] снимок не удалось ужать до', PHOTO_B64_LIMIT, 'символов, получено', best.length
+  )
+  throw new Error(
+    'Снимок не удалось подготовить — сфотографируйте блюдо ещё раз или выберите фото из галереи'
+  )
 }
 
 export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {

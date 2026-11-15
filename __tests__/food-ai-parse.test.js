@@ -14,7 +14,7 @@ jest.mock('expo-image-manipulator', () => ({
   SaveFormat: {},
 }))
 
-import { estimateFromDescription } from '@/lib/food-ai'
+import { estimateFromDescription, scanFoodImage } from '@/lib/food-ai'
 
 describe('estimateFromDescription — разбор состава рецепта', () => {
   test('плов: свинина + картошка + лук (ккал и вес точные)', () => {
@@ -84,5 +84,19 @@ describe('estimateFromDescription — разбор состава рецепта
     expect(estimateFromDescription(null)).toBeNull()
     expect(estimateFromDescription('просто текст без цифр')).toBeNull()
     expect(estimateFromDescription('вода 500 мл')).toBeNull() // 0 ккал → null
+  })
+})
+
+// Регрессия 16.11 (скрин Кати 01:52): на части Samsung новый API
+// манипулятора снимков падает молча — на воркер уходит исходный
+// снимок на десятки мегабайт, лимит тела отвечает 413 и интерфейс
+// показывает «Снимок слишком большой». Оба пути сжатия под заглушками
+// здесь падают → scanFoodImage ОБЯЗАН выбросить понятную ошибку ДО
+// сети, а не отправлять огромное тело
+describe('сжатие фото: сбой манипулятора — понятная ошибка до сети', () => {
+  test('scanFoodImage не уходит в сеть, если снимок не подготовился', async () => {
+    await expect(scanFoodImage('file:///photo.jpg')).rejects.toThrow(
+      'Снимок не удалось подготовить'
+    )
   })
 })
