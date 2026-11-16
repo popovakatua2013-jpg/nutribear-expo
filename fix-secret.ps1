@@ -48,19 +48,27 @@ if ([string]::IsNullOrWhiteSpace($sec)) {
   Write-Host "1/4 Secret found in .env (kept as is, not printed)." -ForegroundColor Green
 }
 
-Write-Host "2/4 Probing the worker (free check - dummy model, no AI money spent)..." -ForegroundColor Cyan
+Write-Host "2/4 Probing the worker (dummy model is rejected locally - no AI money spent)..." -ForegroundColor Cyan
 $body = @{ model = "nb-secret-probe"; messages = @(@{ role = "user"; content = "ping" }) } | ConvertTo-Json -Depth 5
 $code = 0
 try {
-  $r = Invoke-WebRequest -Uri "$worker/v1/chat" -Method Post -ContentType "application/json" -Headers @{ "X-NB-Secret" = $sec } -Body $body -UseBasicParsing -TimeoutSec 20
+  $r = Invoke-WebRequest -Uri "$worker/v1/chat/completions" -Method Post -ContentType "application/json" -Headers @{ "X-NB-Secret" = $sec } -Body $body -UseBasicParsing -TimeoutSec 20
   $code = [int]$r.StatusCode
 } catch {
   if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode } else { $code = -1 }
 }
-# 400 = the secret passed and the worker stopped on the dummy model.
+# 400 = the secret passed, the worker stopped on the dummy model name.
+# 200 = the secret passed too - the probe got a real AI answer, the
+#       whole server chain (secret + AI key + upstream) works.
 # 401 = the worker does NOT accept this secret.
-if ($code -eq 400) {
-  Write-Host "OK: the worker already accepts this secret." -ForegroundColor Green
+if ($code -eq 400 -or $code -eq 200) {
+  Write-Host "OK: the worker ACCEPTS the .env secret (probe HTTP $code)." -ForegroundColor Green
+  if ($code -eq 200) {
+    Write-Host "Bonus: the probe got a real AI answer - key and upstream are healthy too." -ForegroundColor DarkGray
+  }
+  Write-Host "" -ForegroundColor Yellow
+  Write-Host "But the installed APK carries the GITHUB value (it got 401 inside the app)," -ForegroundColor Yellow
+  Write-Host "so the NB_PROXY_SECRET in GitHub holds something else. Update it below:" -ForegroundColor Yellow
 } elseif ($code -eq 401) {
   Write-Host "The worker REJECTS this secret - saving it as NB_SECRET on the worker..." -ForegroundColor Yellow
   Push-Location ".\server"
