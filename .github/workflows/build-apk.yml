@@ -180,7 +180,7 @@ jobs:
             echo "Релиз $TAG обновлён (файлы перезаписаны)"
           else
             gh release create "$TAG" "$DIR"/*.apk \
-              --title "NutriBear ${VERSION} (версия ${VCODE}) — вкладка «Отчёты», «Ещё» без дублей" \
+              --title "NutriBear ${VERSION} (версия ${VCODE})" \
               --notes-file "$DIR/notes.md" \
               --prerelease
             echo "Релиз $TAG создан"
