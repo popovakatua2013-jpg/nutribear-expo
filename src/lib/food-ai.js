@@ -26,8 +26,10 @@ const VISION_SYSTEM =
   'Отвечай ТОЛЬКО валидным JSON, без пояснений и без markdown.'
 
 const VOICE_SYSTEM =
-  'Ты — помощник дневника питания NutriBear. Из русской фразы о еде извлекаешь ' +
-  'название блюда и вес порции. Отвечай ТОЛЬКО валидным JSON, без пояснений.'
+  'Ты — помощник дневника питания NutriBear. Из русской фразы о еде извлекаешь ВСЕ ' +
+  'продукты и блюда — их может быть несколько (перечислены через запятую или «и»). ' +
+  'Для каждого указывай вес порции в граммах (штуки переводите в граммы: 1 яйцо ≈ 55 г, ' +
+  'кружка кофе ≈ 250–350 мл). Отвечай ТОЛЬКО валидным JSON, без пояснений.'
 
 // ═══════════════════════════════════════════════════════════════
 //  ВСТРОЕННАЯ БАЗА ПОПУЛЯРНЫХ БЛЮД — на 100 грамм (бесплатно!)
@@ -187,11 +189,127 @@ function findLocalDish(query) {
 
 // ── Локальный разбор фразы без ИИ («тарелка борща 300 граммов») ─
 const GRAMS_RE = /(\d{1,4})\s*(граммов|грамма|грамм|миллилитров|миллилитра|миллилитр|гр|г|мл)(?![а-я])/
+// Штуки/куски: «2 штуки», «1 ломтик», «полплитки не считаем» — граммовка
+// штуки берётся из PIECE_GRAMS по блюду (\b в JS не работает с кириллицей)
+const PIECES_RE = /(\d{1,2})\s*(штук[а-я]*|кусочк[а-я]*|ломтик[а-я]*|плитк[а-я]*)(?![а-я])/
+
+// Вес одной штуки, г — для перевода «2 штуки» в граммы. Только ходовые
+// позиции, где штука стабильна; у остальных блюд штука неопределённа
+const PIECE_GRAMS = {
+  'Яйцо варёное': 55,
+  'Сосиски': 50,
+  'Пельмени варёные': 15,
+  'Блинчики': 90,
+  'Бутерброд с сыром': 100,
+  'Котлета мясная': 120,
+  'Котлета куриная': 120,
+  'Сырники': 60,
+  'Сыр твёрдый': 30,
+  'Хлеб белый': 30,
+  'Хлеб чёрный': 30,
+  'Банан': 120,
+  'Яблоко': 180,
+  'Апельсин': 200,
+  'Мандарин': 70,
+  'Груша': 180,
+  'Мороженое': 100,
+}
+
+// Объёмная посуда во фразе: «кружка кофе», «большая кружка», «тарелка супа»
+function volumeFromSegment(seg) {
+  const words = seg.split(' ').filter(Boolean)
+  let ml = 0
+  for (const w of words) {
+    if (/^кружк/.test(w)) ml = Math.max(ml, 250)
+    else if (/^чашк/.test(w)) ml = Math.max(ml, 200)
+    else if (/^стакан/.test(w)) ml = Math.max(ml, 250)
+    else if (/^бокал/.test(w)) ml = Math.max(ml, 250)
+    else if (/^тарелк/.test(w)) ml = Math.max(ml, 300)
+    else if (/^миск/.test(w)) ml = Math.max(ml, 300)
+    else if (/^пиал/.test(w)) ml = Math.max(ml, 200)
+  }
+  // «большая кружка», «большая тарелка» — на 40% больше (350/420)
+  if (ml && words.some((w) => /^больш/.test(w))) ml = Math.round((ml * 1.4) / 10) * 10
+  return ml || null
+}
+
+// Один сегмент фразы (между запятыми) → элемент дневника или null
+function parsePhraseSegment(text0) {
+  const seg = normName(text0)
+  if (!seg || !stemsOf(seg).length) return null
+  const gm = seg.match(GRAMS_RE)
+  const pm = seg.match(PIECES_RE)
+  const dish = findLocalDish(seg.replace(GRAMS_RE, ' ').replace(PIECES_RE, ' '))
+  if (!dish) return null
+
+  // Вес порции: явные граммы → штуки × вес штуки → посуда (кружка/тарелка) →
+  // обычная порция блюда. null остаётся только если не распознано ничего
+  let grams = null
+  if (gm) grams = Math.max(1, Math.min(2000, parseInt(gm[1], 10)))
+  else if (pm && PIECE_GRAMS[dish.n]) {
+    grams = Math.max(1, Math.min(2000, parseInt(pm[1], 10) * PIECE_GRAMS[dish.n]))
+  } else grams = volumeFromSegment(seg)
+
+  const item = {
+    name: dish.n,
+    emoji: dish.e,
+    kcal100: dish.kcal100,
+    p: dish.p,
+    f: dish.f,
+    c: dish.c,
+    fib: dish.fib || 0,
+    sug: dish.sug || 0,
+    source: 'base',
+  }
+  if (dish.dg) item.defaultGrams = dish.dg
+  // Распознанный вес — и на карточку (итоговый калораж), и в предзаполнение
+  // граммовки на экране порции (SelectedFood берёт defaultGrams)
+  if (grams) {
+    item.grams = grams
+    item.defaultGrams = grams
+  }
+  return item
+}
 
 function localParsePhrase(raw) {
   const text0 = String(raw || '').trim()
+  if (!text0) return null
+
+  // Несколько продуктов через запятую/точку с запятой: «яйцо 2 штуки,
+  // грудка 100 грамм, кофе с молоком и сахаром, большая кружка».
+  // Разрезаем ТОЛЬКО по запятым — «и» резать нельзя («кофе с молоком
+  // и сахаром»), иначе связка распадётся. 5 позиций — разумный предел
+  const parts = text0.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
+  const items = []
+  for (const part of parts) {
+    const it = parsePhraseSegment(part)
+    if (it) {
+      items.push(it)
+      if (items.length >= 5) break
+      continue
+    }
+    // Сегмент без блюда, но с посудой («большая кружка», «две тарелки»)
+    // — это продолжение предыдущего продукта: переносим объём в его вес,
+    // если свой вес ещё не распознался
+    const vol = volumeFromSegment(normName(part))
+    if (vol && items.length) {
+      const prev = items[items.length - 1]
+      if (!prev.grams) {
+        prev.grams = vol
+        prev.defaultGrams = vol
+      }
+    }
+  }
+  if (items.length) {
+    // Совместимость со старым полем grams (тост «Распознан вес»): вес
+    // первого распознанного сегмента
+    const grams = items.find((i) => i.grams)?.grams ?? null
+    return { text: text0, grams, items }
+  }
+
+  // Ни один сегмент не распознался — прежний путь: самое длинное блюдо
+  // во всей фразе целиком (одно блюдо с одной граммовкой)
   const text = normName(text0)
-  if (!text) return null
   const gm = text.match(GRAMS_RE)
   const grams = gm ? Math.max(1, Math.min(2000, parseInt(gm[1], 10))) : null
   const dish = findLocalDish(text.replace(GRAMS_RE, ' '))
@@ -649,6 +767,10 @@ function normalizeItem(it) {
   const name = String(it.name || '').trim()
   if (!name) return null
   const grams = num(it.defaultGrams, 1500)
+  // Распознанный вес порции (голос/текст): на карточку «≈ ккал · г» и в
+  // предзаполнение граммовки. Для фото/сканера поле просто отсутствует
+  const gr = Number(it.grams)
+  const parsedGrams = Number.isFinite(gr) && gr > 0 ? Math.round(gr) : undefined
   return {
     name,
     emoji: String(it.emoji || '🍽️').slice(0, 4),
@@ -658,9 +780,19 @@ function normalizeItem(it) {
     c: num(it.c ?? it.carbs, 100),
     fib: num(it.fib ?? it.fiber, 50),
     sug: num(it.sug ?? it.sugar, 100),
-    defaultGrams: grams > 0 ? Math.round(grams) : undefined,
+    defaultGrams: parsedGrams || (grams > 0 ? Math.round(grams) : undefined),
+    grams: parsedGrams,
     source: 'ai',
   }
+}
+
+// Итоговый калораж элемента: калорийность на 100 г × вес порции.
+// null — вес неизвестен (нельзя показать честную цифру)
+export function estimateItemKcal(item) {
+  const g = Math.round(Number(item?.grams ?? item?.defaultGrams) || 0)
+  const k = Number(item?.kcal100) || 0
+  if (g <= 0 || k <= 0) return null
+  return Math.round((k * g) / 100)
 }
 
 // ── Сканер и галерея: фото → блюдо ─────────────────────────────
@@ -906,16 +1038,19 @@ export async function recognizeVoiceText(text, timeoutMs = 20000) {
       {
         model: AI_CONFIG.model,
         temperature: 0.2,
-        max_tokens: 250,
+        max_tokens: 400,
         messages: [
           { role: 'system', content: VOICE_SYSTEM },
           {
             role: 'user',
             content:
               `Фраза: «${t}»\n` +
-              'Извлеки блюдо и вес порции. Ответь строго JSON-объектом:\n' +
-              '{"text":"исправленная фраза","grams":число_или_null,"items":[{"name":"название по-русски","emoji":"эмодзи","kcal100":число,"p":число,"f":число,"c":число,"fib":число,"sug":число}]}\n' +
-              'kcal100, p, f, c — пищевая ценность НА 100 ГРАММ, fib — клетчатка (г) и sug — сахара (г) на 100 г. Если вес не указан — grams: null. ' +
+              'Извлеки ВСЕ продукты и блюда из фразы (их может быть несколько — через запятую или «и»), ' +
+              'для каждого — свой вес порции в граммах (штуки переведи в граммы: 1 яйцо ≈ 55 г, кружка ≈ 250–350 мл). ' +
+              'Ответь строго JSON-объектом:\n' +
+              '{"text":"исправленная фраза","items":[{"name":"название по-русски","emoji":"эмодзи","kcal100":число,"p":число,"f":число,"c":число,"fib":число,"sug":число,"grams":число_или_null}]}\n' +
+              'kcal100, p, f, c — пищевая ценность НА 100 ГРАММ, fib — клетчатка (г) и sug — сахара (г) на 100 г, ' +
+              'grams — вес порции этого продукта в граммах (null, если вес понять нельзя). ' +
               'Если во фразе нет еды — items: [].',
           },
         ],
@@ -931,10 +1066,17 @@ export async function recognizeVoiceText(text, timeoutMs = 20000) {
     if (!items.length)
       throw new Error('Не понял фразу — попробуйте иначе, например: «Тарелка овсянки 250 граммов»')
 
-    const grams = Number(parsed?.grams)
+    // Совместимость: старые ответы и кэш держали вес одним числом на всю
+    // фразу (grams сверху) — переносим его первому продукту без своего веса
+    const topGrams = Number(parsed?.grams)
+    if (Number.isFinite(topGrams) && topGrams > 0 && !items.some((i) => i.grams)) {
+      items[0].grams = Math.round(topGrams)
+      items[0].defaultGrams = Math.round(topGrams)
+    }
+
     const result = {
       text: String(parsed?.text || t),
-      grams: Number.isFinite(grams) && grams > 0 ? Math.round(grams) : null,
+      grams: items.find((i) => i.grams)?.grams ?? null,
       items,
     }
     cachePut(key, result)

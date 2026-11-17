@@ -19,7 +19,9 @@
 import { AppState, Platform } from 'react-native'
 import { Pedometer } from 'expo-sensors'
 import { useActivityStore } from '@/store/useActivityStore'
+import { dayKeyOf } from '@/store/useHistoryStore'
 import { hcStepsToday } from '@/lib/healthConnect'
+import { checkDayRollover } from '@/lib/rollover'
 
 const MAX_STEPS = 200000
 const POLL_MS = 60000
@@ -175,6 +177,18 @@ export function startPedometerAgent() {
       else startHealthConnect()
     }
   })
+  // Страховка смены дня: вотчер rollover.js в корневом макете тоже
+  // проверяет день каждую минуту, но если его интервал по какой-то
+  // причине не сработал (гибернация, перезагрузка эффекта) — шаги
+  // копились бы во «вчерашний» день, пока пользователь не перещёлкает
+  // тумблеры в настройках (отзыв Кати 17.11: «если начался новый день,
+  // надо заходить в настройки и снова вкл/выкл»). Агент проверяет день
+  // сам на каждом тике опроса и запускает переход на новый день
+  const selfCheck = setInterval(() => {
+    try {
+      if (useActivityStore.getState().dayKey !== dayKeyOf()) checkDayRollover()
+    } catch {}
+  }, POLL_MS)
   useActivityStore.subscribe((s, prev) => {
     if (s.pedometerEnabled !== prev.pedometerEnabled) {
       if (s.pedometerEnabled) startSensor()
@@ -203,5 +217,6 @@ export function startPedometerAgent() {
     try {
       appSub.remove()
     } catch {}
+    clearInterval(selfCheck)
   }
 }

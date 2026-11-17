@@ -168,13 +168,16 @@ export function MenuRow({
           <Text className="text-[18px]">{icon}</Text>
         </View>
 
-        {/* Без numberOfLines: длинные заголовки («Поддержка и помощь»)
-            обрезались многоточием (отзыв Кати от 10.11) — пусть
-            переносятся на вторую строку; короткие строки выглядят
-            как раньше, высота растёт только когда не влезает */}
+        {/* Заголовок: растёт и сжимается по натуральному размеру (flexBasis
+            auto, а НЕ flex-1 с нулевой основой) — иначе длинное значение
+            справа («перенос на другое устройство») отнимало всю ширину,
+            заголовок сворачивался в колонку по одной букве, а карточка
+            «Документы» разъезжалась на полэкрана в высоту (отзыв Кати
+            17.11: «блоки уехали»). Перенос на 2+ строки — как раньше */}
         <Text
           maxFontSizeMultiplier={1.1}
-          className="min-w-0 flex-1 font-bold text-[16.5px] text-bear-text"
+          className="min-w-0 font-bold text-[16.5px] text-bear-text"
+          style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto' }}
         >
           {title}
         </Text>
@@ -183,12 +186,15 @@ export function MenuRow({
           <MiniToggle value={toggle.value} onChange={toggle.onChange} label={toggle.label || title} />
         ) : (
           <>
-            {/* Живое значение: время, ккал, статус, сборка */}
+            {/* Живое значение: время, ккал, статус, сборка. Может сжиматься
+                и обрезается многоточием (shrink-0 запрещён — см. выше),
+                но не отнимает у заголовка больше половины строки */}
             {value ? (
               <Text
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.1}
-                className="shrink-0 font-sans text-[13.5px] text-bear-dim"
+                className="font-sans text-[13.5px] text-bear-dim"
+                style={{ flexShrink: 1, maxWidth: '55%' }}
               >
                 {value}
               </Text>

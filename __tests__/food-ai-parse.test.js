@@ -14,7 +14,7 @@ jest.mock('expo-image-manipulator', () => ({
   SaveFormat: {},
 }))
 
-import { estimateFromDescription, scanFoodImage } from '@/lib/food-ai'
+import { estimateFromDescription, scanFoodImage, recognizeVoiceText, estimateItemKcal } from '@/lib/food-ai'
 
 describe('estimateFromDescription — разбор состава рецепта', () => {
   test('плов: свинина + картошка + лук (ккал и вес точные)', () => {
@@ -98,5 +98,56 @@ describe('сжатие фото: сбой манипулятора — поня�
     await expect(scanFoodImage('file:///photo.jpg')).rejects.toThrow(
       'Снимок не удалось подготовить'
     )
+  })
+})
+
+// Отзыв Кати 17.11: голос распознал «яйцо 2 штуки, грудка 100 грамм,
+// кофе с молоком и сахаром, большая кружка», а в списке появился ТОЛЬКО
+// кофе (парсер брал одно блюдо на всю фразу и вешал на него чужой вес).
+// Локальный разбор обязан отдавать ВСЕ продукты через запятую, каждый
+// со своим весом: штуки → граммы по весу штуки, посуда → объём
+describe('голосовой разбор фразы: все продукты, свой вес у каждого', () => {
+  test('фраза Кати: яйцо 2 шт + грудка 100 г + кофе большая кружка', async () => {
+    const res = await recognizeVoiceText(
+      'яйцо отварное 2 штуки, грудка куриная отварная 100 грамм, кофе с молоком и сахаром, большая кружка'
+    )
+    expect(res.items.map((i) => i.name)).toEqual([
+      'Яйцо варёное',
+      'Куриная грудка отварная',
+      'Кофе с молоком и сахаром',
+    ])
+    // 2 яйца × 55 г; явные 100 г; «большая кружка» из отдельного сегмента
+    // переносится в кофе: 250 × 1.4 = 350
+    expect(res.items.map((i) => i.grams)).toEqual([110, 100, 350])
+  })
+
+  test('итоговый калораж по каждому продукту и сумма по фразе', async () => {
+    const res = await recognizeVoiceText(
+      'яйцо отварное 2 штуки, грудка куриная отварная 100 грамм, кофе с молоком и сахаром, большая кружка'
+    )
+    const kcal = res.items.map(estimateItemKcal)
+    // яйцо 157 × 110/100 = 173; грудка 137 × 1 = 137; кофе 50 × 350/100 = 175
+    expect(kcal).toEqual([173, 137, 175])
+    expect(kcal.reduce((s, k) => s + k, 0)).toBe(485)
+  })
+
+  test('одна позиция: «тарелка овсянки 250 граммов» — как раньше', async () => {
+    const res = await recognizeVoiceText('тарелка овсянки 250 граммов')
+    expect(res.items).toHaveLength(1)
+    expect(res.items[0].name).toBe('Овсянка на воде')
+    expect(res.items[0].grams).toBe(250)
+    expect(estimateItemKcal(res.items[0])).toBe(220) // 88 × 250/100
+  })
+
+  test('штуки без посуды и граммов — по весу штуки', async () => {
+    const res = await recognizeVoiceText('сырники 3 штуки')
+    expect(res.items).toHaveLength(1)
+    expect(res.items[0].grams).toBe(180) // 3 × 60
+  })
+
+  test('estimateItemKcal: без веса или без калорий — null', () => {
+    expect(estimateItemKcal({ kcal100: 50 })).toBeNull()
+    expect(estimateItemKcal({ kcal100: 0, grams: 200 })).toBeNull()
+    expect(estimateItemKcal(null)).toBeNull()
   })
 })

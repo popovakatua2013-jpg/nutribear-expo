@@ -6,7 +6,7 @@
 // «добавить к имеющимся?», а в тосте «День повторён» есть кнопка
 // «Отменить» — убирает только что скопированные блюда.
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { CalendarDays, Check, Copy, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +15,11 @@ import { useToast } from '@/components/ui/Toast'
 import { readdRow } from '@/lib/data/readd'
 import { tapGuard } from '@/lib/tap-guard'
 import { formatNum } from '@/lib/format'
+
+// Ключ дня «ГГГГ-ММ-ДД» — только такие попадают в список. Строки
+// журнала из совсем старых версий приложения могли не иметь поля day —
+// раньше они собирались под ключом undefined и ломали отрисовку списка
+const VALID_DAY_RE = /^\d{4}-\d{2}-\d{2}$/
 
 const DAY_MS = 86400000
 
@@ -36,6 +41,7 @@ function dayTitle(key) {
 export function RepeatDayModal({ visible, onClose, onCopied }) {
   const history = useFoodStore((s) => s.history)
   const entries = useFoodStore((s) => s.entries)
+  const diaryDay = useFoodStore((s) => s.dayKey) // локальный день дневника
   const addEntry = useFoodStore((s) => s.addEntry)
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const { toast } = useToast()
@@ -44,19 +50,46 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
 
   const todayKey = dayKey(Date.now())
 
+  // Журнал читается из AsyncStorage с задержкой: если открыть модалку
+  // сразу после запуска приложения, список ещё пуст и выглядит как
+  // «записей нет», хотя они есть (отзыв Кати: «выбрать вчерашний день
+  // нет возможности хотя записи есть»). Ждём гидратацию — пустой
+  // список показываем только после неё
+  const [hydrated, setHydrated] = useState(useFoodStore.persist.hasHydrated())
+  useEffect(() => {
+    if (hydrated) return
+    const off = useFoodStore.persist.onFinishHydration(() => setHydrated(true))
+    return off
+  }, [hydrated])
+
   // Дни с записями, новые сверху. Сегодня НЕ предлагаем (повторять день
   // сам в себя бессмысленно — так и задумано по комментарию выше),
-  // исключаем его из журнала. Если после этого список пуст, но в
-  // сегодняшнем дневнике есть блюда — предлагаем повторить сегодняшний
-  // набор (журнал мог не успеться у старых версий)
+  // исключаем его из журнала. Если дневник ещё живёт вчерашним днём
+  // (день не сбросился — например, приложение не открывали после
+  // полуночи), его еда лежит в entries под ключом diaryDay ≠ сегодня:
+  // предлагаем и её. Если после всего список пуст, но в сегодняшнем
+  // дневнике есть блюда — предлагаем повторить сегодняшний набор
   const days = useMemo(() => {
     const map = new Map()
     for (const row of history) {
+      if (!VALID_DAY_RE.test(row?.day || '')) continue
       if (row.day === todayKey) continue
       if (!map.has(row.day)) map.set(row.day, { count: 0, kcal: 0 })
       const agg = map.get(row.day)
       agg.count += 1
       agg.kcal += row.kcal || 0
+    }
+    // Дневник остался на прошлом дне: его записи — тоже «вчерашняя еда»,
+    // которую можно повторить (в журнале они есть, но сумма/число
+    // записей из entries полнее)
+    if (diaryDay && VALID_DAY_RE.test(diaryDay) && diaryDay !== todayKey) {
+      const own = Object.values(entries || {}).flat()
+      if (own.length) {
+        if (!map.has(diaryDay)) map.set(diaryDay, { count: 0, kcal: 0 })
+        const agg = map.get(diaryDay)
+        agg.count += own.length
+        agg.kcal += own.reduce((s, e) => s + (e.kcal || 0), 0)
+      }
     }
     if (map.size === 0) {
       const todays = Object.values(entries || {}).flat()
@@ -70,7 +103,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
     return [...map.entries()]
       .sort((a, b) => (a[0] < b[0] ? 1 : -1))
       .map(([key, agg]) => ({ key, ...agg }))
-  }, [history, entries, todayKey])
+  }, [history, entries, diaryDay, todayKey])
 
   // Скопировать все записи выбранного дня в сегодняшний дневник.
   // Источник: журнал истории, а если он пуст — сегодняшние записи дневника.
@@ -176,7 +209,9 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-4 pt-3">
             {days.length === 0 ? (
               <Text className="py-10 text-center font-sans text-[16.5px] text-bear-sub">
-                {`Пока нет прошлых дней с записями — повторять нечего 🐻\nЗаписи появляются, когда добавляешь еду`}
+                {!hydrated
+                  ? 'Загружаем журнал приёмов…'
+                  : `Пока нет прошлых дней с записями — повторять нечего 🐻\nЗаписи появляются, когда добавляешь еду`}
               </Text>
             ) : (
               <View className="gap-1.5 pb-3">
@@ -189,8 +224,13 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
                       onPress={() => setPicked(isPicked ? null : d.key)}
                       accessibilityRole="button"
                       accessibilityLabel={`Выбрать день ${dayTitle(d.key)}, записей: ${d.count}`}
-                      className={`flex-row items-center gap-2.5 rounded-xl px-3 py-2.5 ${
-                        isPicked ? 'bg-[#5B7FFF]/15' : 'bg-white/[0.04]'
+                      // Выбор подсвечен рамкой И заливкой — раньше только
+                      // слабая заливка, и выбранный день визуально не менялся
+                      // (отзыв Кати: «выбрать вчерашний день нет возможности»)
+                      className={`flex-row items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+                        isPicked
+                          ? 'border-[#8DABFF]/60 bg-[#5B7FFF]/15'
+                          : 'border-transparent bg-white/[0.04]'
                       }`}
                     >
                       <View

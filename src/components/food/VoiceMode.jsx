@@ -11,7 +11,7 @@ import {
 } from 'expo-audio'
 import { Mic, Square } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { recognizeVoiceAudio, recognizeVoiceText } from '@/lib/food-ai'
+import { recognizeVoiceAudio, recognizeVoiceText, estimateItemKcal } from '@/lib/food-ai'
 import { useToast } from '../ui/Toast'
 import { openSettingsSoon } from '@/lib/appSettings'
 import { useProStore } from '@/store/useProStore'
@@ -104,7 +104,12 @@ export function VoiceMode({ onPick }) {
         useAiUsageStore.getState().record('voice')
         setHeard(data.text || '')
         setResults(data.items || [])
-        if (data.grams) toast({ title: `⚖️ Распознан вес: ${data.grams} г` })
+        // Тост о весе — только для одной позиции: при нескольких вес у
+        // каждой свой и показывается прямо на карточках (отзыв Кати:
+        // «где итоговый коллораж, как считались калории?»)
+        if (data.grams && (data.items || []).length === 1) {
+          toast({ title: `⚖️ Распознан вес: ${data.grams} г` })
+        }
       } catch (e) {
         setError(String(e?.message || e))
       } finally {
@@ -179,25 +184,54 @@ export function VoiceMode({ onPick }) {
 
       {results.length > 0 && (
         <View className="mt-3 gap-2">
-          {results.map((it, i) => (
-            <Pressable
-              key={`r${i}`}
-              onPress={() => onPick(it)}
-              accessibilityRole="button"
-              className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 active:bg-white/10"
-            >
-              <Text className="text-[26px]">{it.emoji || '🍽'}</Text>
-              <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
-                  {it.name}
+          {results.map((it, i) => {
+            // Итоговый калораж позиции: калорийность на 100 г × вес порции.
+            // Вес не распознался — честно показываем «на 100 г» без итога
+            const kcal = estimateItemKcal(it)
+            return (
+              <Pressable
+                key={`r${i}`}
+                onPress={() => onPick(it)}
+                accessibilityRole="button"
+                className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 active:bg-white/10"
+              >
+                <Text className="text-[26px]">{it.emoji || '🍽'}</Text>
+                <View className="min-w-0 flex-1">
+                  <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
+                    {it.name}
+                  </Text>
+                  <Text className="text-[15px] text-bear-sub">
+                    {kcal != null
+                      ? `≈ ${kcal} ккал · ${it.grams || it.defaultGrams} г`
+                      : `${it.kcal100 ? `${it.kcal100} ккал / 100 г` : 'калорийность уточните'} · вес уточните`}
+                    {it.source === 'off' ? ' · Open Food Facts' : ''}
+                  </Text>
+                </View>
+              </Pressable>
+            )
+          })}
+
+          {/* Итоговый калораж по всей фразе: сумма позиций с распознанным
+              весом + расшифровка, как считали (отзыв Кати) */}
+          {(() => {
+            const kcalList = results.map(estimateItemKcal)
+            const known = kcalList.filter((k) => k != null)
+            if (!known.length) return null
+            const total = known.reduce((s, k) => s + k, 0)
+            const without = kcalList.length - known.length
+            return (
+              <View className="mt-1 rounded-2xl border border-[#7B6CF6]/35 bg-[#7B6CF6]/10 px-4 py-3">
+                <Text className="font-bold text-[17px] text-bear-text">
+                  Итого по фразе: ≈ {total} ккал
+                  {without ? ` (+${without} без веса)` : ''}
                 </Text>
-                <Text className="text-[15px] text-bear-sub">
-                  {it.kcal100 ? `${it.kcal100} ккал / 100 г` : 'калорийность уточните'}
-                  {it.source === 'off' ? ' · Open Food Facts' : ''}
+                <Text className="mt-0.5 text-[13.5px] leading-[17px] text-bear-sub">
+                  Как считаем: калорийность на 100 г × вес порции. Граммовку
+                  можно поправить на следующем шаге — цифры пересчитаются
                 </Text>
               </View>
-            </Pressable>
-          ))}
+            )
+          })()}
         </View>
       )}
 
