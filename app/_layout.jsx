@@ -8,7 +8,7 @@
 import '../global.css'
 
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import {
@@ -21,9 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ToastProvider } from '@/components/ui/Toast'
 import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
+import { ConsentScreen } from '@/components/onboarding/ConsentScreen'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
-import { wipePhotoDir } from '@/lib/photos'
-import { secureStorage } from '@/lib/secure-storage'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
 import { startPedometerAgent } from '@/lib/pedometer'
@@ -64,14 +63,26 @@ function SplashBear() {
 // «Something went wrong». Зависимостей у экрана минимум —
 // только react-native, чтобы он работал даже когда сломалось
 // что-то из библиотек приложения.
-// Подсказки — ТОЛЬКО для обычного пользователя (отзыв Кати 16.11:
-// «У пользователя нет ни Expo Go, ни update.bat» — прежние шаги были
-// developer-языком для запуска через Expo Go на компьютере, а релиз
-// живёт как обычный APK). Никаких «Expo Go», «update.bat», «проект»,
-// «серое окно»: перезапуск приложения, интернет, сброс данных и
-// почта поддержки (whitelinepay@yandex.ru — та же, что в «Написать нам»).
+//
+// Тексты для обычного пользователя (не разработчика): без технических
+// терминов среды разработки, пакетных файлов и отладочных окон. Каждая
+// ветка — короткое человеческое объяснение + что сделать. Везде в конце —
+// почта поддержки whitelinepay@yandex.ru (на случай если не помогло).
 function hintsForError(message) {
   const m = (message || '').toLowerCase()
+  if (
+    m.includes('unable to resolve') ||
+    m.includes('cannot find module') ||
+    m.includes('не удаётся разрешить') ||
+    m.includes('не удается разрешить')
+  ) {
+    return [
+      'NutriBear не смог загрузить свои компоненты.',
+      '1) Полностью закройте NutriBear и запустите его снова.',
+      '2) Если не помогло — нажмите «Сбросить данные» ниже.',
+      '3) В крайнем случае напишите на whitelinepay@yandex.ru — поможем.',
+    ]
+  }
   if (
     m.includes('network') ||
     m.includes('enotfound') ||
@@ -82,26 +93,21 @@ function hintsForError(message) {
       'Похоже, нет доступа к интернету.',
       '1) Проверьте Wi-Fi или мобильный интернет.',
       '2) Нажмите «Попробовать снова».',
-      'Без сети записи всё равно работают — данные хранятся на телефоне.',
     ]
   }
   if (m.includes('json') || m.includes('parse') || m.includes('syntaxerror')) {
     return [
-      'Сбой при чтении данных. Обычно помогает перезапуск:',
-      '1) Полностью закройте NutriBear — смахните его из недавних приложений.',
-      '2) Откройте приложение снова.',
-      '3) Если падает каждый раз — нажмите «Сбросить данные» ниже: записи '
-        + 'очистятся, но покупка Premium сохранится. Не помогло — напишите '
-        + 'нам: whitelinepay@yandex.ru',
+      'Сбой при чтении данных приложения.',
+      '1) Полностью закройте NutriBear и запустите его снова.',
+      '2) Если не помогло — нажмите «Сбросить данные» ниже.',
+      '3) В крайнем случае напишите на whitelinepay@yandex.ru — поможем.',
     ]
   }
   return [
     'Обычно помогает перезапуск:',
-    '1) Полностью закройте NutriBear — смахните его из недавних приложений.',
-    '2) Откройте приложение снова.',
-    '3) Если падает каждый раз — нажмите «Сбросить данные» ниже: записи '
-      + 'очистится, но покупка Premium сохранится. Не помогло — напишите '
-      + 'нам: whitelinepay@yandex.ru',
+    '1) Полностью закройте NutriBear и запустите его снова.',
+    '2) Если не помогло — нажмите «Сбросить данные» ниже.',
+    '3) В крайнем случае напишите на whitelinepay@yandex.ru — поможем.',
   ]
 }
 
@@ -113,24 +119,21 @@ export function ErrorBoundary({ error, retry }) {
   const steps = hintsForError(message)
 
   // «Сбросить данные» — крайняя мера, когда цикл падает на одной и
-  // той же ошибке при запуске (битый стор в хранилище). Стираем
+  // той же ошибке при запуске (битый стор в AsyncStorage). Стираем
   // все ключи NutriBear и перезапускаем — онбординг покажется заново,
   // но у пользователя остаётся рабочее приложение, а не «Мишка споткнулся»
   // навсегда. Состояние покупки (useProStore) при этом НЕ трогаем —
   // см. правило проекта: «Состояние покупки не сбрасывается "Стереть
-  // все данные"». Файлы фото прогресса удаляются вместе со списком
-  // (аудит 12.11: раньше оставались в папке приложения до удаления
-  // приложения — пользователь думал, что стёр всё). Ключи чувствительных
-  // сторов (цикл, профиль) чистятся и в защищённом хранилище — обычное
-  // multiRemove AsyncStorage их не достаёт
+  // все данные"». Фото в файловой системе не затрагиваем — они не в
+  // AsyncStorage
   const [resetting, setResetting] = useState(false)
   function wipeAndRetry() {
     Alert.alert(
       'Сбросить данные приложения?',
       'Это крайняя мера — если приложение постоянно падает при запуске. '
-        + 'Сотрутся записи питания, история, вода, вес, тренировки, профиль и '
-        + 'фотографии прогресса. Онбординг показывается заново. Покупка '
-        + 'Premium сохраняется. Действие нельзя отменить.',
+        + 'Сотрутся дневник, история, вода, вес, тренировки. Онбординг '
+        + 'показывается заново. Покупка Premium сохраняется. Фотографии '
+        + 'на устройстве не затрагиваются. Действие нельзя отменить.',
       [
         { text: 'Отмена', style: 'cancel' },
         {
@@ -152,14 +155,6 @@ export function ErrorBoundary({ error, retry }) {
               if (toRemove.length) {
                 await AsyncStorage.multiRemove(toRemove)
               }
-              // Файлы фото прогресса: список в AsyncStorage уже стёрт,
-              // сами снимки лежат в папке приложения — удаляем папку
-              await wipePhotoDir()
-              // Цикл и профиль живут в защищённом хранилище
-              // (Android Keystore / iOS Keychain) — чистим и там;
-              // removeItem адаптера заодно чистит остатки в AsyncStorage
-              await secureStorage.removeItem('nutribear-cycle-v1')
-              await secureStorage.removeItem('nutribear-profile-v1')
             } catch (e) {
               console.warn('Не удалось сбросить данные:', e)
             } finally {
@@ -228,8 +223,28 @@ export function ErrorBoundary({ error, retry }) {
           </Text>
         </View>
         <Text className="mt-2 font-sans text-[15px] text-bear-dim">
-          Текст выше — технические детали. Пришлите его мне, и я починю быстрее.
+          Технические детали ошибки показаны выше. Если перезапуск и сброс
+          данных не помогли — пришлите этот текст на whitelinepay@yandex.ru,
+          и мы поможем.
         </Text>
+        <Pressable
+          onPress={() =>
+            Linking.openURL(
+              'mailto:whitelinepay@yandex.ru?subject=' +
+                encodeURIComponent('NutriBear — ошибка запуска')
+            ).catch(() => {})
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Написать в поддержку"
+          className="mt-3 items-center rounded-2xl border border-white/10 px-4 py-3 active:opacity-80"
+        >
+          <Text className="font-bold text-[17px] text-bear-sub2">
+            Написать в поддержку
+          </Text>
+          <Text className="mt-0.5 font-sans text-[14.5px] text-bear-dim">
+            whitelinepay@yandex.ru
+          </Text>
+        </Pressable>
         <View style={{ height: 48 }} />
       </ScrollView>
     </View>
@@ -244,6 +259,10 @@ export default function RootLayout() {
   })
   const hydrated = useOnboardingHydrated()
   const obStatus = useOnboardingStore((s) => s.status)
+  // 152-ФЗ: согласие на обработку ПДн. consentAccepted=false →
+  // показываем ConsentScreen ПЕРВЫМ (раньше онбординга). Без
+  // явного согласия доступ к приложению невозможен.
+  const consentAccepted = useOnboardingStore((s) => s.consentAccepted)
 
   useEffect(() => {
     if (error) console.warn('Шрифты не загрузились:', error)
@@ -270,6 +289,23 @@ export default function RootLayout() {
   // а не зависаем на заставке навсегда
   const fontsReady = loaded || !!error
   if (!fontsReady || !hydrated) return <SplashBear />
+
+  // 152-ФЗ: согласие на обработку ПДн — ПЕРВЫЙ экран приложения.
+  // Пока пользователь не отметит все 4 чекбокса и не нажмёт
+  // «Продолжить» — не показываем ни онбординг, ни само приложение.
+  // Экран ConsentScreen не зависит от status онбординга: он
+  // показывается даже если онбординг уже завершён, но согласие
+  // ещё не получено (например, у существующих пользователей после
+  // обновления до версии с 152-ФЗ).
+  if (!consentAccepted) {
+    return (
+      <ToastProvider>
+        <StatusBar style="light" />
+        <ConsentScreen />
+        <OfflineBar />
+      </ToastProvider>
+    )
+  }
 
   // Онбординг не завершён — флоу вместо приложения
   if (obStatus !== 'done') {
