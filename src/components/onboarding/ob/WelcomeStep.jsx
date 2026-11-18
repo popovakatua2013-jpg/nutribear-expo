@@ -49,13 +49,18 @@ export function WelcomeStep({ onNext }) {
       nextLabel="Далее"
     >
       <View className="items-center pt-1">
-        {/* Мишка со свечением, как на макете. Размеры — inline-стилями,
-            а не классами h-[148px]/w-[200px]: на устройстве Кати
-            произвольные классы этой вёрстки не применились и мишка
-            сжалась в полоску (скрин 19.11 00:29 — «все поехало») */}
+        {/* Мишка со свечением. Уроки скринов Кати 19.11 (00:29 и 00:39):
+            голый <Image style={{width:126, height:126}}> на её Expo Go
+            рисуется полоской 126×1px (ширина применялась, высота — нет),
+            а произвольные классы h-[148px] не применяются вовсе. Поэтому
+            размер держит ОБЁРТКА-«ПЛИТКА» (inline w/h + overflow hidden),
+            а картинка заполняет её на 100% — тот же приём, что в
+            Greeting на Главной, который у Кати работает. Свечение —
+            два эллипса за плиткой (видны по бокам), радиус 28 делает
+            из квадратной картинки аккуратную «иконку» */}
         <View
           style={{
-            height: 148,
+            height: 112,
             width: 200,
             alignItems: 'center',
             justifyContent: 'center',
@@ -64,32 +69,46 @@ export function WelcomeStep({ onNext }) {
           <View
             style={{
               position: 'absolute',
-              height: 92,
-              width: 176,
+              height: 80,
+              width: 156,
               borderRadius: 999,
-              backgroundColor: 'rgba(124,92,252,0.25)',
+              backgroundColor: 'rgba(124,92,252,0.28)',
             }}
           />
           <View
             style={{
               position: 'absolute',
-              height: 60,
-              width: 132,
+              height: 54,
+              width: 122,
               borderRadius: 999,
-              backgroundColor: 'rgba(139,108,255,0.25)',
+              backgroundColor: 'rgba(139,108,255,0.28)',
             }}
           />
-          <Image source={BEAR} style={{ width: 126, height: 126 }} resizeMode="contain" />
+          <View
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: 28,
+              overflow: 'hidden',
+            }}
+          >
+            <Image
+              source={BEAR}
+              accessibilityLabel="Медвежонок NutriBear"
+              resizeMode="cover"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </View>
         </View>
 
         {/* Заголовок «Похудей, поддерживай или набирай вес» удалён
             (отзыв Кати) — остался нейтральный подзаголовок */}
-        <Text className="mx-auto mt-2 max-w-[280px] text-center font-sans text-[17.5px] leading-relaxed text-[#aab4d4]">
+        <Text className="mx-auto mt-1 max-w-[280px] text-center font-sans text-[17.5px] leading-relaxed text-[#aab4d4]">
           Персональный план питания и тренировок под твои цели
         </Text>
 
         {/* Карточка «Твоя цель» с четырьмя чипами (сетка 2×2) */}
-        <View className="mt-5 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
+        <View className="mt-4 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
           <Text className="font-bold text-[17.5px] text-bear-sub2">Твоя цель</Text>
           <View className="mt-3 gap-2.5">
             {CHIP_ROWS.map((row, ri) => (
@@ -121,11 +140,11 @@ export function WelcomeStep({ onNext }) {
         {/* Подсказка, пока «Далее» не активна: серая кнопка должна
             объяснять себя, а не выглядеть сломанной (вопрос Кати) */}
         {!goalId ? (
-          <Text className="mt-3 text-center font-sans text-[14px] leading-snug text-bear-dim">
+          <Text className="mt-2.5 text-center font-sans text-[14px] leading-snug text-bear-dim">
             Выберите цель — и пойдём дальше
           </Text>
         ) : !consentOk ? (
-          <Text className="mt-3 text-center font-sans text-[14px] leading-snug text-bear-dim">
+          <Text className="mt-2.5 text-center font-sans text-[14px] leading-snug text-bear-dim">
             Отметьте согласия — и пойдём дальше
           </Text>
         ) : null}
