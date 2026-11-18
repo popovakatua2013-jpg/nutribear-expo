@@ -2,21 +2,33 @@
 // (Катя, 10.11): тап по строке «Политика конфиденциальности» на «Ещё» →
 // открывается экран, в шапке — название документа, под ней загружается
 // сам текст. Отдельное окно на каждый документ (политика / соглашение /
-// дисклеймер) вместо одного окна с тремя вкладками — как в стандартных
-// приложениях.
+// дисклеймер / о приложении) вместо одного окна с вкладками — как в
+// стандартных приложениях.
 
 import { useEffect, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
+import Constants from 'expo-constants'
 import {
   OPERATOR,
   PRIVACY_SECTIONS,
   TERMS_SECTIONS,
   MEDICAL_SECTIONS,
+  ABOUT_SECTIONS,
 } from '@/lib/data/legal'
+import { BUILD_HASH } from '@/lib/version'
+
+const VERSION = Constants?.expoConfig?.version || '1.0'
 
 const DOCS = {
+  // «О приложении» (отзыв Кати 18.11): вместо даты редакции — версия
+  // и ID сборки, как в стандартных приложениях
+  about: {
+    title: 'О приложении',
+    sections: ABOUT_SECTIONS,
+    subtitle: `Версия ${VERSION} · ID: ${BUILD_HASH || 'dev'}`,
+  },
   privacy: { title: 'Политика конфиденциальности', sections: PRIVACY_SECTIONS },
   terms: { title: 'Пользовательское соглашение', sections: TERMS_SECTIONS },
   medical: { title: 'Медицинский дисклеймер', sections: MEDICAL_SECTIONS },
@@ -45,7 +57,7 @@ export function LegalDocModal({ doc, onClose }) {
               maxFontSizeMultiplier={1.25}
               className="mt-0.5 font-sans text-[15px] text-bear-sub"
             >
-              Редакция от {OPERATOR.effective}
+              {d.subtitle || `Редакция от ${OPERATOR.effective}`}
             </Text>
           </View>
           <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1" hitSlop={8}>
