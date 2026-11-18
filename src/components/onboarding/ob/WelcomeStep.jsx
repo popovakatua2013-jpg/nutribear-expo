@@ -11,10 +11,16 @@
 // цель — единственный обязательный выбор (без неё план не построить),
 // поэтому «Далее» без цели не активна, но под карточкой появляется
 // подсказка, почему; анкета (шаг 2) при этом пропускается «Пропустить»
+// Отзыв Кати 19.11: согласия 152-ФЗ перенесены сюда с отдельной
+// страницы перед входом — компактный блок ConsentBlock мелким шрифтом
+// под карточкой цели (по закону согласие ДО сбора данных, поэтому
+// первый шаг, а не пятый; реквизиты оператора — только в документах).
+// «Далее» активна, когда выбрана цель И отмечены все 4 согласия.
 
 import { Image, Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { ObShell } from './ObShell'
+import { ConsentBlock, useAllConsent } from '../ConsentBlock'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 
 const BEAR = require('../../../../assets/images/bear.webp')
@@ -33,9 +39,15 @@ const CHIP_ROWS = [CHIPS.slice(0, 2), CHIPS.slice(2, 4)]
 export function WelcomeStep({ onNext }) {
   const goalId = useOnboardingStore((s) => s.answers.goalId)
   const patch = useOnboardingStore((s) => s.patchAnswers)
+  const consentOk = useAllConsent()
 
   return (
-    <ObShell title="NutriBear" onNext={onNext} nextDisabled={!goalId} nextLabel="Далее">
+    <ObShell
+      title="NutriBear"
+      onNext={onNext}
+      nextDisabled={!goalId || !consentOk}
+      nextLabel="Далее"
+    >
       <View className="items-center pt-1">
         {/* Мишка со свечением, как на макете */}
         <View className="h-[148px] w-[200px] items-center justify-center">
@@ -69,11 +81,23 @@ export function WelcomeStep({ onNext }) {
           </View>
         </View>
 
-        {/* Подсказка, пока цель не выбрана: серая кнопка «Далее» должна
+        {/* Блок согласий 152-ФЗ — компактный, мелким шрифтом, под
+            карточкой цели (отзыв Кати 19.11; раньше — страница
+            на весь экран перед входом). Реквизиты оператора — в
+            Политике конфиденциальности по ссылке внутри блока */}
+        <View className="mt-4">
+          <ConsentBlock />
+        </View>
+
+        {/* Подсказка, пока «Далее» не активна: серая кнопка должна
             объяснять себя, а не выглядеть сломанной (вопрос Кати) */}
         {!goalId ? (
           <Text className="mt-3 text-center font-sans text-[14px] leading-snug text-bear-dim">
             Выберите цель — и пойдём дальше
+          </Text>
+        ) : !consentOk ? (
+          <Text className="mt-3 text-center font-sans text-[14px] leading-snug text-bear-dim">
+            Отметьте согласия — и пойдём дальше
           </Text>
         ) : null}
       </View>

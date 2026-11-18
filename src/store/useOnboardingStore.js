@@ -40,13 +40,16 @@ const DEFAULT_STATE = {
   account: { email: '', provider: '' }, // регистрация в конце (мок)
   permissions: { push: 'unknown', health: false, camera: 'unknown' },
   sync: { gfit: false, ahealth: false, pedometer: true },
-  // 152-ФЗ: согласия на обработку ПДн. Показываются на экране
-  // ConsentScreen ПЕРВЫМ (раньше онбординга). Пока consentAccepted
-  // не true — доступ к приложению невозможен. Все 4 согласия
-  // отмечаются отдельными чекбоксами. После «Стереть все данные»
-  // (reset) consent сбрасывается → экран показывается заново.
+  // 152-ФЗ: согласия на обработку ПДн. Отмечаются чекбоксами на
+  // ПЕРВОМ шаге онбординга (ConsentBlock под выбором цели — отзыв
+  // Кати 19.11: отдельная страница ОПД перед входом убрана; по
+  // закону согласие нужно ДО сбора данных, поэтому первый шаг, а не
+  // пятый). Все 4 должны быть true, чтобы «Далее» стало активной.
+  // Старые установки, завершившие онбординг до введения согласий,
+  // один раз видят компактный LegacyConsentScreen (шлюз в _layout).
+  // После «Стереть все данные» (reset) consent сбрасывается — блок
+  // снова показывается на первом шаге.
   consent: { pd: false, health: false, crossBorder: false, policy: false },
-  consentAccepted: false,
 }
 
 export const useOnboardingStore = create(
@@ -70,19 +73,14 @@ export const useOnboardingStore = create(
       toggleSync: (key) =>
         set((s) => ({ sync: { ...s.sync, [key]: !s.sync[key] } })),
 
-      // 152-ФЗ: переключение одного согласия (чекбокса) на экране
-      // ConsentScreen. key ∈ {pd, health, crossBorder, policy}.
-      // Все 4 должны быть true, чтобы кнопка «Продолжить» стала
-      // активной (проверка в самом ConsentScreen).
+      // 152-ФЗ: переключение одного согласия (чекбокса) в блоке
+      // ConsentBlock. key ∈ {pd, health, crossBorder, policy}.
+      // Все 4 должны быть true, чтобы кнопка «Далее» на первом шаге
+      // стала активной (проверка в WelcomeStep через useAllConsent).
       toggleConsent: (key) =>
         set((s) => ({
           consent: { ...s.consent, [key]: !s.consent?.[key] },
         })),
-
-      // 152-ФЗ: пользователь отметил все 4 согласия и нажал
-      // «Продолжить». После этого ConsentScreen больше не показывается
-      // (до reset / «Стереть все данные»).
-      setConsentAccepted: (value) => set({ consentAccepted: value }),
 
       // Завершение онбординга (после активации). Окно «Добавить приём
       // пищи» после онбординга не открывается — сразу главная (отзыв
@@ -95,11 +93,13 @@ export const useOnboardingStore = create(
     {
       name: 'nutribear-onboarding-v1',
       version: 2,
-      // v1 → v2: добавили поля consent и consentAccepted (152-ФЗ).
-      // Старым пользователям (без этих полей) проставляем значения
-      // по умолчанию — consentAccepted=false → при следующем запуске
-      // покажется ConsentScreen. Это правильно по закону: согласие
-      // должно быть получено явно.
+      // v1 → v2: добавили поле consent (152-ФЗ). Старым пользователям
+      // (без этих полей) проставляем значения по умолчанию — все
+      // согласия false → у завершивших онбординг при следующем запуске
+      // один раз покажется LegacyConsentScreen, у идущих онбординг —
+      // блок согласий на первом шаге. Это правильно по закону: согласие
+      // должно быть получено явно. Поле consentAccepted удалено:
+      // единственный источник истины — сами 4 чекбокса consent.
       migrate: (state, fromVersion) => {
         if (!state) return state
         const next = { ...state }
@@ -110,9 +110,6 @@ export const useOnboardingStore = create(
             crossBorder: false,
             policy: false,
           }
-        }
-        if (next.consentAccepted === undefined) {
-          next.consentAccepted = false
         }
         return next
       },
@@ -126,7 +123,6 @@ export const useOnboardingStore = create(
         permissions: s.permissions,
         sync: s.sync,
         consent: s.consent,
-        consentAccepted: s.consentAccepted,
       }),
     }
   )

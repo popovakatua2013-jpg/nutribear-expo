@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ToastProvider } from '@/components/ui/Toast'
 import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
-import { ConsentScreen } from '@/components/onboarding/ConsentScreen'
+import { LegacyConsentScreen } from '@/components/onboarding/LegacyConsentScreen'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
@@ -259,10 +259,18 @@ export default function RootLayout() {
   })
   const hydrated = useOnboardingHydrated()
   const obStatus = useOnboardingStore((s) => s.status)
-  // 152-ФЗ: согласие на обработку ПДн. consentAccepted=false →
-  // показываем ConsentScreen ПЕРВЫМ (раньше онбординга). Без
-  // явного согласия доступ к приложению невозможен.
-  const consentAccepted = useOnboardingStore((s) => s.consentAccepted)
+  // 152-ФЗ: все 4 согласия отмечены? Хук — до условных возвратов ниже
+  // (правила хуков React). Новым пользователям согласия даются на
+  // первом шаге онбординга (ConsentBlock под выбором цели в
+  // WelcomeStep) — отдельной страницы перед входом больше нет
+  // (отзыв Кати 19.11: «опд на всю страницу»). Исключение — старые
+  // установки: онбординг у них уже завершён, а согласий в сохранённых
+  // данных нет, поэтому при запуске один раз показывается компактный
+  // LegacyConsentScreen (без страницы текста, без реквизитов —
+  // они в Политике конфиденциальности).
+  const consentOk = useOnboardingStore(
+    (s) => !!(s.consent?.pd && s.consent?.health && s.consent?.crossBorder && s.consent?.policy)
+  )
 
   useEffect(() => {
     if (error) console.warn('Шрифты не загрузились:', error)
@@ -290,18 +298,13 @@ export default function RootLayout() {
   const fontsReady = loaded || !!error
   if (!fontsReady || !hydrated) return <SplashBear />
 
-  // 152-ФЗ: согласие на обработку ПДн — ПЕРВЫЙ экран приложения.
-  // Пока пользователь не отметит все 4 чекбокса и не нажмёт
-  // «Продолжить» — не показываем ни онбординг, ни само приложение.
-  // Экран ConsentScreen не зависит от status онбординга: он
-  // показывается даже если онбординг уже завершён, но согласие
-  // ещё не получено (например, у существующих пользователей после
-  // обновления до версии с 152-ФЗ).
-  if (!consentAccepted) {
+  // Онбординг завершён, но согласий нет (старые установки) —
+  // компактный экран согласия вместо приложения
+  if (obStatus === 'done' && !consentOk) {
     return (
       <ToastProvider>
         <StatusBar style="light" />
-        <ConsentScreen />
+        <LegacyConsentScreen />
         <OfflineBar />
       </ToastProvider>
     )
