@@ -6,7 +6,6 @@ import { getDailyTarget } from './goals'
 import { macroNormsFor } from './bju'
 
 const KCAL_PER_KG = 7700 // энергетическая ценность 1 кг жира
-const num = (v) => Number(String(v).replace(',', '.')) || 0
 const round1 = (v) => Math.round(v * 10) / 10
 
 // Единицы измерения: всегда храним метрику, на экране конвертируем
