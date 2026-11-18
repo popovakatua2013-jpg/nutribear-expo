@@ -28,10 +28,9 @@ jobs:
       EXPO_PUBLIC_AI_VOICE_MODEL: whisper-1
       EXPO_PUBLIC_AI_PROXY_URL: https://nutribear-ai.popovakatua2013.workers.dev/v1
       EXPO_PUBLIC_AI_PROXY_SECRET: ${{ secrets.NB_PROXY_SECRET }}
-      # Сборки для установки/магазина — релизный режим оплаты: демо-кнопка
-      # «активировать без оплаты» скрыта, Premium включается промокодом
-      # (локальные запуски без этой переменной остаются демо-режимом)
-      EXPO_PUBLIC_PAYMENTS_MODE: release
+      # Решение Кати 19.11: режимов оплаты demo/release больше нет —
+      # активация Premium всегда по коду, оплата на странице оплаты
+      # (PAY_PAGE_URL в src/lib/promo-codes.js)
     steps:
       - uses: actions/checkout@v4
 

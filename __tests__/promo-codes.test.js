@@ -1,13 +1,14 @@
-// Промо-коды Premium (релизный режим оплаты, решение Кати 15.11).
-// Проверяем SHA-256 векторами (реализация чистым JS), нормализацию,
-// работу валидатора против хэшей из репозитория и режим оплаты.
-// Плюс страховка исходника PremiumCard: в релизном режиме демо-активация
-// не вызывается, место занято промокодом.
+// Коды активации Premium (решение Кати 19.11: поле ввода кода вместо
+// демо-кнопки). Проверяем SHA-256 векторами (реализация чистым JS),
+// нормализацию, работу валидатора против хэшей из репозитория, целостность
+// партии кодов для продажи и ссылку на страницу оплаты.
+// Плюс страховка исходника PremiumCard: активация без денег из карточки
+// убрана, месяц/год открывают страницу оплаты, код активирует promo-план.
 
 const fs = require('fs')
 const path = require('path')
 const {
-  getPaymentsMode,
+  PAY_PAGE_URL,
   normalizePromoCode,
   sha256Hex,
   isValidPromoCode,
@@ -44,6 +45,12 @@ describe('normalizePromoCode', () => {
     expect(normalizePromoCode('KEDR-2026')).toBe('KEDR2026')
   })
 
+  test('код активации NB-XXXXX-XXXXX сводится к NB+10 символов', () => {
+    expect(normalizePromoCode('nb-abcde-fghjk')).toBe('NBABCDEFGHJK')
+    expect(normalizePromoCode('NB ABCDE FGHIK')).toBe('NBABCDEFGHIK')
+    expect(normalizePromoCode('NB—ABCDE—FGHIK')).toBe('NBABCDEFGHIK')
+  })
+
   test('пустые и мусорные входы', () => {
     expect(normalizePromoCode('')).toBe('')
     expect(normalizePromoCode('   ')).toBe('')
@@ -53,7 +60,7 @@ describe('normalizePromoCode', () => {
 })
 
 describe('isValidPromoCode', () => {
-  test('настоящие коды проходят в любом написании', () => {
+  test('старые промо-коды проходят в любом написании', () => {
     expect(isValidPromoCode('KEDR-2026')).toBe(true)
     expect(isValidPromoCode('kedr 2026')).toBe(true)
     expect(isValidPromoCode('NUTRI-START')).toBe(true)
@@ -65,11 +72,12 @@ describe('isValidPromoCode', () => {
     expect(isValidPromoCode('KEDR-2025')).toBe(false)
     expect(isValidPromoCode('PREMIUM')).toBe(false)
     expect(isValidPromoCode('KEDR20267')).toBe(false)
+    expect(isValidPromoCode('NB-AAAAA-BBBBB')).toBe(false)
     expect(isValidPromoCode('')).toBe(false)
     expect(isValidPromoCode(null)).toBe(false)
   })
 
-  test('код KEDR-2026 сходится с независимым хэшем (python hashlib)', () => {
+  test('старые коды сходятся с независимым хэшем (python hashlib)', () => {
     // Хэш посчитан вне JS-реализации — взаимная проверка
     expect(sha256Hex('KEDR2026')).toBe('4e2cd8df2ccca820bf6b439eb79784826ef57403977ffdfb3a5386088a25a8fb')
     expect(sha256Hex('NUTRISTART')).toBe('6f54257318d403780698c59e9369853840e48b5f8286d862cf4c562632ff6902')
@@ -77,20 +85,30 @@ describe('isValidPromoCode', () => {
   })
 })
 
-describe('getPaymentsMode', () => {
-  const KEY = 'EXPO_PUBLIC_PAYMENTS_MODE'
+describe('партия кодов для продажи (NB-XXXXX-XXXXX)', () => {
+  // Сами коды в репозитории не хранятся (только хэши, список у Кати) —
+  // поэтому здесь проверяется только целостность набора хэшей
+  const src = fs.readFileSync(path.join(__dirname, '../src/lib/promo-codes.js'), 'utf8')
+  const match = src.match(/const PROMO_CODE_HASHES = \[([\s\S]*?)\]/)
+  const hashes = match ? [...match[1].matchAll(/'([0-9a-f]{64})'/g)].map((m) => m[1]) : []
 
-  test('по умолчанию — demo (локальная разработка)', () => {
-    expect(getPaymentsMode({})).toBe('demo')
-    expect(getPaymentsMode({ [KEY]: undefined })).toBe('demo')
-    expect(getPaymentsMode({ [KEY]: 'demo' })).toBe('demo')
+  test('хэшей достаточно: 3 старых промо + партия 1 (40 шт)', () => {
+    expect(match).toBeTruthy()
+    expect(hashes.length).toBeGreaterThanOrEqual(43)
   })
 
-  test('release включается только точным значением (регистр не важен)', () => {
-    expect(getPaymentsMode({ [KEY]: 'release' })).toBe('release')
-    expect(getPaymentsMode({ [KEY]: 'RELEASE' })).toBe('release')
-    expect(getPaymentsMode({ [KEY]: 'Release ' })).toBe('release')
-    expect(getPaymentsMode({ [KEY]: 'release-demo' })).toBe('demo')
+  test('все хэши уникальны (один код — один хэш)', () => {
+    expect(new Set(hashes).size).toBe(hashes.length)
+  })
+})
+
+describe('PAY_PAGE_URL — страница оплаты', () => {
+  test('https-ссылка на GitHub Pages этого репозитория', () => {
+    expect(PAY_PAGE_URL).toMatch(/^https:\/\/popovakatua2013-jpg\.github\.io\/nutribear-expo\/?$/)
+  })
+
+  test('страница оплаты лежит в репозитории (docs/pay.html)', () => {
+    expect(fs.existsSync(path.join(__dirname, '../docs/pay.html'))).toBe(true)
   })
 })
 
@@ -103,27 +121,26 @@ describe('структура: промо не попадает в покупны
 describe('страховка исходника PremiumCard', () => {
   const src = fs.readFileSync(path.join(__dirname, '../src/components/more/PremiumCard.jsx'), 'utf8')
 
-  test('релизный режим подключён через getPaymentsMode', () => {
-    expect(src).toContain("getPaymentsMode() === 'release'")
-    expect(src).toContain('EXPO_PUBLIC_PAYMENTS_MODE')
+  test('демо-активация и режимы demo/release убраны', () => {
+    expect(src).not.toContain('getPaymentsMode')
+    expect(src).not.toContain('Демо-режим оплаты')
+    expect(src).not.toContain('активировать без оплаты')
   })
 
-  test('демо-активация в release перекрыта, промокод активирует promo-план', () => {
-    // ранний return до activate(id) в релизном режиме
-    const pickIdx = src.indexOf('function pickPlan(id)')
-    const guardIdx = src.indexOf("if (release)", pickIdx)
-    const actIdx = src.indexOf('activate(id)', pickIdx)
-    expect(guardIdx).toBeGreaterThan(-1)
-    expect(guardIdx).toBeLessThan(actIdx)
+  test('месяц/год открывают страницу оплаты, триал активируется сразу', () => {
+    expect(src).toContain('Linking.openURL(PAY_PAGE_URL)')
+    expect(src).toContain("activate('trial')")
     expect(src).toContain("activate('promo')")
   })
 
-  test('поле промокода и его доступность для скринридера есть', () => {
-    expect(src).toContain('Ввод промокода Premium')
-    expect(src).toContain('Активировать промокод')
+  test('поле кода активации и его доступность для скринридера есть', () => {
+    expect(src).toContain('Ввод кода активации Premium')
+    expect(src).toContain('Активировать код')
+    expect(src).toContain('placeholder="Код активации"')
   })
 
-  test('в демо-режиме честная подпись сохранена', () => {
-    expect(src).toContain('Демо-режим оплаты: активация работает без денег — для теста')
+  test('в подписи под планами указан порядок: оплата → код на почту', () => {
+    expect(src).toContain('страницу оплаты')
+    expect(src).toContain('код активации придёт на почту')
   })
 })

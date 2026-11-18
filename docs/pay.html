@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="NutriBear Premium — оплата и код активации. Дневник питания и активности для Android." />
+  <title>NutriBear Premium — оплата и код активации</title>
+  <style>
+    /* Тема bear из приложения (tailwind.config.js) */
+    :root {
+      --bg: #0A1020;
+      --card: #121B33;
+      --card2: #131E3A;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #EEF2FB;
+      --sub: #A5AECB;
+      --dim: #8B96B8;
+      --link: #6C8CFF;
+      --amber: #FCD34D;
+      --amber-border: rgba(251, 191, 36, 0.4);
+      --green: #34D399;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.55;
+      padding: 20px 14px 40px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    a { color: var(--link); }
+    .logo { font-size: 34px; }
+    header { text-align: center; padding: 18px 0 6px; }
+    header h1 { font-size: 26px; margin-top: 8px; }
+    header .tagline { color: var(--sub); font-size: 14.5px; margin-top: 6px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    .perks { list-style: none; }
+    .perks li { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; }
+    .perks .emoji { font-size: 17px; flex: 0 0 auto; }
+    .perks b { font-size: 14.5px; font-weight: 600; display: block; }
+    .perks span.sub { color: var(--dim); font-size: 12.5px; display: block; }
+    .perks .check { color: var(--green); flex: 0 0 auto; margin-top: 1px; font-weight: 700; }
+    .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 420px) { .plans { grid-template-columns: 1fr; } }
+    .plan {
+      background: var(--card2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+    }
+    .plan.best { border-color: var(--amber-border); background: rgba(251, 191, 36, 0.10); }
+    .plan .badge {
+      display: inline-block; background: rgba(251, 191, 36, 0.15); color: var(--amber);
+      border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 700; margin-bottom: 6px;
+    }
+    .plan .title { font-weight: 700; font-size: 15.5px; }
+    .plan .price { font-size: 22px; font-weight: 800; margin-top: 4px; }
+    .plan .per { color: var(--dim); font-size: 12.5px; }
+    ol.steps { list-style: none; counter-reset: step; }
+    ol.steps li {
+      counter-increment: step;
+      display: flex; gap: 12px; padding: 10px 0; align-items: flex-start;
+    }
+    ol.steps li::before {
+      content: counter(step);
+      flex: 0 0 auto;
+      width: 26px; height: 26px; border-radius: 999px;
+      background: rgba(108, 140, 255, 0.15); color: var(--link);
+      font-weight: 800; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    ol.steps b { font-size: 14.5px; }
+    ol.steps p { color: var(--sub); font-size: 13.5px; margin-top: 2px; }
+    .btn {
+      display: block; text-align: center; text-decoration: none;
+      background: rgba(251, 191, 36, 0.10);
+      border: 1px solid var(--amber-border);
+      color: var(--amber);
+      font-weight: 700; font-size: 15.5px;
+      border-radius: 16px; padding: 13px 16px; margin-top: 12px;
+    }
+    .btn:active { opacity: 0.8; }
+    .mail { color: var(--text); font-weight: 600; word-break: break-all; }
+    .note { color: var(--dim); font-size: 12.5px; margin-top: 10px; }
+    footer {
+      margin-top: 20px; color: var(--dim); font-size: 12px;
+      text-align: center; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🐻</div>
+    <h1>NutriBear Premium</h1>
+    <p class="tagline">Дневник питания и активности для Android</p>
+  </header>
+
+  <!-- Кнопка оплаты появляется автоматически, когда в PAY_URL ниже вписана
+       ссылка Ю-Kassa. Пока оплата идёт письмом: шаги 1-2-3 ниже. -->
+  <script>
+    // ─── НАСТРОЙКА ОПЛАТЫ (Катя) ─────────────────────────────────────
+    // После регистрации в Ю-Kassa впиши сюда ссылку на платёж (кнопка
+    // «Оплатить» появится на странице вместо первого шага). Пример:
+    // var PAY_URL = 'https://yoomoney.ru/checkout/payments/v2/contract?#...'
+    var PAY_URL = '';
+    var PAY_LABEL = 'Оплатить по ссылке (карта или СБП)';
+  </script>
+
+  <section class="card">
+    <h2>Что входит в Premium</h2>
+    <ul class="perks">
+      <li><span class="emoji">💬</span><div><b>Безлимитный чат с напарником</b><span class="sub">бесплатно — 15 сообщений в день</span></div><span class="check">✓</span></li>
+      <li><span class="emoji">📸</span><div><b>Безлимитное фото еды и этикеток</b><span class="sub">бесплатно — 3 распознавания в день</span></div><span class="check">✓</span></li>
+      <li><span class="emoji">🎤</span><div><b>Безлимитный голосовой ввод</b><span class="sub">бесплатно — 10 записей в день</span></div><span class="check">✓</span></li>
+      <li><span class="emoji">🐻</span><div><b>Все пять медведей: + Топаз, Бусинка, Фит</b><span class="sub">характер под твой стиль</span></div><span class="check">✓</span></li>
+      <li><span class="emoji">🗓️</span><div><b>ИИ-меню на неделю — один тап</b><span class="sub">по вашей норме ккал + список покупок из меню</span></div><span class="check">✓</span></li>
+      <li><span class="emoji">📊</span><div><b>Разбор недели от напарника</b><span class="sub">итоги по питанию и конкретные советы</span></div><span class="check">✓</span></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Сколько стоит</h2>
+    <div class="plans">
+      <div class="plan">
+        <div class="title">Месяц</div>
+        <div class="price">299 ₽</div>
+        <div class="per">в месяц</div>
+      </div>
+      <div class="plan best">
+        <div class="badge">Выгодно</div>
+        <div class="title">Год</div>
+        <div class="price">1 490 ₽</div>
+        <div class="per">в год · скидка 50%</div>
+      </div>
+    </div>
+    <p class="note">Первые 3 дня — бесплатный триал: включается прямо в приложении, без оплаты (Ещё → Премиум).</p>
+  </section>
+
+  <section class="card">
+    <h2>Как получить Premium</h2>
+    <ol class="steps">
+      <li>
+        <div>
+          <b>Напишите на почту</b>
+          <p>Укажите план — «Месяц 299 ₽» или «Год 1 490 ₽» и почту для чека.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <b>Оплатите по ссылке из ответного письма</b>
+          <p>Карта или СБП. Чек придёт на вашу почту — он формируется через «Мой налог».</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <b>Введите код активации в приложении</b>
+          <p>Код придёт в ответном письме. В приложении: <b>Ещё → Премиум → «Код активации»</b>. Регистр, пробелы и дефисы не важны.</p>
+        </div>
+      </li>
+    </ol>
+    <a class="btn" id="mailBtn"
+       href="mailto:whitelinepay@yandex.ru?subject=Premium%20NutriBear&body=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20Premium%20NutriBear.%20%D0%9F%D0%BB%D0%B0%D0%BD%3A%20%D0%BC%D0%B5%D1%81%D1%8F%D1%86%20(299%20%E2%82%BD)%20%2F%20%D0%B3%D0%BE%D0%B4%20(1%20490%20%E2%82%BD).%20%D0%9F%D0%BE%D1%87%D1%82%D0%B0%20%D0%B4%D0%BB%D1%8F%20%D1%87%D0%B5%D0%BA%D0%B0%3A%20">
+      Написать для оплаты
+    </a>
+    <p class="note">Почта для оплаты и вопросов: <span class="mail">whitelinepay@yandex.ru</span></p>
+  </section>
+
+  <footer>
+    Оператор: Попова Екатерина Александровна, самозанятая (НПД), ИНН 290801999806.<br />
+    NutriBear — дневник питания и активности. Не является медицинской услугой.
+  </footer>
+
+  <script>
+    // Если ссылка оплаты задана — показываем кнопку «Оплатить» вместо письма
+    (function () {
+      if (!PAY_URL) return;
+      var steps = document.querySelector('ol.steps');
+      if (steps) {
+        var li = steps.querySelector('li');
+        if (li) {
+          li.querySelector('b').textContent = 'Оплатите по ссылке';
+          li.querySelector('p').textContent = 'Карта или СБП. Чек придёт на вашу почту.';
+        }
+      }
+      var btn = document.getElementById('mailBtn');
+      if (btn) { btn.textContent = PAY_LABEL; btn.href = PAY_URL; }
+    })();
+  </script>
+</body>
+</html>

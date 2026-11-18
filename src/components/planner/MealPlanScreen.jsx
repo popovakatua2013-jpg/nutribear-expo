@@ -532,7 +532,7 @@ export function MealPlanScreen({ compact = false }) {
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
 
       {/* Окно «Меню от ИИ» — Premium: генерация недели одним запросом,
-          для free — paywall с демо-активацией Premium */}
+          для free — paywall с кодом активации Premium */}
       <AiMenuModal
         open={aiOpen}
         weekKey={weekKey}

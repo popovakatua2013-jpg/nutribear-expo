@@ -813,7 +813,7 @@ export function PlanScreen({ onOpenFasting }) {
       />
 
       {/* Разбор недели от напарника — Premium (этап 2 монетизации):
-          для free внутри честный paywall с демо-активацией */}
+          для free внутри честный paywall с кодом активации */}
       <WeekReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)} />
 
     </ScrollView>

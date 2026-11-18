@@ -1,35 +1,30 @@
 // Карточка «Премиум» для вкладки «Ещё»: выгоды подписки и активация
 // планов (триал 3 дня / месяц 299 ₽ / год 1 490 ₽ из useProStore).
 //
-// Два режима оплаты (решение Кати 15.11, релизный блокер RuStore):
-//   demo — прежнее поведение локальной разработки: активация без денег
-//          с честной подписью «Демо-режим оплаты». EXPO_PUBLIC_PAYMENTS_MODE
-//          не задан (локальный запуск, тесты).
-//   release — сборки для установки и магазина (build-apk.yml ставит
-//          EXPO_PUBLIC_PAYMENTS_MODE=release): кнопки «активировать без
-//          оплаты» не активируют ничего — показывают честный ответ
-//          «оплата подключается в следующем обновлении», вместо них
-//          промокод для первых пользователей (src/lib/promo-codes.js,
-//          в APK хэши, сами коды не хранятся). Так модерация не видит
-//          кнопку «покупка без оплаты», а первые пользователи получают
-//          Premium уже до подключения RevenueCat (этап 3).
+// Схема оплаты (решение Кати 19.11 — вместо демо-кнопки «активировать
+// без оплаты»): тап на «Месяц»/«Год» открывает страницу оплаты
+// (PAY_PAGE_URL — карта/СБП через Ю-Kassa), после оплаты покупателю
+// высылается код активации, код вводится в поле ниже. Триал 3 дня
+// бесплатный — активируется сразу в приложении. Режимов demo/release
+// больше нет: активация всегда только по коду (src/lib/promo-codes.js,
+// в APK хэши, сами коды не хранятся).
 //
 // Режим embedded: содержимое встраивается в строку меню «Премиум»
 // (как CompanionCard, CycleCard и пр.).
 
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Linking, Pressable, Text, TextInput, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { PRO_PLANS, useProStore } from '@/store/useProStore'
 import { PREMIUM_PERKS } from '@/lib/entitlements'
-import { getPaymentsMode, isValidPromoCode } from '@/lib/promo-codes'
+import { isValidPromoCode, PAY_PAGE_URL } from '@/lib/promo-codes'
 import { useToast } from '@/components/ui/Toast'
 
 // Подпись статуса для строки меню
 export function premiumStatusValue(pro, plan) {
   if (!pro) return '299 ₽/мес'
   if (plan === 'trial') return 'триал 3 дня'
-  if (plan === 'promo') return 'промо'
+  if (plan === 'promo') return 'по коду'
   return 'активна'
 }
 
@@ -37,7 +32,7 @@ export function premiumStatusValue(pro, plan) {
 function planLabel(plan) {
   if (plan === 'trial') return 'триал 3 дня'
   if (plan === 'month') return 'месяц — 299 ₽'
-  if (plan === 'promo') return 'промо — подарок на год'
+  if (plan === 'promo') return 'по коду активации — год'
   return 'год — 1 490 ₽'
 }
 
@@ -47,46 +42,44 @@ export function PremiumCard({ embedded = false }) {
   const activate = useProStore((s) => s.activate)
   const deactivate = useProStore((s) => s.deactivate)
   const { toast } = useToast()
+  const [code, setCode] = useState('')
 
-  // Режим оплаты фиксируется на этапе сборки (env инлайнится в бандл)
-  const release = getPaymentsMode() === 'release'
-  const [promo, setPromo] = useState('')
-
+  // Триал бесплатный — включается сразу; месяц/год — страница оплаты
   function pickPlan(id) {
-    if (release) {
+    if (id === 'trial') {
+      activate('trial')
       toast({
-        title: 'Оплата — в следующем обновлении',
-        description: 'Оплата картой подключается прямо сейчас, цены не изменятся. А пока Premium включается промокодом ниже',
+        title: '👑 Premium активирован',
+        description: 'Триал 3 дня — все функции Premium без лимитов',
       })
       return
     }
-    activate(id)
-    toast({
-      title: '👑 Premium активирован',
-      description:
-        id === 'trial'
-          ? 'Триал 3 дня — все функции Premium без лимитов'
-          : 'Лимиты сняты, а ИИ-меню на неделю и разбор недели уже ждут',
+    Linking.openURL(PAY_PAGE_URL).catch(() => {
+      toast({
+        title: 'Страница оплаты не открылась',
+        description: 'Откройте в браузере: popovakatua2013-jpg.github.io/nutribear-expo',
+      })
     })
   }
 
-  // Промокод для первых пользователей (релизный режим). Код в APK не
-  // хранится — сравнивается хэш; активация годовым промо-планом
-  function redeemPromo() {
-    const code = promo.trim()
-    if (!code) return
-    if (!isValidPromoCode(code)) {
+  // Код активации: после оплаты покупатель получает код и вводит его
+  // здесь. Код в APK не хранится — сравнивается SHA-256 хэш; активация
+  // годовым промо-планом (src/lib/promo-codes.js)
+  function redeemCode() {
+    const value = code.trim()
+    if (!value) return
+    if (!isValidPromoCode(value)) {
       toast({
-        title: 'Промокод не подошёл',
-        description: 'Проверьте код ещё раз — регистр и дефисы не важны',
+        title: 'Код не подошёл',
+        description: 'Проверьте код ещё раз — регистр, пробелы и дефисы не важны',
       })
       return
     }
-    setPromo('')
+    setCode('')
     activate('promo')
     toast({
       title: '👑 Premium активирован',
-      description: 'Промокод принят — год Premium без лимитов. Спасибо, что вы с нами с самого начала!',
+      description: 'Код принят — год Premium без лимитов. Спасибо, что вы с нами!',
     })
   }
 
@@ -112,11 +105,11 @@ export function PremiumCard({ embedded = false }) {
           <Pressable
             onPress={drop}
             accessibilityRole="button"
-            accessibilityLabel={release ? 'Отключить Premium' : 'Отключить Premium (демо-активация)'}
+            accessibilityLabel="Отключить Premium"
             className="items-center rounded-2xl border border-white/10 bg-white/5 py-3 active:bg-white/10"
           >
             <Text className="font-semibold text-[15.5px] text-bear-sub">
-              {release ? 'Отключить Premium' : 'Отключить (демо-активация)'}
+              Отключить Premium
             </Text>
           </Pressable>
         </>
@@ -140,15 +133,18 @@ export function PremiumCard({ embedded = false }) {
             ))}
           </View>
 
-          {/* Планы: триал / месяц / год. В релизном режиме без оплаты —
-              честный ответ, в демо — прежняя локальная активация */}
+          {/* Планы: триал включается сразу; месяц/год — страница оплаты */}
           <View className="mt-1 gap-2">
             {PRO_PLANS.map((p) => (
               <Pressable
                 key={p.id}
                 onPress={() => pickPlan(p.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`Выбрать: ${p.title} ${p.price}`}
+                accessibilityLabel={
+                  p.id === 'trial'
+                    ? `Выбрать: ${p.title} ${p.price}`
+                    : `Открыть страницу оплаты: ${p.title} ${p.price}`
+                }
                 className={`flex-row items-center justify-between rounded-2xl border px-3.5 py-3 active:opacity-80 ${
                   p.best
                     ? 'border-amber-400/40 bg-amber-400/10'
@@ -166,45 +162,36 @@ export function PremiumCard({ embedded = false }) {
             ))}
           </View>
 
-          {release ? (
-            <>
-              {/* Промокод первых пользователей: место демо-кнопки */}
-              <View className="mt-1 gap-2">
-                <TextInput
-                  value={promo}
-                  onChangeText={setPromo}
-                  placeholder="Промокод"
-                  placeholderTextColor="#8B96B8"
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  accessibilityLabel="Ввод промокода Premium"
-                  className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 text-[15px] text-bear-text"
-                />
-                <Pressable
-                  onPress={redeemPromo}
-                  accessibilityRole="button"
-                  accessibilityLabel="Активировать промокод"
-                  className={`items-center rounded-2xl border border-amber-400/40 bg-amber-400/10 py-3 active:opacity-80 ${
-                    promo.trim() ? '' : 'opacity-50'
-                  }`}
-                >
-                  <Text className="font-semibold text-[15.5px] text-amber-300">
-                    Активировать промокод
-                  </Text>
-                </Pressable>
-              </View>
-              <Text className="mt-0.5 px-1 font-sans text-[12px] leading-relaxed text-bear-dim">
-                Оплата картой подключается в следующем обновлении — цены не изменятся.
-                Первым пользователям Premium включается промокодом.
+          {/* Код активации: вводится после оплаты на странице */}
+          <View className="mt-1 gap-2">
+            <TextInput
+              value={code}
+              onChangeText={setCode}
+              placeholder="Код активации"
+              placeholderTextColor="#8B96B8"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              accessibilityLabel="Ввод кода активации Premium"
+              className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 text-[15px] text-bear-text"
+            />
+            <Pressable
+              onPress={redeemCode}
+              accessibilityRole="button"
+              accessibilityLabel="Активировать код"
+              className={`items-center rounded-2xl border border-amber-400/40 bg-amber-400/10 py-3 active:opacity-80 ${
+                code.trim() ? '' : 'opacity-50'
+              }`}
+            >
+              <Text className="font-semibold text-[15.5px] text-amber-300">
+                Активировать код
               </Text>
-            </>
-          ) : (
-            <Text className="mt-0.5 px-1 font-sans text-[12px] leading-relaxed text-bear-dim">
-              Демо-режим оплаты: активация работает без денег — для теста.
-              Настоящие покупки (Google Play) подключим в одном из следующих
-              обновлений, цены не изменятся.
-            </Text>
-          )}
+            </Pressable>
+          </View>
+          <Text className="mt-0.5 px-1 font-sans text-[12px] leading-relaxed text-bear-dim">
+            «Месяц» и «Год» открывают страницу оплаты — карта или СБП. После
+            оплаты код активации придёт на почту: введите его выше. Триал
+            включается сразу, бесплатно.
+          </Text>
         </>
       )}
     </View>
