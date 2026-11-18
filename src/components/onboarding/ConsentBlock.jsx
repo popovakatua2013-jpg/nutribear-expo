@@ -105,7 +105,9 @@ export function ConsentBlock() {
   const [doc, setDoc] = useState(null)
 
   return (
-    <View className="px-0.5">
+    // w-full: в родителях с items-center блок иначе сжимается до ширины
+    // контента — строки уезжают и наезжают на соседей (скрин Кати 19.11)
+    <View className="w-full px-0.5">
       {CONSENTS.map((c, i) => (
         <ConsentRow
           key={c.key}

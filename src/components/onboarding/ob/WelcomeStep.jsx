@@ -49,10 +49,36 @@ export function WelcomeStep({ onNext }) {
       nextLabel="Далее"
     >
       <View className="items-center pt-1">
-        {/* Мишка со свечением, как на макете */}
-        <View className="h-[148px] w-[200px] items-center justify-center">
-          <View className="absolute h-[92px] w-[176px] rounded-full bg-[#7C5CFC]/25" />
-          <View className="absolute h-[60px] w-[132px] rounded-full bg-[#8B6CFF]/25" />
+        {/* Мишка со свечением, как на макете. Размеры — inline-стилями,
+            а не классами h-[148px]/w-[200px]: на устройстве Кати
+            произвольные классы этой вёрстки не применились и мишка
+            сжалась в полоску (скрин 19.11 00:29 — «все поехало») */}
+        <View
+          style={{
+            height: 148,
+            width: 200,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              height: 92,
+              width: 176,
+              borderRadius: 999,
+              backgroundColor: 'rgba(124,92,252,0.25)',
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              height: 60,
+              width: 132,
+              borderRadius: 999,
+              backgroundColor: 'rgba(139,108,255,0.25)',
+            }}
+          />
           <Image source={BEAR} style={{ width: 126, height: 126 }} resizeMode="contain" />
         </View>
 
@@ -83,10 +109,12 @@ export function WelcomeStep({ onNext }) {
 
         {/* Блок согласий 152-ФЗ — строки мелким шрифтом без карточки,
             под карточкой цели (отзывы Кати 19.11: сначала «перенести
-            с отдельной страницы», потом «очень громоздкий»). Чекбоксы
-            компактные, ссылки на документы — строкой ниже. Реквизиты
+            с отдельной страницы», потом «очень громоздкий»). w-full
+            обязателен: родитель items-center сжимает обёртку до ширины
+            контента — строки уезжали вправо, а строка ссылок
+            накладывалась на подсказку (скрин 19.11 00:29). Реквизиты
             оператора — в Политике конфиденциальности */}
-        <View className="mt-3">
+        <View className="mt-3 w-full">
           <ConsentBlock />
         </View>
 
