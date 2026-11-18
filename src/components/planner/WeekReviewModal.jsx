@@ -11,6 +11,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { RefreshCw, Sparkles, X } from 'lucide-react-native'
 import { tapGuard } from '@/lib/tap-guard'
+import { macroNormsFor } from '@/lib/data/bju'
 import {
   generateWeekReview,
   weekDayKeys,
@@ -48,6 +49,18 @@ export function WeekReviewModal({ open, onClose }) {
   // Статистика недели из журнала дневника — считается при открытии
   const stats = useMemo(() => weekFoodStats(history, dayKeys), [history, dayKeys])
 
+  // Нормы для разбора: свои из целей (0 = авто) или авто — те же доли,
+  // что в плане онбординга и сводке дня (macroNormsFor)
+  const norms = useMemo(() => {
+    const auto = macroNormsFor(kcalGoal, goalId)
+    const n = macroNorms || {}
+    return {
+      p: n.p > 0 ? n.p : auto.p,
+      f: n.f > 0 ? n.f : auto.f,
+      c: n.c > 0 ? n.c : auto.c,
+    }
+  }, [kcalGoal, macroNorms, goalId])
+
   const GOAL_LABEL = { lose: 'похудеть', cut: 'подсушиться', maintain: 'удержать вес', gain: 'набрать вес' }
 
   const run = () => {
@@ -66,12 +79,7 @@ export function WeekReviewModal({ open, onClose }) {
         sex,
         goal: GOAL_LABEL[goalId] || '',
         kcalGoal,
-        // Нормы: свои из целей (0 = авто) или «тарелка» — как в «Прогрессе»
-        norms: {
-          p: macroNorms?.p > 0 ? macroNorms.p : Math.round((kcalGoal * 0.2) / 4),
-          f: macroNorms?.f > 0 ? macroNorms.f : Math.round((kcalGoal * 0.3) / 9),
-          c: macroNorms?.c > 0 ? macroNorms.c : Math.round((kcalGoal * 0.5) / 4),
-        },
+        norms,
         stats,
       })
         .then((res) => {

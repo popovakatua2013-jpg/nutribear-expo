@@ -42,9 +42,9 @@
 // клетчатку в одну строку как было») — возвращена одна строка,
 // длинные значения страхует дожим шрифта (adjustsFontSizeToFit).
 // Нормы БЖУ — свои из целей (маленький карандашик в конце строки
-// открывает окно правки), а если не заданы — «классическая
-// тарелка» (20/30/50% калорий), клетчатка — своя норма, иначе 25 г/день
-// (ВОЗ, FIBER_NORM). Карточка оформлена в стиле вкладки «Тело»
+// открывает окно правки), а если не заданы — авто от цели по калориям
+// (30/30/40 %, «Сушка» 35/25/40 — как в плане онбординга), клетчатка —
+// своя норма, иначе 25 г/день (ВОЗ, FIBER_NORM). Карточка оформлена в стиле вкладки «Тело»
 // (фиолетовая поверхность bear-bodyCard + чип-иконка в шапке BodyChip).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -64,8 +64,9 @@ import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Droplet, Flame, Hexagon, Leaf, Pencil, Sparkles, Utensils, X } from 'lucide-react-native'
 import { formatNum, pluralDays } from '@/lib/format'
 import { remainderOf } from '@/lib/data/remainder'
-import { FIBER_NORM } from '@/lib/data/nutrition'
+import { macroNormsFor } from '@/lib/data/bju'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useFoodStore } from '@/store/useFoodStore'
 import { useDayTypesStore } from '@/store/useDayTypesStore'
 import { DAY_TYPES } from '@/lib/data/dayContext'
 import { dayKeyOf as cycleDayKeyOf } from '@/store/useCycleStore'
@@ -95,16 +96,6 @@ function shiftDayKey(key, n) {
   d.setDate(d.getDate() + n)
   const p = (x) => String(x).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
-
-// Нормы нутриентов от дневной нормы калорий
-function macroTargets(kcal) {
-  return {
-    p: Math.round((kcal * 0.2) / 4),
-    f: Math.round((kcal * 0.3) / 9),
-    c: Math.round((kcal * 0.5) / 4),
-    fib: FIBER_NORM,
-  }
 }
 
 // Ячейка нутриента: иконка слева, справа подпись и жирное значение
@@ -302,9 +293,11 @@ export function DailySummary({
   const done = target > 0 && consumed > 0 && over === 0
 
   // Нормы нутриентов: свои из целей (макросы > 0), иначе — авто от
-  // цели по калориям («тарелка» 20/30/50 % + 25 г клетчатки)
+  // цели по калориям (macroNormsFor: 30/30/40, «Сушка» 35/25/40 —
+  // те же доли, что в плане онбординга; клетчатка 25 г)
   const macroNorms = goals.macroNorms || { p: 0, f: 0, c: 0, fib: 0 }
-  const autoNorms = macroTargets(target)
+  const goalId = useFoodStore((s) => s.goal)
+  const autoNorms = macroNormsFor(target, goalId)
   const norms = {
     p: macroNorms.p > 0 ? macroNorms.p : autoNorms.p,
     f: macroNorms.f > 0 ? macroNorms.f : autoNorms.f,

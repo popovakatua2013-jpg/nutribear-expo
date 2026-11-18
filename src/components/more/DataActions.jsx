@@ -20,7 +20,6 @@ import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { wipePhotoDir } from '@/lib/photos'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
-import { useSessionsStore, usePrefsStore } from '@/features/workouts/store/useWorkoutsStore'
 import { useMealPlanStore } from '@/store/useMealPlanStore'
 import { useShoppingStore } from '@/store/useShoppingStore'
 import { useDayTypesStore } from '@/store/useDayTypesStore'
@@ -87,12 +86,10 @@ export function DataActions({ embedded = false, variant = null }) {
     // Особые дни (метки и прибавки) и трекер цикла — тоже персональные
     useDayTypesStore.getState().resetAll()
     useCycleStore.setState({ enabled: false, lastStart: null, length: 28, bleed: 5, history: [] })
-    // Журнал модуля тренировок (сессии и настройки фильтров) — тоже данные
-    useSessionsStore.setState({ sessions: [] })
-    usePrefsStore.setState({ lang: 'ru', filterType: 'all', query: '' })
-    // «Организм» и копилка монеток удалены из приложения — стираем их
-    // старые ключи в хранилище, оставшиеся от прежних версий; туда же —
-    // ключи модуля тренировок
+    // Журнал старого модуля тренировок стирается из хранилища напрямую
+    // (ключи @app/workouts/*) — живого кода, читающего их, больше нет.
+    // «Организм» и копилка монеток удалены из приложения — туда же их
+    // старые ключи, оставшиеся от прежних версий
     AsyncStorage.multiRemove([
       'nutribear-shop-v1',
       'nutribear-organism-game-v1',
@@ -124,39 +121,48 @@ export function DataActions({ embedded = false, variant = null }) {
     )
   }
 
-  // Вариант «только новый день» — для строки «Начать новый день»
+  // Вариант «только новый день» — для строки «Начать новый день»:
+  // заголовок уже на строке меню, внутри — только компактная строка
+  // действия с описанием (отзыв Кати 19.11: дубль заголовка и крупные
+  // строки выглядели плохо)
   if (variant === 'newday') {
     return (
       <View accessibilityLabel="Начать новый день" className="mt-1">
         <Pressable
           onPress={newDay}
-          className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+          className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.03] px-3.5 py-2.5 active:opacity-80"
         >
-          <Sunrise size={20} color="#fbbf24" />
-          <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
-            <Text className="font-sans text-[15px] text-bear-sub2">
-              {kcal > 0
-                ? `Обнулит приёмы пищи (${formatNum(kcal)} ккал), воду и шаги`
-                : 'Обнулит приёмы пищи, воду и шаги'}
-            </Text>
-          </View>
+          <Sunrise size={16} color="#fbbf24" />
+          <Text
+            maxFontSizeMultiplier={1.1}
+            className="min-w-0 flex-1 font-sans text-[14px] text-bear-sub2"
+          >
+            {kcal > 0
+              ? `Обнулит приёмы пищи (${formatNum(kcal)} ккал), воду и шаги — тапните, чтобы начать`
+              : 'Обнулит приёмы пищи, воду и шаги — тапните, чтобы начать'}
+          </Text>
         </Pressable>
       </View>
     )
   }
 
-  // Вариант «только стирание» — красная строка внизу «Ещё», как в
-  // стандартных приложениях; подробности — в диалоге подтверждения
+  // Вариант «только стирание» — красная строка внизу блока «Документы»
+  // в размере соседних строк списка (отзыв Кати 19.11: была «очень
+  // крупно»); подробности — в диалоге подтверждения
   if (variant === 'wipe') {
     return (
       <View accessibilityLabel="Стереть все данные">
         <Pressable
           onPress={confirmWipe}
-          className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
+          className="flex-row items-center gap-2 rounded-2xl bg-rose-400/[0.06] px-3.5 py-2.5 active:opacity-80"
         >
-          <Trash2 size={20} color="#fb7185" />
-          <Text className="min-w-0 flex-1 font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
+          <Trash2 size={16} color="#fb7185" />
+          <Text
+            maxFontSizeMultiplier={1.1}
+            className="min-w-0 flex-1 font-semibold text-[15px] text-rose-300"
+          >
+            Стереть все данные
+          </Text>
         </Pressable>
       </View>
     )

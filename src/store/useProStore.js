@@ -9,6 +9,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useCompanionStore } from '@/store/useCompanionStore'
 
 // Сроки планов (аудит 12.11: раньше месяц/год не имели срока —
 // время активации хранилось, но проверялся только триал). Активация
@@ -42,15 +43,19 @@ export const useProStore = create(
 
       // Проверить срок плана при старте приложения: триал — 3 дня,
       // месяц — 31 день, год — 366 дней (запас на високосный).
-      // Истёкший план гасится: pro=false, план сбрасывается
+      // Истёкший план гасится: pro=false, план сбрасывается, а выбранный
+      // премиум-медведь возвращается на бесплатного (аудит 19.11:
+      // иначе Фит оставался активным после конца подписки)
       refresh: () =>
         set((s) => {
           if (!s.pro || !s.activatedAt) return {}
           const ms = PLAN_MS[s.plan]
           if (!ms) return {}
-          return Date.now() - s.activatedAt > ms
-            ? { pro: false, plan: null, activatedAt: null }
-            : {}
+          if (Date.now() - s.activatedAt <= ms) return {}
+          try {
+            useCompanionStore.getState().enforceTier(false, false)
+          } catch {}
+          return { pro: false, plan: null, activatedAt: null }
         }),
     }),
     {

@@ -21,7 +21,7 @@ const BASE_FOODS = [
   { id: 'pancakes', emoji: '🥞', name: 'Блины', kcal: 189, p: 6.4, f: 8.4, c: 21.7, fib: 1.1, sug: 3.0, defaultGrams: 120, tags: ['breakfast'] },
   { id: 'cheese-sandwich', emoji: '🍞', name: 'Бутерброд с сыром', kcal: 250, p: 12, f: 11, c: 26, fib: 2.1, sug: 2.2, defaultGrams: 80, tags: ['breakfast', 'snack'] },
   { id: 'buckwheat', emoji: '🌾', name: 'Гречка отварная', kcal: 110, p: 3.6, f: 2.2, c: 19, fib: 2.7, sug: 0.9, defaultGrams: 180, tags: ['breakfast', 'lunch', 'dinner'] },
-  { id: 'cappuccino', emoji: '☕', name: 'Капучино', kcal: 41, p: 2.2, f: 1.9, c: 3.4, fib: 0.0, sug: 3.6, defaultGrams: 200, tags: ['breakfast', 'snack'] },
+  { id: 'cappuccino', emoji: '☕', name: 'Капучино', kcal: 41, p: 2.2, f: 1.9, c: 3.6, fib: 0.0, sug: 3.6, defaultGrams: 200, tags: ['breakfast', 'snack'] },
 
   // ---------- Обед ----------
   { id: 'chicken-grill', emoji: '🍗', name: 'Куриная грудка гриль', kcal: 165, p: 23, f: 8, c: 0, fib: 0.0, sug: 0.0, defaultGrams: 150, tags: ['lunch', 'dinner'] },

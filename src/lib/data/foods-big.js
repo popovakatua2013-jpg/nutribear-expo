@@ -102,7 +102,9 @@ export const BIG_FOODS = [
   { id: 'big-mors', emoji: '🥤', name: 'Морс клюквенный', kcal: 44, p: 0.1, f: 0, c: 11, fib: 0.1, sug: 10.5, defaultGrams: 250, tags: ['snack'] },
   { id: 'big-kvas', emoji: '🥤', name: 'Квас', kcal: 27, p: 0.2, f: 0, c: 5.8, fib: 0, sug: 5.4, defaultGrams: 300, tags: ['snack'] },
   { id: 'big-energy-drink', emoji: '⚡', name: 'Энергетик', kcal: 45, p: 0, f: 0, c: 11, fib: 0, sug: 11, defaultGrams: 250, tags: ['snack'] },
-  { id: 'big-beer', emoji: '🍺', name: 'Пиво светлое 4,5%', kcal: 43, p: 0.5, f: 0, c: 3.6, fib: 0, sug: 0.5, defaultGrams: 500, tags: ['snack'] },
-  { id: 'big-wine-white', emoji: '🥂', name: 'Вино белое сухое', kcal: 66, p: 0.1, f: 0, c: 0.3, fib: 0, sug: 0.4, defaultGrams: 150, tags: ['snack'] },
-  { id: 'big-vodka', emoji: '🥃', name: 'Водка 40%', kcal: 235, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, defaultGrams: 50, tags: ['snack'] },
+  // У алкоголя калории этанола (7 ккал/г) учитывает поле alc —
+  // г спирта на 100 г: обычная формула 4/9/4 по БЖУ их не покрывает
+  { id: 'big-beer', emoji: '🍺', name: 'Пиво светлое 4,5%', kcal: 43, p: 0.5, f: 0, c: 3.6, fib: 0, sug: 0.5, alc: 3.8, defaultGrams: 500, tags: ['snack'] },
+  { id: 'big-wine-white', emoji: '🥂', name: 'Вино белое сухое', kcal: 66, p: 0.1, f: 0, c: 2.6, fib: 0, sug: 0.4, alc: 7.9, defaultGrams: 150, tags: ['snack'] },
+  { id: 'big-vodka', emoji: '🥃', name: 'Водка 40%', kcal: 235, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, alc: 33.5, defaultGrams: 50, tags: ['snack'] },
 ]

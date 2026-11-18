@@ -22,22 +22,16 @@
 //   7. fib-low    — клетчатка ниже 60% нормы все 3 дня
 // Приоритет сверху вниз: показываем одну — самую важную.
 
-import { FIBER_NORM } from './nutrition'
+import { macroNormsFor } from './bju'
 import { SLEEP_NORM_MIN } from './sleep'
 
-// Автонормы от цели по калориям — как в «Съедено за сегодня»
-// (тарелка 20/30/50 %, клетчатка 25 г)
-function macroTargets(kcal) {
-  return {
-    p: Math.round((kcal * 0.2) / 4),
-    fib: FIBER_NORM,
-  }
-}
+// Автонормы от цели по калориям — те же доли, что в плане онбординга
+// и сводке дня (macroNormsFor: 30/30/40, «Сушка» 35/25/40)
 
 // Нормы с учётом своих значений из целей (0 = авто)
-export function insightNorms(goals) {
+export function insightNorms(goals, goalId) {
   const g = goals || {}
-  const auto = macroTargets(g.kcal || 0)
+  const auto = macroNormsFor(g.kcal || 0, goalId)
   const norms = g.macroNorms || {}
   return {
     kcal: g.kcal > 0 ? g.kcal : 0,
@@ -62,8 +56,8 @@ export function weightStands(weights, now = Date.now()) {
 const THREE_DAYS_WORD = 'дня'
 
 // Главная подсказка: { id, title, text } | null
-export function foodInsight({ rows = [], goals = null, weights = [] }) {
-  const norms = insightNorms(goals)
+export function foodInsight({ rows = [], goals = null, weights = [], goalId = null }) {
+  const norms = insightNorms(goals, goalId)
   // Ночи по трекеру сна: строки с записанным sleepMin (в minutes).
   // Ночь живёт в дне пробуждения — считаем по последним записанным.
   // Правило сна независимо от дневника питания: вести еду не обязательно

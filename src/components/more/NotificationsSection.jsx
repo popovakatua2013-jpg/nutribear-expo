@@ -1,25 +1,17 @@
-// Секция «Напоминания» — по схеме Кати: «Уведомление — раскрывающий
-// список: тренировка, вода, взвешивание и т.д. — тумблер вкл/выкл,
-// окно времени». Каждый тип — одна строка компактного списка, и ВСЕ
-// окна времени выглядят ОДИНАКОВО (отзыв Кати 10.11: «окна
-// времени выглядят везде по разному, сделать одинаково»): серый чип
-// со значением и шевроном — тап раскрывает выбор под строкой:
-//   🏋️ Тренировка  — чип «18:00» → поле времени (бывшее «Время пинка»)
-//   💧 Вода        — чип «каждые N мин» → выбор интервала
-//   ⚖️ Взвешивание — чип «Сб · 08:00» → день недели и время
-//   🍽 Еда         — чип с тремя временами → завтрак/обед/ужин
-//   🌙 Сон         — чип «22:30» → поле времени
-//   🐻 Мишка пинает — чип «через N дн» → порог дней без записи веса
-//   📳 Вибро-отклик — тумблер без окна времени
-// Всё в ОДНОМ блоке — отзыв Кати 16.11: «Время пинка, напоминание мишки,
-// напоминание, стиль пинков — нужно объединить… не 100 строк и выбора,
-// а компактно и все в одном месте»: дубли «Сон» и «Время пинка» из
-// группы ЗДОРОВЬЕ (управляли теми же полями стора) удалены, «Напоминание
-// мишки» и «Вибрация» переехали из ПРИЛОЖЕНИЯ сюда.
-// Никаких подсказок и пояснений (отзыв Кати: «все подсказки убрать
-// в напоминаниях»), никаких вложенных карточек и плиток — только
-// список. «Возвращать калории» отсюда убрано: дубль настройки в
-// строке «Дневник питания».
+// Секция «Напоминания» — один компактный список: тумблер вкл/выкл +
+// окно времени у каждого типа. Порядок строк — отзыв Кати 19.11:
+// блоки «от большого к маленькому» (от самого широкого чипа времени
+// к узкому): еда, вода, взвешивание, мишка, тренировка, сон, вибро.
+// Все окна времени выглядят ОДИНАКОВО (отзыв Кати 10.11): серый чип
+// со значением и шевроном — тап раскрывает выбор под строкой.
+// Всё в ОДНОМ блоке — отзыв Кати 16.11: «Время пинка, напоминание
+// мишки, напоминание, стиль пинков — нужно объединить… не 100 строк
+// и выбора, а компактно и все в одном месте»: дубли «Сон» и «Время
+// пинка» из группы ЗДОРОВЬЕ удалены, «Напоминание мишки» и «Вибрация»
+// переехали из ПРИЛОЖЕНИЯ сюда. Никаких подсказок и пояснений
+// (отзыв Кати: «все подсказки убрать в напоминаниях»), никаких
+// вложенных карточек и плиток — только список. «Возвращать калории»
+// отсюда убрано: дубль настройки в строке «Дневник питания».
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -136,26 +128,42 @@ export function NotificationsSection() {
 
   return (
     <View accessibilityLabel="Уведомления" className="gap-1.5">
-      {/* Тренировка: чип времени → раскрытие с полем — как у всех окон */}
+      {/* Порядок строк — отзыв Кати 19.11: блоки с окном времени «от
+          большого к маленькому» — от самого широкого чипа к узкому,
+          иначе список выглядит неаккуратно */}
+      {/* Еда: три времени — самый широкий чип */}
       <ReminderRow
-        icon="🏋️"
-        title="Тренировка"
-        enabled={Boolean(exercise.enabled)}
-        onToggle={(on) => toggle((v) => ({ exercise: { ...exercise, enabled: v } }), on)}
+        icon="🍽"
+        title="Еда"
+        enabled={Boolean(meals.enabled)}
+        onToggle={(on) => toggle((v) => ({ meals: { ...meals, enabled: v } }), on)}
         timeEl={
           <TimeChip
-            text={exercise.time}
-            open={openKey === 'exercise'}
-            onPress={() => flip('exercise')}
+            text={`${meals.breakfast} · ${meals.lunch} · ${meals.dinner}`}
+            open={openKey === 'meals'}
+            onPress={() => flip('meals')}
           />
         }
-        expanded={openKey === 'exercise'}
+        expanded={openKey === 'meals'}
         expand={
-          <View className="flex-row items-center justify-end">
-            <TimeField
-              value={exercise.time}
-              onChange={(t) => setReminder({ exercise: { ...exercise, time: t } })}
-            />
+          <View className="gap-1.5">
+            {MEALS.map((m) => (
+              <View
+                key={m.key}
+                className="flex-row items-center justify-between gap-2 rounded-xl bg-white/[0.03] px-2.5 py-1.5"
+              >
+                <Text
+                  maxFontSizeMultiplier={1.1}
+                  className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text"
+                >
+                  {m.label}
+                </Text>
+                <TimeField
+                  value={meals[m.key]}
+                  onChange={(t) => setReminder({ meals: { ...meals, [m.key]: t } })}
+                />
+              </View>
+            ))}
           </View>
         }
       />
@@ -216,67 +224,6 @@ export function NotificationsSection() {
         }
       />
 
-      {/* Еда: время завтрака, обеда и ужина — чип раскрывает выбор */}
-      <ReminderRow
-        icon="🍽"
-        title="Еда"
-        enabled={Boolean(meals.enabled)}
-        onToggle={(on) => toggle((v) => ({ meals: { ...meals, enabled: v } }), on)}
-        timeEl={
-          <TimeChip
-            text={`${meals.breakfast} · ${meals.lunch} · ${meals.dinner}`}
-            open={openKey === 'meals'}
-            onPress={() => flip('meals')}
-          />
-        }
-        expanded={openKey === 'meals'}
-        expand={
-          <View className="gap-1.5">
-            {MEALS.map((m) => (
-              <View
-                key={m.key}
-                className="flex-row items-center justify-between gap-2 rounded-xl bg-white/[0.03] px-2.5 py-1.5"
-              >
-                <Text
-                  maxFontSizeMultiplier={1.1}
-                  className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-text"
-                >
-                  {m.label}
-                </Text>
-                <TimeField
-                  value={meals[m.key]}
-                  onChange={(t) => setReminder({ meals: { ...meals, [m.key]: t } })}
-                />
-              </View>
-            ))}
-          </View>
-        }
-      />
-
-      {/* Сон: чип времени → раскрытие с полем — как у всех окон */}
-      <ReminderRow
-        icon="🌙"
-        title="Сон"
-        enabled={Boolean(sleep.enabled)}
-        onToggle={(on) => toggle((v) => ({ sleep: { ...sleep, enabled: v } }), on)}
-        timeEl={
-          <TimeChip
-            text={sleep.time}
-            open={openKey === 'sleep'}
-            onPress={() => flip('sleep')}
-          />
-        }
-        expanded={openKey === 'sleep'}
-        expand={
-          <View className="flex-row items-center justify-end">
-            <TimeField
-              value={sleep.time}
-              onChange={(t) => setReminder({ sleep: { ...sleep, time: t } })}
-            />
-          </View>
-        }
-      />
-
       {/* Мишка пинает о весе: тумблер + порог дней без записи веса
           (переехало из группы ПРИЛОЖЕНИЕ — отзыв Кати 16.11: все
           напоминания в одном месте) */}
@@ -305,10 +252,59 @@ export function NotificationsSection() {
         }
       />
 
+      {/* Тренировка: чип времени → раскрытие с полем — как у всех окон */}
+      <ReminderRow
+        icon="🏋️"
+        title="Тренировка"
+        enabled={Boolean(exercise.enabled)}
+        onToggle={(on) => toggle((v) => ({ exercise: { ...exercise, enabled: v } }), on)}
+        timeEl={
+          <TimeChip
+            text={exercise.time}
+            open={openKey === 'exercise'}
+            onPress={() => flip('exercise')}
+          />
+        }
+        expanded={openKey === 'exercise'}
+        expand={
+          <View className="flex-row items-center justify-end">
+            <TimeField
+              value={exercise.time}
+              onChange={(t) => setReminder({ exercise: { ...exercise, time: t } })}
+            />
+          </View>
+        }
+      />
+
+      {/* Сон: чип времени → раскрытие с полем — как у всех окон */}
+      <ReminderRow
+        icon="🌙"
+        title="Сон"
+        enabled={Boolean(sleep.enabled)}
+        onToggle={(on) => toggle((v) => ({ sleep: { ...sleep, enabled: v } }), on)}
+        timeEl={
+          <TimeChip
+            text={sleep.time}
+            open={openKey === 'sleep'}
+            onPress={() => flip('sleep')}
+          />
+        }
+        expanded={openKey === 'sleep'}
+        expand={
+          <View className="flex-row items-center justify-end">
+            <TimeField
+              value={sleep.time}
+              onChange={(t) => setReminder({ sleep: { ...sleep, time: t } })}
+            />
+          </View>
+        }
+      />
+
       {/* Вибро-отклик: отклик приложения на касания (меню, тумблеры,
           пилюли, плеер тренировок, кольца ИМТ) — общая точка
           hapticFeedback. Включили — сразу тестовая вибрация: настройку
-          можно проверить, не отходя от строки */}
+          можно проверить, не отходя от строки. Без окна времени —
+          последней */}
       <ReminderRow
         icon="📳"
         title="Вибро-отклик"

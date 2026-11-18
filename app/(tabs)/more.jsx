@@ -261,7 +261,7 @@ export default function MoreScreen() {
             icon="🛡"
             iconBg="rgba(74,222,128,0.16)"
             title="Экспорт и импорт данных"
-            value="перенос на другое устройство"
+            value="копия в файл"
           >
             <DataPortability embedded />
           </MenuRow>
@@ -278,7 +278,7 @@ export default function MoreScreen() {
             icon="📚"
             iconBg="rgba(96,165,250,0.16)"
             title="Документы"
-            value="о приложении · политика · соглашение"
+            value="4 документа"
           >
             <View className="gap-1">
               {[

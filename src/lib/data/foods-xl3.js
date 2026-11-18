@@ -40,7 +40,7 @@ export const XL3_FOODS = [
   { id: 'xl-sriracha', emoji: '🌶', name: 'Соус шрирача', kcal: 73, p: 1.5, f: 0.8, c: 15, fib: 0.8, sug: 11, defaultGrams: 15, tags: ['lunch', 'dinner'] },
   { id: 'xl-cheese-sauce', emoji: '🧀', name: 'Соус сырный', kcal: 202, p: 4, f: 18, c: 6, fib: 0.1, sug: 4, defaultGrams: 30, tags: ['lunch', 'dinner'] },
   // ---------- Напитки (в т.ч. алкоголь — калории из этанола) ----------
-  { id: 'xl-green-tea', emoji: '🍵', name: 'Чай зелёный', kcal: 1, p: 0, f: 0, c: 0.2, fib: 0, sug: 0, defaultGrams: 200, tags: ['breakfast', 'snack'] },
+  { id: 'xl-green-tea', emoji: '🍵', name: 'Чай зелёный', kcal: 1, p: 0, f: 0, c: 0.25, fib: 0, sug: 0, defaultGrams: 200, tags: ['breakfast', 'snack'] },
   { id: 'xl-espresso', emoji: '☕', name: 'Эспрессо', kcal: 2, p: 0.1, f: 0.1, c: 0.2, fib: 0, sug: 0.2, defaultGrams: 60, tags: ['breakfast', 'snack'] },
   { id: 'xl-americano-milk', emoji: '☕', name: 'Американо с молоком', kcal: 25, p: 1.5, f: 1, c: 2.5, fib: 0, sug: 2.5, defaultGrams: 200, tags: ['breakfast', 'snack'] },
   { id: 'xl-coffee-3in1', emoji: '☕', name: 'Кофе 3 в 1', kcal: 70, p: 1, f: 2, c: 12, fib: 0, sug: 11, defaultGrams: 200, tags: ['breakfast', 'snack'] },
@@ -52,12 +52,14 @@ export const XL3_FOODS = [
   { id: 'xl-multifruit-juice', emoji: '🧃', name: 'Мультифруктовый сок', kcal: 44, p: 0.3, f: 0.1, c: 10.5, fib: 0.2, sug: 10, defaultGrams: 250, tags: ['breakfast', 'snack'] },
   { id: 'xl-green-smoothie', emoji: '🥤', name: 'Смузи зелёный', kcal: 51, p: 1.5, f: 1, c: 9, fib: 1.5, sug: 7, defaultGrams: 250, tags: ['breakfast', 'snack'] },
   { id: 'xl-milkshake', emoji: '🥤', name: 'Молочный коктейль', kcal: 109, p: 3.5, f: 3, c: 17, fib: 0.3, sug: 15, defaultGrams: 300, tags: ['snack'] },
-  { id: 'xl-cider', emoji: '🍺', name: 'Сидр', kcal: 49, p: 0.2, f: 0, c: 6, fib: 0, sug: 6, defaultGrams: 330, tags: ['dinner', 'snack'] },
-  { id: 'xl-champagne-brut', emoji: '🥂', name: 'Шампанское брют', kcal: 82, p: 0.1, f: 0, c: 2, fib: 0, sug: 2, defaultGrams: 150, tags: ['dinner', 'snack'] },
-  { id: 'xl-red-wine-semisweet', emoji: '🍷', name: 'Вино красное полусладкое', kcal: 95, p: 0.1, f: 0, c: 4.5, fib: 0, sug: 4.5, defaultGrams: 150, tags: ['dinner', 'snack'] },
-  { id: 'xl-whisky', emoji: '🥃', name: 'Виски 40%', kcal: 250, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, defaultGrams: 40, tags: ['snack'] },
-  { id: 'xl-cognac', emoji: '🥃', name: 'Коньяк 40%', kcal: 239, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, defaultGrams: 40, tags: ['snack'] },
-  { id: 'xl-liqueur', emoji: '🥃', name: 'Ликёр', kcal: 270, p: 0, f: 0, c: 40, fib: 0, sug: 38, defaultGrams: 40, tags: ['snack'] },
+  // У алкоголя калории этанола (7 ккал/г) учитывает поле alc —
+  // г спирта на 100 г: обычная формула 4/9/4 по БЖУ их не покрывает
+  { id: 'xl-cider', emoji: '🍺', name: 'Сидр', kcal: 49, p: 0.2, f: 0, c: 6, fib: 0, sug: 6, alc: 3.5, defaultGrams: 330, tags: ['dinner', 'snack'] },
+  { id: 'xl-champagne-brut', emoji: '🥂', name: 'Шампанское брют', kcal: 82, p: 0.1, f: 0, c: 2, fib: 0, sug: 2, alc: 10.5, defaultGrams: 150, tags: ['dinner', 'snack'] },
+  { id: 'xl-red-wine-semisweet', emoji: '🍷', name: 'Вино красное полусладкое', kcal: 95, p: 0.1, f: 0, c: 4.5, fib: 0, sug: 4.5, alc: 10.9, defaultGrams: 150, tags: ['dinner', 'snack'] },
+  { id: 'xl-whisky', emoji: '🥃', name: 'Виски 40%', kcal: 250, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, alc: 35.7, defaultGrams: 40, tags: ['snack'] },
+  { id: 'xl-cognac', emoji: '🥃', name: 'Коньяк 40%', kcal: 239, p: 0, f: 0, c: 0.1, fib: 0, sug: 0, alc: 34.1, defaultGrams: 40, tags: ['snack'] },
+  { id: 'xl-liqueur', emoji: '🥃', name: 'Ликёр', kcal: 270, p: 0, f: 0, c: 40, fib: 0, sug: 38, alc: 15.7, defaultGrams: 40, tags: ['snack'] },
   // ---------- Консервы и заготовки ----------
   { id: 'xl-beans-tomato', emoji: '🥫', name: 'Фасоль в томатном соусе', kcal: 100, p: 5.5, f: 1.5, c: 16, fib: 4, sug: 7, defaultGrams: 150, tags: ['lunch', 'dinner'] },
   { id: 'xl-canned-pineapple', emoji: '🍍', name: 'Ананасы консервированные (в соку)', kcal: 59, p: 0.4, f: 0.1, c: 14, fib: 1, sug: 12, defaultGrams: 100, tags: ['lunch', 'snack'] },

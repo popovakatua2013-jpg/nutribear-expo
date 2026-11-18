@@ -3,6 +3,7 @@
 
 import { ACTIVITY_LEVELS } from './onboarding-options'
 import { getDailyTarget } from './goals'
+import { macroNormsFor } from './bju'
 
 const KCAL_PER_KG = 7700 // энергетическая ценность 1 кг жира
 const num = (v) => Number(String(v).replace(',', '.')) || 0
@@ -28,10 +29,10 @@ export function calcTdee(bmr, activityId, workouts) {
   return Math.round(bmr * mult)
 }
 
-// Доли БЖУ от калорий: при «Сушке» белка больше (35%) — на сохранение
-// мышц в дефиците, жиров меньше (25%); в остальных целях — классика 30/30/40
-const macroSplit = (goalId) =>
-  goalId === 'cut' ? { p: 0.35, f: 0.25, c: 0.4 } : { p: 0.3, f: 0.3, c: 0.4 }
+// Доли БЖУ плана — общая macroNormsFor (bju.js): при «Сушке» белка
+// больше (35%) — на сохранение мышц в дефиците, жиров меньше (25%);
+// в остальных целях — 30/30/40. Там же автонормы сводки дня —
+// план и сводка всегда согласованы
 
 // Полный план по ответам анкеты. Беременность/ГВ — калории НЕ режем.
 // Анкету можно пропустить (кнопка «Пропустить» на «Расскажи о себе»):
@@ -51,14 +52,14 @@ export function calcPlan(answers) {
 
   if (!hasBio) {
     const targetKcal = getDailyTarget(a.goalId)
-    const split = macroSplit(a.goalId)
+    const norms = macroNormsFor(targetKcal, a.goalId)
     return {
       bmr: null,
       tdee: null,
       targetKcal,
-      protein: Math.round((targetKcal * split.p) / 4),
-      fat: Math.round((targetKcal * split.f) / 9),
-      carbs: Math.round((targetKcal * split.c) / 4),
+      protein: norms.p,
+      fat: norms.f,
+      carbs: norms.c,
       dailyDelta: 0,
       deltaLabel: a.goalId === 'gain' ? 'Профицит' : 'Дефицит',
       pace: a.pace,
@@ -73,15 +74,16 @@ export function calcPlan(answers) {
   const raw = a.goalId === 'gain' ? tdee + dailyDelta : tdee - dailyDelta
   const floor = a.sex === 'female' ? 1200 : 1500 // пол безопасности
   const targetKcal = Math.max(Math.round(raw), floor)
-  const split = macroSplit(a.goalId)
+  // Ключи protein/fat/carbs (не p/f/c) — их читает RevealStep
+  const norms = macroNormsFor(targetKcal, a.goalId)
 
   const plan = {
     bmr,
     tdee,
     targetKcal,
-    protein: Math.round((targetKcal * split.p) / 4),
-    fat: Math.round((targetKcal * split.f) / 9),
-    carbs: Math.round((targetKcal * split.c) / 4),
+    protein: norms.p,
+    fat: norms.f,
+    carbs: norms.c,
     dailyDelta: Math.round(dailyDelta),
     deltaLabel: a.goalId === 'gain' ? 'Профицит' : 'Дефицит',
     pace: a.pace,

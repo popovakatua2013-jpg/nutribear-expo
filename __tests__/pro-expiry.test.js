@@ -84,3 +84,45 @@ describe('useProStore.refresh: сроки планов', () => {
     expect(useProStore.getState().pro).toBe(true)
   })
 })
+
+// Аудит 19.11: после истечения подписки выбранный премиум-медведь
+// возвращается на бесплатного (иначе Фит оставался активным с замком)
+describe('истечение подписки возвращает бесплатного напарника', () => {
+  const { useCompanionStore } = require('../src/store/useCompanionStore')
+
+  beforeEach(() => {
+    useProStore.setState({ pro: false, plan: null, activatedAt: null })
+    useCompanionStore.setState({ companionId: 'kedr' })
+  })
+
+  test('Фит после конца подписки — возврат к Кедру', () => {
+    useCompanionStore.setState({ companionId: 'fit' })
+    useProStore.setState({ pro: true, plan: 'month', activatedAt: now - 32 * DAY })
+    useProStore.getState().refresh()
+    expect(useProStore.getState().pro).toBe(false)
+    expect(useCompanionStore.getState().companionId).toBe('kedr')
+  })
+
+  test('Топаз/Бусинка после конца подписки — тоже возврат', () => {
+    useCompanionStore.setState({ companionId: 'businka' })
+    useProStore.setState({ pro: true, plan: 'year', activatedAt: now - 367 * DAY })
+    useProStore.getState().refresh()
+    expect(useCompanionStore.getState().companionId).toBe('kedr')
+  })
+
+  test('бесплатный Кедр при истечении подписки не меняется', () => {
+    useCompanionStore.setState({ companionId: 'kedr' })
+    useProStore.setState({ pro: true, plan: 'trial', activatedAt: now - 4 * DAY })
+    useProStore.getState().refresh()
+    expect(useCompanionStore.getState().companionId).toBe('kedr')
+  })
+
+  test('enforceTier: при активной подписке премиум-медведь остаётся', () => {
+    useCompanionStore.setState({ companionId: 'fit' })
+    useCompanionStore.getState().enforceTier(true, false)
+    expect(useCompanionStore.getState().companionId).toBe('fit')
+    // и в триале тоже
+    useCompanionStore.getState().enforceTier(false, true)
+    expect(useCompanionStore.getState().companionId).toBe('fit')
+  })
+})

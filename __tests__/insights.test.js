@@ -8,8 +8,8 @@ const {
   weightStands,
 } = require('@/lib/data/insights')
 
-// Цели: 2000 ккал → авто-норма белка 100 г (20% / 4), вода 2000 мл,
-// клетчатка 25 г
+// Цели: 2000 ккал → авто-норма белка 150 г (30% / 4 — те же доли,
+// что в плане онбординга; аудит 19.11), вода 2000 мл, клетчатка 25 г
 const GOALS = {
   kcal: 2000,
   waterMl: 2000,
@@ -26,7 +26,7 @@ function weight(kg, daysAgo) {
 describe('insightNorms', () => {
   test('авто-нормы от цели по калориям, свои перекрывают', () => {
     const auto = insightNorms(GOALS)
-    expect(auto.p).toBe(100)
+    expect(auto.p).toBe(150)
     expect(auto.fib).toBe(25)
     expect(auto.waterMl).toBe(2000)
 

@@ -31,7 +31,8 @@ import { formatNum, pluralDays } from '@/lib/format'
 import { requestOpenReminders } from '@/lib/navEvents'
 import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { GOALS } from '@/lib/data/goals'
-import { FIBER_NORM, SUGAR_LIMIT, sumNutrition } from '@/lib/data/nutrition'
+import { SUGAR_LIMIT, sumNutrition } from '@/lib/data/nutrition'
+import { macroNormsFor } from '@/lib/data/bju'
 import { goalForecast } from '@/lib/data/forecast'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
@@ -65,16 +66,6 @@ const pad = (n) => String(n).padStart(2, '0')
 
 const dayKeyOfDate = (d) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-
-// Нормы нутриентов от дневной нормы калорий — «классическая тарелка»
-function macroTargets(kcal) {
-  return {
-    p: Math.round((kcal * 0.2) / 4),
-    f: Math.round((kcal * 0.3) / 9),
-    c: Math.round((kcal * 0.5) / 4),
-    fib: FIBER_NORM,
-  }
-}
 
 const fmtClock = (h) => `${pad(((h % 24) + 24) % 24)}:00`
 
@@ -362,9 +353,10 @@ export function PlanScreen({ onOpenFasting }) {
   )
   const forecastText = useMemo(() => forecastTexts(forecast), [forecast])
 
-  // Нормы: свои из целей (0 = авто) или «тарелка» от нормы ккал
+  // Нормы: свои из целей (0 = авто) или авто от нормы ккал — те же доли,
+  // что в плане онбординга (macroNormsFor)
   const norms = useMemo(() => {
-    const auto = macroTargets(kcalGoal)
+    const auto = macroNormsFor(kcalGoal, goalId)
     const n = macroNorms || {}
     return {
       p: n.p > 0 ? n.p : auto.p,
@@ -372,7 +364,7 @@ export function PlanScreen({ onOpenFasting }) {
       c: n.c > 0 ? n.c : auto.c,
       fib: n.fib > 0 ? n.fib : auto.fib,
     }
-  }, [kcalGoal, macroNorms])
+  }, [kcalGoal, macroNorms, goalId])
 
   // Текущая неделя (Пн–Вс): съедено по дням из журнала дневника
   const weekNow = useMemo(() => weekKeyOf(new Date()), [])

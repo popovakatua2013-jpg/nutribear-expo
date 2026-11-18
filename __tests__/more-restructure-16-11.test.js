@@ -180,12 +180,12 @@ describe('Вибро-отклик: единая точка и учёт тумб�
     expect(src).toMatch(/if \(!useUiPrefsStore\.getState\(\)\.haptics\) return/)
   })
 
-  test('плеер тренировок и карточки больше не вибрируют мимо настройки', () => {
-    expect(read('src/features/workouts/player/usePlayerEngine.js')).toMatch(/hapticFeedback\('success'\)/)
-    expect(read('src/features/workouts/components/PressableScale.jsx')).toMatch(/hapticFeedback\('light'\)/)
-    // прямых вызовов expo-haptics там больше нет
-    expect(read('src/features/workouts/player/usePlayerEngine.js')).not.toMatch(/Haptics\./)
-    expect(read('src/features/workouts/components/PressableScale.jsx')).not.toMatch(/Haptics\./)
+  test('плеер тренировок удалён вместе с модулем (чистка 19.11), его строки-тесты больше не нужны', () => {
+    // Модуль src/features/workouts (кроме theme.js) удалён как неиспользуемый:
+    // остаётся проверить только то, что files-сирот в нём нет
+    expect(fs.existsSync(path.join(ROOT, 'src/features/workouts/player'))).toBe(false)
+    expect(fs.existsSync(path.join(ROOT, 'src/features/workouts/components'))).toBe(false)
+    expect(fs.existsSync(path.join(ROOT, 'src/features/workouts/theme.js'))).toBe(true)
   })
 
   test('меню «Ещё» даёт отклик на тумблеры/пилюли/строки', () => {

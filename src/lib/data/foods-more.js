@@ -53,8 +53,10 @@ export const MORE_FOODS = [
   { id: 'tea-with-sugar', emoji: '🍵', name: 'Чай с сахаром', kcal: 25, p: 0, f: 0, c: 6.3, fib: 0.0, sug: 6.3, defaultGrams: 200, tags: ['breakfast', 'snack'] },
   { id: 'compote', emoji: '🥤', name: 'Компот из сухофруктов', kcal: 85, p: 0.1, f: 0, c: 21, fib: 0.3, sug: 19.0, defaultGrams: 250, tags: ['lunch', 'dinner', 'snack'] },
   { id: 'cocoa', emoji: '🥛', name: 'Какао на молоке', kcal: 80, p: 3.0, f: 2.5, c: 12, fib: 0.8, sug: 9.0, defaultGrams: 200, tags: ['breakfast', 'snack'] },
-  { id: 'beer', emoji: '🍺', name: 'Пиво светлое 4.5%', kcal: 43, p: 0.5, f: 0, c: 3.8, fib: 0.0, sug: 0.0, defaultGrams: 500, tags: ['dinner', 'snack'] },
-  { id: 'red-wine', emoji: '🍷', name: 'Вино красное сухое', kcal: 85, p: 0.1, f: 0, c: 2.6, fib: 0.0, sug: 0.3, defaultGrams: 150, tags: ['dinner'] },
+  // У алкоголя калории этанола (7 ккал/г) учитывает поле alc —
+  // г спирта на 100 г: обычная формула 4/9/4 по БЖУ их не покрывает
+  { id: 'beer', emoji: '🍺', name: 'Пиво светлое 4.5%', kcal: 43, p: 0.5, f: 0, c: 3.8, fib: 0.0, sug: 0.0, alc: 3.7, defaultGrams: 500, tags: ['dinner', 'snack'] },
+  { id: 'red-wine', emoji: '🍷', name: 'Вино красное сухое', kcal: 85, p: 0.1, f: 0, c: 2.6, fib: 0.0, sug: 0.3, alc: 10.6, defaultGrams: 150, tags: ['dinner'] },
 
   // ---------- Сладкое, снеки ----------
   { id: 'halva', emoji: '🍬', name: 'Халва', kcal: 520, p: 12.0, f: 30.0, c: 55, fib: 5.0, sug: 45.0, defaultGrams: 30, tags: ['snack'] },

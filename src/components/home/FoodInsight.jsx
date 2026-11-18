@@ -26,6 +26,7 @@ const CARD = {
 
 export function FoodInsight() {
   const foodHistory = useFoodStore((s) => s.history)
+  const goalId = useFoodStore((s) => s.goal)
   const goals = useGoalsStore((s) => s.goals)
   const weights = useProfileStore((s) => s.weights)
   const waterMl = useActivityStore((s) => s.waterMl)
@@ -52,9 +53,9 @@ export function FoodInsight() {
         sleepMin: Number(historyDays[key]?.sleepMin) || 0,
       })
     }
-    return foodInsight({ rows, goals, weights })
+    return foodInsight({ rows, goals, weights, goalId })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [foodHistory, goals, weights, waterMl, historyDays])
+  }, [foodHistory, goals, weights, waterMl, historyDays, goalId])
 
   // Скрыли крестиком сегодня — не показываем (завтра может прийти другая)
   if (!insight || insightHiddenDay === dayKeyOf()) return null

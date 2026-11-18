@@ -28,7 +28,7 @@ export const EXTRA_FOODS = [
   // Молочное и яйца
   { id: 'cottage-cheese', emoji: '🧀', name: 'Творог 5%', kcal: 121, p: 17, f: 5, c: 1.8, fib: 0.0, sug: 1.5, defaultGrams: 150, tags: ['breakfast', 'snack'] },
   { id: 'sour-cream', emoji: '🥛', name: 'Сметана 20%', kcal: 204, p: 2.8, f: 20, c: 3.4, fib: 0.0, sug: 2.6, defaultGrams: 50, tags: ['lunch', 'dinner'] },
-  { id: 'milk', emoji: '🥛', name: 'Молоко 2.5%', kcal: 52, p: 2.8, f: 2.5, c: 4.7, fib: 0.0, sug: 4.8, defaultGrams: 250, tags: ['breakfast', 'snack'] },
+  { id: 'milk', emoji: '🥛', name: 'Молоко 2.5%', kcal: 52, p: 2.8, f: 2.5, c: 4.8, fib: 0.0, sug: 4.8, defaultGrams: 250, tags: ['breakfast', 'snack'] },
   { id: 'hard-cheese', emoji: '🧀', name: 'Сыр твёрдый', kcal: 356, p: 25, f: 28, c: 2, fib: 0.0, sug: 0.5, defaultGrams: 40, tags: ['breakfast', 'snack'] },
   { id: 'mozzarella', emoji: '🧀', name: 'Моцарелла', kcal: 280, p: 22, f: 20, c: 2.2, fib: 0.0, sug: 1.0, defaultGrams: 60, tags: ['lunch', 'dinner'] },
   { id: 'boiled-egg', emoji: '🥚', name: 'Яйцо варёное', kcal: 155, p: 12.7, f: 11.2, c: 0.7, fib: 0.0, sug: 0.4, defaultGrams: 55, tags: ['breakfast', 'snack'] },
@@ -55,12 +55,12 @@ export const EXTRA_FOODS = [
   { id: 'watermelon', emoji: '🍉', name: 'Арбуз', kcal: 30, p: 0.6, f: 0.2, c: 6.4, fib: 0.4, sug: 6.2, defaultGrams: 250, tags: ['snack'] },
 
   // Напитки и сладкое
-  { id: 'black-tea', emoji: '🍵', name: 'Чай без сахара', kcal: 1, p: 0, f: 0, c: 0.2, fib: 0.0, sug: 0.0, defaultGrams: 200, tags: ['breakfast', 'snack'] },
+  { id: 'black-tea', emoji: '🍵', name: 'Чай без сахара', kcal: 1, p: 0, f: 0, c: 0.25, fib: 0.0, sug: 0.0, defaultGrams: 200, tags: ['breakfast', 'snack'] },
   { id: 'cola', emoji: '🥤', name: 'Кола', kcal: 42, p: 0, f: 0, c: 10.6, fib: 0.0, sug: 10.6, defaultGrams: 330, tags: ['snack'] },
   { id: 'orange-juice', emoji: '🧃', name: 'Апельсиновый сок', kcal: 45, p: 0.7, f: 0.2, c: 10.4, fib: 0.2, sug: 8.4, defaultGrams: 250, tags: ['breakfast', 'snack'] },
   { id: 'milk-chocolate', emoji: '🍫', name: 'Шоколад молочный', kcal: 535, p: 7.6, f: 30.4, c: 59, fib: 1.6, sug: 59.0, defaultGrams: 30, tags: ['snack'] },
   { id: 'cookie', emoji: '🍪', name: 'Печенье овсяное', kcal: 437, p: 6.4, f: 14.4, c: 68, fib: 2.6, sug: 24.0, defaultGrams: 40, tags: ['snack'] },
   { id: 'ice-cream', emoji: '🍨', name: 'Пломбир', kcal: 227, p: 3.5, f: 14, c: 21.5, fib: 0.7, sug: 21.0, defaultGrams: 100, tags: ['snack'] },
-  { id: 'honey', emoji: '🍯', name: 'Мёд', kcal: 304, p: 0.3, f: 0, c: 76, fib: 0.2, sug: 82.0, defaultGrams: 25, tags: ['breakfast', 'snack'] },
+  { id: 'honey', emoji: '🍯', name: 'Мёд', kcal: 304, p: 0.3, f: 0, c: 82, fib: 0.2, sug: 82.0, defaultGrams: 25, tags: ['breakfast', 'snack'] },
   { id: 'marshmallow', emoji: '🍬', name: 'Зефир', kcal: 326, p: 0.8, f: 0.2, c: 80.4, fib: 0.1, sug: 58.0, defaultGrams: 40, tags: ['snack'] },
 ]

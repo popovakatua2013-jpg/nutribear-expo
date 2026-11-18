@@ -122,6 +122,15 @@ export const useCompanionStore = create(
         if (c) set({ companionId: id })
       },
 
+      // Возврат к бесплатному напарнику, если премиум-медведь недоступен:
+      // подписка истекла (useProStore.refresh) — иначе Фит/Топаз/Бусинка
+      // оставались бы активными с замком в списке (аудит 19.11)
+      enforceTier: (pro, trialActive) => {
+        const c = get().getCurrent()
+        if (isCompanionAvailable(c, pro, trialActive)) return
+        set({ companionId: 'kedr' })
+      },
+
       // Текущий помощник — метод (геттеры не переживают persist)
       getCurrent: () => {
         const id = get().companionId
