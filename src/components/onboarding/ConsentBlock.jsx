@@ -1,21 +1,22 @@
 // Компактный блок согласий на обработку персональных данных (152-ФЗ).
 //
 // Отзыв Кати 19.11: раньше ОПД была отдельной страницей на весь экран
-// ПЕРЕД онбордингом («опд на всю страницу») — так не выглядит ни у
-// классических приложений, ни у конкурентов (DietAI: условия — мелкими
-// ссылками внизу стартовой страницы, без отдельного экрана).
-// По 152-ФЗ согласие нужно получить ДО сбора данных, поэтому блок
-// стоит на ПЕРВОМ шаге онбординга (WelcomeStep), мелким шрифтом под
-// карточкой цели. Ответ на вопрос Кати: на 5-м шаге нельзя — к нему
-// уже собраны цель, пол, возраст, рост и вес.
+// ПЕРЕД онбордингом («опд на всю страницу») — перенесена на первый шаг
+// онбординга (ConsentBlock под выбором цели; по 152-ФЗ согласие нужно
+// ДО сбора данных, поэтому первый шаг, а не пятый). Второй отзыв тем
+// же вечером: блок «очень громоздкий» — теперь это мелкий шрифт без
+// карточки-рамки, как правовая строка у конкурентов (DietAI: условия
+// мелкими ссылками внизу страницы).
 //
 // 4 независимых согласия (отдельные чекбоксы, можно отметить по одному):
-//   pd          — согласие на обработку ПДн (ст. 6 ч. 1 п. 1 ФЗ-152);
+//   pd          — согласие на обработку ПДн (ст. 6 ФЗ-152);
 //   health      — согласие на обработку специальных категорий: данные
 //                 о здоровье (цикл, шаги) — ст. 10 ФЗ-152;
 //   crossBorder — согласие на трансграничную передачу (США:
 //                 Cloudflare Inc., OpenAI L.L.C.);
-//   policy      — принятие условий Политики конфиденциальности.
+//   policy      — принятие условий Политики и Соглашения.
+// Ссылки на статьи (ст. 6, ст. 10) убраны со строк — они и полный
+// перечень целей/получателей есть в документах по ссылке ниже.
 //
 // Состояние хранится в useOnboardingStore.consent и персистится в
 // AsyncStorage. После «Стереть все данные» consent сбрасывается —
@@ -37,19 +38,19 @@ import { LegalDocModal } from '@/components/more/LegalDocModal'
 const CONSENTS = [
   {
     key: 'pd',
-    label: 'Персональные данные — имя, рост, вес и дневник (ст. 6 ФЗ-152)',
+    label: 'Персональные данные — имя, рост, вес, дневник',
   },
   {
     key: 'health',
-    label: 'Здоровье — цикл и шаги, хранятся только на устройстве (ст. 10 ФЗ-152)',
+    label: 'Здоровье — цикл и шаги, только на устройстве',
   },
   {
     key: 'crossBorder',
-    label: 'Передача в США — ИИ-чат и фото блюд (Cloudflare, OpenAI)',
+    label: 'Передача в США — ИИ-чат и фото (Cloudflare, OpenAI)',
   },
   {
     key: 'policy',
-    label: 'Принимаю условия сбора и удаления данных',
+    label: 'Принимаю условия и Политику',
   },
 ]
 
@@ -65,8 +66,9 @@ function DocLink({ onPress, children }) {
   )
 }
 
-// Строка согласия: компактный чекбокс 18px + формулировка мелким
-// шрифтом. Никаких больших карточек с абзацами — подробности в документах.
+// Строка согласия: маленький чекбокс 16px + формулировка мелким шрифтом.
+// Никаких рамок-разделителей и карточек — просто строки «мелким шрифтом»,
+// как у конкурентов (отзыв Кати 19.11: «очень громоздкий»).
 function ConsentRow({ checked, onToggle, label, last }) {
   return (
     <Pressable
@@ -74,22 +76,20 @@ function ConsentRow({ checked, onToggle, label, last }) {
       accessibilityRole="checkbox"
       accessibilityState={{ checked: !!checked }}
       accessibilityLabel={label}
-      className={`flex-row items-start gap-2.5 py-2 active:opacity-80 ${
-        last ? '' : 'border-b border-white/5'
-      }`}
+      className={`flex-row items-start gap-2 py-1 active:opacity-80 ${last ? '' : 'mb-0.5'}`}
     >
       <View
-        className="mt-0.5 h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border-2"
+        className="mt-0.5 h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border-2"
         style={{
           borderColor: checked ? '#4D7CFE' : 'rgba(255,255,255,0.28)',
           backgroundColor: checked ? 'rgba(77,124,254,0.18)' : 'transparent',
         }}
       >
-        {checked ? <Check size={12} color="#8FA7FF" strokeWidth={3.2} /> : null}
+        {checked ? <Check size={11} color="#8FA7FF" strokeWidth={3.2} /> : null}
       </View>
       <Text
         maxFontSizeMultiplier={1.2}
-        className="min-w-0 flex-1 font-sans text-[12.5px] leading-[16px] text-bear-sub2"
+        className="min-w-0 flex-1 font-sans text-[12px] leading-[15px] text-bear-dim"
       >
         {label}
       </Text>
@@ -105,7 +105,7 @@ export function ConsentBlock() {
   const [doc, setDoc] = useState(null)
 
   return (
-    <View className="rounded-2xl border border-white/5 bg-white/[0.03] px-3.5 py-1.5">
+    <View className="px-0.5">
       {CONSENTS.map((c, i) => (
         <ConsentRow
           key={c.key}
@@ -116,19 +116,18 @@ export function ConsentBlock() {
         />
       ))}
 
-      {/* Ссылки на документы мелким шрифтом — как у конкурентов внизу
-          страницы (скрины DietAI, отзыв Кати 19.11) */}
+      {/* Ссылки на документы — мелкой строкой под чекбоксами, выровнена
+          по тексту строк (отступ = чекбокс 16px + промежуток 8px) */}
       <Text
         maxFontSizeMultiplier={1.25}
-        className="mt-1.5 font-sans text-[11.5px] leading-[15px] text-bear-dim"
+        className="mt-1 font-sans text-[11px] leading-[14px] text-bear-dim"
+        style={{ marginLeft: 24 }}
       >
-        {'Подробности: '}
         <DocLink onPress={() => setDoc('privacy')}>
           Политика конфиденциальности
         </DocLink>
-        {', '}
-        <DocLink onPress={() => setDoc('terms')}>Пользовательское соглашение</DocLink>
-        {'.'}
+        {' · '}
+        <DocLink onPress={() => setDoc('terms')}>Соглашение</DocLink>
       </Text>
 
       <LegalDocModal doc={doc} onClose={() => setDoc(null)} />
