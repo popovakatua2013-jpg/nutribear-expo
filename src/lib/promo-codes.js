@@ -62,9 +62,10 @@ const PROMO_CODE_HASHES = [
 ]
 
 // Страница оплаты Premium (статичная docs/pay.html из этого репозитория,
-// публикуется GitHub Pages). Открывается по тапу на план «Месяц»/«Год»
-// в карточке «Премиум». Триал активируется прямо в приложении — он бесплатный.
-export const PAY_PAGE_URL = 'https://popovakatua2013-jpg.github.io/nutribear-expo/'
+// публикуется GitHub Pages; корень Pages — docs/index.html с правовыми
+// документами). Открывается по тапу на план «Месяц»/«Год» в карточке
+// «Премиум». Триал активируется прямо в приложении — он бесплатный.
+export const PAY_PAGE_URL = 'https://popovakatua2013-jpg.github.io/nutribear-expo/pay.html'
 
 // « kedr-2026 », «Kedr 2026», «KEDR—2026» → KEDR2026
 export function normalizePromoCode(code) {

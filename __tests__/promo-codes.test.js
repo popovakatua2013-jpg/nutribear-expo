@@ -103,8 +103,10 @@ describe('партия кодов для продажи (NB-XXXXX-XXXXX)', () =>
 })
 
 describe('PAY_PAGE_URL — страница оплаты', () => {
-  test('https-ссылка на GitHub Pages этого репозитория', () => {
-    expect(PAY_PAGE_URL).toMatch(/^https:\/\/popovakatua2013-jpg\.github\.io\/nutribear-expo\/?$/)
+  test('https-ссылка на GitHub Pages этого репозитория (docs/pay.html)', () => {
+    expect(PAY_PAGE_URL).toMatch(
+      /^https:\/\/popovakatua2013-jpg\.github\.io\/nutribear-expo\/pay\.html$/
+    )
   })
 
   test('страница оплаты лежит в репозитории (docs/pay.html)', () => {
