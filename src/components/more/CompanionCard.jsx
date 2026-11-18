@@ -92,7 +92,9 @@ export function CompanionCard({ embedded = false }) {
                     {c.name}
                   </Text>
                   {c.tier === 'pro' && (
-                    <Text className="rounded-full bg-[#1F2937]/50 px-1.5 py-0.5 font-bold text-[10.5px] text-white">
+                    // Золотой бейдж (просьба Кати): белый PRO на тёмно-сером
+                    // был почти невидим на тёмном фоне карточки
+                    <Text className="rounded-full bg-amber-400/15 px-1.5 py-0.5 font-bold text-[10.5px] text-amber-300">
                       PRO
                     </Text>
                   )}

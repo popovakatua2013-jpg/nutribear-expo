@@ -100,7 +100,8 @@ export function CompanionStep({ onBack, onNext }) {
                       {c.name}
                     </Text>
                     {c.tier === 'pro' && (
-                      <Text className="rounded-full bg-[#1F2937]/50 px-2 py-0.5 font-bold text-[11.5px] text-white">
+                      // Золотой бейдж (просьба Кати) — как на вкладке «Ещё»
+                      <Text className="rounded-full bg-amber-400/15 px-2 py-0.5 font-bold text-[11.5px] text-amber-300">
                         PRO
                       </Text>
                     )}

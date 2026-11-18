@@ -36,14 +36,15 @@ import { AiChat } from '@/components/home/AiChat'
 // Мягкое неоновое свечение (дымка как на макете) — SoftGlow переехал
 // в ui/SoftGlow.jsx: ту же дымку получают шапки всех страниц
 
-// Неактивная пилюля переключателя
+// Неактивная пилюля переключателя (лежит в горизонтальном скролле —
+// flex-shrink больше не нужен: текст всегда целиком)
 function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || label}
-      className="min-w-0 shrink flex-row items-center gap-1 rounded-full border px-2 py-[7px] active:opacity-70"
+      className="flex-row items-center gap-1 rounded-full border px-2 py-[7px] active:opacity-70"
       style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }}
     >
       {icon}
@@ -152,10 +153,20 @@ export default function BmiScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Переключатель-пилюли как на макете */}
-        <View accessibilityLabel="Разделы: ИМТ и динамика веса" className="flex-row items-center gap-1">
+        {/* Переключатель-пилюли как на макете. Отзыв Кати 18.11 («на самом
+            верху три блока»): на узких экранах третий блок «Подробнее» сжимался
+            до «Подроб…» — ряд пилюль обёрнут в горизонтальный скролл (лента
+            не сжимает текст), подпись «Динамика веса» сокращена до «Динамика»,
+            чтобы всё чаще влезало без прокрутки; шеврон на «Подробнее» —
+            понятный намёк, что есть ещё справа */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 4, paddingRight: 8 }}
+          accessibilityLabel="Разделы: ИМТ и динамика веса"
+        >
           <NavPill
-            label="Динамика веса"
+            label="Динамика"
             icon={<ChartColumn size={14} color="#A78BFA" />}
             onPress={scrollToWeight}
             accessibilityLabel="Перейти к динамике веса"
@@ -191,7 +202,7 @@ export default function BmiScreen() {
             onPress={() => openDetails(null)}
             accessibilityLabel="Подробнее о категориях и рекомендациях"
           />
-        </View>
+        </ScrollView>
 
         {/* Главный блок: БЕЗ карточки — кольцо и легенда свободно
             парят на тёмном фоне; ниже — тёмные карточки «Вес» и «Рост» */}
