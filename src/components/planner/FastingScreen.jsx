@@ -8,16 +8,28 @@
 // (− 1 ч +) и пресеты плана 12/12, 14/10, 16/8, 18/6.
 // «Завершить» записывает сеанс в историю (laps, до 30 записей, свежие
 // сверху) и показывает среднюю длительность. Подсказка «как это
-// работает» — пока сеансов нет. Ниже — карточка «Как это работает и
-// в чём плюсы»: принцип простыми словами + польза списком (просьба
+// работает» — пока сеансов нет. Ниже — карточка «Плюсы» (заголовок
+// укорочен по отзыву Кати 19.11: было «Как это работает и в чём
+// плюсы»): принцип простыми словами + польза списком (просьба
 // Кати 09.11), по общедоступным обзорам — без медицинских обещаний,
-// с напоминанием спросить врача. Стиль — дизайн-система вкладки
-// (theme.js).
+// с напоминанием спросить врача.
+// Своё окно (просьба Кати 19.11): к пресетам добавлен чип «Своё» —
+// раскрывает подбор любой длины окна 1–23 ч шагом ±1 ч.
+// О конце окна без еды сигналят (вопрос Кати 19.11): пуш со звуком
+// даже при закрытом приложении (планировщик — lib/reminders.js),
+// в приложении — вибро + баннер в момент достижения цели; сам таймер
+// не останавливается — честно считает сверх цели до «Завершить».
+// Стиль — дизайн-система вкладки (theme.js).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppState, Pressable, ScrollView, Text, View } from 'react-native'
 import { Clock, History, Info, Play, Square } from 'lucide-react-native'
-import { useFastingStore, FASTING_MIN_LAP_MS } from '@/store/useFastingStore'
+import {
+  clampWindowHours,
+  useFastingStore,
+  FASTING_MIN_LAP_MS,
+} from '@/store/useFastingStore'
+import { hapticFeedback } from '@/lib/haptics'
 import { useToast } from '../ui/Toast'
 import { HintBox } from '../ui/HintBox'
 // Палитра — planPalette (цвета приложения): вкладка «План» одного
@@ -109,6 +121,40 @@ export function FastingScreen() {
   // дважды) тут же запускал новый сеанс, и казалось, что выйти из
   // режима невозможно (отзыв Кати)
   const [lockStart, setLockStart] = useState(false)
+
+  // Своё окно (просьба Кати 19.11): чип «Своё» раскрывает подбор любой
+  // длины окна 1–23 ч. Ряд открыт сразу, если в сторе уже своё значение
+  // (не один из пресетов) — иначе непонятно, откуда оно взялось
+  const [customOpen, setCustomOpen] = useState(() =>
+    !PLANS.includes(useFastingStore.getState().windowHours)
+  )
+  const isCustom = !PLANS.includes(windowHours)
+
+  const setCustom = (d) => {
+    const s = useFastingStore.getState()
+    s.setWindowHours(clampWindowHours(s.windowHours + d))
+  }
+
+  // Сигнал о достижении цели (вопрос Кати 19.11: «по окончанию таймера
+  // он сам отключается? есть ли уведомление или звуковые сигналы?»).
+  // Таймер НЕ останавливается сам: честно показывает, сколько вышло
+  // сверх цели, — сеанс в историю пишется только по «Завершить».
+  // О конце окна без еды сигналят три вещи: пуш со звуком (виден даже
+  // когда приложение закрыто — планирует lib/reminders.js по подписке
+  // на стор), вибро и баннер здесь — один раз за сеанс
+  const celebratedRef = useRef(false)
+  useEffect(() => {
+    celebratedRef.current = false
+  }, [startedAt])
+  useEffect(() => {
+    if (!running || celebratedRef.current || goalMs <= 0 || elapsed < goalMs) return
+    celebratedRef.current = true
+    hapticFeedback('success')
+    toast({
+      title: 'Цель голодания достигнута',
+      description: `${Math.round(goalMs / 3600000)} ч без еды — окно открыто. Таймер идёт дальше, пока не нажмёте «Завершить»`,
+    })
+  }, [running, elapsed, goalMs, toast])
 
   const start = () => {
     useFastingStore.getState().start()
@@ -222,7 +268,10 @@ export function FastingScreen() {
             return (
               <Pressable
                 key={h}
-                onPress={() => useFastingStore.getState().setWindowHours(h)}
+                onPress={() => {
+                  useFastingStore.getState().setWindowHours(h)
+                  setCustomOpen(false)
+                }}
                 style={[styles.planChip, active && styles.planChipActive]}
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={`Окно еды ${h} часов, голодание ${24 - h}`}
@@ -233,19 +282,58 @@ export function FastingScreen() {
               </Pressable>
             )
           })}
+          {/* «Своё» — любая длина окна 1–23 ч (просьба Кати 19.11);
+              когда своё значение уже активно, чип показывает его режим */}
+          <Pressable
+            onPress={() => setCustomOpen((o) => !o)}
+            style={[styles.planChip, isCustom && styles.planChipActive]}
+            accessibilityState={{ selected: isCustom }}
+            accessibilityLabel="Своё окно еды — задать любую длину"
+          >
+            <Text style={[styles.planChipText, isCustom && styles.planChipTextActive]}>
+              {isCustom ? `${24 - windowHours}/${windowHours}` : 'Своё'}
+            </Text>
+          </Pressable>
         </View>
+        {customOpen && (
+          <View style={styles.customRow}>
+            <Text style={styles.customLabel}>Длина окна еды</Text>
+            <View style={styles.customStepper}>
+              <Pressable
+                onPress={() => setCustom(-1)}
+                style={styles.stepBtn}
+                accessibilityLabel="Окно на час короче"
+              >
+                <Text style={styles.stepSign}>−</Text>
+              </Pressable>
+              <Text style={styles.customVal}>
+                {windowHours} ч — голодание {24 - windowHours} ч
+              </Text>
+              <Pressable
+                onPress={() => setCustom(1)}
+                style={styles.stepBtn}
+                accessibilityLabel="Окно на час длиннее"
+              >
+                <Text style={styles.stepSign}>+</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.customHint}>
+              Диапазон 1–23 ч. Час начала окна — стрелками выше
+            </Text>
+          </View>
+        )}
         {running && (
           <Text style={styles.planNote}>Идущий таймер зафиксировал цель при старте — план можно менять на будущее</Text>
         )}
       </View>
 
-      {/* Как это работает и в чём плюсы (просьба Кати 09.11): принцип
-          и польза простыми словами, всегда видно — не подсказка,
-          а содержание экрана */}
+      {/* Плюсы (заголовок укорочен по отзыву Кати 19.11: было «Как это
+          работает и в чём плюсы»): принцип и польза простыми словами,
+          всегда видно — не подсказка, а содержание экрана */}
       <View style={styles.infoCard}>
         <View style={styles.infoHead}>
           <Info size={16} color={colors.cyan} />
-          <Text style={styles.infoTitle}>Как это работает и в чём плюсы</Text>
+          <Text style={styles.infoTitle}>Плюсы</Text>
         </View>
         <Text style={styles.infoText}>
           Еда — только в выбранное окно (например, с 9:00 до 19:00), в остальное время — вода, чай и кофе без сахара. За часы без еды организм сначала тратит запасы гликогена, а затем активнее берёт энергию из жира. Окно короче — за день обычно выходит меньше калорий, поэтому вес снижается.
@@ -349,6 +437,22 @@ const styles = {
   planChipText: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text2 },
   planChipTextActive: { color: colors.accentInk },
   planNote: { ...type.caption, color: colors.text3, marginTop: spacing.s, lineHeight: 16 },
+  customRow: {
+    backgroundColor: colors.surface2,
+    borderRadius: radius.row,
+    padding: spacing.m,
+    marginTop: spacing.m,
+  },
+  customLabel: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text },
+  customStepper: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: spacing.s,
+  },
+  customVal: {
+    ...type.title, fontSize: 14.5, color: colors.text, flex: 1,
+    textAlign: 'center', marginHorizontal: spacing.s, fontVariant: ['tabular-nums'],
+  },
+  customHint: { ...type.caption, color: colors.text3, marginTop: spacing.s, lineHeight: 15 },
   infoCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.l, marginTop: spacing.m,

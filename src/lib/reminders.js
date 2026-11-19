@@ -23,9 +23,14 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useExerciseStore } from '@/store/useExerciseStore'
 import { useCompanionStore } from '@/store/useCompanionStore'
+import { useFastingStore } from '@/store/useFastingStore'
 import { totalConsumed } from '@/lib/data/diary'
 import { formatNum } from '@/lib/format'
-import { requestOpenWeightModal, requestOpenSleepModal } from '@/lib/navEvents'
+import {
+  requestOpenWeightModal,
+  requestOpenSleepModal,
+  requestOpenFasting,
+} from '@/lib/navEvents'
 import {
   mealPokeMessage,
   mealStreaks,
@@ -68,6 +73,11 @@ Notifications?.setNotificationHandler({
       // Пинок о тренировке: занятие уже записано сегодня — молчим
       const logs = useExerciseStore.getState().logs || {}
       show = !(logs[dayKeyOf()] || []).length
+    } else if (kind === 'fast-goal') {
+      // Сигнал о конце окна без еды: сеанс уже завершён вручную —
+      // молчим (страховка: уведомление отменяется при «Завершить»,
+      // но могло сработать чуть раньше обработки)
+      show = Boolean(useFastingStore.getState().startedAt)
     }
     return {
       shouldShowBanner: show,
@@ -140,6 +150,10 @@ async function ensureChannels() {
       name: 'Утро и итоги дня',
       importance: Notifications.AndroidImportance.HIGH,
     })
+    await Notifications.setNotificationChannelAsync('fast', {
+      name: 'Голодание',
+      importance: Notifications.AndroidImportance.HIGH,
+    })
   } catch {}
 }
 
@@ -208,6 +222,46 @@ export async function scheduleMorningSummary() {
     })
   } catch (e) {
     console.warn('Утренняя сводка не запланирована:', e)
+  }
+}
+
+// ── Голодание: сигнал о конце окна без еды ──────────────────────
+// Одноразовое уведомление на момент достижения цели (вопрос Кати
+// 19.11: «по окончанию таймера он сам отключается? есть ли
+// уведомление или звуковые сигналы?»). Таймер не останавливается —
+// честно считает дальше, а о достижении цели сигналит пуш со звуком:
+// срабатывает даже когда приложение закрыто. Планируется при
+// старте/остановке сеанса (подписка на стор в агенте ниже) и
+// перепланируется вместе с остальными напоминаниями —
+// rescheduleReminders делает cancelAll и сносит его тоже.
+export async function scheduleFastingGoal() {
+  if (Platform.OS === 'web' || !Notifications) return
+  const { startedAt, fastHours } = useFastingStore.getState()
+  try {
+    await Notifications.cancelScheduledNotificationAsync('fast-goal')
+  } catch {}
+  if (!startedAt || !fastHours) return // сеанса нет — сигнал не нужен
+  const fireMs = startedAt + fastHours * 3600000
+  if (fireMs <= Date.now()) return // цель уже пройдена — баннер покажет экран
+  const granted = await requestNotifPermission()
+  if (!granted) return
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'fast-goal',
+      content: {
+        title: 'Окно без еды: цель достигнута',
+        body: `${fastHours} ч без еды — окно открыто, можно есть. Молодец! 🐻`,
+        sound: 'default',
+        data: { kind: 'fast-goal' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(fireMs),
+        channelId: 'fast',
+      },
+    })
+  } catch (e) {
+    console.warn('Сигнал о конце голодания не запланирован:', e)
   }
 }
 
@@ -523,6 +577,9 @@ export async function rescheduleReminders() {
   // Утренняя сводка «Новый день» — не зависит от тумблеров напоминаний
   if (my !== seq) return
   await scheduleMorningSummary()
+  // Сигнал о конце голодания: cancelAll выше его снёс — возвращаем
+  // (если сеанс идёт и цель ещё впереди)
+  await scheduleFastingGoal()
 }
 
 // Обновить ежедневные/еженедельные пинки и утреннюю сводку, НЕ трогая
@@ -554,6 +611,8 @@ async function refreshDailyPokes() {
   await scheduleWorkout(reminder)
   await scheduleSleep(reminder)
   await scheduleMorningSummary()
+  // Голодание: если сеанс идёт — сигнал о цели остаётся запланирован
+  await scheduleFastingGoal()
 }
 
 // Тап по уведомлению: открываем соответствующее место приложения
@@ -588,6 +647,11 @@ function handleNotificationTap(data) {
     } else if (kind === 'day') {
       // Тап по утренней сводке — открываем Главную
       router.navigate('/')
+    } else if (kind === 'fast-goal') {
+      // Тап по «цель голодания достигнута» — окно интервального
+      // питания (вкладка «План», окно поверх плана)
+      router.navigate('/workouts')
+      requestOpenFasting()
     }
   } catch (e) {
     console.warn('Не удалось открыть экран по тапу:', e)
@@ -643,6 +707,14 @@ export function startReminderAgent() {
     if (s.name !== prev.name || s.sex !== prev.sex) queueRescheduleMeals()
   })
 
+  // Сеанс голодания стартовал/завершился — планируем или отменяем
+  // сигнал о достижении цели (вопрос Кати 19.11)
+  const fastUnsub = useFastingStore.subscribe((s, prev) => {
+    if (s.startedAt !== prev.startedAt || s.fastHours !== prev.fastHours) {
+      scheduleFastingGoal()
+    }
+  })
+
   return () => {
     if (respSub) respSub.remove()
     try {
@@ -654,6 +726,9 @@ export function startReminderAgent() {
     } catch {}
     try {
       profUnsub()
+    } catch {}
+    try {
+      fastUnsub()
     } catch {}
     if (mealTimer) {
       clearTimeout(mealTimer)

@@ -76,6 +76,7 @@ describe('lib/reminders: экспорт и публичное API', () => {
     expect(typeof reminders.parseTime).toBe('function')
     expect(typeof reminders.requestNotifPermission).toBe('function')
     expect(typeof reminders.scheduleMorningSummary).toBe('function')
+    expect(typeof reminders.scheduleFastingGoal).toBe('function')
     expect(typeof reminders.rescheduleMeals).toBe('function')
     expect(typeof reminders.rescheduleReminders).toBe('function')
     expect(typeof reminders.startReminderAgent).toBe('function')
@@ -92,6 +93,18 @@ describe('lib/reminders: экспорт и публичное API', () => {
 
   test('scheduleMorningSummary не падает без Notifications', async () => {
     await expect(reminders.scheduleMorningSummary()).resolves.toBeUndefined()
+  })
+
+  test('scheduleFastingGoal не падает без Notifications (сеанс есть/нет)', async () => {
+    // Кати 19.11: пуш со звуком о конце окна без еды. В Node
+    // Notifications = null — функция безопасно возвращается и когда
+    // сеанс идёт, и когда нет
+    const { useFastingStore } = require('@/store/useFastingStore')
+    useFastingStore.setState({ startedAt: null, fastHours: null })
+    await expect(reminders.scheduleFastingGoal()).resolves.toBeUndefined()
+    useFastingStore.setState({ startedAt: Date.now() - 3600000, fastHours: 16 })
+    await expect(reminders.scheduleFastingGoal()).resolves.toBeUndefined()
+    useFastingStore.setState({ startedAt: null, fastHours: null })
   })
 
   test('startReminderAgent возвращает функцию остановки (без Notifications)', () => {

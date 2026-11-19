@@ -2,7 +2,8 @@
 // «Голодание»): цель фиксируется при старте (24 − окно еды), «стоп»
 // пишет сеанс в историю (свежие сверху, лимит 30) и сбрасывает таймер,
 // настройки окна меняются независимо, «стоп» без старта историю не
-// трогает.
+// трогает. Плюс границы «своего» окна (clampWindowHours — чип «Своё»
+// на экране, просьба Кати 19.11).
 
 jest.requireActual('./helpers/react-native-stub')
 jest.requireActual('./helpers/async-storage-stub')
@@ -77,5 +78,42 @@ describe('useFastingStore: интервальное голодание', () => {
     expect(store.getState().windowStart).toBe(0)
     store.getState().setWindowHours(14)
     expect(store.getState().windowHours).toBe(14) // голодание 14/10
+  })
+})
+
+describe('clampWindowHours: границы «своего» окна еды (Кати 19.11)', () => {
+  let clamp
+  beforeAll(() => {
+    ;({ clampWindowHours: clamp } = require('@/store/useFastingStore'))
+  })
+
+  test('нормальное значение проходит без изменений', () => {
+    expect(clamp(9)).toBe(9)
+    expect(clamp(1)).toBe(1)
+    expect(clamp(23)).toBe(23)
+    expect(clamp(13)).toBe(13)
+  })
+
+  test('за границами 1–23 обрезается до допустимого', () => {
+    expect(clamp(0)).toBe(1) // окно 0 ч — весь день без еды, смысла нет
+    expect(clamp(-3)).toBe(1)
+    expect(clamp(24)).toBe(23) // окно 24 ч — голодания нет
+    expect(clamp(30)).toBe(23)
+  })
+
+  test('дробные и мусорные значения округляются/обнуляются в 1 ч', () => {
+    expect(clamp(9.6)).toBe(10)
+    expect(clamp(9.4)).toBe(9)
+    expect(clamp(null)).toBe(1)
+    expect(clamp(undefined)).toBe(1)
+    expect(clamp('абв')).toBe(1)
+    expect(clamp(NaN)).toBe(1)
+  })
+
+  test('стор принимает своё значение из допустимого диапазона', () => {
+    const { useFastingStore: store2 } = require('@/store/useFastingStore')
+    store2.setState({ windowStart: 10, windowHours: 8, fastHours: null, startedAt: null, laps: [] })
+    store2.getState().setWindowHours(9)
+    expect(store2.getState().windowHours).toBe(9) // голодание 15/9
   })
 })

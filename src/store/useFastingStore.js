@@ -11,6 +11,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 // (скрин Кати 08.11 — сеанс 21:47 → 21:48, «0 мин»)
 export const FASTING_MIN_LAP_MS = 120000
 
+// «Своё» окно еды (просьба Кати 19.11: «добавить возможность
+// добавлять своё окно приёма пищи»): любая длина 1–23 ч. За границами
+// смысла нет — 0 ч окна это «весь день без еды», 24 ч — голодания нет.
+export const WINDOW_HOURS_MIN = 1
+export const WINDOW_HOURS_MAX = 23
+
+export function clampWindowHours(h) {
+  const n = Math.round(Number(h) || 0)
+  return Math.min(WINDOW_HOURS_MAX, Math.max(WINDOW_HOURS_MIN, n))
+}
+
 export const useFastingStore = create(
   persist(
     (set) => ({

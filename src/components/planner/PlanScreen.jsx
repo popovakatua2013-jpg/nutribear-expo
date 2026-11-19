@@ -69,6 +69,15 @@ const dayKeyOfDate = (d) =>
 
 const fmtClock = (h) => `${pad(((h % 24) + 24) % 24)}:00`
 
+// «3 ч 20 мин» / «42 мин» — прогресс идущего таймера голодания в подписи
+// под кольцом (кольцо стало живым — отзыв Кати 19.11)
+const fmtDurShort = (ms) => {
+  const total = Math.max(0, Math.floor(ms / 60000))
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  return h > 0 ? `${h} ч ${pad(m)} мин` : `${m} мин`
+}
+
 // Показатели недельного графика: калории / клетчатка / сахар
 const METRICS = [
   ['kcal', 'Калории'],
@@ -309,7 +318,23 @@ export function PlanScreen({ onOpenFasting }) {
 
   // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
-  useFocusEffect(useCallback(() => { setRunId((n) => n + 1) }, []))
+  // Текущее время для живого кольца голодания: без тика кольцо
+  // застывало бы между возвратами на вкладку
+  const [fastNow, setFastNow] = useState(() => Date.now())
+  useFocusEffect(
+    useCallback(() => {
+      setRunId((n) => n + 1)
+      setFastNow(Date.now())
+    }, [])
+  )
+  // Тик раз в 15 с, только пока идёт сеанс голодания: кольцо и
+  // подпись «Идёт таймер…» ползут вперёд сами, без тапов
+  useEffect(() => {
+    if (!fastStartedAt) return undefined
+    setFastNow(Date.now())
+    const t = setInterval(() => setFastNow(Date.now()), 15000)
+    return () => clearInterval(t)
+  }, [fastStartedAt])
 
   // «Добавить рецепт» — блок в правой колонке под «Интервальным
   // питанием» (просьба Кати 09.11: вынести из карточки меню в пустое
@@ -429,9 +454,17 @@ export function PlanScreen({ onOpenFasting }) {
     reminder?.sleep?.enabled,
   ].filter(Boolean).length
 
-  // Голодание: режим для кольца «16:8» и легенды окна/голодания
-  const fastGoalH = fastStartedAt && fastHours ? fastHours : 24 - fastWindow
+  // Голодание: кольцо стало ЖИВЫМ (отзыв Кати 19.11: «на вкладке план
+  // интервальное питание всегда отображается полузаполненный круг» —
+  // раньше была застывшая доля плана fastGoal/24 ≈ 2/3, её читали как
+  // прогресс). Теперь: идёт таймер — кольцо заполняется реальным
+  // прогрессом до цели, сверх цели — оранжевое; таймер не идёт —
+  // кольцо пустое, в центре режим плана
+  const fastGoalH = 24 - fastWindow
   const fastPlan = `${fastGoalH}/${fastWindow}`
+  const fastGoalMs = (fastHours || fastGoalH) * 3600000
+  const fastElapsed = fastStartedAt ? Math.max(0, fastNow - fastStartedAt) : 0
+  const fastPct = fastStartedAt && fastGoalMs > 0 ? fastElapsed / fastGoalMs : 0
   const fastEatFrom = fmtClock(fastStart)
   const fastEatTo = fmtClock(((fastStart + fastWindow) % 24 + 24) % 24)
 
@@ -569,12 +602,12 @@ export function PlanScreen({ onOpenFasting }) {
             </Text>
             <View style={styles.fastRingWrap}>
               <Ring
-                pct={fastGoalH / 24}
+                pct={fastPct}
                 runId={runId}
                 size={56}
                 stroke={6}
-                centerText={fastPlan}
-                sub="Режим"
+                centerText={fastStartedAt ? undefined : fastPlan}
+                sub={fastStartedAt ? fastPlan : 'Режим'}
               />
             </View>
             <View style={styles.fastLegend}>
@@ -593,6 +626,12 @@ export function PlanScreen({ onOpenFasting }) {
                 </View>
               </View>
             </View>
+            {/* Живая подпись: что показывает кольцо прямо сейчас */}
+            <Text style={styles.fastLive} numberOfLines={2}>
+              {fastStartedAt
+                ? `Идёт таймер: ${fmtDurShort(fastElapsed)} из ${Math.round(fastGoalMs / 3600000)} ч`
+                : 'Кольцо заполнится по ходу таймера без еды'}
+            </Text>
             <View style={styles.fastMore} pointerEvents="none">
               <Text style={styles.fastMoreText}>Подробнее</Text>
               <ChevronRight size={13} color={P.accentInk} />
@@ -1090,6 +1129,14 @@ const styles = {
     alignSelf: 'stretch',
   },
   fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
+  fastLive: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    fontFamily: F[600],
+    color: P.text3,
+    lineHeight: 14,
+    marginTop: 2,
+  },
 
   // Правая колонка: «Интервальное питание» + под ним «Добавить рецепт».
   // alignSelf: 'stretch' растягивает колонку на высоту ряда (как у

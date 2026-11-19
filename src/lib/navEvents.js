@@ -85,3 +85,24 @@ export function consumeOpenSleepModal() {
   pendingSleepModal = false
   return was
 }
+
+// ─── Окно «Интервальное питание» (вкладка «План») ─────────────────
+// Тап по пушу «цель голодания достигнута» открывает вкладку «План» и
+// окно интервального питания поверх плана. Тот же двойной механизм:
+// живое событие + отложенный флаг (вкладка может быть ещё не
+// смонтирована, если приложение открыли прямо по пушу).
+let pendingFasting = false
+
+export function requestOpenFasting() {
+  pendingFasting = true
+  try {
+    DeviceEventEmitter.emit('nutribear/open-fasting')
+  } catch {}
+}
+
+// Возвращает true, если открытие окна запрашивалось (и сбрасывает флаг)
+export function consumeOpenFasting() {
+  const was = pendingFasting
+  pendingFasting = false
+  return was
+}
