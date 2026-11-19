@@ -67,15 +67,21 @@ export function BaseMode({ mealId, onPick }) {
     [userFoods, q]
   )
 
-  // Локальная база: фильтр по приёму (для доп. перекусов — всё подряд)
+  // Локальная база: фильтр по приёму (для доп. перекусов — всё подряд).
+  // Поиск пословный: каждое слово запроса должно быть в названии —
+  // «колбаса варёная «Вязанка» Докторская» находит и «вязанка», и
+  // «вязанка докторская» (подстрока целиком не срабатывала из-за
+  // кавычек и перестановки слов — бренды из foods-brands.js)
+  const qWords = q.split(/\s+/).filter(Boolean)
   const local = useMemo(
     () =>
       FOODS.filter(
         (f) =>
           (mealId.startsWith('custom-') || f.tags.includes(mealId)) &&
-          (!q || f.name.toLowerCase().includes(q))
+          (!qWords.length ||
+            qWords.every((w) => f.name.toLowerCase().includes(w)))
       ).map((f) => toBuildItem(f)),
-    [mealId, q]
+    [mealId, qWords.join(' ')]
   )
 
   // Поиск в Open Food Facts (≈2.5 млн позиций). Показываем кнопку,

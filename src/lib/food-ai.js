@@ -18,6 +18,7 @@ import { File, Paths } from 'expo-file-system'
 import { ImageManipulator, SaveFormat, manipulateAsync } from 'expo-image-manipulator'
 import { AI_CONFIG } from './ai-config'
 import { buildMultipartBody, decodeBase64ToBytes } from './multipart'
+import { FOODS } from './data/foods'
 
 const TIMEOUT_MS = 45000
 
@@ -187,6 +188,34 @@ function findLocalDish(query) {
   return best ? best.d : null
 }
 
+// Поиск по базе продуктов (foods.js: обычные + брендовые позиции
+// foods-brands.js — «Вязанка», «Простоквашино», «Брест-Литовск» и др.,
+// просьба Кати 19.11: «база продуктов по поставщикам, не просто варёная
+// колбаса, а варёная колбаса „Вязанка“»). Правило то же, что у блюд:
+// все основы названия должны быть во фразе; алиасы (f.al) покрывают
+// короткие запросы («вязанка докторская»). Побеждает самое длинное
+// название. КБЖУ — этикеточные, бесплатно, без ИИ
+const FOOD_INDEX = FOODS.map((f) => ({
+  f,
+  stems: stemsOf(f.name),
+  aliases: (f.al || []).map(stemsOf),
+  len: normName(f.name).length,
+}))
+
+export function findLocalFood(query) {
+  const q = normName(query)
+  if (!q) return null
+  const qStems = new Set(q.split(' ').filter(Boolean).map(dishStem))
+  let best = null
+  for (const e of FOOD_INDEX) {
+    const hit =
+      e.stems.every((w) => qStems.has(w)) ||
+      e.aliases.some((al) => al.every((w) => qStems.has(w)))
+    if (hit && (!best || e.len > best.len)) best = e
+  }
+  return best ? best.f : null
+}
+
 // ── Локальный разбор фразы без ИИ («тарелка борща 300 граммов») ─
 const GRAMS_RE = /(\d{1,4})\s*(граммов|грамма|грамм|миллилитров|миллилитра|миллилитр|гр|г|мл)(?![а-я])/
 // Штуки/куски: «2 штуки», «1 ломтик», «полплитки не считаем» — граммовка
@@ -239,29 +268,37 @@ function parsePhraseSegment(text0) {
   if (!seg || !stemsOf(seg).length) return null
   const gm = seg.match(GRAMS_RE)
   const pm = seg.match(PIECES_RE)
-  const dish = findLocalDish(seg.replace(GRAMS_RE, ' ').replace(PIECES_RE, ' '))
-  if (!dish) return null
+  const name0 = seg.replace(GRAMS_RE, ' ').replace(PIECES_RE, ' ')
+  const dish = findLocalDish(name0)
+  // Не блюдо — может, продуктовая позиция базы (в т.ч. брендовая из
+  // foods-brands.js): «колбаса варёная вязанка 50 грамм» голосом —
+  // тоже считается офлайн и бесплатно
+  const food = dish ? null : findLocalFood(name0)
+  if (!dish && !food) return null
+  const src = dish || food
 
   // Вес порции: явные граммы → штуки × вес штуки → посуда (кружка/тарелка) →
   // обычная порция блюда. null остаётся только если не распознано ничего
   let grams = null
   if (gm) grams = Math.max(1, Math.min(2000, parseInt(gm[1], 10)))
-  else if (pm && PIECE_GRAMS[dish.n]) {
-    grams = Math.max(1, Math.min(2000, parseInt(pm[1], 10) * PIECE_GRAMS[dish.n]))
+  else if (pm && PIECE_GRAMS[src.n || src.name]) {
+    grams = Math.max(1, Math.min(2000, parseInt(pm[1], 10) * PIECE_GRAMS[src.n || src.name]))
   } else grams = volumeFromSegment(seg)
 
   const item = {
-    name: dish.n,
-    emoji: dish.e,
-    kcal100: dish.kcal100,
-    p: dish.p,
-    f: dish.f,
-    c: dish.c,
-    fib: dish.fib || 0,
-    sug: dish.sug || 0,
+    // У блюд поля n/e, у продуктов базы — name/emoji (foods.js)
+    name: src.n || src.name,
+    emoji: src.e || src.emoji || '🍽️',
+    kcal100: dish ? dish.kcal100 : food.kcal,
+    p: dish ? dish.p : food.p,
+    f: dish ? dish.f : food.f,
+    c: dish ? dish.c : food.c,
+    fib: (dish ? dish.fib : food.fib) || 0,
+    sug: (dish ? dish.sug : food.sug) || 0,
     source: 'base',
   }
-  if (dish.dg) item.defaultGrams = dish.dg
+  const dg = dish ? dish.dg : food.defaultGrams
+  if (dg) item.defaultGrams = dg
   // Распознанный вес — и на карточку (итоговый калораж), и в предзаполнение
   // граммовки на экране порции (SelectedFood берёт defaultGrams)
   if (grams) {
@@ -375,6 +412,15 @@ const INGREDIENTS = [
   { n: 'Вода', w: ['вода', 'воды'], kcal100: 0, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
   { n: 'Сахар', w: ['сахар'], kcal100: 387, p: 0, f: 0, c: 99.8, fib: 0, sug: 99.8 },
   { n: 'Соль', w: ['соль'], kcal100: 0, p: 0, f: 0, c: 0, fib: 0, sug: 0 },
+  // ── Рыба и консервы: селёдки здесь не было вовсе — «селёдка в масле»
+  //    ловила слово «масле» и вешала растительное масло 900 ккал/100 г
+  //    на всю граммовку (скрин Кати 19.11: омлет с сельдью показал
+  //    414 ккал/100 г вместо ~170). Значения — солёная/консервированная
+  //    рыба без заливки, как в LOCAL_DISHES и базе продуктов
+  { n: 'Сельдь', w: ['сельдь', 'селедка'], kcal100: 220, p: 18.0, f: 16.0, c: 0, fib: 0, sug: 0 },
+  { n: 'Тунец', w: ['тунец', 'тунца'], kcal100: 96, p: 23.4, f: 0.8, c: 0, fib: 0, sug: 0 },
+  { n: 'Шпроты', w: ['шпроты', 'шпрот'], kcal100: 320, p: 18.0, f: 28.0, c: 0, fib: 0, sug: 0 },
+  { n: 'Горбуша', w: ['горбуша', 'горбуши'], kcal100: 160, p: 22.0, f: 7.0, c: 0, fib: 0, sug: 0 },
   // ── Расширение: ходовые продукты домашней кухни (молочка, выпечка,
   //    соусы, сухофрукты) — больше рецептов считаются офлайн и бесплатно
   { n: 'Сливки 33%', w: ['сливки', 'сливок'], kcal100: 337, p: 2.2, f: 33.0, c: 3.3, fib: 0, sug: 3.3 },
@@ -465,7 +511,20 @@ export function estimateFromDescription(raw) {
     .replace(/\s+/g, ' ')
     .trim()
   if (!text) return null
-  const tokens = text.split(' ').filter(Boolean)
+  // Модификаторы подачи («в масле», «в собственном соку») — не отдельный
+  // ингредиент: вырезаем ДО разбора. Раньше слово «масле» спалось с
+  // основой «масл» и подтягивало «Масло растительное» 900 ккал/100 г на
+  // всю граммовку продукта (скрин Кати 19.11 — «селёдка в масле» в омлете
+  // дал 414 ккал/100 г; теперь сельдь считается сама — ~171).
+  // «омлет НА масле» остаётся без изменений — масло жарки честно входит
+  const prepped = text
+    .replace(
+      /(?:^|\s)(?:в|во)\s+(?:масле|собственном|своем|томатном|томате|маринаде|желе|сиропе|рассоле)(?:\s+(?:соку|соусе|маринаде))?(?=\s|$)/g,
+      ' '
+    )
+    .replace(/\s+/g, ' ')
+    .trim()
+  const tokens = prepped.split(' ').filter(Boolean)
   const UNIT_WORDS = new Set([
     'граммов', 'грамма', 'грамм', 'миллилитров', 'миллилитра', 'миллилитр', 'гр', 'г', 'мл',
   ])
@@ -1114,9 +1173,17 @@ export async function estimateByName(name, timeoutMs = 25000) {
   const q = normName(name)
   if (!q) throw new Error('Сначала впишите название блюда')
 
-  // 1) Встроенная база популярных блюд — БЕСПЛАТНО
+  // 1) Встроенная база — БЕСПЛАТНО. Ищем и в блюдах, и в продуктах
+  //     (включая брендовые «Вязанка», «Простоквашино»…): побеждает
+  //     ДЛИННЕЙШЕЕ совпадение, чтобы «колбаса варёная вязанка докторская»
+  //     взяла этикеточные 230 ккал бренда, а не общий усреднённый «блюдо
+  //     Колбаса варёная» 300. Раньше бренды проваливались в платный ИИ
+  //     и он мог выдать «придуманный» колораж (отзыв Кати 19.11)
   const dish = findLocalDish(q)
-  if (dish)
+  const food = findLocalFood(q)
+  const dishLen = dish ? normName(dish.n).length : -1
+  const foodLen = food ? normName(food.name).length : -1
+  if (dish && dishLen >= foodLen)
     return {
       kcal100: dish.kcal100,
       p: dish.p,
@@ -1124,6 +1191,16 @@ export async function estimateByName(name, timeoutMs = 25000) {
       c: dish.c,
       fib: dish.fib || 0,
       sug: dish.sug || 0,
+      source: 'base',
+    }
+  if (food && foodLen > dishLen)
+    return {
+      kcal100: food.kcal,
+      p: food.p,
+      f: food.f,
+      c: food.c,
+      fib: food.fib || 0,
+      sug: food.sug || 0,
       source: 'base',
     }
 

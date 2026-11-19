@@ -8,6 +8,7 @@ import { BIG_FOODS } from './foods-big'
 import { XL_FOODS } from './foods-xl'
 import { XL2_FOODS } from './foods-xl2'
 import { XL3_FOODS } from './foods-xl3'
+import { BRAND_FOODS } from './foods-brands'
 import { MICROS } from './micros'
 
 const BASE_FOODS = [
@@ -79,6 +80,10 @@ export const FOODS = [
   ...XL_FOODS,
   ...XL2_FOODS,
   ...XL3_FOODS,
+  // Брендовые позиции «по поставщикам» (просьба Кати 19.11: варёная
+  // колбаса не просто «варёная колбаса», а «Вязанка») — этикеточные
+  // КБЖУ из Open Food Facts и справочников состава
+  ...BRAND_FOODS,
 ].map((f) => (MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f))
 
 // Быстрый выбор граммовки в модалке добавления
