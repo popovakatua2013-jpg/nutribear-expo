@@ -38,8 +38,8 @@ export const BRAND_FOODS = [
   { id: 'brand-domik-v-derevne-moloko32', emoji: '🥛', name: 'Молоко 3,2% «Домик в деревне»', kcal: 60, p: 3, f: 3.2, c: 4.7, fib: 0, sug: 4.7, defaultGrams: 250, tags: ['breakfast', 'snack'], al: ['домик в деревне молоко', 'молоко домик в деревне'] },
 
   // ---------- Сыры ----------
-  { id: 'brand-brestlitovsk-rossiyskiy', emoji: '🧀', name: 'Сыр Российский «Брест-Литовск»', kcal: 340, p: 21, f: 28.5, c: 0, fib: 0, sug: 0, defaultGrams: 40, tags: ['breakfast', 'snack'], al: ['брест литовск сыр', 'сыр брест литовск', 'российский брест литовск'] },
-  { id: 'brand-brestlitovsk-gauda', emoji: '🧀', name: 'Сыр Гауда «Брест-Литовск»', kcal: 345, p: 23.7, f: 27.8, c: 0, fib: 0, sug: 0, defaultGrams: 40, tags: ['breakfast', 'snack'], al: ['гауда брест литовск', 'сыр гауда брест'] },
+  { id: 'brand-brestlitovsk-rossiyskiy', emoji: '🧀', name: 'Сыр Российский «Брест-Литовск»', kcal: 340, p: 21, f: 28.5, c: 0, fib: 0, sug: 0, defaultGrams: 40, tags: ['breakfast', 'snack'], al: ['российский брест литовск', 'брест литовск российский'] },
+  { id: 'brand-brestlitovsk-gauda', emoji: '🧀', name: 'Сыр Гауда «Брест-Литовск»', kcal: 345, p: 23.7, f: 27.8, c: 0, fib: 0, sug: 0, defaultGrams: 40, tags: ['breakfast', 'snack'], al: ['гауда брест литовск', 'сыр гауда брест литовск'] },
 
   // ---------- Рыба и консервы ----------
   { id: 'brand-seld-v-masle', emoji: '🐟', name: 'Сельдь в масле (консервы)', kcal: 239, p: 17, f: 19, c: 0, fib: 0, sug: 0, defaultGrams: 100, tags: ['lunch', 'dinner', 'snack'], al: ['селёдка в масле', 'сельдь в масле', 'селедка в масле'] },

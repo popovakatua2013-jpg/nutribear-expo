@@ -160,7 +160,11 @@ function dishStem(w) {
 function stemsOf(t) {
   return normName(t)
     .split(' ')
-    .filter((w) => w && !/^\d/.test(w)) // цифры («5%») не участвуют в поиске
+    // Чисто цифровые слова («5%», «1.5») не участвуют в поиске, а
+    // буквенно-цифровые бренды («7up», «j7») — участвуют; раньше фильтр
+    // /^\d/ выкашивал «7up» целиком, у позиции оставался пустой массив
+    // основ и [].every() матчило ЛЮБОЙ запрос
+    .filter((w) => w && !/^\d+$/.test(w))
     .map(dishStem)
 }
 
@@ -182,7 +186,10 @@ function findLocalDish(query) {
   for (const e of DISH_INDEX) {
     const hit =
       e.stems.every((w) => qStems.has(w)) ||
-      e.aliases.some((al) => al.every((w) => qStems.has(w)))
+      // al.length>0: алиас из одних цифр («7up») после фильтра цифр даёт
+      // пустой массив основ, а [].every() — всегда true: такой алиас
+      // матчит ЛЮБОЙ запрос (проявилось на бренде 7UP)
+      e.aliases.some((al) => al.length > 0 && al.every((w) => qStems.has(w)))
     if (hit && (!best || e.len > best.len)) best = e
   }
   return best ? best.d : null
@@ -210,10 +217,58 @@ export function findLocalFood(query) {
   for (const e of FOOD_INDEX) {
     const hit =
       e.stems.every((w) => qStems.has(w)) ||
-      e.aliases.some((al) => al.every((w) => qStems.has(w)))
+      // al.length>0 — см. findLocalDish: пустые алиасы не матчат всё подряд
+      e.aliases.some((al) => al.length > 0 && al.every((w) => qStems.has(w)))
     if (hit && (!best || e.len > best.len)) best = e
   }
   return best ? best.f : null
+}
+
+// ── Брендовый приоритет для ИИ-ответов (фото/голос) ──────────
+// ИИ «придумывает» калораж знакомых марок и сетей (отзыв Кати 19.11:
+// «очень много продуктов показывает придуманный коллораж»). Если
+// название из ответа ИИ ЦЕЛИКОМ покрывается брендовой позицией базы
+// (все основы слов названия есть среди основ названия/алиаса позиции,
+// и лишних слов у ИИ нет) — подставляем этикеточные КБЖУ из базы
+// вместо ИИ-оценки. Примеры: «Селёдка в масле» → консервы 239 ккал,
+// «Воппер» → 192, «Твистер» → 173. А «Омлет с селёдкой в масле» НЕ
+// перекрывается позицией «Сельдь в масле» (лишнее слово «омлет») —
+// остаётся честная ИИ-оценка целого блюда.
+export function preferBrandBase(items) {
+  if (!Array.isArray(items) || !items.length) return items
+  return items.map((it) => {
+    if (!it || !it.name) return it
+    const qStems = stemsOf(it.name) // цифры («1.5 л») не участвуют — как в поиске
+    if (!qStems.length) return it
+    const qSet = new Set(qStems)
+    let best = null
+    for (const e of FOOD_INDEX) {
+      const fid = e.f.id || ''
+      if (!/^(ff-|brand\d*-)/.test(fid)) continue
+      let covered = null
+      if (e.stems.every((w) => qSet.has(w))) covered = e.stems
+      else {
+        const al = e.aliases.find((st) => st.length > 0 && st.every((w) => qSet.has(w)))
+        if (!al) continue
+        covered = al
+      }
+      // Полное покрытие: у названия ИИ нет слов вне позиции базы
+      if (!qStems.every((w) => covered.includes(w))) continue
+      if (!best || e.len > best.len) best = e
+    }
+    if (!best) return it
+    const b = best.f
+    return {
+      ...it,
+      kcal100: b.kcal,
+      p: b.p,
+      f: b.f,
+      c: b.c,
+      fib: b.fib || 0,
+      sug: b.sug || 0,
+      source: 'brand',
+    }
+  })
 }
 
 // ── Локальный разбор фразы без ИИ («тарелка борща 300 граммов») ─
@@ -998,6 +1053,8 @@ export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
                 type: 'text',
                 text:
                   'Определи основное блюдо на фотографии. Пищевую ценность укажи НА 100 ГРАММ готового продукта. ' +
+                  'Для знакомых продуктов, брендов и блюд используй типовые справочные значения калорийности ' +
+                  '(этикетки, таблицы химического состава), а не произвольные числа. ' +
                   'Внимательно ищи ингредиенты ВНУТРИ блюда, а не только сверху: сыр внутри омлета или ' +
                   'бутерброда, масло для жарки, соус, ветчина, начинка. Такие скрытые добавки учитывай ' +
                   'в калорийности и КБЖУ и упоминай в названии (например, «Омлет с двумя видами сыра», ' +
@@ -1023,7 +1080,9 @@ export async function scanFoodImage(imageUri, timeoutMs = TIMEOUT_MS) {
     const content = data?.choices?.[0]?.message?.content
     const parsed = parseAiJson(content)
     const list = Array.isArray(parsed) ? parsed : []
-    const items = list.map(normalizeItem).filter(Boolean)
+    // Брендовые позиции перекрывают ИИ-оценку: «Селёдка в масле» → 239,
+    // «Воппер» → 192 — вместо придуманного коллоража
+    const items = preferBrandBase(list.map(normalizeItem).filter(Boolean))
     if (!items.length)
       throw new Error('Еда на фото не распознана — попробуйте снять блюдо ближе и при хорошем свете')
     cachePut(key, items)
@@ -1133,6 +1192,7 @@ export async function recognizeVoiceText(text, timeoutMs = 20000) {
               '{"text":"исправленная фраза","items":[{"name":"название по-русски","emoji":"эмодзи","kcal100":число,"p":число,"f":число,"c":число,"fib":число,"sug":число,"grams":число_или_null}]}\n' +
               'kcal100, p, f, c — пищевая ценность НА 100 ГРАММ, fib — клетчатка (г) и sug — сахара (г) на 100 г, ' +
               'grams — вес порции этого продукта в граммах (null, если вес понять нельзя). ' +
+              'Используй типовые справочные значения (таблицы состава, этикетки), не придумывай калорийность. ' +
               'Если во фразе нет еды — items: [].',
           },
         ],
@@ -1142,9 +1202,9 @@ export async function recognizeVoiceText(text, timeoutMs = 20000) {
 
     const content = data?.choices?.[0]?.message?.content
     const parsed = parseAiJson(content)
-    const items = (Array.isArray(parsed?.items) ? parsed.items : [])
-      .map(normalizeItem)
-      .filter(Boolean)
+    const items = preferBrandBase(
+      (Array.isArray(parsed?.items) ? parsed.items : []).map(normalizeItem).filter(Boolean)
+    )
     if (!items.length)
       throw new Error('Не понял фразу — попробуйте иначе, например: «Тарелка овсянки 250 граммов»')
 

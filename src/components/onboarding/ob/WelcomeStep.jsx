@@ -49,18 +49,23 @@ export function WelcomeStep({ onNext }) {
       nextLabel="Далее"
     >
       <View className="items-center pt-1">
-        {/* Мишка со свечением. Уроки скринов Кати 19.11 (00:29 и 00:39):
-            голый <Image style={{width:126, height:126}}> на её Expo Go
-            рисуется полоской 126×1px (ширина применялась, высота — нет),
-            а произвольные классы h-[148px] не применяются вовсе. Поэтому
-            размер держит ОБЁРТКА-«ПЛИТКА» (inline w/h + overflow hidden),
-            а картинка заполняет её на 100% — тот же приём, что в
-            Greeting на Главной, который у Кати работает. Свечение —
-            два эллипса за плиткой (видны по бокам), радиус 28 делает
-            из квадратной картинки аккуратную «иконку» */}
+        {/* Мишка со свечением. История скринов Кати: голый <Image> с
+            inline w/h рисуется полоской 126×1, произвольные классы
+            h-[148px] не применяются вовсе; плитка на чистых inline-стилях
+            (width:100, height:100, overflow hidden) тоже подвела — скрин
+            19.11 16:26 («верхняя штора закрывает медведя»): картинка с
+            width/height '100%' вылезла за плитку, голова срезалась,
+            скругления не видно. Рабочий на её телефоне паттерн —
+            из Greeting на Главной: обёртка на СТАНДАРТНЫХ классах w/h
+            (h-24 w-24 = 96px, шкала Tailwind, как h-11/w-11 в Greeting),
+            overflow-hidden и rounded-3xl тоже стандартные, а картинка
+            заполняет обёртку на 100% с resizeMode cover. Для страховки
+            размер обёртки дублируется inline-пикселями (inline px на
+            View на её устройстве работают — свечения ниже держатся
+            на inline w/h). Свечение — два эллипса за плиткой */}
         <View
           style={{
-            height: 112,
+            height: 108,
             width: 200,
             alignItems: 'center',
             justifyContent: 'center',
@@ -85,12 +90,8 @@ export function WelcomeStep({ onNext }) {
             }}
           />
           <View
-            style={{
-              width: 100,
-              height: 100,
-              borderRadius: 28,
-              overflow: 'hidden',
-            }}
+            className="h-24 w-24 overflow-hidden rounded-3xl bg-white/5"
+            style={{ width: 96, height: 96 }}
           >
             <Image
               source={BEAR}
