@@ -28,6 +28,7 @@ jest.mock('expo-sensors', () => ({
 // healthConnect возвращает not-android на iOS-стабе
 jest.mock('@/lib/healthConnect', () => ({
   hcStepsToday: jest.fn(async () => 0),
+  hcImportStepsHistory: jest.fn(async () => 0),
   hasHealthConnect: jest.fn(() => false),
 }))
 

@@ -15,12 +15,18 @@
 // держим максимум, поэтому источники не спорят — побеждает большее (HC
 // обычно включает и шаги, сделанные при закрытом приложении), а датчик
 // телефона остаётся резервом, если HC пуст.
+// Отзыв Кати 19.11 («шаги обновляются только выкл/вкл тумблера»): две
+// причины. (1) initialize() HC делал только тумблер — теперь это делает
+// ensureInit() в healthConnect.js при первом чтении сессии. (2) финальные
+// шаги «вчера» в историю попадали только по тумблеру — теперь импорт
+// истории (hcImportStepsHistory) сам идёт при старте сессии и при
+// переходе на новый день.
 
 import { AppState, Platform } from 'react-native'
 import { Pedometer } from 'expo-sensors'
 import { useActivityStore } from '@/store/useActivityStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
-import { hcStepsToday } from '@/lib/healthConnect'
+import { hcStepsToday, hcImportStepsHistory } from '@/lib/healthConnect'
 import { checkDayRollover } from '@/lib/rollover'
 
 const MAX_STEPS = 200000
@@ -30,6 +36,7 @@ let started = false
 let timer = null // iOS: минутный опрос исторического запроса датчика
 let subscription = null // Android: живой поток шагов датчика
 let hcTimer = null // Android: минутный опрос Health Connect
+let hcHistoryDone = false // импорт истории HC за сессию — один раз
 let shownDayKey = null // день, к которому относится показанная сумма
 let shownSteps = 0 // сколько шагов уже показали за этот день
 let subBase = 0 // показанная сумма на момент старта подписки (Android)
@@ -140,6 +147,15 @@ function startHealthConnect() {
   if (hcTimer) return
   pollHealthConnect()
   hcTimer = setInterval(pollHealthConnect, POLL_MS)
+  // Импорт истории HC — один раз за сессию: часы/телефон насчитали шаги
+  // вчера и сегодня утром при закрытом приложении — переносим их в
+  // дневную историю без ручного «выкл/вкл тумблера» (отзыв Кати 19.11).
+  // Внутри hcImportStepsHistory «сегодня» не трогается, дни с уже
+  // большими значениями не перезаписываются
+  if (!hcHistoryDone) {
+    hcHistoryDone = true
+    hcImportStepsHistory({ days: 3 }).catch(() => {})
+  }
 }
 
 function stopHealthConnect() {
@@ -207,6 +223,9 @@ export function startPedometerAgent() {
       else if (subscription) subscribeLive() // база событий обнулилась
       if (s.healthConnectEnabled && Platform.OS === 'android') {
         pollHealthConnect()
+        // Сессия пережила полночь: «вчера» стал прошлым днём — финальные
+        // вечерние шаги из HC переносим в историю (без тумблера)
+        hcImportStepsHistory({ days: 2 }).catch(() => {})
       }
     }
   })

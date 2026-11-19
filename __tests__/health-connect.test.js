@@ -1,7 +1,8 @@
 // Юнит-тесты чистых функций Health Connect. Нативный модуль
 // react-native-health-connect не трогаем: в тесты попадают только
 // чистые части src/lib/healthConnect.js (суммирование записей, ключи
-// дней, полночь локального дня).
+// дней, полночь локального дня) — плюс регресс инициализации сессии
+// (мок нативного модуля ниже).
 
 import {
   sumStepRecords,
@@ -11,6 +12,19 @@ import {
   HC_NOT_ANDROID,
 } from '@/lib/healthConnect'
 import { dayKeyOf } from '@/store/useHistoryStore'
+
+// Мок нативного модуля: readRecords отдаёт запись на 42 шага.
+// Нужен для регресса «чтение всегда после initialize» — см. блок ниже.
+jest.mock('react-native-health-connect', () => ({
+  __esModule: true,
+  initialize: jest.fn(async () => true),
+  requestPermission: jest.fn(
+    async () => [{ accessType: 'read', recordType: 'Steps' }],
+  ),
+  readRecords: jest.fn(async () => ({ records: [{ count: 42 }] })),
+  getSdkStatus: jest.fn(async () => 1),
+  SdkAvailabilityStatus: { SDK_AVAILABLE: 1, SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED: 2 },
+}))
 
 describe('sumStepRecords — сумма шагов из записей Steps', () => {
   test('пустые и битые входы дают 0', () => {
@@ -89,5 +103,72 @@ describe('константы статусов', () => {
     expect(HC_OK).not.toBe(HC_NOT_ANDROID)
     expect(typeof HC_OK).toBe('string')
     expect(typeof HC_NOT_ANDROID).toBe('string')
+  })
+})
+
+// Баг Кати 19.11: «шаги обновляются только выкл/вкл тумблера». Клиент HC
+// в новой сессии не инициализирован: readRecords без initialize() бросает,
+// опросы агента молча получали 0, а initialize вызывал только обработчик
+// тумблера. Регресс: ensureInit() сам делает initialize при первом чтении.
+describe('ensureInit — чтение шагов всегда после initialize', () => {
+  let Platform
+  beforeAll(async () => {
+    ;({ Platform } = require('react-native'))
+    Platform.OS = 'android'
+  })
+  afterAll(() => {
+    Platform.OS = 'ios' // стаб для остальных сессий jest
+  })
+
+  test('hcStepsBetween инициализирует клиента и возвращает шаги', async () => {
+    const mod = await import('react-native-health-connect')
+    const lib = await import('@/lib/healthConnect')
+    const steps = await lib.hcStepsBetween(1000, 2000)
+    expect(steps).toBe(42)
+    expect(mod.initialize).toHaveBeenCalledTimes(1)
+    // initialize строго раньше readRecords
+    expect(mod.initialize.mock.invocationCallOrder[0]).toBeLessThan(
+      mod.readRecords.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('повторные чтения в той же сессии не дублируют initialize', async () => {
+    const mod = await import('react-native-health-connect')
+    const lib = await import('@/lib/healthConnect')
+    mod.initialize.mockClear()
+    mod.readRecords.mockClear()
+    await lib.hcStepsBetween(1000, 2000)
+    await lib.hcStepsBetween(2000, 3000)
+    expect(mod.initialize).not.toHaveBeenCalled()
+    expect(mod.readRecords).toHaveBeenCalledTimes(2)
+  })
+
+  test('hcRequestStepsPermission тоже идёт после initialize', async () => {
+    // свежая сессия модуля — initialize должен прозвучать заново
+    jest.resetModules()
+    // resetModules пересоздаёт и стаб react-native: снова ставим Android
+    require('react-native').Platform.OS = 'android'
+    const lib = await import('@/lib/healthConnect')
+    const mod = await import('react-native-health-connect')
+    const ok = await lib.hcRequestStepsPermission()
+    expect(ok).toBe(true)
+    expect(mod.initialize).toHaveBeenCalledTimes(1)
+    expect(mod.initialize.mock.invocationCallOrder[0]).toBeLessThan(
+      mod.requestPermission.mock.invocationCallOrder[0],
+    )
+  })
+
+  test('initialize упал — чтение даёт 0, не падает; следующая попытка ретраит', async () => {
+    jest.resetModules()
+    require('react-native').Platform.OS = 'android'
+    const lib = await import('@/lib/healthConnect')
+    const mod = await import('react-native-health-connect')
+    mod.initialize.mockRejectedValueOnce(new Error('HC сломался'))
+    await expect(lib.hcStepsBetween(1000, 2000)).resolves.toBe(0)
+    expect(mod.readRecords).not.toHaveBeenCalled()
+    // промис сброшен — второе чтение повторяет initialize
+    mod.initialize.mockResolvedValueOnce(true)
+    await expect(lib.hcStepsBetween(1000, 2000)).resolves.toBe(42)
+    expect(mod.initialize).toHaveBeenCalledTimes(2)
   })
 })

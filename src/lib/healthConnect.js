@@ -14,6 +14,13 @@
 // только на Android и только из функций (в jest и на iOS/веб он не
 // трогается). Разрешение «Шаги» выдаётся через окно Health Connect,
 // системное ACTIVITY_RECOGNITION шагомеру оно не заменяет и не нужно.
+//
+// Урок 19.11 (отзыв Кати: «шаги обновляются только выкл/вкл тумблера»):
+// клиент Health Connect нужно initialize() в КАЖДОЙ сессии ДО первого
+// чтения — readRecords без него бросает ошибку, все опросы агента
+// молча получали 0, и шаги обновлялись только тумблером (его обработчик
+// делает initialize). Теперь ensureInit() сам инициализирует клиента
+// при первом чтении сессии.
 
 import { Platform } from 'react-native'
 import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
@@ -71,6 +78,26 @@ async function loadModule() {
   }
 }
 
+// initialize() — один раз за сессию, ДО первого чтения или запроса
+// разрешения (см. урок 19.11 в шапке). Промис кэшируется, чтобы параллельные
+// вызовы не дублировали initialize; при ошибке промис сбрасывается —
+// следующее чтение попробует снова (например, HC доустановился на ходу).
+let initPromise = null
+async function ensureInit() {
+  const m = await loadModule()
+  if (!m) return null
+  if (!initPromise) {
+    initPromise = m
+      .initialize()
+      .then(() => true)
+      .catch(() => {
+        initPromise = null
+        return false
+      })
+  }
+  return (await initPromise) ? m : null
+}
+
 // Доступен ли Health Connect на устройстве
 export async function hcAvailability() {
   const m = await loadModule()
@@ -101,10 +128,9 @@ export async function hcOpenSettings() {
 
 // Запросить разрешение «Шаги» (чтение). true — пользователь разрешил.
 export async function hcRequestStepsPermission() {
-  const m = await loadModule()
+  const m = await ensureInit()
   if (!m) return false
   try {
-    await m.initialize()
     const granted = await m.requestPermission([
       { accessType: 'read', recordType: 'Steps' },
     ])
@@ -118,8 +144,10 @@ export async function hcRequestStepsPermission() {
 }
 
 // Шаги за период [startMs, endMs): сумма записей Steps. 0 — при ошибке.
+// ensureInit() обязателен: без initialize() в этой сессии readRecords
+// бросает ошибку — раньше это выглядело как «шаги не синхронизируются»
 export async function hcStepsBetween(startMs, endMs) {
-  const m = await loadModule()
+  const m = await ensureInit()
   if (!m) return 0
   try {
     const { records } = await m.readRecords('Steps', {
