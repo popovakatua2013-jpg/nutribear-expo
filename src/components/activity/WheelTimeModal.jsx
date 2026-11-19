@@ -8,6 +8,7 @@
 // применяется как есть, расчёт остаётся подсказкой. Без медпретензий.
 import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Pencil, RotateCcw, X } from 'lucide-react-native'
 import { INTENSITY_LEVELS, intensityMet, kcalBurned, parseManualKcal } from '@/lib/data/exercises'
 import { formatNum } from '@/lib/format'
@@ -23,6 +24,10 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
   // и набрать заново), вне правки она всегда валидна или null.
   const [manualKcal, setManualKcal] = useState(null)
   const [editingKcal, setEditingKcal] = useState(false)
+  // Системный отступ снизу: на Samsung с 3-кнопочной навигацией панель
+  // ~48dp в edge-to-edge перекрывала нижнюю часть шторки (скрин Кати
+  // 19.11: «строка телефона частично закрывает кнопку Готово»)
+  const insets = useSafeAreaInsets()
 
   // Каждое открытие — старт от текущего выбора: минуты из поля формы
   // (или типовая длительность тренировки typ), интенсивность —
@@ -88,7 +93,10 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
+        <Pressable
+          style={[styles.sheet, { paddingBottom: Math.max(34, insets.bottom + 12) }]}
+          onPress={() => {}}
+        >
           <View style={styles.head}>
             <Text style={styles.title} numberOfLines={1}>
               {exercise ? `${exercise.emoji} ${exercise.name}` : 'Время и интенсивность'}
@@ -220,7 +228,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingTop: 16,
     paddingHorizontal: 20,
-    paddingBottom: 34,
+    // Нижний отступ теперь динамический: Math.max(34, insets.bottom + 12)
+    // в шапке Pressable — при 3-кнопочной навигации панель выше,
+    // чем жестовая, фиксированных 34 не хватало
     gap: 10,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
