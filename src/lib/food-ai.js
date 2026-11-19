@@ -337,6 +337,9 @@ const INGREDIENTS = [
   { n: 'Говядина', w: ['говядина', 'говяжье'], kcal100: 220, p: 27.0, f: 12.0, c: 0, fib: 0, sug: 0 },
   { n: 'Курица', w: ['курица', 'курицу', 'курицей'], kcal100: 150, p: 25.0, f: 5.0, c: 0, fib: 0, sug: 0 },
   { n: 'Куриное филе', w: ['филе', 'грудка'], kcal100: 137, p: 29.6, f: 1.8, c: 0.4, fib: 0, sug: 0 },
+  // Бедро жирнее грудки — усреднённое тушёное с кожей (отзыв Кати 19.11:
+  // «бедро куриное 150 гр» считалось как безымянная «Курица»)
+  { n: 'Куриное бедро', w2: ['куриное бедро', 'бедро куриное'], w: ['бедро', 'бедрышка', 'бедрышки'], kcal100: 190, p: 22.0, f: 12.5, c: 0, fib: 0, sug: 0 },
   { n: 'Индейка', w: ['индейка'], kcal100: 160, p: 25.0, f: 6.0, c: 0, fib: 0, sug: 0 },
   { n: 'Фарш', w: ['фарш', 'фарша'], kcal100: 250, p: 17.0, f: 20.0, c: 0, fib: 0, sug: 0 },
   { n: 'Картошка', w: ['картошка', 'картофель', 'картошку'], kcal100: 80, p: 2.0, f: 0.4, c: 16.5, fib: 1.3, sug: 0.9 },
@@ -469,11 +472,13 @@ export function estimateFromDescription(raw) {
   const LITER_RE = /^(литров|литра|литр|л)$/
   const NUM_RE = /^\d{1,4}(\.\d{1,2})?$/
   const items = []
+  const missed = [] // граммовки, чьё название не нашлось в базе
   let liters = 0
   let pending = [] // слова ДО граммовки («свинина 300 грамм»)
   let afterBuf = [] // слова ПОСЛЕ граммовки («300 грамм свинины»)
   let awaitGrams = 0 // граммовка, чьё название ещё не встретилось
   let expectName = false // после граммовки слова копим в afterBuf
+  let missedName = '' // слова из pending, когда продукт так и не нашёлся
 
   const takeItem = (ing, grams) => {
     if (ing && items.length < 20)
@@ -484,8 +489,11 @@ export function estimateFromDescription(raw) {
     if (!awaitGrams) return
     const ing = lookupIngredient(afterBuf) || findLocalDish(afterBuf.join(' '))
     takeItem(ing, awaitGrams)
+    if (!ing && (missedName || afterBuf.length))
+      missed.push({ name: missedName || afterBuf.join(' '), grams: awaitGrams })
     awaitGrams = 0
     afterBuf = []
+    missedName = ''
   }
 
   for (let i = 0; i < tokens.length; i++) {
@@ -499,12 +507,16 @@ export function estimateFromDescription(raw) {
     if (UNIT_WORDS.has(next)) {
       resolveAwait()
       const grams = parseFloat(t)
+      const pendingWords = pending // слова-название до граммовки
       const ing =
         lookupIngredient(pending) || findLocalDish(pending.join(' '))
       takeItem(ing, grams)
       pending = []
-      // имя могло быть до граммовки — если нет, ждём его после
+      // имя могло быть до граммовки — если нет, ждём его после; слова
+      // до граммовки запоминаем: если продукт не найдётся, покажем
+      // его в missed («бедро кролика 150 г» не должно исчезать молча)
       awaitGrams = ing ? 0 : grams
+      missedName = ing ? '' : pendingWords.join(' ')
       expectName = !ing
       i++ // съели слово-единицу
     } else if (LITER_RE.test(next)) {
@@ -547,7 +559,18 @@ export function estimateFromDescription(raw) {
     fib: Math.round((fib / weight) * 1000) / 10,
     sug: Math.round((sug / weight) * 1000) / 10,
     weight: Math.round(weight),
-    items: items.map((it) => ({ name: it.n, grams: it.grams })),
+    // Ккал каждого ингредиента — для окна «Исправить блюдо»: Катя 19.11
+    // («не видно как считает калории, из каких ингредиентов») должна
+    // видеть, что именно вошло в цифру
+    items: items.map((it) => ({
+      name: it.n,
+      grams: it.grams,
+      kcal: Math.round((it.kcal100 * it.grams) / 100),
+    })),
+    // Нераспознанные позиции: граммовка была, продукта в базе нет —
+    // в расчёт они не вошли, но молча терять нельзя (пользователь
+    // решит: поправить название или принять)
+    missed: missed.map((m) => ({ name: m.name, grams: m.grams })),
   }
 }
 

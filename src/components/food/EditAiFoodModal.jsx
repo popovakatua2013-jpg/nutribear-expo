@@ -1,8 +1,24 @@
 // Окно «Исправить блюдо»: открывается с экрана подтверждения (SelectedFood),
-// если ИИ распознал неверно. Можно поправить название, калории и БЖУ на 100 г —
+// если распознавание ошиблось. Правится название, калории и БЖУ на 100 г —
 // итог за порцию пересчитывается сразу, до добавления в дневник.
+//
+// Отзыв Кати 19.11 (скрины 09:59/10:04):
+//   1. «Не видно кнопку "пересчитать"» — чип пересчёта теперь сразу
+//      под описанием состава, а не текстовой ссылкой над ним;
+//   2. «не видно как считает калории, из каких ингредиентов» — под
+//      чипом живая расшифровка: каждый продукт, его вес и его ккал
+//      (бесплатный локальный разбор estimateFromDescription);
+//   3. «убрать не знаете БЖУ...» — подсказка «подставить примерные»
+//      убрана, расчёт ведёт чип пересчёта;
+//   4. «выход блюда один, а порция другая» — в предпросмотре выход по
+//      составу (сумма граммовок) показан отдельной строкой, чип
+//      «сделать порцией» переносит его в грамм;
+//   5. «клавиатура перекрывает половину окна» — как в «Записать вес»,
+//      ручной отступ useKeyboardGuard вместо behavior="height".
+//   Клетчатка и сахар подтягиваются сами: они заполняются из состава
+//   сразу, не дожидаясь нажатия пересчёта.
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   KeyboardAvoidingView,
   Modal,
@@ -13,12 +29,13 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { Pencil, Wand2, X } from 'lucide-react-native'
+import { Pencil, TriangleAlert, Wand2, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { estimateBju, bjuForPortion, bjuLine } from '@/lib/data/bju'
+import { bjuForPortion, bjuLine } from '@/lib/data/bju'
 import { formatNum } from '@/lib/format'
 import { estimateByName, estimateFromDescription } from '@/lib/food-ai'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 
 // Подсказка под заголовком — откуда пришли значения
 const SOURCE_HINT = {
@@ -35,6 +52,9 @@ function parseNum(text, fallback, min, max) {
 
 export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   const insets = useSafeAreaInsets()
+  // Android: собственное окно Modal не ужмётся под клавиатуру сам —
+  // считаем отступ сами (тот же приём, что в «Записать вес»)
+  const kb = useKeyboardGuard()
   const [name, setName] = useState(item?.name ?? '')
   const [kcal, setKcal] = useState(
     item?.kcal100 != null ? String(item.kcal100) : ''
@@ -47,6 +67,27 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   const [looking, setLooking] = useState(false)
   const [fillHint, setFillHint] = useState('')
   const [desc, setDesc] = useState(item?.desc ?? '')
+  // «Порция = выход»: null — порция не трогаем (приходит из грамма на
+  // экране подтверждения), число — выбран выход по составу
+  const [overrideGrams, setOverrideGrams] = useState(null)
+
+  // Живой разбор состава из описания (бесплатно, без сети): сумма
+  // граммовок = выход блюда, каждый ингредиент = своя ккал. Пересобирается
+  // при каждом изменении описания — расшифровка всегда актуальна.
+  const recipe = useMemo(() => {
+    const d = String(desc || '').trim()
+    if (!d) return null
+    const r = estimateFromDescription(d)
+    return r && r.kcal100 > 0 ? r : null
+  }, [desc])
+
+  // Клетчатка и сахар подтягиваются сами, но бережно: только пустые
+  // поля (вписанное пользователем не перезатираем)
+  useEffect(() => {
+    if (!recipe) return
+    setFib((cur) => (cur || !(recipe.fib > 0) ? cur : String(recipe.fib)))
+    setSug((cur) => (cur || !(recipe.sug > 0) ? cur : String(recipe.sug)))
+  }, [recipe])
 
   if (!item) return null
 
@@ -61,16 +102,9 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   const fibN = parseNum(fib, item.fib ?? 0, 0, 50)
   const sugN = parseNum(sug, item.sug ?? 0, 0, 100)
   const gramsN = Math.max(1, Math.min(2000, Math.round(Number(grams) || 100)))
-  const previewKcal = Math.max(1, Math.round((kcalN * gramsN) / 100))
-  const previewBju = bjuForPortion(bjuN, gramsN)
-
-  // Нет точных БЖУ? Раскладываем калории по классической тарелке (20/30/50)
-  function applyExampleBju() {
-    const est = estimateBju(kcalN)
-    setP(String(est.p))
-    setF(String(est.f))
-    setC(String(est.c))
-  }
+  const portionG = overrideGrams ?? gramsN
+  const previewKcal = Math.max(1, Math.round((kcalN * portionG) / 100))
+  const previewBju = bjuForPortion(bjuN, portionG)
 
   // История дневника: если такое блюдо уже ели — берём его КБЖУ (пересчёт на 100 г)
   function findInHistory(query) {
@@ -89,18 +123,15 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
     }
   }
 
-  // Кнопка «Посчитать КБЖУ»: 1) по составу из описания (бесплатно и точно),
+  // Чип «Пересчитать КБЖУ»: 1) по составу из описания (бесплатно и точно),
   // 2) по истории дневника, 3) по названию (база → память → ИИ).
   // Технических подсказок пользователю не показываем — только ошибки ввода.
   async function autofill() {
-    const q = name.trim()
-    const d = desc.trim()
     setLooking(true)
     setFillHint('')
     try {
       // 1) Состав с граммовками («свинина 300 грамм, картошка 500 грамм»)
-      const recipe = d ? estimateFromDescription(d) : null
-      if (recipe && recipe.kcal100 > 0) {
+      if (recipe) {
         setKcal(String(recipe.kcal100))
         setP(String(recipe.p))
         setF(String(recipe.f))
@@ -110,6 +141,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
         return
       }
       // 2) Название: сначала история дневника
+      const q = name.trim()
       if (!q) {
         setFillHint(
           'Впишите название или состав с граммовками — например: свинина 300 грамм, картошка 500 грамм'
@@ -151,6 +183,8 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
       fib: fibN,
       sug: sugN,
       desc: desc.trim(),
+      // «порция = выход»: null — грамм на экране подтверждения не трогаем
+      grams: overrideGrams,
     })
     onClose()
   }
@@ -158,11 +192,17 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        onLayout={kb.onLayout}
         className="flex-1 justify-end bg-black/60 px-3"
-        style={{ paddingBottom: 12 + insets.bottom }}
+        style={{ paddingBottom: kb.padBottom > 0 ? kb.padBottom + 12 : 12 + insets.bottom }}
       >
-        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        {/* flexShrink: шторка сжимается, если под клавиатуру осталось
+            мало места, — скролл внутри, шапка всегда на экране */}
+        <View
+          className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          style={{ flexShrink: 1 }}
+        >
           {/* Шапка: левый блок flex-1 — длинный подзаголовок сжимается,
               а не выталкивает крестик за край окна */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-3 pt-4">
@@ -189,6 +229,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
           <ScrollView
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
+            style={{ flexShrink: 1 }}
           >
             {/* Название */}
             <Text className="font-sans text-[16px] font-semibold uppercase text-bear-sub">
@@ -204,23 +245,6 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               className="mt-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] text-bear-text"
             />
 
-            {/* Автоподстановка КБЖУ по названию: история дневника → ИИ */}
-            <Pressable
-              onPress={autofill}
-              disabled={looking}
-              accessibilityRole="button"
-              accessibilityLabel="Подставить КБЖУ по названию"
-              className="mt-2 flex-row items-center gap-1.5 self-start"
-            >
-              <Wand2 size={16} color="#7DD3FC" />
-              <Text className="text-[16.5px] font-semibold text-[#7DD3FC]">
-                {looking ? 'Считаем КБЖУ…' : 'Посчитать КБЖУ по составу или названию'}
-              </Text>
-            </Pressable>
-            {fillHint ? (
-              <Text className="mt-1 text-[15px] leading-[17px] text-bear-sub">{fillHint}</Text>
-            ) : null}
-
             {/* Описание — своими словами (попадёт в дневник) */}
             <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Описание (необязательно)
@@ -235,6 +259,58 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               placeholderTextColor="#8B96B8"
               className="mt-1 min-h-[60px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
             />
+
+            {/* Пересчёт — сразу под составом (отзыв Кати 19.11: кнопку
+                «пересчитать» было не видно, теперь это чип на видном месте) */}
+            <Pressable
+              onPress={autofill}
+              disabled={looking}
+              accessibilityRole="button"
+              accessibilityLabel="Пересчитать КБЖУ по составу или названию"
+              className="mt-2 flex-row items-center gap-1.5 self-start rounded-full border border-[#7DD3FC]/40 bg-[#7DD3FC]/10 px-3.5 py-2 active:opacity-80"
+            >
+              <Wand2 size={15} color="#7DD3FC" />
+              <Text className="text-[16px] font-semibold text-[#7DD3FC]">
+                {looking ? 'Считаем…' : 'Пересчитать КБЖУ'}
+              </Text>
+            </Pressable>
+            {fillHint ? (
+              <Text className="mt-1.5 text-[15px] leading-[17px] text-bear-sub">{fillHint}</Text>
+            ) : null}
+
+            {/* Расшифровка расчёта: что и сколько вошло в калории.
+                Показывается сразу, как только в описании появился состав */}
+            {recipe ? (
+              <View className="mt-2.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5">
+                <Text className="font-sans text-[12px] font-semibold uppercase text-bear-sub">
+                  Как посчитано
+                </Text>
+                {recipe.items.map((it) => (
+                  <View key={it.name} className="mt-1 flex-row items-center justify-between">
+                    <Text numberOfLines={1} className="min-w-0 flex-1 pr-2 font-sans text-[15px] text-bear-soft">
+                      {it.name} · {it.grams} г
+                    </Text>
+                    <Text className="shrink-0 font-sans text-[15px] text-bear-sub">
+                      ≈ {formatNum(it.kcal)} ккал
+                    </Text>
+                  </View>
+                ))}
+                {/* Нераспознанные позиции: в расчёт не вошли — видно сразу */}
+                {recipe.missed.map((m) => (
+                  <View key={`${m.name}-${m.grams}`} className="mt-1 flex-row items-center justify-between">
+                    <View className="min-w-0 flex-1 flex-row items-center pr-2">
+                      <TriangleAlert size={13} color="#FBBF24" />
+                      <Text numberOfLines={1} className="ml-1 min-w-0 flex-1 font-sans text-[15px] text-bear-soft">
+                        {`${m.name} · ${m.grams} г`}
+                      </Text>
+                    </View>
+                    <Text className="shrink-0 font-sans text-[13px] text-[#FBBF24]">
+                      нет в базе
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             {/* Калории на 100 г */}
             <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
@@ -278,16 +354,6 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               ))}
             </View>
 
-            <Pressable
-              onPress={applyExampleBju}
-              accessibilityRole="button"
-              className="mt-2 self-start"
-            >
-              <Text className="text-[16.5px] font-semibold text-[#7DD3FC]">
-                Не знаете БЖУ? Подставить примерные по калориям
-              </Text>
-            </Pressable>
-
             {/* Клетчатка и сахар на 100 г — для рейтинга питания */}
             <Text className="mt-3 font-sans text-[16px] font-semibold uppercase text-bear-sub">
               Клетчатка · сахар на 100 г (для рейтинга)
@@ -318,11 +384,31 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               Необязательно, но с ними рейтинг питания станет точнее
             </Text>
 
-            {/* Живой предпросмотр за порцию */}
+            {/* Живой предпросмотр: выход по составу и порция — разные вещи
+                (отзыв Кати 19.11: «выход блюда один, а порция другая») */}
             <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">
+              {recipe ? (
+                <View className="mb-1.5 flex-row items-center justify-between">
+                  <Text className="font-sans text-[16px] text-bear-soft">
+                    Выход по составу ≈ {recipe.weight} г
+                  </Text>
+                  {recipe.weight !== portionG ? (
+                    <Pressable
+                      onPress={() => setOverrideGrams(recipe.weight)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Сделать порцию равной выходу блюда"
+                      className="flex-row items-center rounded-full border border-[#C4B5FD]/40 bg-[#C4B5FD]/10 px-2.5 py-1 active:opacity-80"
+                    >
+                      <Text className="text-[13px] font-semibold text-[#C4B5FD]">
+                        сделать порцией
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
               <View className="flex-row items-center justify-between">
                 <Text className="font-sans text-[16px] text-bear-soft">
-                  Порция {gramsN} г
+                  Порция {portionG} г
                 </Text>
                 <Text className="font-extrabold text-[22px] text-white">
                   ≈ {formatNum(previewKcal)}{' '}

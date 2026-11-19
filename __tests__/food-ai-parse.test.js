@@ -21,9 +21,9 @@ describe('estimateFromDescription — разбор состава рецепта
     const est = estimateFromDescription('свинина 300 грамм, картошка 500 грамм, лук 50 грамм')
     expect(est.weight).toBe(850)
     expect(est.items).toEqual([
-      { name: 'Свинина', grams: 300 },
-      { name: 'Картошка', grams: 500 },
-      { name: 'Лук', grams: 50 },
+      { name: 'Свинина', grams: 300, kcal: 750 },
+      { name: 'Картошка', grams: 500, kcal: 400 },
+      { name: 'Лук', grams: 50, kcal: 21 },
     ])
     // 250×3 + 80×5 + 41×0.5 = 1170.5 ккал на 850 г → 138 ккал / 100 г
     expect(est.kcal100).toBe(138)
@@ -32,9 +32,9 @@ describe('estimateFromDescription — разбор состава рецепта
   test('новые ингредиенты: сливки + сгущёнка + орехи (торт)', () => {
     const est = estimateFromDescription('сливки 200 грамм, сгущенное молоко 300 грамм, грецкие орехи 100 грамм')
     expect(est.items).toEqual([
-      { name: 'Сливки 33%', grams: 200 },
-      { name: 'Сгущённое молоко', grams: 300 },
-      { name: 'Грецкие орехи', grams: 100 },
+      { name: 'Сливки 33%', grams: 200, kcal: 674 },
+      { name: 'Сгущённое молоко', grams: 300, kcal: 960 },
+      { name: 'Грецкие орехи', grams: 100, kcal: 654 },
     ])
     expect(est.weight).toBe(600)
     // 337×2 + 320×3 + 654×1 = 2288 ккал на 600 г → 381 ккал / 100 г
@@ -43,27 +43,27 @@ describe('estimateFromDescription — разбор состава рецепта
 
   test('баранина для плова распознаётся', () => {
     const est = estimateFromDescription('баранина 400 грамм, лук 100 грамм, морковь 150 грамм')
-    expect(est.items[0]).toEqual({ name: 'Баранина', grams: 400 })
+    expect(est.items[0]).toEqual({ name: 'Баранина', grams: 400, kcal: 836 })
     expect(est.weight).toBe(650)
   })
 
   test('двухсловные названия: «томатная паста» — не помидор', () => {
     const est = estimateFromDescription('томатная паста 50 грамм, кетчуп 30 грамм')
     expect(est.items).toEqual([
-      { name: 'Томатная паста', grams: 50 },
-      { name: 'Кетчуп', grams: 30 },
+      { name: 'Томатная паста', grams: 50, kcal: 41 },
+      { name: 'Кетчуп', grams: 30, kcal: 28 },
     ])
   })
 
   test('порядок «300 грамм свинины» — название после граммовки', () => {
     const est = estimateFromDescription('300 грамм свинины, 200 грамм огурцов соленых')
-    expect(est.items[0]).toEqual({ name: 'Свинина', grams: 300 })
-    expect(est.items[1]).toEqual({ name: 'Огурцы солёные', grams: 200 })
+    expect(est.items[0]).toEqual({ name: 'Свинина', grams: 300, kcal: 750 })
+    expect(est.items[1]).toEqual({ name: 'Огурцы солёные', grams: 200, kcal: 24 })
   })
 
   test('миллилитры: «сливки 100 мл» считаются как граммы', () => {
     const est = estimateFromDescription('сливки 100 мл')
-    expect(est.items).toEqual([{ name: 'Сливки 33%', grams: 100 }])
+    expect(est.items).toEqual([{ name: 'Сливки 33%', grams: 100, kcal: 337 }])
     expect(est.kcal100).toBe(337)
   })
 
@@ -77,6 +77,39 @@ describe('estimateFromDescription — разбор состава рецепта
 
   test('незнакомые слова дают null (уйдёт в ИИ)', () => {
     expect(estimateFromDescription('пангасиус 300 грамм, кускус 200 грамм')).toBeNull()
+  })
+
+  // Отзыв Кати 19.11 (скрин 09:59): «Масло сливочное -10 гр / Бедро
+  // куриное -150 гр / Перловка -50 гр / Греча 100 гр» — раньше бедро
+  // считалось безымянной «Курицей», а в окне не было видно, что вошло
+  // в расчёт. Бедро — самостоятельный ингредиент, у каждого продукта
+  // видна своя ккал, выход по составу — сумма граммовок
+  test('обед Кати: бедро куриное распознаётся, выход 310 г, ккал по каждому', () => {
+    const est = estimateFromDescription(
+      'Масло сливочное -10 гр\nБедро куриное -150 гр\nПерловка -50 гр\nГреча 100 гр',
+    )
+    expect(est.weight).toBe(310)
+    expect(est.items.map((i) => i.name)).toEqual([
+      'Масло сливочное',
+      'Куриное бедро',
+      'Перловка отварная',
+      'Гречка',
+    ])
+    // 750×0.1 + 190×1.5 + 109×0.5 + 110×1 = 524.5 ккал на 310 г
+    expect(est.items.map((i) => i.kcal)).toEqual([75, 285, 55, 110])
+    expect(est.kcal100).toBe(169)
+    expect(est.missed).toEqual([])
+  })
+
+  test('«бедро 150 грамм» одним словом тоже распознаётся', () => {
+    const est = estimateFromDescription('бедро 150 грамм')
+    expect(est.items[0].name).toBe('Куриное бедро')
+  })
+
+  test('нераспознанный продукт не теряется молча — попадает в missed', () => {
+    const est = estimateFromDescription('курица 200 грамм, пангасиус 100 грамм')
+    expect(est.items).toEqual([{ name: 'Курица', grams: 200, kcal: 300 }])
+    expect(est.missed).toEqual([{ name: 'пангасиус', grams: 100 }])
   })
 
   test('битый вход — null, а не падение', () => {

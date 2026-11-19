@@ -58,6 +58,10 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
       sug: next.sug,
       desc: next.desc,
     })
+    // «Порция = выход» из окна правки: чип перенёс выход по составу
+    // в грамм порции (отзыв Кати 19.11: «выход блюда один, а порция
+    // другая может быть» — теперь их видно и синхронизировать легко)
+    if (Number(next.grams) > 0) setGrams(String(Math.round(Number(next.grams))))
     toast({
       title: '✏️ Исправлено',
       description: `${next.name}: ${next.kcal100} ккал / 100 г`,
