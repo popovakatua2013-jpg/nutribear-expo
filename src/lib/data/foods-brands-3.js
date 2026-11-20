@@ -86,8 +86,6 @@ export const BRAND3_FOODS = [
   { id: 'brand3-3korochki', emoji: '🥨', name: 'Сухарики «3 корочки» хрен', kcal: 392, p: 8.5, f: 13.5, c: 59, fib: 4, sug: 3, defaultGrams: 30, tags: ['snack'], al: ['три корочки', '3 корочки'] },
   { id: 'brand3-araxis-otmertina', emoji: '🥜', name: 'Арахис жареный солёный «От Мартина»', kcal: 585, p: 26, f: 49, c: 10, fib: 7, sug: 4, defaultGrams: 30, tags: ['snack'], al: ['арахис отмартина', 'арахис жареный'] },
   { id: 'brand3-semechki-otmertina', emoji: '🌻', name: 'Семечки жареные «От Мартина»', kcal: 584, p: 20.7, f: 52.5, c: 11.5, fib: 8.9, sug: 2.6, defaultGrams: 30, tags: ['snack'], al: ['семечки отмартина', 'семечки жареные'] },
-  { id: 'brand3-izyum', emoji: '🍇', name: 'Изюм', kcal: 277, p: 2.3, f: 0.5, c: 65.8, fib: 3, sug: 65, defaultGrams: 30, tags: ['snack'], al: ['изюм'] },
-  { id: 'brand3-kuraga', emoji: '🍑', name: 'Курага', kcal: 284, p: 3.4, f: 0.5, c: 66.5, fib: 7, sug: 53, defaultGrams: 30, tags: ['snack'], al: ['курага'] },
   { id: 'brand3-zefir-rotfront', emoji: '🍬', name: 'Зефир в шоколаде «Рот Фронт»', kcal: 384, p: 0.9, f: 10, c: 72.5, fib: 1, sug: 60, defaultGrams: 30, tags: ['snack'], al: ['рот фронт зефир', 'зефир в шоколаде'] },
   { id: 'brand3-pastila-belevskaya', emoji: '🍬', name: 'Пастила «Белёвская» яблочная', kcal: 320, p: 0.5, f: 0, c: 80, fib: 4, sug: 72, defaultGrams: 30, tags: ['snack'], al: ['белёвская пастила', 'пастила яблочная'] },
   { id: 'brand3-marmelad-udarnica', emoji: '🍬', name: 'Мармелад «Ударница» лимонный', kcal: 320, p: 0.2, f: 0, c: 80, fib: 1, sug: 78, defaultGrams: 30, tags: ['snack'], al: ['мармелад ударница', 'ударница'] },

@@ -104,6 +104,11 @@ export function PillPicker({ options, value, onChange, accessibilityLabel }) {
 
 // Строка меню: иконка-квадрат + название + значение + шеврон.
 // Тап раскрывает содержимое (виджет) прямо внутри секции.
+// Значение: если название+значение короткие — iOS-стиль, значение
+// справа одной строкой. Если вместе не влезают («Настройки дневника —
+// строгий остаток», «Экспорт и импорт данных — копия в файл»: скрин
+// Кати 20.11 — «строгий оста…», «Копия в ф…») — значение уходит
+// подзаголовком под название, чтобы ничего не обрезалось.
 // Строка-действие: если задан onPress — тап вызывает его вместо
 // раскрытия (например, «Документы» открывает окно), шеврон остаётся
 // направленным вправо. Строка-переключатель: если задан toggle —
@@ -143,6 +148,11 @@ export function MenuRow({
           setOpen(!open)
         }
 
+  // Значение рядом с названием (одной строкой) — только когда оба
+  // короткие; длинные комбинации идут подзаголовком
+  const valueInline =
+    !toggle && value != null && String(value).length > 0 && title.length + String(value).length <= 26
+
   return (
     <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-white/[0.06]' : ''}>
       <Pressable
@@ -173,28 +183,41 @@ export function MenuRow({
             справа («перенос на другое устройство») отнимало всю ширину,
             заголовок сворачивался в колонку по одной букве, а карточка
             «Документы» разъезжалась на полэкрана в высоту (отзыв Кати
-            17.11: «блоки уехали»). Перенос на 2+ строки — как раньше */}
-        <Text
-          maxFontSizeMultiplier={1.1}
-          className="min-w-0 font-bold text-[16.5px] text-bear-text"
+            17.11: «блоки уехали»). Перенос на 2+ строки — как раньше.
+            Под длинным значением — подзаголовок второй строкой (скрин
+            Кати 20.11: «строгий оста…», «Копия в ф…» — обрезались) */}
+        <View
+          className="min-w-0"
           style={{ flexGrow: 1, flexShrink: 1, flexBasis: 'auto' }}
         >
-          {title}
-        </Text>
+          <Text
+            maxFontSizeMultiplier={1.1}
+            className="font-bold text-[16.5px] text-bear-text"
+          >
+            {title}
+          </Text>
+          {!valueInline && !toggle && value ? (
+            <Text
+              maxFontSizeMultiplier={1.1}
+              className="mt-0.5 font-sans text-[13px] leading-[16px] text-bear-dim"
+            >
+              {value}
+            </Text>
+          ) : null}
+        </View>
 
         {toggle ? (
           <MiniToggle value={toggle.value} onChange={toggle.onChange} label={toggle.label || title} />
         ) : (
           <>
-            {/* Живое значение: время, ккал, статус, сборка. Может сжиматься
-                и обрезается многоточием (shrink-0 запрещён — см. выше),
-                но не отнимает у заголовка больше половины строки */}
-            {value ? (
+            {/* Короткое живое значение справа: время, ккал, статус, сборка.
+                Длинные — подзаголовком под названием (см. выше) */}
+            {valueInline && value ? (
               <Text
-                numberOfLines={1}
+                numberOfLines={2}
                 maxFontSizeMultiplier={1.1}
                 className="font-sans text-[13.5px] text-bear-dim"
-                style={{ flexShrink: 1, maxWidth: '55%' }}
+                style={{ flexShrink: 1, maxWidth: '55%', textAlign: 'right' }}
               >
                 {value}
               </Text>

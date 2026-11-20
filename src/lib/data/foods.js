@@ -11,6 +11,13 @@ import { XL3_FOODS } from './foods-xl3'
 import { BRAND_FOODS } from './foods-brands'
 import { BRAND2_FOODS } from './foods-brands-2'
 import { BRAND3_FOODS } from './foods-brands-3'
+import { BRAND4_FOODS } from './foods-brands-4'
+import { BRAND5_FOODS } from './foods-brands-5'
+import { BRAND6_FOODS } from './foods-brands-6'
+import { BRAND7_FOODS } from './foods-brands-7'
+import { BRAND8_FOODS } from './foods-brands-8'
+import { BRAND9_FOODS } from './foods-brands-9'
+import { BRAND10_FOODS } from './foods-brands-10'
 import { FASTFOOD_FOODS } from './foods-fastfood'
 import { MICROS } from './micros'
 
@@ -97,6 +104,18 @@ export const FOODS = [
   // хлеб, соусы, снеки, напитки, консервы, заморозка (файл 3)
   ...BRAND2_FOODS,
   ...BRAND3_FOODS,
+  // Большое расширение по просьбе Кати 20.11 («максимально сколько
+  // можешь за раз, желательно 2-3 тыс позиций»): молочка/детское (4),
+  // мясо/колбасы/заморозка (5), бакалея/соусы/консервы (6), сладкое/
+  // снеки/мороженое/выпечка (7), напитки/чай/кофе (8), фастфуд сетей
+  // + свежее (9), ВкусВилл/готовые блюда/деликатесы (10)
+  ...BRAND4_FOODS,
+  ...BRAND5_FOODS,
+  ...BRAND6_FOODS,
+  ...BRAND7_FOODS,
+  ...BRAND8_FOODS,
+  ...BRAND9_FOODS,
+  ...BRAND10_FOODS,
   // Фастфуд сетей: Вкусно и точка, Ростикс (КФС), Бургер Кинг, Додо,
   // Теремок, Крошка Картошка, Шоколадница, Cofix, Coffee Like
   ...FASTFOOD_FOODS,

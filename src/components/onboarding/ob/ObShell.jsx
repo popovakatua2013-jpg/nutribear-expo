@@ -23,9 +23,12 @@ export function ObShell({
 
   return (
     <View className="flex-1" style={{ paddingBottom: insets.bottom + 16 }}>
+      {/* Шапка-«шторка» компактнее по отзыву Кати 20.11 («шторка всё
+          равно очень большая»): отступ сверху и размер заголовка
+          уменьшены — медведю достаётся больше места */}
       <View
         className="flex-row items-center gap-3 px-5"
-        style={{ paddingTop: insets.top + 8 }}
+        style={{ paddingTop: insets.top + 4 }}
       >
         {onBack ? (
           <Pressable
@@ -44,14 +47,14 @@ export function ObShell({
               {sub}
             </Text>
           ) : null}
-          <Text numberOfLines={1} className="font-extrabold text-[26px] tracking-tight text-bear-text">
+          <Text numberOfLines={1} className="font-extrabold text-[22px] tracking-tight text-bear-text">
             {title}
           </Text>
         </View>
       </View>
 
       <Content
-        className="mt-5 flex-1"
+        className="mt-4 flex-1"
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: 8,

@@ -201,25 +201,44 @@ function findLocalDish(query) {
 // колбаса, а варёная колбаса „Вязанка“»). Правило то же, что у блюд:
 // все основы названия должны быть во фразе; алиасы (f.al) покрывают
 // короткие запросы («вязанка докторская»). Побеждает самое длинное
-// название. КБЖУ — этикеточные, бесплатно, без ИИ
+// название, а при цифрах в запросе — позиция с совпавшей цифрой
+// («молоко 2.5» выбирает 2,5%, а не первое попавшееся молоко: раньше
+// «30% сметаны» нельзя было различить от 10/15/20% — цифры выкашивались
+// из основ и совпавшая первая сметана получала 117 ккал вместо 291;
+// отзыв Кати 20.11 про «придуманный коллораж»). КБЖУ — этикеточные,
+// бесплатно, без ИИ
 const FOOD_INDEX = FOODS.map((f) => ({
   f,
   stems: stemsOf(f.name),
   aliases: (f.al || []).map(stemsOf),
   len: normName(f.name).length,
+  // чисто цифровые токены названия («2 5» из «2,5%», «30» из «30%»)
+  digits: normName(f.name).split(' ').filter((w) => /^\d+$/.test(w)),
 }))
+
+// Числовой вес позиции против запроса: сколько её цифр совпало
+// с цифрами запроса. «2.5» нормализуется в два токена «2» и «5»,
+// поэтому «молоко 2.5» и «молоко 2,5%» вес сойдутся
+function digitScore(eDigits, qDigits) {
+  if (!qDigits.length || !eDigits.length) return 0
+  return eDigits.reduce((n, w) => n + (qDigits.includes(w) ? 1 : 0), 0)
+}
 
 export function findLocalFood(query) {
   const q = normName(query)
   if (!q) return null
-  const qStems = new Set(q.split(' ').filter(Boolean).map(dishStem))
+  const qTokens = q.split(' ').filter(Boolean)
+  const qStems = new Set(qTokens.map(dishStem))
+  const qDigits = qTokens.filter((w) => /^\d+$/.test(w))
   let best = null
   for (const e of FOOD_INDEX) {
     const hit =
       e.stems.every((w) => qStems.has(w)) ||
       // al.length>0 — см. findLocalDish: пустые алиасы не матчат всё подряд
       e.aliases.some((al) => al.length > 0 && al.every((w) => qStems.has(w)))
-    if (hit && (!best || e.len > best.len)) best = e
+    if (!hit) continue
+    const d = digitScore(e.digits, qDigits)
+    if (!best || d > best.d || (d === best.d && e.len > best.len)) best = { f: e.f, d, len: e.len }
   }
   return best ? best.f : null
 }
@@ -233,14 +252,17 @@ export function findLocalFood(query) {
 // вместо ИИ-оценки. Примеры: «Селёдка в масле» → консервы 239 ккал,
 // «Воппер» → 192, «Твистер» → 173. А «Омлет с селёдкой в масле» НЕ
 // перекрывается позицией «Сельдь в масле» (лишнее слово «омлет») —
-// остаётся честная ИИ-оценка целого блюда.
+// остаётся честная ИИ-оценка целого блюда. При цифрах в названии
+// («Сметана 30%») приоритет у позиции с совпавшей цифрой — как в
+// findLocalFood, иначе ИИ-имя «30%» получало КБЖУ первой сметаны 10%
 export function preferBrandBase(items) {
   if (!Array.isArray(items) || !items.length) return items
   return items.map((it) => {
     if (!it || !it.name) return it
-    const qStems = stemsOf(it.name) // цифры («1.5 л») не участвуют — как в поиске
+    const qStems = stemsOf(it.name) // основы без цифр — как в поиске
     if (!qStems.length) return it
     const qSet = new Set(qStems)
+    const qDigits = normName(it.name).split(' ').filter((w) => /^\d+$/.test(w))
     let best = null
     for (const e of FOOD_INDEX) {
       const fid = e.f.id || ''
@@ -254,7 +276,8 @@ export function preferBrandBase(items) {
       }
       // Полное покрытие: у названия ИИ нет слов вне позиции базы
       if (!qStems.every((w) => covered.includes(w))) continue
-      if (!best || e.len > best.len) best = e
+      const d = digitScore(e.digits, qDigits)
+      if (!best || d > best.d || (d === best.d && e.len > best.len)) best = { f: e.f, d, len: e.len }
     }
     if (!best) return it
     const b = best.f

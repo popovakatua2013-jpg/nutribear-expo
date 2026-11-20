@@ -51,48 +51,27 @@ export function WelcomeStep({ onNext }) {
       <View className="items-center pt-1">
         {/* Мишка со свечением. История скринов Кати: голый <Image> с
             inline w/h рисуется полоской 126×1, произвольные классы
-            h-[148px] не применяются вовсе; плитка на чистых inline-стилях
-            (width:100, height:100, overflow hidden) тоже подвела — скрин
-            19.11 16:26 («верхняя штора закрывает медведя»): картинка с
-            width/height '100%' вылезла за плитку, голова срезалась,
-            скругления не видно. Рабочий на её телефоне паттерн —
-            из Greeting на Главной: обёртка на СТАНДАРТНЫХ классах w/h
-            (h-24 w-24 = 96px, шкала Tailwind, как h-11/w-11 в Greeting),
-            overflow-hidden и rounded-3xl тоже стандартные, а картинка
-            заполняет обёртку на 100% с resizeMode cover. Для страховки
-            размер обёртки дублируется inline-пикселями (inline px на
-            View на её устройстве работают — свечения ниже держатся
-            на inline w/h). Свечение — два эллипса за плиткой */}
-        <View
-          style={{
-            height: 108,
-            width: 200,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+            h-[148px] не применяются вовсе; плитка с inline-дублем
+            {width:96,height:96} поверх классов тоже подвела (скрин
+            20.11 20:36: «шторка всё равно закрывает медведя» — видна
+            только полоска с тарелкой). Итоговая версия — РОВНО паттерн
+            Greeting с Главной, который на её телефоне работает:
+            обёртка и плитка ТОЛЬКО на стандартных классах шкалы
+            Tailwind (h-24 w-24 — как h-11/w-11 в Greeting), никакого
+            inline-размера ни на одном звене цепочки картинки; у
+            свечений-эллипсов классами задан размер, а inline остался
+            только на цвете (inline-цвета на её устройстве работают) */}
+        <View className="relative mt-2 h-28 w-40 items-center justify-center">
+          {/* Свечение — два эллипса за плиткой */}
           <View
-            style={{
-              position: 'absolute',
-              height: 80,
-              width: 156,
-              borderRadius: 999,
-              backgroundColor: 'rgba(124,92,252,0.28)',
-            }}
+            className="absolute h-20 w-40 rounded-full"
+            style={{ backgroundColor: 'rgba(124,92,252,0.26)' }}
           />
           <View
-            style={{
-              position: 'absolute',
-              height: 54,
-              width: 122,
-              borderRadius: 999,
-              backgroundColor: 'rgba(139,108,255,0.28)',
-            }}
+            className="absolute h-14 w-32 rounded-full"
+            style={{ backgroundColor: 'rgba(139,108,255,0.26)' }}
           />
-          <View
-            className="h-24 w-24 overflow-hidden rounded-3xl bg-white/5"
-            style={{ width: 96, height: 96 }}
-          >
+          <View className="h-24 w-24 overflow-hidden rounded-3xl bg-white/5">
             <Image
               source={BEAR}
               accessibilityLabel="Медвежонок NutriBear"
