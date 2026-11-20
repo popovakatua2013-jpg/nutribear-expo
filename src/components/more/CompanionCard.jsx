@@ -33,7 +33,7 @@ export function CompanionCard({ embedded = false }) {
     if (!isCompanionAvailable(c, pro, trialActive)) {
       toast({
         title: `${c.name} — Premium`,
-        description: 'Доступен с подпиской или в триале',
+        description: 'Доступен с Premium или в триале',
       })
       return
     }
@@ -128,7 +128,7 @@ export function CompanionCard({ embedded = false }) {
       })}
 
       <Text className="mt-1 font-sans text-[12.5px] leading-relaxed text-bear-dim">
-        Менять можно в любой момент. Premium-медведи открыты, пока активна подписка или триал.
+        Менять можно в любой момент. Premium-медведи открыты, пока активен Premium или идёт триал.
       </Text>
     </View>
   )
