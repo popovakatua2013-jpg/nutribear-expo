@@ -1,8 +1,12 @@
-// Хаб способов добавления еды: компактная строка поиска, карточки
-// «Мои комбо» и «Недавние и частые» со строками (эмодзи, название,
-// калории, кнопка «Добавить», шеврон) — по умолчанию всегда свёрнуты
-// (отзыв Кати), пунктирная кнопка «Сохранить приём», внизу — один ряд
-// из 5 узких цветных плиток (сканер, фото, голос, галерея, этикетка).
+// Хаб способов добавления еды: компактная строка поиска, кнопка «Свой
+// продукт» (отзыв Кати 20.11: «добавить вкладку “свой продукт” —
+// проглядела у конкурента» — раньше форма была спрятана в «Базе
+// продуктов»), карточки «Мои комбо», «Мои продукты» и «История» (журнал
+// по дням, «перенести историю» — как у конкурента) и «Недавние и частые»
+// со строками (эмодзи, название, калории, кнопка «Добавить», шеврон) —
+// по умолчанию всегда свёрнуты (отзыв Кати), пунктирная кнопка «Сохранить
+// приём», внизу — один ряд из 5 узких цветных плиток (сканер, фото,
+// голос, галерея, этикетка).
 // Плитка «Рецепты» переехала в ОТДЕЛЬНОЕ окно (RecipesModal) из
 // раскрывающегося списка «Добавить еду» на Главной (отзыв Кати:
 // «перенести со вкладки добавить приём пищи, где блоки с ИИ-
@@ -30,20 +34,27 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
+  History,
   Images,
   LayoutGrid,
   Mic,
+  Pencil,
   Plus,
   RefreshCcw,
   ScanSearch,
   Search,
+  Star,
+  Trash2,
   UtensilsCrossed,
   X,
 } from 'lucide-react-native'
 import { FoodList } from './FoodList'
 import { BaseMode } from './BaseMode'
+import { UserFoodForm } from './UserFoodForm'
+import { HistoryModal } from '../home/HistoryModal'
 import { FOODS } from '@/lib/data/foods'
 import { toBuildItem } from '@/lib/data/to-item'
+import { historyGroups } from '@/lib/data/history-groups'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
@@ -69,9 +80,29 @@ const TILES = [
   { id: 'label', label: 'Этикетка', Icon: ScanSearch, color: TILE_COLOR },
 ]
 
+// Свой продукт в формате выбора блюда — тот же маппер, что в «Базе
+// продуктов»: тап открывает экран порции, где можно поправить вес
+function userFoodItem(f) {
+  return {
+    id: f.id,
+    name: f.name,
+    kcal100: f.kcal,
+    emoji: f.emoji,
+    p: f.p,
+    f: f.f,
+    c: f.c,
+    fib: f.fib,
+    sug: f.sug,
+    defaultGrams: f.defaultGrams,
+    source: 'user',
+    sub: 'мой продукт',
+  }
+}
+
 export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const recipes = useRecipesStore((s) => s.items)
   const userFoods = useUserFoodsStore((s) => s.items)
+  const removeUserFood = useUserFoodsStore((s) => s.remove)
   const combos = useCombosStore((s) => s.items)
   const addComboItem = useCombosStore((s) => s.add)
   const removeCombo = useCombosStore((s) => s.remove)
@@ -85,11 +116,19 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const [baseOpen, setBaseOpen] = useState(false)
   const [comboOpen, setComboOpen] = useState(false)
   const [comboName, setComboName] = useState('')
-  // Сворачивание карточек «Мои комбо» и «Недавние и частые» — по умолчанию
-  // всегда свёрнуты (отзыв Кати): окно каждый раз открывается компактным,
-  // разворачиваются только по тапу; состояние сбрасывается при закрытии
+  // Сворачивание карточек «Мои комбо», «Мои продукты», «История» и
+  // «Недавние и частые» — по умолчанию всегда свёрнуты (отзыв Кати):
+  // окно каждый раз открывается компактным, разворачиваются только
+  // по тапу; состояние сбрасывается при закрытии
   const [combosOpen, setCombosOpen] = useState(false)
+  const [mineOpen, setMineOpen] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
+  // Форма «Свой продукт» (создание/правка) и полное окно «История
+  // приёмов» поверх хаба
+  const [ufOpen, setUfOpen] = useState(false)
+  const [ufEdit, setUfEdit] = useState(null)
+  const [histModalOpen, setHistModalOpen] = useState(false)
 
   const mealName = getMeal(mealId, customMeals).name
   const q = query.trim().toLowerCase()
@@ -124,20 +163,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
       })
     const mine = userFoods
       .filter((f) => f.name.toLowerCase().includes(q))
-      .map((f) => ({
-        id: f.id,
-        name: f.name,
-        kcal100: f.kcal,
-        emoji: f.emoji,
-        p: f.p,
-        f: f.f,
-        c: f.c,
-        fib: f.fib,
-        sug: f.sug,
-        defaultGrams: f.defaultGrams,
-        source: 'user',
-        sub: 'мой продукт',
-      }))
+      .map(userFoodItem)
     const foods = FOODS.filter((f) => f.name.toLowerCase().includes(q)).map((f) =>
       toBuildItem(f)
     )
@@ -173,6 +199,13 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
     const list = history.filter((h) => h.mealId === mealId && h.day === rows[0].day)
     return { day: rows[0].day, list }
   }, [history, mealId])
+
+  // Свои продукты для карточки «Мои продукты» (сворачиваемой)
+  const mineRows = useMemo(() => userFoods.map(userFoodItem), [userFoods])
+
+  // «История»: журнал по дням («Сегодня», «Вчера», дата) — тап по строке
+  // записывает блюдо снова; «Открыть всю историю» — полное окно журнала
+  const histGroups = useMemo(() => historyGroups(history, 20), [history])
 
   // Добавить запись из журнала с той же граммовкой (1 тап по чипу).
   // dayOff — выбранный в шапке день (сегодня/вчера).
@@ -237,6 +270,22 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
     ])
   }
 
+  // Удалить свой продукт из карточки «Мои продукты» (с подтверждением —
+  // удаление безвозвратное, в отличие от комбо тут нет дубля в «Базе»)
+  function confirmDeleteUserFood(f) {
+    Alert.alert('Удалить продукт?', `${f.emoji} ${f.name}`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () => {
+          removeUserFood(f.id)
+          toast({ title: '🗑 Продукт удалён', description: f.name })
+        },
+      },
+    ])
+  }
+
   function saveCombo() {
     if (!mealEntries.length) {
       toast({ title: '💾 Сначала добавьте блюда', description: `В «${mealName}» пока пусто` })
@@ -279,6 +328,22 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           </Pressable>
         )}
       </View>
+
+      {/* «Свой продукт» — заметная кнопка сразу под поиском (отзыв Кати
+          20.11: «добавить вкладку “свой продукт” — проглядела у
+          конкурента», раньше форма пряталась в «Базе продуктов»).
+          Видна и в режиме поиска: не нашлось — создай свой продукт.
+          Форма та же, что в базе: название, картинка, ккал/БЖУ на 100 г,
+          клетчатка/сахар, обычная порция */}
+      <Pressable
+        onPress={() => setUfOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Добавить свой продукт"
+        className="mt-2.5 h-[42px] flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[#7B6CF6]/50 active:bg-[#7B6CF6]/10"
+      >
+        <Star size={16} color="#C4B5FD" />
+        <Text className="font-semibold text-[15.5px] text-[#C4B5FD]">Свой продукт</Text>
+      </Pressable>
 
       {results ? (
         <>
@@ -394,12 +459,98 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
             </Pressable>
           )}
 
+          {/* Мои продукты (отзыв Кати 20.11: «добавить вкладку “свой
+              продукт”» — список своих продуктов, как у конкурента):
+              тап по строке — добавить в приём (экран порции), карандаш —
+              изменить, корзина — удалить. Создание — кнопкой «Свой
+              продукт» над списком или «+» в «Базе продуктов» */}
+          {mineRows.length > 0 && (
+            <View
+              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+                combos.length > 0 || mealEntries.length > 0 ? 'mt-2.5' : ''
+              }`}
+            >
+              <Pressable
+                onPress={() => setMineOpen((s) => !s)}
+                accessibilityRole="button"
+                accessibilityLabel={mineOpen ? 'Свернуть мои продукты' : 'Развернуть мои продукты'}
+                className="flex-row items-center gap-2 px-3.5 py-3 active:opacity-80"
+              >
+                <Star size={17} color="#FBBF24" />
+                <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
+                  {`Мои продукты · ${mineRows.length}`}
+                </Text>
+                {mineOpen ? (
+                  <ChevronUp size={16} color="#8B96B8" />
+                ) : (
+                  <ChevronDown size={16} color="#8B96B8" />
+                )}
+              </Pressable>
+              {mineOpen && (
+                <View className="gap-0.5 px-2 pb-2">
+                  {mineRows.map((f) => (
+                    <View
+                      key={f.id}
+                      className="flex-row items-center gap-2 rounded-xl bg-[#FBBF24]/[0.06] px-2 py-2"
+                    >
+                      <Pressable
+                        onPress={() => pick(f)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
+                        className="min-w-0 flex-1 flex-row items-center gap-2.5"
+                      >
+                        <Text className="shrink-0 text-[19px]">{f.emoji}</Text>
+                        <View className="min-w-0 flex-1">
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.2}
+                            className="font-semibold text-[15.5px] text-bear-text"
+                          >
+                            {f.name}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            maxFontSizeMultiplier={1.2}
+                            className="font-sans text-[13px] text-bear-sub2"
+                          >
+                            {`${f.kcal100} ккал/100 г${f.defaultGrams ? ` · порция ${f.defaultGrams} г` : ''}`}
+                          </Text>
+                        </View>
+                        <View className="shrink-0 rounded-full bg-[#7B6CF6]/80 px-3 py-1">
+                          <Text className="font-semibold text-[13.5px] text-white">Добавить</Text>
+                        </View>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => setUfEdit(f)}
+                        accessibilityLabel={`Изменить продукт «${f.name}»`}
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        className="rounded p-1"
+                      >
+                        <Pencil size={15} color="#8B96B8" />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => confirmDeleteUserFood(f)}
+                        accessibilityLabel={`Удалить продукт «${f.name}»`}
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        className="rounded p-1"
+                      >
+                        <Trash2 size={16} color="#98A2C2" />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Недавние и частые: карточка со строками — блюдо в один тап,
               как на референс-скриншоте */}
           {recent.length > 0 && (
             <View
               className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
-                combos.length > 0 || mealEntries.length > 0 ? 'mt-2.5' : ''
+                combos.length > 0 || mealEntries.length > 0 || mineRows.length > 0 ? 'mt-2.5' : ''
               }`}
             >
               <Pressable
@@ -450,6 +601,108 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
                       </View>
                     </Pressable>
                   ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* История (отзыв Кати 20.11: «нужно перенести историю» — у
+              конкурента ранее съеденное видно прямо из окна добавления):
+              журнал по дням — «Сегодня», «Вчера», «дд.мм.гггг». Тап по
+              строке записывает блюдо снова (с тем же комментарием и
+              граммовкой), внизу — переход к полному окну «История
+              приёмов» */}
+          {histGroups.length > 0 && (
+            <View
+              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+                combos.length > 0 ||
+                mealEntries.length > 0 ||
+                mineRows.length > 0 ||
+                recent.length > 0
+                  ? 'mt-2.5'
+                  : ''
+              }`}
+            >
+              <Pressable
+                onPress={() => setHistOpen((s) => !s)}
+                accessibilityRole="button"
+                accessibilityLabel={histOpen ? 'Свернуть историю' : 'Развернуть историю'}
+                className="flex-row items-center gap-2 px-3.5 py-3 active:opacity-80"
+              >
+                <History size={17} color="#A78BFA" />
+                <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
+                  История
+                </Text>
+                {histOpen ? (
+                  <ChevronUp size={16} color="#8B96B8" />
+                ) : (
+                  <ChevronDown size={16} color="#8B96B8" />
+                )}
+              </Pressable>
+              {histOpen && (
+                <View className="gap-1 px-2 pb-2">
+                  {histGroups.map((g) => (
+                    <View key={g.day} className="gap-0.5">
+                      <Text
+                        maxFontSizeMultiplier={1.2}
+                        className="px-1 pt-1 font-semibold text-[13px] uppercase tracking-wide text-bear-sub2"
+                      >
+                        {g.label}
+                      </Text>
+                      {g.rows.map((row) => (
+                        <Pressable
+                          key={row.id}
+                          onPress={() => addFromRow(row)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Добавить ${row.name} из истории (${g.label})`}
+                          className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
+                        >
+                          <Text className="shrink-0 text-[19px]">{row.emoji || '🍽️'}</Text>
+                          <View className="min-w-0 flex-1">
+                            <Text
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.2}
+                              className="font-semibold text-[15.5px] text-bear-text"
+                            >
+                              {row.name}
+                            </Text>
+                            {row.note ? (
+                              <Text
+                                numberOfLines={1}
+                                maxFontSizeMultiplier={1.2}
+                                className="font-sans text-[13px] text-bear-sub2"
+                              >
+                                {`📝 ${row.note}`}
+                              </Text>
+                            ) : null}
+                            <Text
+                              numberOfLines={1}
+                              maxFontSizeMultiplier={1.2}
+                              className="font-sans text-[13px] text-bear-sub2"
+                            >
+                              {`${getMeal(row.mealId, customMeals).name} · ${
+                                row.grams > 0 ? `${row.grams} г · ` : ''
+                              }${formatNum(row.kcal)} ккал`}
+                            </Text>
+                          </View>
+                          <View className="shrink-0 rounded-full bg-[#7B6CF6]/80 px-3 py-1">
+                            <Text className="font-semibold text-[13.5px] text-white">Добавить</Text>
+                          </View>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ))}
+                  <Pressable
+                    onPress={() => setHistModalOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Открыть всю историю приёмов"
+                    className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
+                  >
+                    <History size={14} color="#C4B5FD" />
+                    <Text className="font-semibold text-[14px] text-[#C4B5FD]">
+                      Открыть всю историю приёмов
+                    </Text>
+                  </Pressable>
                 </View>
               )}
             </View>
@@ -608,6 +861,22 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Форма «Свой продукт» (создание по кнопке под поиском / правка
+          из карточки «Мои продукты») — та же, что в «Базе продуктов» */}
+      {(ufOpen || ufEdit) && (
+        <UserFoodForm
+          open
+          initial={ufEdit || undefined}
+          onClose={() => {
+            setUfOpen(false)
+            setUfEdit(null)
+          }}
+        />
+      )}
+
+      {/* Полное окно «История приёмов» — из карточки «История» */}
+      <HistoryModal visible={histModalOpen} onClose={() => setHistModalOpen(false)} />
     </View>
   )
 }

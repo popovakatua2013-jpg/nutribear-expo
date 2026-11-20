@@ -129,7 +129,8 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
 }
 
 // Строка блюда внутри раскрытой секции: эмодзи, название, граммовка,
-// калории и время; карандаш — правка веса (с настоящим mealId — у доп.
+// калории и время; комментарий (📝, отзыв Кати 20.11) — отдельной строкой;
+// карандаш — правка веса (с настоящим mealId — у доп.
 // перекусов он свой), корзина — удалить
 function DishRow({ mealId, mealName, entry, onEdit }) {
   const removeEntry = useFoodStore((s) => s.removeEntry)
@@ -155,6 +156,15 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
             entry.time ? ` · ${entry.time}` : ''
           }`}
         </Text>
+        {entry.note ? (
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={MAX}
+            className="font-sans text-[13px] text-bear-sub2"
+          >
+            {`📝 ${entry.note}`}
+          </Text>
+        ) : null}
       </View>
       <Pressable
         onPress={() => onEdit(entry, mealId)}

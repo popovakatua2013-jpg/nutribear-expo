@@ -38,6 +38,11 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
             entry.time ? ` · ${entry.time}` : ''
           }`}
         </Text>
+        {entry.note ? (
+          <Text numberOfLines={1} className="font-sans text-[14px] text-bear-sub2">
+            {`📝 ${entry.note}`}
+          </Text>
+        ) : null}
       </View>
       <Pressable
         onPress={() => onEdit(entry)}

@@ -1,10 +1,12 @@
 // Экран подтверждения: граммовка выбранной еды и добавление в приём.
 // Для распознанного ИИ (фото/голос/открытая база) — кнопка ✏️ «Исправить»:
 // окно правки названия/ккал/БЖУ на 100 г, если распознавание ошиблось.
+// Комментарий («без масла», «на воде»…) пишется прямо здесь — отзыв
+// Кати 20.11: «с возможностью добавить комментарий» (как у конкурента).
 
 import { useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronLeft, Pencil, X } from 'lucide-react-native'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ChevronLeft, MessageSquare, Pencil, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { kcalForPortion } from '@/lib/data/foods'
 import { buildFood } from '@/lib/data/pick'
@@ -27,6 +29,9 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
   const [grams, setGrams] = useState(String(item.defaultGrams || 100))
+  // Комментарий к записи — показывается в дневнике с 📝 и переносится
+  // при повторном добавлении из «Истории»/«Недавних»
+  const [note, setNote] = useState('')
   // Защита от двойного тапа: второй тап успевал сработать до перерисовки
   // — в дневнике оказывались дубли (урок из отзывов конкурента, отзыв
   // Елены: «сохраняются сразу три дублирующиеся записи»)
@@ -70,7 +75,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
 
   function handleAdd() {
     addOnce(() => {
-      addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc }, dayOff)
+      addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc, note }, dayOff)
       toast({
         title: `${food.emoji} ${food.name} — в «${meal.name}»`,
         description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(
@@ -134,6 +139,38 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
             📝 {eff.desc}
           </Text>
         ) : null}
+
+        {/* Комментарий к записи (отзыв Кати: «с возможностью добавить
+            комментарий») — виден в дневнике с 📝, правится в «Изменить
+            запись», повторяется вместе с блюдом из «Истории» */}
+        <View className="mt-3">
+          <Text className="font-sans text-[15px] font-semibold uppercase text-bear-sub">
+            Комментарий (необязательно)
+          </Text>
+          <View className="mt-1.5 h-[42px] flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5">
+            <MessageSquare size={15} color="#8B96B8" />
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              maxLength={200}
+              placeholder="Например: без масла, на воде"
+              placeholderTextColor="#8B96B8"
+              accessibilityLabel="Комментарий к записи"
+              className="min-w-0 flex-1 py-0 font-sans text-[15.5px] text-bear-text"
+              style={{ textAlignVertical: 'center' }}
+            />
+            {note.length > 0 && (
+              <Pressable
+                onPress={() => setNote('')}
+                accessibilityRole="button"
+                accessibilityLabel="Очистить комментарий"
+                className="active:opacity-60"
+              >
+                <X hitSlop={10} size={15} color="#8B96B8" />
+              </Pressable>
+            )}
+          </View>
+        </View>
 
         <View className="mt-4">
           <GramsPicker grams={grams} onChange={setGrams} />

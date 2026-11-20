@@ -246,7 +246,7 @@ export function HistoryModal({ visible, onClose }) {
                             <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub2">
                               {`${r.mealName} · ${r.grams} г · ${formatNum(r.kcal)} ккал${
                                 r.time ? ` · ${r.time}` : ''
-                              }`}
+                              }${r.note ? ` · 📝 ${r.note}` : ''}`}
                             </Text>
                           </View>
                           <Pressable

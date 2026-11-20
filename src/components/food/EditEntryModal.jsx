@@ -1,5 +1,5 @@
 // Полный редактор уже добавленной записи (открывается из «Все приёмы за день»):
-// название, вес, калории и БЖУ за порцию. Вес меняете — ккал и БЖУ
+// название, вес, калории и БЖУ за порцию, комментарий. Вес меняете — ккал и БЖУ
 // пересчитываются пропорционально, пока вы не впишете свои значения вручную.
 
 import { useState } from 'react'
@@ -48,6 +48,9 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
     vita: entry?.vita ?? 0,
   })
   const [desc, setDesc] = useState(entry?.desc ?? '')
+  // Комментарий пользователя («без масла», «с солью») — отдельное поле:
+  // в desc живёт состав от ИИ, его комментарием не затираем
+  const [note, setNote] = useState(entry?.note ?? '')
   // Поля, которые пользователь вписал руками (при смене веса не трогаем)
   const [manual, setManual] = useState({ kcal: false, p: false, f: false, c: false })
 
@@ -96,11 +99,12 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
       vitc: Math.max(0, round1(micro.vitc || 0)),
       vita: Math.max(0, round1(micro.vita || 0)),
       desc: desc.trim(),
+      note: note.trim().slice(0, 200),
     }
     updateEntry(mealId, entry.id, next)
     toast({
       title: '✏️ Запись обновлена',
-      description: `${next.name}: ${next.grams} г · ${next.kcal} ккал · Б ${next.p} · Ж ${next.f} · У ${next.c}`,
+      description: `${next.name}: ${next.grams} г · ${next.kcal} ккал · Б ${next.p} · Ж ${next.f} · У ${next.c}${next.note ? ' · 📝' : ''}`,
     })
     onClose()
   }
@@ -157,6 +161,23 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               placeholder="Например: борщ на свином бульоне, со сметаной"
               placeholderTextColor="#8B96B8"
               className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
+            />
+
+            {/* Комментарий — как у конкурента (отзыв Кати 20.11: «с
+                возможностью добавить комментарий»); показывается в
+                дневнике с 📝 и повторяется из «Истории» */}
+            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
+              Комментарий (необязательно)
+            </Text>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              maxLength={200}
+              multiline
+              accessibilityLabel="Комментарий к записи"
+              placeholder="Например: без масла, с солью"
+              placeholderTextColor="#8B96B8"
+              className="mt-1.5 min-h-[52px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
             {/* Вес порции */}

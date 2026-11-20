@@ -56,26 +56,30 @@ export const useFoodStore = create(
       goal: DEFAULT_GOAL,
       entries: EMPTY_ENTRIES,
       customMeals: [], // дополнительные перекусы: [{id, name}]
-      history: [], // журнал приёмов: [{id, day, time, mealId, name, emoji, grams, kcal, p, f, c, desc}]
+      history: [], // журнал приёмов: [{id, day, time, mealId, name, emoji, grams, kcal, p, f, c, desc, note}]
       dayKey: dayKeyOf(), // локальный день, к которому относится дневник
 
       setGoal: (goal) => set({ goal }),
 
-      // Добавить блюдо в приём пищи (+ время + БЖУ + описание + запись в историю).
+      // Добавить блюдо в приём пищи (+ время + БЖУ + описание + комментарий
+      // + запись в историю).
       // mk — маркер «по продукту известны витамины/минералы» (продукты базы).
+      // note — комментарий пользователя к записи («без масла», «с солью»),
+      // отдельное поле, чтобы не смешивать с desc — составом от ИИ.
       // dayOff — «за какой день»: 0 = сегодня, 1 = вчера (приём после полуночи).
       // Вчера — запись идёт только в журнал со вчерашним днём: дневник
       // «entries» — это живой сегодня, чужие записи ему ни к чему. Заодно
       // досчитываем вчерашние калории в дневную историю, иначе календарь,
       // сводка дня и отчёты покажут старую сумму до следующей полуночи.
       // Возвращает созданную запись — тостам удобно предлагать «Отменить»
-      addEntry: (mealId, { food, grams, kcal, desc }, dayOff = 0) => {
+      addEntry: (mealId, { food, grams, kcal, desc, note }, dayOff = 0) => {
         const time = nowTime()
         const bju = bjuForPortion(food, grams)
         const entry = {
           id: makeId(), foodId: food.id, name: food.name, emoji: food.emoji,
           grams, kcal, ...bju, mk: food.mk, time,
           desc: String(desc || '').trim(),
+          note: String(note || '').trim().slice(0, 200),
         }
         if (dayOff) {
           const d = new Date()
