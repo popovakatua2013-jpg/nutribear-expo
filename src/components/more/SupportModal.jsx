@@ -424,6 +424,7 @@ export function SupportModal({ open = false, onClose }) {
               </Text>
             </View>
           </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
