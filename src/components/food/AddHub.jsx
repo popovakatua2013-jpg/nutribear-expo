@@ -54,7 +54,7 @@ import { BaseMode } from './BaseMode'
 import { UserFoodForm } from './UserFoodForm'
 import { HistoryModal } from '../home/HistoryModal'
 import { FOODS } from '@/lib/data/foods'
-import { foodMatchesQuery } from '@/lib/food-search'
+import { foodMatchesQuery, foodMatchesQueryAnyAlias } from '@/lib/food-search'
 import { toBuildItem } from '@/lib/data/to-item'
 import { historyGroups } from '@/lib/data/history-groups'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
@@ -178,7 +178,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
     const mine = userFoods
       .filter((f) => foodMatchesQuery(f.name, q))
       .map(userFoodItem)
-    const foods = FOODS.filter((f) => foodMatchesQuery(f.name, q)).map((f) =>
+    const foods = FOODS.filter((f) => foodMatchesQueryAnyAlias(f, q)).map((f) =>
       toBuildItem(f)
     )
     return [...rec, ...mine, ...foods]

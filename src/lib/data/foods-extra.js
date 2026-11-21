@@ -22,7 +22,7 @@ export const EXTRA_FOODS = [
   // Рыба и морепродукты
   { id: 'shrimp', emoji: '🍤', name: 'Креветки отварные', kcal: 99, p: 24, f: 0.3, c: 0.2, fib: 0.0, sug: 0.0, defaultGrams: 150, tags: ['lunch', 'dinner'] },
   { id: 'squid', emoji: '🦑', name: 'Кальмар отварной', kcal: 98, p: 19.5, f: 1.5, c: 2, fib: 0.0, sug: 0.0, defaultGrams: 120, tags: ['lunch', 'dinner'] },
-  { id: 'herring', emoji: '🐟', name: 'Сельдь солёная', kcal: 217, p: 20, f: 15, c: 0, fib: 0.0, sug: 0.0, defaultGrams: 80, tags: ['lunch', 'dinner'] },
+  { id: 'herring', emoji: '🐟', name: 'Сельдь солёная', kcal: 217, p: 20, f: 15, c: 0, fib: 0.0, sug: 0.0, defaultGrams: 80, tags: ['lunch', 'dinner'], al: ['селёдка', 'селедка'] },
   { id: 'canned-tuna', emoji: '🐟', name: 'Тунец в собственном соку', kcal: 96, p: 23.4, f: 0.8, c: 0, fib: 0.0, sug: 0.0, defaultGrams: 100, tags: ['lunch', 'snack'] },
 
   // Молочное и яйца

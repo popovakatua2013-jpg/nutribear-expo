@@ -10,7 +10,7 @@ import { Cloud, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react-native'
 import { FoodList } from './FoodList'
 import { UserFoodForm } from './UserFoodForm'
 import { FOODS } from '@/lib/data/foods'
-import { foodMatchesQuery } from '@/lib/food-search'
+import { foodMatchesQuery, foodMatchesQueryAnyAlias } from '@/lib/food-search'
 import { toBuildItem } from '@/lib/data/to-item'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { searchOFFCached } from '@/store/useOffCacheStore'
@@ -80,7 +80,7 @@ export function BaseMode({ mealId, onPick }) {
       FOODS.filter(
         (f) =>
           (mealId.startsWith('custom-') || !q || f.tags.includes(mealId)) &&
-          foodMatchesQuery(f.name, q)
+          foodMatchesQueryAnyAlias(f, q)
       ).map((f) => toBuildItem(f)),
     [mealId, q]
   )

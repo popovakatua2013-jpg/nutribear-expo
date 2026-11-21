@@ -44,3 +44,13 @@ export function foodMatchesQuery(name, query) {
   const nameWords = words(name)
   return qWords.every((w) => nameWords.some((nw) => wordMatch(nw, w)))
 }
+
+// Совпадение по названию ИЛИ псевдонимам (al). Запрос «селёдка» должен
+// находить «Сельдь солёная» — у неё псевдоним «селёдка» (отзыв Кати
+// 21.11 17:21: «В Селёдка не считает жиры и другие» — раньше по запросу
+// «селёдка» встроенная сельдь не находилась вовсе, только «под шубой»)
+export function foodMatchesQueryAnyAlias(food, query) {
+  if (!food) return false
+  if (foodMatchesQuery(food.name, query)) return true
+  return (food.al || []).some((a) => foodMatchesQuery(a, query))
+}
