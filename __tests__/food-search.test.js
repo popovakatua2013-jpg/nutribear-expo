@@ -90,6 +90,14 @@ describe('foodMatchesQuery — запросы Кати по реальной б�
     expect(found.some((f) => f.name.toLowerCase().includes('батон'))).toBe(true)
   })
 
+  test('«каша» и «чай» (скрины Кати 21.11, 16:38) находят продукты', () => {
+    for (const q of ['каша', 'чай']) {
+      const found = FOODS.filter((f) => foodMatchesQuery(f.name, q))
+      expect(found.length).toBeGreaterThan(0)
+      expect(found.some((f) => f.name.toLowerCase().includes(q))).toBe(true)
+    }
+  })
+
   test('«бургеры» и «бургер» находят бургеры (в т. ч. сетей)', () => {
     for (const q of ['бургеры', 'бургер']) {
       const found = FOODS.filter((f) => foodMatchesQuery(f.name, q))

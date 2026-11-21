@@ -360,8 +360,10 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
 
       {results ? (
         <>
-          {/* результаты поиска */}
-          <View className="mt-3 min-h-0 flex-1">
+          {/* результаты поиска: min-h — страховка, чтобы даже при
+              сжатом контейнере несколько строк были видны (отзыв Кати
+              21.11: список вообще не появлялся при открытой клавиатуре) */}
+          <View className="mt-3 min-h-[150px] flex-1">
             <FoodList
               items={results}
               emptyText="Ничего не нашлось 🤷 Попробуйте изменить запрос или создайте свой продукт"

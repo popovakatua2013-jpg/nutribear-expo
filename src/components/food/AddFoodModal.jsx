@@ -188,7 +188,19 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                 )}
 
                 {mode === 'hub' && (
-                  <AddHub mealId={mealId} dayOff={dayOff} onPick={setPicked} onSelect={setMode} />
+                  <AddHub
+                    mealId={mealId}
+                    dayOff={dayOff}
+                    onPick={setPicked}
+                    onSelect={setMode}
+                    /* Без этого пропа «сжатый режим» поиска был мёртвым
+                       кодом: searching всегда false, шапка оставалась
+                       полной, окно h-[85%], и при открытой клавиатуре
+                       списку результатов доставалась нулевая высота
+                       (отзыв Кати 21.11 16:38, скрины: «Каша», «Батон»,
+                       «Чай» — между «Свой продукт» и «Ручной поиск» пусто) */
+                    onSearchActiveChange={setSearching}
+                  />
                 )}
                 {mode === 'barcode' && <BarcodeMode onPick={setPicked} />}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}
