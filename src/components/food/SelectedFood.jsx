@@ -77,7 +77,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
     addOnce(() => {
       addEntry(mealId, { food, grams: gramsNum, kcal: previewKcal, desc: eff.desc, note }, dayOff)
       toast({
-        title: `${food.emoji} ${food.name} — в «${meal.name}»`,
+        title: `${food.name} — в «${meal.name}»`,
         description: `${gramsNum} г · ≈${formatNum(previewKcal)} ккал · ${bjuLine(
           previewBju
         )}${dayOff ? ' · записано за вчера' : ''}`,
@@ -98,7 +98,6 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
           >
             <ChevronLeft size={22} color="#AEB9D9" />
           </Pressable>
-          <Text className="shrink-0 text-2xl">{food.emoji}</Text>
           <View className="min-w-0 flex-1">
             <Text numberOfLines={1} className="font-bold text-[21px] text-bear-text">
               {food.name}

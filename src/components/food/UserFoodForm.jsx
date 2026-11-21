@@ -1,6 +1,9 @@
 // Форма своего продукта: название, ккал и БЖУ на 100 г, клетчатка/сахар,
 // обычная порция. Создаётся в окне «База продуктов», сохраняется навсегда
 // (AsyncStorage) и участвует в поиске наравне со встроенной базой.
+// Эмодзи-картинки продуктов убраны (отзыв Кати 21.11: «не нужны иконки
+// нигде») — в данных остаётся нейтральный «⭐», старые записи с эмодзи
+// совместимы: они просто нигде не показываются.
 
 import { useState } from 'react'
 import {
@@ -24,15 +27,12 @@ function parseNum(text, fallback, min, max) {
   return Math.max(min, Math.min(max, Math.round(n * 10) / 10))
 }
 
-const EMOJIS = ['⭐', '🍽️', '🥗', '🍲', '🥣', '🍞', '🧀', '🥛', '🍗', '🍎', '🍫', '🥤']
-
 export function UserFoodForm({ open, onClose, initial }) {
   const addUserFood = useUserFoodsStore((s) => s.add)
   const updateUserFood = useUserFoodsStore((s) => s.update)
   const { toast } = useToast()
 
   const [name, setName] = useState(initial?.name ?? '')
-  const [emoji, setEmoji] = useState(initial?.emoji ?? '⭐')
   const [kcal, setKcal] = useState(initial ? String(initial.kcal) : '')
   const [p, setP] = useState(initial ? String(initial.p ?? 0) : '')
   const [f, setF] = useState(initial ? String(initial.f ?? 0) : '')
@@ -53,7 +53,7 @@ export function UserFoodForm({ open, onClose, initial }) {
     }
     const data = {
       name,
-      emoji: emoji.trim() || '⭐',
+      emoji: initial?.emoji || '⭐',
       kcal: kcalN,
       p: parseNum(p, 0, 0, 100),
       f: parseNum(f, 0, 0, 100),
@@ -64,10 +64,10 @@ export function UserFoodForm({ open, onClose, initial }) {
     }
     if (initial?.id) {
       updateUserFood(initial.id, data)
-      toast({ title: '✏️ Продукт обновлён', description: `${data.emoji} ${data.name}` })
+      toast({ title: '✏️ Продукт обновлён', description: data.name })
     } else {
       addUserFood(data)
-      toast({ title: '⭐ Продукт сохранён', description: `${data.emoji} ${data.name} · в поиске и базе` })
+      toast({ title: '⭐ Продукт сохранён', description: `${data.name} · в поиске и базе` })
     }
     onClose()
   }
@@ -117,26 +117,8 @@ export function UserFoodForm({ open, onClose, initial }) {
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
 
-            {/* Эмодзи */}
-            <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">
-              Картинка
-            </Text>
-            <View className="mt-1.5 flex-row flex-wrap gap-1.5">
-              {EMOJIS.map((e) => (
-                <Pressable
-                  key={e}
-                  onPress={() => setEmoji(e)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Выбрать картинку ${e}`}
-                  className={`h-10 w-10 items-center justify-center rounded-xl text-[23px] ${
-                    emoji === e ? '' : 'bg-white/5'
-                  }`}
-                  style={emoji === e ? { backgroundColor: '#7B6CF6' } : null}
-                >
-                  <Text className="text-[23px]">{e}</Text>
-                </Pressable>
-              ))}
-            </View>
+            {/* Эмодзи-картинки продуктов убраны (отзыв Кати 21.11:
+                «не нужны иконки нигде») — форма без пикера «Картинка» */}
 
             {/* Ккал */}
             <Text className="mt-3.5 font-sans text-[15px] font-semibold uppercase text-bear-sub">

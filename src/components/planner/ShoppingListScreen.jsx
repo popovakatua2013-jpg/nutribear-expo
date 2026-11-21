@@ -104,7 +104,6 @@ export function ShoppingListScreen() {
           style={[styles.chip, pickedCat === null && styles.chipActive]}
           accessibilityState={{ selected: pickedCat === null }}
         >
-          <Text style={styles.chipEmoji}>✨</Text>
           <Text style={[styles.chipText, pickedCat === null && styles.chipTextActive]}>Авто</Text>
         </Pressable>
         {SHOP_CATEGORIES.map((c) => {
@@ -116,7 +115,6 @@ export function ShoppingListScreen() {
               style={[styles.chip, active && styles.chipActive]}
               accessibilityState={{ selected: active }}
             >
-              <Text style={styles.chipEmoji}>{c.emoji}</Text>
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.label}</Text>
             </Pressable>
           )
@@ -161,7 +159,6 @@ export function ShoppingListScreen() {
             <View key={g.id}>
               {/* Отдел */}
               <View style={styles.sectionHead}>
-                <Text style={styles.sectionEmoji}>{g.emoji}</Text>
                 <Text style={styles.sectionLabel}>{g.label}</Text>
                 <Text style={styles.sectionCount}>
                   {g.items.filter((it) => it.done).length}/{g.items.length}

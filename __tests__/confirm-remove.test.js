@@ -35,7 +35,7 @@ describe('подтверждение удаления записи дневни�
     expect(Alert.alert).toHaveBeenCalledTimes(1)
     const [title, message, buttons] = Alert.alert.mock.calls[0]
     expect(title).toBe('Удалить запись?')
-    expect(message).toContain('🥣 Овсянка')
+    expect(message).toContain('Овсянка')
     expect(message).toContain('250 г')
     expect(message).toContain('255 ккал')
     expect(message).toContain('«Завтрак»')

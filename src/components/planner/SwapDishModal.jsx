@@ -29,7 +29,6 @@ export function SwapDishModal({ item, onClose, onReplace }) {
         <Pressable style={styles.sheet} onPress={() => {}}>
           {/* Шапка: текущее блюдо */}
           <View style={styles.head}>
-            <Text style={styles.emoji}>{item?.emoji || '🍽️'}</Text>
             <View style={styles.headTexts}>
               <Text style={styles.name} numberOfLines={1}>{item?.name || ''}</Text>
               <Text style={styles.sub} numberOfLines={1}>
@@ -70,7 +69,6 @@ export function SwapDishModal({ item, onClose, onReplace }) {
                   accessibilityRole="button"
                   accessibilityLabel={`Заменить на ${f.name}: ${grams} грамм, ${formatNum(kcalPortion)} калорий`}
                 >
-                  <Text style={styles.rowEmoji}>{f.emoji}</Text>
                   <View style={styles.rowTexts}>
                     <Text style={styles.rowName} numberOfLines={1}>{f.name}</Text>
                     <Text style={styles.rowMeta} numberOfLines={1}>{f.kcal} ккал/100 г</Text>

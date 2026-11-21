@@ -28,7 +28,6 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 
   return (
     <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-3 py-2">
-      <Text className="shrink-0 text-[17.5px]">{entry.emoji}</Text>
       <View className="min-w-0 flex-1">
         <Text numberOfLines={1} className="font-medium text-[16.5px] text-bear-bright">
           {entry.name}
@@ -186,7 +185,6 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       className="min-w-0 flex-1 flex-row items-center gap-1.5 active:opacity-70"
                     >
                       <Text className="min-w-0 flex-1 font-bold text-[17.5px] text-bear-text">
-                        {meal.emoji ? `${meal.emoji} ` : ''}
                         {meal.name}
                       </Text>
                       {openNow ? (

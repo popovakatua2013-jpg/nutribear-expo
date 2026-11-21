@@ -46,7 +46,6 @@ export function PortionsModal({ visible, onClose }) {
                   key={p.title}
                   className="flex-row items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5"
                 >
-                  <Text className="text-[28px] leading-[28px]">{p.emoji}</Text>
                   <View className="min-w-0 flex-1">
                     <Text className="font-bold text-[17.5px] text-bear-text">{p.title}</Text>
                     <Text className="mt-0.5 font-sans text-[15px] leading-relaxed text-bear-sub2">

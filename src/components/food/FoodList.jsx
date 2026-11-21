@@ -1,7 +1,9 @@
-// Список продуктов из любого источника: строка с эмодзи (или фото блюда),
-// названием, калорийностью на 100 г и подписью (бренд / источник)
+// Список продуктов из любого источника: строка с названием, калорийностью
+// на 100 г и подписью (бренд / источник). Эмодзи-иконки и фото-миниатюры
+// убраны из списков — отзыв Кати 21.11 («не нужны иконки нигде»):
+// остались только текст и знак «+».
 
-import { FlatList, Image, Pressable, Text, View } from 'react-native'
+import { FlatList, Pressable, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
 
 export function FoodList({ items, emptyText, onPick, scroll = true }) {
@@ -17,24 +19,9 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
     <Pressable
       onPress={() => onPick(item)}
       accessibilityRole="button"
-      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] pr-3 active:bg-[#1A2647]"
+      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-[#1A2647]"
     >
-      {/* Картинка на весь блок: фото/эмодзи во всю высоту строки,
-          впритык к левому краю (по запросу пользователя) */}
-      {item.photo ? (
-        <Image
-          source={{ uri: item.photo }}
-          style={{ width: 52, height: 56 }}
-          className="shrink-0"
-          resizeMode="cover"
-          accessibilityLabel={`Фото: ${item.name}`}
-        />
-      ) : (
-        <View className="h-14 w-[52px] shrink-0 items-center justify-center bg-bear-card">
-          <Text className="text-[26px]">{item.emoji || '🍽️'}</Text>
-        </View>
-      )}
-      <View className="min-w-0 flex-1 justify-center gap-0.5 py-1 pl-2.5">
+      <View className="min-w-0 flex-1 gap-0.5">
         <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
           {item.name}
         </Text>
@@ -44,7 +31,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
             : 'калорийность уточните'}
         </Text>
       </View>
-      <View className="self-center">
+      <View className="shrink-0">
         <Plus size={18} color="#8B96B8" />
       </View>
     </Pressable>

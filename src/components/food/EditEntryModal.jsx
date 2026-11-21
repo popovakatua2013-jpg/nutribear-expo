@@ -123,7 +123,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">Изменить запись</Text>
                 <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
-                  {`${entry.emoji} ${entry.name} · «${mealName}» · ${entry.time || 'без времени'}`}
+                  {`${entry.name} · «${mealName}» · ${entry.time || 'без времени'}`}
                 </Text>
               </View>
             </View>

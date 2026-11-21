@@ -128,7 +128,7 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
   )
 }
 
-// Строка блюда внутри раскрытой секции: эмодзи, название, граммовка,
+// Строка блюда внутри раскрытой секции: название, граммовка,
 // калории и время; комментарий (📝, отзыв Кати 20.11) — отдельной строкой;
 // карандаш — правка веса (с настоящим mealId — у доп.
 // перекусов он свой), корзина — удалить
@@ -138,7 +138,6 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
 
   return (
     <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-2.5 py-2">
-      <Text className="shrink-0 text-[16.5px]">{entry.emoji}</Text>
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}

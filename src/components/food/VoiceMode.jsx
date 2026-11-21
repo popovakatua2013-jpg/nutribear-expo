@@ -195,7 +195,6 @@ export function VoiceMode({ onPick }) {
                 accessibilityRole="button"
                 className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 active:bg-white/10"
               >
-                <Text className="text-[26px]">{it.emoji || '🍽'}</Text>
                 <View className="min-w-0 flex-1">
                   <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
                     {it.name}

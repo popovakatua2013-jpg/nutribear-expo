@@ -213,7 +213,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                   Исправить блюдо
                 </Text>
                 <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
-                  {`${item.emoji || '🍽️'} ${SOURCE_HINT[item.source] || 'проверьте значения'}`}
+                  {SOURCE_HINT[item.source] || 'проверьте значения'}
                 </Text>
               </View>
             </View>

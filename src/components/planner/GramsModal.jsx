@@ -53,7 +53,6 @@ export function GramsModal({ item, onClose, onSave }) {
         <Pressable style={styles.sheet} onPress={() => {}}>
           {/* Шапка: блюдо */}
           <View style={styles.head}>
-            <Text style={styles.emoji}>{item?.emoji || '🍽️'}</Text>
             <Text style={styles.name} numberOfLines={1}>{item?.name || ''}</Text>
             <Pressable onPress={onClose} style={styles.closeBtn} accessibilityLabel="Закрыть окно">
               <X size={18} color={colors.text2} />

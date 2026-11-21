@@ -12,7 +12,7 @@ import { formatNum } from './format'
 export function confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast }) {
   Alert.alert(
     'Удалить запись?',
-    `${entry.emoji || '🍽️'} ${entry.name} — ${
+    `${entry.name} — ${
       entry.grams > 0 ? `${entry.grams} г · ` : ''
     }${formatNum(entry.kcal)} ккал${mealName ? ` · «${mealName}»` : ''}`,
     [

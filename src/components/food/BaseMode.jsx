@@ -159,7 +159,6 @@ export function BaseMode({ mealId, onPick }) {
                   accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
                   className="min-w-0 flex-1 flex-row items-center gap-2"
                 >
-                  <Text className="text-[20px]">{f.emoji}</Text>
                   <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[17px] text-bear-text">
                     {f.name}
                   </Text>

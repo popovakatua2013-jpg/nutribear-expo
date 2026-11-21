@@ -3,7 +3,8 @@
 // проглядела у конкурента» — раньше форма была спрятана в «Базе
 // продуктов»), карточки «Мои комбо», «Мои продукты» и «История» (журнал
 // по дням, «перенести историю» — как у конкурента) и «Недавние и частые»
-// со строками (эмодзи, название, калории, кнопка «Добавить», шеврон) —
+// со строками (название, калории, кнопка «Добавить», шеврон) — эмодзи-
+// иконки продуктов убраны (отзыв Кати 21.11: «не нужны иконки нигде») —
 // по умолчанию всегда свёрнуты (отзыв Кати), пунктирная кнопка «Сохранить
 // приём», внизу — один ряд из 5 узких цветных плиток (сканер, фото,
 // голос, галерея, этикетка).
@@ -237,7 +238,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
     addOnce(() => {
       readdRow(addEntry, mealId, row, dayOff)
       toast({
-        title: `${row.emoji || '🍽️'} ${row.name} — в «${mealName}»`,
+        title: `${row.name} — в «${mealName}»`,
         description: `${row.grams > 0 ? `${row.grams} г · ` : ''}≈${formatNum(row.kcal)} ккал${
           dayOff ? ' · записано за вчера' : ''
         }`,
@@ -263,14 +264,14 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
     addOnce(() => {
       combo.items.forEach((row) => readdRow(addEntry, mealId, row, dayOff))
       toast({
-        title: `${combo.emoji} ${combo.name} — в «${mealName}»`,
+        title: `${combo.name} — в «${mealName}»`,
         description: `${combo.items.length} блюд(а) из комбо${dayOff ? ' · записано за вчера' : ''}`,
       })
     })
   }
 
   function confirmDeleteCombo(combo) {
-    Alert.alert('Удалить комбо?', `${combo.emoji} ${combo.name}`, [
+    Alert.alert('Удалить комбо?', combo.name, [
       { text: 'Отмена', style: 'cancel' },
       {
         text: 'Удалить',
@@ -286,7 +287,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
   // Удалить свой продукт из карточки «Мои продукты» (с подтверждением —
   // удаление безвозвратное, в отличие от комбо тут нет дубля в «Базе»)
   function confirmDeleteUserFood(f) {
-    Alert.alert('Удалить продукт?', `${f.emoji} ${f.name}`, [
+    Alert.alert('Удалить продукт?', f.name, [
       { text: 'Отмена', style: 'cancel' },
       {
         text: 'Удалить',
@@ -425,7 +426,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                         accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
                         className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
                       >
-                        <Text className="shrink-0 text-[19px]">{c.emoji}</Text>
                         <View className="min-w-0 flex-1">
                           <Text
                             numberOfLines={1}
@@ -514,7 +514,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                         accessibilityLabel={`Добавить «${f.name}» (${f.kcal100} ккал на 100 г)`}
                         className="min-w-0 flex-1 flex-row items-center gap-2.5"
                       >
-                        <Text className="shrink-0 text-[19px]">{f.emoji}</Text>
                         <View className="min-w-0 flex-1">
                           <Text
                             numberOfLines={1}
@@ -594,7 +593,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                       accessibilityLabel={`Добавить ${row.name} как в прошлый раз`}
                       className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
                     >
-                      <Text className="shrink-0 text-[19px]">{row.emoji || '🍽️'}</Text>
                       <View className="min-w-0 flex-1">
                         <Text
                           numberOfLines={1}
@@ -672,7 +670,6 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                           accessibilityLabel={`Добавить ${row.name} из истории (${g.label})`}
                           className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
                         >
-                          <Text className="shrink-0 text-[19px]">{row.emoji || '🍽️'}</Text>
                           <View className="min-w-0 flex-1">
                             <Text
                               numberOfLines={1}

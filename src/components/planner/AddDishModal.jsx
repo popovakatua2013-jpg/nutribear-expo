@@ -162,7 +162,6 @@ export function AddDishModal({ open, onClose, onPick }) {
               {/* ── Этап порции: продукт + граммы + ккал + «в покупки» ── */}
               <View style={styles.stageCard}>
                 <View style={styles.stageHead}>
-                  <Text style={styles.rowEmoji}>{picked.raw.emoji}</Text>
                   <View style={styles.stageHeadText}>
                     <Text style={styles.stageName} numberOfLines={1}>{picked.raw.name}</Text>
                     <Text style={styles.stageSub} numberOfLines={1}>
@@ -269,7 +268,6 @@ export function AddDishModal({ open, onClose, onPick }) {
                     onPress={() => openPortion(item)}
                     accessibilityLabel={`${item.name}, ${item.kcal} калорий на 100 граммов. Тап — выбрать порцию`}
                   >
-                    <Text style={styles.rowEmoji}>{item.emoji}</Text>
                     <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.rowMeta}>
                       {item.kcal} ккал/100 г{item.defaultGrams && item.defaultGrams !== 100 ? ` · порция ${item.defaultGrams} г` : ''}

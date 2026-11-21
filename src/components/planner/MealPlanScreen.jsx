@@ -149,7 +149,7 @@ export function MealPlanScreen({ compact = false }) {
     store.getState().addItem(weekKey, picker.dayIdx, picker.mealId, item)
     setOpenMeals((s) => ({ ...s, [picker.mealId]: false }))
     toast({
-      title: `${item.emoji} ${item.name}`,
+      title: item.name,
       description: `${item.grams} г · ${formatNum(item.kcal)} ккал — в «${MEAL_NAMES[picker.mealId]}»${item.shopAdded ? ' · 🛒 добавлено в покупки' : ''}`,
     })
     setPicker(null)
@@ -470,7 +470,6 @@ export function MealPlanScreen({ compact = false }) {
                 </Pressable>
                 {open && items.map((it) => (
                   <View key={it.id} style={styles.itemRow}>
-                    <Text style={styles.itemEmoji}>{it.emoji}</Text>
                     <Pressable
                       onPress={() => setSwapFor({ mealId, itemId: it.id })}
                       style={styles.itemNameBtn}
