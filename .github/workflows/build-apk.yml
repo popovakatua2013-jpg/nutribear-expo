@@ -79,7 +79,14 @@ jobs:
       # и не принималась магазином. Если секреты KEYSTORE_* заданы —
       # подписываем релизным ключом прямо здесь; если нет — выкладываем
       # НЕПОДПИСАННЫЙ APK (его подписывает владелец ключа отдельно)
+      # Режим подписи передаём через ВЫХОД шага ($GITHUB_OUTPUT →
+      # steps.keystore.outputs.mode), а не через $GITHUB_ENV: переменные,
+      # записанные в GITHUB_ENV во время прогона, статический анализатор
+      # редактора не видит и ругался «Context access might be invalid:
+      # SIGN_MODE» (предупреждения в строках if-условий). Поведение то же:
+      # задан ключ — шаги проверки подписи и авто-релиза выполняются
       - name: Prepare release keystore
+        id: keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
@@ -87,11 +94,11 @@ jobs:
           if [ "$HAS_KEYSTORE" = "true" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
             node scripts/apply-release-signing.js
-            echo "SIGN_MODE=secrets" >> "$GITHUB_ENV"
+            echo "mode=secrets" >> "$GITHUB_OUTPUT"
             echo "Ключ декодирован, build.gradle настроен на release.keystore"
           else
             node scripts/apply-release-signing.js --unsigned
-            echo "SIGN_MODE=unsigned" >> "$GITHUB_ENV"
+            echo "mode=unsigned" >> "$GITHUB_OUTPUT"
             echo "::warning::Секреты KEYSTORE_* не заданы — APK выйдет НЕПОДПИСАННЫМ (app-release-unsigned.apk)"
           fi
 
@@ -125,7 +132,7 @@ jobs:
       # ушёл с debug-ключом, выпускать его в магазин нельзя. Проверяем оба
       # APK — тонкий arm64 и универсальный
       - name: Verify release signature
-        if: env.SIGN_MODE == 'secrets'
+        if: steps.keystore.outputs.mode == 'secrets'
         run: |
           BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
           STAGE="$GITHUB_WORKSPACE/apk-stage"
@@ -155,7 +162,7 @@ jobs:
       #   NutriBear-1.1.2-v15-arm64.apk / -universal.apk.
       # Повторный прогон той же версии обновляет файлы (--clobber).
       - name: Publish release (два APK)
-        if: env.SIGN_MODE == 'secrets'
+        if: steps.keystore.outputs.mode == 'secrets'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
