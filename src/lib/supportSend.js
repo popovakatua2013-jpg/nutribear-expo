@@ -18,6 +18,13 @@
 //    RN-части { uri, name, type } (см. шапку multipart.js).
 //  • Размеры проверяем ДО чтения в память (supportLimits.js) — иначе
 //    base64 большого файла раздувает RAM телефона.
+//  • Имя файла в заголовке multipart-части — ASCII-транслит
+//    (asciiFilename из multipart.js): парсер у Cloudflare может быть
+//    строже undici к UTF-8 в Content-Disposition. Настоящее имя —
+//    отдельным текстовым полем filenames, из него воркер берёт подпись
+//    вложения в Telegram.
+//  • Файлы читает НОВЫЙ файловый API, при сбое — старый
+//    expo-file-system/legacy (умеет и file://, и content://).
 //  • Если воркер ответил 503 support_not_configured — канал ещё не
 //    настроен (секреты TG_* не залиты): вернём { notConfigured: true },
 //    и окно поддержки молча откатится на прежний mailto-поток.
@@ -26,10 +33,11 @@
 // ─────────────────────────────────────────────────────────────────
 
 import { File } from 'expo-file-system'
+import * as LegacyFileSystem from 'expo-file-system/legacy'
 import Constants from 'expo-constants'
 import { Platform } from 'react-native'
 import { AI_CONFIG } from './ai-config'
-import { buildMultipartBody, decodeBase64ToBytes } from './multipart'
+import { asciiFilename, buildMultipartBody, decodeBase64ToBytes } from './multipart'
 import { SUPPORT_LIMITS, guessMimeFromName } from './supportLimits'
 
 // Прямая отправка доступна, только если приложение знает адрес воркера
@@ -60,10 +68,23 @@ function localError(message) {
   return e
 }
 
-// Читаем файл в байты через base64 (как фото еды в food-ai.js)
+// Читаем файл в байты через base64 (как фото еды в food-ai.js).
+// Основной путь — новый файловый API; если он не смог (content:// от
+// некоторых проводников, экзотика Samsung) — запасной старый API
+// expo-file-system/legacy: он читает и file://, и content://. Не
+// прочитался и он — исключение летит дальше: SupportModal молча
+// откроет почту с вложением (там файл отдаётся нативно, по uri),
+// сообщение не потеряется.
 async function fileBytesOf(uri) {
-  const b64 = await new File(uri).base64()
-  return decodeBase64ToBytes(b64)
+  try {
+    const b64 = await new File(uri).base64()
+    return decodeBase64ToBytes(b64)
+  } catch {
+    const b64 = await LegacyFileSystem.readAsStringAsync(uri, {
+      encoding: 'base64',
+    })
+    return decodeBase64ToBytes(b64)
+  }
 }
 
 // Отправка обращения. Возвращает:
@@ -100,16 +121,25 @@ export async function sendSupportDirect({ topicLabel, message, contact = '', fil
     { name: 'platform', value: Platform.OS === 'ios' ? 'iOS' : 'Android' },
   ]
 
-  // Файлы читаем по одному: часть multipart = { name, filename, type, bytes }
+  // Файлы читаем по одному: часть multipart = { name, filename, type, bytes }.
+  // filename в заголовке — ASCII-транслит (см. шапку), настоящее имя —
+  // в поле filenames (JSON-массив), воркер использует его для подписи
+  // вложений в Telegram
   const parts = []
-  for (const f of files) {
+  const realNames = []
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i]
     const bytes = await fileBytesOf(f.uri)
+    realNames.push(String(f.name || '').slice(0, 120))
     parts.push({
       name: 'file',
-      filename: String(f.name || 'файл').slice(0, 120),
+      filename: asciiFilename(f.name, i),
       type: guessMimeFromName(f.name),
       bytes,
     })
+  }
+  if (realNames.length > 0) {
+    fields.push({ name: 'filenames', value: JSON.stringify(realNames) })
   }
 
   // multipart-тело собираем руками — winter-fetch в Expo SDK 58 не
@@ -120,9 +150,9 @@ export async function sendSupportDirect({ topicLabel, message, contact = '', fil
     headers['X-NB-Secret'] = AI_CONFIG.proxySecret // тот же секрет, что у ИИ-запросов
   }
 
-  // Таймаут 30 с: обращения с вложениями на медленной сети могут
-  // грузиться дольше обычных запросов (у ИИ — 60 с, здесь файлов
-  // меньше и лимит жёстче)
+  // Таймаут 60 с (как у ИИ-запросов): обращения с вложениями до 16 МБ
+  // на медленной сети грузятся дольше текстовых — 30 с не хватало
+  // (отзыв Кати 21.11: обращение с картинкой падало в почту)
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), SUPPORT_LIMITS.TIMEOUT_MS)
   let res

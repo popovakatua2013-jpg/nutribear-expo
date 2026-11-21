@@ -26,6 +26,9 @@
 //    почта с готовым письмом. Без вложений — прямой mailto через
 //    Linking: работает даже когда expo-mail-composer недоступен в
 //    Expo Go. С вложениями — композер; mailto доставит хотя бы текст.
+//    Причину сбоя показываем в тосте — диагностика с телефона без
+//    консоли (отзыв Кати 21.11: с картинкой прямая отправка падала
+//    в почту, причина была не видна)
 //  Адрес поддержки всегда есть и в политике конфиденциальности
 //  (OPERATOR.email в lib/data/legal).
 //
@@ -213,6 +216,7 @@ export function SupportModal({ open = false, onClose }) {
 
     // ── Шаг 1: прямо из приложения на наш сервер ─────────────────
     let directFailed = false
+    let directFailedReason = ''
     if (isDirectSupportAvailable() && !sending) {
       setSending(true)
       try {
@@ -250,8 +254,12 @@ export function SupportModal({ open = false, onClose }) {
           toast({ title: 'Не получилось отправить', description: e.message })
           return
         }
-        // Сеть/сервер: откатываемся на почту — сообщение не потеряется
+        // Сеть/сервер: откатываемся на почту — сообщение не потеряется.
+        // Причину показываем в тосте запасного потока (диагностика с
+        // телефона — без консоли и логов)
+        console.warn('[support] прямая отправка не удалась:', e)
         directFailed = true
+        directFailedReason = (e && e.message) || ''
       } finally {
         setSending(false)
       }
@@ -260,6 +268,14 @@ export function SupportModal({ open = false, onClose }) {
     // ── Шаг 2: запасной почтовый поток (как было) ─────────────────
     try {
       if (files.length > 0) {
+        if (directFailed) {
+          toast({
+            title: 'Не получилось отправить из приложения',
+            description: directFailedReason
+              ? `Открыли почту с готовым письмом. Причина: ${directFailedReason}`
+              : 'Открыли почту с готовым письмом',
+          })
+        }
         const available = await MailComposer.isAvailableAsync()
         if (!available) throw new Error('почта недоступна')
         await MailComposer.composeAsync({
@@ -274,7 +290,9 @@ export function SupportModal({ open = false, onClose }) {
           directFailed
             ? {
                 title: '📮 Не получилось отправить из приложения',
-                description: 'Открыли вашу почту с готовым письмом — нажмите «Отправить»',
+                description:
+                  'Открыли вашу почту с готовым письмом — нажмите «Отправить»' +
+                  (directFailedReason ? `. Причина: ${directFailedReason}` : ''),
               }
             : {
                 title: '📮 Открываем вашу почту',

@@ -61,6 +61,54 @@ export function decodeBase64ToBytes(input) {
 
 const BOUNDARY_PREFIX = '----NutriBearForm'
 
+// ── ASCII-имя файла для заголовка multipart-части ────────────────
+// filename в Content-Disposition — не «значение поля»: undici (Node,
+// тесты) декодирует UTF-8 в нём спокойно, но парсер multipart у
+// Cloudflare может быть строже — а гадать без секрета не на чем
+// (отзыв Кати 21.11: обращение с вложением падало в почтовый запасной
+// поток). Поэтому в заголовок части кладём ТОЛЬКО ASCII: кириллица —
+// транслитом, всё прочее не-ASCII — в подчёркивание. Настоящее имя
+// едет отдельным текстовым полем filenames (значения полей с UTF-8
+// на воркере доказанно работают — тема «Предложение» доходила).
+const TRANSLIT = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh',
+  з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o',
+  п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c',
+  ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e',
+  ю: 'yu', я: 'ya',
+}
+
+export function asciiFilename(name, index = 0) {
+  const raw = String(name || '').trim().slice(0, 120)
+  let out = ''
+  for (const ch of raw) {
+    const lo = ch.toLowerCase()
+    if (Object.prototype.hasOwnProperty.call(TRANSLIT, lo)) {
+      const t = TRANSLIT[lo]
+      // «Щ» → «Sch» (заглавная первая), «с» → «s» — как есть
+      out += ch === lo ? t : t.charAt(0).toUpperCase() + t.slice(1)
+    } else if (/[A-Za-z0-9._-]/.test(ch)) {
+      out += ch
+    } else {
+      out += '_'
+    }
+  }
+  out = out.replace(/_{2,}/g, '_')
+  // Ствол имени (до последней точки) без единой буквы/цифры —
+  // подставляем нейтральное file-N, расширение сохраняем. Ствол
+  // отделяем ДО чистки подчёркиваний по краям: иначе «???.jpg»
+  // схлопывается в «.jpg» без имени
+  const dot = out.lastIndexOf('.')
+  const ext = dot > 0 ? out.slice(dot) : ''
+  const stem = (dot > 0 ? out.slice(0, dot) : out).replace(/^_+|_+$/g, '')
+  if (!/[A-Za-z0-9]/.test(stem)) {
+    out = `file-${index + 1}${ext}`
+  } else {
+    out = stem + ext
+  }
+  return out.slice(0, 120) || `file-${index + 1}`
+}
+
 function createBoundary() {
   // Случайная граница: 24 символа из window.crypto (или Math.random в Node)
   let s = ''

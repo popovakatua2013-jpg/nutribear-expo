@@ -23,6 +23,8 @@ const {
   guessMimeFromName,
 } = require('@/lib/supportLimits')
 
+const { asciiFilename, buildMultipartBody } = require('@/lib/multipart')
+
 describe('sanitizeSupportFields: очистка полей обращения', () => {
   test('полный набор полей проходит и обрезается по краям', () => {
     const out = sanitizeSupportFields({
@@ -136,6 +138,9 @@ describe('лимиты поддержки: приложение и воркер 
     expect(SUPPORT_LIMITS.MAX_SUPPORT_TOTAL_BYTES).toBeGreaterThanOrEqual(
       SUPPORT_LIMITS.MAX_SUPPORT_FILE_BYTES
     )
+    // таймаут с запасом на медленную сеть: вложения до 16 МБ грузятся
+    // дольше текста — 30 с не хватало (отзыв Кати 21.11)
+    expect(APP_LIMITS.TIMEOUT_MS).toBe(60000)
   })
 })
 
@@ -153,5 +158,52 @@ describe('guessMimeFromName: MIME по расширению', () => {
     expect(guessMimeFromName(null)).toBe('application/octet-stream')
     // без расширения — тоже нейтральный
     expect(guessMimeFromName('без-расширения')).toBe('application/octet-stream')
+  })
+})
+
+describe('asciiFilename: ASCII-имя для заголовка multipart-части', () => {
+  // Парсер multipart у Cloudflare может декодировать UTF-8 в
+  // Content-Disposition filename строже, чем undici в тестах выше —
+  // поэтому в заголовок части едет только ASCII (см. шапку multipart.js)
+  test('кириллица транслитерируется, пробелы и скобки — в подчёркивания', () => {
+    expect(asciiFilename('Скриншот 2026-11-21.jpg')).toBe('Skrinshot_2026-11-21.jpg')
+    expect(asciiFilename('фото (1).png')).toBe('foto_1.png')
+    expect(asciiFilename('ОТЧЁТ.PDF')).toBe('OTChET.PDF')
+    expect(asciiFilename('отчёт.pdf')).toBe('otchet.pdf')
+  })
+
+  test('в результате только печатные ASCII — какой бы имя ни было', () => {
+    const nasty = 'скриншот-😊-приложение (2) «копия».png'
+    const out = asciiFilename(nasty)
+    expect(out).toMatch(/^[\x20-\x7E]+$/)
+    expect(out).toMatch(/\.png$/)
+  })
+
+  test('пустое и бессмысленное имя — нейтральное file-N с расширением', () => {
+    expect(asciiFilename('', 0)).toBe('file-1')
+    expect(asciiFilename('???', 2)).toBe('file-3')
+    expect(asciiFilename('???.jpg', 2)).toBe('file-3.jpg')
+    expect(asciiFilename(null, 4)).toBe('file-5')
+  })
+
+  test('длинное имя обрезается до 120 символов (лимит воркера)', () => {
+    expect(asciiFilename('д'.repeat(300) + '.png')).toHaveLength(120)
+  })
+
+  test('тело multipart: filename в заголовке части — ASCII при кириллическом исходном', () => {
+    const { body } = buildMultipartBody([
+      { name: 'topic', value: 'Предложение' },
+      {
+        name: 'file',
+        filename: asciiFilename('Скриншот_тест.jpg', 0),
+        type: 'image/jpeg',
+        bytes: new Uint8Array([1, 2, 3]),
+      },
+    ])
+    // файловая часть в теле вторая — ищем её заголовок по всему телу
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(body)
+    const fileHeader = text.split('\r\n').find((l) => l.includes('filename='))
+    expect(fileHeader).toContain('filename="Skrinshot_test.jpg"')
+    expect(fileHeader).toMatch(/^[\x00-\x7F]+$/)
   })
 })

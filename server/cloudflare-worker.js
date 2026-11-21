@@ -10,7 +10,8 @@
 //   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы) как есть
 //   POST /v1/audio/transcriptions — голосовой ввод (multipart) как есть
 //   POST /v1/support           — обращения из окна «Написать нам» (multipart:
-//                                тема, текст, контакт + вложения) → Telegram
+//                                тема, текст, контакт, filenames — настоящие
+//                                имена вложений + вложения) → Telegram
 //   GET  /                     — проверка «жив ли воркер» из браузера
 //
 //  Настройка (после деплоя):
@@ -496,6 +497,24 @@ export default {
         if (!fields) {
           return json({ error: 'Пустой текст обращения' }, 400)
         }
+        // Настоящие имена вложений: приложение шлёт их отдельным текстовым
+        // полем filenames (JSON-массив, UTF-8 в ЗНАЧЕНИИ поля воркер
+        // разбирает надёжно), а filename в заголовке части — ASCII-транслит
+        // (парсер multipart у Cloudflare может быть строже undici к UTF-8
+        // в Content-Disposition — отзыв Кати 21.11: обращение с картинкой
+        // падало). Для подписей и имён в Telegram берём настоящее имя
+        let fileNames = []
+        try {
+          const rawNames = form.get('filenames')
+          if (typeof rawNames === 'string' && rawNames) {
+            const arr = JSON.parse(rawNames)
+            if (Array.isArray(arr)) {
+              fileNames = arr
+                .slice(0, MAX_SUPPORT_FILES)
+                .map((s) => String(s).slice(0, 120))
+            }
+          }
+        } catch {}
         // Вложения: только части с именем file (файлы от DocumentPicker).
         // Лимиты — ДО чтения в память: гигантскую пачку отбраковываем
         // сразу, не распаковывая
@@ -536,22 +555,24 @@ export default {
         }
 
         // 2) Вложения — по одному sendDocument (лимит Bot API: файл
-        // до 50 МБ, наши 10 МБ проходят с запасом). caption — имя файла,
-        // обрезанное до безопасной длины (лимит caption 1024)
+        // до 50 МБ, наши 10 МБ проходят с запасом). caption и имя —
+        // настоящее имя файла из поля filenames (или имя части как
+        // запаска), обрезанные до безопасной длины (лимит caption 1024)
         let filesSent = 0
         let filesFailed = 0
         for (let i = 0; i < files.length; i++) {
           try {
             const f = files[i]
+            const realName = String(fileNames[i] || f.name || `файл-${i + 1}`).slice(0, 120)
             const bytes = await f.arrayBuffer()
             const tform = new FormData()
             tform.append('chat_id', String(env.TG_CHAT_ID))
             tform.append(
               'document',
               new Blob([bytes], { type: f.type || 'application/octet-stream' }),
-              (f.name || `файл-${i + 1}`).slice(0, 120)
+              realName
             )
-            tform.append('caption', `Вложение ${i + 1}: ${(f.name || '').slice(0, 200)}`)
+            tform.append('caption', `Вложение ${i + 1}: ${realName.slice(0, 200)}`)
             const fr = await fetch(`${tg}/sendDocument`, { method: 'POST', body: tform })
             const fd = await fr.json().catch(() => null)
             if (fd?.ok) filesSent++
