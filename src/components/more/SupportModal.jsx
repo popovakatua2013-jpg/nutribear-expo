@@ -36,13 +36,30 @@
 // expo-mail-composer (mailto вложения не умеет): тема, текст,
 // подпись и файлы едут вместе; если почты на телефоне нет — прежний
 // тост с адресом. Сам адрес всегда есть в политике конфиденциальности.
+//
+// 21.11, отзыв Кати (скрин 14:09): «клавиатура закрывает экран, нет
+// возможности нажать кнопку отправить; нужно чтобы сообщение открывало
+// почту пользователя и обращение создавалось оттуда». Два фикса:
+//   1. behavior="height" на Android не сжал прозрачную Modal — кнопка
+//      уехала под клавиатуру. Теперь ручной отступ useKeyboardGuard
+//      (как в «Записать вес») + окно в ScrollView: при открытой
+//      клавиатуре якорится вниз (flex-end) — «Отправить» и пометка
+//      видны всегда, шапку и темы прокручиваем; при закрытой — окно
+//      центрируется как раньше.
+//   2. Без вложений — прямой mailto через Linking: система сама
+//      поднимает почту пользователя с готовым письмом (тема, текст,
+//      подпись с версией) — работает даже когда expo-mail-composer
+//      в Expo Go недоступен. С вложениями — композер; если и он не
+//      вышел, mailto доставит хотя бы текст (без файлов).
 
 import { useState } from 'react'
 import {
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -63,6 +80,8 @@ import {
   X,
 } from 'lucide-react-native'
 import { OPERATOR } from '@/lib/data/legal'
+import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
+import { supportMailtoUrl } from '@/lib/supportMailto'
 import { useToast } from '../ui/Toast'
 
 const EMAIL = OPERATOR.email
@@ -85,6 +104,10 @@ function signature() {
 // помощь» на «Ещё» открывает его сразу по тапу
 export function SupportModal({ open = false, onClose }) {
   const { toast } = useToast()
+  // Отступ под клавиатуру считает useKeyboardGuard (behavior="height"
+  // на Android прозрачную Modal не сжимает — скрин Кати 21.11)
+  const kb = useKeyboardGuard()
+  const kbOpen = kb.padBottom > 0 || kb.shrunk
   // Выбранная тема, текст и вложения — черновик сохраняется, пока
   // приложение живо: случайно закрыли — текст и файлы не потерялись
   const [topic, setTopic] = useState(TOPICS[0])
@@ -117,29 +140,60 @@ export function SupportModal({ open = false, onClose }) {
     setFiles((prev) => prev.filter((f) => f.uri !== uri))
   }
 
-  // Письмо собирает expo-mail-composer — только он умеет вкладывать
-  // файлы (mailto не может). Если почта не настроена/не открылась —
-  // прежний тост с адресом (тексты не менялись)
-  function send() {
+  // Отправка (отзыв Кати 21.11: «открывает свою почту и уже оттуда
+  // создаёт обращение»). Без вложений — прямой mailto через Linking:
+  // система Android/iOS сама поднимает почту пользователя (Gmail,
+  // Samsung Email) с уже заполненными получателем, темой и текстом —
+  // осталось нажать «Отправить» в своей почте. Работает и в Expo Go,
+  // даже когда expo-mail-composer недоступен. С вложениями mailto
+  // бессилен — только композер; если и он не вышел (почта не
+  // настроена), доставляем хотя бы текст тем же mailto, а если и это
+  // не вышло — тост с адресом (он всегда есть и в политике).
+  async function send() {
     const text = message.trim()
+    const subject = `[NutriBear] ${topic.subject}`
     const body = `${text || 'Опишите, пожалуйста, подробнее.'}${signature()}`
     const fail = () =>
       toast({
         title: '📮 Почта не открылась',
         description: `Напишите нам сами: ${EMAIL}`,
       })
-    MailComposer.isAvailableAsync()
-      .then((available) => {
-        if (!available) return fail()
-        return MailComposer.composeAsync({
+    const mailto = () =>
+      Linking.openURL(supportMailtoUrl({ email: EMAIL, subject, body }))
+    try {
+      if (files.length > 0) {
+        const available = await MailComposer.isAvailableAsync()
+        if (!available) throw new Error('почта недоступна')
+        await MailComposer.composeAsync({
           recipients: [EMAIL],
-          subject: `[NutriBear] ${topic.subject}`,
+          subject,
           body,
           attachments: files.map((f) => f.uri),
-        }).catch(fail)
-      })
-      .catch(fail)
-    onClose?.()
+        })
+      } else {
+        await mailto()
+        toast({
+          title: '📮 Открываем вашу почту',
+          description: 'Письмо уже заполнено — проверьте и нажмите «Отправить»',
+        })
+      }
+      onClose?.()
+    } catch {
+      if (files.length > 0) {
+        try {
+          await mailto()
+          toast({
+            title: '📮 Открываем вашу почту',
+            description: 'Без вложений — пришлите файлы отдельным письмом',
+          })
+          onClose?.()
+          return
+        } catch {
+          // ниже — общий тост с адресом
+        }
+      }
+      fail()
+    }
   }
 
   return (
@@ -151,13 +205,29 @@ export function SupportModal({ open = false, onClose }) {
       onRequestClose={() => onClose?.()}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 items-center justify-center bg-black/60 px-6"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        onLayout={kb.onLayout}
+        className="flex-1 bg-black/60"
+        style={kb.padBottom > 0 ? { paddingBottom: kb.padBottom + 12 } : null}
       >
-        <View
-          accessibilityLabel="Окно письма в поддержку"
-          className="w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+        {/* Окно выше высоты над клавиатурой, поэтому оно в ScrollView:
+            при открытой клавиатуре якорится вниз — «Отправить» и пометка
+            о безопасности видны всегда, шапка и темы прокручиваются;
+            при закрытой — центрируется как раньше. keyboardShouldPersistTaps
+            — тап по «Отправить» срабатывает, не пряча клавиатуру */}
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: kbOpen ? 'flex-end' : 'center',
+            paddingHorizontal: 24,
+            paddingVertical: 24,
+          }}
+          keyboardShouldPersistTaps="handled"
         >
+          <View
+            accessibilityLabel="Окно письма в поддержку"
+            className="w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          >
           {/* Шапка: лампочка в градиентном чипе + заголовок с подзаголовком
               + круглая кнопка закрытия (по скрину Кати от 10.11) */}
           <View className="flex-row items-center gap-3 px-5 pb-4 pt-5">
@@ -266,7 +336,6 @@ export function SupportModal({ open = false, onClose }) {
               value={message}
               onChangeText={setMessage}
               multiline
-              autoFocus
               maxLength={2000}
               placeholder="Расскажите, что вы думаете…"
               placeholderTextColor="#8B96B8"
@@ -348,7 +417,6 @@ export function SupportModal({ open = false, onClose }) {
               </LinearGradient>
             </Pressable>
 
-            {/* Пометка о безопасности — как на скрине Кати */}
             <View className="mt-2.5 flex-row items-center justify-center gap-1.5">
               <Lock size={14} color="#8D97BC" />
               <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-dim">
@@ -356,7 +424,7 @@ export function SupportModal({ open = false, onClose }) {
               </Text>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
   )

@@ -46,5 +46,8 @@ export function useKeyboardGuard() {
   return {
     onLayout,
     padBottom: Platform.OS !== 'android' || winShrunk || kbPad === 0 ? 0 : kbPad + insets.bottom,
+    // true — контейнер ужался системой (adjustResize): контент ниже
+    // клавиатуры уже виден, окно можно якорить вниз (SupportModal)
+    shrunk: winShrunk,
   }
 }
