@@ -15,7 +15,7 @@
 // дневника — запрос Кати), тут остались «Прошлый раз» и тонкая строка
 // «База продуктов» — отдельное окно со своими продуктами.
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -53,6 +53,7 @@ import { BaseMode } from './BaseMode'
 import { UserFoodForm } from './UserFoodForm'
 import { HistoryModal } from '../home/HistoryModal'
 import { FOODS } from '@/lib/data/foods'
+import { foodMatchesQuery } from '@/lib/food-search'
 import { toBuildItem } from '@/lib/data/to-item'
 import { historyGroups } from '@/lib/data/history-groups'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
@@ -99,7 +100,7 @@ function userFoodItem(f) {
   }
 }
 
-export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
+export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveChange }) {
   const recipes = useRecipesStore((s) => s.items)
   const userFoods = useUserFoodsStore((s) => s.items)
   const removeUserFood = useUserFoodsStore((s) => s.remove)
@@ -133,6 +134,16 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   const mealName = getMeal(mealId, customMeals).name
   const q = query.trim().toLowerCase()
 
+  // Пока в строке поиска есть текст — шапка окна сжимается в компактную
+  // строку (отзыв Кати 21.11: «строка поиска вообще ничего не ищет» —
+  // при открытой клавиатуре окно ужималось и списку результатов доставалась
+  // нулевая высота: не было видно ни результатов, ни заглушки).
+  // Сообщаем родителю (AddFoodModal), что поиск активен
+  const searchActive = q.length > 0
+  useEffect(() => {
+    onSearchActiveChange?.(searchActive)
+  }, [searchActive, onSearchActiveChange])
+
   // Выбор блюда из поиска или базы — окно базы закрываем сами
   function pick(item) {
     setBaseOpen(false)
@@ -140,11 +151,13 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
   }
 
   // Быстрый поиск: свои рецепты + свои продукты + вся база (без фильтра по приёму).
+  // Понимает формы слов и ё/е (отзыв Кати 21.11: «не ищет йогуртов,
+  // творожков, батон, бургеры») — см. foodMatchesQuery.
   // У рецепта — граммовка одной порции (выход, делённый на число порций)
   const results = useMemo(() => {
     if (!q) return null
     const rec = recipes
-      .filter((r) => r.name.toLowerCase().includes(q))
+      .filter((r) => foodMatchesQuery(r.name, q))
       .map((r) => {
         const sv = Math.max(1, Math.round(r.servings || 1))
         return {
@@ -162,9 +175,9 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
         }
       })
     const mine = userFoods
-      .filter((f) => f.name.toLowerCase().includes(q))
+      .filter((f) => foodMatchesQuery(f.name, q))
       .map(userFoodItem)
-    const foods = FOODS.filter((f) => f.name.toLowerCase().includes(q)).map((f) =>
+    const foods = FOODS.filter((f) => foodMatchesQuery(f.name, q)).map((f) =>
       toBuildItem(f)
     )
     return [...rec, ...mine, ...foods]
@@ -351,7 +364,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect }) {
           <View className="mt-3 min-h-0 flex-1">
             <FoodList
               items={results}
-              emptyText="Ничего не нашлось 🤷 Попробуйте другой запрос"
+              emptyText="Ничего не нашлось 🤷 Попробуйте изменить запрос или создайте свой продукт"
               onPick={pick}
             />
           </View>

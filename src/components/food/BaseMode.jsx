@@ -10,6 +10,7 @@ import { Cloud, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react-native'
 import { FoodList } from './FoodList'
 import { UserFoodForm } from './UserFoodForm'
 import { FOODS } from '@/lib/data/foods'
+import { foodMatchesQuery } from '@/lib/food-search'
 import { toBuildItem } from '@/lib/data/to-item'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { searchOFFCached } from '@/store/useOffCacheStore'
@@ -49,7 +50,7 @@ export function BaseMode({ mealId, onPick }) {
   const mine = useMemo(
     () =>
       userFoods
-        .filter((f) => !q || f.name.toLowerCase().includes(q))
+        .filter((f) => !q || foodMatchesQuery(f.name, q))
         .map((f) => ({
           id: f.id,
           name: f.name,
@@ -67,21 +68,21 @@ export function BaseMode({ mealId, onPick }) {
     [userFoods, q]
   )
 
-  // Локальная база: фильтр по приёму (для доп. перекусов — всё подряд).
-  // Поиск пословный: каждое слово запроса должно быть в названии —
-  // «колбаса варёная «Вязанка» Докторская» находит и «вязанка», и
-  // «вязанка докторская» (подстрока целиком не срабатывала из-за
-  // кавычек и перестановки слов — бренды из foods-brands.js)
-  const qWords = q.split(/\s+/).filter(Boolean)
+  // Локальная база. При непустом запросе ищем по ВСЕЙ базе — без фильтра
+  // по приёму пищи (отзыв Кати 21.11: «батон» на Обеде не находился —
+  // «Батон нарезной» помечен только завтраком; а «йогуртов», «творожков»,
+  // «бургеров» не было вовсе — поиск был строгой подстрокой). Пустой
+  // запрос — каталог продуктов текущего приёма, как раньше.
+  // Формы слов и ё/е понимает foodMatchesQuery: «йогуртов» → «йогурт»,
+  // «творожков» → «творог», «вареная» → «варёная»
   const local = useMemo(
     () =>
       FOODS.filter(
         (f) =>
-          (mealId.startsWith('custom-') || f.tags.includes(mealId)) &&
-          (!qWords.length ||
-            qWords.every((w) => f.name.toLowerCase().includes(w)))
+          (mealId.startsWith('custom-') || !q || f.tags.includes(mealId)) &&
+          foodMatchesQuery(f.name, q)
       ).map((f) => toBuildItem(f)),
-    [mealId, qWords.join(' ')]
+    [mealId, q]
   )
 
   // Поиск в Open Food Facts (≈2.5 млн позиций). Показываем кнопку,

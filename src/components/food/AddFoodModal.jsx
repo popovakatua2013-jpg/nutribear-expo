@@ -5,6 +5,10 @@
 // (как на референс-скриншоте): приём после полуночи уходит во вчера,
 // а не в чужой день. Подсказка под заголовком удалена по запросу —
 // плитки говорят сами за себя.
+// Во время активного поиска шапка сжимается в одну строку «Запись в
+// „Обед“» (вкладки приёмов и дни прячутся), а окно раскрывается на всю
+// высоту — иначе при открытой клавиатуре списку результатов доставалась
+// нулевая высота (отзыв Кати 21.11: «строка поиска вообще ничего не ищет»)
 
 import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native'
@@ -62,6 +66,10 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
     : MEALS
   const [mode, setMode] = useState('hub')
   const [picked, setPicked] = useState(null)
+  // Поиск активен (в строке есть текст): AddHub сообщает через колбэк —
+  // шапка сжимается, окно раскрывается на всю высоту, список результатов
+  // виден над клавиатурой
+  const [searching, setSearching] = useState(false)
   // За какой день записываем: 0 = сегодня, 1 = вчера. Выбор действует
   // на все способы добавления из этого окна (чипы, комбо, быстрая
   // запись, подтверждение порции); при закрытии сбрасывается на сегодня
@@ -99,7 +107,11 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
         className="flex-1 justify-end bg-black/60 px-3"
         style={{ paddingBottom: 12 + insets.bottom }}
       >
-        <View className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View
+          className={`overflow-hidden rounded-3xl border border-white/10 bg-bear-pop ${
+            searching ? 'h-full' : 'h-[85%]'
+          }`}
+        >
           {picked ? (
             <SelectedFood
               key={picked.name}
@@ -125,26 +137,39 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                     <X hitSlop={10} size={22} color="#A5AECB" />
                   </Pressable>
                 </View>
-                <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />
+                {searching ? (
+                  // Во время поиска вкладки приёмов прячем: каждая dp на счету,
+                  // пока открыта клавиатура; место записи видно компактной строкой
+                  <Text
+                    numberOfLines={1}
+                    className="mt-1.5 font-sans text-[14.5px] text-bear-sub"
+                  >
+                    {`Запись в «${meal.name}» · ${dayOff ? 'вчера' : 'сегодня'}`}
+                  </Text>
+                ) : (
+                  <MealTabs meals={meals} mealId={mealId} onChange={onMealIdChange} />
+                )}
 
                 {/* За какой день записываем: две пилюли с иконками (календарь
                     «Сегодня», часы «Вчера») — как на референс-скриншоте.
                     Действует на все способы ниже, на экране порции выбор
                     можно поменять */}
-                <View className="mt-2.5 flex-row items-center gap-2">
-                  <DayPill
-                    active={dayOff === 0}
-                    icon={Calendar}
-                    label="Сегодня"
-                    onPress={() => setDayOff(0)}
-                  />
-                  <DayPill
-                    active={dayOff === 1}
-                    icon={Clock}
-                    label="Вчера"
-                    onPress={() => setDayOff(1)}
-                  />
-                </View>
+                {!searching && (
+                  <View className="mt-2.5 flex-row items-center gap-2">
+                    <DayPill
+                      active={dayOff === 0}
+                      icon={Calendar}
+                      label="Сегодня"
+                      onPress={() => setDayOff(0)}
+                    />
+                    <DayPill
+                      active={dayOff === 1}
+                      icon={Clock}
+                      label="Вчера"
+                      onPress={() => setDayOff(1)}
+                    />
+                  </View>
+                )}
               </View>
 
               {/* Тело: хаб способов / выбранный режим */}
