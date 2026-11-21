@@ -13,9 +13,10 @@
 // POST /v1/support): воркер пересылает его владельцу в Telegram
 // (секреты TG_BOT_TOKEN/TG_CHAT_ID живут в Cloudflare, в бандл APK
 // они НЕ попадают). Пользователь жмёт «Отправить» — и всё, почтовое
-// приложение не открывается. Новое поле «Контакт для ответа»: при
-// прямой отправке письмо больше не приходит «от пользователя», без
-// контакта владельцу некому ответить (почта или @ник в Telegram).
+// приложение не открывается. Поле «Контакт для ответа» — ОБЯЗАТЕЛЬНОЕ
+// (решение Кати 21.11: «так сделаем»): при прямой отправке обращение
+// приходит в Telegram без «от пользователя», и без контакта отвечать
+// некому. Без заполненного контакта «Отправить» не срабатывает.
 // Вложения едут тем же запросом (multipart руками через lib/multipart).
 //
 // ЗАПАСНОЙ ПОЧТОВЫЙ ПОТОК — не потерять сообщение:
@@ -204,6 +205,18 @@ export function SupportModal({ open = false, onClose }) {
       toast({ title: 'Сначала напишите сообщение' })
       return
     }
+    // Контакт обязателен (решение Кати 21.11: «так сделаем») — без
+    // него на обращение некому ответить: в Telegram оно приходит
+    // без «от пользователя», и адрес ответа взять неоткуда. Окно
+    // остаётся открытым — человек дописывает контакт и жмёт ещё раз
+    const replyContact = contact.trim()
+    if (!replyContact) {
+      toast({
+        title: 'Укажите контакт для ответа',
+        description: 'Почта или @телеграм — чтобы мы могли ответить',
+      })
+      return
+    }
     const subject = `[NutriBear] ${topic.subject}`
     const body = `${text}${signature()}`
     const fail = () =>
@@ -223,7 +236,7 @@ export function SupportModal({ open = false, onClose }) {
         const res = await sendSupportDirect({
           topicLabel: topic.label,
           message: text,
-          contact: contact.trim(),
+          contact: replyContact,
           files,
         })
         if (!res.notConfigured) {
@@ -233,9 +246,7 @@ export function SupportModal({ open = false, onClose }) {
               : ''
           toast({
             title: '✅ Обращение отправлено',
-            description: contact.trim()
-              ? `Ответим на ${contact.trim()}.${extra}`
-              : 'Спасибо! Мы его прочитаем.' + extra,
+            description: `Ответим на ${replyContact}.${extra}`,
           })
           // Успех — черновик больше не нужен, чтобы случайное
           // повторное открытие не отправило дубль
@@ -475,10 +486,11 @@ export function SupportModal({ open = false, onClose }) {
               {message.length} / 2000
             </Text>
 
-            {/* Контакт для ответа (необязательно): при прямой отправке
-                обращение больше не приходит «от пользователя» из почты —
-                без контакта владельцу некому ответить. Один ввод — почта
-                или @ник в Telegram; на клавиатуре — e-mail-набор */}
+            {/* Контакт для ответа — ОБЯЗАТЕЛЬНЫЙ (решение Кати 21.11:
+                «так сделаем»): при прямой отправке обращение приходит
+                в Telegram без «от пользователя», без контакта отвечать
+                некому. Один ввод — почта или @ник в Telegram; на
+                клавиатуре — e-mail-набор */}
             <Text maxFontSizeMultiplier={1.15} className="mt-3 font-bold text-[15px] text-bear-text">
               Контакт для ответа:
             </Text>
@@ -486,13 +498,13 @@ export function SupportModal({ open = false, onClose }) {
               value={contact}
               onChangeText={setContact}
               maxLength={SUPPORT_LIMITS.CONTACT_MAX}
-              placeholder="Почта или @телеграм — необязательно"
+              placeholder="Почта или @телеграм — чтобы мы могли ответить"
               placeholderTextColor="#8B96B8"
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
               textContentType="emailAddress"
-              accessibilityLabel="Контакт для ответа — почта или ник в Telegram, необязательно"
+              accessibilityLabel="Контакт для ответа — почта или ник в Telegram, обязательно для отправки"
               className="mt-2 h-[48px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 font-sans text-[16px] text-bear-text"
             />
 
