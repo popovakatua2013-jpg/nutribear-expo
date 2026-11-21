@@ -62,17 +62,23 @@ export function sumNutrition(rows) {
 }
 
 // Доля макронутриента в калориях: белки/углеводы 4 ккал/г, жиры 9 ккал/г.
-// Делим на сумму калорий всех трёх — проценты согласованы между собой
+// Делим на ОБЩУЮ калорийность дня: нормы «белки 15–30% ккал» — о всём
+// рационе, а не о сумме БЖУ (отзыв Кати 21.11: свой продукт с завышенной
+// калорийностью и заниженным БЖУ показывал «Белки 79%» — доля считалась
+// от суммы калорий макронутриентов и взлетала). Если БЖУ записей не
+// сходятся с калорийностью, остаток — «неизвестные калории». Запасной
+// путь: без калорийности (kcal = 0) — от суммы калорий БЖУ
 export function macroShares(n) {
   const pk = n.p * 4
   const fk = n.f * 9
   const ck = n.c * 4
   const total = pk + fk + ck
-  if (total <= 0) return { pPct: 0, fPct: 0, cPct: 0 }
+  const denom = n.kcal > 0 ? n.kcal : total
+  if (denom <= 0) return { pPct: 0, fPct: 0, cPct: 0 }
   return {
-    pPct: Math.round((pk / total) * 100),
-    fPct: Math.round((fk / total) * 100),
-    cPct: Math.round((ck / total) * 100),
+    pPct: Math.min(100, Math.round((pk / denom) * 100)),
+    fPct: Math.min(100, Math.round((fk / denom) * 100)),
+    cPct: Math.min(100, Math.round((ck / denom) * 100)),
   }
 }
 

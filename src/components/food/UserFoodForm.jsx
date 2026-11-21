@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -19,6 +20,7 @@ import {
 import { Star, X } from 'lucide-react-native'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useToast } from '../ui/Toast'
+import { findFoodDuplicate } from '@/lib/data/pick'
 
 // Строка инпута → число (запятая тоже работает), с запасным значением
 function parseNum(text, fallback, min, max) {
@@ -30,6 +32,7 @@ function parseNum(text, fallback, min, max) {
 export function UserFoodForm({ open, onClose, initial }) {
   const addUserFood = useUserFoodsStore((s) => s.add)
   const updateUserFood = useUserFoodsStore((s) => s.update)
+  const userItems = useUserFoodsStore((s) => s.items)
   const { toast } = useToast()
 
   const [name, setName] = useState(initial?.name ?? '')
@@ -41,16 +44,7 @@ export function UserFoodForm({ open, onClose, initial }) {
   const [sug, setSug] = useState(initial ? String(initial.sug ?? 0) : '')
   const [grams, setGrams] = useState(String(initial?.defaultGrams ?? 100))
 
-  function save() {
-    const kcalN = parseNum(kcal, 0, 0, 950)
-    if (!name.trim()) {
-      toast({ title: '⭐ Впишите название', description: 'Например: Сырники бабушки' })
-      return
-    }
-    if (kcalN < 1) {
-      toast({ title: '⭐ Впишите калории', description: 'Ккал на 100 г, например 250' })
-      return
-    }
+  function doSave(kcalN) {
     const data = {
       name,
       emoji: initial?.emoji || '⭐',
@@ -70,6 +64,37 @@ export function UserFoodForm({ open, onClose, initial }) {
       toast({ title: '⭐ Продукт сохранён', description: `${data.name} · в поиске и базе` })
     }
     onClose()
+  }
+
+  function save() {
+    const kcalN = parseNum(kcal, 0, 0, 950)
+    if (!name.trim()) {
+      toast({ title: '⭐ Впишите название', description: 'Например: Сырники бабушки' })
+      return
+    }
+    if (kcalN < 1) {
+      toast({ title: '⭐ Впишите калории', description: 'Ккал на 100 г, например 250' })
+      return
+    }
+    // Дубликат по названию (свои или встроенная база): свой продукт
+    // с именем встроенного перебивает его в поиске — свои в результатах
+    // раньше. Отзыв Кати 21.11: свой «Сырники» (380 ккал/100 г) затер
+    // встроенный (183 ккал/100 г) — тапнула первый результат
+    const dup = findFoodDuplicate(name, userItems, initial?.id || null)
+    if (dup) {
+      Alert.alert(
+        'Такой продукт уже есть',
+        dup.from === 'own'
+          ? `«${dup.name}» уже есть в «Моих продуктах» (${dup.kcal} ккал/100 г). Второй продукт с тем же названием перебьёт его в поиске. Всё равно сохранить?`
+          : `«${dup.name}» есть во встроенной базе (${dup.kcal} ккал/100 г${dup.micros ? ', с витаминами и минералами' : ''}). Свой продукт с тем же названием перебьёт его в поиске — проверьте, что калории верные. Всё равно сохранить?`,
+        [
+          { text: 'Отмена', style: 'cancel' },
+          { text: 'Всё равно сохранить', style: 'destructive', onPress: () => doSave(kcalN) },
+        ]
+      )
+      return
+    }
+    doSave(kcalN)
   }
 
   const field = 'min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text'
