@@ -3,20 +3,38 @@
 // ОТКРЫВАЕТСЯ СРАЗУ по тапу на строку «Поддержка и помощь» — без
 // кнопок-тем в строке меню и без адреса в списке (отзыв Кати от 10.11:
 // «да, сразу открывалась»): выбор темы теперь только в самом окне,
-// как на скрине-образце. Письмо уходит в почтовое приложение на адрес
-// оператора из политики конфиденциальности (OPERATOR.email в
-// lib/data/legal); в письмо подставляются тема и текст пользователя +
-// служебная подпись с версией приложения и платформой — разработчику
-// проще разобраться. Почтового редактора внутри приложения нет (и не
-// нужно); если почта на телефоне не настроена — тост с адресом, сам
-// адрес всегда есть в политике конфиденциальности.
+// как на скрине-образце.
+//
+// ОТПРАВКА ПРЯМО ИЗ ПРИЛОЖЕНИЯ (отзыв Кати 21.11: «сейчас тап поддержка
+// - написать нам - отправить - переходит на электронную почту и уже
+// оттуда создает обращение. А я хочу чтобы прямо из приложения
+// пользователь отправлял обращение»). Обращение уходит на наш
+// Cloudflare Worker (адрес — EXPO_PUBLIC_AI_PROXY_URL из .env, путь
+// POST /v1/support): воркер пересылает его владельцу в Telegram
+// (секреты TG_BOT_TOKEN/TG_CHAT_ID живут в Cloudflare, в бандл APK
+// они НЕ попадают). Пользователь жмёт «Отправить» — и всё, почтовое
+// приложение не открывается. Новое поле «Контакт для ответа»: при
+// прямой отправке письмо больше не приходит «от пользователя», без
+// контакта владельцу некому ответить (почта или @ник в Telegram).
+// Вложения едут тем же запросом (multipart руками через lib/multipart).
+//
+// ЗАПАСНОЙ ПОЧТОВЫЙ ПОТОК — не потерять сообщение:
+//  • воркер ответил 503 support_not_configured — канал Telegram ещё не
+//    настроен (секреты TG_* не залиты): молча открываем почту, как
+//    раньше, без пугающих тостов;
+//  • сеть/сервер — тост «не получилось отправить из приложения» и
+//    почта с готовым письмом. Без вложений — прямой mailto через
+//    Linking: работает даже когда expo-mail-composer недоступен в
+//    Expo Go. С вложениями — композер; mailto доставит хотя бы текст.
+//  Адрес поддержки всегда есть и в политике конфиденциальности
+//  (OPERATOR.email в lib/data/legal).
 //
 // Вид окна — по скрину чужого приложения от Кати 10.11 («сделай так»):
 // шапка с лампочкой в градиентном чипе, заголовок «Написать нам» и
 // подзаголовок; темы — плитки 2×2 с иконками (выбранная — градиентная);
 // поле «Ваше сообщение» со счётчиком 0/2000; крупная градиентная кнопка
-// «Отправить» с самолётиком; внизу пометка «Ваше обращение в
-// безопасности» с замком.
+// «Отправить» с самолётиком (при отправке — индикатор, повторный тап
+// заблокирован); внизу пометка «Ваше обращение в безопасности» с замком.
 //
 // 10.11, отзыв Кати: «при нажатии на выбрать тему кнопки съезжают» —
 // у активной плитки и «Отправить» иконка с текстом вставали столбиком
@@ -54,6 +72,7 @@
 
 import { useState } from 'react'
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -82,6 +101,8 @@ import {
 import { OPERATOR } from '@/lib/data/legal'
 import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 import { supportMailtoUrl } from '@/lib/supportMailto'
+import { SUPPORT_LIMITS } from '@/lib/supportLimits'
+import { isDirectSupportAvailable, sendSupportDirect } from '@/lib/supportSend'
 import { useToast } from '../ui/Toast'
 
 const EMAIL = OPERATOR.email
@@ -108,14 +129,21 @@ export function SupportModal({ open = false, onClose }) {
   // на Android прозрачную Modal не сжимает — скрин Кати 21.11)
   const kb = useKeyboardGuard()
   const kbOpen = kb.padBottom > 0 || kb.shrunk
-  // Выбранная тема, текст и вложения — черновик сохраняется, пока
-  // приложение живо: случайно закрыли — текст и файлы не потерялись
+  // Выбранная тема, текст, контакт и вложения — черновик сохраняется,
+  // пока приложение живо: случайно закрыли — не потерялись. Успешно
+  // отправили — черновик очищаем
   const [topic, setTopic] = useState(TOPICS[0])
   const [message, setMessage] = useState('')
+  const [contact, setContact] = useState('')
   const [files, setFiles] = useState([])
+  // true между тапом «Отправить» и ответом воркера: на кнопке индикатор,
+  // повторные тапы заблокированы — иначе по 3 письма за нервный тап
+  const [sending, setSending] = useState(false)
 
   // Выбор файлов: системный проводник (любые файлы — скрины, видео,
-  // логи), несколько сразу; повтор — дубликаты по пути не добавляем
+  // логи), несколько сразу; повтор — дубликаты по пути не добавляем;
+  // больше SUPPORT_LIMITS.FILES_MAX не даём — столько же принимает
+  // воркер (лимиты совпадают, см. supportLimits.js)
   async function pickFiles() {
     try {
       const res = await DocumentPicker.getDocumentAsync({
@@ -127,9 +155,17 @@ export function SupportModal({ open = false, onClose }) {
         uri: a.uri,
         name: a.name || 'файл',
       }))
+      const room = SUPPORT_LIMITS.FILES_MAX - files.length
+      if (room <= 0) {
+        toast({ title: `Вложений не больше ${SUPPORT_LIMITS.FILES_MAX}`, description: 'Сначала уберите лишние крестиком' })
+        return
+      }
+      if (picked.length > room) {
+        toast({ title: `Вложений не больше ${SUPPORT_LIMITS.FILES_MAX}`, description: `Добавили первые ${room}` })
+      }
       setFiles((prev) => {
         const seen = new Set(prev.map((f) => f.uri))
-        return [...prev, ...picked.filter((f) => !seen.has(f.uri))]
+        return [...prev, ...picked.filter((f) => !seen.has(f.uri)).slice(0, room)]
       })
     } catch {
       toast({ title: 'Не удалось открыть выбор файлов' })
@@ -140,19 +176,33 @@ export function SupportModal({ open = false, onClose }) {
     setFiles((prev) => prev.filter((f) => f.uri !== uri))
   }
 
-  // Отправка (отзыв Кати 21.11: «открывает свою почту и уже оттуда
-  // создаёт обращение»). Без вложений — прямой mailto через Linking:
-  // система Android/iOS сама поднимает почту пользователя (Gmail,
-  // Samsung Email) с уже заполненными получателем, темой и текстом —
-  // осталось нажать «Отправить» в своей почте. Работает и в Expo Go,
-  // даже когда expo-mail-composer недоступен. С вложениями mailto
-  // бессилен — только композер; если и он не вышел (почта не
-  // настроена), доставляем хотя бы текст тем же mailto, а если и это
+  // Отправка (отзыв Кати 21.11: «я хочу чтобы прямо из приложения
+  // пользователь отправлял обращение»).
+  //
+  // Шаг 1 — ПРЯМАЯ ОТПРАВКА: если известен адрес воркера
+  // (EXPO_PUBLIC_AI_PROXY_URL), обращение уходит туда целиком — текст,
+  // тема, контакт и вложения, — воркер пересылает его владельцу в
+  // Telegram. Успех — тост, черновик очищаем, окно закрываем; почта
+  // НЕ открывается.
+  //   503 support_not_configured — канал Telegram ещё не настроен:
+  //   молча проваливаемся в почтовый поток ниже, без пугающих тостов.
+  //   Сетевой сбой/отказ сервера — короткий тост «открываем почту»
+  //   и тот же почтовый поток: сообщение пользователя не теряется.
+  // Шаг 2 — ЗАПАСНОЙ ПОЧТОВЫЙ ПОТОК (как было): без вложений — прямой
+  // mailto через Linking (система сама поднимает почту с готовым
+  // письмом, работает и в Expo Go), с вложениями — композер; если и он
+  // не вышел (почта не настроена) — mailto без файлов, а если и это
   // не вышло — тост с адресом (он всегда есть и в политике).
   async function send() {
     const text = message.trim()
+    // Пустое обращение никуда не уходит: в Telegram оно пришло бы
+    // пустышкой, а почта бы открылась с «Опишите, пожалуйста…»
+    if (!text) {
+      toast({ title: 'Сначала напишите сообщение' })
+      return
+    }
     const subject = `[NutriBear] ${topic.subject}`
-    const body = `${text || 'Опишите, пожалуйста, подробнее.'}${signature()}`
+    const body = `${text}${signature()}`
     const fail = () =>
       toast({
         title: '📮 Почта не открылась',
@@ -160,6 +210,54 @@ export function SupportModal({ open = false, onClose }) {
       })
     const mailto = () =>
       Linking.openURL(supportMailtoUrl({ email: EMAIL, subject, body }))
+
+    // ── Шаг 1: прямо из приложения на наш сервер ─────────────────
+    let directFailed = false
+    if (isDirectSupportAvailable() && !sending) {
+      setSending(true)
+      try {
+        const res = await sendSupportDirect({
+          topicLabel: topic.label,
+          message: text,
+          contact: contact.trim(),
+          files,
+        })
+        if (!res.notConfigured) {
+          const extra =
+            res.filesFailed > 0
+              ? ` Текст доставлен, вложений не прошло: ${res.filesFailed} — пришлите их на ${EMAIL}`
+              : ''
+          toast({
+            title: '✅ Обращение отправлено',
+            description: contact.trim()
+              ? `Ответим на ${contact.trim()}.${extra}`
+              : 'Спасибо! Мы его прочитаем.' + extra,
+          })
+          // Успех — черновик больше не нужен, чтобы случайное
+          // повторное открытие не отправило дубль
+          setMessage('')
+          setContact('')
+          setFiles([])
+          onClose?.()
+          return
+        }
+        // notConfigured — молча идём в почтовый поток (шаг 2)
+      } catch (e) {
+        if (e && e.local) {
+          // Проблема известна и исправима здесь (лимиты вложений):
+          // показываем текст и оставляем окно открытым — пользователь
+          // уберёт лишний файл и нажмёт «Отправить» ещё раз
+          toast({ title: 'Не получилось отправить', description: e.message })
+          return
+        }
+        // Сеть/сервер: откатываемся на почту — сообщение не потеряется
+        directFailed = true
+      } finally {
+        setSending(false)
+      }
+    }
+
+    // ── Шаг 2: запасной почтовый поток (как было) ─────────────────
     try {
       if (files.length > 0) {
         const available = await MailComposer.isAvailableAsync()
@@ -172,10 +270,17 @@ export function SupportModal({ open = false, onClose }) {
         })
       } else {
         await mailto()
-        toast({
-          title: '📮 Открываем вашу почту',
-          description: 'Письмо уже заполнено — проверьте и нажмите «Отправить»',
-        })
+        toast(
+          directFailed
+            ? {
+                title: '📮 Не получилось отправить из приложения',
+                description: 'Открыли вашу почту с готовым письмом — нажмите «Отправить»',
+              }
+            : {
+                title: '📮 Открываем вашу почту',
+                description: 'Письмо уже заполнено — проверьте и нажмите «Отправить»',
+              }
+        )
       }
       onClose?.()
     } catch {
@@ -352,6 +457,27 @@ export function SupportModal({ open = false, onClose }) {
               {message.length} / 2000
             </Text>
 
+            {/* Контакт для ответа (необязательно): при прямой отправке
+                обращение больше не приходит «от пользователя» из почты —
+                без контакта владельцу некому ответить. Один ввод — почта
+                или @ник в Telegram; на клавиатуре — e-mail-набор */}
+            <Text maxFontSizeMultiplier={1.15} className="mt-3 font-bold text-[15px] text-bear-text">
+              Контакт для ответа:
+            </Text>
+            <TextInput
+              value={contact}
+              onChangeText={setContact}
+              maxLength={SUPPORT_LIMITS.CONTACT_MAX}
+              placeholder="Почта или @телеграм — необязательно"
+              placeholderTextColor="#8B96B8"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              accessibilityLabel="Контакт для ответа — почта или ник в Telegram, необязательно"
+              className="mt-2 h-[48px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 font-sans text-[16px] text-bear-text"
+            />
+
             {/* Вложения — кнопка со скрепкой открывает выбор файлов,
                 выбранные — чипы с именем и крестиком (отзыв Кати от
                 10.11: «добавить возможность прикрепить файлы») */}
@@ -397,12 +523,18 @@ export function SupportModal({ open = false, onClose }) {
             </View>
 
             {/* Отправить — крупная градиентная кнопка с самолётиком
-                (градиент — родитель, раскладку ведёт внутренний View) */}
+                (градиент — родитель, раскладку ведёт внутренний View).
+                Пока идёт отправка — индикатор и «Отправляем…», тапы
+                заблокированы (disabled), чтобы не насоздавать дублей */}
             <Pressable
               onPress={send}
+              disabled={sending}
               accessibilityRole="button"
-              accessibilityLabel="Отправить письмо в поддержку"
-              className="mt-2 h-[54px] flex-row active:opacity-80"
+              accessibilityLabel={
+                sending ? 'Обращение отправляется, подождите' : 'Отправить обращение в поддержку'
+              }
+              accessibilityState={{ busy: sending }}
+              className={`mt-2 h-[54px] flex-row ${sending ? 'opacity-70' : 'active:opacity-80'}`}
             >
               <LinearGradient
                 start={{ x: 0, y: 0 }}
@@ -411,8 +543,14 @@ export function SupportModal({ open = false, onClose }) {
                 style={{ flex: 1, borderRadius: 999 }}
               >
                 <View className="h-[54px] flex-row items-center justify-center gap-2">
-                  <Send size={19} color="#FFFFFF" />
-                  <Text className="font-bold text-[17px] text-white">Отправить</Text>
+                  {sending ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Send size={19} color="#FFFFFF" />
+                  )}
+                  <Text className="font-bold text-[17px] text-white">
+                    {sending ? 'Отправляем…' : 'Отправить'}
+                  </Text>
                 </View>
               </LinearGradient>
             </Pressable>

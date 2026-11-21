@@ -9,6 +9,8 @@
 //   POST /v1/chat              — чат NutriBear: { messages } → { reply }
 //   POST /v1/chat/completions  — OpenAI-протокол (фото еды, фразы) как есть
 //   POST /v1/audio/transcriptions — голосовой ввод (multipart) как есть
+//   POST /v1/support           — обращения из окна «Написать нам» (multipart:
+//                                тема, текст, контакт + вложения) → Telegram
 //   GET  /                     — проверка «жив ли воркер» из браузера
 //
 //  Настройка (после деплоя):
@@ -16,6 +18,10 @@
 //   npx wrangler secret put NB_SECRET   — общий секрет приложения
 //     (необязательно, но НАСТОЯТЕЛЬНО: без него POST может слать кто угодно,
 //      нашедший адрес воркера; в .env приложения — EXPO_PUBLIC_AI_PROXY_SECRET)
+//   npx wrangler secret put TG_BOT_TOKEN — токен бота поддержки (от @BotFather);
+//     без него обращение не примут (503 support_not_configured) — на ПК это
+//     делает скрипт .\setup-support.ps1 за две минуты, вместе с chat_id
+//   npx wrangler secret put TG_CHAT_ID   — chat_id владельца (куда слать)
 //   [vars] в wrangler.toml              — AI_UPSTREAM, AI_MODEL
 //                                         AI_ALLOWED_MODELS — белый список
 //                                         моделей через запятую (по умолчанию
@@ -53,6 +59,68 @@ export const LIMITS = {
   MAX_AUDIO_BYTES: 5 * 1024 * 1024, // потолок для аудио (Whisper)
 }
 const { MAX_CHAT_MESSAGES, MAX_MESSAGE_LEN, MAX_BODY_BYTES } = LIMITS
+
+// Лимиты окна «Написать нам» (POST /v1/support): поле message в
+// приложении ограничено 2000 символами, вложений не больше 5 файлов
+// по 10 МБ, всё вместе — 16 МБ (потолок ТЕЛА запроса, проверяется по
+// Content-Length ещё до formData()). Экспортируем для тестов и чтобы
+// приложение (src/lib/supportLimits.js) держало те же числа.
+export const SUPPORT_LIMITS = {
+  MAX_SUPPORT_MESSAGE_LEN: 2000,
+  MAX_SUPPORT_TOPIC_LEN: 100,
+  MAX_SUPPORT_CONTACT_LEN: 200,
+  MAX_SUPPORT_META_LEN: 100, // версия приложения / платформа
+  MAX_SUPPORT_FILES: 5,
+  MAX_SUPPORT_FILE_BYTES: 10 * 1024 * 1024,
+  MAX_SUPPORT_TOTAL_BYTES: 16 * 1024 * 1024,
+}
+const {
+  MAX_SUPPORT_MESSAGE_LEN,
+  MAX_SUPPORT_TOPIC_LEN,
+  MAX_SUPPORT_CONTACT_LEN,
+  MAX_SUPPORT_META_LEN,
+  MAX_SUPPORT_FILES,
+  MAX_SUPPORT_FILE_BYTES,
+  MAX_SUPPORT_TOTAL_BYTES,
+} = SUPPORT_LIMITS
+
+// Очистка полей обращения из окна «Написать нам» перед пересылкой в
+// Telegram. Обрезаем длины по лимитам (сообщение обязано быть непустым —
+// приложение его и требует, а пустые «обращения»-пинг от спамера тут
+// же отсеиваются), тема/контакт/метаданные необязательны и получают
+// безопасные дефолты. Возвращает null — сообщение пустое (400).
+// Токены Telegram-разметки не страшны: sendMessage шлём БЕЗ parse_mode,
+// любой текст (<script>, #хэштег, @упоминание) уедет как есть.
+// Экспортируем для тестов без деплоя.
+export function sanitizeSupportFields(raw) {
+  const s = (v, max) => {
+    const str = typeof v === 'string' ? v.trim() : ''
+    return str.slice(0, max)
+  }
+  const message = s(raw?.message, MAX_SUPPORT_MESSAGE_LEN)
+  if (!message) return null
+  return {
+    topic: s(raw?.topic, MAX_SUPPORT_TOPIC_LEN) || 'Другое',
+    message,
+    contact: s(raw?.contact, MAX_SUPPORT_CONTACT_LEN),
+    version: s(raw?.version, MAX_SUPPORT_META_LEN),
+    platform: s(raw?.platform, MAX_SUPPORT_META_LEN),
+  }
+}
+
+// Текст сообщения в Telegram: компактная шпаргалка для владельца —
+// тема, текст, контакт для ответа, версия и платформа (как подпись
+// в старом письме). Без markdown/parse_mode — юзерский текст
+// не может сломать отправку.
+export function buildSupportMessage(f) {
+  const lines = ['🧸 Обращение из NutriBear', '', `Тема: ${f.topic}`, 'Сообщение:', f.message]
+  if (f.version || f.platform) {
+    const meta = [f.version, f.platform].filter(Boolean).join(' · ')
+    lines.push('', `Приложение: ${meta}`)
+  }
+  if (f.contact) lines.push(`Ответить: ${f.contact}`)
+  return lines.join('\n')
+}
 
 // Роли, которые клиент может прислать в messages для /chat. 'system'
 // НЕ включён намеренно: системный промпт формирует воркер (или
@@ -232,18 +300,27 @@ export default {
     if (request.method !== 'POST') return json({ error: 'Метод не поддерживается' }, 405)
 
     // Жёсткий потолок размера тела: защита от «положить изолят»
-    // огромным телом. JSON-запросы (фото, чат) — 512 КБ, аудио — свой
-    // Голос (/audio/transcriptions) имеет свой щедрый потолок
-    // MAX_AUDIO_BYTES: общий лимит НЕ применяем — реальная минута речи
-    // (300–400 КБ m4a) умирала на общем лимите ещё до аудио-проверки
+    // огромным телом. JSON-запросы (фото, чат) — 512 КБ, аудио — свой,
+    // обращения в поддержку — свой (вложения до 16 МБ). Голос
+    // (/audio/transcriptions) имеет щедрый потолок MAX_AUDIO_BYTES:
+    // общий лимит НЕ применяем — реальная минута речи (300–400 КБ m4a)
+    // умирала на общем лимите ещё до аудио-проверки
     const isAudioRoute = path === '/audio/transcriptions'
+    const isSupportRoute = path === '/support'
     const cl = Number(request.headers.get('content-length') || 0)
-    if (cl && cl > (isAudioRoute ? LIMITS.MAX_AUDIO_BYTES : MAX_BODY_BYTES)) {
+    const bodyCap = isAudioRoute
+      ? LIMITS.MAX_AUDIO_BYTES
+      : isSupportRoute
+        ? MAX_SUPPORT_TOTAL_BYTES
+        : MAX_BODY_BYTES
+    if (cl && cl > bodyCap) {
       return json(
         {
           error: isAudioRoute
             ? 'Аудио слишком большое (макс. 5 МБ)'
-            : 'Тело запроса слишком большое',
+            : isSupportRoute
+              ? 'Вложения слишком большие (макс. 16 МБ)'
+              : 'Тело запроса слишком большое',
         },
         413
       )
@@ -386,6 +463,107 @@ export default {
       const out = new Headers(res.headers)
       Object.entries(CORS).forEach(([k, v]) => out.set(k, v))
       return new Response(res.body, { status: res.status, headers: out })
+    }
+
+    // ── 4. Обращение из окна «Написать нам» → Telegram ────────────
+    // Модель доставки: приложение шлёт multipart (тема, текст, контакт,
+    // версия, платформа + файлы-вложения) сюда, воркер пересылает
+    // владельцу в Telegram через Bot API. Токен бота и chat_id живут
+    // в секретах Cloudflare — в бандл приложения они НЕ попадают,
+    // и почтовый клиент пользователю открывать не нужно. Канал не
+    // настроен (секретов нет) — 503 support_not_configured: приложение
+    // молча откатится на прежний mailto-поток. Лимиты файлов — выше,
+    // SUPPORT_LIMITS (5 файлов × 10 МБ, всего 16 МБ).
+    if (isSupportRoute) {
+      const ct = request.headers.get('content-type') || ''
+      if (!ct.toLowerCase().startsWith('multipart/form-data')) {
+        return json({ error: 'Обращение должно быть multipart/form-data' }, 400)
+      }
+      // Канал доставки не настроен — отдельный код, приложение отличает
+      // «ещё не настроено» от «сбой сети» и не пугает пользователя
+      if (!env.TG_BOT_TOKEN || !env.TG_CHAT_ID) {
+        return json({ error: 'support_not_configured' }, 503)
+      }
+      try {
+        const form = await request.formData()
+        const fields = sanitizeSupportFields({
+          topic: form.get('topic'),
+          message: form.get('message'),
+          contact: form.get('contact'),
+          version: form.get('version'),
+          platform: form.get('platform'),
+        })
+        if (!fields) {
+          return json({ error: 'Пустой текст обращения' }, 400)
+        }
+        // Вложения: только части с именем file (файлы от DocumentPicker).
+        // Лимиты — ДО чтения в память: гигантскую пачку отбраковываем
+        // сразу, не распаковывая
+        const all = form.getAll('file')
+        const files = all.filter((x) => x && typeof x === 'object' && typeof x.arrayBuffer === 'function')
+        if (files.length > MAX_SUPPORT_FILES) {
+          return json({ error: `Слишком много вложений (макс. ${MAX_SUPPORT_FILES})` }, 400)
+        }
+        let total = 0
+        for (const f of files) {
+          total += f.size || 0
+          if ((f.size || 0) > MAX_SUPPORT_FILE_BYTES) {
+            return json({ error: `Файл «${(f.name || '').slice(0, 60)}» больше 10 МБ` }, 413)
+          }
+        }
+        if (total > MAX_SUPPORT_TOTAL_BYTES) {
+          return json({ error: 'Вложения слишком большие (макс. 16 МБ)' }, 413)
+        }
+
+        const tg = `https://api.telegram.org/bot${env.TG_BOT_TOKEN}`
+        // 1) Текст обращения. sendMessage БЕЗ parse_mode — юзерский
+        // текст (скобки, подчёркивания, «&») не может сломать отправку
+        const textRes = await fetch(`${tg}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: env.TG_CHAT_ID,
+            text: buildSupportMessage(fields),
+            disable_web_page_preview: true,
+          }),
+        })
+        const textData = await textRes.json().catch(() => null)
+        if (!textData?.ok) {
+          return json(
+            { error: `Telegram не принял обращение (HTTP ${textRes.status})` },
+            502
+          )
+        }
+
+        // 2) Вложения — по одному sendDocument (лимит Bot API: файл
+        // до 50 МБ, наши 10 МБ проходят с запасом). caption — имя файла,
+        // обрезанное до безопасной длины (лимит caption 1024)
+        let filesSent = 0
+        let filesFailed = 0
+        for (let i = 0; i < files.length; i++) {
+          try {
+            const f = files[i]
+            const bytes = await f.arrayBuffer()
+            const tform = new FormData()
+            tform.append('chat_id', String(env.TG_CHAT_ID))
+            tform.append(
+              'document',
+              new Blob([bytes], { type: f.type || 'application/octet-stream' }),
+              (f.name || `файл-${i + 1}`).slice(0, 120)
+            )
+            tform.append('caption', `Вложение ${i + 1}: ${(f.name || '').slice(0, 200)}`)
+            const fr = await fetch(`${tg}/sendDocument`, { method: 'POST', body: tform })
+            const fd = await fr.json().catch(() => null)
+            if (fd?.ok) filesSent++
+            else filesFailed++
+          } catch {
+            filesFailed++
+          }
+        }
+        return json({ ok: true, files_sent: filesSent, files_failed: filesFailed })
+      } catch (e) {
+        return json({ error: `Сбой обработки обращения: ${e.message}` }, 502)
+      }
     }
 
     return json({ error: `Неизвестный путь: ${url.pathname}` }, 404)
