@@ -5,8 +5,11 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PORTIONS } from '@/lib/data/portions'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function PortionsModal({ visible, onClose }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
 
   return (
@@ -31,7 +34,7 @@ export function PortionsModal({ visible, onClose }) {
               accessibilityLabel="Закрыть"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X hitSlop={10} size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
           </View>
 
@@ -51,7 +54,7 @@ export function PortionsModal({ visible, onClose }) {
                     <Text className="mt-0.5 font-sans text-[15px] leading-relaxed text-bear-sub2">
                       {p.text}
                     </Text>
-                    <Text className="mt-1 font-semibold text-[15px] text-[#8DABFF]">
+                    <Text className="mt-1 font-semibold text-[15px] text-bear-link">
                       {p.grams}
                     </Text>
                   </View>

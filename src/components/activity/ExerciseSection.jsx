@@ -64,6 +64,8 @@ import { Pills } from '../ui/Pills'
 import { WheelTimeModal } from './WheelTimeModal'
 import { BodyChip } from '../ui/BodyChip'
 import { formatNum, makeId } from '@/lib/format'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Периоды «Динамики» — пилюли
 const DYN_RANGES = [
@@ -113,6 +115,7 @@ function exNoun(n) {
 }
 
 export function ExerciseSection({ flat = false }) {
+  const themeColors = useThemeColors()
   const logs = useExerciseStore((s) => s.logs)
   const addLog = useExerciseStore((s) => s.addLog)
   const { toast } = useToast()
@@ -243,7 +246,7 @@ export function ExerciseSection({ flat = false }) {
                 accessibilityRole={isToday ? 'button' : undefined}
                 accessibilityLabel={isToday ? `Изменить ${e.name}` : undefined}
                 className={`flex-row items-center gap-2.5 rounded-xl px-1.5 py-1.5 active:opacity-70 ${
-                  editingThis ? 'bg-[#7B6CF6]/10' : ''
+                  editingThis ? 'bg-bear-accentFaint' : ''
                 }`}
               >
                 <View className="h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
@@ -275,7 +278,7 @@ export function ExerciseSection({ flat = false }) {
                   </Text>
                 )}
                 {isToday && (
-                  <Pencil size={14} color={editingThis ? '#C4B5FD' : '#8B96B8'} />
+                  <Pencil size={14} color={editingThis ? themeColors.accentSoft : themeColors.dim} />
                 )}
               </RowWrap>
             )
@@ -292,13 +295,13 @@ export function ExerciseSection({ flat = false }) {
           accessibilityLabel={histOpen ? 'Свернуть историю тренировок' : `Показать историю тренировок: ${pastRows.length} ${exNoun(pastRows.length)}`}
           className="mt-0.5 flex-row items-center gap-1 self-start rounded-lg px-1.5 py-2 active:opacity-70"
         >
-          <Text className="font-semibold text-[13.5px] text-[#8DABFF]">
+          <Text className="font-semibold text-[13.5px] text-bear-link">
             {`История · ${pastRows.length}`}
           </Text>
           {histOpen ? (
-            <ChevronUp size={14} color="#8DABFF" />
+            <ChevronUp size={14} color={themeColors.link} />
           ) : (
-            <ChevronDown size={14} color="#8DABFF" />
+            <ChevronDown size={14} color={themeColors.link} />
           )}
         </Pressable>
       )}
@@ -353,7 +356,7 @@ export function ExerciseSection({ flat = false }) {
           accessibilityLabel={`Повторить тренировки за ${repDay.label}`}
           className="mt-1.5 self-start flex-row items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 active:opacity-70"
         >
-          <RotateCcw size={13} color="#A78BFA" />
+          <RotateCcw size={13} color={themeColors.accentBright} />
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.05}
@@ -383,7 +386,7 @@ export function ExerciseSection({ flat = false }) {
         <View className="mt-2.5 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
           <View className="flex-row items-center justify-between gap-2">
             <View className="min-w-0 flex-row items-center gap-1.5">
-              <BarChart3 size={15} color="#A78BFA" />
+              <BarChart3 size={15} color={themeColors.accentBright} />
               <Text className="font-bold text-[15px] text-bear-text">Динамика</Text>
             </View>
             <Pills
@@ -397,7 +400,7 @@ export function ExerciseSection({ flat = false }) {
           <View className="mt-1">
             <SvgAreaChart
               data={dynData}
-              color="#A78BFA"
+              color={themeColors.accentBright}
               height={88}
               yFmt={(v) => formatNum(Math.round(v))}
               bare
@@ -420,6 +423,7 @@ export function ExerciseSection({ flat = false }) {
 // Свои тренировки: «＋ Своя тренировка» в списке — название, иконка,
 // интенсивность; запоминается между сессиями.
 function WorkoutForm({ editing = null, onDone, className = '' }) {
+  const themeColors = useThemeColors()
   const weightKg = useProfileStore((s) => s.weightKg)
   const addLog = useExerciseStore((s) => s.addLog)
   const updateLog = useExerciseStore((s) => s.updateLog)
@@ -698,9 +702,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           ) : (
             <View
               className="h-6 w-6 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: 'rgba(123,108,246,0.18)' }}
+              style={{ backgroundColor: themeColors.accentFaint3 }}
             >
-              <Dumbbell size={14} color="#A78BFA" />
+              <Dumbbell size={14} color={themeColors.accentBright} />
             </View>
           )}
           <Text
@@ -711,9 +715,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             {ex ? ex.name : 'Выбрать тренировку'}
           </Text>
           {listOpen ? (
-            <ChevronUp size={16} color="#A5AECB" />
+            <ChevronUp size={16} color={themeColors.sub} />
           ) : (
-            <ChevronDown size={16} color="#A5AECB" />
+            <ChevronDown size={16} color={themeColors.sub} />
           )}
         </Pressable>
         {/* Время — открывает счётчик-барабаны (интенсивность + минуты,
@@ -741,7 +745,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           keyboardType="number-pad"
           maxLength={5}
           placeholder={autoKcal ? `≈${formatNum(autoKcal)}` : 'ккал'}
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           accessibilityLabel="Сожжённые калории — вручную"
           className="w-[62px] shrink-0 rounded-xl border border-white/10 bg-white/5 py-2 text-center font-bold text-[16px] text-bear-text"
         />
@@ -756,7 +760,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             accessibilityLabel={`Изменить ${ex.name}`}
             className="flex-row items-center gap-1 active:opacity-70"
           >
-            <Pencil size={12} color="#A5AECB" />
+            <Pencil size={12} color={themeColors.sub} />
             <Text className="font-sans text-[12.5px] text-bear-sub2">Изменить</Text>
           </Pressable>
           <Pressable
@@ -765,7 +769,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             accessibilityLabel={`Удалить ${ex.name} из моих тренировок`}
             className="flex-row items-center gap-1 active:opacity-70"
           >
-            <Trash2 size={12} color="#98A2C2" />
+            <Trash2 size={12} color={themeColors.sub2} />
             <Text className="font-sans text-[12.5px] text-bear-sub2">Удалить из списка</Text>
           </Pressable>
         </View>
@@ -794,7 +798,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                   accessibilityLabel={e.name}
                   accessibilityState={{ selected: active }}
                   className={`flex-row items-center gap-2.5 border-b border-white/5 px-3 py-2 active:opacity-70 ${
-                    active ? 'bg-[#7B6CF6]/10' : ''
+                    active ? 'bg-bear-accentFaint' : ''
                   }`}
                 >
                   <Text className="text-[18px]">{e.emoji}</Text>
@@ -802,7 +806,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                     numberOfLines={1}
                     maxFontSizeMultiplier={1.1}
                     className={`min-w-0 flex-1 font-semibold text-[14.5px] ${
-                      active ? 'text-[#C4B5FD]' : 'text-bear-text'
+                      active ? 'text-bear-accentSoft' : 'text-bear-text'
                     }`}
                   >
                     {e.name}
@@ -813,9 +817,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                   {active && (
                     <View
                       className="shrink-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: '#7B6CF6', width: 18, height: 18 }}
+                      style={{ backgroundColor: themeColors.accent, width: 18, height: 18 }}
                     >
-                      <Check size={12} color="#FFFFFF" />
+                      <Check size={12} color={themeColors.accentOn} />
                     </View>
                   )}
                 </Pressable>
@@ -828,7 +832,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               accessibilityLabel="Создать свою тренировку"
               className="flex-row items-center justify-center gap-1.5 py-2.5 active:opacity-70"
             >
-              <Plus size={15} color="#A5AECB" />
+              <Plus size={15} color={themeColors.sub} />
               <Text className="font-bold text-[14.5px] text-bear-soft">Своя тренировка</Text>
             </Pressable>
           </ScrollView>
@@ -845,7 +849,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               onChangeText={setNewName}
               maxLength={24}
               placeholder="Например: Бокс, скакалка, падел"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название своей тренировки"
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-sans text-[16px] text-bear-text"
             />
@@ -866,9 +870,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                 {emojiOpen ? 'Свернуть' : 'Выбрать иконку'}
               </Text>
               {emojiOpen ? (
-                <ChevronUp size={16} color="#A5AECB" />
+                <ChevronUp size={16} color={themeColors.sub} />
               ) : (
-                <ChevronDown size={16} color="#A5AECB" />
+                <ChevronDown size={16} color={themeColors.sub} />
               )}
             </Pressable>
             {emojiOpen && (
@@ -881,7 +885,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                     accessibilityRole="button"
                     className={`h-8 w-8 items-center justify-center rounded-lg border ${
                       newEmoji === em
-                        ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10'
+                        ? 'border-bear-accentBorder bg-bear-accentFaint'
                         : 'border-white/5 bg-white/[0.03]'
                     }`}
                   >
@@ -923,7 +927,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                     keyboardType="number-pad"
                     maxLength={4}
                     placeholder="300"
-                    placeholderTextColor="#8B96B8"
+                    placeholderTextColor={themeColors.dim}
                     accessibilityLabel="Калории за 30 минут"
                     className="w-24 rounded-xl border border-white/10 bg-white/5 py-1.5 text-center font-bold text-[16px] text-bear-text"
                   />
@@ -964,9 +968,9 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               accessibilityRole="button"
               accessibilityLabel="Запомнить тренировку"
               className="min-w-0 flex-1 items-center justify-center rounded-xl py-2 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              style={{ backgroundColor: themeColors.accent }}
             >
-              <Text className="font-bold text-[14.5px] text-white">
+              <Text className="font-bold text-[14.5px]" style={{ color: themeColors.accentOn }}>
                 {editingCustomId ? 'Сохранить' : 'Запомнить'}
               </Text>
             </Pressable>

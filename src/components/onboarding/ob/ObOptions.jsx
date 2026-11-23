@@ -39,7 +39,7 @@ export function OptionGrid({ options, value, onChange, columns = 1 }) {
                 onPress={() => onChange(o.id)}
                 accessibilityLabel={o.label}
                 className={`min-w-0 flex-1 overflow-hidden rounded-2xl border ${
-                  active ? 'border-[#6c8cff]/60' : 'border-white/5'
+                  active ? 'border-bear-accentBorder' : 'border-white/5'
                 }`}
               >
                 {active ? (
@@ -102,7 +102,7 @@ export function ChipMulti({ options, values, onToggle }) {
             key={o.id}
             onPress={() => onToggle(o.id)}
             className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 ${
-              on ? 'border-[#6c8cff]/60 bg-[#6c8cff]/10' : 'border-white/5 bg-white/[0.03]'
+              on ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-white/5 bg-white/[0.03]'
             }`}
           >
             {o.emoji ? <Text className="text-[17.5px]">{o.emoji}</Text> : null}

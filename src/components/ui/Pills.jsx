@@ -13,10 +13,13 @@
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Lock } from 'lucide-react-native'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const BRAND = ['#4D7CFE', '#8B5CF6', '#A45BFF']
 
 export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel }) {
+  const themeColors = useThemeColors()
   // Отступы и размер текста отдельно: у заблокированного пункта рядом
   // с текстом стоит замок, и строка собирается из иконки + текста
   const pad = size === 'sm' ? { box: 'px-2.5 py-1.5', text: 'text-[15px]' } : { box: 'px-3 py-1.5', text: 'text-[16px]' }
@@ -31,7 +34,7 @@ export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel 
             className={`flex-row items-center gap-1 ${pad.box}`}
             style={locked ? { opacity: 0.5 } : null}
           >
-            {locked && <Lock size={11} color={active ? '#FFFFFF' : '#8B96B8'} />}
+            {locked && <Lock size={11} color={active ? '#FFFFFF' : themeColors.dim} />}
             <Text className={`${pad.text} font-semibold ${active ? 'text-white' : 'text-bear-dim'}`}>
               {it.label}
             </Text>

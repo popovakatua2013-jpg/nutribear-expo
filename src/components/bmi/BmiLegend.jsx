@@ -6,6 +6,8 @@
 
 import { Pressable, Text, View } from 'react-native'
 import { bmiCategory } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const ROWS = [
   { ids: ['norm'], label: 'Норма', range: '18.5 – 24.9', color: '#38BDF8' },
@@ -14,6 +16,7 @@ const ROWS = [
 ]
 
 export function BmiLegend({ bmi, onRowPress }) {
+  const themeColors = useThemeColors()
   const active = bmiCategory(bmi).id
 
   return (
@@ -37,8 +40,8 @@ export function BmiLegend({ bmi, onRowPress }) {
               // Активная строка — лёгкая фиолетовая капсула;
               // у остальных прозрачная рамка той же толщины, чтобы строки
               // не прыгали при переключении категории
-              backgroundColor: isActive ? 'rgba(168,85,247,0.16)' : 'transparent',
-              borderColor: isActive ? 'rgba(168,85,247,0.35)' : 'transparent',
+              backgroundColor: isActive ? themeColors.bodyLine : 'transparent',
+              borderColor: isActive ? themeColors.bodyLine : 'transparent',
               borderWidth: 1,
             }}
           >

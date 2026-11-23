@@ -49,6 +49,8 @@ import { fmtDecimal } from '@/lib/data/bmi'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { MeasurementHistoryModal } from './MeasurementHistoryModal'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const CUSTOM_COLOR = '#4ADE80'
 const MIN_CM = 20
@@ -56,11 +58,12 @@ const MAX_CM = 300
 
 // Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
 // bodyCard с фиолетовой обводкой): цвета блока выровнены с ИМТ
-const CARD = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
+// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
   borderWidth: 1,
-}
+})
 
 // Иконки плиток: весёлые «прозвища» замеров (шрифт-стайл мишки NutriBear)
 const MEAS_ICONS = {
@@ -94,6 +97,7 @@ function deltaTone(m, d) {
 }
 
 export function MeasurementsCard() {
+  const themeColors = useThemeColors()
   const measurements = useProfileStore((s) => s.measurements)
   const customs = useProfileStore((s) => s.customMeasurements)
   // Скрытые замеры (снятые галочки в «Записать замеры») — не видны
@@ -183,7 +187,7 @@ export function MeasurementsCard() {
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
-          <Ruler size={20} color="#A78BFA" />
+          <Ruler size={20} color={themeColors.accentBright} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[22px] tracking-tight text-bear-text">
@@ -203,7 +207,7 @@ export function MeasurementsCard() {
           accessibilityLabel="Записать замеры"
           className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-[7px] active:opacity-70"
         >
-          <Text className="font-bold text-[15px] text-[#8DABFF]">+ Добавить</Text>
+          <Text className="font-bold text-[15px] text-bear-link">+ Добавить</Text>
         </Pressable>
         {/* Крестик секции (просьба Кати: «добавь возможность закрыть
             на крестик») — отдельная круглая кнопка: развёрнута — крестик
@@ -216,9 +220,9 @@ export function MeasurementsCard() {
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
         >
           {secOpen ? (
-            <X size={16} color="#A5AECB" />
+            <X size={16} color={themeColors.sub} />
           ) : (
-            <ChevronDown size={17} color="#A5AECB" />
+            <ChevronDown size={17} color={themeColors.sub} />
           )}
         </Pressable>
       </Pressable>
@@ -231,7 +235,7 @@ export function MeasurementsCard() {
           каждый замер; тап по строке — окно записи. Пока замеров нет —
           вместо таблицы прочерков «—» чистое пустое состояние (отзыв
           Кати: после регистрации блок пуст по умолчанию) */}
-      <View className="rounded-2xl p-3" style={CARD}>
+      <View className="rounded-2xl p-3" style={cardSurface(themeColors)}>
         {/* Шапка колонок: короткие подписи мелким шрифтом — длинная
             «Текущее значение» наезжала на соседние колонки на 361dp */}
         <View className="flex-row items-end border-b border-white/[0.08] pb-2">
@@ -330,7 +334,7 @@ export function MeasurementsCard() {
                 <SvgAreaChart
                   spark
                   data={r.trend}
-                  color={r.tone === '#8B96B8' ? r.color : r.tone}
+                  color={r.tone === themeColors.dim ? r.color : r.tone}
                   dot
                   height={24}
                 />
@@ -353,7 +357,7 @@ export function MeasurementsCard() {
             «История» — журнал всех записей по дням (вопрос Кати:
             «где хранится история?» — смотреть её было негде) */}
         <View className="mt-1.5 flex-row items-center gap-1.5 border-t border-white/[0.07] pt-2">
-          <Info size={13} color="#8B96B8" />
+          <Info size={13} color={themeColors.dim} />
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.2}
@@ -370,10 +374,10 @@ export function MeasurementsCard() {
             hitSlop={6}
             className="shrink-0 flex-row items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 active:opacity-70"
           >
-            <History size={12} color="#8DABFF" />
+            <History size={12} color={themeColors.link} />
             <Text
               maxFontSizeMultiplier={1.2}
-              className="font-bold text-[12.5px] text-[#8DABFF]"
+              className="font-bold text-[12.5px] text-bear-link"
             >
               История
             </Text>
@@ -382,7 +386,7 @@ export function MeasurementsCard() {
       </View>
         </>
       ) : (
-        <View className="rounded-2xl p-4" style={CARD}>
+        <View className="rounded-2xl p-4" style={cardSurface(themeColors)}>
           <Text className="font-bold text-[16.5px] text-bear-text">Замеров пока нет</Text>
           <Text className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim">
             Нажмите «+ Добавить», чтобы записать первые параметры, — и здесь появится таблица с динамикой
@@ -410,6 +414,7 @@ export function MeasurementsCard() {
 // и линия не рисовалась (отзыв Кати).
 // Внизу — создание своего замера (появляется в списке сразу).
 function MeasurementsModal({ open, onClose }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const measurements = useProfileStore((s) => s.measurements)
   const customs = useProfileStore((s) => s.customMeasurements)
@@ -563,7 +568,7 @@ function MeasurementsModal({ open, onClose }) {
                 </Text>
               </View>
               <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
 
@@ -595,7 +600,7 @@ function MeasurementsModal({ open, onClose }) {
                         className={`h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border active:opacity-70 ${
                           picked[m.key] === false
                             ? 'border-white/20 bg-transparent'
-                            : 'border-[#7B6CF6] bg-[#7B6CF6]'
+                            : 'border-bear-accent bg-bear-accent'
                         }`}
                       >
                         {picked[m.key] !== false && (
@@ -624,7 +629,7 @@ function MeasurementsModal({ open, onClose }) {
                           accessibilityLabel={`Удалить свой замер ${m.label}`}
                           className="shrink-0 rounded p-1 active:opacity-60"
                         >
-                          <Trash2 size={16} color="#98A2C2" />
+                          <Trash2 size={16} color={themeColors.sub2} />
                         </Pressable>
                       )}
                       <TextInput
@@ -637,7 +642,7 @@ function MeasurementsModal({ open, onClose }) {
                         keyboardType="decimal-pad"
                         maxLength={6}
                         placeholder="—"
-                        placeholderTextColor="#8B96B8"
+                        placeholderTextColor={themeColors.dim}
                         textAlign="center"
                         accessibilityLabel={`${m.label} в сантиметрах`}
                         className={`w-[96px] shrink-0 rounded-2xl border bg-white/5 px-3 py-2.5 font-semibold text-[17.5px] text-white ${
@@ -668,7 +673,7 @@ function MeasurementsModal({ open, onClose }) {
                     onChangeText={setNewName}
                     maxLength={24}
                     placeholder="Например: Шея, бицепс"
-                    placeholderTextColor="#8B96B8"
+                    placeholderTextColor={themeColors.dim}
                     returnKeyType="done"
                     onSubmitEditing={handleAddCustom}
                     accessibilityLabel="Название своего замера"
@@ -680,7 +685,7 @@ function MeasurementsModal({ open, onClose }) {
                     accessibilityLabel="Добавить свой замер в список"
                     className="shrink-0 justify-center rounded-xl bg-white/10 px-3 active:opacity-70"
                   >
-                    <Text className="font-bold text-[16.5px] text-[#8DABFF]">Добавить</Text>
+                    <Text className="font-bold text-[16.5px] text-bear-link">Добавить</Text>
                   </Pressable>
                 </View>
               </View>

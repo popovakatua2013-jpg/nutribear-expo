@@ -10,6 +10,8 @@ import { formatNum } from '@/lib/format'
 import { fmtSleep } from '@/lib/data/sleep'
 import { dayData, dayStatus } from '@/lib/data/calendar'
 import { dayKeyOf } from '@/store/useHistoryStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MONTHS = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -29,6 +31,7 @@ function Row({ icon, label, value, tone }) {
 }
 
 export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights }) {
+  const themeColors = useThemeColors()
   const d = dayData(history, dayKey, null)
   const status = dayStatus(d, goals.kcal)
   // Взвешивания хранятся с ISO-датой (UTC): сравнение по локальному
@@ -58,7 +61,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               accessibilityRole="button"
               className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X hitSlop={10} size={20} color="#A5AECB" />
+              <X hitSlop={10} size={20} color={themeColors.sub} />
             </Pressable>
           </View>
 

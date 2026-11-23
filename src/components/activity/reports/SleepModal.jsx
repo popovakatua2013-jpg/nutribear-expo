@@ -19,6 +19,8 @@ import { Pills } from '../../ui/Pills'
 import { useToast } from '../../ui/Toast'
 import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { fmtSleep, sleepMinutes } from '@/lib/data/sleep'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // После полуночи чаще записывают ПРОШЛУЮ ночь — открываем с «Вчера»
 function defaultDayOff() {
@@ -102,6 +104,7 @@ export function SleepModal({ open, onClose }) {
 }
 
 function SleepBody({ onClose }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const record = useHistoryStore((s) => s.record)
   const savedDays = useHistoryStore((s) => s.days)
@@ -158,7 +161,7 @@ function SleepBody({ onClose }) {
           accessibilityLabel="Закрыть запись сна"
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
-          <X hitSlop={10} size={20} color="#A5AECB" />
+          <X hitSlop={10} size={20} color={themeColors.sub} />
         </Pressable>
       </View>
 

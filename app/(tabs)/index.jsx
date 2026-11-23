@@ -58,8 +58,11 @@ import { totalConsumed, dayBju } from '@/lib/data/diary'
 import { WATER_GLASS, xpForDay } from '@/lib/data/activity'
 import { formatNum } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export default function HomeScreen() {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   const { toast } = useToast()
   const scrollRef = useRef(null)
@@ -434,7 +437,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X hitSlop={10} size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color={themeColors.sub} />
                 </Pressable>
               </View>
               <Text className="mt-1 font-sans text-[15px] text-bear-sub">
@@ -447,7 +450,7 @@ export default function HomeScreen() {
                   keyboardType="number-pad"
                   maxLength={6}
                   placeholder="Например, 4500"
-                  placeholderTextColor="#8B96B8"
+                  placeholderTextColor={themeColors.dim}
                   accessibilityLabel="Количество шагов"
                   autoFocus
                   onSubmitEditing={saveSteps}
@@ -460,9 +463,11 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить шаги"
                 className="mt-4 rounded-2xl py-3 active:opacity-80"
-                style={{ backgroundColor: '#7B6CF6' }}
+                style={{ backgroundColor: themeColors.accent }}
               >
-                <Text className="text-center font-bold text-[19px] text-white">Записать</Text>
+                <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                  Записать
+                </Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -492,7 +497,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[15px] text-bear-sub">
@@ -505,7 +510,7 @@ export default function HomeScreen() {
                 keyboardType="number-pad"
                 maxLength={5}
                 placeholder={String(goals[goalEdit?.field || 'kcal'] || '')}
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Новое значение цели"
                 autoFocus
                 className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
@@ -517,9 +522,11 @@ export default function HomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Сохранить цель"
               className="mt-4 rounded-2xl py-3 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              style={{ backgroundColor: themeColors.accent }}
             >
-              <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
+              <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                Сохранить
+              </Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>

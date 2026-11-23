@@ -23,7 +23,7 @@ import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { LegacyConsentScreen } from '@/components/onboarding/LegacyConsentScreen'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
-import { useThemeVars } from '@/lib/use-theme'
+import { useThemeVars, useThemeColors } from '@/lib/use-theme'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
 import { startPedometerAgent } from '@/lib/pedometer'
@@ -59,6 +59,7 @@ function useOnboardingHydrated() {
 }
 
 function SplashBear() {
+  const themeColors = useThemeColors()
   // Нейтральный экран, пока восстанавливаются данные (без мигания).
   // Колесико загрузки — по отзыву Кати: чтобы при запуске было видно,
   // что приложение грузится, а не зависло. Обёрнут в Shell — тема
@@ -69,7 +70,7 @@ function SplashBear() {
         <Text className="text-[56px]">🐻</Text>
         <ActivityIndicator
           size="large"
-          color="#6C8CFF"
+          color={themeColors.link}
           style={{ marginTop: 28 }}
         />
       </View>

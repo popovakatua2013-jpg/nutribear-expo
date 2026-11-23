@@ -15,6 +15,8 @@ import {
 } from '@/store/useCompanionStore'
 import { useProStore } from '@/store/useProStore'
 import { useToast } from '@/components/ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Триал активен, если pro=true и plan='trial'
 function isTrialActive(pro, plan) {
@@ -22,6 +24,7 @@ function isTrialActive(pro, plan) {
 }
 
 export function CompanionCard({ embedded = false }) {
+  const themeColors = useThemeColors()
   const companionId = useCompanionStore((s) => s.companionId)
   const select = useCompanionStore((s) => s.select)
   const pro = useProStore((s) => s.pro)
@@ -119,7 +122,7 @@ export function CompanionCard({ embedded = false }) {
                 </View>
               ) : locked ? (
                 <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5">
-                  <Lock size={14} color="#8B96B8" />
+                  <Lock size={14} color={themeColors.dim} />
                 </View>
               ) : null}
             </View>

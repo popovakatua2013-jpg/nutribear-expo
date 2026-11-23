@@ -18,6 +18,8 @@ import { QUICK_GRAMS } from '@/lib/data/foods'
 import { round1 } from '@/lib/data/bju'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Строка инпута → число (запятая тоже работает), с запасным значением
 function parseNum(text, fallback, min, max) {
@@ -27,6 +29,7 @@ function parseNum(text, fallback, min, max) {
 }
 
 export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
+  const themeColors = useThemeColors()
   const updateEntry = useFoodStore((s) => s.updateEntry)
   const { toast } = useToast()
 
@@ -119,7 +122,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-row items-center gap-2 pr-2">
-              <Pencil size={20} color="#6C8CFF" />
+              <Pencil size={20} color={themeColors.link} />
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">Изменить запись</Text>
                 <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
@@ -128,7 +131,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               </View>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -159,7 +162,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               multiline
               accessibilityLabel="Описание блюда"
               placeholder="Например: борщ на свином бульоне, со сметаной"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
@@ -176,7 +179,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               multiline
               accessibilityLabel="Комментарий к записи"
               placeholder="Например: без масла, с солью"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               className="mt-1.5 min-h-[52px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
@@ -202,10 +205,11 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                   onPress={() => changeGrams(String(v))}
                   accessibilityRole="button"
                   className={`rounded-full px-3 py-1.5 ${gramsN === v ? '' : 'bg-white/5'}`}
-                  style={gramsN === v ? { backgroundColor: '#7B6CF6' } : null}
+                  style={gramsN === v ? { backgroundColor: themeColors.accent } : null}
                 >
                   <Text
-                    className={`font-semibold text-[16px] ${gramsN === v ? 'text-white' : 'text-bear-sub'}`}
+                    className={`font-semibold text-[16px] ${gramsN === v ? '' : 'text-bear-sub'}`}
+                    style={{ color: gramsN === v ? themeColors.accentOn : undefined }}
                   >
                     {`${v} г`}
                   </Text>
@@ -267,9 +271,11 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               onPress={save}
               accessibilityRole="button"
               className="mt-4 rounded-2xl py-3 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              style={{ backgroundColor: themeColors.accent }}
             >
-              <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
+              <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                Сохранить
+              </Text>
             </Pressable>
           </ScrollView>
         </View>

@@ -5,6 +5,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronLeft } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function ObShell({
   sub,
@@ -17,6 +19,7 @@ export function ObShell({
   footer,
   scroll = true,
 }) {
+  const themeColors = useThemeColors()
   const Content = scroll ? ScrollView : View
   // Edge-to-edge в SDK 58: отступы под статус-бар и системную нижнюю панель
   const insets = useSafeAreaInsets()
@@ -36,7 +39,7 @@ export function ObShell({
             accessibilityLabel="Назад"
             className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
           >
-            <ChevronLeft size={22} color="#AEB9D9" />
+            <ChevronLeft size={22} color={themeColors.soft} />
           </Pressable>
         ) : (
           <View className="h-10 w-10 shrink-0" />

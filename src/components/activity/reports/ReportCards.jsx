@@ -46,6 +46,8 @@ import { kcalWithDayMark } from '@/lib/data/dayContext'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { history } from '@/lib/data/activity'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Порядок карточек 3×2 — как на референсе: компактный ряд и крупный ряд
 const COMPACT_ITEMS = [
@@ -132,7 +134,8 @@ function CardBg({ color }) {
 // скрине-2. Текст краткий («Цель: 4/7 дн») — помещается всегда.
 // big — крупный футер-приглашение к действию (отзыв Кати: кнопка
 // «Записать сон» была «очень мелко» — теперь 13px и полужирная)
-function CalFooter({ children, color = '#8B96B8', line = true, big = false }) {
+function CalFooter({ children, color = themeColors.dim, line = true, big = false }) {
+  const themeColors = useThemeColors()
   return (
     // mt-auto — футер прижат к нижнему краю карточки даже когда сосед
     // в ряду выше (растянутая карточка не оставляет футер в середине)
@@ -198,12 +201,13 @@ function CardHead({ m, s, iconColor = null }) {
 // Δ% к прошлому периоду (когда есть данные), футер цели и спарклайн.
 // Размер единый у всех шести карточек (отзыв Кати)
 function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {} }) {
+  const themeColors = useThemeColors()
   const s = SIZES.card
   // Среднее за день по ведённым дням; сравнение — тоже по средним
   const avg = useMemo(() => dailyAverage(rows, m.key), [rows, m.key])
   const prevAvg = useMemo(() => dailyAverage(prevRows, m.key), [prevRows, m.key])
   const pct = prevAvg > 0 ? changePct(avg, prevAvg) : null
-  const tone = pct == null ? '#8B96B8' : deltaTone(pct, m.invert)
+  const tone = pct == null ? themeColors.dim : deltaTone(pct, m.invert)
   const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
   const spark = useMemo(() => sparkOf(rows, m.key), [rows, m.key])
 
@@ -272,7 +276,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           )}
         </CardBand>
         {goalMet != null && (
-          <CalFooter color={goalMet > 0 ? '#4ade80' : '#8B96B8'}>
+          <CalFooter color={goalMet > 0 ? '#4ade80' : themeColors.dim}>
             {`Цель: ${goalMet}/${days} дн`}
           </CalFooter>
         )}
@@ -290,6 +294,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
 // тап по пустой карточке открывает окно записи, тап по карточке с
 // данными — окно истории показателя (как у остальных карточек)
 function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd = () => {} }) {
+  const themeColors = useThemeColors()
   const s = SIZES.card
   const nights = rows.filter((r) => r.sleepMin > 0).length
   const avg = sleepAvg(rows)
@@ -341,7 +346,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             {/* Лента со спарклайном ночей — как у соседних карточек:
                 одна и та же структура, футер прижат к низу */}
             <CardBand data={spark} color="#c084fc" height={s.band} />
-            <CalFooter color={inNorm > 0 ? '#4ade80' : '#8B96B8'}>
+            <CalFooter color={inNorm > 0 ? '#4ade80' : themeColors.dim}>
               {`Цель: ${inNorm}/${days} дн`}
             </CalFooter>
           </>
@@ -367,7 +372,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
               пока нет записей
             </Text>
             <CardBand height={s.band} />
-            <CalFooter color="#8DABFF" big>Записать сон →</CalFooter>
+            <CalFooter color={themeColors.link} big>Записать сон →</CalFooter>
           </>
         )}
       </View>
@@ -381,6 +386,7 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
 // (как у остальных карточек — отзыв Кати; график динамики веса остаётся
 // и на «Теле»)
 function WeightReportCard({ days, onPress = () => {} }) {
+  const themeColors = useThemeColors()
   const s = SIZES.card
   const weights = useProfileStore((s2) => s2.weights)
   const heightCm = useProfileStore((s2) => s2.heightCm)
@@ -394,7 +400,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
   const { min, max } = healthyRange(heightCm)
   const towardNorm =
     delta != null && ((delta < 0 && lastW.kg >= min) || (delta > 0 && lastW.kg <= max))
-  const tone = delta == null || delta === 0 ? '#8B96B8' : towardNorm ? '#4ADE80' : '#FB7185'
+  const tone = delta == null || delta === 0 ? themeColors.dim : towardNorm ? '#4ADE80' : '#FB7185'
 
   // Спарклайн: последние до 10 взвешиваний по возрастанию даты
   // (журнал хранит новые сверху). Меньше двух точек — линии нет
@@ -437,7 +443,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
           minimumFontScale={0.8}
           maxFontSizeMultiplier={1.15}
           className="font-sans leading-tight text-bear-dim"
-          style={{ fontSize: s.cap, color: delta != null ? tone : '#8B96B8' }}
+          style={{ fontSize: s.cap, color: delta != null ? tone : themeColors.dim }}
         >
           {delta == null
             ? 'последний замер'
@@ -450,7 +456,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
             Рост не указан (min/max = 0) — футера нет */}
         <CardBand data={spark} color="#a78bfa" height={s.band} />
         {heightCm > 0 && Number.isFinite(min) && Number.isFinite(max) && max > min && (
-          <CalFooter color="#8DABFF">
+          <CalFooter color={themeColors.link}>
             {`Норма: ${min}–${max} кг`}
           </CalFooter>
         )}

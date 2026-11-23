@@ -21,6 +21,8 @@ import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const BEAR = require('../../../../assets/images/bear.webp')
 const MAX = 1.25
@@ -56,6 +58,7 @@ function Stat({ Icon, color, value, label }) {
 }
 
 export function DayShareCard({ open, onClose }) {
+  const themeColors = useThemeColors()
   const cardRef = useRef(null)
   const [busy, setBusy] = useState(false)
 
@@ -97,7 +100,7 @@ export function DayShareCard({ open, onClose }) {
           collapsable={false}
           accessibilityLabel="Карточка итогов дня для поделиться"
           className="w-full overflow-hidden rounded-3xl border border-white/10"
-          style={{ backgroundColor: '#101831' }}
+          style={{ backgroundColor: themeColors.card }}
         >
           <LinearGradient colors={['rgba(77,124,254,0.16)', 'rgba(139,92,246,0.05)', 'rgba(16,24,49,0)']} style={{ padding: 20 }}>
             {/* Шапка: мишка + бренд */}
@@ -193,7 +196,7 @@ export function DayShareCard({ open, onClose }) {
           className="mt-1 w-full items-center py-3"
         >
           <View className="flex-row items-center gap-1.5">
-            <X size={17} color="#8B96B8" />
+            <X size={17} color={themeColors.dim} />
             <Text className="font-semibold text-[15.5px] text-bear-sub">Закрыть</Text>
           </View>
         </Pressable>

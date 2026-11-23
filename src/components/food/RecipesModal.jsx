@@ -12,8 +12,11 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChefHat, X } from 'lucide-react-native'
 import { RecipeMode } from './RecipeMode'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function RecipesModal({ onClose = () => {}, onLogRecipe = () => {} }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
 
   return (
@@ -56,7 +59,7 @@ export function RecipesModal({ onClose = () => {}, onLogRecipe = () => {} }) {
               accessibilityRole="button"
               className="p-1"
             >
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 

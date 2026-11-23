@@ -17,14 +17,18 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { useThemeColors } from '@/lib/use-theme'
 
-const CARD = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
+
+// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
   borderWidth: 1,
-}
+})
 
 export function FoodInsight() {
+  const themeColors = useThemeColors()
   const foodHistory = useFoodStore((s) => s.history)
   const goalId = useFoodStore((s) => s.goal)
   const goals = useGoalsStore((s) => s.goals)
@@ -64,7 +68,7 @@ export function FoodInsight() {
     <View
       accessibilityLabel={`Персональная подсказка: ${insight.title}`}
       className="overflow-hidden rounded-3xl p-3.5"
-      style={CARD}
+      style={cardSurface(themeColors)}
     >
       {/* Крестик — прячет подсказку до конца дня (отзыв Кати) */}
       <Pressable
@@ -74,14 +78,14 @@ export function FoodInsight() {
         hitSlop={10}
         className="absolute right-2.5 top-2.5 z-10 p-1 active:opacity-60"
       >
-        <X size={17} color="#8B96B8" />
+        <X size={17} color={themeColors.dim} />
       </Pressable>
       <View className="flex-row items-center gap-2.5">
         <View
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: 'rgba(77,124,254,0.16)' }}
         >
-          <Lightbulb size={18} color="#8DABFF" />
+          <Lightbulb size={18} color={themeColors.link} />
         </View>
         <View className="min-w-0 flex-1 pr-5">
           <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16.5px] text-bear-text">

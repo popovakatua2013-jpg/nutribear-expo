@@ -18,6 +18,8 @@ import Svg, {
 } from 'react-native-svg'
 import { ArrowDown, Target, X } from 'lucide-react-native'
 import { BMI_CATEGORIES, bmiCategory, fmtDecimal, kgToNextCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Та же шкала, что у большого кольца на вкладке (BmiDonut)
 const MR_BMI_MIN = 15
@@ -105,6 +107,7 @@ function MiniRing({ bmi, catColor, shortLabel }) {
 }
 
 export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = null, weightKg, heightCm }) {
+  const themeColors = useThemeColors()
   // Своя категория — по реальному ИМТ; catId (тап по строке легенды)
   // подменяет только текст пояснения, мини-кольцо остаётся «твоим»
   const own = bmiCategory(bmi)
@@ -147,7 +150,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               accessibilityLabel="Закрыть"
               className="ml-1 mt-0.5 p-1"
             >
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -164,12 +167,12 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                   backgroundColor: nextKg.tone === 'ok' ? 'rgba(74,222,128,0.12)' : 'rgba(141,171,255,0.12)',
                 }}
               >
-                <Target size={14} color={nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF'} />
+                <Target size={14} color={nextKg.tone === 'ok' ? '#4ADE80' : themeColors.link} />
                 <Text
                   numberOfLines={2}
                   maxFontSizeMultiplier={1.1}
                   className="min-w-0 flex-1 font-semibold text-[16px]"
-                  style={{ color: nextKg.tone === 'ok' ? '#4ADE80' : '#8DABFF' }}
+                  style={{ color: nextKg.tone === 'ok' ? '#4ADE80' : themeColors.link }}
                 >
                   {nextKg.text}
                 </Text>
@@ -201,8 +204,8 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                 accessibilityLabel="К рекомендациям — перейти к блоку советов"
                 className="mt-4 flex-row items-center justify-center gap-1.5 rounded-2xl py-3 active:opacity-75"
                 style={{
-                  backgroundColor: 'rgba(168,85,247,0.16)',
-                  borderColor: 'rgba(168,85,247,0.35)',
+                  backgroundColor: themeColors.bodyLine,
+                  borderColor: themeColors.bodyLine,
                   borderWidth: 1,
                 }}
               >

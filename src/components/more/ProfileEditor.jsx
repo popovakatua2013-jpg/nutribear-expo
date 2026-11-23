@@ -22,11 +22,14 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
 import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 import { fmtDecimal } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const FIELD =
   'mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white'
 
 export function ProfileEditor() {
+  const themeColors = useThemeColors()
   const name = useProfileStore((s) => s.name)
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
@@ -80,7 +83,7 @@ export function ProfileEditor() {
         </View>
 
         {/* Карандаш «изменить» — как у тренировок на «Главной» */}
-        <Pencil size={20} color="#6C8CFF" />
+        <Pencil size={20} color={themeColors.link} />
       </Pressable>
 
       <ProfileModal open={open} onClose={() => setOpen(false)} />
@@ -111,6 +114,7 @@ function ProfileModal({ open, onClose }) {
 }
 
 function ProfileBody({ onClose }) {
+  const themeColors = useThemeColors()
   const name = useProfileStore((s) => s.name)
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
@@ -166,7 +170,7 @@ function ProfileBody({ onClose }) {
           </Text>
         </View>
         <Pressable onPress={onClose} accessibilityLabel="Закрыть профиль" className="p-1">
-          <X hitSlop={10} size={22} color="#A5AECB" />
+          <X hitSlop={10} size={22} color={themeColors.sub} />
         </Pressable>
       </View>
 

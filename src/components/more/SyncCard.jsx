@@ -33,6 +33,8 @@ import {
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings, openAppSettings } from '@/lib/appSettings'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Источники шагов по платформе: Android — только Health Connect
 // (строка ниже, не в ROWS), iOS — Apple Health; встроенный шагомер
@@ -44,14 +46,11 @@ const ROWS = IS_IOS
   ? [{ key: 'ahealth', label: 'Apple Health', hint: 'шаги и тренировки с телефона и часов' }]
   : []
 
-// Единый акцент всех переключателей — #7B6CF6 (унификация цвета
-// по отзыву Кати от 11.11)
-const SWITCH_COLORS = {
-  true: '#7B6CF6',
-  false: 'rgba(255,255,255,0.15)',
-}
-
 export function SyncCard({ embedded = false }) {
+  const themeColors = useThemeColors()
+  // Единый акцент всех переключателей (унификация цвета по отзыву
+  // Кати от 11.11) — теперь акцент активной темы
+  const switchColors = { true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }
   const sync = useOnboardingStore((s) => s.sync)
   const toggleSync = useOnboardingStore((s) => s.toggleSync)
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
@@ -175,8 +174,8 @@ export function SyncCard({ embedded = false }) {
           <Switch
             value={sync[r.key]}
             onValueChange={() => toggleSync(r.key)}
-            trackColor={SWITCH_COLORS}
-            thumbColor="#FFFFFF"
+            trackColor={switchColors}
+            thumbColor={themeColors.accentOn}
             accessibilityLabel={r.label}
           />
         </View>
@@ -198,8 +197,8 @@ export function SyncCard({ embedded = false }) {
           <Switch
             value={healthConnectEnabled}
             onValueChange={toggleHealthConnect}
-            trackColor={SWITCH_COLORS}
-            thumbColor="#FFFFFF"
+            trackColor={switchColors}
+            thumbColor={themeColors.accentOn}
             accessibilityLabel="Health Connect"
           />
         </View>
@@ -210,7 +209,7 @@ export function SyncCard({ embedded = false }) {
         <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center gap-1.5">
-              <Footprints size={18} color="#EEF2FB" />
+              <Footprints size={18} color={themeColors.text} />
               <Text className="font-bold text-[17.5px] text-bear-text">Встроенный шагомер</Text>
             </View>
             <Text className="font-sans text-[15px] text-bear-sub2">
@@ -222,8 +221,8 @@ export function SyncCard({ embedded = false }) {
           <Switch
             value={pedometerEnabled}
             onValueChange={togglePedometer}
-            trackColor={SWITCH_COLORS}
-            thumbColor="#FFFFFF"
+            trackColor={switchColors}
+            thumbColor={themeColors.accentOn}
             accessibilityLabel="Встроенный шагомер"
           />
         </View>

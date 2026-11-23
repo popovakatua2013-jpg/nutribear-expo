@@ -6,8 +6,11 @@
 import { Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { Pencil, X } from 'lucide-react-native'
 import { gramsPerServing } from '@/store/useRecipesStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
+  const themeColors = useThemeColors()
   const sv = Math.max(1, Math.round(recipe.servings || 1))
   const portionGrams = gramsPerServing(recipe)
   const kcalPortion = Math.round((recipe.kcal100 * portionGrams) / 100)
@@ -32,7 +35,7 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
             accessibilityLabel="Закрыть просмотр рецепта"
             className="p-1 active:opacity-70"
           >
-            <X hitSlop={10} size={20} color="#A5AECB" />
+            <X hitSlop={10} size={20} color={themeColors.sub} />
           </Pressable>
         </View>
 
@@ -72,9 +75,9 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
             accessibilityRole="button"
             accessibilityLabel={`Записать «${recipe.name}» в приём пищи`}
             className="rounded-2xl py-3 active:opacity-80"
-            style={{ backgroundColor: '#7B6CF6' }}
+            style={{ backgroundColor: themeColors.accent }}
           >
-            <Text className="text-center font-bold text-[16px] text-white">
+            <Text className="text-center font-bold text-[16px]" style={{ color: themeColors.accentOn }}>
               Записать в приём пищи
             </Text>
           </Pressable>
@@ -84,7 +87,7 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
             accessibilityLabel={`Изменить рецепт «${recipe.name}»`}
             className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 py-2.5 active:bg-white/10"
           >
-            <Pencil size={15} color="#AEB9D9" />
+            <Pencil size={15} color={themeColors.soft} />
             <Text className="font-semibold text-[15px] text-bear-soft">Изменить рецепт</Text>
           </Pressable>
         </View>

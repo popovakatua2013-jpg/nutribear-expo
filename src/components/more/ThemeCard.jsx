@@ -13,6 +13,8 @@ import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useProStore } from '@/store/useProStore'
 import { useToast } from '../ui/Toast'
 import { hapticFeedback } from '@/lib/haptics'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Мини-превью темы: полоска фона с «карточкой» и точкой текста —
 // пользователь видит оттенок до переключения
@@ -46,6 +48,7 @@ function ThemeSwatch({ colors, size = 46 }) {
 }
 
 export function ThemeCard({ embedded = false }) {
+  const themeColors = useThemeColors()
   const themeId = useUiPrefsStore((s) => s.themeId)
   const setTheme = useUiPrefsStore((s) => s.setTheme)
   const pro = useProStore((s) => s.pro)
@@ -85,7 +88,7 @@ export function ThemeCard({ embedded = false }) {
             }
             accessibilityState={{ selected }}
             className={`flex-row items-center gap-3 rounded-2xl border px-3 py-2.5 active:opacity-80 ${
-              selected ? 'border-[#7B6CF6]/60 bg-[#7B6CF6]/10' : 'border-white/10 bg-white/[0.04]'
+              selected ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-white/10 bg-white/[0.04]'
             }`}
           >
             <ThemeSwatch colors={theme.colors} />
@@ -96,16 +99,17 @@ export function ThemeCard({ embedded = false }) {
               </Text>
             </View>
             {locked ? (
-              <Lock size={16} color="#8B96B8" />
+              <Lock size={16} color={themeColors.dim} />
             ) : selected ? (
-              <Check size={18} color="#A78BFA" strokeWidth={2.5} />
+              <Check size={18} color={themeColors.accentBright} strokeWidth={2.5} />
             ) : null}
           </Pressable>
         )
       })}
       <Text className="mt-1 px-1 font-sans text-[12.5px] leading-snug text-bear-dim">
-        Все темы тёмные — интерфейс остаётся удобным ночью. Акценты и кнопки
-        не меняются, меняется оттенок фона и поверхностей.
+        Все темы тёмные — интерфейс остаётся удобным ночью. Меняется оттенок
+        фона и поверхностей, у «Чёрно-лимонной» — ещё и лимонные кнопки,
+        тумблеры и пилюли.
       </Text>
     </View>
   )

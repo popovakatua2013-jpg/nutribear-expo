@@ -7,8 +7,11 @@ import { Pressable, Text, TextInput, View } from 'react-native'
 import { Check, Pencil } from 'lucide-react-native'
 import { useActivityStore } from '@/store/useActivityStore'
 import { vesselIcon } from './vesselIcons'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function VesselCard({ vessel, onDrink }) {
+  const themeColors = useThemeColors()
   const setVessels = useActivityStore((s) => s.setVessels)
   const vessels = useActivityStore((s) => s.vessels)
   const [edit, setEdit] = useState(false)
@@ -51,9 +54,9 @@ export function VesselCard({ vessel, onDrink }) {
           accessibilityRole="button"
           accessibilityLabel="Сохранить ёмкость"
           className="mt-1.5 h-9 items-center justify-center rounded-lg"
-          style={{ backgroundColor: '#7B6CF6' }}
+          style={{ backgroundColor: themeColors.accent }}
         >
-          <Check size={16} color="#fff" strokeWidth={2.5} />
+          <Check size={16} color={themeColors.accentOn} strokeWidth={2.5} />
         </Pressable>
       </View>
     )
@@ -81,7 +84,7 @@ export function VesselCard({ vessel, onDrink }) {
         accessibilityLabel={`Редактировать «${vessel.label}»`}
         className="absolute right-1 top-1 rounded-full bg-white/10 p-1"
       >
-        <Pencil size={13} color="#AEB9D9" />
+        <Pencil size={13} color={themeColors.soft} />
       </Pressable>
     </View>
   )

@@ -27,8 +27,11 @@ import { useCycleStore } from '@/store/useCycleStore'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
 import { formatNum } from '@/lib/format'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function DataActions({ embedded = false, variant = null }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const entries = useFoodStore((s) => s.entries)
   const resetDay = useFoodStore((s) => s.resetDay)
@@ -209,7 +212,7 @@ export function DataActions({ embedded = false, variant = null }) {
     <CollapsibleCard
       storageKey="data-actions"
       accessibilityLabel="Данные"
-      icon={<Database size={20} color="#8DABFF" />}
+      icon={<Database size={20} color={themeColors.link} />}
       title="Данные"
       summary="новый день · стереть всё"
     >

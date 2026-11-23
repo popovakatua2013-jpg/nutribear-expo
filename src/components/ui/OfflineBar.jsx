@@ -7,8 +7,11 @@ import { Text, View } from 'react-native'
 import { WifiOff } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOffline } from '@/lib/useOffline'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function OfflineBar() {
+  const themeColors = useThemeColors()
   const offline = useOffline()
   const insets = useSafeAreaInsets()
   if (!offline) return null
@@ -20,7 +23,7 @@ export function OfflineBar() {
       className="absolute left-4 right-4 z-50 flex-row items-center justify-center gap-1.5 rounded-full bg-black/75 px-3.5 py-1.5"
       style={{ top: insets.top + 6, elevation: 10 }}
     >
-      <WifiOff size={14} color="#8B96B8" />
+      <WifiOff size={14} color={themeColors.dim} />
       <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-[#aeb9d9]">
         Нет сети — записи и отчёты работают, ИИ отключён
       </Text>

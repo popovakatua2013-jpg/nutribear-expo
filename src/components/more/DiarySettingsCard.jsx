@@ -27,8 +27,11 @@ import { useDayTypesStore, DELTA_MIN, DELTA_MAX, DELTA_STEP } from '@/store/useD
 import { DAY_TYPES } from '@/lib/data/dayContext'
 import { formatNum } from '@/lib/format'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function DiarySettingsCard({ embedded = false }) {
+  const themeColors = useThemeColors()
   const countBurned = useGoalsStore((s) => Boolean(s.goals.countBurned))
   const setGoals = useGoalsStore((s) => s.setGoals)
   // Прибавки особых дней: строка «эмодзи Тип − 150 ккал +»
@@ -52,8 +55,8 @@ export function DiarySettingsCard({ embedded = false }) {
       accessibilityLabel="Учитывать сожжённые калории в остатке"
       value={countBurned}
       onValueChange={(v) => setGoals({ countBurned: v })}
-      trackColor={{ true: '#7B6CF6', false: 'rgba(255,255,255,0.15)' }}
-      thumbColor="#fff"
+      trackColor={{ true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }}
+      thumbColor={themeColors.accentOn}
     />
   )
 
@@ -81,9 +84,9 @@ export function DiarySettingsCard({ embedded = false }) {
           {/* Раскрыта — крестик (отзыв Кати: подсказки закрываются
               крестиком); свернута — шеврон */}
           {moreOpen ? (
-            <X size={14} color="#C4B5FD" />
+            <X size={14} color={themeColors.accentSoft} />
           ) : (
-            <ChevronDown size={14} color="#C4B5FD" />
+            <ChevronDown size={14} color={themeColors.accentSoft} />
           )}
         </Pressable>
         {moreOpen && (
@@ -134,11 +137,11 @@ export function DiarySettingsCard({ embedded = false }) {
                   hitSlop={6}
                   className={`${btn} bg-white/5 ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
                 >
-                  <Minus size={15} color="#AEB9D9" />
+                  <Minus size={15} color={themeColors.soft} />
                 </Pressable>
                 <Text
                   maxFontSizeMultiplier={1.1}
-                  className="w-[76px] shrink-0 text-center font-bold text-[13px] text-[#C4B5FD]"
+                  className="w-[76px] shrink-0 text-center font-bold text-[13px] text-bear-accentSoft"
                 >
                   {`+${formatNum(val)} ккал`}
                 </Text>
@@ -149,9 +152,9 @@ export function DiarySettingsCard({ embedded = false }) {
                   accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
                   hitSlop={6}
                   className={`${btn} ${val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''}`}
-                  style={val >= DELTA_MAX ? null : { backgroundColor: 'rgba(123,108,246,0.15)' }}
+                  style={val >= DELTA_MAX ? null : { backgroundColor: themeColors.accentFaint2 }}
                 >
-                  <Plus size={15} color="#A78BFA" />
+                  <Plus size={15} color={themeColors.accentBright} />
                 </Pressable>
               </View>
             )
@@ -168,7 +171,7 @@ export function DiarySettingsCard({ embedded = false }) {
     <CollapsibleCard
       storageKey="diary"
       accessibilityLabel="Настройки дневника"
-      icon={<Utensils size={20} color="#C4B5FD" />}
+      icon={<Utensils size={20} color={themeColors.accentSoft} />}
       title="Настройки дневника"
       right={switchEl}
     >
@@ -190,9 +193,9 @@ export function DiarySettingsCard({ embedded = false }) {
         {/* Раскрыта — крестик (отзыв Кати: подсказки закрываются
             крестиком); свернута — шеврон */}
         {moreOpen ? (
-          <X size={14} color="#C4B5FD" />
+          <X size={14} color={themeColors.accentSoft} />
         ) : (
-          <ChevronDown size={14} color="#C4B5FD" />
+          <ChevronDown size={14} color={themeColors.accentSoft} />
         )}
       </Pressable>
       {moreOpen && (
@@ -243,11 +246,11 @@ export function DiarySettingsCard({ embedded = false }) {
                 hitSlop={6}
                 className={`${btn} bg-white/5 ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
               >
-                <Minus size={15} color="#AEB9D9" />
+                <Minus size={15} color={themeColors.soft} />
               </Pressable>
               <Text
                 maxFontSizeMultiplier={1.1}
-                className="w-[76px] shrink-0 text-center font-bold text-[13px] text-[#C4B5FD]"
+                className="w-[76px] shrink-0 text-center font-bold text-[13px] text-bear-accentSoft"
               >
                 {`+${formatNum(val)} ккал`}
               </Text>
@@ -258,9 +261,9 @@ export function DiarySettingsCard({ embedded = false }) {
                 accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
                 hitSlop={6}
                 className={`${btn} ${val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''}`}
-                style={val >= DELTA_MAX ? null : { backgroundColor: 'rgba(123,108,246,0.15)' }}
+                style={val >= DELTA_MAX ? null : { backgroundColor: themeColors.accentFaint2 }}
               >
-                <Plus size={15} color="#A78BFA" />
+                <Plus size={15} color={themeColors.accentBright} />
               </Pressable>
             </View>
           )

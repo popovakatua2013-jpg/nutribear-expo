@@ -14,6 +14,8 @@ import { changePct, nutrientTotals, nutrientsByDay } from '@/lib/data/reports'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
 import { BodyChip } from '../../ui/BodyChip'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const round1 = (v) => Math.round(v * 10) / 10
 
@@ -26,6 +28,7 @@ const STATS = [
 ]
 
 function Stat({ label, color, value, sub, pct }) {
+  const themeColors = useThemeColors()
   const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
   return (
     <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.04] px-3 py-2.5">
@@ -43,7 +46,7 @@ function Stat({ label, color, value, sub, pct }) {
       </Text>
       {pct != null && Arrow ? (
         <View className="mt-1 flex-row items-center gap-0.5">
-          <Arrow size={15} color="#8B96B8" />
+          <Arrow size={15} color={themeColors.dim} />
           <Text className="font-sans text-[14.5px] text-bear-dim">
             {`${Math.abs(pct)}% к прошлому периоду`}
           </Text>

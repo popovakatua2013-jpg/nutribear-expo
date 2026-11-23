@@ -24,6 +24,12 @@ export const useUiPrefsStore = create(
       // «Напоминания» — отзыв Кати 16.11: один компактный блок вместо
       // разбросанных строк). По умолчанию включено — как раньше
       weighNudgeOn: true,
+      // Уведомление мишки о взвешивании закрыто крестиком (просьба Кати
+      // 24.11: «добавить крестик — закрыть, смахнуть»): храним дату
+      // последнего взвешивания на момент закрытия. Полоска не вернётся,
+      // пока не появится НОВЫЙ вес (запись веса сбрасывает напоминание,
+      // а после следующего порога дней без записи она покажется снова)
+      weighNudgeDismissedAt: null,
       // Ключ закрытой крестиком золотой карточки «Цель по весу достигнута»
       // («дата достижения|цель в кг»): переживёт перезапуск, а при смене
       // цели ключ изменится и карточка покажется снова
@@ -71,6 +77,8 @@ export const useUiPrefsStore = create(
 
       setWeighNudgeDays: (n) =>
         set({ weighNudgeDays: [5, 7, 10].includes(n) ? n : 7 }),
+
+      dismissWeighNudge: (weightDate) => set({ weighNudgeDismissedAt: weightDate }),
 
       dismissWeightGoalCelebration: (key) =>
         set({ weightGoalCelebrationDismissed: key }),

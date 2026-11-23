@@ -43,11 +43,14 @@ import {
   bodyFatLevel,
   tdeeExplainer,
 } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // «72,5» → 72.5 (русская запятая — тоже десятичный разделитель)
 const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
 
 export function BmiCalculator() {
+  const themeColors = useThemeColors()
   const profileSex = useProfileStore((s) => s.sex)
   const profileAge = useProfileStore((s) => s.age)
   const profileHeight = useProfileStore((s) => s.heightCm)
@@ -165,7 +168,7 @@ export function BmiCalculator() {
   }
 
   return (
-    <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border p-4" style={CARD_STYLE}>
+    <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border p-4" style={cardSurface(themeColors)}>
       {/* Шапка: чип-иконка + заголовок + подзаголовок + шеврон.
           По умолчанию свёрнут — тап по шапке раскрывает/скрывает поля */}
       <Pressable
@@ -179,7 +182,7 @@ export function BmiCalculator() {
           className="h-9 w-9 items-center justify-center rounded-xl border"
           style={{ backgroundColor: 'rgba(139,92,246,0.22)', borderColor: 'rgba(139,92,246,0.35)' }}
         >
-          <Calculator size={19} color="#C4B5FD" />
+          <Calculator size={19} color={themeColors.accentSoft} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[20.5px] tracking-tight text-white">
@@ -191,9 +194,9 @@ export function BmiCalculator() {
         </View>
         <View className="shrink-0 rounded-full bg-white/[0.06] p-1.5">
           {open ? (
-            <ChevronUp size={18} color="#C4B5FD" />
+            <ChevronUp size={18} color={themeColors.accentSoft} />
           ) : (
-            <ChevronDown size={18} color="#C4B5FD" />
+            <ChevronDown size={18} color={themeColors.accentSoft} />
           )}
         </View>
       </Pressable>
@@ -321,7 +324,7 @@ export function BmiCalculator() {
             >
               {currentLevel ? currentLevel.label : 'Выберите…'}
             </Text>
-            <ChevronDown size={18} color="#C4B5FD" />
+            <ChevronDown size={18} color={themeColors.accentSoft} />
           </Pressable>
 
           {/* Подсказка «как считается норма» — СВЁРНУТА по умолчанию
@@ -350,9 +353,9 @@ export function BmiCalculator() {
               Как считается суточная норма?
             </Text>
             {hintOpen ? (
-              <ChevronUp size={16} color="#8B96B8" />
+              <ChevronUp size={16} color={themeColors.dim} />
             ) : (
-              <ChevronDown size={16} color="#8B96B8" />
+              <ChevronDown size={16} color={themeColors.dim} />
             )}
           </Pressable>
           {hintOpen && (
@@ -380,7 +383,7 @@ export function BmiCalculator() {
         >
           <Pressable
             className="overflow-hidden rounded-t-[28px] border-t px-2 pb-2"
-            style={{ backgroundColor: '#150F2D', borderColor: 'rgba(168,85,247,0.35)' }}
+            style={{ backgroundColor: '#150F2D', borderColor: themeColors.bodyLine }}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Ручка-полоска */}
@@ -402,7 +405,7 @@ export function BmiCalculator() {
                 accessibilityLabel="Закрыть"
                 className="shrink-0 rounded-full bg-white/[0.06] p-1.5 active:opacity-70"
               >
-                <X size={18} color="#C4B5FD" />
+                <X size={18} color={themeColors.accentSoft} />
               </Pressable>
             </View>
             {TDEE_LEVELS.map((l) => {
@@ -437,7 +440,7 @@ export function BmiCalculator() {
                       </Text>
                     ) : null}
                   </View>
-                  <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[14px] text-[#C4B5FD]">
+                  <Text maxFontSizeMultiplier={1.1} className="shrink-0 font-bold text-[14px] text-bear-accentSoft">
                     {`×${String(l.mult).replace('.', ',')}`}
                   </Text>
                 </Pressable>
@@ -454,12 +457,14 @@ export function BmiCalculator() {
 
 // Та же поверхность, что у остальных карточек вкладки (bodyCard +
 // bodyLine) — калькулятор больше не выбивается из единого стиля
-const CARD_STYLE = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
-}
+// Поверхность карточки — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
+})
 
 function NumField({ label, value, onChange, decimal }) {
+  const themeColors = useThemeColors()
   return (
     <View className="min-w-0 flex-1">
       <Text maxFontSizeMultiplier={1.1} numberOfLines={1} className="font-medium text-[15px] text-bear-sub">
@@ -471,7 +476,7 @@ function NumField({ label, value, onChange, decimal }) {
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         textAlign="center"
         placeholder="—"
-        placeholderTextColor="#8B96B8"
+        placeholderTextColor={themeColors.dim}
         accessibilityLabel={label}
         className="mt-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2.5 font-semibold text-[19px] text-white"
       />
@@ -480,13 +485,14 @@ function NumField({ label, value, onChange, decimal }) {
 }
 
 function Stat({ label, value, accent }) {
+  const themeColors = useThemeColors()
   return (
     <View className="min-w-0 flex-1 rounded-xl bg-white/[0.03] px-3 py-2.5">
       <Text className="font-medium text-[15px] text-bear-sub2">{label}</Text>
       <Text
         maxFontSizeMultiplier={1.2}
         className="mt-0.5 font-bold text-[19px]"
-        style={{ color: accent ? '#6C8CFF' : '#EEF2FB' }}
+        style={{ color: accent ? themeColors.link : themeColors.text }}
       >
         {value}
       </Text>

@@ -24,11 +24,14 @@ import { VoiceMode } from './VoiceMode'
 import { SelectedFood } from './SelectedFood'
 import { MEALS } from '@/lib/data/meals'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Пилюля выбора дня с иконкой и шевроном — как на референс-скриншоте:
 // календарь «Сегодня», часы «Вчера»; активная подсвечена фиолетовым
 function DayPill({ active, icon: Icon, label, onPress }) {
-  const tint = active ? '#C4B5FD' : '#8B96B8'
+  const themeColors = useThemeColors()
+  const tint = active ? themeColors.accentSoft : themeColors.dim
   return (
     <Pressable
       onPress={onPress}
@@ -36,7 +39,7 @@ function DayPill({ active, icon: Icon, label, onPress }) {
       accessibilityState={{ selected: active }}
       accessibilityLabel={`Записать за: ${label}`}
       className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
-        active ? 'border-[#7B6CF6]/70 bg-[#7B6CF6]/20' : 'border-white/10 bg-white/[0.04]'
+        active ? 'border-bear-accentBorder bg-bear-accentFaint3' : 'border-white/10 bg-white/[0.04]'
       }`}
     >
       <Icon size={15} color={tint} />
@@ -51,6 +54,7 @@ function DayPill({ active, icon: Icon, label, onPress }) {
 }
 
 export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPick = null, onPickConsumed = () => {} }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   const customMeals = useFoodStore((s) => s.customMeals)
   // Базовые приёмы; свои перекусы («Перекус 2», «Перекус 3»…) в пилюли
@@ -134,7 +138,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                     </Text>
                   </View>
                   <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-                    <X hitSlop={10} size={22} color="#A5AECB" />
+                    <X hitSlop={10} size={22} color={themeColors.sub} />
                   </Pressable>
                 </View>
                 {searching ? (
@@ -180,7 +184,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                     accessibilityRole="button"
                     className="mb-3 flex-row items-center gap-1 self-start"
                   >
-                    <ChevronLeft size={18} color="#A5AECB" />
+                    <ChevronLeft size={18} color={themeColors.sub} />
                     <Text className="font-semibold text-[16.5px] text-bear-sub">
                       Все способы
                     </Text>

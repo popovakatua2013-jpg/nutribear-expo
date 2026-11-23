@@ -5,8 +5,9 @@ import { useState } from 'react'
 import { View } from 'react-native'
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg'
 import { smoothPath } from './SvgAreaChart'
+import { useThemeColors } from '@/lib/use-theme'
 
-const AXIS = '#8B96B8'
+
 const GRID = 'rgba(255,255,255,0.06)'
 
 export function SvgLineChart({
@@ -19,6 +20,8 @@ export function SvgLineChart({
   dots = 'all',
   yFmt = (v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : `${Math.round(v)}`),
 }) {
+  // Подписи оси — цветом активной темы (темы оформления — Premium 23.11)
+  const themeColors = useThemeColors()
   const [w, setW] = useState(0)
   const PAD_L = 34
   const PAD_R = 8
@@ -64,7 +67,7 @@ export function SvgLineChart({
             key={`t${i}`}
             x={PAD_L - 5}
             y={PAD_T + (ih * i) / 3 + 3}
-            fill={AXIS}
+            fill={themeColors.dim}
             fontSize={9}
             textAnchor="end"
           >
@@ -103,7 +106,7 @@ export function SvgLineChart({
               key={`x${i}`}
               x={x(i)}
               y={height - 6}
-              fill={AXIS}
+              fill={themeColors.dim}
               fontSize={9}
               textAnchor={i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
             >

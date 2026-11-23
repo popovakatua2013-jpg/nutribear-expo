@@ -13,10 +13,13 @@ import { Check, Pencil, RotateCcw, X } from 'lucide-react-native'
 import { INTENSITY_LEVELS, intensityMet, kcalBurned, parseManualKcal } from '@/lib/data/exercises'
 import { formatNum } from '@/lib/format'
 import { WheelPicker } from './WheelPicker'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MIN_MAX = 180 // максимум минут в барабане
 
 export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinutes = 0, onApply }) {
+  const themeColors = useThemeColors()
   const [level, setLevel] = useState('mid')
   const [minutes, setMinutes] = useState(30)
   // Ручные ккал: null — автоподсчёт, строка — вписанное в поле.
@@ -28,6 +31,8 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
   // ~48dp в edge-to-edge перекрывала нижнюю часть шторки (скрин Кати
   // 19.11: «строка телефона частично закрывает кнопку Готово»)
   const insets = useSafeAreaInsets()
+  // Стили шторки — из активной темы (Premium 23.11)
+  const styles = makeStyles(themeColors)
 
   // Каждое открытие — старт от текущего выбора: минуты из поля формы
   // (или типовая длительность тренировки typ), интенсивность —
@@ -102,7 +107,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
               {exercise ? `${exercise.emoji} ${exercise.name}` : 'Время и интенсивность'}
             </Text>
             <Pressable onPress={onClose} style={styles.closeBtn} accessibilityLabel="Закрыть счётчик">
-              <X size={18} color="#8B96B8" />
+              <X size={18} color={themeColors.dim} />
             </Pressable>
           </View>
           <Text style={styles.sub}>
@@ -144,7 +149,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
                 autoFocus
                 selectTextOnFocus
                 placeholder="ккал"
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Калории вручную"
                 style={styles.kcalInput}
               />
@@ -154,7 +159,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
                 accessibilityRole="button"
                 accessibilityLabel="Применить ручные калории"
               >
-                <Check size={13} color="#C4B5FD" />
+                <Check size={13} color={themeColors.accentSoft} />
                 <Text style={styles.kcalChipText}>ОК</Text>
               </Pressable>
               <Pressable
@@ -163,7 +168,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
                 accessibilityRole="button"
                 accessibilityLabel="Вернуть автоподсчёт калорий"
               >
-                <RotateCcw size={13} color="#A7B1D0" />
+                <RotateCcw size={13} color={themeColors.soft} />
                 <Text style={styles.kcalChipText}>авто</Text>
               </Pressable>
             </View>
@@ -183,7 +188,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
                   accessibilityRole="button"
                   accessibilityLabel="Вписать калории вручную"
                 >
-                  <Pencil size={12} color="#C4B5FD" />
+                  <Pencil size={12} color={themeColors.accentSoft} />
                   <Text style={styles.kcalChipText}>править</Text>
                 </Pressable>
                 {isManual && (
@@ -193,7 +198,7 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
                     accessibilityRole="button"
                     accessibilityLabel="Вернуть автоподсчёт калорий"
                   >
-                    <RotateCcw size={12} color="#A7B1D0" />
+                    <RotateCcw size={12} color={themeColors.soft} />
                     <Text style={styles.kcalChipText}>авто</Text>
                   </Pressable>
                 )}
@@ -220,10 +225,11 @@ export function WheelTimeModal({ open, onClose, exercise, weightKg, initialMinut
   )
 }
 
-const styles = StyleSheet.create({
+// Стили от цветов активной темы (темы оформления — Premium 23.11)
+const makeStyles = (C) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: '#121B33',
+    backgroundColor: C.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 16,
@@ -239,20 +245,20 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     fontFamily: 'Inter_600SemiBold',
-    color: '#EEF2FB',
+    color: C.text,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: '#131E3A',
+    backgroundColor: C.pop,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sub: {
     fontSize: 12.5,
     fontFamily: 'Inter_400Regular',
-    color: '#98A2C2',
+    color: C.sub2,
     lineHeight: 17,
   },
   wheels: { flexDirection: 'row', justifyContent: 'center', gap: 20 },
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',
-    color: '#A7B1D0',
+    color: C.soft,
     marginBottom: 4,
   },
   kcal: {
@@ -270,7 +276,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     fontFamily: 'Inter_800ExtraBold',
-    color: '#C4B5FD',
+    color: C.accentSoft,
   },
   kcalRow: {
     flexDirection: 'row',
@@ -283,7 +289,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#131E3A',
+    backgroundColor: C.pop,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -292,13 +298,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',
-    color: '#A7B1D0',
+    color: C.soft,
   },
   kcalInput: {
     minWidth: 92,
     borderWidth: 1,
-    borderColor: 'rgba(196,181,253,0.35)',
-    backgroundColor: '#131E3A',
+    borderColor: C.accentBorder,
+    backgroundColor: C.pop,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -306,17 +312,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     fontFamily: 'Inter_800ExtraBold',
-    color: '#C4B5FD',
+    color: C.accentSoft,
   },
   kcalHint: {
     fontSize: 11.5,
     fontFamily: 'Inter_400Regular',
-    color: '#8B96B8',
+    color: C.dim,
   },
   doneBtn: {
     height: 46,
     borderRadius: 14,
-    backgroundColor: '#7B6CF6',
+    backgroundColor: C.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 6,
@@ -325,6 +331,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     fontFamily: 'Inter_800ExtraBold',
-    color: '#FFFFFF',
+    // Цвет текста на акцентной кнопке — свой у каждой темы
+    color: C.accentOn,
   },
 })

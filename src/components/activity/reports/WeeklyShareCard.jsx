@@ -14,6 +14,8 @@ import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Sh
 import { formatNum, pluralDays } from '@/lib/format'
 import { formatLiters, changePct, deltaTone } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const BEAR = require('../../../../assets/images/bear.webp')
 const MAX = 1.25
@@ -39,6 +41,7 @@ function Stat({ Icon, color, value, label }) {
 }
 
 export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak = 0, days = 7 }) {
+  const themeColors = useThemeColors()
   const cardRef = useRef(null)
   const [busy, setBusy] = useState(false)
 
@@ -72,7 +75,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
           collapsable={false}
           accessibilityLabel="Карточка итогов для поделиться"
           className="w-full overflow-hidden rounded-3xl border border-white/10"
-          style={{ backgroundColor: '#101831' }}
+          style={{ backgroundColor: themeColors.card }}
         >
           <LinearGradient colors={['rgba(77,124,254,0.16)', 'rgba(139,92,246,0.05)', 'rgba(16,24,49,0)']} style={{ padding: 20 }}>
             {/* Шапка: мишка + бренд */}
@@ -119,7 +122,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                 <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
                   {METRICS.filter((m) => m.key !== 'sleepMin' && (prev?.[m.key] || 0) > 0).map((m) => {
                     const pct = changePct(totals?.[m.key] || 0, prev[m.key])
-                    const tone = deltaTone(pct, m.invert, '#8B96B8')
+                    const tone = deltaTone(pct, m.invert, themeColors.dim)
                     const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
                     return (
                       <View key={m.key} className="flex-row items-center gap-1">
@@ -147,8 +150,8 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
             {/* Дисциплина: сколько дней периода велся дневник */}
             {recorded != null ? (
               <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-[#4D7CFE]/15 px-3 py-1.5">
-                <BookOpen size={15} color="#8DABFF" />
-                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#8DABFF]">
+                <BookOpen size={15} color={themeColors.link} />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-bear-link">
                   {`дней с записями: ${recorded} из ${days}`}
                 </Text>
               </View>
@@ -185,7 +188,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
           className="mt-1 w-full items-center py-3"
         >
           <View className="flex-row items-center gap-1.5">
-            <X size={17} color="#8B96B8" />
+            <X size={17} color={themeColors.dim} />
             <Text className="font-semibold text-[15.5px] text-bear-sub">Закрыть</Text>
           </View>
         </Pressable>

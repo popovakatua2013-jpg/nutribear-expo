@@ -17,8 +17,11 @@ import { openSettingsSoon } from '@/lib/appSettings'
 import { useProStore } from '@/store/useProStore'
 import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { FREE_LIMITS } from '@/lib/entitlements'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function VoiceMode({ onPick }) {
+  const themeColors = useThemeColors()
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
   const timerRef = useRef(null)
   const [recording, setRecording] = useState(false)
@@ -219,7 +222,7 @@ export function VoiceMode({ onPick }) {
             const total = known.reduce((s, k) => s + k, 0)
             const without = kcalList.length - known.length
             return (
-              <View className="mt-1 rounded-2xl border border-[#7B6CF6]/35 bg-[#7B6CF6]/10 px-4 py-3">
+              <View className="mt-1 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-4 py-3">
                 <Text className="font-bold text-[17px] text-bear-text">
                   Итого по фразе: ≈ {total} ккал
                   {without ? ` (+${without} без веса)` : ''}
@@ -251,7 +254,7 @@ export function VoiceMode({ onPick }) {
         value={phrase}
         onChangeText={setPhrase}
         placeholder="Или введите фразу текстом…"
-        placeholderTextColor="#8B96B8"
+        placeholderTextColor={themeColors.dim}
         className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[17.5px] text-bear-text"
       />
       <Pressable

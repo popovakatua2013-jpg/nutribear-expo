@@ -62,6 +62,8 @@ import { animateExpandCollapse } from '@/lib/anim'
 import { targetsFromKcal } from '@/lib/data/goals'
 import { confirmRemoveEntry } from '@/lib/confirm-remove'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MAX = 1.2
 // диаметр круглого фото приёма; радиус = половина
@@ -94,6 +96,7 @@ function mealTotals(meal, entries) {
 // Строка раскрывающегося списка способов добавления: цветная плитка
 // с иконкой + название + серая подсказка. Тап — выбрать способ и свернуть
 function MenuRow({ icon, tile, title, sub, onPress }) {
+  const themeColors = useThemeColors()
   return (
     <Pressable
       onPress={onPress}
@@ -123,7 +126,7 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
           {sub}
         </Text>
       </View>
-      <ChevronRight size={16} color="#8B96B8" />
+      <ChevronRight size={16} color={themeColors.dim} />
     </Pressable>
   )
 }
@@ -133,6 +136,7 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
 // карандаш — правка веса (с настоящим mealId — у доп.
 // перекусов он свой), корзина — удалить
 function DishRow({ mealId, mealName, entry, onEdit }) {
+  const themeColors = useThemeColors()
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const { toast } = useToast()
 
@@ -171,7 +175,7 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Pencil size={14} color="#8B96B8" />
+        <Pencil size={14} color={themeColors.dim} />
       </Pressable>
       <Pressable
         onPress={() => confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast })}
@@ -179,7 +183,7 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Trash2 size={14} color="#8B96B8" />
+        <Trash2 size={14} color={themeColors.dim} />
       </Pressable>
     </View>
   )
@@ -189,6 +193,7 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
 // «съедено / рекомендовано ккал» и шеврон; тап по заголовку сворачивает
 // и разворачивает список блюд, «+» добавляет без раскрытия
 function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDelete }) {
+  const themeColors = useThemeColors()
   const { mealEntries, count, consumed } = totals
   const pct = target > 0 ? Math.round((consumed / target) * 100) : 0
   const barPct = Math.min(100, Math.max(0, pct))
@@ -218,10 +223,10 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
           {/* галочка «внесено» — фиолетовый кружок на фото */}
           {count > 0 && (
             <View
-              className="absolute items-center justify-center rounded-full bg-[#7B6CF6]"
-              style={{ width: 17, height: 17, right: -2, bottom: -2, borderWidth: 2, borderColor: '#0C1327' }}
+              className="absolute items-center justify-center rounded-full bg-bear-accent"
+              style={{ width: 17, height: 17, right: -2, bottom: -2, borderWidth: 2, borderColor: themeColors.deep }}
             >
-              <Check size={13} color="#FFFFFF" strokeWidth={3.5} />
+              <Check size={13} color={themeColors.accentOn} strokeWidth={3.5} />
             </View>
           )}
         </View>
@@ -270,9 +275,9 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
         )}
 
         {open ? (
-          <ChevronUp size={15} color="#98A2C2" />
+          <ChevronUp size={15} color={themeColors.sub2} />
         ) : (
-          <ChevronDown size={15} color="#98A2C2" />
+          <ChevronDown size={15} color={themeColors.sub2} />
         )}
 
         {/* быстрое добавление без раскрытия секции */}
@@ -283,7 +288,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
           hitSlop={4}
           className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
         >
-          <Plus size={15} color="#8DABFF" />
+          <Plus size={15} color={themeColors.link} />
         </Pressable>
       </Pressable>
 
@@ -291,7 +296,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
       <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
         <View
           className="h-1 rounded-full"
-          style={{ width: `${barPct}%`, backgroundColor: over ? '#F59E0B' : '#7B6CF6' }}
+          style={{ width: `${barPct}%`, backgroundColor: over ? '#F59E0B' : themeColors.accent }}
         />
       </View>
 
@@ -324,6 +329,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
 }
 
 export function MealPlanCard({ onAdd, onViewAll }) {
+  const themeColors = useThemeColors()
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -478,10 +484,10 @@ export function MealPlanCard({ onAdd, onViewAll }) {
         accessibilityState={{ expanded: menuOpen }}
         accessibilityLabel={menuOpen ? 'Свернуть способы добавления еды' : 'Добавить еду — раскрыть способы'}
         className="mt-2 h-[42px] flex-row items-center justify-center gap-1.5 rounded-2xl active:opacity-80"
-        style={{ backgroundColor: '#7B6CF6' }}
+        style={{ backgroundColor: themeColors.accent }}
       >
-        <Plus size={17} color="#FFFFFF" />
-        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[16px] text-white">
+        <Plus size={17} color={themeColors.accentOn} />
+        <Text maxFontSizeMultiplier={MAX} className="font-bold text-[16px]" style={{ color: themeColors.accentOn }}>
           Добавить еду
         </Text>
         {/* Шеврон справа убран (отзыв Кати 15.11: «слева + справа галочка —
@@ -510,8 +516,8 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               «сейчас она переехала в “Все приёмы пищи”, верни обратно»):
               свой перекус создаётся прямо из списка под секциями */}
           <MenuRow
-            icon={<Plus size={17} color="#A78BFA" />}
-            tile="#7B6CF622"
+            icon={<Plus size={17} color={themeColors.accentBright} />}
+            tile={themeColors.accentFaint2}
             title="Добавить перекус"
             sub="Второй, третий перекус — своя секция с «+»"
             onPress={addSnack}
@@ -547,7 +553,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
                 accessibilityLabel="Закрыть быструю запись"
                 className="p-1"
               >
-                <X hitSlop={10} size={20} color="#A5AECB" />
+                <X hitSlop={10} size={20} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-3 font-sans text-[15px] font-semibold uppercase text-bear-sub">
@@ -568,7 +574,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="250"
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Калории за порцию"
                 autoFocus
                 maxFontSizeMultiplier={1.3}
@@ -587,7 +593,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               onChangeText={setQName}
               maxLength={40}
               placeholder="Перекус в офисе"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название быстрой записи"
               maxFontSizeMultiplier={1.3}
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
@@ -598,9 +604,9 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               accessibilityRole="button"
               accessibilityLabel="Добавить быструю запись"
               className="mt-4 rounded-2xl py-3 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              style={{ backgroundColor: themeColors.accent }}
             >
-              <Text maxFontSizeMultiplier={1.25} className="text-center font-bold text-[19px] text-white">
+              <Text maxFontSizeMultiplier={1.25} className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
                 {`Добавить в «${getMeal(qMealId, customMeals).name}»`}
               </Text>
             </Pressable>

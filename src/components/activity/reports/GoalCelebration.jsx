@@ -22,6 +22,8 @@ import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/
 import { formatNum, pluralDays } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 import { requestOpenWeightModal } from '@/lib/navEvents'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Карточка достижения — style-объект, чтобы анимировать Animated.View
 // (rounded-2xl, золотая рамка и подложка, p-4)
@@ -46,6 +48,7 @@ function makeParticles() {
 }
 
 export function GoalCelebration() {
+  const themeColors = useThemeColors()
   const weightKg = useProfileStore((s) => s.weightKg)
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const goalReachedAt = useProfileStore((s) => s.goalReachedAt)
@@ -276,7 +279,7 @@ export function GoalCelebration() {
         className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard p-4 active:opacity-80"
       >
         <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8DABFF]/15">
-          <Target size={22} color="#8DABFF" />
+          <Target size={22} color={themeColors.link} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[19px] leading-snug text-bear-text">

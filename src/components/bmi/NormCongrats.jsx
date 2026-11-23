@@ -12,6 +12,8 @@ import { Share2 } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { fmtDecimal } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const BEAR = require('../../../assets/images/bear.webp')
 
@@ -29,6 +31,7 @@ function makeParticles() {
 }
 
 export function NormCongrats({ open, onClose, bmi }) {
+  const themeColors = useThemeColors()
   const haptics = useUiPrefsStore((s) => s.haptics)
   const name = useProfileStore((s) => s.name)
   const pop = useRef(new Animated.Value(0)).current
@@ -144,9 +147,9 @@ export function NormCongrats({ open, onClose, bmi }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть поздравление"
-              className="min-w-0 flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+              className="min-w-0 flex-1 items-center rounded-2xl bg-bear-accent py-3 active:opacity-80"
             >
-              <Text className="font-bold text-[19px] text-white">Ура! 🎉</Text>
+              <Text className="font-bold text-[19px]" style={{ color: themeColors.accentOn }}>Ура! 🎉</Text>
             </Pressable>
             <Pressable
               onPress={shareResult}
@@ -154,7 +157,7 @@ export function NormCongrats({ open, onClose, bmi }) {
               accessibilityLabel="Поделиться результатом"
               className="w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 active:opacity-70"
             >
-              <Share2 size={18} color="#AEB9D9" />
+              <Share2 size={18} color={themeColors.soft} />
             </Pressable>
           </View>
         </Animated.View>

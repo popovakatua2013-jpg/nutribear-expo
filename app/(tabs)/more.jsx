@@ -68,12 +68,15 @@ import { THEMES, resolveThemeId } from '@/lib/themes'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Версия приложения из app.json — строкой внизу экрана «Ещё»
 // (как в чужом приложении по скрину Кати: «Версия …» + «ID: …»)
 const VERSION = Constants?.expoConfig?.version || '1.0'
 
 export default function MoreScreen() {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   // Правовые документы: каждый — отдельной строкой внизу «Ещё», тап
   // открывает экран с названием документа в шапке и его текстом
@@ -292,7 +295,7 @@ export default function MoreScreen() {
           </MenuRow>
           <MenuRow
             icon="🎨"
-            iconBg="rgba(167,139,250,0.16)"
+            iconBg={themeColors.accentFaint2}
             title="Оформление"
             value={themeTitle}
           >
@@ -335,7 +338,7 @@ export default function MoreScreen() {
                   accessibilityLabel={label}
                   className="flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-4 py-3 active:opacity-70"
                 >
-                  <ChevronRight size={15} color="#A5AECB" />
+                  <ChevronRight size={15} color={themeColors.sub} />
                   <Text maxFontSizeMultiplier={1.2} className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text">
                     {label}
                   </Text>

@@ -30,6 +30,8 @@ import {
   WORKOUT_OPTIONS,
 } from '@/lib/data/onboarding-options'
 import { cmToIn, inToCm, kgToLb, lbToKg } from '@/lib/data/onboarding'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const num = (raw) => Number(String(raw).replace(',', '.'))
 
@@ -268,6 +270,7 @@ export function ProfileStep({ onNext, onBack }) {
 // Строка-карточка анкеты: иконка слева, подпись, значение справа,
 // раскрытие редактирования внизу (по тапу — как на макете, но живое)
 function Row({ icon: Icon, tint, label, value, open, onToggle, children }) {
+  const themeColors = useThemeColors()
   return (
     <View className="rounded-2xl border border-white/5 bg-bear-card">
       <Pressable
@@ -286,9 +289,9 @@ function Row({ icon: Icon, tint, label, value, open, onToggle, children }) {
           {value}
         </Text>
         {open ? (
-          <ChevronUp size={18} color="#8B96B8" />
+          <ChevronUp size={18} color={themeColors.dim} />
         ) : (
-          <ChevronDown size={18} color="#8B96B8" />
+          <ChevronDown size={18} color={themeColors.dim} />
         )}
       </Pressable>
       {open ? <View className="px-3.5 pb-3.5">{children}</View> : null}
@@ -298,6 +301,7 @@ function Row({ icon: Icon, tint, label, value, open, onToggle, children }) {
 
 // Числовое поле внутри строки: ввод с суффиксом единицы справа
 function NumInput({ value, onChange, suffix, placeholder, keyboardType = 'decimal-pad' }) {
+  const themeColors = useThemeColors()
   return (
     <View>
       <TextInput
@@ -305,7 +309,7 @@ function NumInput({ value, onChange, suffix, placeholder, keyboardType = 'decima
         onChangeText={onChange}
         keyboardType={keyboardType}
         placeholder={placeholder}
-        placeholderTextColor="#8B96B8"
+        placeholderTextColor={themeColors.dim}
         className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-4 pr-14 font-sans text-[20px] text-white"
       />
       {suffix ? (

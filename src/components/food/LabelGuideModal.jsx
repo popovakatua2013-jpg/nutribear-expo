@@ -9,6 +9,8 @@
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowDownToLine, ScanSearch, Sun, X, Zap } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const TIPS = [
   {
@@ -69,6 +71,7 @@ function LabelMock() {
 }
 
 export function LabelGuideModal({ visible, onClose }) {
+  const themeColors = useThemeColors()
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       {/* Тап по тёмному фону тоже закрывает — как в соседних подсказках */}
@@ -96,7 +99,7 @@ export function LabelGuideModal({ visible, onClose }) {
                 hitSlop={10}
                 className="p-1"
               >
-                <X size={22} color="#A5AECB" />
+                <X size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-1 text-[15.5px] leading-[19px] text-bear-sub">

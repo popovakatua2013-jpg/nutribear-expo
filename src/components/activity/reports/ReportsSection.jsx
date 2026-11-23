@@ -29,6 +29,8 @@ import { history, RANGES } from '@/lib/data/activity'
 import { consumeOpenSleepModal, requestScrollToWeight } from '@/lib/navEvents'
 import { useHistoryStore } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function ReportsSection({
   today,
@@ -36,6 +38,7 @@ export function ReportsSection({
   rangeId = '7d',
   onRangeChange = () => {},
 }) {
+  const themeColors = useThemeColors()
   const [shareOpen, setShareOpen] = useState(false)
   const [dayShareOpen, setDayShareOpen] = useState(false)
   // Окно «Записать сон» (лёг/встал): открывается тапом по пустой карточке
@@ -130,8 +133,8 @@ export function ReportsSection({
           accessibilityLabel="Поделиться итогами периода"
           className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 active:opacity-70"
         >
-          <Share2 size={15} color="#8DABFF" />
-          <Text className="font-semibold text-[16px] text-[#8DABFF]">Итоги</Text>
+          <Share2 size={15} color={themeColors.link} />
+          <Text className="font-semibold text-[16px] text-bear-link">Итоги</Text>
         </Pressable>
         {/* «День» — слепок сегодняшнего дня картинкой: вместо серии
             скриншотов тренеру (отзыв из Google Play) */}

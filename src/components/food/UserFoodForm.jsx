@@ -21,6 +21,8 @@ import { Star, X } from 'lucide-react-native'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useToast } from '../ui/Toast'
 import { findFoodDuplicate } from '@/lib/data/pick'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Строка инпута → число (запятая тоже работает), с запасным значением
 function parseNum(text, fallback, min, max) {
@@ -30,6 +32,7 @@ function parseNum(text, fallback, min, max) {
 }
 
 export function UserFoodForm({ open, onClose, initial }) {
+  const themeColors = useThemeColors()
   const addUserFood = useUserFoodsStore((s) => s.add)
   const updateUserFood = useUserFoodsStore((s) => s.update)
   const userItems = useUserFoodsStore((s) => s.items)
@@ -111,16 +114,16 @@ export function UserFoodForm({ open, onClose, initial }) {
             <View className="flex-row items-center gap-2">
               <View
                 className="h-9 w-9 items-center justify-center rounded-lg"
-                style={{ backgroundColor: '#7B6CF6' }}
+                style={{ backgroundColor: themeColors.accent }}
               >
-                <Star size={16} color="#FFFFFF" />
+                <Star size={16} color={themeColors.accentOn} />
               </View>
               <Text className="font-bold text-[20px] text-bear-text">
                 {initial ? 'Изменить продукт' : 'Свой продукт'}
               </Text>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -137,7 +140,7 @@ export function UserFoodForm({ open, onClose, initial }) {
               onChangeText={setName}
               maxLength={60}
               placeholder="Например: Сырники бабушки"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название своего продукта"
               className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
@@ -156,7 +159,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="250"
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Калории на 100 грамм"
                 className={field}
               />
@@ -180,7 +183,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     placeholder="0"
-                    placeholderTextColor="#8B96B8"
+                    placeholderTextColor={themeColors.dim}
                     accessibilityLabel={fld.label}
                     className={field}
                   />
@@ -207,7 +210,7 @@ export function UserFoodForm({ open, onClose, initial }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     placeholder="0"
-                    placeholderTextColor="#8B96B8"
+                    placeholderTextColor={themeColors.dim}
                     accessibilityLabel={fld.label}
                     className={field}
                   />
@@ -239,9 +242,9 @@ export function UserFoodForm({ open, onClose, initial }) {
               accessibilityRole="button"
               accessibilityLabel="Сохранить свой продукт"
               className="mt-4 rounded-2xl py-3 active:opacity-80"
-              style={{ backgroundColor: '#7B6CF6' }}
+              style={{ backgroundColor: themeColors.accent }}
             >
-              <Text className="text-center font-bold text-[19px] text-white">
+              <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
                 {initial ? 'Сохранить' : 'Добавить в базу'}
               </Text>
             </Pressable>

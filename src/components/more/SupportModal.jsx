@@ -108,6 +108,8 @@ import { supportMailtoUrl } from '@/lib/supportMailto'
 import { SUPPORT_LIMITS } from '@/lib/supportLimits'
 import { isDirectSupportAvailable, sendSupportDirect } from '@/lib/supportSend'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const EMAIL = OPERATOR.email
 
@@ -128,6 +130,7 @@ function signature() {
 // Окно письма: open/onClose приходит снаружи — строка «Поддержка и
 // помощь» на «Ещё» открывает его сразу по тапу
 export function SupportModal({ open = false, onClose }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   // Отступ под клавиатуру считает useKeyboardGuard (behavior="height"
   // на Android прозрачную Modal не сжимает — скрин Кати 21.11)
@@ -394,7 +397,7 @@ export function SupportModal({ open = false, onClose }) {
               accessibilityRole="button"
               className="h-[34px] w-[34px] items-center justify-center rounded-full bg-white/10 active:bg-white/20"
             >
-              <X size={18} color="#A5AECB" />
+              <X size={18} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -444,7 +447,7 @@ export function SupportModal({ open = false, onClose }) {
                           </LinearGradient>
                         ) : (
                           <View className="flex-row items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-3">
-                            <Icon size={17} color="#8D97BC" />
+                            <Icon size={17} color={themeColors.dim} />
                             <Text
                               numberOfLines={1}
                               maxFontSizeMultiplier={1.15}
@@ -472,7 +475,7 @@ export function SupportModal({ open = false, onClose }) {
               multiline
               maxLength={2000}
               placeholder="Расскажите, что вы думаете…"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               accessibilityLabel="Текст обращения в поддержку"
               className="mt-2 min-h-[120px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
               style={{ textAlignVertical: 'top' }}
@@ -499,7 +502,7 @@ export function SupportModal({ open = false, onClose }) {
               onChangeText={setContact}
               maxLength={SUPPORT_LIMITS.CONTACT_MAX}
               placeholder="Почта или @телеграм — чтобы мы могли ответить"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
@@ -518,7 +521,7 @@ export function SupportModal({ open = false, onClose }) {
                 accessibilityLabel="Прикрепить файл"
                 className="flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-2 active:opacity-80"
               >
-                <Paperclip size={14} color="#8D97BC" />
+                <Paperclip size={14} color={themeColors.dim} />
                 <Text
                   maxFontSizeMultiplier={1.15}
                   className="font-semibold text-[13px] text-bear-sub"
@@ -531,7 +534,7 @@ export function SupportModal({ open = false, onClose }) {
                   key={f.uri}
                   className="max-w-[210px] flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.06] px-3 py-2"
                 >
-                  <Paperclip size={13} color="#8D97BC" />
+                  <Paperclip size={13} color={themeColors.dim} />
                   <Text
                     numberOfLines={1}
                     maxFontSizeMultiplier={1.15}
@@ -546,7 +549,7 @@ export function SupportModal({ open = false, onClose }) {
                     hitSlop={8}
                     className="ml-0.5"
                   >
-                    <X size={14} color="#A5AECB" />
+                    <X size={14} color={themeColors.sub} />
                   </Pressable>
                 </View>
               ))}
@@ -586,7 +589,7 @@ export function SupportModal({ open = false, onClose }) {
             </Pressable>
 
             <View className="mt-2.5 flex-row items-center justify-center gap-1.5">
-              <Lock size={14} color="#8D97BC" />
+              <Lock size={14} color={themeColors.dim} />
               <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-dim">
                 Ваше обращение в безопасности
               </Text>

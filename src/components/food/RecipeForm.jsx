@@ -18,6 +18,8 @@ import { estimateFromDescription, estimateCompositionByAi } from '@/lib/food-ai'
 import { toRecipeTotals, recipeItemsLine } from '@/lib/data/recipe-est'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings } from '@/lib/appSettings'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
 
@@ -25,6 +27,7 @@ const field =
   'rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 font-sans text-[19px] text-bear-text'
 
 export function RecipeForm({ onDone, initial, onCancel }) {
+  const themeColors = useThemeColors()
   const add = useRecipesStore((s) => s.add)
   const update = useRecipesStore((s) => s.update)
   const { toast } = useToast()
@@ -190,7 +193,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             accessibilityLabel="Отменить изменение рецепта"
             className="p-1 active:opacity-70"
           >
-            <X hitSlop={10} size={20} color="#A5AECB" />
+            <X hitSlop={10} size={20} color={themeColors.sub} />
           </Pressable>
         )}
       </View>
@@ -201,7 +204,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={name}
           onChangeText={setName}
           placeholder="Название рецепта"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           accessibilityLabel="Название рецепта"
           className={`${field} min-w-0 flex-1`}
         />
@@ -228,7 +231,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
             accessibilityLabel="Убрать фото"
             className="flex-row items-center gap-1 rounded p-1 active:opacity-70"
           >
-            <Trash2 size={14} color="#98A2C2" />
+            <Trash2 size={14} color={themeColors.sub2} />
             <Text className="font-sans text-[15px] text-bear-sub">убрать</Text>
           </Pressable>
         </View>
@@ -243,7 +246,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           multiline
           accessibilityLabel="Состав рецепта"
           placeholder="Состав: свинина 300 грамм, картошка 500 грамм…"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           className={`${field} min-h-[64px]`}
         />
         <Pressable
@@ -266,7 +269,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={grams}
           onChangeText={setGrams}
           placeholder="Общий выход, г"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="decimal-pad"
           accessibilityLabel="Общий выход, граммы"
           className={`${field} flex-[2]`}
@@ -275,7 +278,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={servings}
           onChangeText={setServings}
           placeholder="Порций"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="number-pad"
           maxLength={2}
           accessibilityLabel="Число порций"
@@ -287,7 +290,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={kcal}
           onChangeText={setKcal}
           placeholder="Ккал на весь выход"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="decimal-pad"
           accessibilityLabel="Калорийность всего"
           className={`${field} flex-1`}
@@ -298,7 +301,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={p}
           onChangeText={setP}
           placeholder="Белки, г"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="decimal-pad"
           accessibilityLabel="Белки, граммы"
           className={`${field} flex-1`}
@@ -307,7 +310,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={f}
           onChangeText={setF}
           placeholder="Жиры, г"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="decimal-pad"
           accessibilityLabel="Жиры, граммы"
           className={`${field} flex-1`}
@@ -316,7 +319,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           value={c}
           onChangeText={setC}
           placeholder="Углеводы, г"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           keyboardType="decimal-pad"
           accessibilityLabel="Углеводы, граммы"
           className={`${field} flex-1`}
@@ -339,7 +342,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           disabled={!ready}
           accessibilityRole="button"
           className="rounded-full px-4 py-2 active:opacity-80"
-          style={{ backgroundColor: ready ? '#7B6CF6' : '#4A4670' }}
+          style={{ backgroundColor: ready ? themeColors.accent : '#4A4670' }}
         >
           <Text className="font-bold text-[16px] text-white">
             {editing ? 'Сохранить изменения' : 'Сохранить рецепт'}

@@ -73,6 +73,8 @@ import { dayKeyOf as cycleDayKeyOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
 import { Check, RotateCcw } from 'lucide-react-native'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MAX = 1.25
 const RING = 84
@@ -150,6 +152,7 @@ function VDivider() {
 // карандашики — только у особых дней и норм нутриентов); правка
 // цели остаётся на коротком тапе по кольцу (родительский Pressable)
 function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLabel, runId, size = RING, numSize = 23 }) {
+  const themeColors = useThemeColors()
   // size — диаметр (у обоих колец одинаковый 84); толщина дуги и радиус
   // считаются от диаметра, шрифт числа — свой
   const sw = size === RING ? SW : Math.max(7, Math.round((SW * size) / RING))
@@ -218,7 +221,7 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             <Defs>
               <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
                 <Stop offset="0" stopColor="#8B5CF6" />
-                <Stop offset="1" stopColor="#6C8CFF" />
+                <Stop offset="1" stopColor={themeColors.link} />
               </LinearGradient>
             </Defs>
           )}
@@ -283,6 +286,7 @@ export function DailySummary({
   onEditBurnGoal, // тап по кольцу сжигания — изменить цель
   onEditKcalGoal, // тап по левой половине — изменить цель по калориям
 }) {
+  const themeColors = useThemeColors()
   const goals = useGoalsStore((s) => s.goals)
   const setGoals = useGoalsStore((s) => s.setGoals)
   const { toast } = useToast()
@@ -581,7 +585,7 @@ export function DailySummary({
                 style={{ color: remTone.text, fontSize: 27 }}
               >
                 {rem == null ? '—' : rem >= 0 ? formatNum(rem) : `−${formatNum(Math.abs(rem))}`}
-                <Text className="font-bold" style={{ fontSize: 13, color: '#8B96B8' }}>
+                <Text className="font-bold" style={{ fontSize: 13, color: themeColors.dim }}>
                   {' ккал'}
                 </Text>
               </Text>
@@ -643,7 +647,7 @@ export function DailySummary({
         {dayMark ? (
           <Text className="text-[14px] leading-none">{markMeta.emoji}</Text>
         ) : (
-          <Sparkles size={15} color="#C4B5FD" />
+          <Sparkles size={15} color={themeColors.accentSoft} />
         )}
         <Text
           numberOfLines={1}
@@ -651,7 +655,7 @@ export function DailySummary({
           minimumFontScale={0.8}
           maxFontSizeMultiplier={MAX}
           className="font-bold text-[13.5px] leading-tight"
-          style={{ color: dayMark ? markMeta.color : '#C4B5FD' }}
+          style={{ color: dayMark ? markMeta.color : themeColors.accentSoft }}
         >
           {dayMark
             ? `${markMeta.label} · норма ${formatNum(target)} ккал${
@@ -661,7 +665,7 @@ export function DailySummary({
         </Text>
         <Pencil
           size={14}
-          color={dayMark ? markMeta.color : '#C4B5FD'}
+          color={dayMark ? markMeta.color : themeColors.accentSoft}
         />
       </Pressable>
 
@@ -699,7 +703,7 @@ export function DailySummary({
           hitSlop={6}
           className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
-          <Pencil size={14} color="#8B96B8" />
+          <Pencil size={14} color={themeColors.dim} />
         </Pressable>
       </View>
 
@@ -728,7 +732,7 @@ export function DailySummary({
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X hitSlop={10} size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color={themeColors.sub} />
                 </Pressable>
               </View>
               <View className="mt-3 flex-row gap-2.5">
@@ -768,9 +772,11 @@ export function DailySummary({
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить нормы нутриентов"
                 className="mt-4 rounded-2xl py-3 active:opacity-80"
-                style={{ backgroundColor: '#7B6CF6' }}
+                style={{ backgroundColor: themeColors.accent }}
               >
-                <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
+                <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                  Сохранить
+                </Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -806,7 +812,7 @@ export function DailySummary({
                 accessibilityLabel="Закрыть"
                 className="p-1"
               >
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <View className="mt-3 gap-2">
@@ -844,7 +850,7 @@ export function DailySummary({
                     hitSlop={8}
                     className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
                   >
-                    <Pencil size={14} color="#AEB9D9" />
+                    <Pencil size={14} color={themeColors.soft} />
                   </Pressable>
                   <View
                     className="h-6 w-6 shrink-0 items-center justify-center rounded-full"
@@ -896,7 +902,7 @@ export function DailySummary({
                       hitSlop={8}
                       className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
                     >
-                      <Pencil size={14} color="#AEB9D9" />
+                      <Pencil size={14} color={themeColors.soft} />
                     </Pressable>
                     {active && (
                       <View
@@ -958,7 +964,7 @@ export function DailySummary({
                 accessibilityLabel="Вернуть обычный день"
                 className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-white/5 py-2.5 active:opacity-70"
               >
-                <RotateCcw size={15} color="#AEB9D9" />
+                <RotateCcw size={15} color={themeColors.soft} />
                 <Text className="font-bold text-[16px] text-bear-soft">Вернуть обычный день</Text>
               </Pressable>
             )}
@@ -1002,7 +1008,7 @@ export function DailySummary({
                   accessibilityLabel="Закрыть"
                   className="p-1"
                 >
-                  <X hitSlop={10} size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color={themeColors.sub} />
                 </Pressable>
               </View>
               <TextInput
@@ -1015,16 +1021,18 @@ export function DailySummary({
                 accessibilityLabel="Прибавка, килокалорий в день"
                 className="mt-3 rounded-2xl border border-white/10 bg-white/5 py-3 text-center font-bold text-[22px] text-bear-text"
                 placeholder="0"
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
               />
               <Pressable
                 onPress={saveDelta}
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить прибавку"
                 className="mt-4 rounded-2xl py-3 active:opacity-80"
-                style={{ backgroundColor: '#7B6CF6' }}
+                style={{ backgroundColor: themeColors.accent }}
               >
-                <Text className="text-center font-bold text-[19px] text-white">Сохранить</Text>
+                <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                  Сохранить
+                </Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -1037,6 +1045,7 @@ export function DailySummary({
 // Поле ввода своей нормы: подпись с цветной точкой нутриента и ввод
 // по центру, как в остальных окнах целей
 function NormInput({ label, value, onChange, placeholder, color }) {
+  const themeColors = useThemeColors()
   return (
     <View className="min-w-0 flex-1">
       <View className="mb-1.5 flex-row items-center gap-1">
@@ -1051,7 +1060,7 @@ function NormInput({ label, value, onChange, placeholder, color }) {
         keyboardType="number-pad"
         maxLength={3}
         placeholder={placeholder}
-        placeholderTextColor="#8B96B8"
+        placeholderTextColor={themeColors.dim}
         accessibilityLabel={label}
         className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center font-bold text-[19px] text-bear-text"
       />

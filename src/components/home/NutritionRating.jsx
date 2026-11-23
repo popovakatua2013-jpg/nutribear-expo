@@ -29,6 +29,8 @@ import {
 } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MAX = 1.25
 const MONTHS = [
@@ -67,6 +69,7 @@ function MetricRow({ label, value, norm, score }) {
 }
 
 export function NutritionRating() {
+  const themeColors = useThemeColors()
   const entries = useFoodStore((s) => s.entries)
   const history = useFoodStore((s) => s.history)
   const macroNorms = useGoalsStore((s) => s.goals.macroNorms)
@@ -163,12 +166,13 @@ export function NutritionRating() {
               accessibilityRole="button"
               accessibilityLabel={`Рейтинг за ${id === 'day' ? 'день' : 'месяц'}`}
               className={`rounded-full px-3 py-1.5 ${
-                mode === id ? 'bg-[#7B6CF6]' : 'active:opacity-70'
+                mode === id ? 'bg-bear-accent' : 'active:opacity-70'
               }`}
             >
               <Text
                 maxFontSizeMultiplier={MAX}
-                className={`font-semibold text-[15px] ${mode === id ? 'text-white' : 'text-bear-sub'}`}
+                className={`font-semibold text-[15px] ${mode === id ? '' : 'text-bear-sub'}`}
+                style={{ color: mode === id ? themeColors.accentOn : undefined }}
               >
                 {lb}
               </Text>
@@ -206,7 +210,7 @@ export function NutritionRating() {
               {!explain && (
                 <Text
                   onPress={() => setExplain(true)}
-                  className="mt-0.5 font-semibold text-[15px] text-[#8DABFF]"
+                  className="mt-0.5 font-semibold text-[15px] text-bear-link"
                 >
                   Что даёт этот балл?
                 </Text>
@@ -234,7 +238,7 @@ export function NutritionRating() {
               </Text>
               <Text
                 onPress={() => setExplain(false)}
-                className="mt-1.5 self-end font-semibold text-[15px] text-[#8DABFF]"
+                className="mt-1.5 self-end font-semibold text-[15px] text-bear-link"
               >
                 Понятно, скрыть
               </Text>
@@ -258,9 +262,9 @@ export function NutritionRating() {
               className="mt-3 flex-row items-center justify-center gap-1 rounded-xl bg-white/5 py-2 active:bg-white/10"
             >
               {expanded ? (
-                <ChevronUp size={16} color="#AEB9D9" />
+                <ChevronUp size={16} color={themeColors.soft} />
               ) : (
-                <ChevronDown size={16} color="#AEB9D9" />
+                <ChevronDown size={16} color={themeColors.soft} />
               )}
               <Text className="font-semibold text-[16.5px] text-bear-sub">
                 {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}

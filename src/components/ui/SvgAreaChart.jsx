@@ -12,8 +12,10 @@
 import { useState } from 'react'
 import { View } from 'react-native'
 import Svg, { Defs, LinearGradient, Stop, Path, Circle, Line, Rect, Text as SvgText } from 'react-native-svg'
+import { useThemeColors } from '@/lib/use-theme'
 
-const AXIS = '#8B96B8'
+
+
 const GRID = 'rgba(255,255,255,0.06)'
 
 // Круглый шаг делений оси: ближайшее «красивое» число (1/2/2.5/5 × 10^k)
@@ -60,6 +62,7 @@ export function SvgAreaChart({
   spark = false, // мини-спарклайн в карточке: без каких-либо подписей,
   // плотные поля и тонкая линия — линии тренда в карточках 3×2 и таблице замеров
 }) {
+  const themeColors = useThemeColors()
   const [w, setW] = useState(0)
   const PAD_L = spark ? 2 : bare ? 12 : 34
   const PAD_R = spark ? 2 : 8
@@ -170,7 +173,7 @@ export function SvgAreaChart({
               key={`t${t}`}
               x={PAD_L - 5}
               y={y(t) + 3}
-              fill={AXIS}
+              fill={themeColors.dim}
               fontSize={9}
               textAnchor="end"
             >
@@ -217,7 +220,7 @@ export function SvgAreaChart({
               cy={y(data[activeIndex].value)}
               r={5.5}
               fill={dotColor || color}
-              stroke="#0C1327"
+              stroke={themeColors.deep}
               strokeWidth={2}
             />
           </>
@@ -231,7 +234,7 @@ export function SvgAreaChart({
             const by = Math.max(2, y(data[data.length - 1].value) - 27)
             return (
               <>
-                <Rect x={bx} y={by} width={bw} height={17} rx={8.5} fill="#7B6CF6" />
+                <Rect x={bx} y={by} width={bw} height={17} rx={8.5} fill={themeColors.accent} />
                 <SvgText
                   x={bx + bw / 2}
                   y={by + 12.5}
@@ -252,7 +255,7 @@ export function SvgAreaChart({
                 key={`x${i}`}
                 x={pts[i].x}
                 y={height - 6}
-                fill={AXIS}
+                fill={themeColors.dim}
                 fontSize={9}
                 textAnchor={single ? 'middle' : i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle'}
               >

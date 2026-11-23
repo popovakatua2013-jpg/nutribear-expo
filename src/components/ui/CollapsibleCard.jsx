@@ -14,6 +14,8 @@ import { Pressable, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { BodyChip } from './BodyChip'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function CollapsibleCard({
   icon,
@@ -25,6 +27,7 @@ export function CollapsibleCard({
   accessibilityLabel,
   embedded = false,
 }) {
+  const themeColors = useThemeColors()
   const stored = useUiPrefsStore((s) => (storageKey ? s.expanded[storageKey] : undefined))
   const setExpanded = useUiPrefsStore((s) => s.setExpanded)
   const [localOpen, setLocalOpen] = useState(false)
@@ -79,7 +82,7 @@ export function CollapsibleCard({
           </View>
           <ChevronDown
             size={20}
-            color="#A5AECB"
+            color={themeColors.sub}
             style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
           />
         </Pressable>

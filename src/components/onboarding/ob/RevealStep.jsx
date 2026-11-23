@@ -17,6 +17,8 @@ import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { calcPlan, planDoneText } from '@/lib/data/onboarding'
 import { WATER_BY_ANSWER, WORKOUT_OPTIONS } from '@/lib/data/onboarding-options'
 import { formatNum } from '@/lib/format'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const SIZE = 92
 const R = 40
@@ -24,6 +26,7 @@ const CIRC = 2 * Math.PI * R
 const ARC = 0.75 // кольцо заполнено на три четверти — как на макете
 
 export function RevealStep({ onNext, onBack }) {
+  const themeColors = useThemeColors()
   const answers = useOnboardingStore((s) => s.answers)
   const savePlan = useOnboardingStore((s) => s.savePlan)
   const plan = useMemo(() => calcPlan(answers), [answers])
@@ -77,7 +80,7 @@ export function RevealStep({ onNext, onBack }) {
         <Text className="mt-3 font-extrabold text-[28px] tracking-tight text-bear-text">
           Отлично!
         </Text>
-        <Text className="mx-auto mt-1.5 max-w-[260px] text-center font-sans text-[17.5px] leading-relaxed text-[#aab4d4]">
+        <Text className="mx-auto mt-1.5 max-w-[260px] text-center font-sans text-[17.5px] leading-relaxed text-bear-sub">
           Твой персональный план готов
         </Text>
       </View>
@@ -91,7 +94,7 @@ export function RevealStep({ onNext, onBack }) {
         <Stat emoji="💧" value={String(glasses)} caption="стаканы воды" />
       </View>
 
-      <Text className="mt-3 px-1 text-center font-sans text-[16.5px] leading-relaxed text-[#aab4d4]">
+      <Text className="mt-3 px-1 text-center font-sans text-[16.5px] leading-relaxed text-bear-sub">
         {planDoneText(plan)}
       </Text>
 
@@ -105,9 +108,9 @@ export function RevealStep({ onNext, onBack }) {
           {open ? 'Скрыть подробности' : 'Показать план'}
         </Text>
         {open ? (
-          <ChevronUp size={18} color="#8B96B8" />
+          <ChevronUp size={18} color={themeColors.dim} />
         ) : (
-          <ChevronDown size={18} color="#8B96B8" />
+          <ChevronDown size={18} color={themeColors.dim} />
         )}
       </Pressable>
 

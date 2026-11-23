@@ -76,15 +76,18 @@ import {
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
 // bodyCard с фиолетовой обводкой): цвета блоков «Динамики веса»
 // и «Измерений тела» выровнены с ИМТ (решение пользователя)
-const CARD = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
+// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
   borderWidth: 1,
-}
+})
 
 const PERIODS = [
   { id: 'week', label: 'Неделя' },
@@ -98,6 +101,7 @@ const shortDay = (iso) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
 
 export function WeightCard() {
+  const themeColors = useThemeColors()
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
   // Цель питания («Моя цель» в «Ещё»): lose — сушка/похудеть,
@@ -265,7 +269,7 @@ export function WeightCard() {
     gaining: wantUp,
   })
   const toneColor =
-    strip.tone === 'bad' ? '#FB7185' : strip.tone === 'info' ? '#8B96B8' : '#34D399'
+    strip.tone === 'bad' ? '#FB7185' : strip.tone === 'info' ? themeColors.dim : '#34D399'
 
   // Цвет линии графика (отзыв Кати: «в зависимости от цели — линия
   // красная/зелёная»): красная — за период вес уходит от цели (или,
@@ -273,7 +277,7 @@ export function WeightCard() {
   // Одна запись — вывода нет: нейтральная серая
   const away =
     goalWeightKg != null ? periodTowardGoal === false : towardNorm === false
-  const lineColor = fewData ? '#8B96B8' : away ? '#fb7185' : '#4ade80'
+  const lineColor = fewData ? themeColors.dim : away ? '#fb7185' : '#4ade80'
 
   // Подсветка «Текущего веса» (отзыв Кати): по калькулятору ИМТ перебор —
   // красный, недостаток веса — жёлтый; в норме цвет уточняет цель
@@ -290,7 +294,7 @@ export function WeightCard() {
           : foodGoal === 'maintain'
             ? '#38BDF8'
             : foodGoal === 'gain'
-              ? '#A78BFA'
+              ? themeColors.accentBright
               : '#4ADE80'
 
   // Ключ сегодняшнего дня (локальная дата) — запись сегодняшнего
@@ -388,14 +392,14 @@ export function WeightCard() {
             accessibilityLabel={`Период графика: ${PERIODS.find((p) => p.id === period)?.label}. Нажмите, чтобы изменить`}
             className="flex-row items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-[7px] active:opacity-70"
           >
-            <Calendar size={15} color="#A78BFA" />
-            <Text className="font-semibold text-[15px] text-[#D6DCF2]">
+            <Calendar size={15} color={themeColors.accentBright} />
+            <Text className="font-semibold text-[15px] text-bear-bright">
               {PERIODS.find((p) => p.id === period)?.label}
             </Text>
             {menuOpen ? (
-              <ChevronUp size={14} color="#A5AECB" />
+              <ChevronUp size={14} color={themeColors.sub} />
             ) : (
-              <ChevronDown size={14} color="#A5AECB" />
+              <ChevronDown size={14} color={themeColors.sub} />
             )}
           </Pressable>
 
@@ -422,7 +426,7 @@ export function WeightCard() {
                     >
                       {p.label}
                     </Text>
-                    {active && <Check size={15} color="#A78BFA" />}
+                    {active && <Check size={15} color={themeColors.accentBright} />}
                   </Pressable>
                 )
               })}
@@ -432,9 +436,9 @@ export function WeightCard() {
 
         {/* Шеврон состояния секции — секция по умолчанию развёрнута */}
         {secOpen ? (
-          <ChevronUp size={17} color="#A5AECB" />
+          <ChevronUp size={17} color={themeColors.sub} />
         ) : (
-          <ChevronDown size={17} color="#A5AECB" />
+          <ChevronDown size={17} color={themeColors.sub} />
         )}
       </Pressable>
 
@@ -445,7 +449,7 @@ export function WeightCard() {
         {/* Текущий вес + цель + кнопка «Задать цель»; тап по весу — запись */}
         <View
           className="w-[122px] shrink-0 justify-between rounded-2xl p-3.5"
-          style={CARD}
+          style={cardSurface(themeColors)}
         >
           <View>
             <Pressable
@@ -485,7 +489,7 @@ export function WeightCard() {
               <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16px] text-bear-text">
                 {heightCm} см
               </Text>
-              <Pencil size={15} color="#8DABFF" />
+              <Pencil size={15} color={themeColors.link} />
             </Pressable>
           </View>
 
@@ -537,7 +541,7 @@ export function WeightCard() {
               >
                 {goalWeightKg != null ? `${fmtDecimal(goalWeightKg)} кг` : 'не задана'}
               </Text>
-              <Pencil size={15} color="#8DABFF" />
+              <Pencil size={15} color={themeColors.link} />
             </Pressable>
 
             {/* Прогресс до цели — полоса от первой записи журнала к цели
@@ -606,14 +610,14 @@ export function WeightCard() {
             onPress={() => setOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Записать вес"
-            className="mt-2 items-center justify-center rounded-xl border border-[#A78BFA]/50 bg-[#A78BFA]/25 py-2 active:opacity-70"
+            className="mt-2 items-center justify-center rounded-xl border border-bear-accentBorder bg-bear-accentFaint3 py-2 active:opacity-70"
           >
-            <Plus size={32} color="#C4B5FD" strokeWidth={2.75} />
+            <Plus size={32} color={themeColors.accentSoft} strokeWidth={2.75} />
           </Pressable>
         </View>
 
         {/* График + строка-поддержка */}
-        <View className="min-w-0 flex-1 rounded-2xl p-3" style={CARD}>
+        <View className="min-w-0 flex-1 rounded-2xl p-3" style={cardSurface(themeColors)}>
           {/* Пилюля изменения за период: точка в цвет тона. Одна запись —
               «—»: сравнивать не с чем (аудит: «0 кг» при одном взвешивании
               читалось как «вес стоит», хотя пары точек просто нет) */}
@@ -668,8 +672,8 @@ export function WeightCard() {
           >
             <WeightChart data={data} goalKg={goalWeightKg} color={lineColor} lastBadge height={128} />
             <View className="mt-1 flex-row items-center justify-center gap-1">
-              <NotebookText size={14} color="#8DABFF" />
-              <Text className="font-sans text-[14.5px] font-semibold text-[#8DABFF]">
+              <NotebookText size={14} color={themeColors.link} />
+              <Text className="font-sans text-[14.5px] font-semibold text-bear-link">
                 {weights.length > 0 ? `Журнал веса · ${weights.length}` : 'Журнал веса'}
               </Text>
             </View>
@@ -764,7 +768,7 @@ export function WeightCard() {
                 accessibilityLabel="Закрыть журнал веса"
                 className="p-1"
               >
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
 
@@ -787,9 +791,11 @@ export function WeightCard() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Записать вес"
-                  className="mt-4 w-full items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+                  className="mt-4 w-full items-center rounded-2xl bg-bear-accent py-3 active:opacity-80"
                 >
-                  <Text className="font-bold text-[17.5px] text-white">Записать вес</Text>
+                  <Text className="font-bold text-[17.5px]" style={{ color: themeColors.accentOn }}>
+                    Записать вес
+                  </Text>
                 </Pressable>
               </View>
             ) : (
@@ -816,13 +822,13 @@ export function WeightCard() {
                           className="flex-row items-center gap-2 rounded-xl px-2.5 py-2 active:opacity-70"
                           style={{
                             backgroundColor: isToday
-                              ? 'rgba(167,139,250,0.12)'
+                              ? themeColors.accentFaint
                               : 'rgba(255,255,255,0.04)',
                           }}
                         >
                           <Text
                             className={`shrink-0 font-sans text-[15px] ${
-                              isToday ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                              isToday ? 'font-bold text-bear-accentBright' : 'text-bear-dim'
                             }`}
                           >
                             {isToday ? 'Сегодня' : shortDay(w.date)}
@@ -839,7 +845,7 @@ export function WeightCard() {
                             accessibilityLabel={`Удалить вес ${fmtDecimal(w.kg)} кг`}
                             className="shrink-0 rounded p-1 active:opacity-60"
                           >
-                            <Trash2 size={15} color="#98A2C2" />
+                            <Trash2 size={15} color={themeColors.sub2} />
                           </Pressable>
                         </Pressable>
                       )
@@ -861,7 +867,7 @@ export function WeightCard() {
                     }
                     className="mt-2.5 items-center rounded-xl bg-white/[0.06] py-2.5 active:opacity-70"
                   >
-                    <Text className="font-semibold text-[15px] text-[#8DABFF]">
+                    <Text className="font-semibold text-[15px] text-bear-link">
                       {showAllRecs ? 'Свернуть' : `Показать все записи (${weights.length})`}
                     </Text>
                   </Pressable>
@@ -882,7 +888,7 @@ export function WeightCard() {
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Изменить вес</Text>
               <Pressable onPress={() => setEditing(null)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[15px] text-bear-sub">
@@ -906,9 +912,11 @@ export function WeightCard() {
                 onPress={saveEdit}
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить новый вес"
-                className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+                className="flex-1 items-center rounded-2xl bg-bear-accent py-3 active:opacity-80"
               >
-                <Text className="font-bold text-[17.5px] text-white">Сохранить</Text>
+                <Text className="font-bold text-[17.5px]" style={{ color: themeColors.accentOn }}>
+                  Сохранить
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -925,7 +933,7 @@ export function WeightCard() {
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Изменить рост</Text>
               <Pressable onPress={() => setHeightOpen(false)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-1 font-sans text-[15px] text-bear-sub">
@@ -948,9 +956,11 @@ export function WeightCard() {
                 onPress={saveHeight}
                 accessibilityRole="button"
                 accessibilityLabel="Сохранить рост"
-                className="flex-1 items-center rounded-2xl bg-[#7B6CF6] py-3 active:opacity-80"
+                className="flex-1 items-center rounded-2xl bg-bear-accent py-3 active:opacity-80"
               >
-                <Text className="font-bold text-[17.5px] text-white">Сохранить</Text>
+                <Text className="font-bold text-[17.5px]" style={{ color: themeColors.accentOn }}>
+                  Сохранить
+                </Text>
               </Pressable>
             </View>
           </View>

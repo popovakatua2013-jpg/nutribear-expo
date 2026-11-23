@@ -18,6 +18,8 @@ import {
   ABOUT_SECTIONS,
 } from '@/lib/data/legal'
 import { BUILD_HASH } from '@/lib/version'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const VERSION = Constants?.expoConfig?.version || '1.0'
 
@@ -35,6 +37,7 @@ const DOCS = {
 }
 
 export function LegalDocModal({ doc, onClose }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   // Помним последний открытый документ: пока окно закрывается анимацией,
   // название и текст не должны исчезать
@@ -61,7 +64,7 @@ export function LegalDocModal({ doc, onClose }) {
             </Text>
           </View>
           <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1" hitSlop={8}>
-            <X size={22} color="#A5AECB" />
+            <X size={22} color={themeColors.sub} />
           </Pressable>
         </View>
 

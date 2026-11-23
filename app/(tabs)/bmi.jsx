@@ -32,6 +32,8 @@ import { WeightNudge } from '@/components/bmi/WeightNudge'
 import { StreakHistoryModal } from '@/components/bmi/StreakHistoryModal'
 import { consumeScrollToWeight } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Мягкое неоновое свечение (дымка как на макете) — SoftGlow переехал
 // в ui/SoftGlow.jsx: ту же дымку получают шапки всех страниц
@@ -48,7 +50,7 @@ function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
       style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }}
     >
       {icon}
-      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-[#D6DCF2]">
+      <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-bear-bright">
         {label}
       </Text>
       {chevron}
@@ -57,6 +59,7 @@ function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
 }
 
 export default function BmiScreen() {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   const heightCm = useProfileStore((s) => s.heightCm)
   const weightKg = useProfileStore((s) => s.weightKg)
@@ -167,7 +170,7 @@ export default function BmiScreen() {
         >
           <NavPill
             label="Динамика"
-            icon={<ChartColumn size={14} color="#A78BFA" />}
+            icon={<ChartColumn size={14} color={themeColors.accentBright} />}
             onPress={scrollToWeight}
             accessibilityLabel="Перейти к динамике веса"
           />
@@ -198,7 +201,7 @@ export default function BmiScreen() {
           </View>
           <NavPill
             label="Подробнее"
-            chevron={<ChevronRight size={14} color="#A5AECB" />}
+            chevron={<ChevronRight size={14} color={themeColors.sub} />}
             onPress={() => openDetails(null)}
             accessibilityLabel="Подробнее о категориях и рекомендациях"
           />

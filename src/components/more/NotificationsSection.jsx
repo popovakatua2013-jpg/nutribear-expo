@@ -24,6 +24,8 @@ import { hapticFeedback } from '@/lib/haptics'
 import { requestNotifPermission } from '@/lib/reminders'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings } from '@/lib/appSettings'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const INTERVALS = [30, 60, 90, 120].map((n) => ({ key: n, label: `${n} мин` }))
@@ -39,6 +41,7 @@ const NUDGE_OPTIONS = [5, 7, 10].map((n) => ({ key: n, label: `${n} дней` })
 // Чип «окно времени» — единый вид для всех пяти напоминаний:
 // текущее значение + шеврон, тап раскрывает выбор под строкой
 function TimeChip({ text, open, onPress }) {
+  const themeColors = useThemeColors()
   return (
     <Pressable
       onPress={onPress}
@@ -57,7 +60,7 @@ function TimeChip({ text, open, onPress }) {
       </Text>
       <ChevronDown
         size={13}
-        color="#A5AECB"
+        color={themeColors.sub}
         style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
       />
     </Pressable>

@@ -49,6 +49,7 @@ import { RecipesModal } from '../food/RecipesModal'
 import { AddFoodModal } from '../food/AddFoodModal'
 import { P, goodsWord } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
+import { useThemeColors } from '@/lib/use-theme'
 
 const BEAR = require('../../../assets/images/bear.webp')
 const SHOP_BAG = require('../../../assets/images/shop-bag.webp')
@@ -315,6 +316,8 @@ function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
 export function PlanScreen({ onOpenFasting }) {
   const { toast } = useToast()
   const router = useRouter()
+  // Цвета активной темы (Premium 23.11) — поверхности карточек целей и разбора недели
+  const themeColors = useThemeColors()
 
   // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
@@ -566,7 +569,7 @@ export function PlanScreen({ onOpenFasting }) {
               </View>
               {active && (
                 <View style={styles.goalCheck} pointerEvents="none">
-                  <View style={styles.goalCheckCircle}>
+                  <View style={[styles.goalCheckCircle, { backgroundColor: themeColors.deep }]}>
                     <Check size={13} color={P.accentInk} strokeWidth={3.5} />
                   </View>
                 </View>
@@ -740,7 +743,7 @@ export function PlanScreen({ onOpenFasting }) {
         {/* Разбор недели от напарника — Premium (этап 2 монетизации):
             строка в стиле прогноза, тап открывает окно разбора */}
         <Pressable
-          style={styles.reviewRow}
+          style={[styles.reviewRow, { backgroundColor: themeColors.accentFaint, borderColor: themeColors.accentBorder }]}
           onPress={() => setReviewOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Разбор недели от напарника — Premium"

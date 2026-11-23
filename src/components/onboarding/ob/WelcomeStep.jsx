@@ -83,7 +83,7 @@ export function WelcomeStep({ onNext }) {
 
         {/* Заголовок «Похудей, поддерживай или набирай вес» удалён
             (отзыв Кати) — остался нейтральный подзаголовок */}
-        <Text className="mx-auto mt-1 max-w-[280px] text-center font-sans text-[17.5px] leading-relaxed text-[#aab4d4]">
+        <Text className="mx-auto mt-1 max-w-[280px] text-center font-sans text-[17.5px] leading-relaxed text-bear-sub">
           Персональный план питания и тренировок под твои цели
         </Text>
 

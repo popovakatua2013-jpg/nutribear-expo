@@ -8,6 +8,8 @@
 import { Modal, Pressable, ScrollView, Text, View, Image } from 'react-native'
 import { ArrowDownToLine, Camera, Hand, Salad, Scan, X } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Пример «хорошего» фото: вид сверху, всё блюдо в кадре, рука для масштаба
 const EXAMPLE = require('../../../assets/images/photo-guide-example.webp')
@@ -36,6 +38,7 @@ const TIPS = [
 ]
 
 export function PhotoGuideModal({ visible, onClose }) {
+  const themeColors = useThemeColors()
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       {/* Тап по тёмному фону тоже закрывает (отзыв Кати: окна закрываются
@@ -64,7 +67,7 @@ export function PhotoGuideModal({ visible, onClose }) {
                 hitSlop={10}
                 className="p-1"
               >
-                <X size={22} color="#A5AECB" />
+                <X size={22} color={themeColors.sub} />
               </Pressable>
             </View>
             <Text className="mt-1 text-[15.5px] leading-[19px] text-bear-sub">

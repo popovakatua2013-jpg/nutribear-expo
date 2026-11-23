@@ -8,14 +8,14 @@
 // падал на «Главную» (баг Кати). Теперь «Покупки» — отдельная страница
 // app/shopping.jsx (стек над вкладками), открывается с карточки
 // «Список покупок» на «Плане». Активная вкладка — иконка
-// в фиолетовой «пилюле» с мягкой подсветкой, неактивные —
-// серые, без подложки: сразу видно, где вы находитесь.
+// в акцентной «пилюле» активной темы, неактивные — серые,
+// без подложки: сразу видно, где вы находитесь.
 
 import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CalendarDays, ChartColumn, House, Menu, PersonStanding } from 'lucide-react-native'
-import { useThemeVars } from '@/lib/use-theme'
+import { useThemeVars, useThemeColors } from '@/lib/use-theme'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
@@ -31,6 +31,7 @@ const TABS = [
 // Пилюля активной вкладки: фиксированный размер, чтобы
 // иконки не прыгали при переключении
 function TabIcon({ Icon, color, focused }) {
+  const themeColors = useThemeColors()
   return (
     <View
       className="items-center justify-center"
@@ -38,9 +39,9 @@ function TabIcon({ Icon, color, focused }) {
         width: 46,
         height: 30,
         borderRadius: 15,
-        backgroundColor: focused ? 'rgba(123,108,246,0.18)' : 'transparent',
+        backgroundColor: focused ? themeColors.accentFaint3 : 'transparent',
         borderWidth: focused ? 1 : 0,
-        borderColor: 'rgba(167,139,250,0.28)',
+        borderColor: themeColors.accentBorder,
       }}
     >
       <Icon size={22} color={color} />
@@ -49,22 +50,22 @@ function TabIcon({ Icon, color, focused }) {
 }
 
 export default function TabsLayout() {
+  const themeColors = useThemeColors()
   // В SDK 58 Android работает edge-to-edge: системная нижняя панель
   // (жесты/кнопки) рисуется поверх приложения — добавляем её высоту
   // в панель вкладок, иначе она перекрывает меню
   const insets = useSafeAreaInsets()
   // Тема оформления (Premium-фича 23.11): фон панели и сцены — из
-  // активной темы. Активный/неактивный цвет иконок оставляем константами:
-  // акценты приложения (фиолетовые пилюли, тумблеры) у всех тем общие
-  // — так любая тема выглядит согласованной (см. src/lib/themes.js)
+  // активной темы; цвет иконок и подсветка активной пилюли — тоже из
+  // темы (правка Кати 24.11: «при смене тем меняется частично вкладки»)
   const { theme } = useThemeVars()
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#A78BFA',
-        tabBarInactiveTintColor: '#8B96B8',
+        tabBarActiveTintColor: themeColors.accentBright,
+        tabBarInactiveTintColor: themeColors.dim,
         tabBarStyle: {
           backgroundColor: theme.colors.deep,
           borderTopColor: theme.colors.line,

@@ -19,14 +19,8 @@ import { useCycleStore, dayKeyOf, daysToNext, phaseOf } from '@/store/useCycleSt
 import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
 import { fontFamilies } from '../home/ring-font'
+import { useThemeColors } from '@/lib/use-theme'
 
-// Единый акцент всех переключателей — #7B6CF6 (унификация цвета
-// по отзыву Кати от 11.11: у CycleCard и SyncCard был синий #4D7CFE,
-// в остальных карточках — фиолетовый)
-const SWITCH_COLORS = {
-  true: '#7B6CF6',
-  false: 'rgba(255,255,255,0.15)',
-}
 
 const MONTHS_RU = [
   'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -64,6 +58,7 @@ function ringState(enabled, lastStart, length) {
 
 // Кольцо цикла: дорожка + фиолетово-розовая дуга пройденной части цикла
 function CycleRing({ value, caption, progress }) {
+  const themeColors = useThemeColors()
   const SIZE = 96
   const R = 41
   const CIRC = 2 * Math.PI * R
@@ -78,7 +73,7 @@ function CycleRing({ value, caption, progress }) {
         <Defs>
           <SvgGradient id="cycleRing" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor="#F472B6" />
-            <Stop offset="1" stopColor="#A78BFA" />
+            <Stop offset="1" stopColor={themeColors.accentBright} />
           </SvgGradient>
         </Defs>
         <Circle cx="48" cy="48" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="7" />
@@ -98,7 +93,7 @@ function CycleRing({ value, caption, progress }) {
         <SvgText
           x="48"
           y="46"
-          fill="#EEF2FB"
+          fill={themeColors.text}
           fontSize="14.5"
           fontWeight="800"
           fontFamily={fontFamilies.extrabold}
@@ -109,7 +104,7 @@ function CycleRing({ value, caption, progress }) {
         <SvgText
           x="48"
           y="60"
-          fill="#8B96B8"
+          fill={themeColors.dim}
           fontSize="8"
           fontFamily={fontFamilies.regular}
           textAnchor="middle"
@@ -156,6 +151,10 @@ function Stepper({ label, value, onMinus, onPlus, disabled }) {
 }
 
 export function CycleCard({ embedded = false }) {
+  const themeColors = useThemeColors()
+  // Единый акцент всех переключателей (унификация цвета по отзыву
+  // Кати от 11.11) — теперь акцент активной темы
+  const switchColors = { true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }
   const enabled = useCycleStore((s) => s.enabled)
   const lastStart = useCycleStore((s) => s.lastStart)
   const length = useCycleStore((s) => s.length)
@@ -204,8 +203,8 @@ export function CycleCard({ embedded = false }) {
         <Switch
           value={enabled}
           onValueChange={setEnabled}
-          trackColor={SWITCH_COLORS}
-          thumbColor="#fff"
+          trackColor={switchColors}
+          thumbColor={themeColors.accentOn}
           accessibilityLabel="Трекер цикла вкл/выкл"
         />
       </View>
@@ -322,7 +321,7 @@ export function CycleCard({ embedded = false }) {
             accessibilityLabel={`Длина цикла ${v} дней`}
             hitSlop={4}
             className="rounded-full px-2.5 py-1.5 active:opacity-80"
-            style={{ backgroundColor: active ? '#7B6CF6' : 'rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: active ? themeColors.accent : 'rgba(255,255,255,0.06)' }}
           >
             <Text
               maxFontSizeMultiplier={1.05}
@@ -375,7 +374,7 @@ export function CycleCard({ embedded = false }) {
           <Text className="font-bold text-[15px] text-bear-text">Настройки цикла</Text>
           <ChevronDown
             size={18}
-            color="#A5AECB"
+            color={themeColors.sub}
             style={{ transform: [{ rotate: settingsOpen ? '180deg' : '0deg' }] }}
           />
         </Pressable>
@@ -398,7 +397,7 @@ export function CycleCard({ embedded = false }) {
           {headerInner}
           <ChevronDown
             size={20}
-            color="#A5AECB"
+            color={themeColors.sub}
             style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
           />
         </Pressable>

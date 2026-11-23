@@ -37,6 +37,8 @@ import { formatNum } from '@/lib/format'
 import { ProgressBar } from '../ui/ProgressBar'
 import { BodyChip } from '../ui/BodyChip'
 import { fontFamilies } from './ring-font'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const nowTime = () =>
   new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -57,6 +59,7 @@ function normalizeTime(text) {
 // Кольцо «% цели»: голубая дуга поверх тёмного трека, в центре —
 // процент (крупно) и слово «цели» — как кольцо на макете
 function GoalRing({ pct }) {
+  const themeColors = useThemeColors()
   const R = 33
   const CIRC = 2 * Math.PI * R
   const len = (Math.max(0, Math.min(100, pct)) / 100) * CIRC
@@ -91,7 +94,7 @@ function GoalRing({ pct }) {
         <SvgText
           x="42"
           y="44"
-          fill="#EEF2FB"
+          fill={themeColors.text}
           fontSize="17"
           fontWeight="800"
           fontFamily={fontFamilies.extrabold}
@@ -102,7 +105,7 @@ function GoalRing({ pct }) {
         <SvgText
           x="42"
           y="57"
-          fill="#A5AECB"
+          fill={themeColors.sub}
           fontSize="8.5"
           fontFamily={fontFamilies.regular}
           textAnchor="middle"
@@ -115,6 +118,7 @@ function GoalRing({ pct }) {
 }
 
 export function WaterModal({ open, onClose, goalMl, ml }) {
+  const themeColors = useThemeColors()
   const vessels = useActivityStore((s) => s.vessels)
   const addWater = useActivityStore((s) => s.addWater)
   const editWaterLog = useActivityStore((s) => s.editWaterLog)
@@ -219,7 +223,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            colors={['#16234A', '#131E3A', '#101A36']}
+            colors={['#16234A', themeColors.pop, '#101A36']}
           >
             <ScrollView
               ref={scrollRef}
@@ -236,7 +240,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                   <Text className="font-bold text-[20px] text-bear-text">Вода</Text>
                 </View>
                 <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-                  <X hitSlop={10} size={22} color="#A5AECB" />
+                  <X hitSlop={10} size={22} color={themeColors.sub} />
                 </Pressable>
               </View>
 
@@ -250,7 +254,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                       <Text className="font-semibold text-[17.5px] text-bear-sub">мл</Text>
                     </Text>
                     <View className="mt-1 flex-row items-center gap-1">
-                      <Target size={15} color="#A5AECB" />
+                      <Target size={15} color={themeColors.sub} />
                       <Text className="font-sans text-[15px] text-bear-sub">
                         Цель: {formatNum(goalMl)} мл
                       </Text>
@@ -309,9 +313,9 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     )}
                   </View>
                   {logOpen ? (
-                    <ChevronUp size={17} color="#8B96B8" />
+                    <ChevronUp size={17} color={themeColors.dim} />
                   ) : (
-                    <ChevronDown size={17} color="#8B96B8" />
+                    <ChevronDown size={17} color={themeColors.dim} />
                   )}
                 </Pressable>
                 {logOpen &&
@@ -403,7 +407,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           </Text>
                           <View className="shrink-0 flex-row items-center gap-0.5">
                             <View className="p-1">
-                              <Pencil size={15} color="#8B96B8" />
+                              <Pencil size={15} color={themeColors.dim} />
                             </View>
                             <Pressable
                               onPress={() => removeEntry(w)}
@@ -411,7 +415,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                               accessibilityLabel={`Удалить запись ${w.ml} мл`}
                               className="p-1"
                             >
-                              <Trash2 size={16} color="#8B96B8" />
+                              <Trash2 size={16} color={themeColors.dim} />
                             </Pressable>
                           </View>
                         </Pressable>

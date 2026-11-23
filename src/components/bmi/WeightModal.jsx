@@ -24,6 +24,8 @@ import {
 import { recommendedKcal } from '@/lib/goal'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function WeightModal({ open, onClose, height, weight, goalWeight, onSave }) {
   // Android: окно Modal не ужмётся под клавиатуру само — считаем отступ
@@ -54,6 +56,7 @@ export function WeightModal({ open, onClose, height, weight, goalWeight, onSave 
 }
 
 function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const [kg, setKg] = useState(String(weight))
   const [goal, setGoal] = useState(goalWeight == null ? '' : String(goalWeight))
@@ -137,7 +140,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           </Text>
         </View>
         <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-          <X hitSlop={10} size={22} color="#A5AECB" />
+          <X hitSlop={10} size={22} color={themeColors.sub} />
         </Pressable>
       </View>
 
@@ -165,7 +168,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           keyboardType="decimal-pad"
           textAlign="center"
           placeholder="—"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           accessibilityLabel="Целевой вес в килограммах"
           className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
         />
@@ -182,7 +185,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
               accessibilityLabel={`Подставить цель около ${suggestKg} килограммов`}
               className="ml-2 rounded-full bg-white/10 px-2.5 py-1.5 active:opacity-70"
             >
-              <Text className="font-semibold text-[15px] text-[#8DABFF]">≈ {suggestKg} кг</Text>
+              <Text className="font-semibold text-[15px] text-bear-link">≈ {suggestKg} кг</Text>
             </Pressable>
           </View>
         )}

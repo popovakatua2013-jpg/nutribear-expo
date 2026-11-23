@@ -8,6 +8,8 @@ import { createContext, useCallback, useContext, useRef, useState } from 'react'
 import { Animated, PanResponder, Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { X } from 'lucide-react-native'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const ToastActions = createContext({ toast: () => {} })
 const ToastState = createContext({ items: [], dismiss: () => {} })
@@ -19,6 +21,7 @@ export function useToast() {
 // Один тост: свайп в любую сторону или крестик — закрыть.
 // Анимации — только native Animated (transform/opacity).
 function ToastItem({ item, onDismiss }) {
+  const themeColors = useThemeColors()
   const pos = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current
   const fade = useRef(new Animated.Value(1)).current
   const closing = useRef(false)
@@ -60,7 +63,7 @@ function ToastItem({ item, onDismiss }) {
       style={{ transform: pos.getTranslateTransform(), opacity: fade }}
       {...pan.panHandlers}
     >
-      <View className="flex-row items-start gap-2 rounded-2xl border border-bear-line bg-[#1A2647] px-4 py-3 shadow-lg shadow-black/40">
+      <View className="flex-row items-start gap-2 rounded-2xl border border-bear-line bg-bear-pop px-4 py-3 shadow-lg shadow-black/40">
         <View className="min-w-0 flex-1">
           <Text className="font-semibold text-[17.5px] text-bear-text">{item.title}</Text>
           {item.description ? (
@@ -90,7 +93,7 @@ function ToastItem({ item, onDismiss }) {
           hitSlop={8}
           className="shrink-0 rounded-full bg-white/5 p-1 active:opacity-70"
         >
-          <X hitSlop={10} size={15} color="#8B96B8" />
+          <X hitSlop={10} size={15} color={themeColors.dim} />
         </Pressable>
       </View>
     </Animated.View>

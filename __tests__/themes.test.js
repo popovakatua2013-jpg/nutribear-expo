@@ -1,5 +1,7 @@
-// Темы оформления (Premium-фича 23.11 «усилить Premium»): структура
-// палитры, гейтинг по подписке (resolveThemeId), карта CSS-переменных
+// Темы оформления (Premium-фича 23.11 «усилить Premium»; правка Кати
+// 24.11: «заменить графит тему на черно лимонный» — вместо «Графита»
+// появилась «Чёрно-лимонная» с лимонными акцентами): структура палитры,
+// гейтинг по подписке (resolveThemeId), карта CSS-переменных
 // (themeToCssVars) и СТРАХОВКА соответствия fallback-значений
 // tailwind.config.js классической теме — если они разъедутся,
 // поддеревья без переменных (окно ошибки, оверлеи) потеряют цвета.
@@ -18,9 +20,13 @@ const {
 
 describe('THEMES: структура палитры', () => {
   test('пять тем, «Классика» — первая и бесплатная', () => {
-    expect(THEME_ORDER).toEqual(['classic', 'graphite', 'forest', 'ocean', 'plum'])
+    expect(THEME_ORDER).toEqual(['classic', 'lemon', 'forest', 'ocean', 'plum'])
     expect(THEMES.classic.premium).toBe(false)
     expect(DEFAULT_THEME_ID).toBe('classic')
+    // «Графит» заменена на «Чёрно-лимонную» (просьба Кати 24.11)
+    expect(THEMES.graphite).toBeUndefined()
+    expect(THEMES.lemon.premium).toBe(true)
+    expect(THEMES.lemon.title).toBe('Чёрно-лимонная')
   })
 
   test('все премиум-темы помечены premium', () => {
@@ -33,7 +39,8 @@ describe('THEMES: структура палитры', () => {
     for (const id of THEME_ORDER) {
       const theme = THEMES[id]
       expect(theme.id).toBe(id)
-      expect(theme.title).toMatch(/^[А-ЯЁ][а-яё]+$/)
+      // названия с дефисом («Чёрно-лимонная») тоже валидны
+      expect(theme.title).toMatch(/^[А-ЯЁ][а-яёА-ЯЁ-]+$/)
       for (const token of THEME_TOKENS) {
         expect(typeof theme.colors[token]).toBe('string')
         expect(theme.colors[token].length).toBeGreaterThan(0)
@@ -65,19 +72,54 @@ describe('THEMES: структура палитры', () => {
       soft: '#AEB9D9',
       bright: '#C7D2F0',
       link: '#6C8CFF',
+      accent: '#7B6CF6',
+      accentBright: '#A78BFA',
+      accentSoft: '#C4B5FD',
+      accentOn: '#FFFFFF',
+      accentFaint: 'rgba(123,108,246,0.10)',
+      accentFaint2: 'rgba(123,108,246,0.16)',
+      accentFaint3: 'rgba(123,108,246,0.20)',
+      accentStrong: 'rgba(123,108,246,0.80)',
+      accentBorder: 'rgba(123,108,246,0.42)',
     })
+  })
+
+  test('«Чёрно-лимонная»: чёрный фон, лимонные акценты, тёмный текст на акценте', () => {
+    const c = THEMES.lemon.colors
+    // Чёрный фон и поверхности
+    expect(c.bg).toBe('#060606')
+    expect(c.card).toBe('#121212')
+    expect(c.deep).toBe('#040404')
+    // Лимонные кнопки/пилюли/ссылки — светло-жёлто-зелёные
+    expect(c.accent).toBe('#E4F93B')
+    expect(c.accentBright).toBe('#F0FA6B')
+    expect(c.link).toBe('#E4F93B')
+    // Текст НА акцентной кнопке — тёмный (белый на лимоне не читается)
+    expect(c.accentOn).toBe('#191D05')
+    // Подсветки/обводки — те же лимонные оттенки
+    expect(c.accentFaint2).toBe('rgba(228,240,70,0.16)')
+    expect(c.accentBorder).toBe('rgba(228,240,70,0.42)')
+  })
+
+  test('у остальных тем — общий фирменный фиолетовый акцент', () => {
+    for (const id of ['classic', 'forest', 'ocean', 'plum']) {
+      expect(THEMES[id].colors.accent).toBe('#7B6CF6')
+      expect(THEMES[id].colors.accentBright).toBe('#A78BFA')
+      expect(THEMES[id].colors.accentOn).toBe('#FFFFFF')
+    }
   })
 })
 
 describe('resolveThemeId: гейтинг по подписке', () => {
   test('премиум-тема без подписки → «Классика»', () => {
+    expect(resolveThemeId('lemon', false)).toBe('classic')
     expect(resolveThemeId('forest', false)).toBe('classic')
     expect(resolveThemeId('plum', false)).toBe('classic')
-    expect(resolveThemeId('graphite', false)).toBe('classic')
     expect(resolveThemeId('ocean', false)).toBe('classic')
   })
 
   test('премиум-тема с подпиской → сама тема', () => {
+    expect(resolveThemeId('lemon', true)).toBe('lemon')
     expect(resolveThemeId('forest', true)).toBe('forest')
     expect(resolveThemeId('plum', true)).toBe('plum')
   })
@@ -89,6 +131,8 @@ describe('resolveThemeId: гейтинг по подписке', () => {
 
   test('неизвестный/битый id → «Классика» (безопасный дефолт)', () => {
     expect(resolveThemeId('nope', true)).toBe('classic')
+    // удалённая тема «графит» тоже откатывается в «Классику»
+    expect(resolveThemeId('graphite', true)).toBe('classic')
     expect(resolveThemeId(null, true)).toBe('classic')
     expect(resolveThemeId(undefined, false)).toBe('classic')
   })
@@ -111,7 +155,7 @@ describe('страховка: fallback-значения tailwind.config.js = «�
     path.join(__dirname, '../tailwind.config.js'),
     'utf8'
   )
-  const calls = [...config.matchAll(/bearVar\('([A-Za-z2]+)', '([^']+)'\)/g)].map(
+  const calls = [...config.matchAll(/bearVar\('([A-Za-z0-9]+)', '([^']+)'\)/g)].map(
     ([, token, fallback]) => ({ token, fallback })
   )
 

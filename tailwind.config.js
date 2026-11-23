@@ -40,6 +40,20 @@ module.exports = {
           soft: bearVar('soft', '#AEB9D9'),
           bright: bearVar('bright', '#C7D2F0'),
           link: bearVar('link', '#6C8CFF'),
+          // Акценты (кнопки, тумблеры, активные пилюли). У всех тем,
+          // кроме «Чёрно-лимонной», — фирменный фиолетовый #7B6CF6;
+          // accentOn — цвет текста/иконки НА акцентной поверхности
+          // (у лимонной темы он тёмный). Цвета в style-пропсах берутся
+          // из useThemeColors (src/lib/use-theme.js)
+          accent: bearVar('accent', '#7B6CF6'),
+          accentBright: bearVar('accentBright', '#A78BFA'),
+          accentSoft: bearVar('accentSoft', '#C4B5FD'),
+          accentOn: bearVar('accentOn', '#FFFFFF'),
+          accentFaint: bearVar('accentFaint', 'rgba(123,108,246,0.10)'),
+          accentFaint2: bearVar('accentFaint2', 'rgba(123,108,246,0.16)'),
+          accentFaint3: bearVar('accentFaint3', 'rgba(123,108,246,0.20)'),
+          accentStrong: bearVar('accentStrong', 'rgba(123,108,246,0.80)'),
+          accentBorder: bearVar('accentBorder', 'rgba(123,108,246,0.42)'),
         },
       },
       fontFamily: {

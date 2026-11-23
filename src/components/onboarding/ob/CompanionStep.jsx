@@ -17,6 +17,8 @@ import { ObShell } from './ObShell'
 import { COMPANIONS, useCompanionStore, isCompanionAvailable } from '@/store/useCompanionStore'
 import { useProStore } from '@/store/useProStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Триал активен, если pro=true и plan='trial'
 function isTrialActive(pro, plan) {
@@ -24,6 +26,7 @@ function isTrialActive(pro, plan) {
 }
 
 export function CompanionStep({ onBack, onNext }) {
+  const themeColors = useThemeColors()
   const companionId = useCompanionStore((s) => s.companionId)
   const select = useCompanionStore((s) => s.select)
   const pro = useProStore((s) => s.pro)
@@ -136,7 +139,7 @@ export function CompanionStep({ onBack, onNext }) {
                   </View>
                 ) : locked ? (
                   <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5">
-                    <Lock size={16} color="#8B96B8" />
+                    <Lock size={16} color={themeColors.dim} />
                   </View>
                 ) : null}
               </View>

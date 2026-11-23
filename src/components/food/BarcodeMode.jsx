@@ -18,6 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { getBarcodeCached } from '@/store/useOffCacheStore'
 import { BarcodeGuideModal } from './BarcodeGuideModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Ответ OFF-поиска (off-search.js) → вид «выбранной еды» (на 100 г).
 // parseOFFProduct уже отфильтровал записи без названия/калорийности
@@ -39,6 +41,7 @@ function offToItem(code, off) {
 }
 
 export function BarcodeMode({ onPick }) {
+  const themeColors = useThemeColors()
   const [permission, requestPermission] = useCameraPermissions()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -106,9 +109,11 @@ export function BarcodeMode({ onPick }) {
           accessibilityRole="button"
           accessibilityLabel="Разрешить камеру"
           className="rounded-2xl px-5 py-2.5"
-          style={{ backgroundColor: '#7B6CF6' }}
+          style={{ backgroundColor: themeColors.accent }}
         >
-          <Text className="font-bold text-[19px] text-white">Разрешить камеру</Text>
+          <Text className="font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+            Разрешить камеру
+          </Text>
         </Pressable>
       </View>
     )
@@ -165,7 +170,7 @@ export function BarcodeMode({ onPick }) {
             accessibilityLabel={torch ? 'Выключить фонарик' : 'Включить фонарик'}
             className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
           >
-            {torch ? <Flashlight size={20} color="#FBBF24" /> : <FlashlightOff size={20} color="#AEB9D9" />}
+            {torch ? <Flashlight size={20} color="#FBBF24" /> : <FlashlightOff size={20} color={themeColors.soft} />}
           </Pressable>
           {/* Подсказка «как сканировать» — вернуть окно вручную */}
           <Pressable
@@ -174,7 +179,7 @@ export function BarcodeMode({ onPick }) {
             accessibilityLabel="Как сканировать штрихкод"
             className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
           >
-            <Info size={20} color="#8DABFF" />
+            <Info size={20} color={themeColors.link} />
           </Pressable>
         </View>
       </View>

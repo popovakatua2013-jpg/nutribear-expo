@@ -29,6 +29,8 @@ import { fmtDecimal } from '@/lib/data/bmi'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { requestScrollToWeight } from '@/lib/navEvents'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const WEIGHT_RANGES = [
   { id: 7, label: '7 д', days: 7 },
@@ -37,6 +39,7 @@ const WEIGHT_RANGES = [
 ]
 
 export function WeightTrendCard() {
+  const themeColors = useThemeColors()
   const weights = useProfileStore((s) => s.weights)
   const goalKg = useProfileStore((s) => s.goalWeightKg)
   const savedDays = useHistoryStore((s) => s.days)
@@ -106,7 +109,7 @@ export function WeightTrendCard() {
         style={{
           borderRadius: 16,
           borderWidth: 1,
-          borderColor: 'rgba(168,85,247,0.30)',
+          borderColor: themeColors.bodyLine,
           padding: 14,
         }}
       >
@@ -148,14 +151,15 @@ export function WeightTrendCard() {
                 accessibilityState={{ selected: active, disabled: locked }}
                 accessibilityLabel={`График за ${r.id} дней${locked ? ' — пока недоступно' : ''}`}
                 className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-white/[0.06]'}`}
-                style={[active ? { backgroundColor: '#7B6CF6' } : null, locked ? { opacity: 0.5 } : null]}
+                style={[active ? { backgroundColor: themeColors.accent } : null, locked ? { opacity: 0.5 } : null]}
               >
                 {locked && (
-                  <Lock size={11} color={active ? '#FFFFFF' : '#8B96B8'} />
+                  <Lock size={11} color={active ? themeColors.accentOn : themeColors.dim} />
                 )}
                 <Text
                   maxFontSizeMultiplier={1.15}
-                  className={`font-semibold text-[12.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+                  className={`font-semibold text-[12.5px] ${active ? '' : 'text-bear-sub'}`}
+                  style={{ color: active ? themeColors.accentOn : undefined }}
                 >
                   {r.label}
                 </Text>
@@ -192,7 +196,7 @@ export function WeightTrendCard() {
           <View className="mt-1">
             <SvgAreaChart
               data={data}
-              color="#A78BFA"
+              color={themeColors.accentBright}
               dotColor="#FFFFFF"
               dot={data.length <= 10}
               height={150}

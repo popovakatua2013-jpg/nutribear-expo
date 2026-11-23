@@ -1,16 +1,19 @@
 // Карточка «Экспорт отчёта в файл» на вкладке «Отчёты» (Premium-фича,
 // задача Кати 23.11: «усилить Premium — экспорт отчётов в файл»).
-// Premium: кнопка готовит HTML-файл периода (ккал, БЖУ, вода, шаги,
-// вес, дисциплина — та же математика, что у карточек вкладки) и
-// открывает «Поделиться»: файл можно сохранить в облако, отправить
-// врачу или тренеру. Бесплатно: объяснение + paywall (паттерн
-// AiMenuModal — карточка с объяснением и PremiumCard embedded).
-// Период берётся из пилюль вкладки — отчёт повторяет то, что видно
-// на экране.
+// Правка Кати 24.11: «экспорт отчёта в файл всегда свернуть» — карточка
+// по умолчанию СВЁРНУТА в одну строку (длинное описание и платёжка не
+// распирают вкладку «Отчёты», отзыв: «вкладка отчеты схлопнулась»);
+// тап по строке раскрывает содержимое. Premium: кнопка готовит
+// HTML-файл периода (ккал, БЖУ, вода, шаги, вес, дисциплина — та же
+// математика, что у карточек вкладки) и открывает «Поделиться»: файл
+// можно сохранить в облако, отправить врачу или тренеру. Бесплатно:
+// объяснение + paywall (паттерн AiMenuModal — карточка с объяснением
+// и PremiumCard embedded). Период берётся из пилюль вкладки — отчёт
+// повторяет то, что видно на экране.
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Crown, FileDown } from 'lucide-react-native'
+import { ChevronDown, Crown, FileDown } from 'lucide-react-native'
 import { useProStore } from '@/store/useProStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -18,6 +21,7 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { nutrientsByDay, weightByDay } from '@/lib/data/reports'
 import { buildReportHtml, shareReportFile } from '@/lib/data/report-export'
 import { PremiumCard } from '@/components/more/PremiumCard'
+import { useThemeColors } from '@/lib/use-theme'
 import { useToast } from '../../ui/Toast'
 
 const RANGE_LABEL = { '7d': 'неделя', '30d': '30 дней', '90d': '90 дней' }
@@ -50,7 +54,11 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
   const goals = useGoalsStore((s) => s.goals)
   const weights = useProfileStore((s) => s.weights)
   const foodHistory = useFoodStore((s) => s.history)
+  const themeColors = useThemeColors()
   const { toast } = useToast()
+  // Свёрнута по умолчанию (просьба Кати 24.11: «всегда свернуть») —
+  // вкладка «Отчёты» не растёт на высоту описания и платёжки
+  const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   async function exportReport() {
@@ -81,44 +89,79 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
   return (
     <View
       accessibilityLabel="Экспорт отчёта в файл"
-      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4"
+      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
     >
-      {!pro ? (
-        <LockedContent />
-      ) : (
-        <View className="gap-2">
-          <View className="flex-row items-center gap-2">
-            <FileDown size={17} color="#8DABFF" />
-            <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
-              Экспорт отчёта в файл
-            </Text>
-            <Text className="font-semibold text-[13.5px] text-bear-sub">
-              {RANGE_LABEL[rangeId] || `${days} дней`}
-            </Text>
-          </View>
-          <Text className="font-sans text-[14px] leading-snug text-bear-sub">
-            Один файл за выбранный период: средние за день, БЖУ, дисциплина,
-            вес и сравнение по неделям. Откроется меню «Поделиться» — файл
-            можно сохранить в облако или отправить врачу.
+      {/* Шапка-строка: тап раскрывает/сворачивает содержимое */}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={`Экспорт отчёта в файл — ${open ? 'свернуть' : 'раскрыть'}`}
+        className="flex-row items-center gap-2 px-4 py-3.5 active:opacity-70"
+      >
+        <View
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: themeColors.accentFaint2, borderWidth: 1, borderColor: themeColors.accentBorder }}
+        >
+          <FileDown size={17} color={themeColors.accentSoft} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text numberOfLines={1} className="font-bold text-[17px] tracking-tight text-bear-text">
+            Экспорт отчёта в файл
           </Text>
-          <Pressable
-            onPress={exportReport}
-            disabled={busy}
-            accessibilityRole="button"
-            accessibilityLabel="Подготовить файл отчёта"
-            className={`mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-[#7B6CF6]/50 bg-[#7B6CF6]/15 py-3 active:opacity-80 ${
-              busy ? 'opacity-60' : ''
-            }`}
+          <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            className="mt-0.5 font-sans text-[13px] text-bear-dim"
           >
-            <FileDown size={17} color="#C4B5FD" />
-            <Text className="font-semibold text-[15.5px] text-[#C4B5FD]">
-              {busy ? 'Готовим файл…' : 'Подготовить файл'}
-            </Text>
-          </Pressable>
-          <Text className="font-sans text-[12.5px] leading-snug text-bear-dim">
-            Файл открывается в браузере. Для PDF: браузер → «Печать» →
-            «Сохранить как PDF».
+            {pro
+              ? `Файл за ${RANGE_LABEL[rangeId] || `${days} дней`} — в «Поделиться»`
+              : 'Готовить файл отчёта — в Premium'}
           </Text>
+        </View>
+        {!pro && <Crown size={15} color="#FBBF24" />}
+        <ChevronDown
+          size={20}
+          color={themeColors.sub}
+          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
+        />
+      </Pressable>
+
+      {/* Содержимое — только в раскрытом виде */}
+      {open && (
+        <View className="border-t border-bear-bodyLine px-4 pb-4 pt-3">
+          {!pro ? (
+            <LockedContent />
+          ) : (
+            <View className="gap-2">
+              <Text className="font-sans text-[14px] leading-snug text-bear-sub">
+                Один файл за выбранный период: средние за день, БЖУ, дисциплина,
+                вес и сравнение по неделям. Откроется меню «Поделиться» — файл
+                можно сохранить в облако или отправить врачу.
+              </Text>
+              <Pressable
+                onPress={exportReport}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel="Подготовить файл отчёта"
+                className={`mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint2 py-3 active:opacity-80 ${
+                  busy ? 'opacity-60' : ''
+                }`}
+              >
+                <FileDown size={17} color={themeColors.accentSoft} />
+                <Text
+                  className="font-semibold text-[15.5px]"
+                  style={{ color: themeColors.accentSoft }}
+                >
+                  {busy ? 'Готовим файл…' : 'Подготовить файл'}
+                </Text>
+              </Pressable>
+              <Text className="font-sans text-[12.5px] leading-snug text-bear-dim">
+                Файл открывается в браузере. Для PDF: браузер → «Печать» →
+                «Сохранить как PDF».
+              </Text>
+            </View>
+          )}
         </View>
       )}
     </View>

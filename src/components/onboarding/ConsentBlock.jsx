@@ -40,6 +40,8 @@ import { Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { LegalDocModal } from '@/components/more/LegalDocModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Короткие формулировки: одна строка мелким шрифтом, подробности —
 // в документах по ссылке под чекбоксами. Порядок слов без мужского/
@@ -64,11 +66,12 @@ const CONSENTS = [
 ]
 
 function DocLink({ onPress, children }) {
+  const themeColors = useThemeColors()
   return (
     <Text
       onPress={onPress}
       accessibilityRole="link"
-      style={{ color: '#6C8CFF', textDecorationLine: 'underline' }}
+      style={{ color: themeColors.link, textDecorationLine: 'underline' }}
     >
       {children}
     </Text>

@@ -53,6 +53,8 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { Pills } from '../../ui/Pills'
 import { DayDetailsModal } from '../../home/DayDetailsModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Ключ цели в useGoalsStore для каждого показателя реестра
 const GOAL_KEY = { steps: 'steps', kcal: 'kcal', waterMl: 'waterMl', burned: 'burnKcal', sleepMin: 'sleepMin' }
@@ -214,6 +216,7 @@ export function MetricHistoryModal({
   today,
   onAdd, // опциональная кнопка «Записать» в шапке (у сна — «лёг/встал», у веса — экран веса)
 }) {
+  const themeColors = useThemeColors()
   const goals = useGoalsStore((s) => s.goals)
   const savedDays = useHistoryStore((s) => s.days) // подписка: сводка дня живо видит записи
   const weights = useProfileStore((s) => s.weights)
@@ -279,7 +282,7 @@ export function MetricHistoryModal({
   // «0% к прошлой неделе» без прошлого вводит в заблуждение (отзыв
   // Кати) — ждём, пока соберутся данные, и не показываем Δ вовсе
   const pct = isWeight || prevAvg <= 0 ? null : changePct(avg, prevAvg)
-  const tone = pct == null ? '#8B96B8' : deltaTone(pct, metric.invert)
+  const tone = pct == null ? themeColors.dim : deltaTone(pct, metric.invert)
   const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
 
   // ===== Вес: текущий замер, Δ за период и шкала столбиков =====
@@ -293,7 +296,7 @@ export function MetricHistoryModal({
   const { min: rangeMin, max: rangeMax } = healthyRange(heightCm)
   const weightDeltaTone =
     weightDelta == null || weightDelta === 0
-      ? '#8B96B8'
+      ? themeColors.dim
       : (weightDelta < 0 && lastMeasure?.weight >= rangeMin) || (weightDelta > 0 && lastMeasure?.weight <= rangeMax)
         ? '#4ADE80'
         : '#FB7185'
@@ -439,7 +442,7 @@ export function MetricHistoryModal({
                         accessibilityLabel={`Закрыть историю: ${metric.label}`}
                         className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
                       >
-                        <X hitSlop={10} size={20} color="#C7D2F0" />
+                        <X hitSlop={10} size={20} color={themeColors.bright} />
                       </Pressable>
                     </View>
                     <View className="mt-0.5 flex-row items-center gap-2">
@@ -654,7 +657,7 @@ export function MetricHistoryModal({
                                       adjustsFontSizeToFit
                                       minimumFontScale={0.7}
                                       className={`flex-1 text-center font-sans text-[10px] ${
-                                        row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                                        row.key === todayKey ? 'font-bold text-bear-accentBright' : 'text-bear-dim'
                                       }`}
                                     >
                                       {dotDateFromKey(row.key)}
@@ -672,7 +675,7 @@ export function MetricHistoryModal({
                                         numberOfLines={1}
                                         maxFontSizeMultiplier={1.1}
                                         className={`flex-1 font-sans text-[11px] ${edge} ${
-                                          row.key === todayKey ? 'font-bold text-[#A78BFA]' : 'text-bear-dim'
+                                          row.key === todayKey ? 'font-bold text-bear-accentBright' : 'text-bear-dim'
                                         }`}
                                       >
                                         {dotDateFromKey(row.key)}

@@ -2,6 +2,8 @@
 
 import { Text, TextInput, View } from 'react-native'
 import { QUICK_GRAMS } from '@/lib/data/foods'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function GramsPicker({ grams, onChange }) {
   const gramsNum = Math.round(Number(grams) || 0)
@@ -30,14 +32,15 @@ export function GramsPicker({ grams, onChange }) {
 }
 
 function PressPill({ g, active, onChange }) {
+  const themeColors = useThemeColors()
   return (
     <Text
       onPress={() => onChange(String(g))}
       accessibilityRole="button"
       className={`rounded-full px-3 py-1.5 font-semibold text-[16px] ${
-        active ? 'text-white' : 'bg-white/5 text-bear-sub'
+        active ? '' : 'bg-white/5 text-bear-sub'
       }`}
-      style={active ? { backgroundColor: '#7B6CF6' } : null}
+      style={active ? { backgroundColor: themeColors.accent, color: themeColors.accentOn } : null}
     >
       {g} г
     </Text>

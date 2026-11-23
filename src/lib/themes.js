@@ -1,29 +1,50 @@
 // Темы оформления приложения (Premium-фича, задача Кати 23.11:
-// «усилить Premium — оформление»). Приложение всегда тёмное: светлую
-// тему не делаем (сотни inline-белых rgba в компонентах её сломают),
-// темы различаются оттенком фона и поверхностей. Акцентные цвета
-// (фиолетовые пилюли, тумблеры, кнопки #7B6CF6) у всех тем общие —
-// они заданы константами в компонентах, поэтому любая тема выглядит
-// согласованной.
+// «усилить Premium — оформление»; правка Кати 24.11: «при смене тем
+// меняется частично вкладки и часть блоков» — палитра расширена
+// акцентными токенами, жёстко зашитые цвета компонентов переведены
+// на них; «Графит» заменена на «Чёрно-лимонную»). Приложение всегда
+// тёмное: светлую тему не делаем (сотни inline-белых rgba в
+// компонентах её сломают), темы различаются фоном, поверхностями
+// и — у «Чёрно-лимонной» — акцентами (кнопки, тумблеры, пилюли).
 //
 // Палитра живёт в tailwind.config.js через CSS-переменные --nb-*:
 // класс bg-bear-bg компилируется в var(--nb-bg, <классика>) — поддеревья
 // без переменных (окно «Мишка споткнулся», оверлеи без обёртки) остаются
 // в «Классике», а не становятся прозрачными. Переменные прокидываются
-// в корневом макете (app/_layout.jsx → src/lib/use-theme.js).
+// в корневом макете (app/_layout.jsx → src/lib/use-theme.js). Цвета
+// в style-пропсах компонентов берутся из хука useThemeColors (там же) —
+// они работают и вне обёртки с переменными.
 //
 // Файл чистый (без react-native и nativewind) — тестируется
 // в __tests__/themes.test.js.
 
 export const DEFAULT_THEME_ID = 'classic'
 
-export const THEME_ORDER = ['classic', 'graphite', 'forest', 'ocean', 'plum']
+export const THEME_ORDER = ['classic', 'lemon', 'forest', 'ocean', 'plum']
 
 // Токены палитры: ровно те же имена, что в tailwind.config.js (bear.*)
 export const THEME_TOKENS = [
   'bg', 'card', 'card2', 'deep', 'pop', 'line', 'bodyCard', 'bodyLine',
   'text', 'sub', 'sub2', 'dim', 'soft', 'bright', 'link',
+  // Акценты: кнопки, тумблеры, активные пилюли. accentOn — цвет текста/
+  // иконки НА акцентной поверхности (у лимонной темы он тёмный)
+  'accent', 'accentBright', 'accentSoft', 'accentOn',
+  'accentFaint', 'accentFaint2', 'accentFaint3', 'accentStrong', 'accentBorder',
 ]
+
+// Фиолетовый набор акцентов — родной для приложения (#7B6CF6):
+// «Классика», «Хвоя», «Океан» и «Слива» выглядят как раньше
+const PURPLE_ACCENTS = {
+  accent: '#7B6CF6',
+  accentBright: '#A78BFA',
+  accentSoft: '#C4B5FD',
+  accentOn: '#FFFFFF',
+  accentFaint: 'rgba(123,108,246,0.10)',
+  accentFaint2: 'rgba(123,108,246,0.16)',
+  accentFaint3: 'rgba(123,108,246,0.20)',
+  accentStrong: 'rgba(123,108,246,0.80)',
+  accentBorder: 'rgba(123,108,246,0.42)',
+}
 
 export const THEMES = {
   // Классика — текущая navy-палитра приложения, бесплатно.
@@ -49,30 +70,42 @@ export const THEMES = {
       soft: '#AEB9D9',
       bright: '#C7D2F0',
       link: '#6C8CFF',
+      ...PURPLE_ACCENTS,
     },
   },
 
-  // Графит — нейтральный тёмно-серый, без синевы (подлюбителям строгого)
-  graphite: {
-    id: 'graphite',
-    title: 'Графит',
+  // Чёрно-лимонная — чёрный фон + лимонные акценты (просьба Кати
+  // 24.11: «заменить графит тему на черно лимонный»): кнопки, тумблеры,
+  // активные пилюли и ссылки — лимонные, текст на них — тёмный
+  lemon: {
+    id: 'lemon',
+    title: 'Чёрно-лимонная',
     premium: true,
     colors: {
-      bg: '#0B0C10',
-      card: '#17191F',
-      card2: '#16181E',
-      deep: '#0F1014',
-      pop: '#1A1D24',
-      line: 'rgba(255,255,255,0.07)',
-      bodyCard: 'rgba(35,37,44,0.82)',
-      bodyLine: 'rgba(168,85,247,0.28)',
-      text: '#F1F2F5',
-      sub: '#A8ACB6',
-      sub2: '#9BA0AA',
-      dim: '#8E939E',
-      soft: '#B5BAC5',
-      bright: '#D2D5DC',
-      link: '#7C8CF6',
+      bg: '#060606',
+      card: '#121212',
+      card2: '#101010',
+      deep: '#040404',
+      pop: '#171717',
+      line: 'rgba(255,255,255,0.08)',
+      bodyCard: 'rgba(28,30,13,0.85)',
+      bodyLine: 'rgba(228,240,70,0.32)',
+      text: '#F2F4E8',
+      sub: '#B1B6A6',
+      sub2: '#A3A898',
+      dim: '#94998A',
+      soft: '#BFC4B2',
+      bright: '#E2E8CC',
+      link: '#E4F93B',
+      accent: '#E4F93B',
+      accentBright: '#F0FA6B',
+      accentSoft: '#F6FDB0',
+      accentOn: '#191D05',
+      accentFaint: 'rgba(228,240,70,0.10)',
+      accentFaint2: 'rgba(228,240,70,0.16)',
+      accentFaint3: 'rgba(228,240,70,0.20)',
+      accentStrong: 'rgba(228,240,70,0.80)',
+      accentBorder: 'rgba(228,240,70,0.42)',
     },
   },
 
@@ -97,6 +130,7 @@ export const THEMES = {
       soft: '#B2D3C1',
       bright: '#D0E9DB',
       link: '#5ED0A5',
+      ...PURPLE_ACCENTS,
     },
   },
 
@@ -121,6 +155,7 @@ export const THEMES = {
       soft: '#B0CBDD',
       bright: '#CFE3F1',
       link: '#38BDF8',
+      ...PURPLE_ACCENTS,
     },
   },
 
@@ -145,14 +180,15 @@ export const THEMES = {
       soft: '#C4B8DF',
       bright: '#DFD4F5',
       link: '#A78BFA',
+      ...PURPLE_ACCENTS,
     },
   },
 }
 
 // Какую тему реально показывать: премиум-тема без подписки → «Классика»,
-// неизвестный id (битое хранилище, удалённая тема) → «Классика».
-// Данные в сторе не трогаем — после оплаты подписки выбранная тема
-// вернётся сама
+// неизвестный id (битое хранилище, удалённая тема — например, «графит»
+// до замены на «Чёрно-лимонную») → «Классика». Данные в сторе не
+// трогаем — после оплаты подписки выбранная тема вернётся сама
 export function resolveThemeId(themeId, pro) {
   const theme = THEMES[themeId]
   if (!theme) return DEFAULT_THEME_ID

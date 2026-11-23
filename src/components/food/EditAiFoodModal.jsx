@@ -36,6 +36,8 @@ import { formatNum } from '@/lib/format'
 import { estimateByName, estimateFromDescription } from '@/lib/food-ai'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Подсказка под заголовком — откуда пришли значения
 const SOURCE_HINT = {
@@ -51,6 +53,7 @@ function parseNum(text, fallback, min, max) {
 }
 
 export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   // Android: собственное окно Modal не ужмётся под клавиатуру сам —
   // считаем отступ сами (тот же приём, что в «Записать вес»)
@@ -207,7 +210,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               а не выталкивает крестик за край окна */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-4 pb-3 pt-4">
             <View className="min-w-0 flex-1 flex-row items-center gap-2 pr-2">
-              <Pencil size={20} color="#6C8CFF" />
+              <Pencil size={20} color={themeColors.link} />
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">
                   Исправить блюдо
@@ -222,7 +225,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Закрыть"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
             >
-              <X hitSlop={10} size={20} color="#A5AECB" />
+              <X hitSlop={10} size={20} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -241,7 +244,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               maxLength={60}
               accessibilityLabel="Название блюда"
               placeholder="Название блюда"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               className="mt-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] text-bear-text"
             />
 
@@ -256,7 +259,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               multiline
               accessibilityLabel="Описание блюда"
               placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               className="mt-1 min-h-[60px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
             />
 
@@ -371,7 +374,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     maxLength={5}
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     placeholder="0"
-                    placeholderTextColor="#8B96B8"
+                    placeholderTextColor={themeColors.dim}
                     className="rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
@@ -397,9 +400,9 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                       onPress={() => setOverrideGrams(recipe.weight)}
                       accessibilityRole="button"
                       accessibilityLabel="Сделать порцию равной выходу блюда"
-                      className="flex-row items-center rounded-full border border-[#C4B5FD]/40 bg-[#C4B5FD]/10 px-2.5 py-1 active:opacity-80"
+                      className="flex-row items-center rounded-full border border-bear-accentBorder bg-bear-accentFaint px-2.5 py-1 active:opacity-80"
                     >
-                      <Text className="text-[13px] font-semibold text-[#C4B5FD]">
+                      <Text className="text-[13px] font-semibold text-bear-accentSoft">
                         сделать порцией
                       </Text>
                     </Pressable>
@@ -426,9 +429,11 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 onPress={apply}
                 accessibilityRole="button"
                 className="flex-1 rounded-2xl py-3 active:opacity-80"
-                style={{ backgroundColor: '#7B6CF6' }}
+                style={{ backgroundColor: themeColors.accent }}
               >
-                <Text className="text-center font-bold text-[19px] text-white">Готово</Text>
+                <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
+                  Готово
+                </Text>
               </Pressable>
             </View>
           </ScrollView>

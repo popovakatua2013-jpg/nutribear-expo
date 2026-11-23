@@ -14,8 +14,11 @@ import { useProStore } from '@/store/useProStore'
 import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { LabelGuideModal } from './LabelGuideModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function LabelMode({ onPick }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -113,8 +116,8 @@ export function LabelMode({ onPick }) {
         accessibilityLabel="Как снимать этикетку"
         className="mt-0.5 ml-1 flex-row items-center gap-1.5 self-start p-1 active:opacity-70"
       >
-        <Info size={14} color="#8DABFF" />
-        <Text className="font-semibold text-[13.5px] text-[#8DABFF]">
+        <Info size={14} color={themeColors.link} />
+        <Text className="font-semibold text-[13.5px] text-bear-link">
           Как снимать этикетку?
         </Text>
       </Pressable>
@@ -199,7 +202,7 @@ export function LabelMode({ onPick }) {
             accessibilityLabel="Повторить распознавание"
             className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
           >
-            <RefreshCcw size={15} color="#AEB9D9" />
+            <RefreshCcw size={15} color={themeColors.soft} />
             <Text className="font-semibold text-[16.5px] text-bear-soft">Попробовать ещё раз</Text>
           </Pressable>
         </View>

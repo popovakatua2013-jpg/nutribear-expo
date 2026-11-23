@@ -15,8 +15,11 @@ import { toBuildItem } from '@/lib/data/to-item'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { searchOFFCached } from '@/store/useOffCacheStore'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function BaseMode({ mealId, onPick }) {
+  const themeColors = useThemeColors()
   const [query, setQuery] = useState('')
   const [formOpen, setFormOpen] = useState(false) // создание нового
   const [editItem, setEditItem] = useState(null) // свой продукт на изменении
@@ -116,11 +119,11 @@ export function BaseMode({ mealId, onPick }) {
       {/* Поиск «тетрадная строка» + кнопка «свой продукт» */}
       <View className="flex-row items-end gap-2">
         <View className="min-w-0 flex-1 flex-row items-center gap-2 border-b border-white/15 px-1 pb-1.5">
-          <Search size={18} color="#8B96B8" />
+          <Search size={18} color={themeColors.dim} />
           <TextInput
             accessibilityLabel="Поиск блюда"
             placeholder="Найти блюдо…"
-            placeholderTextColor="#8B96B8"
+            placeholderTextColor={themeColors.dim}
             value={query}
             onChangeText={setQuery}
             className="min-w-0 flex-1 font-sans text-[17.5px] text-bear-text"
@@ -131,9 +134,9 @@ export function BaseMode({ mealId, onPick }) {
           accessibilityRole="button"
           accessibilityLabel="Добавить свой продукт"
           className="h-[36px] w-[42px] shrink-0 items-center justify-center rounded-xl active:opacity-80"
-          style={{ backgroundColor: '#7B6CF6' }}
+          style={{ backgroundColor: themeColors.accent }}
         >
-          <Plus size={20} color="#FFFFFF" />
+          <Plus size={20} color={themeColors.accentOn} />
         </Pressable>
       </View>
 
@@ -173,7 +176,7 @@ export function BaseMode({ mealId, onPick }) {
                   hitSlop={6}
                   className="rounded p-1"
                 >
-                  <Pencil size={15} color="#8B96B8" />
+                  <Pencil size={15} color={themeColors.dim} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -185,7 +188,7 @@ export function BaseMode({ mealId, onPick }) {
                   hitSlop={6}
                   className="rounded p-1"
                 >
-                  <Trash2 size={16} color="#98A2C2" />
+                  <Trash2 size={16} color={themeColors.sub2} />
                 </Pressable>
               </View>
             ))}

@@ -5,8 +5,11 @@
 
 import { FlatList, Pressable, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function FoodList({ items, emptyText, onPick, scroll = true }) {
+  const themeColors = useThemeColors()
   if (!items.length) {
     return (
       <Text className="py-8 text-center font-sans text-[19px] text-bear-sub">
@@ -19,7 +22,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
     <Pressable
       onPress={() => onPick(item)}
       accessibilityRole="button"
-      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-[#1A2647]"
+      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-bear-pop"
     >
       <View className="min-w-0 flex-1 gap-0.5">
         <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
@@ -32,7 +35,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
         </Text>
       </View>
       <View className="shrink-0">
-        <Plus size={18} color="#8B96B8" />
+        <Plus size={18} color={themeColors.dim} />
       </View>
     </Pressable>
   )

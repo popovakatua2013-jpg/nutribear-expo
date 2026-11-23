@@ -19,12 +19,15 @@ import { GramsPicker } from '../home/GramsPicker'
 import { Pills } from '../ui/Pills'
 import { toBuildItem } from '@/lib/data/to-item'
 import { EditAiFoodModal } from './EditAiFoodModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Что можно править кнопкой ✏️: ИИ, этикетка, Open Food Facts и свои
 // продукты ошибаются редко, но поправить под себя можно всегда
 const EDITABLE_SOURCES = ['ai', 'off', 'base', 'user', 'label']
 
 export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, onBack, onClose }) {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   const addEntry = useFoodStore((s) => s.addEntry)
   const { toast } = useToast()
@@ -96,7 +99,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
             accessibilityLabel="Назад к списку"
             className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5"
           >
-            <ChevronLeft size={22} color="#AEB9D9" />
+            <ChevronLeft size={22} color={themeColors.soft} />
           </Pressable>
           <View className="min-w-0 flex-1">
             <Text numberOfLines={1} className="font-bold text-[21px] text-bear-text">
@@ -113,7 +116,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
               accessibilityLabel="Исправить распознанное блюдо"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
             >
-              <Pencil size={18} color="#AEB9D9" />
+              <Pencil size={18} color={themeColors.soft} />
             </Pressable>
           )}
           <Pressable
@@ -122,7 +125,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
             accessibilityLabel="Закрыть"
             className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
           >
-            <X size={20} color="#AEB9D9" />
+            <X size={20} color={themeColors.soft} />
           </Pressable>
         </View>
 
@@ -147,13 +150,13 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
             Комментарий (необязательно)
           </Text>
           <View className="mt-1.5 h-[42px] flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5">
-            <MessageSquare size={15} color="#8B96B8" />
+            <MessageSquare size={15} color={themeColors.dim} />
             <TextInput
               value={note}
               onChangeText={setNote}
               maxLength={200}
               placeholder="Например: без масла, на воде"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               accessibilityLabel="Комментарий к записи"
               className="min-w-0 flex-1 py-0 font-sans text-[15.5px] text-bear-text"
               style={{ textAlignVertical: 'center' }}
@@ -165,7 +168,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
                 accessibilityLabel="Очистить комментарий"
                 className="active:opacity-60"
               >
-                <X hitSlop={10} size={15} color="#8B96B8" />
+                <X hitSlop={10} size={15} color={themeColors.dim} />
               </Pressable>
             )}
           </View>
@@ -210,9 +213,9 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
         <Pressable
           onPress={handleAdd}
           className="rounded-2xl py-3.5 active:opacity-80"
-          style={{ backgroundColor: '#7B6CF6' }}
+          style={{ backgroundColor: themeColors.accent }}
         >
-          <Text className="text-center font-bold text-[19px] text-white">
+          <Text className="text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>
             {dayOff ? `Добавить за вчера в «${meal.name}»` : `Добавить в «${meal.name}»`}
           </Text>
         </Pressable>

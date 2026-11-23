@@ -15,6 +15,8 @@ import { Share2, X } from 'lucide-react-native'
 import { calcBmi, bmiCategory, fmtDecimal, shortDateNum } from '@/lib/data/bmi'
 import { smoothPath } from '../ui/SvgAreaChart'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Короткие названия категорий — чтобы строка помещалась в один ряд
 const SHORT = {
@@ -32,6 +34,7 @@ const WEEKS = 8
 // никаких вымышленных значений. Точки окрашены по категории ИМТ,
 // у последней — белая обводка (текущий снимок). Ширина меряется onLayout.
 function WeeksSparkline({ rows }) {
+  const themeColors = useThemeColors()
   const [w, setW] = useState(0)
   const chrono = [...rows].reverse() // старые слева, сегодняшняя справа
   const valid = chrono.filter((r) => r.kg != null)
@@ -90,8 +93,8 @@ function WeeksSparkline({ rows }) {
             <Defs>
               {/* свой id — чтобы не пересекаться с другими заливками вкладки */}
               <LinearGradient id="nbsStreakFill" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#A78BFA" stopOpacity={0.26} />
-                <Stop offset="1" stopColor="#A78BFA" stopOpacity={0.02} />
+                <Stop offset="0" stopColor={themeColors.accentBright} stopOpacity={0.26} />
+                <Stop offset="1" stopColor={themeColors.accentBright} stopOpacity={0.02} />
               </LinearGradient>
             </Defs>
             {lines.map((run, ri) => {
@@ -103,7 +106,7 @@ function WeeksSparkline({ rows }) {
               <Path
                 key={`ln${ri}`}
                 d={smoothPath(run)}
-                stroke="#A78BFA"
+                stroke={themeColors.accentBright}
                 strokeWidth={2}
                 strokeLinecap="round"
                 fill="none"
@@ -135,6 +138,7 @@ function WeeksSparkline({ rows }) {
 }
 
 export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
 
   // Измерения по возрастанию времени — для поиска «на тот день или раньше»
@@ -201,7 +205,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               accessibilityLabel="Поделиться историей ИМТ по неделям"
               className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <Share2 size={17} color="#AEB9D9" />
+              <Share2 size={17} color={themeColors.soft} />
             </Pressable>
             <Pressable
               onPress={onClose}
@@ -209,7 +213,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               accessibilityLabel="Закрыть историю ИМТ"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X hitSlop={10} size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
           </View>
 

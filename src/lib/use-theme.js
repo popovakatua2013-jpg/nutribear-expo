@@ -21,3 +21,18 @@ export function useThemeVars() {
     return { theme, style: vars(themeToCssVars(theme)) }
   }, [themeId, pro])
 }
+
+// Цвета активной темы для style-пропсов и иконок: компоненты, где цвет
+// задан не классом, а значением (backgroundColor в style, color иконки
+// lucide), берут их отсюда — правка Кати 24.11: «при смене тем меняется
+// частично вкладки и часть блоков». Возвращает те же токены, что и
+// bear.* в tailwind.config.js; работает в любом поддереве — это простые
+// значения, а не CSS-переменные
+export function useThemeColors() {
+  const themeId = useUiPrefsStore((s) => s.themeId)
+  const pro = useProStore((s) => s.pro)
+  return useMemo(
+    () => THEMES[resolveThemeId(themeId, pro) || DEFAULT_THEME_ID].colors,
+    [themeId, pro]
+  )
+}

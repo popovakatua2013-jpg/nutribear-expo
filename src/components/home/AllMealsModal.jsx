@@ -21,8 +21,11 @@ import { targetsFromKcal } from '@/lib/data/goals'
 import { useToast } from '@/components/ui/Toast'
 import { EditEntryModal } from '../food/EditEntryModal'
 import { confirmRemoveEntry } from '@/lib/confirm-remove'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 function EntryRow({ mealId, mealName, entry, onEdit }) {
+  const themeColors = useThemeColors()
   const removeEntry = useFoodStore((s) => s.removeEntry)
   const { toast } = useToast()
 
@@ -49,7 +52,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Pencil size={15} color="#8B96B8" />
+        <Pencil size={15} color={themeColors.dim} />
       </Pressable>
       <Pressable
         onPress={() => confirmRemoveEntry({ removeEntry, mealId, entry, mealName, toast })}
@@ -57,13 +60,14 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
         accessibilityRole="button"
         className="shrink-0 rounded p-1"
       >
-        <Trash2 size={15} color="#8B96B8" />
+        <Trash2 size={15} color={themeColors.dim} />
       </Pressable>
     </View>
   )
 }
 
 export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
+  const themeColors = useThemeColors()
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
@@ -149,7 +153,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
               </Text>
             </View>
             <Pressable onPress={close} accessibilityLabel="Закрыть" className="p-1">
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 
@@ -188,9 +192,9 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         {meal.name}
                       </Text>
                       {openNow ? (
-                        <ChevronUp size={16} color="#98A2C2" />
+                        <ChevronUp size={16} color={themeColors.sub2} />
                       ) : (
-                        <ChevronDown size={16} color="#98A2C2" />
+                        <ChevronDown size={16} color={themeColors.sub2} />
                       )}
                     </Pressable>
 
@@ -222,7 +226,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
                         className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
                       >
-                        <Plus size={16} color="#8DABFF" />
+                        <Plus size={16} color={themeColors.link} />
                       </Pressable>
                     )}
                   </View>
@@ -253,8 +257,8 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityRole="button"
                         className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
                       >
-                        <Plus size={16} color="#8DABFF" />
-                        <Text className="font-semibold text-[16px] text-[#8DABFF]">
+                        <Plus size={16} color={themeColors.link} />
+                        <Text className="font-semibold text-[16px] text-bear-link">
                           Добавить блюдо
                         </Text>
                       </Pressable>
@@ -272,7 +276,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
               accessibilityLabel="Добавить свой перекус — ещё одну секцию дневника"
               className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
             >
-              <Plus size={16} color="#A5AECB" />
+              <Plus size={16} color={themeColors.sub} />
               <Text className="font-semibold text-[15px] text-bear-sub">
                 Добавить перекус
               </Text>

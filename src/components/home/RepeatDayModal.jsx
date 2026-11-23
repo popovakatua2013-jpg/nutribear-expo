@@ -15,6 +15,8 @@ import { useToast } from '@/components/ui/Toast'
 import { readdRow } from '@/lib/data/readd'
 import { tapGuard } from '@/lib/tap-guard'
 import { formatNum } from '@/lib/format'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Ключ дня «ГГГГ-ММ-ДД» — только такие попадают в список. Строки
 // журнала из совсем старых версий приложения могли не иметь поля day —
@@ -39,6 +41,7 @@ function dayTitle(key) {
 }
 
 export function RepeatDayModal({ visible, onClose, onCopied }) {
+  const themeColors = useThemeColors()
   const history = useFoodStore((s) => s.history)
   const entries = useFoodStore((s) => s.entries)
   const diaryDay = useFoodStore((s) => s.dayKey) // локальный день дневника
@@ -188,7 +191,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
               <View className="flex-row items-center gap-2">
-                <CalendarDays size={19} color="#6C8CFF" />
+                <CalendarDays size={19} color={themeColors.link} />
                 <Text className="font-bold text-[20px] text-bear-text">Повторить день</Text>
               </View>
               <Text className="mt-0.5 font-sans text-[15px] text-bear-sub">
@@ -201,7 +204,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
               accessibilityLabel="Закрыть"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X hitSlop={10} size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
           </View>
 
@@ -238,7 +241,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
                           isPicked ? 'border-[#8DABFF] bg-[#5B7FFF]/30' : 'border-white/15'
                         }`}
                       >
-                        {isPicked && <Check size={14} color="#8DABFF" strokeWidth={3} />}
+                        {isPicked && <Check size={14} color={themeColors.link} strokeWidth={3} />}
                       </View>
                       <View className="min-w-0 flex-1">
                         <Text
@@ -271,7 +274,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
                 picked ? 'bg-[#5B7FFF] active:opacity-80' : 'bg-white/5'
               }`}
             >
-              <Copy size={17} color={picked ? '#FFFFFF' : '#8B96B8'} />
+              <Copy size={17} color={picked ? '#FFFFFF' : themeColors.dim} />
               <Text
                 className={`font-bold text-[17.5px] ${picked ? 'text-white' : 'text-bear-sub2'}`}
               >

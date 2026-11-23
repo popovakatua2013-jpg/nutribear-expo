@@ -47,6 +47,8 @@ import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { totalConsumed } from '@/lib/data/diary'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Текст сообщения построчно: переносы из ответа ИИ (и многострочного
 // ввода) гарантированно видны — каждая строка свой Text, пустая
@@ -102,6 +104,7 @@ function TypingDots() {
 }
 
 export default function AiChatScreen() {
+  const themeColors = useThemeColors()
   const messages = useAiChatStore((s) => s.messages)
   const text = useAiChatStore((s) => s.text)
   const busy = useAiChatStore((s) => s.busy)
@@ -338,7 +341,7 @@ export default function AiChatScreen() {
           hitSlop={6}
           className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
-          <ArrowLeft size={20} color="#AEB9D9" />
+          <ArrowLeft size={20} color={themeColors.soft} />
         </Pressable>
         <View className="min-w-0 flex-1 flex-row items-center gap-2.5 pl-2">
           <Image
@@ -355,7 +358,7 @@ export default function AiChatScreen() {
             <Text numberOfLines={1} className="font-extrabold text-[21px] text-bear-text">
               {companion.name}
             </Text>
-            <Text numberOfLines={1} className="mt-0.5 text-[15px] text-[#8a94b3]">
+            <Text numberOfLines={1} className="mt-0.5 text-[15px] text-bear-dim">
               Нутрициолог NutriBear — отвечает сразу
             </Text>
           </View>
@@ -367,7 +370,7 @@ export default function AiChatScreen() {
           hitSlop={6}
           className="ml-1 h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
         >
-          <Trash2 size={19} color="#AEB9D9" />
+          <Trash2 size={19} color={themeColors.soft} />
         </Pressable>
       </View>
 
@@ -377,8 +380,8 @@ export default function AiChatScreen() {
           accessibilityLabel="Нет сети"
           className="mx-4 mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.05] px-3.5 py-2"
         >
-          <WifiOff size={16} color="#8B96B8" />
-          <Text className="flex-1 font-sans text-[16px] text-[#8a94b3]">
+          <WifiOff size={16} color={themeColors.dim} />
+          <Text className="flex-1 font-sans text-[16px] text-bear-dim">
             Нет сети — ИИ отключён. Отвечает офлайн-помощник по вашему дневнику
           </Text>
         </View>
@@ -449,15 +452,15 @@ export default function AiChatScreen() {
                   <View className="min-w-[110px] rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-2.5">
                     <MessageText
                       content={item.content}
-                      className="text-[19px] leading-[22px] text-[#dbe3f8]"
+                      className="text-[19px] leading-[22px] text-bear-bright"
                     />
                   </View>
                   {item.limit ? (
-                    <Text className="mt-1 px-1 text-[12.5px] leading-[16px] text-[#5c668a]">
+                    <Text className="mt-1 px-1 text-[12.5px] leading-[16px] text-bear-dim">
                       🧸 дневной лимит ИИ исчерпан — отвечает встроенный помощник. Premium — безлимит
                     </Text>
                   ) : item.offline ? (
-                    <Text className="mt-1 px-1 text-[12.5px] text-[#5c668a]">
+                    <Text className="mt-1 px-1 text-[12.5px] text-bear-dim">
                       🧸 офлайн-режим — отвечает встроенный помощник по дневнику
                     </Text>
                   ) : null}
@@ -488,7 +491,7 @@ export default function AiChatScreen() {
               />
               <View className="rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-3">
                 <View className="flex-row items-center">
-                  <Text className="text-[15px] text-[#8a94b3]">
+                  <Text className="text-[15px] text-bear-dim">
                     {companion.name} печатает
                   </Text>
                   <TypingDots />
@@ -508,7 +511,7 @@ export default function AiChatScreen() {
               ? `Осталось сообщений ИИ сегодня: ${chatLeft}`
               : 'Дневной лимит ИИ исчерпан'
           }
-          className="mb-1 px-4 text-[12.5px] text-[#5c668a]"
+          className="mb-1 px-4 text-[12.5px] text-bear-dim"
         >
           {chatLeft > 0
             ? `ИИ-чата осталось: ${chatLeft} сообщений сегодня · Premium — безлимит`
@@ -524,7 +527,7 @@ export default function AiChatScreen() {
           onSubmitEditing={send}
           editable={!busy}
           placeholder="Спросите о питании…"
-          placeholderTextColor="#8B96B8"
+          placeholderTextColor={themeColors.dim}
           accessibilityLabel="Сообщение ИИ-помощнику"
           multiline
           className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"

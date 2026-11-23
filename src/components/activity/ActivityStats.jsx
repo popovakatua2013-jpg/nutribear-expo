@@ -27,6 +27,8 @@ import {
 } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // однострочный текст, который при нехватке ширины сжимается, а не режется
 function FitLine({ className, maxFontSizeMultiplier = 1.25, style, children }) {
@@ -155,6 +157,7 @@ export function ActivityStats({
   onOpenStepsInput,
   onOpenActivity, // тап по «Активность» — что посчитано (тренировки + шаги)
 }) {
+  const themeColors = useThemeColors()
   // остаток/перебор по шагам: короткие формулировки, чтобы влезать в карточку
   const stepsLeft = stepsGoal - steps
   const stepsFoot = stepsGoal > 0 ? (
@@ -238,8 +241,8 @@ export function ActivityStats({
     {
       colors: {
         border: 'border-violet-400/25',
-        icon: ['#A78BFA', '#9333EA'],
-        tint: '#A78BFA',
+        icon: [themeColors.accentBright, '#9333EA'],
+        tint: themeColors.accentBright,
       },
       Icon: Dumbbell,
       LabelIcon: Flame, // у «Активности» подпись с огоньком — как на макете

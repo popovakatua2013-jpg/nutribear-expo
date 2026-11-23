@@ -18,6 +18,8 @@ import { useActivityStore } from '@/store/useActivityStore'
 import { useToast } from '../../ui/Toast'
 import { applyOnboarding } from '@/lib/data/onboarding-apply'
 import { openSettingsSoon } from '@/lib/appSettings'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
 const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
@@ -26,6 +28,7 @@ const IS_IOS = Platform.OS === 'ios'
 const IS_WEB = Platform.OS === 'web'
 
 export function PermissionsStep({ onBack }) {
+  const themeColors = useThemeColors()
   const answers = useOnboardingStore((s) => s.answers)
   const plan = useOnboardingStore((s) => s.plan)
   const finish = useOnboardingStore((s) => s.finish)
@@ -142,7 +145,7 @@ export function PermissionsStep({ onBack }) {
                 «показывать чисто connect, встроенный шагомер») */}
             {IS_IOS && (
               <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[17.5px] text-[#aab4d4]">Apple Health</Text>
+                <Text className="font-sans text-[17.5px] text-bear-sub">Apple Health</Text>
                 <Switch
                   value={sync.ahealth}
                   onValueChange={() => toggleSync('ahealth')}
@@ -154,8 +157,8 @@ export function PermissionsStep({ onBack }) {
             )}
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-1.5">
-                <Footprints size={18} color="#EEF2FB" />
-                <Text className="font-sans text-[17.5px] text-[#aab4d4]">Встроенный шагомер</Text>
+                <Footprints size={18} color={themeColors.text} />
+                <Text className="font-sans text-[17.5px] text-bear-sub">Встроенный шагомер</Text>
               </View>
               <Switch
                 value={pedometerEnabled}

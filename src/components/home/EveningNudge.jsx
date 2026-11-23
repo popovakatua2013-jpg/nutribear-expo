@@ -9,6 +9,8 @@ import { Pressable, Text, View } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const HIDDEN_KEY = 'nutribear.evening-nudge.hidden-date'
 
@@ -39,6 +41,7 @@ export function EveningNudge({
   onAddWater,
   onAddFood,
 }) {
+  const themeColors = useThemeColors()
   const now = useNowMinute()
   const hour = new Date(now).getHours()
 
@@ -86,7 +89,7 @@ export function EveningNudge({
   return (
     <View
       accessibilityLabel="Вечерняя подсказка"
-      className="rounded-3xl border border-[#7B6CF6]/30 bg-[#7B6CF6]/10 p-4"
+      className="rounded-3xl border border-bear-accentBorder bg-bear-accentFaint p-4"
     >
       <Pressable
         onPress={close}
@@ -95,7 +98,7 @@ export function EveningNudge({
         hitSlop={10}
         className="absolute right-2 top-2 rounded-full p-1.5 active:opacity-60"
       >
-        <X hitSlop={10} size={18} color="#A5AECB" />
+        <X hitSlop={10} size={18} color={themeColors.sub} />
       </Pressable>
       <View className="flex-row items-start gap-3">
         <Text className="text-[28px]">{kind === 'water' ? '💧' : '🍽'}</Text>
@@ -114,9 +117,9 @@ export function EveningNudge({
             accessibilityLabel={
               kind === 'water' ? 'Добавить стакан воды' : 'Добавить ужин'
             }
-            className="mt-2.5 self-start rounded-full bg-[#7B6CF6] px-4 py-2 active:opacity-80"
+            className="mt-2.5 self-start rounded-full bg-bear-accent px-4 py-2 active:opacity-80"
           >
-            <Text className="font-bold text-[16.5px] text-white">
+            <Text className="font-bold text-[16.5px]" style={{ color: themeColors.accentOn }}>
               {kind === 'water' ? '+ Стакан воды' : 'Добавить ужин'}
             </Text>
           </Pressable>

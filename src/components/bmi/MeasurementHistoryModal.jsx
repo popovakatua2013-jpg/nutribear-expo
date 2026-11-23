@@ -17,6 +17,8 @@ import { History, Trash2, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // «7 ноября 2026» — заголовок дня в журнале
 const dayTitle = (d) =>
@@ -27,6 +29,7 @@ const dayTime = (d) =>
   new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(d)
 
 export function MeasurementHistoryModal({ open, onClose, items = [] }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
   const measurements = useProfileStore((s) => s.measurements)
   const hiddenKeys = useProfileStore((s) => s.hiddenMeasurements)
@@ -97,7 +100,7 @@ export function MeasurementHistoryModal({ open, onClose, items = [] }) {
           <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
             <View className="flex-row items-center gap-2.5">
               <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
-                <History size={19} color="#8DABFF" />
+                <History size={19} color={themeColors.link} />
               </View>
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">История замеров</Text>
@@ -115,7 +118,7 @@ export function MeasurementHistoryModal({ open, onClose, items = [] }) {
                 accessibilityLabel="Закрыть историю"
                 className="p-1"
               >
-                <X hitSlop={10} size={22} color="#A5AECB" />
+                <X hitSlop={10} size={22} color={themeColors.sub} />
               </Pressable>
             </View>
 
@@ -175,7 +178,7 @@ export function MeasurementHistoryModal({ open, onClose, items = [] }) {
                           hitSlop={6}
                           className="shrink-0 rounded p-1 active:opacity-60"
                         >
-                          <Trash2 size={16} color="#98A2C2" />
+                          <Trash2 size={16} color={themeColors.sub2} />
                         </Pressable>
                       </View>
                     ))}

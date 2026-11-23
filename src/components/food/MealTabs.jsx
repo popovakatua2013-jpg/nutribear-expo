@@ -10,8 +10,11 @@
 // сжатых текстов разного размера.
 
 import { Pressable, Text, View } from 'react-native'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function MealTabs({ meals, mealId, onChange }) {
+  const themeColors = useThemeColors()
   // Плотный режим: 5+ пилюль — текст и отступы чуть меньше, но ОДИНАКОВЫЕ
   const dense = meals.length > 4
 
@@ -31,14 +34,14 @@ export function MealTabs({ meals, mealId, onChange }) {
             className={`min-w-0 flex-1 items-center rounded-xl ${dense ? 'px-0.5 py-2' : 'px-1 py-2.5'} ${
               active ? '' : 'border border-white/[0.06] bg-white/[0.05]'
             }`}
-            style={active ? { backgroundColor: '#7B6CF6' } : null}
+            style={active ? { backgroundColor: themeColors.accent, color: themeColors.accentOn } : null}
           >
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.78}
               className={`font-semibold ${dense ? 'text-[13px]' : 'text-[15px]'} ${
-                active ? 'text-white' : 'text-bear-sub'
+                active ? '' : 'text-bear-sub'
               }`}
             >
               {m.short || m.name}

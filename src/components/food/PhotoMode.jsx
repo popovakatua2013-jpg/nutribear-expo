@@ -26,8 +26,11 @@ import { useProStore } from '@/store/useProStore'
 import { useAiUsageStore, aiRemaining } from '@/store/useAiUsageStore'
 import { usePhotoQueueStore, MAX_ATTEMPTS } from '@/store/usePhotoQueueStore'
 import { PhotoGuideModal } from './PhotoGuideModal'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function PhotoMode({ source, onPick }) {
+  const themeColors = useThemeColors()
   const [photo, setPhoto] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -224,7 +227,7 @@ export function PhotoMode({ source, onPick }) {
         </View>
       ) : (
         <View className="h-[200px] w-full items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.03]">
-          <ScanSearch size={36} color="#8B96B8" />
+          <ScanSearch size={36} color={themeColors.dim} />
           <Text className="mt-2 px-6 text-center text-[16.5px] text-bear-sub">
             Сфотографируйте блюдо — ИИ определит продукт и калорийность
           </Text>
@@ -264,8 +267,8 @@ export function PhotoMode({ source, onPick }) {
           Кирилла из RuStore — «офлайн съёмка, после подключения к сети
           чтобы фото автоматически отправлялись на анализ») */}
       {queued.length > 0 && (
-        <View className="mt-3 flex-row items-center gap-2 rounded-2xl border border-[#7B6CF6]/30 bg-[#7B6CF6]/10 px-3.5 py-2.5">
-          <CloudUpload size={16} color="#C4B5FD" />
+        <View className="mt-3 flex-row items-center gap-2 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-3.5 py-2.5">
+          <CloudUpload size={16} color={themeColors.accentSoft} />
           <Text
             numberOfLines={3}
             maxFontSizeMultiplier={1.2}
@@ -281,7 +284,7 @@ export function PhotoMode({ source, onPick }) {
           onPress={pickPhoto}
           className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3.5 active:bg-white/10"
         >
-          <RefreshCcw size={18} color="#AEB9D9" />
+          <RefreshCcw size={18} color={themeColors.soft} />
           <Text className="font-semibold text-[17.5px] text-bear-text">
             {photo ? 'Другое фото' : isCamera ? 'Сделать фото' : 'Выбрать фото'}
           </Text>

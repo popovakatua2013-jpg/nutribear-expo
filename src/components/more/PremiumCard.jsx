@@ -19,6 +19,8 @@ import { PRO_PLANS, useProStore } from '@/store/useProStore'
 import { PREMIUM_PERKS } from '@/lib/entitlements'
 import { isValidPromoCode, PAY_PAGE_URL } from '@/lib/promo-codes'
 import { useToast } from '@/components/ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Подпись статуса для строки меню
 export function premiumStatusValue(pro, plan) {
@@ -37,6 +39,7 @@ function planLabel(plan) {
 }
 
 export function PremiumCard({ embedded = false }) {
+  const themeColors = useThemeColors()
   const pro = useProStore((s) => s.pro)
   const plan = useProStore((s) => s.plan)
   const activate = useProStore((s) => s.activate)
@@ -169,7 +172,7 @@ export function PremiumCard({ embedded = false }) {
               value={code}
               onChangeText={setCode}
               placeholder="Код активации"
-              placeholderTextColor="#8B96B8"
+              placeholderTextColor={themeColors.dim}
               autoCapitalize="characters"
               autoCorrect={false}
               accessibilityLabel="Ввод кода активации Premium"

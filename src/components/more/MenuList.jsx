@@ -19,6 +19,8 @@ import { Children, cloneElement, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { hapticFeedback } from '@/lib/haptics'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Секция меню: заголовок-ярлык + скруглённый контейнер со строками.
 // Разделители между строками добавляются автоматически (первая — без).
@@ -48,6 +50,7 @@ export function MenuGroup({ title, children }) {
 
 // Компактный тумблер (стандартный Switch шире строки меню)
 export function MiniToggle({ value, onChange, label }) {
+  const themeColors = useThemeColors()
   return (
     <Pressable
       onPress={() => {
@@ -60,18 +63,22 @@ export function MiniToggle({ value, onChange, label }) {
       hitSlop={6}
       className="h-[22px] w-[40px] shrink-0 justify-center rounded-full"
       style={{
-        backgroundColor: value ? '#7B6CF6' : 'rgba(255,255,255,0.15)',
+        backgroundColor: value ? themeColors.accent : 'rgba(255,255,255,0.15)',
         alignItems: value ? 'flex-end' : 'flex-start',
         paddingHorizontal: 2,
       }}
     >
-      <View className="h-[18px] w-[18px] rounded-full bg-white" />
+      <View
+        className="h-[18px] w-[18px] rounded-full"
+        style={{ backgroundColor: value ? themeColors.accentOn : '#FFFFFF' }}
+      />
     </Pressable>
   )
 }
 
-// Ряд пилюль-чипов: одно активное значение подсвечивается фиолетовым
+// Ряд пилюль-чипов: одно активное значение подсвечивается акцентом темы
 export function PillPicker({ options, value, onChange, accessibilityLabel }) {
+  const themeColors = useThemeColors()
   return (
     <View accessibilityLabel={accessibilityLabel} className="flex-row flex-wrap gap-1.5">
       {options.map((o) => {
@@ -87,11 +94,11 @@ export function PillPicker({ options, value, onChange, accessibilityLabel }) {
             accessibilityLabel={o.a11y || o.label}
             accessibilityState={{ selected: active }}
             className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? '' : 'bg-white/5'}`}
-            style={active ? { backgroundColor: '#7B6CF6' } : null}
+            style={active ? { backgroundColor: themeColors.accent } : null}
           >
             <Text
               maxFontSizeMultiplier={1.1}
-              className={`font-semibold text-[14.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+              className={`font-semibold text-[14.5px] ${active ? '' : 'text-bear-sub'}`} style={active ? { color: themeColors.accentOn } : null}
             >
               {o.label}
             </Text>
@@ -129,6 +136,7 @@ export function MenuRow({
   open: openProp,
   onOpenChange,
 }) {
+  const themeColors = useThemeColors()
   const [openLocal, setOpenLocal] = useState(false)
   const open = openProp !== undefined ? openProp : openLocal
   const setOpen = (v) => {
@@ -225,7 +233,7 @@ export function MenuRow({
 
             <ChevronRight
               size={17}
-              color="#A5AECB"
+              color={themeColors.sub}
               style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}
             />
           </>

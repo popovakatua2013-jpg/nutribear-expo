@@ -14,6 +14,7 @@
 //    барабан мог застрять между строками без подсветки.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useThemeColors } from '@/lib/use-theme'
 
 const ITEM_H = 40 // высота одной строки барабана
 const VISIBLE = 3 // сколько строк видно в окне
@@ -21,6 +22,9 @@ const SIDE = (VISIBLE - 1) / 2 // строк над/под центрально�
 export const WHEEL_H = ITEM_H * VISIBLE
 
 export function WheelPicker({ data, value, onChange, width = 128, accessibilityLabel }) {
+  const themeColors = useThemeColors()
+  // Стили барабана — из активной темы (Premium 23.11)
+  const styles = makeStyles(themeColors)
   const listRef = useRef(null)
   // Скролл, который ещё нужно применить: на Android первый scrollTo
   // после монтирования теряется (контент ещё не измерен), повторяем
@@ -165,7 +169,9 @@ export function WheelPicker({ data, value, onChange, width = 128, accessibilityL
   )
 }
 
-const styles = StyleSheet.create({
+// Стили от цветов активной темы (темы оформления — Premium 23.11):
+// плашка выбранной строки и подписи перекрашиваются вместе с темой
+const makeStyles = (C) => StyleSheet.create({
   wrap: { overflow: 'hidden' },
   // flex:1 — занять всю высоту обёртки (у обёртки фиксированная высота),
   // иначе ScrollView растёт по контенту и вылезает за окно барабана
@@ -179,21 +185,21 @@ const styles = StyleSheet.create({
     right: 4,
     height: ITEM_H,
     borderRadius: 12,
-    backgroundColor: 'rgba(123,108,246,0.16)',
-    borderColor: 'rgba(167,139,250,0.45)',
+    backgroundColor: C.accentFaint2,
+    borderColor: C.accentBorder,
     borderWidth: 1,
   },
   text: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: '#6E799C',
+    color: C.dim,
   },
-  textNear: { fontSize: 14.5, color: '#AEB9D9' },
+  textNear: { fontSize: 14.5, color: C.soft },
   textOn: {
     fontSize: 16.5,
     fontWeight: '700',
     fontFamily: 'Inter_600SemiBold',
-    color: '#EEF2FB',
+    color: C.text,
   },
-  textFar: { fontSize: 12.5, color: '#5F6A8E' },
+  textFar: { fontSize: 12.5, color: C.dim },
 })

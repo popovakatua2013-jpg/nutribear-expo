@@ -11,6 +11,8 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Flame, Footprints, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { KCAL_PER_STEP } from '@/lib/data/activity'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function ActivityBreakdownModal({
   open,
@@ -20,6 +22,7 @@ export function ActivityBreakdownModal({
   burned = 0, // итог: тренировки + шаги (totalBurned)
   burnGoal = 0,
 }) {
+  const themeColors = useThemeColors()
   const stepsKcal = Math.round((steps || 0) * KCAL_PER_STEP)
   const exMin = logs.reduce((s, e) => s + (Number(e.minutes) || 0), 0)
 
@@ -40,16 +43,16 @@ export function ActivityBreakdownModal({
             <View className="min-w-0 flex-1 flex-row items-center gap-2">
               <View
                 className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: 'rgba(167,139,250,0.18)' }}
+                style={{ backgroundColor: themeColors.accentFaint2 }}
               >
-                <Flame size={18} color="#C4B5FD" />
+                <Flame size={18} color={themeColors.accentSoft} />
               </View>
               <Text numberOfLines={1} className="font-bold text-[20px] text-bear-text">
                 Активность за сегодня
               </Text>
             </View>
             <Pressable onPress={onClose} accessibilityLabel="Закрыть" className="p-1">
-              <X hitSlop={10} size={22} color="#A5AECB" />
+              <X hitSlop={10} size={22} color={themeColors.sub} />
             </Pressable>
           </View>
 

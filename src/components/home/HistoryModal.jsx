@@ -23,6 +23,8 @@ import {
   filterHistoryByCutoff,
 } from '@/lib/data/history-access'
 import { FREE_LIMITS } from '@/lib/entitlements'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const DAY_MS = 86400000
 
@@ -55,6 +57,7 @@ function resolveMealName(id, customMeals) {
 }
 
 export function HistoryModal({ visible, onClose }) {
+  const themeColors = useThemeColors()
   const history = useFoodStore((s) => s.history)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
@@ -150,7 +153,7 @@ export function HistoryModal({ visible, onClose }) {
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
               <View className="flex-row items-center gap-2">
-                <History size={19} color="#6C8CFF" />
+                <History size={19} color={themeColors.link} />
                 <Text className="font-bold text-[20px] text-bear-text">
                   История приёмов
                 </Text>
@@ -165,7 +168,7 @@ export function HistoryModal({ visible, onClose }) {
               accessibilityLabel="Экспорт дневника в файл"
               className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <Download size={17} color="#AEB9D9" />
+              <Download size={17} color={themeColors.soft} />
             </Pressable>
             <Pressable
               onPress={onClose}
@@ -173,7 +176,7 @@ export function HistoryModal({ visible, onClose }) {
               accessibilityLabel="Закрыть"
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
             >
-              <X hitSlop={10} size={18} color="#AEB9D9" />
+              <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
           </View>
 
@@ -196,7 +199,7 @@ export function HistoryModal({ visible, onClose }) {
                     className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-white/5'}`}
                   >
                     <Text
-                      className={`font-semibold text-[15px] ${active ? 'text-[#8DABFF]' : 'text-bear-sub'}`}
+                      className={`font-semibold text-[15px] ${active ? 'text-bear-link' : 'text-bear-sub'}`}
                     >
                       {f.label}
                     </Text>
@@ -206,12 +209,12 @@ export function HistoryModal({ visible, onClose }) {
             </View>
 
             <View className="mt-2 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-              <Search size={17} color="#8B96B8" />
+              <Search size={17} color={themeColors.dim} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Поиск блюда…"
-                placeholderTextColor="#8B96B8"
+                placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Поиск блюда в истории"
                 returnKeyType="search"
                 className="min-w-0 flex-1 py-0 font-sans text-[17.5px] text-bear-text"
@@ -224,7 +227,7 @@ export function HistoryModal({ visible, onClose }) {
                   hitSlop={8}
                   className="shrink-0 rounded-full bg-white/10 p-1 active:opacity-70"
                 >
-                  <X hitSlop={10} size={14} color="#AEB9D9" />
+                  <X hitSlop={10} size={14} color={themeColors.soft} />
                 </Pressable>
               )}
             </View>
@@ -280,7 +283,7 @@ export function HistoryModal({ visible, onClose }) {
                             accessibilityLabel={`Записать «${r.name}» снова`}
                             className="shrink-0 rounded-full bg-[#5B7FFF]/15 p-1.5 active:bg-[#5B7FFF]/30"
                           >
-                            <Plus size={16} color="#8DABFF" />
+                            <Plus size={16} color={themeColors.link} />
                           </Pressable>
                         </View>
 
@@ -295,7 +298,7 @@ export function HistoryModal({ visible, onClose }) {
                                 accessibilityLabel={`Добавить «${r.name}» в «${m.name}»`}
                                 className="flex-1 items-center rounded-lg border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-1.5 active:bg-[#5B7FFF]/25"
                               >
-                                <Text numberOfLines={1} className="font-semibold text-[15px] text-[#8DABFF]">
+                                <Text numberOfLines={1} className="font-semibold text-[15px] text-bear-link">
                                   {m.id === 'snack' ? 'Перекус' : m.name}
                                 </Text>
                               </Pressable>

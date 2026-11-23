@@ -21,16 +21,19 @@ import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { deletePhotoFile, savePhoto } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
 import { toastAndOpenSettings } from '@/lib/appSettings'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 const MAX = 1.25
 
 // Поверхность — та же фиолетовая (bodyCard + bodyLine), что у остальных
 // блоков «Тела»: карточка больше не выбивается navy-фоном
-const CARD = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
+// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
   borderWidth: 1,
-}
+})
 
 // Сколько секунд кнопка удаления ждёт второй тап, прежде чем сброситься
 const DELETE_CONFIRM_MS = 2600
@@ -40,6 +43,7 @@ const shortDay = (iso) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
 
 export function ProgressPhotos() {
+  const themeColors = useThemeColors()
   const items = useProgressPhotosStore((s) => s.items)
   const addPhoto = useProgressPhotosStore((s) => s.addPhoto)
   const removePhoto = useProgressPhotosStore((s) => s.removePhoto)
@@ -144,7 +148,7 @@ export function ProgressPhotos() {
     <View
       accessibilityLabel="Фото прогресса"
       className="rounded-3xl p-5"
-      style={CARD}
+      style={cardSurface(themeColors)}
     >
       <View className="flex-row items-center justify-between gap-2">
         {/* Заголовок — тап разворачивает/сворачивает ленту (когда есть фото) */}
@@ -166,9 +170,9 @@ export function ProgressPhotos() {
           </Text>
           {items.length > 0 &&
             (expanded ? (
-              <ChevronDown size={18} color="#8B96B8" />
+              <ChevronDown size={18} color={themeColors.dim} />
             ) : (
-              <ChevronRight size={18} color="#8B96B8" />
+              <ChevronRight size={18} color={themeColors.dim} />
             ))}
         </Pressable>
         {/* Крупная цветная кнопка фотоаппарата — заметная, как главная
@@ -220,7 +224,7 @@ export function ProgressPhotos() {
               ? `1 фото скрыто · снято ${shortDay(newest.date)}`
               : `${items.length} фото скрыто · последнее ${shortDay(newest.date)}`}
           </Text>
-          <Text className="shrink-0 font-semibold text-[15px] text-[#8DABFF]">Показать</Text>
+          <Text className="shrink-0 font-semibold text-[15px] text-bear-link">Показать</Text>
         </Pressable>
       ) : items.length > 0 ? (
         <>
@@ -245,7 +249,7 @@ export function ProgressPhotos() {
               style={{ width: '100%', aspectRatio: 1, borderRadius: 14 }}
               resizeMode="cover"
             />
-            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[15px] text-[#8DABFF]">
+            <Text maxFontSizeMultiplier={MAX} className="mt-1.5 font-semibold text-[15px] text-bear-link">
               Сейчас · {shortDay(newest.date)}
             </Text>
           </View>

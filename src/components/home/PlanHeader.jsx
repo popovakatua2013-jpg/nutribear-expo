@@ -11,9 +11,12 @@ import { Copy, History, UtensilsCrossed, ChevronRight, Hand } from 'lucide-react
 import { PortionsModal } from './PortionsModal'
 import { RepeatDayModal } from './RepeatDayModal'
 import { BodyChip } from '../ui/BodyChip'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Серая иконка-кнопка без подписи; назначение — в accessibilityLabel
 function IconButton({ onPress, label, Icon }) {
+  const themeColors = useThemeColors()
   return (
     <Pressable
       onPress={onPress}
@@ -22,12 +25,13 @@ function IconButton({ onPress, label, Icon }) {
       hitSlop={4}
       className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
     >
-      <Icon size={17} color="#AEB9D9" />
+      <Icon size={17} color={themeColors.soft} />
     </Pressable>
   )
 }
 
 export function PlanHeader({ onViewAll, onHistory, onCopied }) {
+  const themeColors = useThemeColors()
   const [portionsOpen, setPortionsOpen] = useState(false)
   const [repeatOpen, setRepeatOpen] = useState(false)
 
@@ -56,15 +60,15 @@ export function PlanHeader({ onViewAll, onHistory, onCopied }) {
           accessibilityRole="button"
           accessibilityLabel="Повторить день — скопировать еду выбранного дня в сегодня"
           hitSlop={4}
-          className="shrink-0 flex-row items-center gap-1.5 rounded-full border border-[#A78BFA]/45 bg-[#A78BFA]/15 px-3 py-[7px] active:opacity-70"
+          className="shrink-0 flex-row items-center gap-1.5 rounded-full border border-bear-accentBorder bg-bear-accentFaint2 px-3 py-[7px] active:opacity-70"
         >
-          <Copy size={15} color="#C4B5FD" />
+          <Copy size={15} color={themeColors.accentSoft} />
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.72}
             maxFontSizeMultiplier={1.15}
-            className="font-bold text-[14.5px] text-[#C4B5FD]"
+            className="font-bold text-[14.5px] text-bear-accentSoft"
           >
             Повторить день
           </Text>
@@ -80,8 +84,8 @@ export function PlanHeader({ onViewAll, onHistory, onCopied }) {
             hitSlop={4}
             className="ml-auto flex-row items-center gap-0.5 px-1 py-1.5"
           >
-            <Text className="font-medium text-[16.5px] text-[#6C8CFF]">Все</Text>
-            <ChevronRight size={16} color="#6C8CFF" />
+            <Text className="font-medium text-[16.5px] text-bear-link">Все</Text>
+            <ChevronRight size={16} color={themeColors.link} />
           </Pressable>
         )}
       </View>

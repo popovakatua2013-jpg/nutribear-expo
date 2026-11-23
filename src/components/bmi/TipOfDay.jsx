@@ -12,16 +12,20 @@ import { tipOfDay } from '@/lib/data/bmi'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { SoftGlow } from '../ui/SoftGlow'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 // Поверхность — та же фиолетовая (bodyCard + bodyLine), что у остальных
 // блоков «Тела»: совет больше не выбивается navy-карточкой
-const CARD = {
-  backgroundColor: 'rgba(29,18,64,0.82)',
-  borderColor: 'rgba(168,85,247,0.30)',
+// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
+const cardSurface = (C) => ({
+  backgroundColor: C.bodyCard,
+  borderColor: C.bodyLine,
   borderWidth: 1,
-}
+})
 
 export function TipOfDay() {
+  const themeColors = useThemeColors()
   const tipHiddenDay = useUiPrefsStore((s) => s.tipHiddenDay)
   const dismissTipOfDay = useUiPrefsStore((s) => s.dismissTipOfDay)
 
@@ -33,7 +37,7 @@ export function TipOfDay() {
     <View
       accessibilityLabel="Совет дня"
       className="overflow-hidden rounded-2xl p-4"
-      style={CARD}
+      style={cardSurface(themeColors)}
     >
       <SoftGlow id="glowTipR" w={120} h={70} peak={0.22} color="#7C5CFC" style={{ top: -20, right: -30 }} />
       {/* Крестик — правый верхний угол; прячет совет до конца дня */}
@@ -44,14 +48,14 @@ export function TipOfDay() {
         hitSlop={10}
         className="absolute right-2.5 top-2.5 z-10 p-1 active:opacity-60"
       >
-        <X size={17} color="#8B96B8" />
+        <X size={17} color={themeColors.dim} />
       </Pressable>
       <View className="flex-row items-center gap-3">
         <View
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: 'rgba(77,124,254,0.16)' }}
         >
-          <Lightbulb size={18} color="#8DABFF" />
+          <Lightbulb size={18} color={themeColors.link} />
         </View>
         <View className="min-w-0 flex-1 pr-4">
           <Text className="font-bold text-[17.5px] text-bear-text">Совет дня</Text>

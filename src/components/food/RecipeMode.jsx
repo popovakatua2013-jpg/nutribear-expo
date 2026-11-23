@@ -9,8 +9,11 @@ import { RecipeForm } from './RecipeForm'
 import { RecipeDetails } from './RecipeDetails'
 import { FoodList } from './FoodList'
 import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
+import { useThemeColors } from '@/lib/use-theme'
+
 
 export function RecipeMode({ onPick }) {
+  const themeColors = useThemeColors()
   const items = useRecipesStore((s) => s.items)
   const remove = useRecipesStore((s) => s.remove)
   const [creating, setCreating] = useState(!items.length)
@@ -89,7 +92,7 @@ export function RecipeMode({ onPick }) {
     <View>
       <View className="mb-3 flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-1.5 px-1">
-          <ChefHat size={16} color="#6C8CFF" />
+          <ChefHat size={16} color={themeColors.link} />
           <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-link">
             Мои рецепты
           </Text>
@@ -99,7 +102,7 @@ export function RecipeMode({ onPick }) {
           accessibilityRole="button"
           className="flex-row items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 active:bg-white/10"
         >
-          <Plus size={16} color="#AEB9D9" />
+          <Plus size={16} color={themeColors.soft} />
           <Text className="font-semibold text-[15px] text-bear-soft">Новый</Text>
         </Pressable>
       </View>
@@ -130,7 +133,7 @@ export function RecipeMode({ onPick }) {
                 <Text numberOfLines={1} className="min-w-0 flex-1 font-sans text-[15px] text-bear-dim">
                   {`${r.name} · выход ${r.grams} г${Math.round(r.servings || 1) > 1 ? ` · ${Math.round(r.servings || 1)} порции` : ''}`}
                 </Text>
-                <Pencil size={14} color="#8B96B8" />
+                <Pencil size={14} color={themeColors.dim} />
               </Pressable>
               <Pressable
                 onPress={() => remove(r.id)}
@@ -138,7 +141,7 @@ export function RecipeMode({ onPick }) {
                 accessibilityRole="button"
                 className="rounded p-1"
               >
-                <Trash2 size={16} color="#98A2C2" />
+                <Trash2 size={16} color={themeColors.sub2} />
               </Pressable>
             </View>
           ))}
