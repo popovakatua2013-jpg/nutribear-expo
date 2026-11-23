@@ -318,6 +318,72 @@ describe('getFoodByBarcode: поиск по штрих-коду (mock fetch)', (
   })
 })
 
+// Отзыв Кати 23.11 (скрин 17:30): сканировала молоко, приложение
+// показало «Продукт 46902…» и «1 ккал». Причина: у OFF-сканера был
+// свой сырой запрос с подстановкой имени «Продукт {код}» и калорийности
+// «не меньше 1 ккал» — безымянные записи-заглушки базы превращались в
+// выдуманный продукт. Сканер идёт через getBarcodeCached: запись без
+// настоящего названия и калорийности = не найдена
+describe('штрихкод: безымянная заглушка OFF — не выдуманный «Продукт 46902…»', () => {
+  const realFetch = global.fetch
+  afterEach(() => {
+    global.fetch = realFetch
+    useOffCacheStore.setState({ cache: {} })
+  })
+
+  // Реальная ситуация из скрина: запись есть, названия и КБЖУ нет
+  const OFF_STUB_RESPONSE = () => ({
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        status: 1,
+        product: { code: '4690217001234', product_name: '', nutriments: {} },
+      }),
+  })
+
+  test('безымянная запись без ккал → null (не «Продукт {код}» и не 1 ккал)', async () => {
+    global.fetch = jest.fn(OFF_STUB_RESPONSE)
+    const f = await getBarcodeCached('4690217001234')
+    expect(f).toBeNull()
+  })
+
+  test('null не кешируется — повторное сканирование снова ищет в сети', async () => {
+    global.fetch = jest.fn(OFF_STUB_RESPONSE)
+    await getBarcodeCached('4690217001234')
+    await getBarcodeCached('4690217001234')
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+  })
+
+  test('молоко с названием и ккал → в приложение приходит настоящий продукт', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 1,
+            product: {
+              code: '4690217005678',
+              product_name: 'Молоко 2.5%',
+              brands: 'Домик в деревне',
+              serving_size: '200 мл',
+              nutriments: {
+                'energy-kcal_100g': 52,
+                proteins_100g: 2.8,
+                fat_100g: 2.5,
+                carbohydrates_100g: 4.7,
+              },
+            },
+          }),
+      })
+    )
+    const f = await getBarcodeCached('4690217005678')
+    expect(f).not.toBeNull()
+    expect(f.name).toBe('Молоко 2.5%')
+    expect(f.kcal).toBe(52)
+    expect(f.p).toBe(2.8)
+  })
+})
+
 describe('useOffCacheStore: кеш', () => {
   beforeEach(() => {
     useOffCacheStore.setState({ cache: {} })

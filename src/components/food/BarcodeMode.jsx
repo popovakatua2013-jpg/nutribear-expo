@@ -1,6 +1,14 @@
 // Режим «Сканер штрих-кода»: наводите камеру на штрих-код упаковки —
 // продукт ищется в открытой базе Open Food Facts (бесплатно, без ИИ)
 // и открывается экран подтверждения порции. Работает в Expo Go.
+//
+// Раньше здесь был свой сырой запрос к OFF с подстановкой имени
+// «Продукт {штрихкод}» и калорийности «не меньше 1 ккал» — безымянные
+// заглушки базы (есть запись, но нет названия/КБЖУ) превращались в
+// «Продукт 46902… — 1 ккал» (отзыв Кати 23.11: сканировала молоко).
+// Теперь поиск идёт через getBarcodeCached: продукт БЕЗ настоящего
+// названия и калорийности считается не найденным — честная ошибка с
+// подсказками вместо выдуманной карточки
 
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -8,32 +16,24 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { Flashlight, FlashlightOff, Info } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { getBarcodeCached } from '@/store/useOffCacheStore'
 import { BarcodeGuideModal } from './BarcodeGuideModal'
 
-const OFF_URL = 'https://world.openfoodfacts.org/api/v2/product'
-
-// Нормализация ответа Open Food Facts → вид «выбранной еды» (на 100 г)
-function offToItem(code, product) {
-  const n = product?.nutriments || {}
-  const kcal =
-    Number(n['energy-kcal_100g']) ||
-    (Number(n.energy_100g) ? Math.round(Number(n.energy_100g) / 4.184) : 0)
-  const name = String(product?.product_name_ru || product?.product_name || '').trim()
+// Ответ OFF-поиска (off-search.js) → вид «выбранной еды» (на 100 г).
+// parseOFFProduct уже отфильтровал записи без названия/калорийности
+function offToItem(code, off) {
   return {
-    id: `off-${code}`,
-    name: name || `Продукт ${code}`,
+    id: off.id || `off-${code}`,
+    name: off.name,
     emoji: '📦',
-    kcal100: Math.max(1, Math.min(950, Math.round(kcal) || 1)),
-    p: Math.max(0, Math.min(100, Number(n.proteins_100g) || 0)),
-    f: Math.max(0, Math.min(100, Number(n.fat_100g) || 0)),
-    c: Math.max(0, Math.min(100, Number(n.carbohydrates_100g) || 0)),
-    fib: Math.max(0, Math.min(50, Number(n.fiber_100g) || 0)),
-    sug: Math.max(0, Math.min(100, Number(n.sugars_100g) || 0)),
-    defaultGrams:
-      Number(product?.serving_quantity) > 0 && Number(product.serving_quantity) <= 1000
-        ? Math.round(Number(product.serving_quantity))
-        : 100,
-    sub: String(product?.brands || '').split(',')[0]?.trim() || 'Open Food Facts',
+    kcal100: Math.max(0, Math.min(950, Math.round(off.kcal))),
+    p: Math.max(0, Math.min(100, Number(off.p) || 0)),
+    f: Math.max(0, Math.min(100, Number(off.f) || 0)),
+    c: Math.max(0, Math.min(100, Number(off.c) || 0)),
+    fib: Math.max(0, Math.min(50, Number(off.fib) || 0)),
+    sug: Math.max(0, Math.min(100, Number(off.sug) || 0)),
+    defaultGrams: off.defaultGrams || 100,
+    sub: off.brand || 'Open Food Facts',
     source: 'off',
   }
 }
@@ -74,15 +74,15 @@ export function BarcodeMode({ onPick }) {
     setBusy(true)
     setError('')
     try {
-      const res = await fetch(`${OFF_URL}/${code}.json`, {
-        headers: { Accept: 'application/json' },
-      })
-      const json = await res.json()
-      if (json?.status !== 1 || !json?.product) {
-        setError(`Продукт со штрих-кодом ${code} не нашёлся в открытой базе. Добавьте его вручную или сфотографируйте этикетку.`)
+      const off = await getBarcodeCached(code)
+      if (!off) {
+        setError(
+          `Штрихкод ${code} не нашёлся в открытой базе — добавьте продукт ` +
+            'вручную, введите название голосом или сфотографируйте этикетку'
+        )
         return
       }
-      onPick(offToItem(code, json.product))
+      onPick(offToItem(code, off))
     } catch {
       setError('Нет связи с базой продуктов. Проверьте интернет и попробуйте ещё раз')
     } finally {

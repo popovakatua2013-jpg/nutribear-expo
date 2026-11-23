@@ -296,9 +296,11 @@ export function preferBrandBase(items) {
 
 // ── Локальный разбор фразы без ИИ («тарелка борща 300 граммов») ─
 const GRAMS_RE = /(\d{1,4})\s*(граммов|грамма|грамм|миллилитров|миллилитра|миллилитр|гр|г|мл)(?![а-я])/
-// Штуки/куски: «2 штуки», «1 ломтик», «полплитки не считаем» — граммовка
-// штуки берётся из PIECE_GRAMS по блюду (\b в JS не работает с кириллицей)
-const PIECES_RE = /(\d{1,2})\s*(штук[а-я]*|кусочк[а-я]*|ломтик[а-я]*|плитк[а-я]*)(?![а-я])/
+// Штуки/куски: «2 штуки», «3 шт», «1 ломтик», «полплитки не считаем» — граммовка
+// штуки берётся из PIECE_GRAMS по блюду (\b в JS не работает с кириллицей).
+// «шт» добавлено: нейросеть транскрипции записывает «штуки» часто как «шт»
+// (отзыв Кати 23.11: «варёное яйцо 3 шт»)
+const PIECES_RE = /(\d{1,2})\s*(штук[а-я]*|шт|кусочк[а-я]*|кусок|куска|куски|ломтик[а-я]*|плитк[а-я]*)(?![а-я])/
 
 // Вес одной штуки, г — для перевода «2 штуки» в граммы. Только ходовые
 // позиции, где штука стабильна; у остальных блюд штука неопределённа
@@ -320,6 +322,9 @@ const PIECE_GRAMS = {
   'Мандарин': 70,
   'Груша': 180,
   'Мороженое': 100,
+  // Овощи поштучно: средний помидор/огурец ≈ 120 г («огурец 1 штука»)
+  'Помидор': 120,
+  'Огурец': 120,
 }
 
 // Объёмная посуда во фразе: «кружка кофе», «большая кружка», «тарелка супа»
@@ -386,6 +391,279 @@ function parsePhraseSegment(text0) {
   return item
 }
 
+// ── Разбивка сегмента БЕЗ запятых на отдельные продукты ────────
+// Диктовка часто идёт сплошным потоком: нейросеть транскрипции не
+// расставляет запятые, и «грудка 200 грамм яйцо 3 штуки помидор 200
+// грамм огурец» превращалось в ОДИН продукт — первое блюдо получало
+// первую граммовку, остальные терялись молча (отзыв Кати 23.11:
+// диктует 4 продукта — в списке 1). Режем по «погонам» слов: числа и
+// единицы (грамм/шт) стоят между названиями и служат границами.
+const SEG_UNIT_WORDS = new Set([
+  'граммов', 'грамма', 'грамм', 'миллилитров', 'миллилитра', 'миллилитр', 'гр', 'г', 'мл',
+])
+const SEG_PIECE_WORDS = /^(штук[а-я]*|шт|кусочк[а-я]*|кусок|куска|куски|ломтик[а-я]*|плитк[а-я]*)$/
+const SEG_NUM_RE = /^\d+$/
+const clampGrams = (n) => Math.max(1, Math.min(2000, Math.round(n)))
+
+function sameStemSet(a, b) {
+  const sa = new Set(a)
+  const sb = new Set(b)
+  if (!sa.size || sa.size !== sb.size) return false
+  for (const w of sa) if (!sb.has(w)) return false
+  return true
+}
+
+// Слова-модификаторы — сами по себе НЕ названия продуктов: «варёная»
+// и «варенье» после огласовки имеют одну основу («варен»), и раньше
+// «варёная куриная грудка» начиналась с карточки «Варенье». Проверяем
+// по словоформе: у прилагательных типовые окончания, у существительных
+// («варенье») их нет — «варенье 20 грамм» продолжает работать
+const MODIFIER_STEMS = new Set([
+  'варен', 'жарен', 'тушен', 'парен', 'запечен', 'копчен', 'солен', 'сушен', 'вялен',
+  'печен', 'квашен', 'мочен', 'свеж', 'свежеморожен', 'заморожен', 'консервирован',
+  'маринован', 'отварн', 'больш', 'маленьк', 'средн', 'домашн',
+])
+const ADJ_END_RE = /(ая|ое|ый|ые|ой|ий|ым|ом|их|им|ем|его|ему|ого|ому)$/
+function isModifierWord(w) {
+  return w.length > 3 && ADJ_END_RE.test(w) && MODIFIER_STEMS.has(dishStem(w))
+}
+
+// Точное совпадение погона слов с названием/псевдонимом блюда или
+// продукта базы. Лишних слов быть не может — жадный захват исключён
+function equalitySpanMatch(spanWords) {
+  const set = stemsOf(spanWords.join(' '))
+  if (!set.length) return null
+  for (const e of DISH_INDEX) {
+    if (sameStemSet(e.stems, set)) return e.d
+    for (const al of e.aliases) if (al.length && sameStemSet(al, set)) return e.d
+  }
+  for (const e of FOOD_INDEX) {
+    if (sameStemSet(e.stems, set)) return e.f
+    for (const al of e.aliases) if (al.length && sameStemSet(al, set)) return e.f
+  }
+  return null
+}
+
+// Непокрытые слова погона сами образуют продукт? Значит, захват был
+// жадный («куриная грудка вареное яйцо» одним погоном) — укорачиваем,
+// чтобы сосед не проглотился. Модификаторы («варёная», «свежий») сами
+// по себе не продукты — их не считаем
+function leftoverHasProduct(spanWords, coveredStems) {
+  const covered = new Set(coveredStems)
+  const leftover = spanWords.filter((w) => !covered.has(dishStem(w)))
+  for (let i = 0; i < leftover.length; i++) {
+    for (let len = 1; len <= Math.min(3, leftover.length - i); len++) {
+      if (len === 1 && isModifierWord(leftover[i])) continue
+      if (equalitySpanMatch(leftover.slice(i, i + len))) return true
+    }
+  }
+  return false
+}
+
+// Один погон слов → найденные продукты в порядке следования.
+// 1) точное совпадение названия (самое длинное — «кофе с молоком и
+//    сахаром» точнее, чем «кофе»); блюдо сильнее продукта базы,
+//    у продуктов приоритет у совпавшей цифры («молоко 2,5» → 2,5%);
+// 2) иначе неполное название: все основы названия/псевдонима внутри
+//    погона («свежий помидор» → «Помидор»), минимальный захват;
+// 3) иначе слово не продукт — пропускаем
+function matchProductAt(words, i, qDigits) {
+  const maxLen = Math.min(6, words.length - i)
+  let bestDish = null
+  let bestFood = null
+  for (let len = 1; len <= maxLen; len++) {
+    const span = words.slice(i, i + len)
+    // одиночное слово-модификатор («варёная», «свежий») — не продукт
+    if (len === 1 && isModifierWord(span[0])) continue
+    const set = stemsOf(span.join(' '))
+    if (!set.length) continue
+    for (const e of DISH_INDEX) {
+      const eq =
+        sameStemSet(e.stems, set) ||
+        e.aliases.some((al) => al.length && sameStemSet(al, set))
+      if (eq && (!bestDish || e.len > bestDish.nameLen)) bestDish = { src: e.d, len, nameLen: e.len }
+    }
+    for (const e of FOOD_INDEX) {
+      const eq =
+        sameStemSet(e.stems, set) ||
+        e.aliases.some((al) => al.length && sameStemSet(al, set))
+      if (!eq) continue
+      const d = digitScore(e.digits, qDigits)
+      if (!bestFood || d > bestFood.d || (d === bestFood.d && e.len > bestFood.nameLen))
+        bestFood = { src: e.f, len, nameLen: e.len, d }
+    }
+  }
+  if (bestDish) return { src: bestDish.src, len: bestDish.len }
+  if (bestFood) return { src: bestFood.src, len: bestFood.len }
+
+  for (let len = 1; len <= maxLen; len++) {
+    const span = words.slice(i, i + len)
+    if (len === 1 && isModifierWord(span[0])) continue
+    const set = new Set(stemsOf(span.join(' ')))
+    if (!set.size) continue
+    let cand = null
+    for (const e of DISH_INDEX) {
+      const cov = e.stems.every((w) => set.has(w))
+        ? e.stems
+        : e.aliases.find((al) => al.length && al.every((w) => set.has(w)))
+      if (cov && (!cand || e.len > cand.nameLen)) cand = { src: e.d, nameLen: e.len, covered: cov }
+    }
+    if (!cand) {
+      for (const e of FOOD_INDEX) {
+        const cov = e.stems.every((w) => set.has(w))
+          ? e.stems
+          : e.aliases.find((al) => al.length && al.every((w) => set.has(w)))
+        if (!cov) continue
+        const d = digitScore(e.digits, qDigits)
+        if (!cand || d > (cand.d || 0) || (d === (cand.d || 0) && e.len > cand.nameLen))
+          cand = { src: e.f, nameLen: e.len, covered: cov, d }
+      }
+    }
+    if (!cand) continue
+    const covered = new Set(cand.covered)
+    const leftover = span.filter((w) => !covered.has(dishStem(w)))
+    if (cand.covered.length === 1 && leftover.length) {
+      // у кандидата одна основа, а в погоне есть лишние слова: разрешаем
+      // их ТОЛЬКО если все — модификаторы («свежий помидор» → «Помидор»);
+      // иначе одноосновные продукты цепляются за чужие слова («вареная
+      // куриная» ловила «Варенье» по основе «варен»)
+      if (!leftover.every((w) => isModifierWord(w))) continue
+    } else if (leftoverHasProduct(span, cand.covered)) continue // сосед рядом — укорачиваем захват
+    return { src: cand.src, len }
+  }
+  return null
+}
+
+function segmentRunProducts(words, qDigits) {
+  const out = []
+  let i = 0
+  while (i < words.length) {
+    const m = matchProductAt(words, i, qDigits)
+    if (m) {
+      out.push({ src: m.src, grams: null })
+      i += m.len
+    } else i++
+  }
+  return out
+}
+
+// Сегмент фразы (между запятыми) → МАССИВ продуктов (0…5).
+// Поток режется на блоки: погоны слов и разделители (числа/единицы/штуки).
+// Число+единица после погона — вес последнего продукта («грудка 200
+// грамм»); перед погоном — вес первого («300 грамм свинины»). Число
+// без единицы рядом со штучным продуктом — штуки («яйца 2» → 110 г);
+// прочие голые числа не трогаем: это чаще всего проценты из транскрипта
+// («молоко 2 5», «сметана 15»)
+function parseSegmentMulti(text0) {
+  const norm = normName(text0)
+  const toks = norm.split(' ').filter(Boolean)
+  const qDigits = toks.filter((w) => SEG_NUM_RE.test(w))
+
+  // Блоки в порядке следования: { type: 'run' | 'sep', words }
+  const blocks = []
+  for (const w of toks) {
+    const last = blocks[blocks.length - 1]
+    const sepLike = SEG_NUM_RE.test(w) || SEG_UNIT_WORDS.has(w) || SEG_PIECE_WORDS.test(w)
+    if (sepLike) {
+      if (last && last.type === 'sep') last.words.push(w)
+      else blocks.push({ type: 'sep', words: [w] })
+    } else {
+      if (last && last.type === 'run') last.words.push(w)
+      else blocks.push({ type: 'run', words: [w] })
+    }
+  }
+
+  const matched = []
+  const usedSep = new Set() // индексы блоков-разделителей, уже отданных продукту
+  const pieceGramsOf = (p) => PIECE_GRAMS[p.src.n || p.src.name] || null
+
+  const applySep = (blockIdx, target) => {
+    const blk = blocks[blockIdx]
+    if (!blk || blk.type !== 'sep' || usedSep.has(blockIdx)) return false
+    if (target == null || target.grams != null) return false
+    const sep = blk.words
+    const n = sep.find((w) => SEG_NUM_RE.test(w))
+    if (n == null) return false
+    const num = parseInt(n, 10)
+    const afterNum = sep[sep.indexOf(n) + 1]
+    const pg = pieceGramsOf(target)
+    let grams = null
+    if (afterNum && SEG_UNIT_WORDS.has(afterNum)) grams = num
+    else if (afterNum && SEG_PIECE_WORDS.test(afterNum) && pg) grams = num * pg
+    else if (!afterNum && sep.length === 1) {
+      // голое число: рядом со штучным продуктом — штуки, иначе только
+      // «взрослые» числа (≥20) считаем граммами («грудка 100»), мелкие
+      // — проценты из транскрипта, не вес
+      if (pg) grams = num * pg
+      else if (num >= 20) grams = num
+    }
+    if (grams == null) return false
+    target.grams = clampGrams(grams)
+    usedSep.add(blockIdx)
+    return true
+  }
+
+  for (let k = 0; k < blocks.length; k++) {
+    const b = blocks[k]
+    if (b.type !== 'run') continue
+    const products = segmentRunProducts(b.words, qDigits)
+    if (!products.length) continue
+
+    // разделитель ПОСЛЕ погона — последнему продукту («грудка 200 грамм»);
+    // не отдан — достанется первому продукту следующего погона
+    applySep(k + 1, products[products.length - 1])
+    // разделитель ПЕРЕД погоном — первому продукту («300 грамм свинины»,
+    // «2 яйца»), если предыдущий погон его не забрал
+    applySep(k - 1, products[0])
+
+    // посуда внутри погона («тарелка борща», «большая кружка кофе») —
+    // объём первому продукту без веса; явная граммовка сильнее
+    if (products.some((p) => p.grams == null)) {
+      const vol = volumeFromSegment(b.words.join(' '))
+      if (vol) {
+        const target = products.find((p) => p.grams == null)
+        target.grams = clampGrams(vol)
+      }
+    }
+
+    for (const p of products) {
+      const src = p.src
+      const dish = src.n ? src : null
+      const food = dish ? null : src
+      const item = {
+        name: src.n || src.name,
+        emoji: src.e || src.emoji || '🍽️',
+        kcal100: dish ? dish.kcal100 : food.kcal,
+        p: dish ? dish.p : food.p,
+        f: dish ? dish.f : food.f,
+        c: dish ? dish.c : food.c,
+        fib: (dish ? dish.fib : food.fib) || 0,
+        sug: (dish ? dish.sug : food.sug) || 0,
+        source: 'base',
+      }
+      const dg = dish ? dish.dg : food.defaultGrams
+      if (dg) item.defaultGrams = dg
+      if (p.grams != null) {
+        item.grams = p.grams
+        item.defaultGrams = p.grams
+      }
+      matched.push(item)
+    }
+  }
+
+  // Посуда в соседнем погоне без чисел: «салат 2 тарелки», «кофе большая
+  // кружка» (сегмент из одного продукта) — объём единственному продукту
+  // без веса, как в прежнем разборе
+  if (matched.length === 1 && matched[0].grams == null) {
+    const vol = volumeFromSegment(norm)
+    if (vol) {
+      matched[0].grams = clampGrams(vol)
+      matched[0].defaultGrams = matched[0].grams
+    }
+  }
+  return matched
+}
+
 function localParsePhrase(raw) {
   const text0 = String(raw || '').trim()
   if (!text0) return null
@@ -397,6 +675,17 @@ function localParsePhrase(raw) {
   const parts = text0.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
   const items = []
   for (const part of parts) {
+    // Погонный разбор: сегмент без запятых может содержать несколько
+    // продуктов подряд (диктовка без пауз — транскрипт без пунктуации)
+    const multi = parseSegmentMulti(part)
+    if (multi.length) {
+      for (const it of multi) {
+        items.push(it)
+        if (items.length >= 5) break
+      }
+      if (items.length >= 5) break
+      continue
+    }
     const it = parsePhraseSegment(part)
     if (it) {
       items.push(it)
