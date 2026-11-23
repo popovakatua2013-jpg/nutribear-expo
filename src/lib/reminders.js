@@ -226,26 +226,65 @@ export async function scheduleMorningSummary() {
 }
 
 // ── Голодание: сигнал о конце окна без еды ──────────────────────
-// Одноразовое уведомление на момент достижения цели (вопрос Кати
-// 19.11: «по окончанию таймера он сам отключается? есть ли
-// уведомление или звуковые сигналы?»). Таймер не останавливается —
-// честно считает дальше, а о достижении цели сигналит пуш со звуком:
-// срабатывает даже когда приложение закрыто. Планируется при
-// старте/остановке сеанса (подписка на стор в агенте ниже) и
-// перепланируется вместе с остальными напоминаниями —
-// rescheduleReminders делает cancelAll и сносит его тоже.
+// Два одноразовых уведомления: за 30 минут до конца («собирайте еду»)
+// и в момент достижения цели («можно есть», со звуком). Срабатывают
+// даже когда приложение закрыто. Планируются при старте/остановке
+// сеанса (подписка на стор в агенте ниже) и перепланируются вместе
+// с остальными напоминаниями — rescheduleReminders делает cancelAll
+// и сносит их тоже. Вопрос Кати 19.11 и 23.11 («запускаем голод на
+// 16 ч, по истечении времени не приходит ни одного уведомления»):
+// кроме пушей экран голодания при старте сам проверяет разрешение
+// на уведомления — без него сигнал не планировался молча
+
+// За сколько до конца окна предупредить («скоро можно есть»)
+export const FAST_SOON_MS = 30 * 60 * 1000
+
+// Чистая функция (покрывается тестами): моменты пушей для сеанса.
+// endMs — конец голода (старт + fastHours), soonMs — за 30 минут до него;
+// soonMs = null, если момент уже прошёл. null — сеанса нет/цель уже пройдена
+export function fastingSignalTimes(startedAt, fastHours, now = Date.now()) {
+  const start = Number(startedAt)
+  const hours = Number(fastHours)
+  if (!Number.isFinite(start) || !Number.isFinite(hours) || start <= 0 || hours <= 0) {
+    return null
+  }
+  const endMs = start + hours * 3600000
+  if (endMs <= now) return null // цель уже пройдена — баннер покажет экран
+  const soonMs = endMs - FAST_SOON_MS
+  return { soonMs: soonMs > now ? soonMs : null, endMs }
+}
+
 export async function scheduleFastingGoal() {
   if (Platform.OS === 'web' || !Notifications) return
   const { startedAt, fastHours } = useFastingStore.getState()
   try {
     await Notifications.cancelScheduledNotificationAsync('fast-goal')
+    await Notifications.cancelScheduledNotificationAsync('fast-soon')
   } catch {}
-  if (!startedAt || !fastHours) return // сеанса нет — сигнал не нужен
-  const fireMs = startedAt + fastHours * 3600000
-  if (fireMs <= Date.now()) return // цель уже пройдена — баннер покажет экран
+  const signals = fastingSignalTimes(startedAt, fastHours)
+  if (!signals) return // сеанса нет или цель уже пройдена
   const granted = await requestNotifPermission()
   if (!granted) return
   try {
+    // Предупреждение за 30 минут: «скоро можно есть» — полезно само по
+    // себе и страхует от сбоев точных будильников Android 12+ (SCHEDULE_
+    // EXACT_ALARM): даже если основной сигнал запоздает, этот — тоже дойдёт
+    if (signals.soonMs) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'fast-soon',
+        content: {
+          title: 'Голод почти закончен',
+          body: 'Через 30 минут окно откроется — можно планировать приём пищи 🐻',
+          sound: 'default',
+          data: { kind: 'fast-goal' },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: new Date(signals.soonMs),
+          channelId: 'fast',
+        },
+      })
+    }
     await Notifications.scheduleNotificationAsync({
       identifier: 'fast-goal',
       content: {
@@ -256,7 +295,7 @@ export async function scheduleFastingGoal() {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: new Date(fireMs),
+        date: new Date(signals.endMs),
         channelId: 'fast',
       },
     })

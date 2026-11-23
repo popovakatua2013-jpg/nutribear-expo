@@ -10,9 +10,9 @@
 // по отзыву: вес живёт в «Динамике веса» выше, дубль не нужен. Тап по
 // строке открывает окно записи: значения подставлены последними,
 // отмечаем галочками, что измерили, меняем то, что нужно; в окне —
-// «+ Свой замер». Ниже — карточка «Общий прогресс» (датчик ScoreGauge,
-// подпись и звёзды — bodyProgressScore). Поверхность карточек —
-// фиолетовая, одинаковая с ИМТ-блоком выше.
+// «+ Свой замер». Карточка «Общий прогресс» (датчик, звёзды) удалена
+// по решению Кати 23.11 («удали вкладка тело — общий прогресс»). Поверхность
+// карточек — фиолетовая, одинаковая с ИМТ-блоком выше.
 // История записей: журнал всегда лежал в хранилище (по нему «Сейчас»,
 // «Изменение» и линия), но смотреть его было негде (вопрос Кати:
 // «ввожу повторно данные — где хранится история?») — теперь в футере
@@ -21,9 +21,8 @@
 // Крестик секции (отзыв Кати: «добавь возможность закрыть на крестик»):
 // в шапке отдельная круглая кнопка — развёрнута: крестик сворачивает
 // блок, свёрнута: шеврон вниз разворачивает обратно; тап по всей шапке
-// работал и раньше. Обрезанные шапки (отзыв Кати: «Общий прогресс
-// шапка обрезана»): подзаголовок секции и заголовок карточки прогресса
-// переносятся на 2 строки, у описания баллов лимит строк снят — текст
+// работал и раньше. Обрезанные шапки (подзаголовок секции): подзаголовок
+// секции переносится на 2 строки, у описания баллов лимит строк снят — текст
 // всегда виден целиком.
 
 import { useEffect, useMemo, useState } from 'react'
@@ -39,8 +38,6 @@ import {
   Info,
   Ruler,
   Shirt,
-  Star,
-  StarHalf,
   Trash2,
   Waves,
   X,
@@ -48,8 +45,7 @@ import {
 } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
-import { bodyProgressScore, fmtDecimal } from '@/lib/data/bmi'
-import { ScoreGauge } from './ScoreGauge'
+import { fmtDecimal } from '@/lib/data/bmi'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { MeasurementHistoryModal } from './MeasurementHistoryModal'
 import { useToast } from '../ui/Toast'
@@ -103,10 +99,6 @@ export function MeasurementsCard() {
   // Скрытые замеры (снятые галочки в «Записать замеры») — не видны
   // в плитках и таблице, но данные хранятся (отзыв Кати)
   const hiddenKeys = useProfileStore((s) => s.hiddenMeasurements)
-  const weightKg = useProfileStore((s) => s.weightKg)
-  const heightCm = useProfileStore((s) => s.heightCm)
-  const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
-  const weights = useProfileStore((s) => s.weights)
   const [open, setOpen] = useState(false)
   // Окно истории записей (кнопка в футере таблицы)
   const [histOpen, setHistOpen] = useState(false)
@@ -124,24 +116,6 @@ export function MeasurementsCard() {
     () => Object.values(measurements).some((l) => Array.isArray(l) && l.length > 0),
     [measurements]
   )
-
-  // Оценка общего прогресса: вес к цели + динамика талии/живота +
-  // регулярность замеров (формула в lib/data/bmi.js). Скрытые замеры
-  // не считаем — их убрали осознанно
-  const visibleMeasurements = useMemo(() => {
-    const out = {}
-    for (const [k, v] of Object.entries(measurements)) {
-      if (!hiddenKeys.includes(k)) out[k] = v
-    }
-    return out
-  }, [measurements, hiddenKeys])
-  const { score, caption, stars } = bodyProgressScore({
-    weightKg,
-    weights,
-    goalWeightKg,
-    heightCm,
-    measurements: visibleMeasurements,
-  })
 
   // Строки таблицы: замеры в сантиметрах. Дельта — к предыдущему
   // измерению; тон — «минус хорошо» для талии/живота (см. deltaTone);
@@ -415,30 +389,6 @@ export function MeasurementsCard() {
           </Text>
         </View>
       )}
-
-      {/* Общий прогресс: датчик + подпись + звёзды (85 → 4.5★, как на макете) */}
-      <View className="flex-row items-center gap-2 rounded-2xl p-3.5" style={CARD}>
-        <ScoreGauge score={score} />
-        <View className="min-w-0 flex-1">
-          <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
-            Общий прогресс
-          </Text>
-          <Text
-            numberOfLines={2}
-            maxFontSizeMultiplier={1.2}
-            className="mt-0.5 font-bold text-[20px] text-bear-text"
-          >
-            {caption}
-          </Text>
-          <Stars value={stars} />
-          <Text
-            maxFontSizeMultiplier={1.25}
-            className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim"
-          >
-            Вес к цели — до 60 баллов, талия и живот — до 25, регулярность замеров и взвешиваний — до 15
-          </Text>
-        </View>
-      </View>
         </>
       )}
 
@@ -448,29 +398,6 @@ export function MeasurementsCard() {
         onClose={() => setHistOpen(false)}
         items={histItems}
       />
-    </View>
-  )
-}
-
-// Звёзды 0…5 с половинками: 4.5 — четыре золотых + пол-звезды
-function Stars({ value }) {
-  const full = Math.floor(value)
-  const half = value - full >= 0.5
-  const DIM = 'rgba(255,255,255,0.14)'
-  return (
-    <View className="mt-1 flex-row items-center gap-0.5" accessibilityLabel={`Оценка: ${value} из 5 звёзд`}>
-      {[0, 1, 2, 3, 4].map((i) => {
-        if (i < full) return <Star key={i} size={15} color="#FACC15" fill="#FACC15" />
-        if (i === full && half) {
-          return (
-            <View key={i} className="h-[13px] w-[13px] items-center justify-center">
-              <Star size={15} color={DIM} fill={DIM} style={{ position: 'absolute' }} />
-              <StarHalf size={15} color="#FACC15" fill="#FACC15" />
-            </View>
-          )
-        }
-        return <Star key={i} size={15} color={DIM} fill={DIM} />
-      })}
     </View>
   )
 }

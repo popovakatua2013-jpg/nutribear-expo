@@ -165,6 +165,32 @@ function stopHealthConnect() {
   }
 }
 
+// Мгновенная синхронизация «прямо сейчас» (отзыв Кати 23.11: «мне нужно —
+// пользователь открыл приложение — автоматически обновились шаги»):
+// стартуем включённые источники и сразу опрашиваем HC/датчик. Идемпотентно:
+// таймеры/подписки не дублируются (start* сами проверяют), безопасно
+// звать на каждом фокусе Главной и после гидратации стора
+export function kickPedometerSync() {
+  try {
+    const s = useActivityStore.getState()
+    if (s.pedometerEnabled) {
+      if (Platform.OS === 'ios') {
+        pollToday()
+      } else if (timer || subscription) {
+        subscribeLive()
+      } else {
+        startSensor()
+      }
+    }
+    if (s.healthConnectEnabled && Platform.OS === 'android') {
+      if (hcTimer) pollHealthConnect()
+      else startHealthConnect()
+    }
+  } catch {
+    // Топливо диагностики не жжём: провал — молча, на следующем тике повторится
+  }
+}
+
 // Запускается один раз из корневого макета. Следит за тумблерами
 // «Встроенный шагомер» и «Health Connect» и сменой дня: на новом дне сумма
 // с нуля, подписка перезапускается (база событий обнуляется), на iOS —
@@ -232,6 +258,18 @@ export function startPedometerAgent() {
   const s = useActivityStore.getState()
   if (s.pedometerEnabled) startSensor()
   if (s.healthConnectEnabled) startHealthConnect()
+  // Гонка гидратации: эффект макета стартует раньше, чем zustand persist
+  // дочитает AsyncStorage, — на момент старта тумблеры могут быть ещё
+  // дефолтными (false), и источники не запускались до тумблера вручную.
+  // Как только хранилище восстановилось — стартуем ещё раз; если уже
+  // гидратирован (перезапуск эффекта) — кик сразу
+  try {
+    if (useActivityStore.persist?.hasHydrated()) {
+      kickPedometerSync()
+    } else {
+      useActivityStore.persist?.onFinishHydration?.(() => kickPedometerSync())
+    }
+  } catch {}
   return () => {
     try {
       appSub.remove()

@@ -46,6 +46,7 @@ import { AiChat } from '@/components/home/AiChat'
 import { FoodInsight } from '@/components/home/FoodInsight'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
+import { kickPedometerSync } from '@/lib/pedometer'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useCycleStore } from '@/store/useCycleStore'
@@ -198,18 +199,22 @@ export default function HomeScreen() {
   // Окно «Добавить приём пищи» после онбординга больше НЕ открывается
   // само: после регистрации — сразу главная страница (отзыв Кати)
 
-  // Уход с экрана закрывает модалки (иначе они висят над другими вкладками)
+  // Уход с экрана закрывает модалки (иначе они висят над другими вкладками).
+  // Каждый фокус Главной — мгновенный кик шагомера (отзыв Кати 23.11:
+  // «пользователь открыл приложение — шаги обновились сами»): агент
+  // стартует включённые источники и сразу опрашивает датчик/Health Connect,
+  // без выкл/вкл тумблера в «Ещё»
   useFocusEffect(
-    useCallback(
-      () => () => {
+    useCallback(() => {
+      kickPedometerSync()
+      return () => {
         setAddOpen(false)
         setAllOpen(false)
         setWaterOpen(false)
         setStepsOpen(false)
         setActivityOpen(false)
-      },
-      []
-    )
+      }
+    }, [])
   )
 
   // Тап по уведомлению открывает нужное окно (напоминания о воде/еде).

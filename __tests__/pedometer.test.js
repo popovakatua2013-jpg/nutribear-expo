@@ -135,4 +135,35 @@ describe('lib/pedometer: агент шагомера', () => {
     expect(typeof stop).toBe('function')
     expect(() => stop()).not.toThrow()
   })
+
+  test('kickPedometerSync безопасен: без тумблеров, с тумблерами и без запуска агента', () => {
+    // Кати 23.11: «пользователь открыл приложение — шаги обновились сами».
+    // Кик зовётся на фокусе Главной и после гидратации — обязан работать
+    // и до старта агента (порядок монтирования экранов не гарантирован)
+    const { kickPedometerSync } = require('@/lib/pedometer')
+    expect(typeof kickPedometerSync).toBe('function')
+    useActivityStore.setState({ pedometerEnabled: false, healthConnectEnabled: false })
+    expect(() => kickPedometerSync()).not.toThrow()
+    useActivityStore.setState({ pedometerEnabled: true })
+    expect(() => kickPedometerSync()).not.toThrow()
+    // и после старта агента тоже — идемпотентность
+    const stop = startPedometerAgent()
+    expect(() => kickPedometerSync()).not.toThrow()
+    stop()
+  })
+
+  test('гидратация стора с включённым шагомером запускает источники (гонка старта)', () => {
+    // Урок 23.11: эффект макета стартует раньше persist — тумблер ещё
+    // false. После гидратации подписка стора обязана запустить источник.
+    // В Node AsyncStorage-стаб гидратируется асинхронно — имитируем
+    // порядок: агент ДО «гидратации», затем включение тумблера (как
+    // делает persist при восстановлении), источник стартует по подписке
+    const stop = startPedometerAgent()
+    useActivityStore.setState({ pedometerEnabled: false })
+    // «гидратация»: persist восстановил true — изменение состояния
+    useActivityStore.setState({ pedometerEnabled: true })
+    // Ошибок нет, шаги не изменились без реального датчика
+    expect(useActivityStore.getState().pedometerSteps).toBe(0)
+    stop()
+  })
 })

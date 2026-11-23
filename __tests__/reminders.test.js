@@ -107,6 +107,34 @@ describe('lib/reminders: экспорт и публичное API', () => {
     useFastingStore.setState({ startedAt: null, fastHours: null })
   })
 
+  test('fastingSignalTimes: 16-часовой голод — сигнал за 30 минут и в конце', () => {
+    const { fastingSignalTimes, FAST_SOON_MS } = reminders
+    const start = Date.now()
+    const s = fastingSignalTimes(start, 16, start + 60000)
+    expect(s.endMs).toBe(start + 16 * 3600000)
+    expect(s.soonMs).toBe(start + 16 * 3600000 - FAST_SOON_MS)
+    expect(FAST_SOON_MS).toBe(30 * 60 * 1000)
+  })
+
+  test('fastingSignalTimes: без сеанса или цель уже пройдена — null', () => {
+    const { fastingSignalTimes } = reminders
+    const now = Date.now()
+    expect(fastingSignalTimes(null, 16, now)).toBeNull()
+    expect(fastingSignalTimes(0, 16, now)).toBeNull()
+    expect(fastingSignalTimes(now - 3600000, 0, now)).toBeNull()
+    // сеанс длиной 1 ч, стартовали 2 ч назад — конец уже в прошлом
+    expect(fastingSignalTimes(now - 2 * 3600000, 1, now)).toBeNull()
+  })
+
+  test('fastingSignalTimes: если до конца меньше 30 минут — предупреждение уже не планируется', () => {
+    const { fastingSignalTimes } = reminders
+    const now = Date.now()
+    // конец через 10 минут — soonMs в прошлом → null, а конец — в будущем
+    const s = fastingSignalTimes(now - 50 * 60000, 1, now)
+    expect(s.soonMs).toBeNull()
+    expect(s.endMs).toBeGreaterThan(now)
+  })
+
   test('startReminderAgent возвращает функцию остановки (без Notifications)', () => {
     // Notifications = null → функция возвращает no-op
     const stop = reminders.startReminderAgent()

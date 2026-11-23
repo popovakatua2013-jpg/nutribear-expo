@@ -1,12 +1,16 @@
 // GDPR: экспорт всех данных пользователя (JSON), восстановление из
 // копии. Персональные данные о здоровье — особая категория:
 // пользователь имеет право на переносимость данных (экспорт + импорт)
-// и полное удаление (кнопка в «Данных»). Длинный юридический абзац о
-// правах убран из карточки — теперь это документ «Политика
-// конфиденциальности» в окне «Ещё → Правовые документы» (отзыв Кати:
-// «можно ли переписать их в документы»). Режим embedded (редизайн
-// «Ещё» в групповое меню): без своей карточки и шапки — содержимое
-// встраивается в строку меню «Приватность и данные».
+// и полное удаление (кнопка в «Данных»).
+//
+// Простыми словами (отзыв Кати 23.11: «это для разработчика или обычного
+// пользователя? — даже я не могу разобраться как это работает»): это
+// резервная копия для ОБЫЧНОГО пользователя. «Сохранить» — выгружает один
+// файл со всеми данными, его удобно отправить себе в облако/на почту.
+// «Восстановить» — читает такой файл и возвращает все данные обратно
+// (например, на новом телефоне). Никаких технических знаний не нужно.
+// Режим embedded (редизайн «Ещё» в групповое меню): без своей карточки
+// и шапки — содержимое встраивается в строку меню «Резервная копия».
 
 import { Alert, Pressable, Text, View } from 'react-native'
 import { FileDown, FileUp, ShieldCheck } from 'lucide-react-native'
@@ -109,19 +113,27 @@ export function DataPortability({ embedded = false }) {
 
   const content = (
     <>
+      {/* Простое объяснение «что это и зачем» (отзыв Кати 23.11:
+          «даже я не могу разобраться как это работает») */}
+      <Text className="mt-2 font-sans text-[14.5px] leading-snug text-bear-sub">
+        Резервная копия — один файл со всеми вашими данными: дневник, вода,
+        вес и замеры, рецепты, свои продукты, фото. Сохраните файл в облако —
+        на новом телефоне или после сбоя всё вернётся одним нажатием.
+      </Text>
+
       <Pressable
         onPress={confirmExport}
         accessibilityRole="button"
-        accessibilityLabel="Сохранить копию данных в JSON-файл"
+        accessibilityLabel="Сохранить резервную копию данных"
         className="mt-3 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
         <FileDown size={20} color="#38bdf8" />
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[17.5px] text-bear-text">
-            Сохранить копию (JSON)
+            Сохранить копию в файл
           </Text>
           <Text className="font-sans text-[15px] text-bear-sub2">
-            дневник, вода, вес, рецепты, свои продукты, комбо, фото
+            телефон предложит, куда отправить файл: облако, почта, память
           </Text>
         </View>
       </Pressable>
@@ -129,7 +141,7 @@ export function DataPortability({ embedded = false }) {
       <Pressable
         onPress={importBackup}
         accessibilityRole="button"
-        accessibilityLabel="Восстановить данные из копии"
+        accessibilityLabel="Восстановить данные из резервной копии"
         className="mt-2 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
         <FileUp size={20} color="#a78bfa" />
@@ -138,7 +150,7 @@ export function DataPortability({ embedded = false }) {
             Восстановить из копии
           </Text>
           <Text className="font-sans text-[15px] text-bear-sub2">
-            выбрать JSON-файл — например, на новом телефоне
+            выбрать сохранённый файл — все данные вернутся
           </Text>
         </View>
       </Pressable>
@@ -147,16 +159,16 @@ export function DataPortability({ embedded = false }) {
 
   // Встроено в строку меню — только содержимое
   if (embedded) {
-    return <View accessibilityLabel="Приватность">{content}</View>
+    return <View accessibilityLabel="Резервная копия">{content}</View>
   }
 
   return (
     <CollapsibleCard
       storageKey="data-portability"
-      accessibilityLabel="Приватность"
+      accessibilityLabel="Резервная копия"
       icon={<ShieldCheck size={20} color="#4ade80" />}
-      title="Приватность и данные"
-      summary="экспорт · восстановление"
+      title="Резервная копия"
+      summary="сохранить · восстановить"
     >
       {content}
     </CollapsibleCard>
