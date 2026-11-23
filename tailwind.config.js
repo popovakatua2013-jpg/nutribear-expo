@@ -40,11 +40,12 @@ module.exports = {
           soft: bearVar('soft', '#AEB9D9'),
           bright: bearVar('bright', '#C7D2F0'),
           link: bearVar('link', '#6C8CFF'),
-          // Акценты (кнопки, тумблеры, активные пилюли). У всех тем,
-          // кроме «Чёрно-лимонной», — фирменный фиолетовый #7B6CF6;
-          // accentOn — цвет текста/иконки НА акцентной поверхности
-          // (у лимонной темы он тёмный). Цвета в style-пропсах берутся
-          // из useThemeColors (src/lib/use-theme.js)
+          // Акценты (кнопки, тумблеры, активные пилюли, свечения рамок).
+          // Значения ниже — «Классика» (фирменный фиолетовый #7B6CF6);
+          // у неоновых тем они СВОИ — см. src/lib/themes.js. accentOn —
+          // цвет текста/иконки НА акцентной поверхности (у ярких
+          // лайма/циана/янтаря он тёмный). Цвета в style-пропсах
+          // берутся из useThemeColors (src/lib/use-theme.js)
           accent: bearVar('accent', '#7B6CF6'),
           accentBright: bearVar('accentBright', '#A78BFA'),
           accentSoft: bearVar('accentSoft', '#C4B5FD'),

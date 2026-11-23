@@ -16,6 +16,7 @@ import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react
 import { ChevronDown, ChevronUp, Leaf } from 'lucide-react-native'
 import { ProgressBar } from '../ui/ProgressBar'
 import { BodyChip } from '../ui/BodyChip'
+import { NeonCard } from '../ui/NeonCard'
 import { formatNum } from '@/lib/format'
 import { round1 } from '@/lib/data/bju'
 import {
@@ -142,9 +143,10 @@ export function NutritionRating() {
   const visibleRows = expanded ? rows : rows.slice(0, 3)
 
   return (
-    <View
+    <NeonCard
       accessibilityLabel="Рейтинг питания"
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
+      // Рамка — градиент цвета темы (NeonCard): яркие темы с макета
+      className="p-5"
     >
       {/* шапка: заголовок + переключатель День/Месяц */}
       <View className="flex-row items-center justify-between gap-2">
@@ -285,6 +287,6 @@ export function NutritionRating() {
             : `За ${monthName} записей ещё нет — переключитесь на «День» или добавьте блюда 🐻`}
         </Text>
       )}
-    </View>
+    </NeonCard>
   )
 }

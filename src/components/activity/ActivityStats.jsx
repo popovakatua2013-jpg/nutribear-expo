@@ -241,7 +241,9 @@ export function ActivityStats({
     {
       colors: {
         border: 'border-violet-400/25',
-        icon: [themeColors.accentBright, '#9333EA'],
+        // Плитка «Активность» — градиентом активной темы (правка Кати
+        // «сделай в точности как на скрине»: плитки светятся неоном темы)
+        icon: [themeColors.accentBright, themeColors.accent],
         tint: themeColors.accentBright,
       },
       Icon: Dumbbell,

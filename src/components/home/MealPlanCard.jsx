@@ -53,6 +53,7 @@ import { PlanHeader } from './PlanHeader'
 import { HistoryModal } from './HistoryModal'
 import { EditEntryModal } from '../food/EditEntryModal'
 import { MealTabs } from '../food/MealTabs'
+import { NeonCard } from '../ui/NeonCard'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { MEALS, customMealCard, getMeal } from '@/lib/data/meals'
@@ -440,9 +441,10 @@ export function MealPlanCard({ onAdd, onViewAll }) {
   }
 
   return (
-    <View
+    <NeonCard
       accessibilityLabel="Приёмы пищи на сегодня"
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-4"
+      // Рамка — градиент цвета темы (NeonCard): яркие темы с макета
+      className="p-4"
     >
       <PlanHeader
         onViewAll={onViewAll}
@@ -627,6 +629,6 @@ export function MealPlanCard({ onAdd, onViewAll }) {
           mealName={edit.mealName}
         />
       )}
-    </View>
+    </NeonCard>
   )
 }

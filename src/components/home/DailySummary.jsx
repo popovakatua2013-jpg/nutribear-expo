@@ -72,6 +72,7 @@ import { DAY_TYPES } from '@/lib/data/dayContext'
 import { dayKeyOf as cycleDayKeyOf } from '@/store/useCycleStore'
 import { useToast } from '../ui/Toast'
 import { BodyChip } from '../ui/BodyChip'
+import { NeonCard } from '../ui/NeonCard'
 import { Check, RotateCcw } from 'lucide-react-native'
 import { useThemeColors } from '@/lib/use-theme'
 
@@ -220,8 +221,10 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
           {gradient && (
             <Defs>
               <LinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#8B5CF6" />
-                <Stop offset="1" stopColor={themeColors.link} />
+                {/* Дуга кольца — градиент цвета активной темы: у ярких тем
+                    с макета кольца светятся неоном, а не фиолетовым */}
+                <Stop offset="0" stopColor={themeColors.accentBright} />
+                <Stop offset="1" stopColor={themeColors.accent} />
               </LinearGradient>
             </Defs>
           )}
@@ -459,22 +462,24 @@ export function DailySummary({
   const BurnZone = onEditBurnGoal ? Pressable : View
 
   const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
-  // Тон блока «Остаток»: зелёный — остаток в плюсе (можно ещё съесть),
+  // Тон блока «Остаток»: акцент темы — остаток в плюсе (можно ещё
+  // съесть; как на макете: крупная цифра светится цветом темы),
   // жёлтый — небольшой перебор (до 100 ккал — погрешность дня),
-  // красный — больший перебор. Цели нет — зелёный (сравнивать не с чем)
+  // красный — больший перебор. Цели нет — акцент темы (сравнивать не с чем)
   const remTone =
     rem == null || rem >= 0
-      ? { text: '#34D399' }
+      ? { text: themeColors.accentBright }
       : rem >= -100
         ? { text: '#FBBF24' }
         : { text: '#FB7185' }
 
   return (
-    <View
+    <NeonCard
       accessibilityLabel="Сводка за день"
       // Без mx — ширина ровно та же, что у «Приёмов пищи» и остальных
-      // блоков Главной (отзыв Кати: блоки были разной ширины)
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-3"
+      // блоков Главной (отзыв Кати: блоки были разной ширины).
+      // Рамка — градиент цвета темы (NeonCard): яркие темы с макета
+      className="p-3"
     >
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
@@ -636,7 +641,7 @@ export function DailySummary({
             : 'Отметить особый день: командировка или праздник'
         }
         className={`mt-2.5 flex-row items-center gap-1.5 self-center rounded-full px-3.5 py-2 active:opacity-75 ${
-          dayMark ? '' : 'border border-dashed border-[#A45BFF]/60 bg-[#A45BFF]/10'
+          dayMark ? '' : 'border border-dashed border-bear-accentBorder bg-bear-accentFaint'
         }`}
         style={
           dayMark
@@ -1038,7 +1043,7 @@ export function DailySummary({
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </NeonCard>
   )
 }
 

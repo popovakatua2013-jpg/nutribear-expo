@@ -63,8 +63,10 @@ export function Greeting() {
             </Text>
           </View>
         )}
-        <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-          <Text maxFontSizeMultiplier={1.25} className="font-medium text-[15px] text-bear-soft">
+        <View
+          className="rounded-full border border-bear-accentBorder bg-bear-accentFaint px-3 py-1.5"
+        >
+          <Text maxFontSizeMultiplier={1.25} className="font-medium text-[15px] text-bear-bright">
             {dateLabel}
           </Text>
         </View>

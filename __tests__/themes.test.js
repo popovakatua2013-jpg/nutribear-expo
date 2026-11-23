@@ -1,10 +1,12 @@
 // Темы оформления (Premium-фича 23.11 «усилить Premium»; правка Кати
-// 24.11: «заменить графит тему на черно лимонный» — вместо «Графита»
-// появилась «Чёрно-лимонная» с лимонными акцентами): структура палитры,
-// гейтинг по подписке (resolveThemeId), карта CSS-переменных
-// (themeToCssVars) и СТРАХОВКА соответствия fallback-значений
-// tailwind.config.js классической теме — если они разъедутся,
-// поддеревья без переменных (окно ошибки, оверлеи) потеряют цвета.
+// 24.11: «заменить графит тему на черно лимонный»; правка Кати 24.11
+// «сделай в точности как на скрине» — блеклые темы заменены на ПЯТЬ
+// ярких неоновых с макета + светлая «Кремовая»): структура палитры,
+// гейтинг по подписке (resolveThemeId) с переездом старых выборов
+// (THEME_ROLL_FORWARD), карта CSS-переменных (themeToCssVars) и
+// СТРАХОВКА соответствия fallback-значений tailwind.config.js
+// классической теме — если они разъедутся, поддеревья без переменных
+// (окно ошибки, оверлеи) потеряют цвета.
 
 const fs = require('fs')
 const path = require('path')
@@ -14,19 +16,54 @@ const {
   THEME_ORDER,
   THEME_TOKENS,
   THEMES,
+  THEME_ROLL_FORWARD,
   resolveThemeId,
   themeToCssVars,
 } = require('@/lib/themes')
 
+// Относительная яркость цвета (WCAG) — для проверки контраста светлой темы
+function luminance(hex) {
+  const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
+  if (!m) throw new Error(`не hex-цвет: ${hex}`)
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
+  const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+}
+function contrast(a, b) {
+  const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+  return (l1 + 0.05) / (l2 + 0.05)
+}
+
 describe('THEMES: структура палитры', () => {
-  test('пять тем, «Классика» — первая и бесплатная', () => {
-    expect(THEME_ORDER).toEqual(['classic', 'lemon', 'forest', 'ocean', 'plum'])
+  test('шесть тем: «Классика» + пять ярких с макета, «Классика» бесплатная', () => {
+    expect(THEME_ORDER).toEqual([
+      'classic',
+      'neonLime',
+      'neonBlue',
+      'neonPurple',
+      'neonCyan',
+      'cream',
+    ])
     expect(THEMES.classic.premium).toBe(false)
     expect(DEFAULT_THEME_ID).toBe('classic')
-    // «Графит» заменена на «Чёрно-лимонную» (просьба Кати 24.11)
+    // Блеклые темы сняты с макета — их больше нет
+    expect(THEMES.lemon).toBeUndefined()
     expect(THEMES.graphite).toBeUndefined()
-    expect(THEMES.lemon.premium).toBe(true)
-    expect(THEMES.lemon.title).toBe('Чёрно-лимонная')
+    expect(THEMES.forest).toBeUndefined()
+    expect(THEMES.ocean).toBeUndefined()
+    expect(THEMES.plum).toBeUndefined()
+    // Новые темы с макета — премиум
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+      expect(THEMES[id].premium).toBe(true)
+    }
+  })
+
+  test('названия новых тем — как на макете', () => {
+    expect(THEMES.neonLime.title).toBe('Неон-лайм')
+    expect(THEMES.neonBlue.title).toBe('Неон-синий')
+    expect(THEMES.neonPurple.title).toBe('Неон-фиолетовый')
+    expect(THEMES.neonCyan.title).toBe('Неон-циан')
+    expect(THEMES.cream.title).toBe('Кремовая')
   })
 
   test('все премиум-темы помечены premium', () => {
@@ -39,7 +76,7 @@ describe('THEMES: структура палитры', () => {
     for (const id of THEME_ORDER) {
       const theme = THEMES[id]
       expect(theme.id).toBe(id)
-      // названия с дефисом («Чёрно-лимонная») тоже валидны
+      // названия с дефисом («Неон-фиолетовый») тоже валидны
       expect(theme.title).toMatch(/^[А-ЯЁ][а-яёА-ЯЁ-]+$/)
       for (const token of THEME_TOKENS) {
         expect(typeof theme.colors[token]).toBe('string')
@@ -84,44 +121,74 @@ describe('THEMES: структура палитры', () => {
     })
   })
 
-  test('«Чёрно-лимонная»: чёрный фон, лимонные акценты, тёмный текст на акценте', () => {
-    const c = THEMES.lemon.colors
-    // Чёрный фон и поверхности
-    expect(c.bg).toBe('#060606')
-    expect(c.card).toBe('#121212')
-    expect(c.deep).toBe('#040404')
-    // Лимонные кнопки/пилюли/ссылки — светло-жёлто-зелёные
-    expect(c.accent).toBe('#E4F93B')
-    expect(c.accentBright).toBe('#F0FA6B')
-    expect(c.link).toBe('#E4F93B')
-    // Текст НА акцентной кнопке — тёмный (белый на лимоне не читается)
-    expect(c.accentOn).toBe('#191D05')
-    // Подсветки/обводки — те же лимонные оттенки
-    expect(c.accentFaint2).toBe('rgba(228,240,70,0.16)')
-    expect(c.accentBorder).toBe('rgba(228,240,70,0.42)')
+  test('неоновые тёмные темы: свой яркий акцент у каждой, «свечение» рамок', () => {
+    const accents = {
+      neonLime: '#C9F31D',
+      neonBlue: '#2E9EFF',
+      neonPurple: '#C44BF8',
+      neonCyan: '#23E5C8',
+    }
+    for (const [id, accent] of Object.entries(accents)) {
+      const c = THEMES[id].colors
+      // Кнопки/тумблеры/пилюли и ссылки — цвет темы
+      expect(c.accent).toBe(accent)
+      expect(c.link).toBe(accent)
+      // Рамки главных карточек («свечение») — яркие: альфа ≥ 0.4
+      const m = c.bodyLine.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/)
+      expect(m).not.toBeNull()
+      expect(Number(m[4])).toBeGreaterThanOrEqual(0.4)
+      // Подсветки — того же цвета, что акцент
+      expect(c.accentFaint).toContain(m.slice(1, 4).join(','))
+    }
   })
 
-  test('у остальных тем — общий фирменный фиолетовый акцент', () => {
-    for (const id of ['classic', 'forest', 'ocean', 'plum']) {
-      expect(THEMES[id].colors.accent).toBe('#7B6CF6')
-      expect(THEMES[id].colors.accentBright).toBe('#A78BFA')
-      expect(THEMES[id].colors.accentOn).toBe('#FFFFFF')
+  test('текст НА акценте: тёмный у ярких лайма/циана/янтаря, белый у синего/фиолетового', () => {
+    expect(THEMES.neonLime.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
+    expect(luminance(THEMES.neonLime.colors.accentOn)).toBeLessThan(0.1)
+    expect(luminance(THEMES.neonCyan.colors.accentOn)).toBeLessThan(0.1)
+    expect(THEMES.cream.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
+    expect(luminance(THEMES.cream.colors.accentOn)).toBeLessThan(0.1)
+    expect(THEMES.neonBlue.colors.accentOn).toBe('#FFFFFF')
+    expect(THEMES.neonPurple.colors.accentOn).toBe('#FFFFFF')
+  })
+
+  test('«Кремовая» — светлая тема: тёмные тексты читаются по WCAG AA', () => {
+    const c = THEMES.cream.colors
+    // Светлый фон и поверхности
+    expect(contrast(c.bg, '#000000')).toBeGreaterThan(6)
+    expect(contrast(c.card, c.text)).toBeGreaterThan(9)
+    // Вторичные тексты — не хуже 4.5:1 (как заявлено в tailwind.config.js)
+    expect(contrast(c.card, c.sub)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(c.card, c.sub2)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(c.card, c.dim)).toBeGreaterThanOrEqual(4.5)
+    // Ссылка — читаемый янтарный
+    expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
+      const c = THEMES[id].colors
+      // Фон реально тёмный
+      expect(luminance(c.bg)).toBeLessThan(0.03)
+      expect(contrast(c.card, c.text)).toBeGreaterThan(9)
+      expect(contrast(c.card, c.sub)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(c.card, c.sub2)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(c.card, c.dim)).toBeGreaterThanOrEqual(4.5)
     }
   })
 })
 
-describe('resolveThemeId: гейтинг по подписке', () => {
+describe('resolveThemeId: гейтинг по подписке и переезд старых выборов', () => {
   test('премиум-тема без подписки → «Классика»', () => {
-    expect(resolveThemeId('lemon', false)).toBe('classic')
-    expect(resolveThemeId('forest', false)).toBe('classic')
-    expect(resolveThemeId('plum', false)).toBe('classic')
-    expect(resolveThemeId('ocean', false)).toBe('classic')
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+      expect(resolveThemeId(id, false)).toBe('classic')
+    }
   })
 
   test('премиум-тема с подпиской → сама тема', () => {
-    expect(resolveThemeId('lemon', true)).toBe('lemon')
-    expect(resolveThemeId('forest', true)).toBe('forest')
-    expect(resolveThemeId('plum', true)).toBe('plum')
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+      expect(resolveThemeId(id, true)).toBe(id)
+    }
   })
 
   test('«Классика» всегда доступна, подписка не важна', () => {
@@ -129,10 +196,28 @@ describe('resolveThemeId: гейтинг по подписке', () => {
     expect(resolveThemeId('classic', true)).toBe('classic')
   })
 
+  test('старые выборы переезжают на яркие темы того же цвета (выбор Кати сохраняется)', () => {
+    // Даже без подписки переезд валиден: «Классика» бесплатна,
+    // а после оплаты вернётся яркая тема
+    expect(THEME_ROLL_FORWARD).toEqual({
+      lemon: 'neonLime',
+      ocean: 'neonBlue',
+      plum: 'neonPurple',
+      forest: 'neonCyan',
+      graphite: 'classic',
+    })
+    expect(resolveThemeId('lemon', true)).toBe('neonLime')
+    expect(resolveThemeId('ocean', true)).toBe('neonBlue')
+    expect(resolveThemeId('plum', true)).toBe('neonPurple')
+    expect(resolveThemeId('forest', true)).toBe('neonCyan')
+    // удалённая «графит» — в «Классику»
+    expect(resolveThemeId('graphite', true)).toBe('classic')
+    // без подписки переезд сначала уводит в «Классику» (гейтинг)
+    expect(resolveThemeId('lemon', false)).toBe('classic')
+  })
+
   test('неизвестный/битый id → «Классика» (безопасный дефолт)', () => {
     expect(resolveThemeId('nope', true)).toBe('classic')
-    // удалённая тема «графит» тоже откатывается в «Классику»
-    expect(resolveThemeId('graphite', true)).toBe('classic')
     expect(resolveThemeId(null, true)).toBe('classic')
     expect(resolveThemeId(undefined, false)).toBe('classic')
   })
@@ -140,10 +225,10 @@ describe('resolveThemeId: гейтинг по подписке', () => {
 
 describe('themeToCssVars: карта CSS-переменных', () => {
   test('ключи --nb-* на все токены, значения — цвета темы', () => {
-    const vars = themeToCssVars(THEMES.forest)
+    const vars = themeToCssVars(THEMES.neonCyan)
     expect(Object.keys(vars)).toHaveLength(THEME_TOKENS.length)
     for (const token of THEME_TOKENS) {
-      expect(vars[`--nb-${token}`]).toBe(THEMES.forest.colors[token])
+      expect(vars[`--nb-${token}`]).toBe(THEMES.neonCyan.colors[token])
     }
   })
 })

@@ -34,6 +34,7 @@ import { WaterModal } from '@/components/home/WaterModal'
 import { ActivityBreakdownModal } from '@/components/home/ActivityBreakdownModal'
 import { DailySummary } from '@/components/home/DailySummary'
 import { SoftGlow } from '@/components/ui/SoftGlow'
+import { NeonCard } from '@/components/ui/NeonCard'
 import { Greeting } from '@/components/home/Greeting'
 import { EveningNudge } from '@/components/home/EveningNudge'
 import { CycleBadge } from '@/components/home/CycleBadge'
@@ -269,9 +270,11 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-bear-bg">
-      {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
-      <SoftGlow id="glowHomeTR" w={190} h={160} peak={0.3} color="#7C3AED" style={{ top: -26, right: -46 }} />
-      <SoftGlow id="glowHomeL" w={120} h={150} peak={0.14} color="#4D7CFE" style={{ top: 60, left: -40 }} />
+      {/* Неоновая дымка в шапке — цветом активной темы: у ярких тем
+          с макета вся страница светится своим неоном (единый стиль
+          страниц, как на «Теле») */}
+      <SoftGlow id="glowHomeTR" w={190} h={160} peak={0.34} color={themeColors.accent} style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowHomeL" w={120} h={150} peak={0.16} color={themeColors.accentBright} style={{ top: 60, left: -40 }} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
@@ -322,7 +325,8 @@ export default function HomeScreen() {
             активность). Тап по плитке «Шаги» — записать шаги, тап по
             «Вода» — стаканы за день; долгий тап по плиткам — правка
             целей; история по дням — во вкладке «Дневник» */}
-        <View className="rounded-3xl border border-bear-bodyLine bg-white/[0.02] p-3">
+        {/* Рамка — градиент цвета темы (NeonCard): яркие темы с макета */}
+        <NeonCard className="p-3">
           <ActivityStats
             steps={extraSteps}
             burned={burned}
@@ -344,7 +348,7 @@ export default function HomeScreen() {
             onOpenStepsInput={() => setStepsOpen(true)}
             onOpenActivity={() => setActivityOpen(true)}
           />
-        </View>
+        </NeonCard>
 
         {/* Блок «Тренировки» — прежний с главной, сразу после плиток
             «шаги/вода/активность» (просьба Кати): каталог активностей

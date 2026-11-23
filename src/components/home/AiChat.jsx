@@ -11,8 +11,13 @@ import { Pressable } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Mail } from 'lucide-react-native'
 import { router } from 'expo-router'
+import { useThemeColors } from '@/lib/use-theme'
 
 export function AiChat() {
+  // Конвертик — в цвете активной темы (правка Кати 24.11 «сделай
+  // в точности как на скрине»: на макете плавающая кнопка светится
+  // неоном темы — лайм/лазурь/орхидея/бирюза/янтарь); иконка белая
+  const c = useThemeColors()
   return (
     <Pressable
       onPress={() => router.push('/ai-chat')}
@@ -23,18 +28,18 @@ export function AiChat() {
         width: 60,
         height: 60,
         elevation: 6,
-        shadowColor: '#4D7CFE',
-        shadowOpacity: 0.45,
-        shadowRadius: 10,
+        shadowColor: c.accent,
+        shadowOpacity: 0.55,
+        shadowRadius: 12,
       }}
     >
       {/* Градиент — явным размером, иконка ВНУТРИ него: заливка
           «растяжкой на весь родитель» (absolute-инсеты) не рендерится —
-          вместо фиолетового круга на устройстве Кати был голый конверт */}
+          вместо неонового круга на устройстве Кати был голый конверт */}
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+        colors={[c.accentBright, c.accent]}
         style={{
           width: 60,
           height: 60,
