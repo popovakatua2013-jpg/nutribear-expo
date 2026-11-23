@@ -5,6 +5,7 @@
 // дневник дублируют плитки и приёмы пищи на «Главной», сон — карточка
 // в «Отчётах», вес — «Тело», серия — чип в сводке «Главной»):
 //   Герой-профиль:   аватар, рост • вес, тап — редактирование
+//   ПРЕМИУМ:         планы/код/статус (усиление Premium, 23.11)
 //   ЗДОРОВЬЕ:        Цикл / Шаги и здоровье (переехало из ПРИЛОЖЕНИЯ —
 //                    это здоровье, а не настройка приложения)
 //   ПОМОЩНИК:        Напарник (стиль пинков теперь у медведей — отдельный
@@ -16,7 +17,8 @@
 //   ДНЕВНИК:         Начать новый день
 //   ПОДДЕРЖКА:       Поддержка — тап сразу открывает окно
 //                    «Написать нам»
-//   ПРИЛОЖЕНИЕ:      Настройки дневника / Резервная копия
+//   ПРИЛОЖЕНИЕ:      Настройки дневника / Оформление (темы — Premium,
+//                    23.11) / Резервная копия
 //                    («Вибрация», «Стиль пинков», «Напоминание мишки»
 //                    переехали в блок НАПОМИНАНИЯ)
 //   ДОКУМЕНТЫ:       один блок с выпадающим списком (отзыв Кати 16.11
@@ -52,12 +54,17 @@ import { CompanionCard } from '@/components/more/CompanionCard'
 import { DataPortability } from '@/components/more/DataPortability'
 import { DataActions } from '@/components/more/DataActions'
 import { LegalDocModal } from '@/components/more/LegalDocModal'
+import { PremiumCard, premiumStatusValue } from '@/components/more/PremiumCard'
+import { ThemeCard } from '@/components/more/ThemeCard'
 import { SoftGlow } from '@/components/ui/SoftGlow'
 import { BodyChip } from '@/components/ui/BodyChip'
 import { useCycleStore, daysToNext } from '@/store/useCycleStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useCompanionStore } from '@/store/useCompanionStore'
+import { useProStore } from '@/store/useProStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { THEMES, resolveThemeId } from '@/lib/themes'
 import { BUILD_HASH } from '@/lib/version'
 import { consumeOpenReminders } from '@/lib/navEvents'
 import { AiChat } from '@/components/home/AiChat'
@@ -134,6 +141,17 @@ export default function MoreScreen() {
     // лёгкий поиск без импорта COMPANIONS в этот файл (он в CompanionCard)
     ({ kedr: 'Кедр', kira: 'Кира', topaz: 'Топаз', businka: 'Бусинка', fit: 'Фит' })[companion] || 'Кедр'
 
+  // Премиум: статус подписки для строки меню (проекция из useProStore —
+  // раньше карточка была спрятана в модалках, теперь есть и здесь,
+  // как и обещано на странице оплаты «Ещё → Премиум»)
+  const pro = useProStore((s) => s.pro)
+  const plan = useProStore((s) => s.plan)
+
+  // Оформление: имя активной темы для значения строки (с учётом
+  // подписки — без Premium всегда «Классика»)
+  const themeId = useUiPrefsStore((s) => s.themeId)
+  const themeTitle = THEMES[resolveThemeId(themeId, pro)].title
+
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
@@ -163,6 +181,21 @@ export default function MoreScreen() {
 
         {/* ── Герой-профиль: аватар, рост • вес, тап — редактирование ── */}
         <ProfileEditor />
+
+        {/* ── ПРЕМИУМ: планы, код активации, статус (решение Кати 23.11:
+               «усилить Premium» — раньше карточка была спрятана в модалках
+               ИИ-меню и разбора недели, а на странице оплаты обещан раздел
+               «Ещё → Премиум») ───────────────────────────────────── */}
+        <MenuGroup title="ПРЕМИУМ">
+          <MenuRow
+            icon="👑"
+            iconBg="rgba(251,191,36,0.16)"
+            title="Премиум"
+            value={premiumStatusValue(pro, plan)}
+          >
+            <PremiumCard embedded />
+          </MenuRow>
+        </MenuGroup>
 
         {/* ── ЗДОРОВЬЕ: Цикл и Шаги — здоровье, а не настройка приложения
                («Шаги и здоровье» переехало из ПРИЛОЖЕНИЯ; «Сон» и «Время
@@ -256,6 +289,14 @@ export default function MoreScreen() {
             value={countBurned ? 'возврат ккал' : 'строгий остаток'}
           >
             <DiarySettingsCard embedded />
+          </MenuRow>
+          <MenuRow
+            icon="🎨"
+            iconBg="rgba(167,139,250,0.16)"
+            title="Оформление"
+            value={themeTitle}
+          >
+            <ThemeCard embedded />
           </MenuRow>
           <MenuRow
             icon="🛡"

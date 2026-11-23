@@ -6,12 +6,19 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { THEME_ORDER, DEFAULT_THEME_ID } from '@/lib/themes'
 
 export const useUiPrefsStore = create(
   persist(
     (set) => ({
       expanded: {}, // { [storageKey]: true|false }
       haptics: true, // вибро-отклик в приложении (меню, тумблеры, плеер, ИМТ)
+      // Тема оформления (Premium-фича, задача Кати 23.11): id из
+      // src/lib/themes.js. «classic» — классическая navy-палитра;
+      // премиум-темы при отсутствии подписки сами заменяются на
+      // «Классику» (resolveThemeId) — выбор сохраняется и возвращается
+      // после оплаты
+      themeId: DEFAULT_THEME_ID,
       weighNudgeDays: 7, // порог напоминания мишки о взвешивании (5/7/10 дней)
       // Само напоминание мишки: можно выключить целиком (тумблер в блоке
       // «Напоминания» — отзыв Кати 16.11: один компактный блок вместо
@@ -54,6 +61,11 @@ export const useUiPrefsStore = create(
         set((s) => ({ expanded: { ...s.expanded, [key]: !!value } })),
 
       setHaptics: (value) => set({ haptics: !!value }),
+
+      // Переключение темы оформления: валидируем id — битое значение из
+      // хранилища не должно сломать рендер (use-theme.js отдаст «Классику»,
+      // но стор хранит только корректные id)
+      setTheme: (id) => set({ themeId: THEME_ORDER.includes(id) ? id : DEFAULT_THEME_ID }),
 
       setWeighNudgeOn: (value) => set({ weighNudgeOn: !!value }),
 

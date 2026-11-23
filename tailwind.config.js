@@ -1,4 +1,13 @@
-// Tailwind для NativeWind: палитра NutriBear + шрифты Inter
+// Tailwind для NativeWind: палитра NutriBear + шрифты Inter.
+// Палитра задана CSS-переменными --nb-* (темы оформления, задача Кати
+// 23.11): переменные прокидываются на корне приложения
+// (src/lib/use-theme.js → NativeWind vars()), значение ПОСЛЕ запятой —
+// классическая navy-палитра: страховка для поддеревьев без переменных
+// (окно «Мишка споткнулся», оверлеи вне обёртки) — они остаются
+// в «Классике», а не становятся прозрачными. Пятёрка тем и их цвета —
+// в src/lib/themes.js; значение fallback ДОЛЖНО совпадать с
+// THEMES.classic.colors дословно
+const bearVar = (name, fallback) => `var(--nb-${name}, ${fallback})`
 const plugin = require('tailwindcss/plugin')
 
 module.exports = {
@@ -8,28 +17,29 @@ module.exports = {
     extend: {
       colors: {
         bear: {
-          bg: '#0A1020',
-          card: '#121B33',
-          card2: '#111C38',
-          deep: '#0C1327',
-          pop: '#131E3A',
-          line: 'rgba(255,255,255,0.08)',
+          bg: bearVar('bg', '#0A1020'),
+          card: bearVar('card', '#121B33'),
+          card2: bearVar('card2', '#111C38'),
+          deep: bearVar('deep', '#0C1327'),
+          pop: bearVar('pop', '#131E3A'),
+          line: bearVar('line', 'rgba(255,255,255,0.08)'),
           // Поверхность и обводка карточек в стиле вкладки «Тело»:
           // полупрозрачный тёмно-фиолетовый + фиолетовая обводка.
           // Применяются на «Главной», «Дневнике» и «Ещё» — вкладка
           // «Организм» остаётся на нейтральной navy-теме (по решению)
-          bodyCard: 'rgba(29,18,64,0.82)',
-          bodyLine: 'rgba(168,85,247,0.30)',
-          text: '#EEF2FB',
+          bodyCard: bearVar('bodyCard', 'rgba(29,18,64,0.82)'),
+          bodyLine: bearVar('bodyLine', 'rgba(168,85,247,0.30)'),
+          text: bearVar('text', '#EEF2FB'),
           // Второстепенные цвета — проверены на контраст по WCAG AA (≥ 4.5:1)
           // на фоне #0A1020/#121B33/#131E3A: app должен хорошо читаться
-          // слабовидящими (раньше dim был 2.9–3.4 — «еле заметно»)
-          sub: '#A5AECB',
-          sub2: '#98A2C2',
-          dim: '#8B96B8',
-          soft: '#AEB9D9',
-          bright: '#C7D2F0',
-          link: '#6C8CFF',
+          // слабовидящими (раньше dim был 2.9–3.4 — «еле заметно»);
+          // премиум-темы держат те же уровни яркости (см. themes.js)
+          sub: bearVar('sub', '#A5AECB'),
+          sub2: bearVar('sub2', '#98A2C2'),
+          dim: bearVar('dim', '#8B96B8'),
+          soft: bearVar('soft', '#AEB9D9'),
+          bright: bearVar('bright', '#C7D2F0'),
+          link: bearVar('link', '#6C8CFF'),
         },
       },
       fontFamily: {

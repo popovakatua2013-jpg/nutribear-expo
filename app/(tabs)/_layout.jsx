@@ -15,6 +15,7 @@ import { View } from 'react-native'
 import { Tabs } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CalendarDays, ChartColumn, House, Menu, PersonStanding } from 'lucide-react-native'
+import { useThemeVars } from '@/lib/use-theme'
 
 const TABS = [
   { name: 'index', label: 'Главная', Icon: House },
@@ -52,6 +53,11 @@ export default function TabsLayout() {
   // (жесты/кнопки) рисуется поверх приложения — добавляем её высоту
   // в панель вкладок, иначе она перекрывает меню
   const insets = useSafeAreaInsets()
+  // Тема оформления (Premium-фича 23.11): фон панели и сцены — из
+  // активной темы. Активный/неактивный цвет иконок оставляем константами:
+  // акценты приложения (фиолетовые пилюли, тумблеры) у всех тем общие
+  // — так любая тема выглядит согласованной (см. src/lib/themes.js)
+  const { theme } = useThemeVars()
 
   return (
     <Tabs
@@ -60,14 +66,14 @@ export default function TabsLayout() {
         tabBarActiveTintColor: '#A78BFA',
         tabBarInactiveTintColor: '#8B96B8',
         tabBarStyle: {
-          backgroundColor: '#0C1327',
-          borderTopColor: 'rgba(255,255,255,0.06)',
+          backgroundColor: theme.colors.deep,
+          borderTopColor: theme.colors.line,
           height: 68 + insets.bottom,
           paddingBottom: 7 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11.5, fontFamily: 'Inter_600SemiBold' },
-        sceneStyle: { backgroundColor: '#0A1020' },
+        sceneStyle: { backgroundColor: theme.colors.bg },
       }}
     >
       {TABS.map(({ name, label, Icon }) => (

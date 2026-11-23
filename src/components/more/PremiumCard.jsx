@@ -98,8 +98,9 @@ export function PremiumCard({ embedded = false }) {
               👑 Premium активна
             </Text>
             <Text className="mt-1 font-sans text-[13.5px] leading-snug text-bear-sub">
-              План: {planLabel(plan)}. Лимиты сняты: чат, фото и голос — без ограничений.
-              Доступны ИИ-меню на неделю и разбор недели от напарника.
+              План: {planLabel(plan)}. Лимиты сняты: чат, фото и голос — без
+              ограничений. Доступны вся история приёмов, комбо без лимита,
+              темы оформления и экспорт отчётов в файл.
             </Text>
           </View>
           <Pressable

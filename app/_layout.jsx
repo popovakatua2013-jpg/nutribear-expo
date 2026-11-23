@@ -23,9 +23,25 @@ import { OfflineBar } from '@/components/ui/OfflineBar'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { LegacyConsentScreen } from '@/components/onboarding/LegacyConsentScreen'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
+import { useThemeVars } from '@/lib/use-theme'
 import { startRolloverWatcher } from '@/lib/rollover'
 import { startReminderAgent } from '@/lib/reminders'
 import { startPedometerAgent } from '@/lib/pedometer'
+
+// Обёртка корневых веток: задаёт CSS-переменные темы оформления (--nb-*,
+// Premium-фича 23.11). Переменные наследуются через React-контекст во всё
+// поддерево (включая RN-модалки — тот же React-дерево); поддеревья БЕЗ
+// обёртки (окно ошибки ниже — у него минимум зависимостей) остаются
+// в «Классике» через fallback-значения var(--nb-*, классика)
+// в tailwind.config.js
+function Shell({ children }) {
+  const { style } = useThemeVars()
+  return (
+    <View className="flex-1" style={style}>
+      {children}
+    </View>
+  )
+}
 
 // Гидратация persist-стора онбординга из AsyncStorage
 function useOnboardingHydrated() {
@@ -45,16 +61,19 @@ function useOnboardingHydrated() {
 function SplashBear() {
   // Нейтральный экран, пока восстанавливаются данные (без мигания).
   // Колесико загрузки — по отзыву Кати: чтобы при запуске было видно,
-  // что приложение грузится, а не зависло.
+  // что приложение грузится, а не зависло. Обёрнут в Shell — тема
+  // применяется и к заставке
   return (
-    <View className="flex-1 items-center justify-center bg-bear-bg">
-      <Text className="text-[56px]">🐻</Text>
-      <ActivityIndicator
-        size="large"
-        color="#6C8CFF"
-        style={{ marginTop: 28 }}
-      />
-    </View>
+    <Shell>
+      <View className="flex-1 items-center justify-center bg-bear-bg">
+        <Text className="text-[56px]">🐻</Text>
+        <ActivityIndicator
+          size="large"
+          color="#6C8CFF"
+          style={{ marginTop: 28 }}
+        />
+      </View>
+    </Shell>
   )
 }
 
@@ -271,6 +290,9 @@ export default function RootLayout() {
   const consentOk = useOnboardingStore(
     (s) => !!(s.consent?.pd && s.consent?.health && s.consent?.crossBorder && s.consent?.policy)
   )
+  // Тема оформления: цвета окна навигации — из активной темы (use-theme.js);
+  // хук — до условных возвратов (правила хуков React)
+  const { theme } = useThemeVars()
 
   useEffect(() => {
     if (error) console.warn('Шрифты не загрузились:', error)
@@ -303,9 +325,11 @@ export default function RootLayout() {
   if (obStatus === 'done' && !consentOk) {
     return (
       <ToastProvider>
-        <StatusBar style="light" />
-        <LegacyConsentScreen />
-        <OfflineBar />
+        <Shell>
+          <StatusBar style="light" />
+          <LegacyConsentScreen />
+          <OfflineBar />
+        </Shell>
       </ToastProvider>
     )
   }
@@ -314,21 +338,25 @@ export default function RootLayout() {
   if (obStatus !== 'done') {
     return (
       <ToastProvider>
-        <StatusBar style="light" />
-        <OnboardingFlow />
-        <OfflineBar />
+        <Shell>
+          <StatusBar style="light" />
+          <OnboardingFlow />
+          <OfflineBar />
+        </Shell>
       </ToastProvider>
     )
   }
 
   return (
     <ToastProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A1020' } }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-      {/* Полоска «Нет сети» поверх всех экранов: тонкая, некликабельная */}
-      <OfflineBar />
+      <Shell>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.bg } }}>
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        {/* Полоска «Нет сети» поверх всех экранов: тонкая, некликабельная */}
+        <OfflineBar />
+      </Shell>
     </ToastProvider>
   )
 }

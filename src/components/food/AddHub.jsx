@@ -61,6 +61,8 @@ import { useRecipesStore, gramsPerServing } from '@/store/useRecipesStore'
 import { useUserFoodsStore } from '@/store/useUserFoodsStore'
 import { useCombosStore } from '@/store/useCombosStore'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useProStore } from '@/store/useProStore'
+import { FREE_LIMITS } from '@/lib/entitlements'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { getMeal } from '@/lib/data/meals'
 import { readdRow } from '@/lib/data/readd'
@@ -112,6 +114,9 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
   const mealEntries = useFoodStore((s) => s.entries[mealId]) || []
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
+  // Premium: комбо без ограничений (задача Кати 23.11 «усилить Premium»),
+  // бесплатно — FREE_LIMITS.combos сохранённых комбо
+  const pro = useProStore((s) => s.pro)
   const { toast } = useToast()
 
   const [query, setQuery] = useState('')
@@ -306,6 +311,17 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
       setComboOpen(false)
       return
     }
+    // Лимит бесплатного тарифа: уже сохранённые комбо НЕ удаляются —
+    // просто нельзя добавить новое, пока не освободится слот (удаление —
+    // долгий тап) или не включится Premium
+    if (!pro && combos.length >= FREE_LIMITS.combos) {
+      toast({
+        title: `👑 Комбо — максимум ${FREE_LIMITS.combos} на бесплатном`,
+        description: 'Premium снимает лимит: сохраняйте сколько нужно',
+      })
+      setComboOpen(false)
+      return
+    }
     const name = comboName.trim() || `Мой ${mealName.toLowerCase()}`
     addComboItem({ name, emoji: mealEntries[0]?.emoji || '⭐', items: mealEntries })
     toast({ title: '💾 Комбо сохранено', description: `${name} · ${mealEntries.length} блюд(а)` })
@@ -451,6 +467,13 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                       </Pressable>
                     )
                   })}
+                  {/* Напоминание о лимите бесплатного тарифа (усиление
+                      Premium 23.11) — только у бесплатников */}
+                  {!pro && (
+                    <Text className="px-2 pb-1 pt-1 font-sans text-[12px] leading-snug text-bear-dim">
+                      Комбо: {combos.length} из {FREE_LIMITS.combos} бесплатно · Premium — без лимита 👑
+                    </Text>
+                  )}
                 </View>
               )}
             </View>

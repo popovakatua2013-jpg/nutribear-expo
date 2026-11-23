@@ -11,12 +11,18 @@ import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-nativ
 import { Download, History, Plus, Search, X } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useProStore } from '@/store/useProStore'
 import { useToast } from '@/components/ui/Toast'
 import { MEALS } from '@/lib/data/meals'
 import { readdRow } from '@/lib/data/readd'
 import { tapGuard } from '@/lib/tap-guard'
 import { formatNum } from '@/lib/format'
 import { buildCsv, shareCsv } from '@/lib/data/diary-export'
+import {
+  historyCutoffKey,
+  filterHistoryByCutoff,
+} from '@/lib/data/history-access'
+import { FREE_LIMITS } from '@/lib/entitlements'
 
 const DAY_MS = 86400000
 
@@ -52,6 +58,11 @@ export function HistoryModal({ visible, onClose }) {
   const history = useFoodStore((s) => s.history)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addEntry = useFoodStore((s) => s.addEntry)
+  // Premium: вся история + экспорт дневника в файл (задача Кати 23.11
+  // «усилить Premium»). Бесплатно — последние FREE_LIMITS.historyDays
+  // дней; данные при этом НЕ удаляются — режется только отображение,
+  // после оплаты вся история видна сразу
+  const pro = useProStore((s) => s.pro)
   const { toast } = useToast()
   const insets = useSafeAreaInsets()
   const [reAddId, setReAddId] = useState(null) // блюдо, для которого открыт выбор приёма
@@ -73,13 +84,18 @@ export function HistoryModal({ visible, onClose }) {
     })
   }
 
+  // Граница бесплатного просмотра: ключ самого старого видимого дня
+  // (null у Premium). Считаем на каждом открытии — модалка может быть
+  // открыта несколько дней подряд
+  const cutoff = visible ? historyCutoffKey(new Date(), pro) : null
+
   // Группировка по дням, новые сверху. Поиск фильтрует по названию,
   // фильтр-пилюли — по приёму пищи; работают вместе, дни без совпадений
-  // прячутся целиком
+  // прячутся целиком. Бесплатный тариф: дни старше границы не показываются
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
     const map = new Map()
-    for (const row of history) {
+    for (const row of filterHistoryByCutoff(history, cutoff)) {
       if (q && !String(row.name || '').toLowerCase().includes(q)) continue
       if (mealFilter === 'custom') {
         // Свои приёмы пищи: всё, что не встроенный приём. Записи в уже
@@ -92,11 +108,21 @@ export function HistoryModal({ visible, onClose }) {
         .push({ ...row, mealName: resolveMealName(row.mealId, customMeals) })
     }
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
-  }, [history, customMeals, query, mealFilter])
+  }, [history, customMeals, query, mealFilter, cutoff])
 
   const foundCount = useMemo(() => groups.reduce((n, [, rows]) => n + rows.length, 0), [groups])
 
   async function exportCsv() {
+    // Экспорт дневника в файл — часть Premium (задача Кати 23.11:
+    // «усилить Premium — экспорт отчётов в файл»). Резервная копия
+    // («Ещё») остаётся бесплатной целиком — это GDPR и сохранность данных
+    if (!pro) {
+      toast({
+        title: '👑 Экспорт дневника — в Premium',
+        description: 'CSV-файл дневника и отчёты периодом — часть Premium',
+      })
+      return
+    }
     if (!history.length) {
       toast({ title: 'Дневник пуст', description: 'Экспортировать нечего 🤷' })
       return
@@ -280,6 +306,21 @@ export function HistoryModal({ visible, onClose }) {
                     ))}
                   </View>
                 ))}
+              </View>
+            )}
+
+            {/* Бесплатный тариф: подсказка про лимит просмотра (усиление
+                Premium 23.11). Данные не удаляются — Premium сразу
+                открывает всю историю */}
+            {!pro && (
+              <View className="mb-2 mt-1 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3">
+                <Text className="font-semibold text-[15px] text-amber-300">
+                  👑 Вся история — в Premium
+                </Text>
+                <Text className="mt-1 font-sans text-[13.5px] leading-snug text-bear-sub">
+                  Бесплатно журнал показывает последние {FREE_LIMITS.historyDays} дней.
+                  Premium открывает всю историю и экспорт дневника в файл.
+                </Text>
               </View>
             )}
           </ScrollView>

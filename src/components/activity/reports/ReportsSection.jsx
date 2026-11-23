@@ -19,6 +19,7 @@ import { WeightTrendCard } from './WeightTrendCard'
 import { DisciplineCard } from './DisciplineCard'
 import { MetricHistoryModal } from './MetricHistoryModal'
 import { NutrientsCard } from './NutrientsCard'
+import { ReportExportCard } from './ReportExportCard'
 import { SleepModal } from './SleepModal'
 import { WeeklyShareCard } from './WeeklyShareCard'
 import { DayShareCard } from './DayShareCard'
@@ -182,6 +183,11 @@ export function ReportsSection({
       <WeightTrendCard />
 
       <NutrientsCard days={days} />
+
+      {/* Экспорт отчёта в файл — Premium (задача Кати 23.11 «усилить
+          Premium»): тот же период, что у пилюль вкладки; у бесплатных —
+          объяснение и paywall. PNG-«Итоги»/«День» выше остаются бесплатными */}
+      <ReportExportCard days={days} rows={rows} today={today} rangeId={rangeId} />
 
       <WeeklyShareCard
         open={shareOpen}
