@@ -22,18 +22,21 @@ import { daysSince, isAtGoal, supportSwitchPlan, WEIGH_NUDGE_DAYS } from '@/lib/
 import { formatNum, pluralDays } from '@/lib/format'
 import { useToast } from '@/components/ui/Toast'
 import { requestOpenWeightModal } from '@/lib/navEvents'
+import { withAlpha } from '@/lib/themes'
 import { useThemeColors } from '@/lib/use-theme'
 
 
-// Карточка достижения — style-объект, чтобы анимировать Animated.View
-// (rounded-2xl, золотая рамка и подложка, p-4)
-const GOLD_CARD = {
+// Карточка достижения — style-объект собирается ВНУТРИ компонента:
+// «золотая» рамка/подложка — цвет warn ТЕМЫ (правка Кати 25.11: «все
+// уведомления тоже подогнать по цвету тем» — раньше фиксированный
+// #fbbf24 выбивался в кремовой/неоновых палитрах)
+const makeGoldCard = (warn) => ({
   borderRadius: 16,
   borderWidth: 1,
-  borderColor: 'rgba(251,191,36,0.25)',
-  backgroundColor: 'rgba(251,191,36,0.08)',
+  borderColor: withAlpha(warn, 0.32),
+  backgroundColor: withAlpha(warn, 0.1),
   padding: 16,
-}
+})
 
 // Частицы праздничного бurst: эмодзи разлетаются из иконки и тают
 function makeParticles() {
@@ -49,6 +52,8 @@ function makeParticles() {
 
 export function GoalCelebration() {
   const themeColors = useThemeColors()
+  const gold = themeColors.warn
+  const goldCard = makeGoldCard(gold)
   const weightKg = useProfileStore((s) => s.weightKg)
   const goalWeightKg = useProfileStore((s) => s.goalWeightKg)
   const goalReachedAt = useProfileStore((s) => s.goalReachedAt)
@@ -158,7 +163,7 @@ export function GoalCelebration() {
       <Animated.View
         accessibilityLabel="Цель по весу достигнута"
         style={[
-          GOLD_CARD,
+          goldCard,
           {
             opacity: pop,
             transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
@@ -197,15 +202,18 @@ export function GoalCelebration() {
           accessibilityLabel="Скрыть карточку «Цель по весу достигнута»"
           className="absolute right-1.5 top-1.5 p-1.5 active:opacity-70"
         >
-          <X hitSlop={10} size={18} color="#d9b96a" />
+          <X hitSlop={10} size={18} color={gold} />
         </Pressable>
 
         <View className="flex-row items-center gap-2.5">
-          <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#fbbf24]/15">
-            <PartyPopper size={22} color="#fbbf24" />
+          <View
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: withAlpha(gold, 0.15) }}
+          >
+            <PartyPopper size={22} color={gold} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="font-bold text-[19px] leading-snug text-[#fbbf24]">
+            <Text className="font-bold text-[19px] leading-snug" style={{ color: gold }}>
               Цель по весу достигнута!
             </Text>
             <Text className="mt-0.5 font-sans text-[16px] leading-snug text-bear-sub">
@@ -227,10 +235,11 @@ export function GoalCelebration() {
             onPress={switchToMaintain}
             accessibilityRole="button"
             accessibilityLabel={`Перейти на поддержку, норма ${formatNum(plan.kcal)} килокалорий в день`}
-            className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#fbbf24]/15 py-2.5 active:opacity-80"
+            className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl py-2.5 active:opacity-80"
+            style={{ backgroundColor: withAlpha(gold, 0.15) }}
           >
-            <Scale size={17} color="#fbbf24" />
-            <Text className="font-semibold text-[17px] text-[#fbbf24]">
+            <Scale size={17} color={gold} />
+            <Text className="font-semibold text-[17px]" style={{ color: gold }}>
               {`Перейти на поддержку · ${formatNum(plan.kcal)} ккал`}
             </Text>
           </Pressable>
@@ -241,12 +250,13 @@ export function GoalCelebration() {
           onPress={shareResult}
           accessibilityRole="button"
           accessibilityLabel="Поделиться результатом"
-          className={`flex-row items-center justify-center gap-1.5 rounded-xl border border-[#fbbf24]/30 py-2.5 active:opacity-80 ${
+          className={`flex-row items-center justify-center gap-1.5 rounded-xl py-2.5 active:opacity-80 ${
             plan ? 'mt-1.5' : 'mt-3'
           }`}
+          style={{ borderWidth: 1, borderColor: withAlpha(gold, 0.32) }}
         >
-          <Share2 size={16} color="#fbbf24" />
-          <Text className="font-semibold text-[17px] text-[#fbbf24]">Поделиться</Text>
+          <Share2 size={16} color={gold} />
+          <Text className="font-semibold text-[17px]" style={{ color: gold }}>Поделиться</Text>
         </Pressable>
 
         {overdue && (
@@ -256,7 +266,7 @@ export function GoalCelebration() {
             accessibilityLabel="Записать вес во вкладке Тело"
             className="mt-1.5 active:opacity-70"
           >
-            <Text className="font-sans text-[15px] leading-snug text-[#d9b96a]">
+            <Text className="font-sans text-[15px] leading-snug" style={{ color: withAlpha(gold, 0.85) }}>
               {Number.isFinite(lastWeighDays)
                 ? `📅 Последнее взвешивание было ${lastWeighDays} ${pluralDays(lastWeighDays)} назад — запишите вес, стрик должен быть честным. Записать вес →`
                 : '📅 Записать вес во вкладке Тело — взвешивание раз в неделю держит стрик честным →'}
@@ -278,7 +288,10 @@ export function GoalCelebration() {
         accessibilityLabel="Возвращаемся к результату — записать вес"
         className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard p-4 active:opacity-80"
       >
-        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8DABFF]/15">
+        <View
+          className="h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: themeColors.accentFaint2 }}
+        >
           <Target size={22} color={themeColors.link} />
         </View>
         <View className="min-w-0 flex-1">

@@ -403,3 +403,50 @@ export function themeToCssVars(theme) {
   }
   return out
 }
+
+// ─── Помощники цвета (правка Кати 25.11, третий круг: «не хватает
+// больше свечения», «обозначения норма/лишний вес/ожирение подогнать
+// по цвету с кольцом») ────────────────────────────────────────────────
+
+// '#RRGGBB' → 'rgba(r, g, b, a)' — полупрозрачная копия цвета для
+// ореолов свечения карточек (NeonCard) и подложек бейджей. Если цвет
+// уже 'rgba(…)' или не hex — возвращаем как есть (ореол рисовать нечем)
+export function withAlpha(color, alpha) {
+  if (typeof color !== 'string') return color
+  const m = /^#([0-9A-Fa-f]{6})$/.exec(color.trim())
+  if (!m) return color
+  const n = parseInt(m[1], 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
+
+// Смешение двух hex-цветов: t = 0 → a, t = 1 → b, 0.5 — середина.
+// Нужно тону «лишний вес» — между «предупреждением» и «плохо»
+export function blendHex(a, b, t) {
+  const pa = /^#([0-9A-Fa-f]{6})$/.exec(String(a || '').trim())
+  const pb = /^#([0-9A-Fa-f]{6})$/.exec(String(b || '').trim())
+  if (!pa || !pb) return t < 0.5 ? a : b
+  const na = parseInt(pa[1], 16)
+  const nb = parseInt(pb[1], 16)
+  const mix = (sa, sb) => Math.round(sa + (sb - sa) * t)
+  const hex = (v) => v.toString(16).padStart(2, '0')
+  return `#${hex(mix((na >> 16) & 255, (nb >> 16) & 255))}${hex(
+    mix((na >> 8) & 255, (nb >> 8) & 255)
+  )}${hex(mix(na & 255, nb & 255))}`
+}
+
+// Тона категорий ИМТ из СЕМЕЙСТВА активной темы: кольцо ИМТ, его бейдж
+// и легенда красятся этими тонами (правка Кати 25.11: «обозначения
+// норма/лишний вес/ожирение подогнать по цвету с кольцом», «кремовый
+// в кремовой теме и т.д.») — в кремовой всё кольцо янтарно-терракотовое,
+// в неонах — неон + семантические жёлтый/розовый для сигнала.
+// «Недостаток» — «предупреждение», «норма» — «хорошо», «лишний вес» —
+// смесь «предупреждения» и «плохо» (переходная зона), «ожирение» — «плохо»
+export function bmiTones(colors) {
+  return {
+    low: colors.warn,
+    norm: colors.good,
+    over: blendHex(colors.warn, colors.bad, 0.5),
+    obese1: colors.bad,
+    obese2: colors.bad,
+  }
+}

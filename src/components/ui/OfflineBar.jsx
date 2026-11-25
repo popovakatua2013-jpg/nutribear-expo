@@ -24,7 +24,7 @@ export function OfflineBar() {
       style={{ top: insets.top + 6, elevation: 10 }}
     >
       <WifiOff size={14} color={themeColors.dim} />
-      <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-[#aeb9d9]">
+      <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px]" style={{ color: themeColors.sub }}>
         Нет сети — записи и отчёты работают, ИИ отключён
       </Text>
     </View>

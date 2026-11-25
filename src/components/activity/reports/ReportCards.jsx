@@ -37,7 +37,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { ArrowDownRight, ArrowUpRight, Calendar, ChevronRight, MoonStar, Scale } from 'lucide-react-native'
 import { changePct, dailyAverage, deltaTone, discipline, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
-import { METRIC_TOKENS } from '@/lib/themes'
+import { METRIC_TOKENS, withAlpha } from '@/lib/themes'
 import { fmtSleep, nightsInNorm, sleepAvg } from '@/lib/data/sleep'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -107,30 +107,81 @@ function CardBand({ data, color, height = 22, children }) {
   )
 }
 
-// Фон карточки «в одном стиле с «Главной» (правка Кати 25.11: «почти все
-// блоки не перекрашены» — раньше у каждой карточки была своя цветная
-// подложка с тёмно-фиолетовым низом #1A123A, в неоновых темах она
-// выбивалась). Теперь подложка — тинт темы, низ — поверхность card,
-// обводка — акцентная рамка темы; цвет метрики остаётся на плитке
-// иконки и спарклайне
+// Фон карточки «Отчётов» — ТОТ ЖЕ НЕОНОВЫЙ ЯЗЫК, что у «Главной»
+// (правка Кати 25.11, третий круг: «блоки белые не перекрашены
+// в градиент, все темы должны быть градиент-свечение, одинаково на всех
+// вкладках»): градиентная кайма accentBright → accent, внутри
+// непрозрачная поверхность card с тинтом accentFaint2 у верхнего края,
+// вокруг — ореолы свечения (те же концентры, что у NeonCard). Раньше
+// была плоская подложка accentFaint2→card с рамкой accentBorder — на
+// светлой «Кремовой» она читалась белой, а в градиентной системе
+// выглядела чужой. Цвет метрики остаётся на плитке иконки и спарклайне.
+// Абсолютное позиционирование сохранено: растянутый рядом карточек
+// Pressable не должен давать градиенту height:'100%' от вьюпорта
+// (скрин «ужаса» из прошлых отзывов)
 function CardBg() {
-  const themeColors = useThemeColors()
+  const c = useThemeColors()
   return (
-    <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      colors={[themeColors.accentFaint2, themeColors.card]}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: themeColors.accentBorder,
-      }}
-    />
+    <>
+      {/* Ореолы свечения — как у NeonCard (радиус карточки 16) */}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        colors={[withAlpha(c.accentBright, 0.5), withAlpha(c.accent, 0.5)]}
+        style={{
+          position: 'absolute',
+          top: -5,
+          left: -5,
+          right: -5,
+          bottom: -5,
+          borderRadius: 21,
+        }}
+      />
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        colors={[withAlpha(c.accentBright, 0.26), withAlpha(c.accent, 0.26)]}
+        style={{
+          position: 'absolute',
+          top: -13,
+          left: -13,
+          right: -13,
+          bottom: -13,
+          borderRadius: 29,
+        }}
+      />
+      {/* Градиентная кайма + непрозрачная поверхность с тинтом */}
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        colors={[c.accentBright, c.accent, c.accentBright]}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 16,
+          padding: 1.5,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            borderRadius: 14.5,
+            backgroundColor: c.card,
+            overflow: 'hidden',
+          }}
+        >
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.7, y: 1 }}
+            colors={[c.accentFaint2, 'transparent']}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+        </View>
+      </LinearGradient>
+    </>
   )
 }
 

@@ -80,9 +80,15 @@ function ToastItem({ item, onDismiss }) {
               accessibilityRole="button"
               accessibilityLabel={item.action.label}
               hitSlop={4}
-              className="mt-2 self-start rounded-lg bg-[#5B7FFF]/25 px-3 py-1.5 active:opacity-70"
+              // Кнопка-действие — акцент ТЕМЫ (правка Кати 25.11:
+              // «все уведомления тоже подогнать по цвету тем»):
+              // раньше была фиксированной сине-фиолетовой (#5B7FFF/#9DB4FF)
+              className="mt-2 self-start rounded-lg px-3 py-1.5 active:opacity-70"
+              style={{ backgroundColor: themeColors.accentFaint2 }}
             >
-              <Text className="font-bold text-[16px] text-[#9DB4FF]">{item.action.label}</Text>
+              <Text className="font-bold text-[16px]" style={{ color: themeColors.accentBright }}>
+                {item.action.label}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -91,7 +97,8 @@ function ToastItem({ item, onDismiss }) {
           accessibilityRole="button"
           accessibilityLabel="Закрыть уведомление"
           hitSlop={8}
-          className="shrink-0 rounded-full bg-white/5 p-1 active:opacity-70"
+          className="shrink-0 rounded-full p-1 active:opacity-70"
+          style={{ backgroundColor: themeColors.accentFaint }}
         >
           <X hitSlop={10} size={15} color={themeColors.dim} />
         </Pressable>

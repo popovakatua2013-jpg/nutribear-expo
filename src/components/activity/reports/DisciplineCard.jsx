@@ -5,7 +5,9 @@
 // Разбивка «цель достигнута N из M дней» по шагам/воде/калориям —
 // в карточках показателей ниже (ReportCards), а не здесь: плитки в этой
 // карточке дублировали их и обрезались на узких экранах (отзыв Кати).
-// Поверхность и шапка — в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
+// Поверхность — NeonCard (градиентная кайма + ореолы свечения, как у
+// всех блоков приложения — правка Кати 25.11 «блоки белые не перекрашены
+// в градиент, всё одинаково на всех вкладках»), шапка — BodyChip.
 // Правка Кати 25.11 («проверь замечания по всем темам»): тон чипа и
 // полосы — цвета ТЕМЫ (хорошо/предупреждение/плохо), а не фиксированные
 // зелёный/жёлтый/красный
@@ -15,6 +17,7 @@ import { CalendarCheck } from 'lucide-react-native'
 import { discipline } from '@/lib/data/reports'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { BodyChip } from '../../ui/BodyChip'
+import { NeonCard } from '../../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
 export function DisciplineCard({ rows }) {
@@ -29,9 +32,9 @@ export function DisciplineCard({ rows }) {
     pct >= 67 ? themeColors.good : pct >= 34 ? themeColors.warn : themeColors.bad
 
   return (
-    <View
+    <NeonCard
       accessibilityLabel="Дисциплина периода"
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
+      className="p-5"
     >
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
@@ -49,8 +52,9 @@ export function DisciplineCard({ rows }) {
         </View>
       </View>
 
-      {/* Полоса заполненности дневника: доля дней с записями */}
-      <View className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+      {/* Полоса заполненности дневника: доля дней с записями. Трек —
+          line темы (белое 6% на светлой «Кремовой» не было видно) */}
+      <View className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-bear-line">
         <View className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: tone }} />
       </View>
 
@@ -59,6 +63,6 @@ export function DisciplineCard({ rows }) {
           ? 'Записей за период пока нет — добавьте шаги, воду или еду, и здесь появится статистика'
           : 'День считается заполненным, когда есть любая запись; пустые дни средние показатели не топят'}
       </Text>
-    </View>
+    </NeonCard>
   )
 }

@@ -19,6 +19,9 @@ const {
   THEME_ROLL_FORWARD,
   resolveThemeId,
   themeToCssVars,
+  withAlpha,
+  blendHex,
+  bmiTones,
 } = require('@/lib/themes')
 
 // Относительная яркость цвета (WCAG) — для проверки контраста светлой темы
@@ -314,5 +317,56 @@ describe('страховка: fallback-значения tailwind.config.js = «�
     for (const { token, fallback } of calls) {
       expect(fallback).toBe(THEMES.classic.colors[token])
     }
+  })
+})
+
+describe('помощники цвета: withAlpha / blendHex / bmiTones (правка Кати 25.11: «больше свечения», «обозначения подогнать по цвету с кольцом»)', () => {
+  test('withAlpha: hex → rgba с нужной альфой (ореолы свечения NeonCard)', () => {
+    expect(withAlpha('#C9F31D', 0.5)).toBe('rgba(201, 243, 29, 0.5)')
+    expect(withAlpha('#0A1020', 0.16)).toBe('rgba(10, 16, 32, 0.16)')
+  })
+
+  test('withAlpha: не-hex (rgba/undefined) возвращается как есть', () => {
+    const rgba = 'rgba(255,255,255,0.08)'
+    expect(withAlpha(rgba, 0.5)).toBe(rgba)
+    expect(withAlpha(undefined, 0.5)).toBeUndefined()
+    expect(withAlpha('#F3F', 0.5)).toBe('#F3F')
+  })
+
+  test('blendHex: края и середина', () => {
+    expect(blendHex('#000000', '#FFFFFF', 0)).toBe('#000000')
+    expect(blendHex('#000000', '#FFFFFF', 1)).toBe('#ffffff')
+    expect(blendHex('#000000', '#FFFFFF', 0.5)).toBe('#808080')
+    expect(blendHex('#FBBF24', '#FB7185', 0.5)).toBe('#fb9855')
+    // Не-hex — безопасный фолбэк (возвращает ближайший край)
+    expect(blendHex('rgba(1,2,3,1)', '#FFFFFF', 0.2)).toBe('rgba(1,2,3,1)')
+  })
+
+  test('bmiTones: все категории ИМТ имеют тон из семьи темы', () => {
+    for (const id of THEME_ORDER) {
+      const tones = bmiTones(THEMES[id].colors)
+      for (const cat of ['low', 'norm', 'over', 'obese1', 'obese2']) {
+        expect(typeof tones[cat]).toBe('string')
+        expect(tones[cat].length).toBeGreaterThan(0)
+      }
+      // Шкала различима: норма ≠ лишний вес ≠ ожирение
+      expect(tones.norm).not.toBe(tones.over)
+      expect(tones.over).not.toBe(tones.obese1)
+    }
+  })
+
+  test('bmiTones: тона привязаны к семантике темы (норма — good, ожирение — bad)', () => {
+    const classic = THEMES.classic.colors
+    const tClassic = bmiTones(classic)
+    expect(tClassic.norm).toBe(classic.good)
+    expect(tClassic.obese1).toBe(classic.bad)
+    expect(tClassic.low).toBe(classic.warn)
+    // «Лишний вес» — переходная зона: смесь warn и bad (оранжевый)
+    expect(tClassic.over).toBe(blendHex(classic.warn, classic.bad, 0.5))
+    // В кремовой тема остаётся тёплой: норма — янтарь, не зелёный
+    const cream = THEMES.cream.colors
+    expect(bmiTones(cream).norm).toBe(cream.good)
+    expect(bmiTones(cream).norm).toBe('#A16207')
+    expect(bmiTones(cream).over).toBe('#9a431d')
   })
 })

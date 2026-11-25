@@ -1,19 +1,24 @@
-// Мотивационный баннер: мишка на скале, закат в горах и цитата дня
+// Мотивационный баннер: мишка на скале, закат в горах и цитата дня.
+// Правка Кати 25.11 («все уведомления тоже подогнать по цвету тем»):
+// рамка и сердечко — токены темы; затемняющие градиенты поверх фото
+// остаются — они держат читаемость белой цитаты на картинке
 
 import { Image, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Heart } from 'lucide-react-native'
+import { useThemeColors } from '@/lib/use-theme'
 
 const SCENE = require('../../../assets/images/banner-bear.webp')
 
 const QUOTE = 'Маленькие шаги приводят к большим результатам'
 
 export function MotivationBanner() {
+  const themeColors = useThemeColors()
   return (
     <View
       accessibilityLabel="Мотивационная цитата"
-      className="overflow-hidden rounded-3xl border border-white/5"
-      style={{ height: 150 }}
+      className="overflow-hidden rounded-3xl"
+      style={{ height: 150, borderWidth: 1, borderColor: themeColors.bodyLine }}
     >
       <Image
         source={SCENE}
@@ -40,7 +45,7 @@ export function MotivationBanner() {
             {QUOTE}
           </Text>
           <View className="ml-1.5 mb-0.5">
-            <Heart size={20} color="#4ade80" fill="#4ade80" />
+            <Heart size={20} color={themeColors.good} fill={themeColors.good} />
           </View>
         </View>
       </View>
