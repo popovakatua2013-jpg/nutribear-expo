@@ -1,8 +1,11 @@
 // Универсальный переключатель-«пилюли»: периоды (7/30/90), показатели
-// (шаги/калории/…), минуты в тренировках. Раньше этот паттерн был
-// скопирован в четырёх местах с чуть разными отступами и цветами.
-// Активная пилюля — градиент (полный фирменный или в цвет показателя,
-// если у пункта задан color), неактивная — серая подложка.
+// (шаги/калории/…), минуты в тренировках, «Сегодня/Вчера» в форме
+// тренировки. Раньше этот паттерн был скопирован в четырёх местах с чуть
+// разными отступами и цветами. Активная пилюля — ГРАДИЕНТ АКТИВНОЙ ТЕМЫ
+// (правка Кати 25.11: «За какой день сегодня/вчера — не перекрашено»:
+// раньше активная пилюля всегда была фирменным сине-фиолетовым
+// градиентом BRAND, в неоновых темах выбивалась), неактивная —
+// приглушённая подложка темы.
 //
 // Пункт с disabled: true — «заблокирован»: серый, приглушён, с замком
 // (отзыв Кати: динамика за 30/90 дней открывается, только когда
@@ -16,13 +19,17 @@ import { Lock } from 'lucide-react-native'
 import { useThemeColors } from '@/lib/use-theme'
 
 
-const BRAND = ['#4D7CFE', '#8B5CF6', '#A45BFF']
-
-export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel }) {
+export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel, color }) {
   const themeColors = useThemeColors()
   // Отступы и размер текста отдельно: у заблокированного пункта рядом
   // с текстом стоит замок, и строка собирается из иконки + текста
   const pad = size === 'sm' ? { box: 'px-2.5 py-1.5', text: 'text-[15px]' } : { box: 'px-3 py-1.5', text: 'text-[16px]' }
+  // Цвет активной пилюли: свой у конкретного пункта (it.color), иначе
+  // акцент активной темы; градиент — свечение темы, как у кнопок на «Главной»
+  const grad = color
+    ? [color, `${color}99`]
+    : [themeColors.accentBright, themeColors.accent]
+  const ink = themeColors.accentOn
 
   return (
     <View className="flex-row flex-wrap gap-1.5" accessibilityLabel={accessibilityLabel}>
@@ -34,8 +41,11 @@ export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel 
             className={`flex-row items-center gap-1 ${pad.box}`}
             style={locked ? { opacity: 0.5 } : null}
           >
-            {locked && <Lock size={11} color={active ? '#FFFFFF' : themeColors.dim} />}
-            <Text className={`${pad.text} font-semibold ${active ? 'text-white' : 'text-bear-dim'}`}>
+            {locked && <Lock size={11} color={active ? ink : themeColors.dim} />}
+            <Text
+              className={`${pad.text} font-semibold ${active ? '' : 'text-bear-dim'}`}
+              style={active ? { color: ink } : null}
+            >
               {it.label}
             </Text>
           </View>
@@ -55,12 +65,12 @@ export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel 
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                colors={it.color ? [it.color, `${it.color}99`] : BRAND}
+                colors={it.color ? [it.color, `${it.color}99`] : grad}
               >
                 {pill}
               </LinearGradient>
             ) : (
-              <View className="bg-white/5">{pill}</View>
+              <View className="bg-bear-accentFaint">{pill}</View>
             )}
           </Pressable>
         )

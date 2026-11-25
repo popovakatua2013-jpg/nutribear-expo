@@ -184,7 +184,7 @@ export function ProgressPhotos() {
           className="h-11 w-11 items-center justify-center overflow-hidden rounded-full active:opacity-80"
           style={{
             elevation: 5,
-            shadowColor: '#8B5CF6',
+            shadowColor: themeColors.accent,
             shadowOpacity: 0.5,
             shadowRadius: 9,
           }}
@@ -192,7 +192,7 @@ export function ProgressPhotos() {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+            colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
             style={[StyleSheet.absoluteFillObject, { borderRadius: 22 }]}
           />
           <Camera size={23} color="#FFFFFF" strokeWidth={2.2} />

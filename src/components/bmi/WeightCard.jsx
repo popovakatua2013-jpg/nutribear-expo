@@ -269,7 +269,7 @@ export function WeightCard() {
     gaining: wantUp,
   })
   const toneColor =
-    strip.tone === 'bad' ? '#FB7185' : strip.tone === 'info' ? themeColors.dim : '#34D399'
+    strip.tone === 'bad' ? themeColors.bad : strip.tone === 'info' ? themeColors.dim : themeColors.good
 
   // Цвет линии графика (отзыв Кати: «в зависимости от цели — линия
   // красная/зелёная»): красная — за период вес уходит от цели (или,
@@ -277,7 +277,7 @@ export function WeightCard() {
   // Одна запись — вывода нет: нейтральная серая
   const away =
     goalWeightKg != null ? periodTowardGoal === false : towardNorm === false
-  const lineColor = fewData ? themeColors.dim : away ? '#fb7185' : '#4ade80'
+  const lineColor = fewData ? themeColors.dim : away ? themeColors.bad : themeColors.good
 
   // Подсветка «Текущего веса» (отзыв Кати): по калькулятору ИМТ перебор —
   // красный, недостаток веса — жёлтый; в норме цвет уточняет цель
@@ -286,16 +286,16 @@ export function WeightCard() {
   const bmiNow = calcBmi(weightKg, heightCm)
   const weightTone =
     bmiNow >= 25
-      ? '#FB7185'
+      ? themeColors.bad
       : bmiNow > 0 && bmiNow < 18.5
-        ? '#FACC15'
+        ? themeColors.warn
         : foodGoal === 'lose'
-          ? '#FBBF24'
+          ? themeColors.warn
           : foodGoal === 'maintain'
-            ? '#38BDF8'
+            ? themeColors.link
             : foodGoal === 'gain'
               ? themeColors.accentBright
-              : '#4ADE80'
+              : themeColors.good
 
   // Ключ сегодняшнего дня (локальная дата) — запись сегодняшнего
   // взвешивания в журнале подсвечивается словом «Сегодня»
@@ -496,10 +496,10 @@ export function WeightCard() {
           <View>
             <View className="flex-row items-center gap-1">
               {!fewData && periodDelta < 0 && (
-                <TrendingDown size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+                <TrendingDown size={14} color={toneColor === themeColors.good ? themeColors.good : themeColors.bad} />
               )}
               {!fewData && periodDelta > 0 && (
-                <TrendingUp size={14} color={toneColor === '#34D399' ? '#34d399' : '#fb7185'} />
+                <TrendingUp size={14} color={toneColor === themeColors.good ? themeColors.good : themeColors.bad} />
               )}
               <Text
                 numberOfLines={1}
@@ -556,14 +556,14 @@ export function WeightCard() {
                     adjustsFontSizeToFit
                     maxFontSizeMultiplier={1.2}
                     className="font-semibold text-[13px]"
-                    style={{ color: '#4ADE80' }}
+                    style={{ color: themeColors.good }}
                   >
                     Цель достигнута!
                   </Text>
                   <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
                     <View
                       className="h-full rounded-full"
-                      style={{ width: '100%', backgroundColor: '#4ADE80' }}
+                      style={{ width: '100%', backgroundColor: themeColors.good }}
                     />
                   </View>
                 </View>
@@ -698,8 +698,8 @@ export function WeightCard() {
                 size={16}
                 color={
                   strip.tone === 'bad' || strip.tone === 'push'
-                    ? '#FBBF24'
-                    : '#38BDF8'
+                    ? themeColors.warn
+                    : themeColors.link
                 }
               />
             </View>

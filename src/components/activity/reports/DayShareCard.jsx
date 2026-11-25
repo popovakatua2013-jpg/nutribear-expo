@@ -180,10 +180,10 @@ export function DayShareCard({ open, onClose }) {
           disabled={busy}
           className="mt-4 w-full overflow-hidden rounded-2xl active:opacity-80"
         >
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
             <View className="flex-row items-center justify-center gap-2 py-3.5">
-              <Share2 size={19} color="#FFFFFF" />
-              <Text className="font-bold text-[18px] text-white">
+              <Share2 size={19} color={themeColors.accentOn} />
+              <Text className="font-bold text-[18px]" style={{ color: themeColors.accentOn }}>
                 {busy ? 'Готовим…' : 'Поделиться'}
               </Text>
             </View>

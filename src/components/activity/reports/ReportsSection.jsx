@@ -131,21 +131,24 @@ export function ReportsSection({
           onPress={() => setShareOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Поделиться итогами периода"
-          className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 active:opacity-70"
+          className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-bear-accentFaint px-3 py-1.5 active:opacity-70"
         >
           <Share2 size={15} color={themeColors.link} />
           <Text className="font-semibold text-[16px] text-bear-link">Итоги</Text>
         </Pressable>
         {/* «День» — слепок сегодняшнего дня картинкой: вместо серии
-            скриншотов тренеру (отзыв из Google Play) */}
+            скриншотов тренеру (отзыв из Google Play). Цвет — темы
+            (правка Кати 25.11: розовый #F9A8D4 выбивался из неонов) */}
         <Pressable
           onPress={() => setDayShareOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Поделиться итогами дня"
-          className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 active:opacity-70"
+          className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-bear-accentFaint px-3 py-1.5 active:opacity-70"
         >
-          <Share2 size={15} color="#F9A8D4" />
-          <Text className="font-semibold text-[16px] text-[#F9A8D4]">День</Text>
+          <Share2 size={15} color={themeColors.accentBright} />
+          <Text className="font-semibold text-[16px]" style={{ color: themeColors.accentBright }}>
+            День
+          </Text>
         </Pressable>
       </View>
 

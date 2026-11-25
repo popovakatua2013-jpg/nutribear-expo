@@ -116,7 +116,7 @@ export function PhotoGuideModal({ visible, onClose }) {
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+                colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
                 style={{ paddingVertical: 14, alignItems: 'center' }}
               >
                 <Text className="font-bold text-[17.5px] text-white">Понятно</Text>

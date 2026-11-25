@@ -41,7 +41,7 @@ import { HintBox } from '../ui/HintBox'
 // цвета с остальным приложением, включая кнопки (просьба Кати 09.11).
 // Ключи те же, что у design-системы «Тренировок», значения — bear.*
 import { spacing, radius, F, type } from '@/features/workouts/theme'
-import { C as colors } from './planPalette'
+import { usePlanPalette } from './planPalette'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 
@@ -84,6 +84,7 @@ const fmtStamp = (ts) => {
 }
 
 export function FastingScreen() {
+  const colors = usePlanPalette().C
   const { toast } = useToast()
   const windowStart = useFastingStore((s) => s.windowStart)
   const windowHours = useFastingStore((s) => s.windowHours)

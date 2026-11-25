@@ -103,8 +103,13 @@ describe('ai-chat.jsx: оформление как в мессенджере (о
     // внутри градиента
     expect(SRC).toContain('width: 42')
     expect(SRC).toContain('height: 42')
-    expect(SRC).toContain('<Send size={19} color="#FFFFFF" />')
-    const after = SRC.slice(SRC.indexOf("colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}", SRC.indexOf('Отправить')))
+    // Правка Кати 25.11 («проверь замечания по всем темам»): кнопка и
+    // пузыри ИИ-чата светятся цветом АКТИВНОЙ темы (accentBright →
+    // accent), иконка на градиенте — accentOn
+    expect(SRC).toContain('<Send size={19} color={themeColors.accentOn} />')
+    expect(SRC).toContain("colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}")
+    expect(SRC).not.toContain('#4D7CFE')
+    const after = SRC.slice(SRC.indexOf("colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}", SRC.indexOf('Отправить')))
     expect(after).toContain('<Send')
     expect(SRC).not.toContain('absoluteFillObject')
     const conv = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'home', 'AiChat.jsx'), 'utf8')

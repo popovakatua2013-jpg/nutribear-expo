@@ -122,7 +122,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                 <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
                   {METRICS.filter((m) => m.key !== 'sleepMin' && (prev?.[m.key] || 0) > 0).map((m) => {
                     const pct = changePct(totals?.[m.key] || 0, prev[m.key])
-                    const tone = deltaTone(pct, m.invert, themeColors.dim)
+                    const tone = deltaTone(pct, m.invert, themeColors.dim, themeColors.good, themeColors.bad)
                     const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
                     return (
                       <View key={m.key} className="flex-row items-center gap-1">
@@ -172,10 +172,10 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
           disabled={busy}
           className="mt-4 w-full overflow-hidden rounded-2xl active:opacity-80"
         >
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
             <View className="flex-row items-center justify-center gap-2 py-3.5">
-              <Share2 size={19} color="#FFFFFF" />
-              <Text className="font-bold text-[18px] text-white">
+              <Share2 size={19} color={themeColors.accentOn} />
+              <Text className="font-bold text-[18px]" style={{ color: themeColors.accentOn }}>
                 {busy ? 'Готовим…' : 'Поделиться'}
               </Text>
             </View>

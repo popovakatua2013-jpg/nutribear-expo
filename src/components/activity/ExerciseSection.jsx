@@ -999,8 +999,18 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           accessibilityLabel={editing ? 'Сохранить изменения' : 'Записать тренировку'}
           className="shrink-0 overflow-hidden rounded-xl active:opacity-80"
         >
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-            <Text className="px-4 py-2 text-center font-bold text-[15.5px] text-white">
+          {/* Градиент кнопки — цвета ТЕМЫ (правка Кати 25.11: кнопка была
+              сине-фиолетовой во всех темах и рядом с «Сегодня/Вчера»
+              выбивалась) */}
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            colors={[themeColors.accentBright, themeColors.accent]}
+          >
+            <Text
+              className="px-4 py-2 text-center font-bold text-[15.5px]"
+              style={{ color: themeColors.accentOn }}
+            >
               {editing ? 'Сохранить' : 'Записать'}
             </Text>
           </LinearGradient>
@@ -1028,8 +1038,10 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             accessibilityLabel={`Удалить ${editing.name}`}
             className="flex-row items-center gap-1.5 py-1 active:opacity-70"
           >
-            <Trash2 size={14} color="#f87171" />
-            <Text className="font-semibold text-[13px] text-[#f87171]">Удалить</Text>
+            <Trash2 size={14} color={themeColors.bad} />
+            <Text className="font-semibold text-[13px]" style={{ color: themeColors.bad }}>
+              Удалить
+            </Text>
           </Pressable>
           <Pressable
             onPress={onDone}
@@ -1062,6 +1074,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
 // Статичное (без анимации) — растёт с каждой записанной тренировкой;
 // тап по нему показывает минуты, серию и дельту к прошлой неделе
 function MiniWeekRing({ pct, size = 44 }) {
+  const themeColors = useThemeColors()
   const sw = 5
   const r = (size - sw) / 2
   const c = 2 * Math.PI * r
@@ -1071,8 +1084,8 @@ function MiniWeekRing({ pct, size = 44 }) {
       <Svg width={size} height={size}>
         <Defs>
           <SvgGrad id="miniWkRingGrad" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#8B5CF6" />
-            <Stop offset="1" stopColor="#A45BFF" />
+            <Stop offset="0" stopColor={themeColors.accentBright} />
+            <Stop offset="1" stopColor={themeColors.accent} />
           </SvgGrad>
         </Defs>
         <Circle

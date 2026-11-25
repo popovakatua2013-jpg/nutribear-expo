@@ -461,17 +461,17 @@ export function DailySummary({
   // Правое кольцо — Pressable для правки цели (короткий тап), иначе View
   const BurnZone = onEditBurnGoal ? Pressable : View
 
-  const ringColor = over > 0 ? '#FBBF24' : done ? '#34D399' : null // null → градиент
+  const ringColor = over > 0 ? themeColors.warn : done ? themeColors.good : null // null → градиент
   // Тон блока «Остаток»: акцент темы — остаток в плюсе (можно ещё
   // съесть; как на макете: крупная цифра светится цветом темы),
-  // жёлтый — небольшой перебор (до 100 ккал — погрешность дня),
-  // красный — больший перебор. Цели нет — акцент темы (сравнивать не с чем)
+  // предупреждающий — небольшой перебор (до 100 ккал — погрешность дня),
+  // тревожный — больший перебор. Цели нет — акцент темы (сравнивать не с чем)
   const remTone =
     rem == null || rem >= 0
       ? { text: themeColors.accentBright }
       : rem >= -100
-        ? { text: '#FBBF24' }
-        : { text: '#FB7185' }
+        ? { text: themeColors.warn }
+        : { text: themeColors.bad }
 
   return (
     <NeonCard
@@ -492,10 +492,16 @@ export function DailySummary({
           <View
             accessibilityLabel={`Стрик: ${streak} ${pluralDays(streak)} подряд`}
             className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1.5"
-            style={{ backgroundColor: 'rgba(251,146,60,0.13)' }}
+            // Свечение темы (правка Кати 25.11: бейдж стрика был оранжевым
+            // во всех темах — теперь светится цветом активной темы)
+            style={{ backgroundColor: themeColors.accentFaint2 }}
           >
-            <Flame size={14} color="#fb923c" />
-            <Text maxFontSizeMultiplier={MAX} className="font-bold text-[15px] text-[#fdba74]">
+            <Flame size={14} color={themeColors.accent} />
+            <Text
+              maxFontSizeMultiplier={MAX}
+              className="font-bold text-[15px]"
+              style={{ color: themeColors.accentBright }}
+            >
               {`${streak} ${pluralDays(streak)}`}
             </Text>
           </View>
@@ -609,15 +615,15 @@ export function DailySummary({
           className="shrink-0 items-center"
         >
           {/* сожжено — кольцо того же диаметра, что и «съедено» (отзыв
-              Кати про разные кольца): зелёная дуга (#34D399 — красное
-              кольцо тревожило, отзыв Кати), внутри число и «из N ккал»,
-              под кольцом подпись «сожжено» */}
+              Кати про разные кольца): дуга цвета темы («хорошо» — в неонах
+              это оттенок того же неона; раньше была всегда зелёной),
+              внутри число и «из N ккал», под кольцом подпись «сожжено» */}
           <KcalRing
             value={burned}
             goal={burnGoal > 0 ? burnGoal : null}
             caption="сожжено"
             pct={burnPct}
-            color="#34D399"
+            color={themeColors.good}
             runId={runId}
             accessibilityLabel={`Сожжено ${formatNum(burned)} килокалорий за сегодня${burnGoal > 0 ? ` из ${formatNum(burnGoal)}` : ''}`}
           />
@@ -688,17 +694,17 @@ export function DailySummary({
         }
         className="mt-2.5 flex-row items-center"
       >
-        <NutrientCell label="Белки" value={bju.p} target={norms.p} color="#A78BFA" Icon={Hexagon} />
+        <NutrientCell label="Белки" value={bju.p} target={norms.p} color={themeColors.nutP} Icon={Hexagon} />
         <VDivider />
-        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color="#FB923C" Icon={Flame} />
+        <NutrientCell label="Жиры" value={bju.f} target={norms.f} color={themeColors.nutF} Icon={Flame} />
         <VDivider />
-        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color="#38BDF8" Icon={Droplet} />
+        <NutrientCell label="Углеводы" value={bju.c} target={norms.c} color={themeColors.nutC} Icon={Droplet} />
         <VDivider />
         <NutrientCell
           label="Клетчатка"
           value={bju.fib || 0}
           target={norms.fib}
-          color="#34D399"
+          color={themeColors.nutFib}
           Icon={Leaf}
         />
         <Pressable
@@ -706,7 +712,7 @@ export function DailySummary({
           accessibilityRole="button"
           accessibilityLabel="Изменить нормы белков, жиров, углеводов и клетчатки"
           hitSlop={6}
-          className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="ml-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-bear-accentFaint active:opacity-70"
         >
           <Pencil size={14} color={themeColors.dim} />
         </Pressable>
@@ -746,14 +752,14 @@ export function DailySummary({
                   value={normsDraft.p}
                   onChange={(t) => setNormsDraft((d) => ({ ...d, p: t }))}
                   placeholder={String(norms.p)}
-                  color="#A78BFA"
+                  color={themeColors.nutP}
                 />
                 <NormInput
                   label="Жиры, г"
                   value={normsDraft.f}
                   onChange={(t) => setNormsDraft((d) => ({ ...d, f: t }))}
                   placeholder={String(norms.f)}
-                  color="#FB923C"
+                  color={themeColors.nutF}
                 />
               </View>
               <View className="mt-2.5 flex-row gap-2.5">
@@ -762,14 +768,14 @@ export function DailySummary({
                   value={normsDraft.c}
                   onChange={(t) => setNormsDraft((d) => ({ ...d, c: t }))}
                   placeholder={String(norms.c)}
-                  color="#38BDF8"
+                  color={themeColors.nutC}
                 />
                 <NormInput
                   label="Клетчатка, г"
                   value={normsDraft.fib}
                   onChange={(t) => setNormsDraft((d) => ({ ...d, fib: t }))}
                   placeholder={String(norms.fib)}
-                  color="#34D399"
+                  color={themeColors.nutFib}
                 />
               </View>
               <Pressable
@@ -853,7 +859,7 @@ export function DailySummary({
                     accessibilityRole="button"
                     accessibilityLabel="Изменить прибавку для менструации"
                     hitSlop={8}
-                    className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+                    className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-bear-accentFaint active:opacity-70"
                   >
                     <Pencil size={14} color={themeColors.soft} />
                   </Pressable>
@@ -905,7 +911,7 @@ export function DailySummary({
                       accessibilityRole="button"
                       accessibilityLabel={`Изменить прибавку для «${meta.label}»`}
                       hitSlop={8}
-                      className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+                      className="h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-bear-accentFaint active:opacity-70"
                     >
                       <Pencil size={14} color={themeColors.soft} />
                     </Pressable>
@@ -926,7 +932,10 @@ export function DailySummary({
                   указать, на сколько дней командировка, чтобы рассчитать
                   колораж). Метка ставится на весь диапазон */}
               {tripDaysOpen && (
-                <View className="gap-2 rounded-2xl border border-[#38BDF8]/40 bg-[#38BDF8]/10 p-3">
+                <View
+                  className="gap-2 rounded-2xl border p-3"
+                  style={{ borderColor: themeColors.accentBorder, backgroundColor: themeColors.accentFaint }}
+                >
                   <Text
                     maxFontSizeMultiplier={MAX}
                     className="font-bold text-[15px] text-bear-text"
@@ -940,7 +949,7 @@ export function DailySummary({
                         onPress={() => applyTripDays(n)}
                         accessibilityRole="button"
                         accessibilityLabel={`Отметить командировку на ${n} ${pluralDays(n)}`}
-                        className="rounded-full bg-white/[0.08] px-3 py-1.5 active:opacity-70"
+                        className="rounded-full bg-bear-accentFaint2 px-3 py-1.5 active:opacity-70"
                       >
                         <Text className="font-semibold text-[14px] text-bear-text">
                           {n === 1 ? '1 день' : `${n} дн`}
@@ -967,7 +976,7 @@ export function DailySummary({
                 onPress={clearManualMark}
                 accessibilityRole="button"
                 accessibilityLabel="Вернуть обычный день"
-                className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-white/5 py-2.5 active:opacity-70"
+                className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-2xl bg-bear-accentFaint py-2.5 active:opacity-70"
               >
                 <RotateCcw size={15} color={themeColors.soft} />
                 <Text className="font-bold text-[16px] text-bear-soft">Вернуть обычный день</Text>
@@ -1024,7 +1033,7 @@ export function DailySummary({
                 autoFocus
                 selectTextOnFocus
                 accessibilityLabel="Прибавка, килокалорий в день"
-                className="mt-3 rounded-2xl border border-white/10 bg-white/5 py-3 text-center font-bold text-[22px] text-bear-text"
+                className="mt-3 rounded-2xl border border-bear-line bg-bear-accentFaint py-3 text-center font-bold text-[22px] text-bear-text"
                 placeholder="0"
                 placeholderTextColor={themeColors.dim}
               />
@@ -1067,7 +1076,7 @@ function NormInput({ label, value, onChange, placeholder, color }) {
         placeholder={placeholder}
         placeholderTextColor={themeColors.dim}
         accessibilityLabel={label}
-        className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center font-bold text-[19px] text-bear-text"
+        className="rounded-2xl border border-bear-line bg-bear-accentFaint py-2.5 text-center font-bold text-[19px] text-bear-text"
       />
     </View>
   )

@@ -6,25 +6,27 @@
 // в карточках показателей ниже (ReportCards), а не здесь: плитки в этой
 // карточке дублировали их и обрезались на узких экранах (отзыв Кати).
 // Поверхность и шапка — в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
+// Правка Кати 25.11 («проверь замечания по всем темам»): тон чипа и
+// полосы — цвета ТЕМЫ (хорошо/предупреждение/плохо), а не фиксированные
+// зелёный/жёлтый/красный
 
 import { Text, View } from 'react-native'
 import { CalendarCheck } from 'lucide-react-native'
 import { discipline } from '@/lib/data/reports'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { BodyChip } from '../../ui/BodyChip'
+import { useThemeColors } from '@/lib/use-theme'
 
 export function DisciplineCard({ rows }) {
+  const themeColors = useThemeColors()
   const goals = useGoalsStore((s) => s.goals)
   const { days, recorded } = discipline(rows, goals)
   const pct = days > 0 ? Math.round((recorded / days) * 100) : 0
 
-  // Тон полосы и чипа — по заполненности периода
+  // Тон полосы и чипа — по заполненности периода, цвет — из темы:
+  // «хорошо» в неонах светится оттенком того же неона
   const tone =
-    pct >= 67
-      ? { chip: 'bg-emerald-400/10', text: 'text-emerald-300', bar: 'bg-emerald-400/70' }
-      : pct >= 34
-        ? { chip: 'bg-amber-400/10', text: 'text-amber-300', bar: 'bg-amber-400/70' }
-        : { chip: 'bg-rose-400/10', text: 'text-rose-300', bar: 'bg-rose-400/70' }
+    pct >= 67 ? themeColors.good : pct >= 34 ? themeColors.warn : themeColors.bad
 
   return (
     <View
@@ -38,10 +40,10 @@ export function DisciplineCard({ rows }) {
             Дисциплина
           </Text>
         </View>
-        <View className={`shrink-0 rounded-full px-2.5 py-1.5 ${tone.chip}`}>
+        <View className="shrink-0 rounded-full bg-bear-accentFaint px-2.5 py-1.5">
           {/* Кратко «2/7 дн»: полная форма «2 из 7 дней» обрезалась
               на узких экранах (отзыв Кати) */}
-          <Text className={`font-semibold text-[15px] ${tone.text}`}>
+          <Text className="font-semibold text-[15px]" style={{ color: tone }}>
             дней с записями {recorded}/{days}
           </Text>
         </View>
@@ -49,7 +51,7 @@ export function DisciplineCard({ rows }) {
 
       {/* Полоса заполненности дневника: доля дней с записями */}
       <View className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <View className={`h-full rounded-full ${tone.bar}`} style={{ width: `${pct}%` }} />
+        <View className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: tone }} />
       </View>
 
       <Text className="mt-3 font-sans text-[15px] leading-snug text-bear-dim">

@@ -10,6 +10,9 @@
 // Норма клетчатки — своя из целей «Съедено за сегодня» (если задана),
 // иначе 25 г/день (ВОЗ): и в балле, и в подписи строки. Поверхность и
 // шапка — в стиле вкладки «Тело» (фиолетовая bear-bodyCard + BodyChip).
+// Правка Кати 25.11 («сахар, белки и кнопка свернуть — не перекрашены»):
+// полосы метрик и значения — цвета темы (хорошо/предупреждение/плохо),
+// кнопка «Подробнее/Свернуть» и тумблер «День/Месяц» — подложки темы.
 
 import { useRef, useState } from 'react'
 import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react-native'
@@ -39,9 +42,14 @@ const MONTHS = [
   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь',
 ]
 
-const toneOf = (score) => (score >= 70 ? 'emerald' : score >= 45 ? 'amber' : 'grad')
-
 function MetricRow({ label, value, norm, score }) {
+  const themeColors = useThemeColors()
+  // Цвет полосы и значения — из темы: «хорошо» светится акцентом темы
+  // (в неонах это оттенок того же неона), «средне» — предупреждающим,
+  // «слабо» — тревожным (правка Кати 25.11: «сахар, белки — не перекрашены»:
+  // раньше полосы были всегда зелёными/янтарными из другой палитры)
+  const tone =
+    score >= 70 ? themeColors.good : score >= 45 ? themeColors.warn : themeColors.bad
   return (
     <View>
       <View className="flex-row items-baseline justify-between gap-2">
@@ -54,13 +62,12 @@ function MetricRow({ label, value, norm, score }) {
       </View>
       <View className="mt-1 flex-row items-center gap-2">
         <View className="flex-1">
-          <ProgressBar pct={score} h={6} tone={toneOf(score)} />
+          <ProgressBar pct={score} h={6} color={tone} />
         </View>
         <Text
           maxFontSizeMultiplier={MAX}
-          className={`w-14 text-right font-bold text-[16.5px] ${
-            score >= 70 ? 'text-emerald-300' : score >= 45 ? 'text-amber-300' : 'text-bear-soft'
-          }`}
+          className="w-14 text-right font-bold text-[16.5px]"
+          style={{ color: tone }}
         >
           {value}
         </Text>
@@ -157,7 +164,7 @@ export function NutritionRating() {
           </Text>
         </View>
 
-        <View className="flex-row rounded-full bg-white/5 p-1">
+        <View className="flex-row rounded-full bg-bear-accentFaint p-1">
           {[
             { id: 'day', label: 'День' },
             { id: 'month', label: 'Месяц' },
@@ -192,7 +199,7 @@ export function NutritionRating() {
               accessibilityRole="button"
               accessibilityLabel="Открыть подробные метрики рейтинга питания"
               accessibilityState={{ selected: expanded }}
-              className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-line bg-white/[0.04] active:opacity-70"
+              className="h-14 w-14 items-center justify-center rounded-2xl border border-bear-accentBorder bg-bear-accentFaint active:opacity-70"
             >
               <Text maxFontSizeMultiplier={MAX} className="font-extrabold text-[28px] tracking-tight text-bear-text">
                 {r.overall}
@@ -222,7 +229,7 @@ export function NutritionRating() {
 
           {/* Пояснение: из чего складывается балл и как его поднять */}
           {explain && (
-            <View className="mt-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5 py-3">
+            <View className="mt-3 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-3.5 py-3">
               <Text className="font-semibold text-[16.5px] text-bear-text">
                 Балл 0–100 — насколько сбалансирован рацион за период
               </Text>
@@ -261,14 +268,17 @@ export function NutritionRating() {
               onPress={() => setExpanded((v) => !v)}
               accessibilityRole="button"
               accessibilityLabel={expanded ? 'Свернуть подробности' : 'Показать подробности'}
-              className="mt-3 flex-row items-center justify-center gap-1 rounded-xl bg-white/5 py-2 active:bg-white/10"
+              className="mt-3 flex-row items-center justify-center gap-1 rounded-xl border border-bear-accentBorder bg-bear-accentFaint py-2 active:opacity-70"
             >
               {expanded ? (
-                <ChevronUp size={16} color={themeColors.soft} />
+                <ChevronUp size={16} color={themeColors.accentSoft} />
               ) : (
-                <ChevronDown size={16} color={themeColors.soft} />
+                <ChevronDown size={16} color={themeColors.accentSoft} />
               )}
-              <Text className="font-semibold text-[16.5px] text-bear-sub">
+              <Text
+                className="font-semibold text-[16.5px]"
+                style={{ color: themeColors.accentSoft }}
+              >
                 {expanded ? 'Свернуть' : 'Подробнее · жиры, углеводы, витамины'}
               </Text>
             </Pressable>

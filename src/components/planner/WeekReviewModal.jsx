@@ -25,10 +25,12 @@ import { useWeekReviewStore } from '@/store/useWeekReviewStore'
 import { weekKeyOf } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { PremiumCard } from '@/components/more/PremiumCard'
-import { P } from './planPalette'
+import { usePlanPalette } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 export function WeekReviewModal({ open, onClose }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
   const { toast } = useToast()
   const pro = useProStore((s) => s.pro)
   const history = useFoodStore((s) => s.history)
@@ -188,7 +190,7 @@ export function WeekReviewModal({ open, onClose }) {
   )
 }
 
-const styles = {
+const makeStyles = (P) => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   sheet: {
     backgroundColor: P.tile,
@@ -248,4 +250,4 @@ const styles = {
   runBtnBusy: { opacity: 0.7 },
   runBtnText: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
   note: { ...type.caption, color: P.text3, textAlign: 'center' },
-}
+})

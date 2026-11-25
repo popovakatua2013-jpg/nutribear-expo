@@ -21,7 +21,7 @@ import { useMealPlanStore } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { PremiumCard } from '@/components/more/PremiumCard'
 import { generateWeekMenu } from '@/lib/menu-ai'
-import { P } from './planPalette'
+import { usePlanPalette } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 // Норма калорий для ИИ-меню: здравые границы — за ними просим поправить
@@ -29,6 +29,8 @@ const MIN_KCAL = 1000
 const MAX_KCAL = 5000
 
 export function AiMenuModal({ open, weekKey, weekDishes = 0, onClose }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
   const { toast } = useToast()
   const pro = useProStore((s) => s.pro)
   const kcalGoal = useGoalsStore((s) => s.goals.kcal)
@@ -177,7 +179,7 @@ export function AiMenuModal({ open, weekKey, weekDishes = 0, onClose }) {
   )
 }
 
-const styles = {
+const makeStyles = (P) => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   sheet: {
     backgroundColor: P.tile,
@@ -244,4 +246,4 @@ const styles = {
   runBtnBusy: { opacity: 0.7 },
   runBtnText: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
   note: { ...type.caption, color: P.text3, textAlign: 'center' },
-}
+})

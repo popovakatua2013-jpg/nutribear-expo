@@ -15,7 +15,10 @@
 // «7 д» в первые 7 дней выглядел как поломка). Данные — журнал
 // взвешиваний из профиля; за период измерений нет — честная
 // подсказка. Тап по карточке открывает вкладку ИМТ и докручивает
-// до большого графика «Динамика веса»
+// до большого графика «Динамика веса».
+// Правка Кати 25.11 («график веса и почти все блоки не перекрашены»):
+// подложка — тинт и поверхность ТЕМЫ (раньше фиолетовый градиент
+// #a78bfa14 → #1A123A был во всех темах), иконка/точки графика — цвета темы
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -105,11 +108,11 @@ export function WeightTrendCard() {
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        colors={['#a78bfa14', '#1A123A']}
+        colors={[themeColors.accentFaint, themeColors.card]}
         style={{
           borderRadius: 16,
           borderWidth: 1,
-          borderColor: themeColors.bodyLine,
+          borderColor: themeColors.accentBorder,
           padding: 14,
         }}
       >
@@ -119,12 +122,12 @@ export function WeightTrendCard() {
               width: 28,
               height: 28,
               borderRadius: 10,
-              backgroundColor: '#a78bfa1f',
+              backgroundColor: themeColors.accentFaint2,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <BarChart3 size={16} color="#a78bfa" />
+            <BarChart3 size={16} color={themeColors.accentBright} />
           </View>
           <Text
             numberOfLines={1}
@@ -150,7 +153,7 @@ export function WeightTrendCard() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: active, disabled: locked }}
                 accessibilityLabel={`График за ${r.id} дней${locked ? ' — пока недоступно' : ''}`}
-                className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-white/[0.06]'}`}
+                className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-bear-accentFaint'}`}
                 style={[active ? { backgroundColor: themeColors.accent } : null, locked ? { opacity: 0.5 } : null]}
               >
                 {locked && (
@@ -197,7 +200,7 @@ export function WeightTrendCard() {
             <SvgAreaChart
               data={data}
               color={themeColors.accentBright}
-              dotColor="#FFFFFF"
+              dotColor={themeColors.accentOn}
               dot={data.length <= 10}
               height={150}
               goalLine={hasGoal ? goalKg : null}
@@ -211,7 +214,7 @@ export function WeightTrendCard() {
           <View className="mt-2.5 gap-1.5">
             <View
               accessibilityLabel={`Взвешивание ${data[0].label}: ${fmtDecimal(data[0].value)} килограммов`}
-              className="flex-row items-center justify-between rounded-xl bg-white/[0.05] px-3 py-2.5"
+              className="flex-row items-center justify-between rounded-xl bg-bear-accentFaint px-3 py-2.5"
             >
               <Text
                 maxFontSizeMultiplier={1.2}
@@ -235,7 +238,7 @@ export function WeightTrendCard() {
           </View>
         ) : (
           <View
-            className="items-center justify-center rounded-2xl border border-dashed border-white/10"
+            className="items-center justify-center rounded-2xl border border-dashed border-bear-accentBorder"
             style={{ height: 130, marginTop: 8 }}
           >
             <Text
@@ -255,7 +258,7 @@ export function WeightTrendCard() {
 // значение снизу крупно — как мини-статы в отчётах
 function StatCell({ label, value }) {
   return (
-    <View className="min-w-0 flex-1 rounded-xl bg-white/[0.05] px-2.5 py-1.5">
+    <View className="min-w-0 flex-1 rounded-xl bg-bear-accentFaint px-2.5 py-1.5">
       <Text
         numberOfLines={1}
         maxFontSizeMultiplier={1.2}

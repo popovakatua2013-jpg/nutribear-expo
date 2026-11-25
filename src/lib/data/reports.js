@@ -45,10 +45,13 @@ export function changePct(cur, prev) {
 // Цвет изменения: зелёный — «хорошо», красный — «плохо», серый — нет
 // изменений. invert — когда рост плох (калории). Единая логика для
 // карточек отчётов и панели недельного сравнения.
-export function deltaTone(pct, invert, muted = '#7c87a8') {
+export function deltaTone(pct, invert, muted = '#7c87a8', good = '#4ade80', bad = '#f87171') {
   if (!pct) return muted
-  const good = invert ? pct < 0 : pct > 0
-  return good ? '#4ade80' : '#f87171'
+  const isGood = invert ? pct < 0 : pct > 0
+  // Цвета темы передают вызывающие (правка Кати 25.11: «всё в одном
+  // стиле» — в неонах и «хорошо», и «плохо» берутся из темы; дефолты —
+  // прежние зелёный/красный «Классики»)
+  return isGood ? good : bad
 }
 
 // 12450 -> «12,5 л», 14000 -> «14 л»

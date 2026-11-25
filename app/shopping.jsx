@@ -14,13 +14,31 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ShoppingListScreen } from '@/components/planner/ShoppingListScreen'
 // Палитра приложения (planPalette) — страница «Покупки» открывается с
 // «Плана» и красится в один цвет с приложением (просьба Кати 09.11),
-// раньше был фон design-системы «Тренировок» (#0A0C10) с лаймом
-import { P } from '@/components/planner/planPalette'
+// раньше был фон design-системы «Тренировок» (#0A0C10) с лаймом.
+// Правка Кати 25.11 («вкладка план полностью не в теме»): палитра
+// строится из АКТИВНОЙ ТЕМЫ (usePlanPalette) — раньше здесь всегда
+// были цвета «Классики»
+import { usePlanPalette } from '@/components/planner/planPalette'
 import { spacing, F } from '@/features/workouts/theme'
+
+// Стили зависят от палитры темы
+const makeStyles = (P) => ({
+  back: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginHorizontal: spacing.xl,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  backText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: P.accent },
+})
 
 export default function ShoppingPage() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
 
   return (
     <View style={{ flex: 1, backgroundColor: P.bg, paddingTop: insets.top }}>
@@ -37,16 +55,4 @@ export default function ShoppingPage() {
       <ShoppingListScreen />
     </View>
   )
-}
-
-const styles = {
-  back: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginHorizontal: spacing.xl,
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-  backText: { fontSize: 14, fontWeight: '700', fontFamily: F[700], color: P.accent },
 }

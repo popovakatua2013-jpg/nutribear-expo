@@ -6,19 +6,60 @@
 // useUiPrefsStore.closedHints — после перезапуска она не вернётся.
 // Шаги — список строк с номерами в акцентных кружках (стиль бокса
 // подсказок «Меню на неделю», палитра planPalette — цвета приложения).
+// Правка Кати 25.11 («проверь замечания по всем темам»): стили
+// собираются из ПАЛИТРЫ АКТИВНОЙ ТЕМЫ (usePlanPalette) — раньше
+// подсказка всегда была в фиолетовых тонах «Классики».
 
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { ChevronDown, X } from 'lucide-react-native'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
-import { P } from '../planner/planPalette'
+import { usePlanPalette } from '../planner/planPalette'
 import { spacing, radius, type, F } from '@/features/workouts/theme'
 
+// Стили зависят от палитры темы — собираются в рендере
+const makeStyles = (P) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: P.accentSoft,
+      borderColor: P.accentBorder,
+      borderWidth: 1,
+      borderRadius: radius.screen,
+      padding: spacing.l,
+      marginTop: spacing.m,
+    },
+    head: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
+    title: { ...type.title, fontSize: 15, color: P.text, flex: 1 },
+    xbtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: P.tileSoft,
+    },
+    row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
+    num: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: P.accentSoft,
+      borderColor: P.accentBorder,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    numText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accentText },
+    text: { ...type.body, fontSize: 13, color: P.text2, flex: 1, lineHeight: 19 },
+  })
+
 export function HintBox({ id, title = 'Как это работает', steps = [], style }) {
+  const { P } = usePlanPalette()
   const closed = useUiPrefsStore((s) => Boolean(s.closedHints?.[id]))
   const closeHint = useUiPrefsStore((s) => s.closeHint)
   // open — локальное раскрытие: по умолчанию свернуто (отзыв Кати)
   const [open, setOpen] = useState(false)
+  const S = makeStyles(P)
   if (closed) return null
 
   return (
@@ -62,37 +103,3 @@ export function HintBox({ id, title = 'Как это работает', steps = 
     </View>
   )
 }
-
-const S = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(123,108,246,0.08)',
-    borderColor: P.accentBorder,
-    borderWidth: 1,
-    borderRadius: radius.screen,
-    padding: spacing.l,
-    marginTop: spacing.m,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  title: { ...type.title, fontSize: 15, color: P.text, flex: 1 },
-  xbtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, marginTop: spacing.s },
-  num: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: P.accentSoft,
-    borderColor: P.accentBorder,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numText: { fontSize: 13, fontWeight: '800', fontFamily: F[700], color: P.accentText },
-  text: { ...type.body, fontSize: 13, color: P.text2, flex: 1, lineHeight: 19 },
-})

@@ -22,9 +22,10 @@ import { useToast } from '../ui/Toast'
 // цвета с остальным приложением, включая кнопки (просьба Кати 09.11).
 // Ключи те же, что у design-системы «Тренировок», значения — bear.*
 import { spacing, radius, F, type } from '@/features/workouts/theme'
-import { C as colors } from './planPalette'
+import { usePlanPalette } from './planPalette'
 
 export function ShoppingListScreen() {
+  const colors = usePlanPalette().C
   const { toast } = useToast()
   const items = useShoppingStore((s) => s.items)
   const planWeek = useMealPlanStore((s) => s.plans[weekKeyOf(new Date())])

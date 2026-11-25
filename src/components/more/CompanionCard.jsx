@@ -64,7 +64,7 @@ export function CompanionCard({ embedded = false }) {
             <View
               className={`flex-row items-center gap-3 border px-3 py-2.5 ${
                 active
-                  ? 'border-[#A45BFF] bg-[#A45BFF]/10'
+                  ? 'border-bear-accent bg-bear-accentFaint3'
                   : locked
                     ? 'border-white/5 bg-white/[0.02]'
                     : 'border-white/10 bg-white/[0.03]'
@@ -117,8 +117,8 @@ export function CompanionCard({ embedded = false }) {
 
               {/* Состояние: галочка / замок */}
               {active ? (
-                <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#A45BFF]">
-                  <Check size={15} color="#FFFFFF" strokeWidth={3} />
+                <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bear-accent">
+                  <Check size={15} color={themeColors.accentOn} strokeWidth={3} />
                 </View>
               ) : locked ? (
                 <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5">

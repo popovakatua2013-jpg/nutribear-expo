@@ -84,7 +84,7 @@ function GoalRing({ pct }) {
             cy="42"
             r={R}
             fill="none"
-            stroke="#38BDF8"
+            stroke={themeColors.accentSoft}
             strokeWidth="8.5"
             strokeLinecap="round"
             strokeDasharray={`${len} ${CIRC}`}
@@ -261,7 +261,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     </View>
                     <View className="mt-2.5 flex-row items-center gap-2">
                       <View className="min-w-0 flex-1">
-                        <ProgressBar pct={pct} h={7} color="#38BDF8" />
+                        <ProgressBar pct={pct} h={7} color={themeColors.accentSoft} />
                       </View>
                       <Text className="font-semibold text-[15px] text-bear-text">{pct}%</Text>
                     </View>
@@ -398,7 +398,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           accessibilityLabel={`Изменить запись ${w.ml} мл`}
                           className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2 active:opacity-80"
                         >
-                          <Droplets size={16} color="#38BDF8" />
+                          <Droplets size={16} color={themeColors.accentSoft} />
                           <Text className="min-w-0 flex-1 font-semibold text-[17.5px] text-bear-text">
                             {formatNum(w.ml)} мл
                           </Text>

@@ -6,6 +6,8 @@
 // (около 2 месяцев) — самые старые дни 90-дневного периода могут
 // отсутствовать, они честно не входят в среднее. Поверхность и шапка —
 // в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
+// Правка Кати 25.11 («цветные точки — по темам»): точки нутриентов —
+// цвета активной темы (nutP/nutF/nutC/nutFib), а не жёсткая палитра
 
 import { useMemo } from 'react'
 import { Text, View } from 'react-native'
@@ -19,19 +21,20 @@ import { useThemeColors } from '@/lib/use-theme'
 
 const round1 = (v) => Math.round(v * 10) / 10
 
-// Цвета — как в сводке «Съедено за сегодня»: гексагон/огонь/капля/лист
+// Нутриенты и их ТОКЕНЫ темы (цвет берётся в рендере — по активной теме):
+// гексагон/огонь/капля/лист — как в сводке «Съедено за сегодня»
 const STATS = [
-  { key: 'p', label: 'Белки', color: '#A78BFA' },
-  { key: 'f', label: 'Жиры', color: '#fb923c' },
-  { key: 'c', label: 'Углеводы', color: '#38BDF8' },
-  { key: 'fib', label: 'Клетчатка', color: '#34D399' },
+  { key: 'p', label: 'Белки', token: 'nutP' },
+  { key: 'f', label: 'Жиры', token: 'nutF' },
+  { key: 'c', label: 'Углеводы', token: 'nutC' },
+  { key: 'fib', label: 'Клетчатка', token: 'nutFib' },
 ]
 
 function Stat({ label, color, value, sub, pct }) {
   const themeColors = useThemeColors()
   const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
   return (
-    <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.04] px-3 py-2.5">
+    <View className="min-w-0 flex-1 rounded-2xl bg-bear-accentFaint px-3 py-2.5">
       <View className="flex-row items-center gap-1.5">
         <View className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
         <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
@@ -57,6 +60,7 @@ function Stat({ label, color, value, sub, pct }) {
 }
 
 export function NutrientsCard({ days }) {
+  const themeColors = useThemeColors()
   const foodHistory = useFoodStore((s) => s.history)
   const byDay = useMemo(() => nutrientsByDay(foodHistory), [foodHistory])
   const cur = useMemo(() => nutrientTotals(byDay, days, 0), [byDay, days])
@@ -74,7 +78,7 @@ export function NutrientsCard({ days }) {
             Нутриенты
           </Text>
         </View>
-        <View className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1.5">
+        <View className="shrink-0 rounded-full bg-bear-accentFaint px-2.5 py-1.5">
           <Text className="font-semibold text-[15px] text-bear-soft">
             {`${cur.recorded} из ${days} дн. с едой`}
           </Text>
@@ -96,7 +100,7 @@ export function NutrientsCard({ days }) {
               <Stat
                 key={s.key}
                 label={s.label}
-                color={s.color}
+                color={themeColors[s.token]}
                 value={`${round1(cur[s.key] / cur.recorded)} г/день`}
                 sub={`${Math.round(cur[s.key])} г за период`}
                 pct={prev.recorded > 0 ? changePct(cur[s.key], prev[s.key]) : null}
@@ -108,7 +112,7 @@ export function NutrientsCard({ days }) {
               <Stat
                 key={s.key}
                 label={s.label}
-                color={s.color}
+                color={themeColors[s.token]}
                 value={`${round1(cur[s.key] / cur.recorded)} г/день`}
                 sub={
                   s.key === 'fib'

@@ -47,7 +47,7 @@ import { MealPlanScreen } from './MealPlanScreen'
 import { WeekReviewModal } from './WeekReviewModal'
 import { RecipesModal } from '../food/RecipesModal'
 import { AddFoodModal } from '../food/AddFoodModal'
-import { P, goodsWord } from './planPalette'
+import { usePlanPalette, goodsWord } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 import { useThemeColors } from '@/lib/use-theme'
 
@@ -85,7 +85,10 @@ const METRICS = [
   ['fib', 'Клетчатка'],
   ['sug', 'Сахар'],
 ]
-const METRIC_COLORS = { kcal: P.accent, fib: P.green, sug: P.pink }
+// Цвета метрик графика — из палитры ТЕМЫ (правка Кати 25.11): функция,
+// чтобы график перекрашивался при смене темы (константа на модуле была
+// всегда из «Классики»)
+const METRIC_COLORS = (P) => ({ kcal: P.accent, fib: P.green, sug: P.pink })
 const METRIC_UNIT = { kcal: 'ккал', fib: 'г', sug: 'г' }
 
 // Месяцы в родительном падеже — дата прогноза цели («20 декабря»)
@@ -145,7 +148,10 @@ function forecastTexts(f) {
 // sub — подпись под числом («от цели», как в макете).
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
-function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, centerText }) {
+function Ring({ pct, runId, size = 64, stroke = 7, color, sub, centerText }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
+  const ringColor = color || P.accent
   const over = pct > 1.05
   // Дуга рисуется до 100% максимум; число в центре — реальное
   const frac = Math.max(0, Math.min(1, pct))
@@ -201,7 +207,7 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, center
             cx={size / 2}
             cy={size / 2}
             r={rc}
-            stroke={over ? P.orange : color}
+            stroke={over ? P.orange : ringColor}
             strokeWidth={stroke}
             fill="none"
             strokeLinecap="round"
@@ -229,6 +235,8 @@ function Ring({ pct, runId, size = 64, stroke = 7, color = P.accent, sub, center
 const CHART_H = 116
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
   const [w, setW] = useState(0)
   const PAD_T = 16
   const PAD_B = 26
@@ -314,6 +322,8 @@ function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
 }
 
 export function PlanScreen({ onOpenFasting }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
   const { toast } = useToast()
   const router = useRouter()
   // Цвета активной темы (Premium 23.11) — поверхности карточек целей и разбора недели
@@ -424,7 +434,7 @@ export function PlanScreen({ onOpenFasting }) {
   const weekValues = weekStats.map((d) => d[metric])
   const weekNorm = metric === 'kcal' ? kcalGoal : metric === 'fib' ? norms.fib : SUGAR_LIMIT
   const chartMax = Math.max(weekNorm, ...weekValues, 1)
-  const metricColor = METRIC_COLORS[metric]
+  const metricColor = METRIC_COLORS(P)[metric]
   const fmtVal = (v) => (metric === 'kcal' ? formatNum(v) : String(Math.round(v * 10) / 10))
 
   // Выбор цели — вариант 3 (выбор Кати): план «хранит» выбор цели, а
@@ -854,7 +864,7 @@ export function PlanScreen({ onOpenFasting }) {
   )
 }
 
-const styles = {
+const makeStyles = (P) => ({
   // Шапка: аватар + заголовок + иконки без подложек (как в макете)
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: spacing.l },
   avatarWrap: {
@@ -930,7 +940,7 @@ const styles = {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#0C1327',
+    backgroundColor: P.deep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1171,4 +1181,4 @@ const styles = {
   },
   recipeName: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: P.text },
   recipeSub: { fontSize: 11, fontWeight: '400', fontFamily: F[400], color: P.text3, textAlign: 'center' },
-}
+})

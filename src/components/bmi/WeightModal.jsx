@@ -198,7 +198,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         disabled={!valid || !goalValid}
         className={`mt-3 overflow-hidden rounded-2xl ${!valid || !goalValid ? 'opacity-50' : ''}`}
       >
-        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
           <Text className="py-3.5 text-center font-bold text-[19px] text-white">Сохранить</Text>
         </LinearGradient>
       </Pressable>

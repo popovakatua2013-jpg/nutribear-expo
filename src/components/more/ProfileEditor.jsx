@@ -54,7 +54,7 @@ export function ProfileEditor() {
         className="flex-row items-center gap-3 px-4 py-3.5 active:opacity-80"
       >
         <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full">
-          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#8B5CF6', '#6D28D9']}>
+          <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent]}>
             <View className="h-12 w-12 items-center justify-center">
               {initial ? (
                 <Text className="font-extrabold text-[21px] text-white">{initial}</Text>
@@ -219,7 +219,7 @@ function ProfileBody({ onClose }) {
       {/* Сохранить — закреплено внизу: видна всегда, даже когда
           клавиатура открыта */}
       <Pressable onPress={save} className="mt-3 overflow-hidden rounded-2xl">
-        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
+        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
           <Text className="py-3.5 text-center font-bold text-[19px] text-white">
             Сохранить профиль
           </Text>

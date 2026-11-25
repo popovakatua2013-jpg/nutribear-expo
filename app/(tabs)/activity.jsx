@@ -20,11 +20,13 @@ import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { useFoodStore } from '@/store/useFoodStore'
+import { useThemeColors } from '@/lib/use-theme'
 import { totalConsumed } from '@/lib/data/diary'
 import { RANGES, xpForDay } from '@/lib/data/activity'
 import { AiChat } from '@/components/home/AiChat'
 
 export default function ActivityScreen() {
+  const themeColors = useThemeColors()
   const insets = useSafeAreaInsets()
   // Один период для всей вкладки — пилюли в шапке «Отчётов»: им живут
   // карточки-итоги, дисциплина, нутриенты и шеринговые «Итоги».
@@ -61,8 +63,8 @@ export default function ActivityScreen() {
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
-      <SoftGlow id="glowDiaryTR" w={190} h={160} peak={0.3} color="#4D7CFE" style={{ top: -26, right: -46 }} />
-      <SoftGlow id="glowDiaryL" w={120} h={150} peak={0.14} color="#8B5CF6" style={{ top: 60, left: -40 }} />
+      <SoftGlow id="glowDiaryTR" w={190} h={160} peak={0.3} color={themeColors.accent} style={{ top: -26, right: -46 }} />
+      <SoftGlow id="glowDiaryL" w={120} h={150} peak={0.14} color={themeColors.link} style={{ top: 60, left: -40 }} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 16,

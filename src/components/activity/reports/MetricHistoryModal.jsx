@@ -51,6 +51,7 @@ import { dayKeyOf, useHistoryStore } from '@/store/useHistoryStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
+import { METRIC_TOKENS } from '@/lib/themes'
 import { Pills } from '../../ui/Pills'
 import { DayDetailsModal } from '../../home/DayDetailsModal'
 import { useThemeColors } from '@/lib/use-theme'
@@ -73,12 +74,15 @@ function wdDateLabel(key) {
   return `${shortWeekday(d)}, ${dotDateFromKey(key)}`
 }
 
-// Цвет точки/легенды по уровню дня (как в календаре-теплокарте)
-function levelColor(metric, level) {
-  if (level === 'met') return metric.color
-  if (level === 'mid') return `${metric.color}99`
-  if (level === 'low') return `${metric.color}40`
-  if (level === 'over') return '#f87171'
+// Цвет точки/легенды по уровню дня (как в календаре-теплокарте);
+// themeColors передаёт вызывающий (правка Кати 25.11: «проверь по всем
+// темам» — «перебор» раньше был всегда красным #f87171)
+function levelColor(metric, level, themeColors) {
+  const mc = (themeColors && METRIC_TOKENS[metric.key] && themeColors[METRIC_TOKENS[metric.key]]) || metric.color
+  if (level === 'met') return mc
+  if (level === 'mid') return `${mc}99`
+  if (level === 'low') return `${mc}40`
+  if (level === 'over') return themeColors ? themeColors.bad : '#f87171'
   return STUB
 }
 
@@ -144,41 +148,48 @@ function Glass({ children, className = '', style }) {
 }
 
 // Градиентная плитка показателя в шапке (в макете — фиолетовый квадрат
-// с белой иконкой; здесь — цвет показателя, переходящий в фиолетовый)
+// с белой иконкой; здесь — цвет показателя ТЕМЫ, переходящий в акцент
+// темы; правка Кати 25.11: «всё в одном стиле как и главная страница»)
 function MetricTile({ metric }) {
+  const themeColors = useThemeColors()
+  const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[metric.color, '#7C3AED']}
+      colors={[mc, themeColors.accent]}
       style={{ width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
     >
-      <metric.Icon size={22} color="#FFFFFF" />
+      <metric.Icon size={22} color={themeColors.accentOn} />
     </LinearGradient>
   )
 }
 
 // Кружок с иконкой рядом с большой цифрой среднего
 function AvgBubble({ metric }) {
+  const themeColors = useThemeColors()
+  const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[metric.color, `${metric.color}77`]}
+      colors={[mc, `${mc}77`]}
       style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}
     >
-      <metric.Icon size={19} color="#FFFFFF" />
+      <metric.Icon size={19} color={themeColors.accentOn} />
     </LinearGradient>
   )
 }
 
 // Чип значения в градиенте показателя — «1725» у лучших дней
 function ValueChip({ metric, value }) {
+  const themeColors = useThemeColors()
+  const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[metric.color, `${metric.color}B3`]}
+      colors={[mc, `${mc}B3`]}
       style={{ borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 100 }}
     >
       <Text
@@ -186,7 +197,8 @@ function ValueChip({ metric, value }) {
         adjustsFontSizeToFit
         minimumFontScale={0.7}
         maxFontSizeMultiplier={1.1}
-        className="font-bold text-[15.5px] text-white"
+        className="font-bold text-[15.5px]"
+        style={{ color: themeColors.accentOn }}
       >
         {value}
       </Text>
@@ -196,14 +208,16 @@ function ValueChip({ metric, value }) {
 
 // Кружок места в «Лучших днях» — градиент в цвет показателя
 function RankBubble({ metric, n }) {
+  const themeColors = useThemeColors()
+  const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[metric.color, `${metric.color}66`]}
+      colors={[mc, `${mc}66`]}
       style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text className="font-bold text-[13.5px] text-white">{n}</Text>
+      <Text className="font-bold text-[13.5px]" style={{ color: themeColors.accentOn }}>{n}</Text>
     </LinearGradient>
   )
 }
@@ -223,6 +237,9 @@ export function MetricHistoryModal({
   const heightCm = useProfileStore((s) => s.heightCm)
   const metric = metricId === 'weight' ? WEIGHT_METRIC : METRICS.find((m) => m.key === metricId) || METRICS[0]
   const isWeight = metric.key === 'weight'
+  // Цвет показателя — из ТЕМЫ (mSteps/mKcal/…): плитки, пилюли периода,
+  // столбики и точки светятся оттенками активной темы (правка Кати 25.11)
+  const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
   // Разблокировка периодов — та же логика, что у пилюль секции (отзыв
   // Кати: динамика за 30/90 дней открывается на 30-й/90-й день ведения
   // дневника; НЕДЕЛЯ всегда открыта — замок на «7 дней» в первые 7 дней
@@ -282,7 +299,7 @@ export function MetricHistoryModal({
   // «0% к прошлой неделе» без прошлого вводит в заблуждение (отзыв
   // Кати) — ждём, пока соберутся данные, и не показываем Δ вовсе
   const pct = isWeight || prevAvg <= 0 ? null : changePct(avg, prevAvg)
-  const tone = pct == null ? themeColors.dim : deltaTone(pct, metric.invert)
+  const tone = pct == null ? themeColors.dim : deltaTone(pct, metric.invert, themeColors.dim, themeColors.good, themeColors.bad)
   const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
 
   // ===== Вес: текущий замер, Δ за период и шкала столбиков =====
@@ -298,8 +315,8 @@ export function MetricHistoryModal({
     weightDelta == null || weightDelta === 0
       ? themeColors.dim
       : (weightDelta < 0 && lastMeasure?.weight >= rangeMin) || (weightDelta > 0 && lastMeasure?.weight <= rangeMax)
-        ? '#4ADE80'
-        : '#FB7185'
+        ? themeColors.good
+        : themeColors.bad
 
   // Шкала столбиков веса: не от нуля, а от минимума периода с запасом —
   // иначе 71 и 72 кг неразличимы (столбики одинаковой высоты)
@@ -405,19 +422,20 @@ export function MetricHistoryModal({
     <>
       <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
         <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-          {/* Рамка-свечение: тонкий фиолетово-розовый градиентный ободок
-              вокруг тёмного окна — как на макете */}
+          {/* Рамка-свечение: градиентный ободок вокруг тёмного окна —
+              свечение ЦВЕТОМ ТЕМЫ (правка Кати 25.11: рамка была
+              фиолетово-розовой во всех темах) */}
           <View className="max-h-[86%]">
             <LinearGradient
               start={{ x: 0, y: 0.1 }}
               end={{ x: 1, y: 0.9 }}
-              colors={['#8B5CF6', '#D946EF', '#6D28D9']}
+              colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
               // flexShrink: по умолчанию Yoga не сжимает детей — цепочка
               // «макс-высота → градиент → карточка → ScrollView» рвалась,
               // и «Закрыть» уезжала за экран на 30/90 днях (отзыв Кати)
               style={{ borderRadius: 30, padding: 1.6, flexShrink: 1 }}
             >
-              <View className="overflow-hidden rounded-[28px] bg-[#150F2D]" style={{ flexShrink: 1 }}>
+              <View className="overflow-hidden rounded-[28px] bg-bear-deep" style={{ flexShrink: 1 }}>
                 {/* Шапка: плитка показателя + заголовок с крестиком,
                     ниже — подпись и «Записать» (отзыв Кати: «Вес · исто…»
                     и «Динамика веса …» обрезались — кнопка теснила заголовок;
@@ -440,7 +458,7 @@ export function MetricHistoryModal({
                         onPress={onClose}
                         accessibilityRole="button"
                         accessibilityLabel={`Закрыть историю: ${metric.label}`}
-                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-accentFaint active:opacity-70"
                       >
                         <X hitSlop={10} size={20} color={themeColors.bright} />
                       </Pressable>
@@ -464,10 +482,10 @@ export function MetricHistoryModal({
                           accessibilityRole="button"
                           accessibilityLabel={`Записать: ${metric.label}`}
                           className="shrink-0 flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-70"
-                          style={{ backgroundColor: `${metric.color}26`, borderWidth: 1, borderColor: `${metric.color}66` }}
+                          style={{ backgroundColor: themeColors.accentFaint2, borderWidth: 1, borderColor: themeColors.accentBorder }}
                         >
-                          <Plus size={14} color={metric.color} />
-                          <Text maxFontSizeMultiplier={1.15} className="font-bold text-[13.5px]" style={{ color: metric.color }}>
+                          <Plus size={14} color={mc} />
+                          <Text maxFontSizeMultiplier={1.15} className="font-bold text-[13.5px]" style={{ color: mc }}>
                             Записать
                           </Text>
                         </Pressable>
@@ -485,7 +503,7 @@ export function MetricHistoryModal({
                       items={RANGES.map((r) => ({
                         id: r.id,
                         label: r.label,
-                        color: metric.color,
+                        color: mc,
                         disabled: periodLocked(r.days, diaryAge),
                       }))}
                       value={rangeId}
@@ -592,7 +610,7 @@ export function MetricHistoryModal({
                                       <LinearGradient
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 0, y: 1 }}
-                                        colors={[metric.color, `${metric.color}AA`]}
+                                        colors={[mc, `${mc}AA`]}
                                         style={{ width: '100%', height: h, borderRadius: 4 }}
                                       />
                                     ) : (
@@ -601,7 +619,7 @@ export function MetricHistoryModal({
                                           width: '100%',
                                           height: h,
                                           borderRadius: 3,
-                                          backgroundColor: v > 0 ? metric.color : STUB,
+                                          backgroundColor: v > 0 ? mc : STUB,
                                           opacity: v > 0 ? (isToday ? 0.9 : 0.6) : 1,
                                         }}
                                       />
@@ -636,7 +654,7 @@ export function MetricHistoryModal({
                                       <Text
                                         numberOfLines={1}
                                         className="absolute font-sans text-[12.5px] font-bold"
-                                        style={{ color: metric.color, bottom: hlH + 3, left, width: bw, textAlign: 'center' }}
+                                        style={{ color: mc, bottom: hlH + 3, left, width: bw, textAlign: 'center' }}
                                       >
                                         {metric.fmt(hlV)}
                                       </Text>
@@ -750,9 +768,9 @@ export function MetricHistoryModal({
                                 const b = wd[i] || { avg: 0, recorded: false }
                                 const color = isWeight
                                   ? b.recorded
-                                    ? metric.color
+                                    ? mc
                                     : STUB
-                                  : levelColor(metric, dayLevel(metric.key, b.avg, goals[GOAL_KEY[metric.key]] || 0))
+                                  : levelColor(metric, dayLevel(metric.key, b.avg, goals[GOAL_KEY[metric.key]] || 0), themeColors)
                                 return (
                                   <View key={w} style={{ width: WD_COL, alignItems: 'center' }}>
                                     <Text
@@ -797,7 +815,7 @@ export function MetricHistoryModal({
                                   width: 10,
                                   height: 10,
                                   borderRadius: 5,
-                                  backgroundColor: levelColor(metric, level),
+                                  backgroundColor: levelColor(metric, level, themeColors),
                                 }}
                               />
                               <Text maxFontSizeMultiplier={1.1} className="font-sans text-[12.5px] text-bear-dim">{label}</Text>
@@ -840,10 +858,12 @@ export function MetricHistoryModal({
                     <LinearGradient
                       start={{ x: 0, y: 0 }}
                       end={{ x: 0, y: 1 }}
-                      colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+                      colors={[themeColors.accentBright, themeColors.accent]}
                       style={{ paddingVertical: 13, alignItems: 'center' }}
                     >
-                      <Text className="font-extrabold text-[17.5px] text-white">Закрыть</Text>
+                      <Text className="font-extrabold text-[17.5px]" style={{ color: themeColors.accentOn }}>
+                        Закрыть
+                      </Text>
                     </LinearGradient>
                   </Pressable>
                 </View>

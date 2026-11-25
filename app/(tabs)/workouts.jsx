@@ -28,12 +28,16 @@ import { FastingScreen } from '@/components/planner/FastingScreen'
 import { spacing } from '@/features/workouts/theme'
 // Фон вкладки и окна голодания — палитра приложения (planPalette):
 // вкладка «План» одного цвета с остальным приложением (просьба Кати 09.11),
-// раньше здесь был фон design-системы «Тренировок» (#0A0C10)
-import { P } from '@/components/planner/planPalette'
+// раньше здесь был фон design-системы «Тренировок» (#0A0C10).
+// Правка Кати 25.11 («вкладка план полностью не в теме»): палитра
+// строится из АКТИВНОЙ ТЕМЫ (usePlanPalette) — раньше всегда были
+// цвета «Классики»
+import { usePlanPalette } from '@/components/planner/planPalette'
 import { AiChat } from '@/components/home/AiChat'
 import { consumeOpenFasting } from '@/lib/navEvents'
 
 export default function PlanTab() {
+  const { P } = usePlanPalette()
   const [fastOpen, setFastOpen] = useState(false)
   const insets = useSafeAreaInsets()
   const closeRowStyle = [styles.closeRow, { paddingTop: insets.top + 6 }]

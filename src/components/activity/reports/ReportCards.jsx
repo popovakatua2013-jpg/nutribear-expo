@@ -37,6 +37,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { ArrowDownRight, ArrowUpRight, Calendar, ChevronRight, MoonStar, Scale } from 'lucide-react-native'
 import { changePct, dailyAverage, deltaTone, discipline, prevLabel } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
+import { METRIC_TOKENS } from '@/lib/themes'
 import { fmtSleep, nightsInNorm, sleepAvg } from '@/lib/data/sleep'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
@@ -106,16 +107,19 @@ function CardBand({ data, color, height = 22, children }) {
   )
 }
 
-// Фон карточки «как на скрине-2»: у каждой метрики свой ореол —
-// градиент от цветного тинта к фиолетовой подложке и обводка
-// в цвете метрики. Тинт приглушён (22/4D вместо 2B/66): карточка
-// «Калории» больше не красится целиком в красный (аудит по скрину)
-function CardBg({ color }) {
+// Фон карточки «в одном стиле с «Главной» (правка Кати 25.11: «почти все
+// блоки не перекрашены» — раньше у каждой карточки была своя цветная
+// подложка с тёмно-фиолетовым низом #1A123A, в неоновых темах она
+// выбивалась). Теперь подложка — тинт темы, низ — поверхность card,
+// обводка — акцентная рамка темы; цвет метрики остаётся на плитке
+// иконки и спарклайне
+function CardBg() {
+  const themeColors = useThemeColors()
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      colors={[`${color}22`, '#1A123A']}
+      colors={[themeColors.accentFaint2, themeColors.card]}
       style={{
         position: 'absolute',
         top: 0,
@@ -124,7 +128,7 @@ function CardBg({ color }) {
         bottom: 0,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: `${color}4D`,
+        borderColor: themeColors.accentBorder,
       }}
     />
   )
@@ -133,23 +137,26 @@ function CardBg({ color }) {
 // Подпись-футер с иконкой календаря и тонкой линией сверху — как на
 // скрине-2. Текст краткий («Цель: 4/7 дн») — помещается всегда.
 // big — крупный футер-приглашение к действию (отзыв Кати: кнопка
-// «Записать сон» была «очень мелко» — теперь 13px и полужирная)
-function CalFooter({ children, color = themeColors.dim, line = true, big = false }) {
+// «Записать сон» была «очень мелко» — теперь 13px и полужирная).
+// Цвет по умолчанию — из темы (раньше дефолт ссылался на переменную
+// до инициализации — ReferenceError при вызове без color)
+function CalFooter({ children, color, line = true, big = false }) {
   const themeColors = useThemeColors()
+  const tone = color || themeColors.dim
   return (
     // mt-auto — футер прижат к нижнему краю карточки даже когда сосед
     // в ряду выше (растянутая карточка не оставляет футер в середине)
     <View className="mt-auto">
       {line && <View className="mt-1.5 h-px bg-white/[0.07]" />}
       <View className="mt-1 flex-row items-center gap-1">
-        <Calendar size={big ? 13 : 11} color={color} />
+        <Calendar size={big ? 13 : 11} color={tone} />
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.75}
           maxFontSizeMultiplier={1.2}
           className={`min-w-0 flex-1 ${big ? 'font-semibold text-[13px]' : 'font-medium text-[10.5px]'}`}
-          style={{ color }}
+          style={{ color: tone }}
         >
           {children}
         </Text>
@@ -164,6 +171,7 @@ function CalFooter({ children, color = themeColors.dim, line = true, big = false
 // шевроном «Калории»/«Сожжено» сжимались до «Кало…»/«С…»; теперь
 // название всегда целиком, с adjustsFontSizeToFit как страховкой)
 function CardHead({ m, s, iconColor = null }) {
+  const themeColors = useThemeColors()
   const color = iconColor || m.color
   const big = s.tile >= 32
   return (
@@ -181,7 +189,7 @@ function CardHead({ m, s, iconColor = null }) {
         >
           <m.Icon size={s.icon} color={color} />
         </View>
-        <ChevronRight size={big ? 15 : 13} color="rgba(255,255,255,0.28)" />
+        <ChevronRight size={big ? 15 : 13} color={themeColors.dim} />
       </View>
       <Text
         numberOfLines={1}
@@ -203,11 +211,15 @@ function CardHead({ m, s, iconColor = null }) {
 function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {} }) {
   const themeColors = useThemeColors()
   const s = SIZES.card
+  // Цвет метрики — из ТЕМЫ (mSteps/mKcal/…): в неонах карточки светятся
+  // оттенками одного неона, как «Главная» (правка Кати 25.11); m.color
+  // реестра — фолбэк для немных ключей
+  const mc = themeColors[METRIC_TOKENS[m.key]] || m.color
   // Среднее за день по ведённым дням; сравнение — тоже по средним
   const avg = useMemo(() => dailyAverage(rows, m.key), [rows, m.key])
   const prevAvg = useMemo(() => dailyAverage(prevRows, m.key), [prevRows, m.key])
   const pct = prevAvg > 0 ? changePct(avg, prevAvg) : null
-  const tone = pct == null ? themeColors.dim : deltaTone(pct, m.invert)
+  const tone = pct == null ? themeColors.dim : deltaTone(pct, m.invert, themeColors.dim, themeColors.good, themeColors.bad)
   const Arrow = pct != null && pct < 0 ? ArrowDownRight : ArrowUpRight
   const spark = useMemo(() => sparkOf(rows, m.key), [rows, m.key])
 
@@ -223,9 +235,9 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           рядом карточек). НЕ height:'100%' — в ряду с авто-высотой Yoga
           считал 100% от высоты вьюпорта, и карточки растягивались
           на весь экран (скрин «ужаса» из отзыва) */}
-      <CardBg color={m.color} />
+      <CardBg />
       <View style={{ padding: s.pad }} className="flex-1">
-        <CardHead m={m} s={s} />
+        <CardHead m={m} s={s} iconColor={mc} />
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.15}
@@ -260,7 +272,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
             пусто. Одна лента вместо двух слотов — середина карточки
             больше не пустует (скрин Кати 07.11: «так же» громоздкие);
             точный % и график за период — в окне истории по тапу */}
-        <CardBand data={spark} color={m.color} height={s.band}>
+        <CardBand data={spark} color={mc} height={s.band}>
           {pct != null && (
             <View className="flex-row items-center gap-0.5">
               <Arrow size={12} color={tone} />
@@ -276,7 +288,7 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           )}
         </CardBand>
         {goalMet != null && (
-          <CalFooter color={goalMet > 0 ? '#4ade80' : themeColors.dim}>
+          <CalFooter color={goalMet > 0 ? themeColors.good : themeColors.dim}>
             {`Цель: ${goalMet}/${days} дн`}
           </CalFooter>
         )}
@@ -296,6 +308,8 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
 function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd = () => {} }) {
   const themeColors = useThemeColors()
   const s = SIZES.card
+  // Цвет карточки сна — из темы (mSleep): раньше был всегда фиолетовым
+  const sc = themeColors.mSleep
   const nights = rows.filter((r) => r.sleepMin > 0).length
   const avg = sleepAvg(rows)
   const inNorm = nightsInNorm(rows, goalMin)
@@ -318,9 +332,9 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
     >
       {/* фон — абсолютный градиент (см. комментарий в ReportCard:
           height:'100%' растягивал карточку до высоты вьюпорта) */}
-      <CardBg color="#c084fc" />
+      <CardBg />
       <View style={{ padding: s.pad }} className="flex-1">
-        <CardHead m={{ label: 'Сон', Icon: MoonStar, color: '#c084fc' }} s={s} />
+        <CardHead m={{ label: 'Сон', Icon: MoonStar, color: sc }} s={s} />
         {nights ? (
           <>
             <Text
@@ -345,8 +359,8 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
             </Text>
             {/* Лента со спарклайном ночей — как у соседних карточек:
                 одна и та же структура, футер прижат к низу */}
-            <CardBand data={spark} color="#c084fc" height={s.band} />
-            <CalFooter color={inNorm > 0 ? '#4ade80' : themeColors.dim}>
+            <CardBand data={spark} color={sc} height={s.band} />
+            <CalFooter color={inNorm > 0 ? themeColors.good : themeColors.dim}>
               {`Цель: ${inNorm}/${days} дн`}
             </CalFooter>
           </>
@@ -400,7 +414,9 @@ function WeightReportCard({ days, onPress = () => {} }) {
   const { min, max } = healthyRange(heightCm)
   const towardNorm =
     delta != null && ((delta < 0 && lastW.kg >= min) || (delta > 0 && lastW.kg <= max))
-  const tone = delta == null || delta === 0 ? themeColors.dim : towardNorm ? '#4ADE80' : '#FB7185'
+  const tone = delta == null || delta === 0 ? themeColors.dim : towardNorm ? themeColors.good : themeColors.bad
+  // Цвет карточки веса — из темы (mWeight)
+  const wc = themeColors.mWeight
 
   // Спарклайн: последние до 10 взвешиваний по возрастанию даты
   // (журнал хранит новые сверху). Меньше двух точек — линии нет
@@ -421,9 +437,9 @@ function WeightReportCard({ days, onPress = () => {} }) {
       className="min-w-0 flex-1 active:opacity-80"
       style={{ borderRadius: 16 }}
     >
-      <CardBg color="#a78bfa" />
+      <CardBg />
       <View style={{ padding: s.pad }} className="flex-1">
-        <CardHead m={{ label: 'Вес', Icon: Scale, color: '#a78bfa' }} s={s} />
+        <CardHead m={{ label: 'Вес', Icon: Scale, color: wc }} s={s} />
         <Text
           numberOfLines={1}
           maxFontSizeMultiplier={1.15}
@@ -454,7 +470,7 @@ function WeightReportCard({ days, onPress = () => {} }) {
         {/* Лента со спарклайном взвешиваний — как у соседних карточек;
             у веса нет дневной цели — показываем здоровый диапазон роста.
             Рост не указан (min/max = 0) — футера нет */}
-        <CardBand data={spark} color="#a78bfa" height={s.band} />
+        <CardBand data={spark} color={wc} height={s.band} />
         {heightCm > 0 && Number.isFinite(min) && Number.isFinite(max) && max > min && (
           <CalFooter color={themeColors.link}>
             {`Норма: ${min}–${max} кг`}

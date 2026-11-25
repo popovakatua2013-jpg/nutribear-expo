@@ -12,7 +12,7 @@ import { formatNum } from '@/lib/format'
 // цвета с остальным приложением, включая кнопки (просьба Кати 09.11).
 // Ключи те же, что у design-системы «Тренировок», значения — bear.*
 import { spacing, radius, F, type } from '@/features/workouts/theme'
-import { C as colors } from './planPalette'
+import { usePlanPalette } from './planPalette'
 
 const MIN = 10
 const MAX = 2000
@@ -22,6 +22,7 @@ const PRESETS = [50, 100, 150, 200, 250, 300, 400]
 const clamp = (v) => Math.max(MIN, Math.min(MAX, Math.round(Number(v)) || MIN))
 
 export function GramsModal({ item, onClose, onSave }) {
+  const colors = usePlanPalette().C
   const [grams, setGrams] = useState(100)
   const [draft, setDraft] = useState('')
 

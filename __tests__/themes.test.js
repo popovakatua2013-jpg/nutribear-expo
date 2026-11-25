@@ -118,7 +118,47 @@ describe('THEMES: структура палитры', () => {
       accentFaint3: 'rgba(123,108,246,0.20)',
       accentStrong: 'rgba(123,108,246,0.80)',
       accentBorder: 'rgba(123,108,246,0.42)',
+      // Семейство CLASSIC_FAMILY: прежние цвета точек БЖУ/метрик/семантики
+      good: '#4ade80',
+      warn: '#FBBF24',
+      bad: '#FB7185',
+      nutP: '#A78BFA',
+      nutF: '#FB923C',
+      nutC: '#38BDF8',
+      nutFib: '#34D399',
+      nutSug: '#F472B6',
+      mSteps: '#4ade80',
+      mKcal: '#f87171',
+      mWater: '#38bdf8',
+      mBurned: '#fb923c',
+      mSleep: '#c084fc',
+      mWeight: '#a78bfa',
     })
+  })
+
+  test('семейства темы: нутриенты/метрики — оттенки неона, точки БЖУ по темам (правка Кати 25.11)', () => {
+    // У неона нутриенты и метрики — оттенки ТОГО ЖЕ неона (монохромное
+    // свечение, как на макете); у «Классики» — прежние фирменные цвета
+    const lime = THEMES.neonLime.colors
+    expect(lime.nutP).toBe(lime.accentBright)
+    expect(lime.nutF).toBe(lime.accent)
+    expect(lime.nutC).toBe(lime.accentSoft)
+    expect(lime.mWeight).toBe(lime.accent)
+    expect(lime.good).toBe(lime.accent)
+    // bad/warn — семантика чужого оттенка намеренно: сигнал читается
+    // и в монохромной теме
+    expect(lime.bad).toBe('#FB7185')
+    expect(lime.warn).toBe('#FBBF24')
+    // у неонов nutP/метрики не равны между темами (каждая — своего цвета)
+    expect(THEMES.neonCyan.colors.nutP).toBe(THEMES.neonCyan.colors.accentBright)
+    expect(THEMES.neonCyan.colors.nutP).not.toBe(lime.nutP)
+  })
+
+  test('цвета семейств «Кремовой» читаются на бежевом по WCAG AA', () => {
+    const c = THEMES.cream.colors
+    for (const token of ['good', 'warn', 'bad', 'nutP', 'nutF', 'nutC', 'nutFib', 'nutSug', 'mSteps', 'mKcal', 'mWater', 'mBurned', 'mSleep', 'mWeight']) {
+      expect(contrast(c.card, c[token])).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
   test('неоновые тёмные темы: свой яркий акцент у каждой, «свечение» рамок', () => {

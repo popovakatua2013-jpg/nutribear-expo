@@ -55,6 +55,25 @@ module.exports = {
           accentFaint3: bearVar('accentFaint3', 'rgba(123,108,246,0.20)'),
           accentStrong: bearVar('accentStrong', 'rgba(123,108,246,0.80)'),
           accentBorder: bearVar('accentBorder', 'rgba(123,108,246,0.42)'),
+          // Семантика состояний («хорошо/предупреждение/плохо»), нутриенты
+          // (точки/иконки БЖУ) и метрики «Отчётов» — у каждой темы СВОИ
+          // (правка Кати 25.11: «цветные точки — по темам», «всё в одном
+          // стиле как и главная страница»). Значения fallback — «Классика»
+          // дословно (src/lib/themes.js, CLASSIC_FAMILY)
+          good: bearVar('good', '#4ade80'),
+          warn: bearVar('warn', '#FBBF24'),
+          bad: bearVar('bad', '#FB7185'),
+          nutP: bearVar('nutP', '#A78BFA'),
+          nutF: bearVar('nutF', '#FB923C'),
+          nutC: bearVar('nutC', '#38BDF8'),
+          nutFib: bearVar('nutFib', '#34D399'),
+          nutSug: bearVar('nutSug', '#F472B6'),
+          mSteps: bearVar('mSteps', '#4ade80'),
+          mKcal: bearVar('mKcal', '#f87171'),
+          mWater: bearVar('mWater', '#38bdf8'),
+          mBurned: bearVar('mBurned', '#fb923c'),
+          mSleep: bearVar('mSleep', '#c084fc'),
+          mWeight: bearVar('mWeight', '#a78bfa'),
         },
       },
       fontFamily: {

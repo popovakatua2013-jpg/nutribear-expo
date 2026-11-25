@@ -14,9 +14,10 @@ import { formatNum } from '@/lib/format'
 import { swapCandidates, gramsForSameKcal } from '@/lib/data/swap'
 // Палитра — planPalette (цвета приложения), как у остальных окон вкладки
 import { spacing, radius, F, type } from '@/features/workouts/theme'
-import { C as colors } from './planPalette'
+import { usePlanPalette } from './planPalette'
 
 export function SwapDishModal({ item, onClose, onReplace }) {
+  const colors = usePlanPalette().C
   // Похожие по ккал из базы — считаем, пока окно открыто
   const list = useMemo(() => swapCandidates(item), [item])
 

@@ -415,7 +415,7 @@ export default function AiChatScreen() {
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+                colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
                 style={{
                   minWidth: 110,
                   maxWidth: '80%',
@@ -545,7 +545,7 @@ export default function AiChatScreen() {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+            colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
             style={{
               width: 42,
               height: 42,
@@ -554,7 +554,7 @@ export default function AiChatScreen() {
               justifyContent: 'center',
             }}
           >
-            <Send size={19} color="#FFFFFF" />
+            <Send size={19} color={themeColors.accentOn} />
           </LinearGradient>
         </Pressable>
       </View>

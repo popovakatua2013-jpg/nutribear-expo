@@ -10,6 +10,9 @@
 // про уехавшую кнопку в воде). Запись идёт в useHistoryStore (sleepMin) —
 // карточка «Сон», окно истории, теплокарта и сравнение периодов видят её
 // сами, отдельной синхронизации не нужно.
+// Правка Кати 25.11 («проверь замечания по всем темам»): фиолетовые
+// акценты сна и кнопка «Сохранить» (жёсткий сине-фиолетовый градиент)
+// заменены цветами активной темы.
 
 import { useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
@@ -38,6 +41,7 @@ function dayKeyFor(off) {
 // окно через sleepMinutes (мусор/25 часов — null): кнопка «Сохранить»
 // блокируется и появляется подсказка — честнее, чем игнорировать нажатия
 function TimeField({ value, onChange, placeholder, icon, color, label }) {
+  const themeColors = useThemeColors()
   const Icon = icon
   function handle(t) {
     const d = t.replace(/\D/g, '').slice(0, 4)
@@ -59,10 +63,10 @@ function TimeField({ value, onChange, placeholder, icon, color, label }) {
         keyboardType="number-pad"
         maxLength={5}
         placeholder={placeholder}
-        placeholderTextColor="#5A6390"
+        placeholderTextColor={themeColors.dim}
         textAlign="center"
         accessibilityLabel={label}
-        className="rounded-xl border border-white/10 bg-white/5 py-2.5 font-bold text-[21px] text-bear-text"
+        className="rounded-xl border border-bear-line bg-bear-accentFaint py-2.5 font-bold text-[21px] text-bear-text"
       />
     </View>
   )
@@ -78,7 +82,7 @@ function QuickChips({ times, value, onPick }) {
           onPress={() => onPick(t)}
           accessibilityRole="button"
           accessibilityLabel={`Подставить ${t}`}
-          className="rounded-full bg-white/[0.06] px-2.5 py-1 active:opacity-70"
+          className="rounded-full bg-bear-accentFaint px-2.5 py-1 active:opacity-70"
         >
           <Text maxFontSizeMultiplier={1.2} className="font-semibold text-[13.5px] text-bear-dim">
             {t}
@@ -105,6 +109,7 @@ export function SleepModal({ open, onClose }) {
 
 function SleepBody({ onClose }) {
   const themeColors = useThemeColors()
+  const sc = themeColors.mSleep // цвет сна — из темы (раньше — всегда фиолетовый #c084fc)
   const { toast } = useToast()
   const record = useHistoryStore((s) => s.record)
   const savedDays = useHistoryStore((s) => s.days)
@@ -142,12 +147,12 @@ function SleepBody({ onClose }) {
             width: 34,
             height: 34,
             borderRadius: 12,
-            backgroundColor: '#c084fc33',
+            backgroundColor: themeColors.accentFaint3,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <MoonStar size={18} color="#c084fc" />
+          <MoonStar size={18} color={sc} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[20px] tracking-tight text-bear-text">Записать сон</Text>
@@ -159,7 +164,7 @@ function SleepBody({ onClose }) {
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Закрыть запись сна"
-          className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-accentFaint active:opacity-70"
         >
           <X hitSlop={10} size={20} color={themeColors.sub} />
         </Pressable>
@@ -190,7 +195,7 @@ function SleepBody({ onClose }) {
               onChange={setBed}
               placeholder="23:00"
               icon={MoonStar}
-              color="#c084fc"
+              color={sc}
               label="Легли спать"
             />
             <TimeField
@@ -198,7 +203,7 @@ function SleepBody({ onClose }) {
               onChange={setWake}
               placeholder="07:00"
               icon={Sunrise}
-              color="#fbbf24"
+              color={themeColors.warn}
               label="Встали"
             />
           </View>
@@ -217,8 +222,8 @@ function SleepBody({ onClose }) {
           <View
             className="rounded-2xl border px-4 py-3"
             style={{
-              borderColor: valid ? '#c084fc66' : '#ffffff1a',
-              backgroundColor: valid ? '#c084fc1f' : 'rgba(255,255,255,0.04)',
+              borderColor: valid ? themeColors.accentBorder : themeColors.line,
+              backgroundColor: valid ? themeColors.accentFaint2 : themeColors.accentFaint,
             }}
           >
             <Text maxFontSizeMultiplier={1.2} className="font-sans text-[13px] text-bear-sub">
@@ -259,8 +264,15 @@ function SleepBody({ onClose }) {
         accessibilityLabel="Сохранить запись сна"
         className={`mt-3 overflow-hidden rounded-2xl px-5 ${!valid ? 'opacity-50' : ''}`}
       >
-        <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}>
-          <Text className="py-3.5 text-center font-bold text-[19px] text-white">
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={[themeColors.accentBright, themeColors.accent]}
+        >
+          <Text
+            className="py-3.5 text-center font-bold text-[19px]"
+            style={{ color: themeColors.accentOn }}
+          >
             Сохранить{valid ? ` · ${fmtSleep(mins)}` : ''}
           </Text>
         </LinearGradient>

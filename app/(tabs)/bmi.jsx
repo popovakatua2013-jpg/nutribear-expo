@@ -180,7 +180,7 @@ export default function BmiScreen() {
             accessibilityState={{ selected: true }}
             className="overflow-hidden rounded-full"
             style={{
-              shadowColor: '#8B5CF6',
+              shadowColor: themeColors.accent,
               shadowOpacity: 0.55,
               shadowRadius: 12,
             }}
@@ -188,12 +188,12 @@ export default function BmiScreen() {
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              colors={['#A855F7', '#7C3AED']}
+              colors={[themeColors.accentBright, themeColors.accent]}
               style={{ paddingHorizontal: 9, paddingVertical: 7 }}
             >
               <View className="flex-row items-center gap-1">
-                <Scale size={15} color="#FFFFFF" />
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[15px] text-white">
+                <Scale size={15} color={themeColors.accentOn} />
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-bold text-[15px]" style={{ color: themeColors.accentOn }}>
                   ИМТ и состав тела
                 </Text>
               </View>
@@ -212,7 +212,7 @@ export default function BmiScreen() {
         <View accessibilityLabel="ИМТ и состав тела">
           {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
           <SoftGlow id="nbsGlowTR" w={185} h={150} peak={0.34} style={{ top: -24, right: -42 }} />
-          <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color="#8B5CF6" style={{ top: 64, right: -30 }} />
+          <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color={themeColors.accent} style={{ top: 64, right: -30 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
               {/* Кольцо + бейдж стрика «в норме N недель» + легенда.

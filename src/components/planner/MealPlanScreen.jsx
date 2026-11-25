@@ -45,7 +45,7 @@ import { AddDishModal } from './AddDishModal'
 import { GramsModal } from './GramsModal'
 import { SwapDishModal } from './SwapDishModal'
 import { AiMenuModal } from './AiMenuModal'
-import { P } from './planPalette'
+import { usePlanPalette } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
@@ -78,6 +78,8 @@ const dayKeyOfDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d
 const fmtDate = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]}`
 
 export function MealPlanScreen({ compact = false }) {
+  const { P } = usePlanPalette()
+  const styles = makeStyles(P)
   const { toast } = useToast()
   const [weekKey, setWeekKey] = useState(() => weekKeyOf(new Date()))
   const [sel, setSel] = useState(0) // выбранный день 0…6
@@ -646,7 +648,7 @@ export function MealPlanScreen({ compact = false }) {
   )
 }
 
-const styles = {
+const makeStyles = (P) => ({
   // Карточка «Меню на неделю» — единый контейнер, как в макете
   card: {
     backgroundColor: P.card,
@@ -898,4 +900,4 @@ const styles = {
     height: 42,
   },
   tplSaveText: { fontSize: 12.5, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
-}
+})

@@ -130,20 +130,24 @@ function StatCard({ colors, Icon, LabelIcon, label, value, sub, foot, onPress, o
 // всегда присутствует (даже «цель не задана»), чтобы верхний и нижний
 // ряды были одинаковой высоты
 function Foot({ tone = 'muted', children }) {
+  // Цвета подписи — из темы (правка Кати 25.11: «проверь по всем темам»):
+  // «хорошо» светится темой, предупреждение — тревожным цветом темы,
+  // «небо» (вода) — мягким оттенком темы
+  const themeColors = useThemeColors()
   const map = {
-    good: { dot: 'bg-emerald-400/90', text: 'text-emerald-300' },
-    warn: { dot: 'bg-rose-400/90', text: 'text-rose-300' },
-    accent: { dot: 'bg-violet-400/90', text: 'text-violet-300' },
-    sky: { dot: 'bg-sky-400/90', text: 'text-sky-300' },
-    muted: { dot: 'bg-white/20', text: 'text-bear-sub2' },
+    good: { dot: themeColors.good, text: themeColors.good },
+    warn: { dot: themeColors.bad, text: themeColors.bad },
+    accent: { dot: themeColors.accentBright, text: themeColors.accentBright },
+    sky: { dot: themeColors.accentSoft, text: themeColors.accentSoft },
+    muted: { dot: themeColors.dim, text: themeColors.sub2 },
   }
   const t = map[tone] || map.muted
   return (
     <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-white/[0.05] px-1 py-1">
-      <View className={`h-3 w-3 shrink-0 items-center justify-center rounded-full ${t.dot}`}>
-        <Check size={8} color="#FFFFFF" strokeWidth={3.5} />
+      <View className="h-3 w-3 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: t.dot }}>
+        <Check size={8} color={themeColors.bg} strokeWidth={3.5} />
       </View>
-      <FitLine maxFontSizeMultiplier={1.15} className={`min-w-0 flex-1 font-bold text-[11px] ${t.text}`}>
+      <FitLine maxFontSizeMultiplier={1.15} className="min-w-0 flex-1 font-bold text-[11px]" style={{ color: t.text }}>
         {children}
       </FitLine>
     </View>
@@ -210,10 +214,12 @@ export function ActivityStats({
 
   const cards = [
     {
+      // Цвет плитки — из темы (в неонах светится тем же неоном, что и
+      // вся «Главная»; правка Кати 25.11)
       colors: {
-        border: 'border-emerald-400/25',
-        icon: ['#34D399', '#16A34A'],
-        tint: '#34D399',
+        border: 'border-bear-accentBorder',
+        icon: [themeColors.accentBright, themeColors.accent],
+        tint: themeColors.accentBright,
       },
       Icon: Footprints,
       LabelIcon: Footprints, // маленькая иконка в подписи — как на макете
@@ -225,9 +231,9 @@ export function ActivityStats({
     },
     {
       colors: {
-        border: 'border-sky-400/25',
-        icon: ['#38BDF8', '#2563EB'],
-        tint: '#38BDF8',
+        border: 'border-bear-accentBorder',
+        icon: [themeColors.accentSoft, themeColors.accent],
+        tint: themeColors.accentSoft,
       },
       Icon: Droplets,
       LabelIcon: Droplets, // маленькая иконка в подписи — как на макете

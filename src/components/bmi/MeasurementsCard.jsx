@@ -701,7 +701,7 @@ function MeasurementsModal({ open, onClose }) {
               <LinearGradient
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                colors={['#4D7CFE', '#8B5CF6', '#A45BFF']}
+                colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
               >
                 <Text className="py-3.5 text-center font-bold text-[19px] text-white">
                   Сохранить
