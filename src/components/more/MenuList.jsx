@@ -19,6 +19,7 @@ import { Children, cloneElement, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { hapticFeedback } from '@/lib/haptics'
+import { NeonCard } from '../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -26,6 +27,12 @@ import { useThemeColors } from '@/lib/use-theme'
 // Разделители между строками добавляются автоматически (первая — без).
 // Заголовок опционален: у нижних групп («Документы», «О приложении»)
 // его нет — как в стандартных приложениях.
+// ОФОРМЛЕНИЕ (правка Кати 25.11, пятый круг: «вкладка ещё — вообще не
+// оформлена! Ни рамок ни свечения ни градиента. Все вкладки должны
+// быть оформлены одинаково»): группа на NeonCard — та же градиентная
+// кайма, градиентная поверхность и мягкое свечение темы, что у блоков
+// «Главной», «Отчётов», «Тела» и «Плана»; разделители строк — кайма
+// темы (accentBorder), серые рамки line больше не участвуют
 export function MenuGroup({ title, children }) {
   const items = Children.toArray(children)
   return (
@@ -39,11 +46,11 @@ export function MenuGroup({ title, children }) {
           {title}
         </Text>
       ) : null}
-      <View className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard">
+      <NeonCard>
         {items.map((child, i) =>
           i === 0 ? child : cloneElement(child, { bordered: true })
         )}
-      </View>
+      </NeonCard>
     </View>
   )
 }
@@ -162,7 +169,7 @@ export function MenuRow({
     !toggle && value != null && String(value).length > 0 && title.length + String(value).length <= 26
 
   return (
-    <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-bear-line' : ''}>
+    <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-bear-accentBorder' : ''}>
       <Pressable
         onPress={handlePress}
         accessibilityRole={toggle ? 'switch' : 'button'}

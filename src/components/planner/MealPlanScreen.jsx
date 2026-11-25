@@ -33,6 +33,7 @@ import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
 import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Sparkles, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { tapGuard } from '@/lib/tap-guard'
+import { NeonCard } from '../ui/NeonCard'
 import { buildFood } from '@/lib/data/pick'
 import { useFoodStore } from '@/store/useFoodStore'
 import {
@@ -287,7 +288,10 @@ export function MealPlanScreen({ compact = false }) {
   }
 
   return (
-    <View style={styles.card}>
+    // Правка Кати 25.11, пятый круг («вкладка план — вообще не оформлена!
+    // Ни рамок ни свечения ни градиента»): карточка на NeonCard — кайма,
+    // градиент и свечение те же, что у блоков «Главной» и «Отчётов»
+    <NeonCard style={styles.card} innerStyle={styles.cardInner}>
       {/* Шапка карточки: плитка + заголовок + навигация недели.
           В компактном режиме навигация недели переносится на строку
           под заголовком (flexWrap: заголовку хватает ширины) */}
@@ -644,19 +648,18 @@ export function MealPlanScreen({ compact = false }) {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </NeonCard>
   )
 }
 
 const makeStyles = (P) => ({
-  // Карточка «Меню на неделю» — единый контейнер, как в макете
+  // Карточка «Меню на неделю» — фон/кайма/градиент даёт NeonCard,
+  // здесь — только отступ и внутренний паддинг (cardInner)
   card: {
-    backgroundColor: P.card,
-    borderColor: P.line,
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: spacing.l,
     marginTop: spacing.l,
+  },
+  cardInner: {
+    padding: spacing.l,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   iconTile: {

@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pencil, UserRound, X } from 'lucide-react-native'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useToast } from '../ui/Toast'
+import { NeonCard } from '../ui/NeonCard'
 import { useKeyboardGuard } from '@/lib/useKeyboardGuard'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { useThemeColors } from '@/lib/use-theme'
@@ -40,10 +41,10 @@ export function ProfileEditor() {
   const initial = (name || '').trim().charAt(0).toUpperCase()
 
   return (
-    <View
-      accessibilityLabel="Профиль"
-      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
-    >
+    // Правка Кати 25.11, пятый круг («вкладка ещё — вообще не оформлена!
+    // Ни рамок ни свечения ни градиента»): герой-карточка профиля на
+    // NeonCard — кайма, градиент и свечение, как у всех блоков приложения
+    <NeonCard accessibilityLabel="Профиль">
       {/* Компактная шапка: аватар + имя + рост • вес + карандаш.
           Никакого раскрытия внутри блока — тап сразу открывает
           отдельное окно редактирования (отзыв Кати от 11.11) */}
@@ -87,7 +88,7 @@ export function ProfileEditor() {
       </Pressable>
 
       <ProfileModal open={open} onClose={() => setOpen(false)} />
-    </View>
+    </NeonCard>
   )
 }
 

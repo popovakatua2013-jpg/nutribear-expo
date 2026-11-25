@@ -14,7 +14,13 @@
 // (adjustsFontSizeToFit), а не обрезаются. Карточку «Калории» убрали
 // ранее — она дублировала сводку. История по дням — во вкладке
 // «Дневник» (тап по карточке-итогу в «Отчётах»).
-// Поверхность плиток — bear-bodyCard с цветной обводкой показателя.
+// Поверхность плиток — GradientTile (правка Кати 25.11, пятый круг:
+// «активность дня — не совпадает с блоком „Съедено сегодня“ по
+// оформлению»): плоская bodyCard с серой рамкой читалась «дырой» между
+// светящимися блоками главной. Теперь каждая плитка — градиентная
+// поверхность с неоновой каймой активной темы (GradientTile, тот же
+// язык, что у NeonCard, но без ореолов — плиткам свечение наружу не
+// нужно).
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -28,6 +34,7 @@ import {
 import { formatNum } from '@/lib/format'
 import { formatLiters } from '@/lib/data/reports'
 import { useThemeColors } from '@/lib/use-theme'
+import { GradientTile } from '../ui/GradientTile'
 
 
 // однострочный текст, который при нехватке ширины сжимается, а не режется
@@ -61,10 +68,9 @@ function StatCard({ colors, Icon, LabelIcon, label, value, sub, foot, onPress, o
             ? `Открыть: ${label}`
             : undefined
       }
-      className={`min-w-0 flex-1 items-center rounded-2xl border bg-bear-bodyCard px-1.5 pb-2.5 pt-2 ${
-        colors.border
-      } ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
+      className={`min-w-0 flex-1 ${onPress || onLongPress ? 'active:opacity-80' : ''}`}
     >
+      <GradientTile radius={16} className="items-center px-1.5 pb-2.5 pt-2">
       {/* «Сегодня» — подпись сверху каждой карточки (запрос Кати) */}
       <Text
         numberOfLines={1}
@@ -122,6 +128,7 @@ function StatCard({ colors, Icon, LabelIcon, label, value, sub, foot, onPress, o
 
       {/* пилюля итога — есть у всех карточек, поэтому ряды одной высоты */}
       {foot}
+      </GradientTile>
     </Root>
   )
 }

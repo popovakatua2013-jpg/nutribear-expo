@@ -43,6 +43,8 @@ import { useActivityStore } from '@/store/useActivityStore'
 import { dayDate, weekKeyOf, WEEKDAYS } from '@/store/useMealPlanStore'
 import { useToast } from '../ui/Toast'
 import { smoothPath } from '../ui/SvgAreaChart'
+import { NeonCard } from '../ui/NeonCard'
+import { GradientTile } from '../ui/GradientTile'
 import { MealPlanScreen } from './MealPlanScreen'
 import { WeekReviewModal } from './WeekReviewModal'
 import { RecipesModal } from '../food/RecipesModal'
@@ -553,21 +555,17 @@ export function PlanScreen({ onOpenFasting }) {
         </Pressable>
       </View>
 
-      {/* 1. Цели — крупные чипы: эмодзи + название + подпись, активный —
-          фиолетовый с белой галочкой — один цвет с кнопками приложения
-          (у нас 4 цели — сеткой 2×2) */}
+      {/* 1. Цели — крупные чипы: эмодзи + название + подпись (сетка 2×2).
+          ОФОРМЛЕНИЕ (правка Кати 25.11, пятый круг: «вкладка план —
+          вообще не оформлена! Ни рамок ни свечения ни градиента»):
+          неактивный чип — GradientTile (градиентная поверхность + кайма
+          темы), активный — сплошной акцент с галочкой (выбор видно и
+          в неонах, и на «Кремовой») */}
       <View style={styles.goalGrid}>
         {GOALS.map((g) => {
           const active = goalId === g.id
-          return (
-            <Pressable
-              key={g.id}
-              onPress={() => pickGoal(g.id)}
-              style={[styles.goalChip, active && styles.goalChipOn]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={`Цель ${g.label}${active ? ', активна' : ''}, выбор цели норму калорий не меняет`}
-            >
+          const chipBody = (
+            <>
               <Text style={styles.goalEmoji}>{g.emoji}</Text>
               <View style={styles.goalTexts}>
                 <Text numberOfLines={1} style={[styles.goalName, active && styles.goalNameOn]}>
@@ -583,6 +581,24 @@ export function PlanScreen({ onOpenFasting }) {
                     <Check size={13} color={P.accentInk} strokeWidth={3.5} />
                   </View>
                 </View>
+              )}
+            </>
+          )
+          return (
+            <Pressable
+              key={g.id}
+              onPress={() => pickGoal(g.id)}
+              style={styles.goalChipWrap}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`Цель ${g.label}${active ? ', активна' : ''}, выбор цели норму калорий не меняет`}
+            >
+              {active ? (
+                <View style={[styles.goalChipInner, styles.goalChipOn]}>{chipBody}</View>
+              ) : (
+                <GradientTile radius={20} style={styles.goalTile} innerStyle={styles.goalChipInner}>
+                  {chipBody}
+                </GradientTile>
               )}
             </Pressable>
           )
@@ -600,11 +616,11 @@ export function PlanScreen({ onOpenFasting }) {
 
         <View style={styles.fastCol}>
           <Pressable
-            style={styles.fastCard}
             onPress={onOpenFasting}
             accessibilityRole="button"
             accessibilityLabel="Интервальное питание — открыть подробнее"
           >
+            <NeonCard radius={20} style={styles.fastCard} innerStyle={styles.fastInner}>
             <Text
               style={styles.fastTitle}
               numberOfLines={2}
@@ -649,6 +665,7 @@ export function PlanScreen({ onOpenFasting }) {
               <Text style={styles.fastMoreText}>Подробнее</Text>
               <ChevronRight size={13} color={P.accentInk} />
             </View>
+            </NeonCard>
           </Pressable>
 
           {/* «Добавить рецепт» — отдельный блок в правой колонке: окно
@@ -656,10 +673,10 @@ export function PlanScreen({ onOpenFasting }) {
               рецепта открывает окно добавления еды (экран порции) */}
           <Pressable
             onPress={() => setRecipesOpen(true)}
-            style={styles.recipeCard}
             accessibilityRole="button"
             accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
           >
+            <NeonCard radius={20} style={styles.recipeCard} innerStyle={styles.recipeInner}>
             <View style={styles.recipeTile}>
               <ChefHat size={17} color={P.accentText} />
             </View>
@@ -672,12 +689,16 @@ export function PlanScreen({ onOpenFasting }) {
               Добавить рецепт
             </Text>
             <Text style={styles.recipeSub} numberOfLines={1}>Свой рецепт · мои рецепты</Text>
+            </NeonCard>
           </Pressable>
         </View>
       </View>
 
-      {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда */}
-      <View style={styles.card}>
+      {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда.
+          Оформление — NeonCard (пятый круг Кати: «вкладка план — ни
+          рамок ни свечения ни градиента»): кайма + градиент + свечение,
+          как у блоков «Главной» */}
+      <NeonCard style={styles.card} innerStyle={styles.cardInner}>
         <View style={styles.cardHead}>
           <View style={styles.iconTile}>
             <BarChart3 size={18} color={P.accentText} />
@@ -769,12 +790,13 @@ export function PlanScreen({ onOpenFasting }) {
           </View>
           <ChevronRight size={15} color={P.text3} />
         </Pressable>
-      </View>
+      </NeonCard>
 
       {/* 4. Список покупок — чек-лист слева, иллюстрация и лаймовая кнопка
-          справа (как в макете); тап открывает экран «Покупки» */}
+          справа (как в макете); тап открывает экран «Покупки».
+          Оформление — NeonCard, как у «Прогресса» (единый стиль вкладки) */}
+      <NeonCard style={styles.card} innerStyle={styles.cardInner}>
       <Pressable
-        style={styles.card}
         onPress={() => router.push('/shopping')}
         accessibilityRole="button"
         accessibilityLabel="Открыть список покупок"
@@ -826,6 +848,7 @@ export function PlanScreen({ onOpenFasting }) {
           </View>
         </View>
       </Pressable>
+      </NeonCard>
 
       {/* Окно рецептов: монтируется только открытым — каждый раз
           стартует со списка (или формы, если рецептов ещё нет) */}
@@ -903,20 +926,22 @@ const makeStyles = (P) => ({
     gap: 10,
     marginTop: spacing.l,
   },
-  goalChip: {
+  // Чип цели: Pressable задаёт размер в сетке (wrap), поверхность —
+  // GradientTile (неактивный) или сплошной акцент (активный)
+  goalChipWrap: {
     flex: 1,
     minWidth: '47%',
+  },
+  goalTile: { flex: 1 },
+  goalChipInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: P.card,
-    borderColor: P.line,
-    borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 13,
     paddingVertical: 12,
   },
-  goalChipOn: { backgroundColor: P.accent, borderColor: P.accent, paddingRight: 36 },
+  goalChipOn: { backgroundColor: P.accent, paddingRight: 36 },
   goalEmoji: { fontSize: 21 },
   goalTexts: { flex: 1, minWidth: 0 },
   goalName: {
@@ -945,14 +970,13 @@ const makeStyles = (P) => ({
     justifyContent: 'center',
   },
 
-  // Карточка раздела: плитка-иконка + заголовок + правая ссылка
+  // Карточка раздела: фон/кайма/градиент даёт NeonCard, здесь — только
+  // отступ и внутренний паддинг (cardInner)
   card: {
-    backgroundColor: P.card,
-    borderColor: P.line,
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: spacing.l,
     marginTop: spacing.l,
+  },
+  cardInner: {
+    padding: spacing.l,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconTile: {
@@ -1107,14 +1131,11 @@ const makeStyles = (P) => ({
   menuLeft: { width: '60%' },
   fastCard: {
     // Без flex:1 — карточка стоит в колонке fastCol своей высоты,
-    // а пустое место под ней заполняет блок «Добавить рецепт»
-    backgroundColor: P.card,
-    borderColor: P.line,
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 10,
+    // а пустое место под ней заполняет блок «Добавить рецепт»;
+    // фон/кайма/градиент — NeonCard, паддинг — fastInner
     marginTop: spacing.l,
   },
+  fastInner: { padding: 10 },
   fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
   fastRingWrap: { alignItems: 'center', marginTop: 8 },
   fastLegend: { gap: 7, marginTop: 8, alignSelf: 'stretch' },
@@ -1158,14 +1179,14 @@ const makeStyles = (P) => ({
 
   // «Добавить рецепт» — отдельный блок в правой колонке (просьба Кати
   // от 09.11: вынести из карточки меню в пустое место под голоданием);
-  // контент по центру — блок читается как большая кнопка
+  // контент по центру — блок читается как большая кнопка;
+  // фон/кайма/градиент — NeonCard (recipeInner — паддинг и центровка)
   recipeCard: {
     flex: 1,
     marginTop: 10,
-    backgroundColor: P.card,
-    borderColor: P.line,
-    borderWidth: 1,
-    borderRadius: 20,
+  },
+  recipeInner: {
+    flex: 1,
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',

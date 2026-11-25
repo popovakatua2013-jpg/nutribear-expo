@@ -63,6 +63,8 @@ import { useToast } from '../ui/Toast'
 import { Pills } from '../ui/Pills'
 import { WheelTimeModal } from './WheelTimeModal'
 import { BodyChip } from '../ui/BodyChip'
+import { NeonCard } from '../ui/NeonCard'
+import { GradientTile } from '../ui/GradientTile'
 import { formatNum, makeId } from '@/lib/format'
 import { useThemeColors } from '@/lib/use-theme'
 
@@ -202,10 +204,16 @@ export function ExerciseSection({ flat = false }) {
     })
   }
 
+  // Оформление блока (правка Кати 25.11, пятый круг: «блок тренировки
+  // … вообще не оформлен! Ни рамок ни свечения ни градиента»): обычный
+  // режим — NeonCard, как у всех блоков «Главной» (тонкая градиентная
+  // кайма + градиентная поверхность + мягкое свечение темы); режим
+  // flat — без оболочки (встраивание внутрь другой карточки).
+  const Shell = flat ? View : NeonCard
   return (
-    <View
+    <Shell
       accessibilityLabel="Тренировки"
-      className={flat ? '' : 'rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5'}
+      className={flat ? '' : 'p-5'}
     >
       {/* ── Шапка: чип + заголовок + строка недели + мини-кольцо ───────── */}
       <View className="flex-row items-center gap-2.5">
@@ -381,9 +389,9 @@ export function ExerciseSection({ flat = false }) {
         <WorkoutForm key="add" className="mt-2.5" />
       )}
 
-      {/* ── Динамика: сожжённые ккал по дням, периоды 7/30/90 ──────────── */}
+      {/* ── Динамика: сожжённые ккал по дням, периоды 7/30/90 ─────────── */}
       {hasDyn && (
-        <View className="mt-2.5 rounded-2xl border border-bear-line bg-bear-card2 p-3">
+        <GradientTile radius={16} className="p-3" style={{ marginTop: 10 }}>
           <View className="flex-row items-center justify-between gap-2">
             <View className="min-w-0 flex-row items-center gap-1.5">
               <BarChart3 size={15} color={themeColors.accentBright} />
@@ -407,9 +415,9 @@ export function ExerciseSection({ flat = false }) {
               lastBadge
             />
           </View>
-        </View>
+        </GradientTile>
       )}
-    </View>
+    </Shell>
   )
 }
 
@@ -687,7 +695,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
 
   return (
     <View
-      className={`rounded-2xl border border-bear-line bg-bear-card2 p-2.5 ${className}`}
+      className={`rounded-2xl border border-bear-accentFaint3 bg-bear-card2 p-2.5 ${className}`}
     >
       {/* Строка 1: выбор тренировки + время + калории */}
       <View className="flex-row items-center gap-2">
@@ -695,7 +703,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           onPress={() => setListOpen((v) => !v)}
           accessibilityRole="button"
           accessibilityLabel={listOpen ? 'Скрыть список тренировок' : 'Выбрать тренировку'}
-          className="min-w-0 flex-1 flex-row items-center gap-2 rounded-xl border border-bear-line bg-bear-card2 px-2.5 py-2 active:opacity-70"
+          className="min-w-0 flex-1 flex-row items-center gap-2 rounded-xl border border-bear-accentFaint3 bg-bear-card2 px-2.5 py-2 active:opacity-70"
         >
           {ex ? (
             <Text className="text-[19px]">{ex.emoji}</Text>
@@ -730,7 +738,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               ? `Время тренировки ${minutesNum} минут — открыть счётчик`
               : 'Время тренировки — открыть счётчик'
           }
-          className="w-[68px] shrink-0 flex-row items-center justify-center rounded-xl border border-bear-line bg-bear-card2 py-2 active:opacity-70"
+          className="w-[68px] shrink-0 flex-row items-center justify-center rounded-xl border border-bear-accentFaint3 bg-bear-card2 py-2 active:opacity-70"
         >
           <Text
             numberOfLines={1}
@@ -747,7 +755,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
           placeholder={autoKcal ? `≈${formatNum(autoKcal)}` : 'ккал'}
           placeholderTextColor={themeColors.dim}
           accessibilityLabel="Сожжённые калории — вручную"
-          className="w-[62px] shrink-0 rounded-xl border border-bear-line bg-bear-card2 py-2 text-center font-bold text-[16px] text-bear-text"
+          className="w-[62px] shrink-0 rounded-xl border border-bear-accentFaint3 bg-bear-card2 py-2 text-center font-bold text-[16px] text-bear-text"
         />
       </View>
 
@@ -778,7 +786,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
       {/* Раскрытый список тренировок: каталог + свои, внизу —
           «Своя тренировка» с формой запоминания */}
       {listOpen && !creating && (
-        <View className="mt-2 overflow-hidden rounded-xl border border-bear-line bg-bear-card">
+        <View className="mt-2 overflow-hidden rounded-xl border border-bear-accentFaint3 bg-bear-card">
           <ScrollView
             style={{ maxHeight: 210 }}
             nestedScrollEnabled
@@ -841,7 +849,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
 
       {/* Форма своей тренировки — вместо списка, прямо в панели */}
       {listOpen && creating && (
-        <View className="mt-2 gap-2.5 rounded-xl border border-bear-line bg-bear-card2 p-2.5">
+        <View className="mt-2 gap-2.5 rounded-xl border border-bear-accentFaint3 bg-bear-card2 p-2.5">
           <View>
             <Text className="mb-1 font-sans text-[13.5px] text-bear-sub2">Название</Text>
             <TextInput
@@ -851,7 +859,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               placeholder="Например: Бокс, скакалка, падел"
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название своей тренировки"
-              className="rounded-xl border border-bear-line bg-bear-card2 px-3 py-2 font-sans text-[16px] text-bear-text"
+              className="rounded-xl border border-bear-accentFaint3 bg-bear-card2 px-3 py-2 font-sans text-[16px] text-bear-text"
             />
           </View>
 
@@ -863,7 +871,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
               onPress={() => setEmojiOpen((v) => !v)}
               accessibilityRole="button"
               accessibilityLabel={emojiOpen ? 'Скрыть выбор иконки' : 'Выбрать иконку'}
-              className="flex-row items-center gap-2 rounded-xl border border-bear-line bg-bear-card2 px-3 py-2 active:opacity-70"
+              className="flex-row items-center gap-2 rounded-xl border border-bear-accentFaint3 bg-bear-card2 px-3 py-2 active:opacity-70"
             >
               <Text className="text-[19px]">{newEmoji}</Text>
               <Text className="min-w-0 flex-1 font-semibold text-[14.5px] text-bear-soft">
@@ -886,7 +894,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                     className={`h-8 w-8 items-center justify-center rounded-lg border ${
                       newEmoji === em
                         ? 'border-bear-accentBorder bg-bear-accentFaint'
-                        : 'border-bear-line bg-bear-card2'
+                        : 'border-bear-accentFaint3 bg-bear-card2'
                     }`}
                   >
                     <Text className="text-[18px]">{em}</Text>
@@ -929,7 +937,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
                     placeholder="300"
                     placeholderTextColor={themeColors.dim}
                     accessibilityLabel="Калории за 30 минут"
-                    className="w-24 rounded-xl border border-bear-line bg-bear-card2 py-1.5 text-center font-bold text-[16px] text-bear-text"
+                    className="w-24 rounded-xl border border-bear-accentFaint3 bg-bear-card2 py-1.5 text-center font-bold text-[16px] text-bear-text"
                   />
                   <Text className="min-w-0 flex-1 font-sans text-[12.5px] leading-snug text-bear-sub2">
                     ккал за 30 минут этой активности — цифра с тренажёра или часов

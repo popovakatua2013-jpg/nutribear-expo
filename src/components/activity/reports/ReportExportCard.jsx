@@ -21,12 +21,19 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { nutrientsByDay, weightByDay } from '@/lib/data/reports'
 import { buildReportHtml, shareReportFile } from '@/lib/data/report-export'
 import { PremiumCard } from '@/components/more/PremiumCard'
+import { NeonCard } from '../../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 import { useToast } from '../../ui/Toast'
 
 const RANGE_LABEL = { '7d': 'неделя', '30d': '30 дней', '90d': '90 дней' }
 
 function LockedContent() {
+  // Хук внутри компонента (а не ссылка на чужую переменную): раньше здесь
+  // использовался themeColors из родительской функции — в отдельной
+  // функции его не существует, у не-Premium пользователя это был бы
+  // ReferenceError-краш того же класса, что и «Property 'colors' doesn't
+  // exist» (исправлен в 842f8f3)
+  const themeColors = useThemeColors()
   return (
     <View className="gap-2" accessibilityLabel="Экспорт отчёта в файл — Premium">
       <View className="flex-row items-center gap-2">
@@ -87,10 +94,10 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
   }
 
   return (
-    <View
-      accessibilityLabel="Экспорт отчёта в файл"
-      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
-    >
+    // Правка Кати 25.11, пятый круг («все вкладки должны быть оформлены
+    // одинаково»): карточка на NeonCard — кайма + градиент + свечение,
+    // как у остальных блоков «Отчётов»
+    <NeonCard accessibilityLabel="Экспорт отчёта в файл">
       {/* Шапка-строка: тап раскрывает/сворачивает содержимое */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
@@ -129,7 +136,7 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
 
       {/* Содержимое — только в раскрытом виде */}
       {open && (
-        <View className="border-t border-bear-bodyLine px-4 pb-4 pt-3">
+        <View className="border-t border-bear-accentBorder px-4 pb-4 pt-3">
           {!pro ? (
             <LockedContent />
           ) : (
@@ -164,6 +171,6 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
           )}
         </View>
       )}
-    </View>
+    </NeonCard>
   )
 }

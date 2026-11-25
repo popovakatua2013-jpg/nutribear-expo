@@ -270,11 +270,11 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-bear-bg">
-      {/* Неоновая дымка в шапке — цветом активной темы: у ярких тем
-          с макета вся страница светится своим неоном (единый стиль
-          страниц, как на «Теле») */}
-      <SoftGlow id="glowHomeTR" w={260} h={210} peak={0.5} color={themeColors.accent} style={{ top: -30, right: -60 }} />
-      <SoftGlow id="glowHomeL" w={190} h={210} peak={0.24} color={themeColors.accentBright} style={{ top: 80, left: -56 }} />
+      {/* Неоновая дымка в шапке — цветом активной темы (спокойнее,
+          пятый круг Кати 25.11: «сделать чуть спокойнее» — пик 0.32/0.15
+          вместо 0.5/0.24, свечение осталось, фон снова тёмный) */}
+      <SoftGlow id="glowHomeTR" w={260} h={210} peak={0.32} color={themeColors.accent} style={{ top: -30, right: -60 }} />
+      <SoftGlow id="glowHomeL" w={190} h={210} peak={0.15} color={themeColors.accentBright} style={{ top: 80, left: -56 }} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}

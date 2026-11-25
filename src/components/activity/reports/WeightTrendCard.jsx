@@ -22,13 +22,12 @@
 
 import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { BarChart3, Lock } from 'lucide-react-native'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
+import { NeonCard } from '../../ui/NeonCard'
 import { dotDateFromKey } from '@/lib/data/activity'
 import { weightByDay, diaryAgeDays, periodLocked } from '@/lib/data/reports'
-import { withAlpha } from '@/lib/themes'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
@@ -104,46 +103,14 @@ export function WeightTrendCard() {
       accessibilityRole="button"
       accessibilityLabel="График веса. Тап — открыть вкладку ИМТ"
       className="active:opacity-90"
-      style={{ borderRadius: 16 }}
     >
-      {/* Ореолы свечения — те же концентры, что у NeonCard и карточек
-          показателей (правка Кати 25.11: «все одинаково на всех
-          вкладках») */}
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={[withAlpha(themeColors.accentBright, 0.5), withAlpha(themeColors.accent, 0.5)]}
-        style={{ position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderRadius: 21 }}
-      />
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={[withAlpha(themeColors.accentBright, 0.26), withAlpha(themeColors.accent, 0.26)]}
-        style={{ position: 'absolute', top: -13, left: -13, right: -13, bottom: -13, borderRadius: 29 }}
-      />
-      {/* Градиентная кайма + непрозрачная поверхность card с тинтом:
-          плоская подложка accentFaint→card с рамкой на светлой теме
-          читалась белой — теперь блок в одном языке с «Главной» */}
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
-        style={{ borderRadius: 16, padding: 1.5 }}
-      >
-        <View
-          style={{
-            borderRadius: 14.5,
-            backgroundColor: themeColors.card,
-            overflow: 'hidden',
-            padding: 14,
-          }}
-        >
-          <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.7, y: 1 }}
-            colors={[themeColors.accentFaint2, 'transparent']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-          />
+      {/* Правка Кати 25.11, пятый круг («все вкладки должны быть оформлены
+          одинаково»): самодельный стек (два ореола 0.5/0.26 + кайма
+          1.5 px + подложка card с тинтом) заменён NeonCard — те же
+          ореолы, кайма и градиентная поверхность, что у всех блоков
+          приложения, без расхождений по толщине/яркости */}
+      <NeonCard radius={16}>
+        <View className="p-3.5">
 
         <View className="flex-row items-center gap-2">
           <View
@@ -279,7 +246,7 @@ export function WeightTrendCard() {
           </View>
         )}
         </View>
-      </LinearGradient>
+      </NeonCard>
     </Pressable>
   )
 }

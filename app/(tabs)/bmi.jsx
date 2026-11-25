@@ -213,8 +213,8 @@ export default function BmiScreen() {
             парят на тёмном фоне; ниже — тёмные карточки «Вес» и «Рост» */}
         <View accessibilityLabel="ИМТ и состав тела">
           {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
-          <SoftGlow id="nbsGlowTR" w={250} h={200} peak={0.5} style={{ top: -28, right: -55 }} />
-          <SoftGlow id="nbsGlowR" w={180} h={260} peak={0.3} color={themeColors.accent} style={{ top: 90, right: -44 }} />
+          <SoftGlow id="nbsGlowTR" w={250} h={200} peak={0.32} style={{ top: -28, right: -55 }} />
+          <SoftGlow id="nbsGlowR" w={180} h={260} peak={0.18} color={themeColors.accent} style={{ top: 90, right: -44 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
               {/* Кольцо + бейдж стрика «в норме N недель» + легенда.

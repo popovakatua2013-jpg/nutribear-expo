@@ -7,7 +7,13 @@
 // отсутствовать, они честно не входят в среднее. Поверхность и шапка —
 // в стиле вкладки «Тело» (bear-bodyCard + BodyChip).
 // Правка Кати 25.11 («цветные точки — по темам»): точки нутриентов —
-// цвета активной темы (nutP/nutF/nutC/nutFib), а не жёсткая палитра
+// цвета активной темы (nutP/nutF/nutC/nutFib), а не жёсткая палитра.
+// Правка Кати 25.11, пятый круг («нутриенты + нет рамки», «все вкладки
+// должны быть оформлены одинаково»): блок был плоской подложкой
+// bodyCard без рамки и без градиента — читался «дырой» между
+// светящимися карточками «Отчётов». Теперь: снаружи NeonCard (кайма +
+// градиент + свечение, как у «Съедено за сегодня»), внутри плитки
+// нутриентов — GradientTile (градиент + кайма темы)
 
 import { useMemo } from 'react'
 import { Text, View } from 'react-native'
@@ -16,6 +22,8 @@ import { changePct, nutrientTotals, nutrientsByDay } from '@/lib/data/reports'
 import { FIBER_NORM } from '@/lib/data/nutrition'
 import { useFoodStore } from '@/store/useFoodStore'
 import { BodyChip } from '../../ui/BodyChip'
+import { NeonCard } from '../../ui/NeonCard'
+import { GradientTile } from '../../ui/GradientTile'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -34,7 +42,11 @@ function Stat({ label, color, value, sub, pct }) {
   const themeColors = useThemeColors()
   const Arrow = pct > 0 ? ArrowUpRight : pct < 0 ? ArrowDownRight : null
   return (
-    <View className="min-w-0 flex-1 rounded-2xl bg-bear-accentFaint px-3 py-2.5">
+    <GradientTile
+      radius={16}
+      className="min-w-0 flex-1 px-3 py-2.5"
+      style={{ flex: 1, minWidth: 0 }}
+    >
       <View className="flex-row items-center gap-1.5">
         <View className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
         <Text numberOfLines={1} className="font-sans text-[15px] text-bear-sub">
@@ -55,7 +67,7 @@ function Stat({ label, color, value, sub, pct }) {
           </Text>
         </View>
       ) : null}
-    </View>
+    </GradientTile>
   )
 }
 
@@ -67,10 +79,7 @@ export function NutrientsCard({ days }) {
   const prev = useMemo(() => nutrientTotals(byDay, days, days), [byDay, days])
 
   return (
-    <View
-      accessibilityLabel="Нутриенты за период"
-      className="rounded-3xl border border-bear-bodyLine bg-bear-bodyCard p-5"
-    >
+    <NeonCard accessibilityLabel="Нутриенты за период" className="p-5">
       <View className="flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-row items-center gap-2">
           <BodyChip icon={<Wheat size={17} />} />
@@ -131,6 +140,6 @@ export function NutrientsCard({ days }) {
           ) : null}
         </>
       )}
-    </View>
+    </NeonCard>
   )
 }

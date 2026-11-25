@@ -77,18 +77,16 @@ import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
 import { NeonCard } from '../ui/NeonCard'
+import { GradientTile } from '../ui/GradientTile'
 import { useThemeColors } from '@/lib/use-theme'
 
 
-// Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
-// bodyCard с фиолетовой обводкой): цвета блоков «Динамики веса»
-// и «Измерений тела» выровнены с ИМТ (решение пользователя)
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
+// Поверхность плиток — GradientTile (правка Кати 25.11, пятый круг:
+// «динамика веса… вообще не оформлена! Ни рамок ни свечения ни
+// градиента»): плоские подложки bodyCard с рамкой bodyLine читались
+// «дырами» внутри светящейся карточки. Теперь внутренние плитки —
+// градиентная поверхность + кайма темы (как плитки «Активности» на
+// «Главной»)
 
 const PERIODS = [
   { id: 'week', label: 'Неделя' },
@@ -375,7 +373,7 @@ export function WeightCard() {
         accessibilityLabel={secOpen ? 'Свернуть динамику веса' : 'Развернуть динамику веса'}
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
-        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-line bg-bear-card2">
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-accentFaint3 bg-bear-card2">
           <ChartLine size={20} color={themeColors.accentSoft} />
         </View>
         <Text className="min-w-0 flex-1 font-bold text-[22px] tracking-tight text-bear-text">
@@ -396,7 +394,7 @@ export function WeightCard() {
             onPress={() => setMenuOpen((v) => !v)}
             accessibilityRole="button"
             accessibilityLabel={`Период графика: ${PERIODS.find((p) => p.id === period)?.label}. Нажмите, чтобы изменить`}
-            className="flex-row items-center gap-1 rounded-full border border-bear-line bg-bear-card2 px-2.5 py-[7px] active:opacity-70"
+            className="flex-row items-center gap-1 rounded-full border border-bear-accentFaint3 bg-bear-card2 px-2.5 py-[7px] active:opacity-70"
           >
             <Calendar size={15} color={themeColors.accentBright} />
             <Text className="font-semibold text-[15px] text-bear-bright">
@@ -411,7 +409,7 @@ export function WeightCard() {
 
           {menuOpen && (
             <View
-              className="absolute right-0 top-9 z-10 w-[124px] overflow-hidden rounded-2xl border border-bear-line bg-bear-pop py-1.5"
+              className="absolute right-0 top-9 z-10 w-[124px] overflow-hidden rounded-2xl border border-bear-accentBorder bg-bear-pop py-1.5"
               style={{ elevation: 16 }}
             >
               {PERIODS.map((p) => {
@@ -453,9 +451,10 @@ export function WeightCard() {
       {/* Ряд: узкая карточка веса/цели + карточка с графиком */}
       <View className="flex-row items-stretch gap-2.5">
         {/* Текущий вес + цель + кнопка «Задать цель»; тап по весу — запись */}
-        <View
-          className="w-[122px] shrink-0 justify-between rounded-2xl p-3.5"
-          style={cardSurface(themeColors)}
+        <GradientTile
+          radius={16}
+          className="justify-between p-3.5"
+          style={{ width: 122, flexShrink: 0 }}
         >
           <View>
             <Pressable
@@ -620,10 +619,10 @@ export function WeightCard() {
           >
             <Plus size={32} color={themeColors.accentSoft} strokeWidth={2.75} />
           </Pressable>
-        </View>
+        </GradientTile>
 
         {/* График + строка-поддержка */}
-        <View className="min-w-0 flex-1 rounded-2xl p-3" style={cardSurface(themeColors)}>
+        <GradientTile radius={16} className="p-3" style={{ flex: 1, minWidth: 0 }}>
           {/* Пилюля изменения за период: точка в цвет тона. Одна запись —
               «—»: сравнивать не с чем (аудит: «0 кг» при одном взвешивании
               читалось как «вес стоит», хотя пары точек просто нет) */}
@@ -736,7 +735,7 @@ export function WeightCard() {
               <ThumbsUp size={22} color={themeColors.good} />
             )}
           </View>
-        </View>
+        </GradientTile>
       </View>
 
         </>

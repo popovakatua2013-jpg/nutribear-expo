@@ -158,8 +158,8 @@ export default function MoreScreen() {
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
-      <SoftGlow id="glowMoreTR" w={260} h={210} peak={0.44} color={themeColors.accent} style={{ top: -30, right: -60 }} />
-      <SoftGlow id="glowMoreL" w={190} h={210} peak={0.18} color={themeColors.link} style={{ top: 80, left: -56 }} />
+      <SoftGlow id="glowMoreTR" w={260} h={210} peak={0.32} color={themeColors.accent} style={{ top: -30, right: -60 }} />
+      <SoftGlow id="glowMoreL" w={190} h={210} peak={0.12} color={themeColors.link} style={{ top: 80, left: -56 }} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 16,
@@ -336,7 +336,7 @@ export default function MoreScreen() {
                   onPress={() => setLegalDoc(doc)}
                   accessibilityRole="button"
                   accessibilityLabel={label}
-                  className="flex-row items-center gap-2 rounded-2xl bg-white/[0.03] px-4 py-3 active:opacity-70"
+                  className="flex-row items-center gap-2 rounded-2xl bg-bear-accentFaint px-4 py-3 active:opacity-70"
                 >
                   <ChevronRight size={15} color={themeColors.sub} />
                   <Text maxFontSizeMultiplier={1.2} className="min-w-0 flex-1 font-sans text-[15.5px] text-bear-text">

@@ -48,6 +48,7 @@ import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
 import { NeonCard } from '../ui/NeonCard'
+import { GradientTile } from '../ui/GradientTile'
 import { MeasurementHistoryModal } from './MeasurementHistoryModal'
 import { useToast } from '../ui/Toast'
 import { useThemeColors } from '@/lib/use-theme'
@@ -56,14 +57,10 @@ import { useThemeColors } from '@/lib/use-theme'
 const MIN_CM = 20
 const MAX_CM = 300
 
-// Поверхность карточек — та же, что у ИМТ-блока выше (фиолетовая
-// bodyCard с фиолетовой обводкой): цвета блока выровнены с ИМТ
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
+// Поверхность плиток — GradientTile (правка Кати 25.11, пятый круг:
+// «измерение тела… вообще не оформлена! Ни рамок ни свечения ни
+// градиента»): плоские подложки bodyCard заменены градиентной
+// поверхностью с каймой темы — как плитки «Главной»
 
 // Иконки плиток: весёлые «прозвища» замеров (шрифт-стайл мишки NutriBear)
 const MEAS_ICONS = {
@@ -193,7 +190,7 @@ export function MeasurementsCard() {
         accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
-        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-line bg-bear-card2">
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-accentFaint3 bg-bear-card2">
           <Ruler size={20} color={themeColors.accentBright} />
         </View>
         <View className="min-w-0 flex-1">
@@ -212,7 +209,7 @@ export function MeasurementsCard() {
           onPress={() => setOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Записать замеры"
-          className="shrink-0 rounded-full border border-bear-line bg-bear-card2 px-3 py-[7px] active:opacity-70"
+          className="shrink-0 rounded-full border border-bear-accentFaint3 bg-bear-card2 px-3 py-[7px] active:opacity-70"
         >
           <Text className="font-bold text-[15px] text-bear-link">+ Добавить</Text>
         </Pressable>
@@ -224,7 +221,7 @@ export function MeasurementsCard() {
           accessibilityRole="button"
           accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
           hitSlop={6}
-          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-bear-line bg-bear-card2 active:opacity-70"
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-bear-accentFaint3 bg-bear-card2 active:opacity-70"
         >
           {secOpen ? (
             <X size={16} color={themeColors.sub} />
@@ -242,7 +239,7 @@ export function MeasurementsCard() {
           каждый замер; тап по строке — окно записи. Пока замеров нет —
           вместо таблицы прочерков «—» чистое пустое состояние (отзыв
           Кати: после регистрации блок пуст по умолчанию) */}
-      <View className="rounded-2xl p-3" style={cardSurface(themeColors)}>
+      <GradientTile radius={16} className="p-3">
         {/* Шапка колонок: короткие подписи мелким шрифтом — длинная
             «Текущее значение» наезжала на соседние колонки на 361dp */}
         <View className="flex-row items-end border-b border-bear-line pb-2">
@@ -391,15 +388,15 @@ export function MeasurementsCard() {
             </Text>
           </Pressable>
         </View>
-      </View>
+      </GradientTile>
         </>
       ) : (
-        <View className="rounded-2xl p-4" style={cardSurface(themeColors)}>
+        <GradientTile radius={16} className="p-4">
           <Text className="font-bold text-[16.5px] text-bear-text">Замеров пока нет</Text>
           <Text className="mt-1 font-sans text-[14.5px] leading-snug text-bear-dim">
             Нажмите «+ Добавить», чтобы записать первые параметры, — и здесь появится таблица с динамикой
           </Text>
-        </View>
+        </GradientTile>
       )}
         </>
       )}
