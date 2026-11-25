@@ -17,11 +17,15 @@
 //   </GradientTile>
 // style — на внешнем контейнере (отступы, flex), className/innerStyle —
 // на внутренней поверхности (паддинги, выравнивание).
+//
+// РЕЖИМ БЕЗ ЭФФЕКТОВ (тема «Чёрно-белая», просьба Кати 26.11): при
+// plain: true — плоская плитка: фон card2 и тонкая рамка line темы,
+// без градиентов.
 
 import { View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { withAlpha } from '@/lib/themes'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 export function GradientTile({
   children,
@@ -34,6 +38,31 @@ export function GradientTile({
   accessibilityRole,
 }) {
   const c = useThemeColors()
+  const plain = useThemePlain()
+
+  // Без эффектов: плоская плитка — фон card2, тонкая рамка темы
+  if (plain) {
+    return (
+      <View
+        style={[
+          {
+            backgroundColor: c.card2,
+            borderRadius: radius,
+            borderWidth: 1,
+            borderColor: c.line,
+          },
+          style,
+        ]}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
+      >
+        <View className={className} style={innerStyle}>
+          {children}
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View
       style={[{ position: 'relative' }, style]}

@@ -36,11 +36,16 @@
 // Если карточке нужен свой фон/обрезка — передайте innerStyle/
 // innerClassName (поверх градиента можно положить свою полупрозрачную
 // подложку, например bg-black/20 под сканером).
+//
+// РЕЖИМ БЕЗ ЭФФЕКТОВ (тема «Чёрно-белая», просьба Кати 26.11: «одну
+// бесплатную черно-белую без каких либо эффектов»): когда активная
+// тема помечена plain: true, вместо ореолов/каймы/градиентов рисуется
+// ПЛОСКАЯ карточка — фон card и тонкая рамка accentBorder темы.
 
 import { View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { withAlpha } from '@/lib/themes'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 // Три концентрических ореола: насколько выходят за карточку (inset, px)
 // и насколько плотные (alpha). Ближний — самый яркий, дальний — едва
@@ -62,6 +67,32 @@ export function NeonCard({
   accessibilityRole,
 }) {
   const c = useThemeColors()
+  const plain = useThemePlain()
+
+  // Без эффектов: плоская карточка — фон card, тонкая рамка темы,
+  // никаких ореолов и градиентов
+  if (plain) {
+    return (
+      <View
+        style={[
+          {
+            backgroundColor: c.card,
+            borderRadius: radius,
+            borderWidth: 1,
+            borderColor: c.accentBorder,
+          },
+          style,
+        ]}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
+      >
+        <View className={className} style={innerStyle}>
+          {children}
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View
       style={[{ position: 'relative' }, style]}

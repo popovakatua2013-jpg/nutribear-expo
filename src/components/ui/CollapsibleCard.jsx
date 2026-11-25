@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { ChevronDown } from 'lucide-react-native'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { BodyChip } from './BodyChip'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 
 export function CollapsibleCard({
@@ -52,20 +52,34 @@ export function CollapsibleCard({
   // плоская bodyCard читалась белым листом на «Кремовой» и чёрным
   // пластом на неонах — теперь диагональный градиент card→deep (тот же
   // язык, что у NeonCard), кайма — accentBorder темы (чужие серые рамки
-  // больше не участвуют)
-  return (
-    <LinearGradient
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      colors={[themeColors.card, themeColors.deep]}
-      style={{
+  // больше не участвуют). В plain-теме («Чёрно-белая», просьба Кати
+  // 26.11: «без каких либо эффектов») — плоская карточка без градиента.
+  const plain = useThemePlain()
+  const surfaceStyle = plain
+    ? {
+        backgroundColor: themeColors.card,
         borderRadius: 24,
         borderWidth: 1,
         borderColor: themeColors.accentBorder,
         overflow: 'hidden',
-      }}
-      accessibilityLabel={accessibilityLabel}
-    >
+      }
+    : {}
+  const Surface = plain ? View : LinearGradient
+  const surfaceProps = plain
+    ? { style: surfaceStyle }
+    : {
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 1 },
+        colors: [themeColors.card, themeColors.deep],
+        style: {
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: themeColors.accentBorder,
+          overflow: 'hidden',
+        },
+      }
+  return (
+    <Surface {...surfaceProps} accessibilityLabel={accessibilityLabel}>
       <View className="flex-row items-center">
         <Pressable
           onPress={toggle}
@@ -105,6 +119,6 @@ export function CollapsibleCard({
       </View>
 
       {open && <View className="px-4 pb-4">{children}</View>}
-    </LinearGradient>
+    </Surface>
   )
 }

@@ -38,9 +38,10 @@ function contrast(a, b) {
 }
 
 describe('THEMES: структура палитры', () => {
-  test('семь тем: «Классика» + пять ярких с макета + «Приглушённая», «Классика» бесплатная', () => {
+  test('восемь тем: «Классика» + бесплатная «Чёрно-белая» + шесть Premium', () => {
     expect(THEME_ORDER).toEqual([
       'classic',
+      'mono',
       'neonLime',
       'neonBlue',
       'neonPurple',
@@ -62,6 +63,67 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
+  test('«Чёрно-белая» — бесплатная и без эффектов (правка Кати 26.11)', () => {
+    const mono = THEMES.mono
+    expect(mono.title).toBe('Чёрно-белая')
+    expect(mono.premium).toBe(false)
+    // Флаг plain: только у монохромной темы — компоненты эффектов
+    // рисуют плоские поверхности
+    expect(mono.plain).toBe(true)
+    for (const id of THEME_ORDER.filter((x) => x !== 'mono')) {
+      expect(THEMES[id].plain).toBeFalsy()
+    }
+    // accent == accentBright — все прочие градиенты приложения
+    // становятся плоской заливкой
+    expect(mono.colors.accent).toBe(mono.colors.accentBright)
+    // Строгий монохром: все hex-токены — серые (R == G == B),
+    // rgba-токены — серые каналы
+    const gray = (v) => {
+      const hx = /^#([0-9A-Fa-f]{6})$/.exec(v)
+      if (hx) {
+        const r = parseInt(hx[1].slice(0, 2), 16)
+        const g = parseInt(hx[1].slice(2, 4), 16)
+        const b = parseInt(hx[1].slice(4, 6), 16)
+        return r === g && g === b
+      }
+      const m = /rgba?\((\d+),(\d+),(\d+)/.exec(v.replace(/\s/g, ''))
+      return !!m && m[1] === m[2] && m[2] === m[3]
+    }
+    for (const token of THEME_TOKENS) {
+      expect(gray(mono.colors[token])).toBe(true)
+    }
+    // База — тёмная, текст — белый, семьи различаются светлотой
+    const lum = (hex) => {
+      const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    }
+    expect(lum(mono.colors.bg)).toBeLessThan(0.03)
+    expect(lum(mono.colors.text)).toBeGreaterThan(0.8)
+    // «хорошо» светлее «предупреждения» светлее «плохо» — смысл
+    // сохранён светлотой
+    expect(lum(mono.colors.good)).toBeGreaterThan(lum(mono.colors.warn))
+    expect(lum(mono.colors.warn)).toBeGreaterThan(lum(mono.colors.bad))
+  })
+
+  test('семья «Чёрно-белой» читается на card по WCAG AA', () => {
+    const c = THEMES.mono.colors
+    const lum = (hex) => {
+      const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    }
+    const contrast = (a, b) => {
+      const [l1, l2] = [lum(a), lum(b)].sort((x, y) => y - x)
+      return (l1 + 0.05) / (l2 + 0.05)
+    }
+    for (const token of ['good', 'warn', 'bad', 'nutP', 'nutF', 'nutC', 'nutFib', 'nutSug', 'mSteps', 'mKcal', 'mWater', 'mBurned', 'mSleep', 'mWeight']) {
+      expect(contrast(c.card, c[token])).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
   test('названия новых тем — как на макете', () => {
     expect(THEMES.neonLime.title).toBe('Неон-лайм')
     expect(THEMES.neonBlue.title).toBe('Неон-синий')
@@ -69,12 +131,15 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.neonCyan.title).toBe('Неон-циан')
     expect(THEMES.muted.title).toBe('Приглушённая')
     expect(THEMES.cream.title).toBe('Кремовая')
+    expect(THEMES.mono.title).toBe('Чёрно-белая')
   })
 
-  test('все премиум-темы помечены premium', () => {
-    for (const id of THEME_ORDER.slice(1)) {
+  test('все неоновые и «Кремовая» помечены premium, бесплатные — «Классика» и «Чёрно-белая»', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(THEMES[id].premium).toBe(true)
     }
+    expect(THEMES.classic.premium).toBe(false)
+    expect(THEMES.mono.premium).toBe(false)
   })
 
   test('у каждой темы полный набор токенов (ровно как в tailwind bear.*)', () => {
@@ -234,8 +299,8 @@ describe('THEMES: структура палитры', () => {
     expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
   })
 
-  test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
+  test('тёмные неоновые темы и «Чёрно-белая»: вторичные тексты читаются по WCAG AA', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'mono']) {
       const c = THEMES[id].colors
       // Фон реально тёмный
       expect(luminance(c.bg)).toBeLessThan(0.03)
@@ -248,10 +313,14 @@ describe('THEMES: структура палитры', () => {
 })
 
 describe('resolveThemeId: гейтинг по подписке и переезд старых выборов', () => {
-  test('премиум-тема без подписки → «Классика»', () => {
+  test('премиум-тема без подписки → «Классика»; бесплатные доступны всем', () => {
     for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(resolveThemeId(id, false)).toBe('classic')
     }
+    // «Чёрно-белая» — бесплатная (просьба Кати 26.11): работает и без
+    // подписки, и с ней
+    expect(resolveThemeId('mono', false)).toBe('mono')
+    expect(resolveThemeId('mono', true)).toBe('mono')
   })
 
   test('премиум-тема с подпиской → сама тема', () => {

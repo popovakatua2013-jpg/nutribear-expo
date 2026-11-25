@@ -36,3 +36,17 @@ export function useThemeColors() {
     [themeId, pro]
   )
 }
+
+// Флаг «без эффектов» (тема «Чёрно-белая», просьба Кати 26.11: «одну
+// бесплатную черно-белую без каких либо эффектов»): true — компоненты
+// эффектов (NeonCard, GradientTile, SoftGlow, CollapsibleCard) рисуют
+// плоские поверхности без свечения, ореолов и градиентов. У остальных
+// тем флаг не задан → false
+export function useThemePlain() {
+  const themeId = useUiPrefsStore((s) => s.themeId)
+  const pro = useProStore((s) => s.pro)
+  return useMemo(
+    () => Boolean(THEMES[resolveThemeId(themeId, pro) || DEFAULT_THEME_ID].plain),
+    [themeId, pro]
+  )
+}
