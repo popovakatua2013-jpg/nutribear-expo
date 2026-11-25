@@ -30,9 +30,10 @@ describe('FREE_LIMITS после усиления Premium', () => {
     const byText = Object.fromEntries(PREMIUM_PERKS.map((p) => [p.text, p.sub]))
     expect(byText['Вся история приёмов пищи']).toContain('14 дней')
     expect(byText['Комбо без ограничений']).toContain('2')
-    expect(byText['Пять ярких тем оформления']).toBeTruthy()
-    expect(byText['Пять ярких тем оформления']).toContain('Неон-лайм')
-    expect(byText['Пять ярких тем оформления']).toContain('Кремовая')
+    expect(byText['Шесть тем оформления']).toBeTruthy()
+    expect(byText['Шесть тем оформления']).toContain('Неон-лайм')
+    expect(byText['Шесть тем оформления']).toContain('Приглушённая')
+    expect(byText['Шесть тем оформления']).toContain('Кремовая')
     expect(byText['Экспорт отчётов в файл']).toBeTruthy()
   })
 

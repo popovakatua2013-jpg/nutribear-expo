@@ -23,8 +23,16 @@
 // «Перекус 3»…) — ПОЛНОЦЕННЫЕ секции после «Перекус/Полдник», каждая
 // со своими блюдами, «+» и корзиной. Управление (повтор дня,
 // история, порции) — в шапке, «Все» открывает старое окно со сводкой
-// БЖУ. Поверхность — в стиле вкладки «Тело» (фиолетовая bear-bodyCard
-// + обводка bear-bodyLine).
+// БЖУ.
+// ОФОРМЛЕНИЕ (правка Кати 25.11, шестой круг: «блок приёма пищи остался
+// не редактирован»): сам блок давно NeonCard, но СЕКЦИИ приёмов внутри
+// оставались плоскими (card2 + серая рамка line) и выпадали из общего
+// языка «градиент + неоновая кайма» — как «Активность дня» до пятого
+// круга. Теперь каждая секция — GradientTile (тонкая градиентная кайма
+// accentBright→accent + градиентная поверхность акцент 10%→card→deep
+// активной темы), строка блюда — с каймой темы, панель способов
+// добавления — тоже GradientTile, полоска заполнения — на тёмной
+// подложке темы.
 
 import { useCallback, useRef, useState } from 'react'
 import {
@@ -54,6 +62,7 @@ import { HistoryModal } from './HistoryModal'
 import { EditEntryModal } from '../food/EditEntryModal'
 import { MealTabs } from '../food/MealTabs'
 import { NeonCard } from '../ui/NeonCard'
+import { GradientTile } from '../ui/GradientTile'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { MEALS, customMealCard, getMeal } from '@/lib/data/meals'
@@ -142,7 +151,7 @@ function DishRow({ mealId, mealName, entry, onEdit }) {
   const { toast } = useToast()
 
   return (
-    <View className="flex-row items-center gap-2 rounded-xl bg-bear-card px-2.5 py-2">
+    <View className="flex-row items-center gap-2 rounded-xl border border-bear-line bg-bear-card px-2.5 py-2">
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}
@@ -200,8 +209,10 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
   const barPct = Math.min(100, Math.max(0, pct))
   const over = pct > 100 // перебор нормы — полоска янтарная
 
+  // Секция — GradientTile (шестой круг Кати: секции приёмов были
+  // последними плоскими card2 с серой рамкой на «Главной»)
   return (
-    <View className="rounded-2xl border border-bear-line bg-bear-card2">
+    <GradientTile radius={16}>
       {/* заголовок секции */}
       <Pressable
         onPress={onToggle}
@@ -293,11 +304,17 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
         </Pressable>
       </Pressable>
 
-      {/* полоска заполнения приёма: доля от рекомендованных ккал */}
-      <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full bg-bear-card2">
+      {/* полоска заполнения приёма: доля от рекомендованных ккал;
+          дорожка — тёмная поверхность темы (была card2 в цвет фона —
+          на градиентной плите потерялась); перебор нормы — «предупреждение»
+          темы (был жёсткий янтарный #F59E0B — «всё по темам») */}
+      <View
+        className="mx-3 mb-2 h-1 overflow-hidden rounded-full"
+        style={{ backgroundColor: themeColors.deep }}
+      >
         <View
           className="h-1 rounded-full"
-          style={{ width: `${barPct}%`, backgroundColor: over ? '#F59E0B' : themeColors.accent }}
+          style={{ width: `${barPct}%`, backgroundColor: over ? themeColors.warn : themeColors.accent }}
         />
       </View>
 
@@ -325,7 +342,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
               через «+» */}
         </View>
       )}
-    </View>
+    </GradientTile>
   )
 }
 
@@ -498,8 +515,10 @@ export function MealPlanCard({ onAdd, onViewAll }) {
       </Pressable>
 
       {menuOpen && (
-        <View
-          className="mt-2 gap-1 overflow-hidden rounded-2xl border border-bear-line bg-bear-card2 p-1.5"
+        <GradientTile
+          radius={16}
+          className="gap-1 p-1.5"
+          style={{ marginTop: 8 }}
           accessibilityLabel="Способы добавления еды"
         >
           {/* 1. Только калории — первым (отзыв Кати): перекус в один тап,
@@ -524,7 +543,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
             sub="Второй, третий перекус — своя секция с «+»"
             onPress={addSnack}
           />
-        </View>
+        </GradientTile>
       )}
 
       {/* окно быстрой записи: пилюли приёмов + калории + название */}
@@ -544,9 +563,11 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               <View className="flex-row items-center gap-2">
                 <View
                   className="h-9 w-9 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: '#F59E0B' }}
+                  style={{ backgroundColor: themeColors.warn }}
                 >
-                  <Zap size={16} color="#FFFFFF" />
+                  {/* иконка цветом фона темы: на ярком warn тёмных тем — тёмная,
+                      на тёмном янтаре «Кремовой» — светлая (читается везде) */}
+                  <Zap size={16} color={themeColors.bg} />
                 </View>
                 <Text className="font-bold text-[20px] text-bear-text">Быстрая запись</Text>
               </View>

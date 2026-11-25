@@ -596,7 +596,7 @@ export function PlanScreen({ onOpenFasting }) {
               {active ? (
                 <View style={[styles.goalChipInner, styles.goalChipOn]}>{chipBody}</View>
               ) : (
-                <GradientTile radius={20} style={styles.goalTile} innerStyle={styles.goalChipInner}>
+                <GradientTile radius={20} innerStyle={styles.goalChipInner}>
                   {chipBody}
                 </GradientTile>
               )}
@@ -926,20 +926,23 @@ const makeStyles = (P) => ({
     gap: 10,
     marginTop: spacing.l,
   },
-  // Чип цели: Pressable задаёт размер в сетке (wrap), поверхность —
-  // GradientTile (неактивный) или сплошной акцент (активный)
+  // Чип цели: ПЛОСКАЯ ширина ~48% — два в ряд. Раньше обёртка была
+  // flex:1 + minWidth, а на плитке висел flex:1 по высоте — чип
+  // растягивался в высокий прямоугольник с контентом, прилипшим к
+  // верхнему краю, и пустым полем снизу («Похудение/Сушка уехали»,
+  // скрин Кати 25.11). Теперь высота — по контенту с minHeight,
+  // содержимое отцентрировано вертикально (alignItems в строке)
   goalChipWrap: {
-    flex: 1,
-    minWidth: '47%',
+    width: '48%',
   },
-  goalTile: { flex: 1 },
   goalChipInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     borderRadius: 20,
     paddingHorizontal: 13,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    minHeight: 58,
   },
   goalChipOn: { backgroundColor: P.accent, paddingRight: 36 },
   goalEmoji: { fontSize: 21 },

@@ -11,6 +11,8 @@
 //   «Неон-синий» — тёмно-синий фон + яркая лазурь;
 //   «Неон-фиолетовый» — тёмно-фиолетовый фон + яркая орхидея;
 //   «Неон-циан» — чёрно-бирюзовый фон + яркая бирюза;
+//   «Приглушённая» — спокойный графитово-зелёный с шалфейным акцентом
+//   (без «кислоты», правка Кати 25.11: «сделать еще приглушенную темы»);
 //   «Кремовая» — светлая бежевая с янтарными акцентами.
 //
 // Правка Кати 25.11 («цветные точки в блоках БЖУ — сделать по темам»,
@@ -36,7 +38,7 @@
 
 export const DEFAULT_THEME_ID = 'classic'
 
-export const THEME_ORDER = ['classic', 'neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']
+export const THEME_ORDER = ['classic', 'neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']
 
 // Токены палитры: ровно те же имена, что в tailwind.config.js (bear.*)
 export const THEME_TOKENS = [
@@ -307,6 +309,47 @@ export const THEMES = {
     },
   },
 
+  // Приглушённая — спокойная тёмная тема без «кислоты» (просьба Кати
+  // 25.11: «сделать еще приглушенную темы» — после пяти неонов нужна
+  // мягкая). Природа та же, что у неонов: чёрно-графитовый фон с
+  // зелёным подтоном, ШАЛФЕЙНЫЙ акцент — все токены (рамки, кнопки,
+  // свечение, градиенты NeonCard/GradientTile) берут его из темы
+  // автоматически. Отличия от неонов: акцент десатурирован (низкая
+  // насыщенность — «приглушён»), ореолы и каймы мягче. Семья
+  // нутриентов/метрик — оттенки того же шалфея (см. neonFamily ниже),
+  // warn/bad — чужие тёплые сигнальные тона, чтобы читались в монохроме
+  muted: {
+    id: 'muted',
+    title: 'Приглушённая',
+    premium: true,
+    colors: {
+      bg: '#0C100D',
+      card: '#161D18',
+      card2: '#141A16',
+      deep: '#0A0E0B',
+      pop: '#1A221C',
+      line: 'rgba(190,205,192,0.14)',
+      bodyCard: 'rgba(30,42,33,0.85)',
+      bodyLine: 'rgba(163,194,160,0.44)',
+      text: '#EAF1EB',
+      sub: '#A3B3A6',
+      sub2: '#98A89B',
+      dim: '#8A9A8D',
+      soft: '#BCCBBF',
+      bright: '#DCE7DD',
+      link: '#A3C2A0',
+      accent: '#A3C2A0',
+      accentBright: '#C2DCBD',
+      accentSoft: '#DCEBD8',
+      accentOn: '#0F2410',
+      accentFaint: 'rgba(163,194,160,0.12)',
+      accentFaint2: 'rgba(163,194,160,0.18)',
+      accentFaint3: 'rgba(163,194,160,0.24)',
+      accentStrong: 'rgba(163,194,160,0.85)',
+      accentBorder: 'rgba(163,194,160,0.55)',
+    },
+  },
+
   // Кремовая — светлая бежевая тема (нижний ряд макета, без креста):
   // тёплый кремовый фон, янтарные акценты. Правка Кати 25.11 («в кремовой
   // теме не видно поля, выглядит как сплошной белый фон»): слои РАЗВЕДЕНЫ
@@ -353,7 +396,7 @@ export const THEMES = {
 // неоны — из своих акцентов (монохромное свечение), «Классика» и
 // «Кремовая» — из зафиксированных наборов (см. CLASSIC_FAMILY/CREAM_FAMILY)
 THEMES.classic.colors = { ...THEMES.classic.colors, ...CLASSIC_FAMILY }
-for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
+for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
   THEMES[id].colors = { ...THEMES[id].colors, ...neonFamily(THEMES[id].colors) }
 }
 THEMES.cream.colors = { ...THEMES.cream.colors, ...CREAM_FAMILY }

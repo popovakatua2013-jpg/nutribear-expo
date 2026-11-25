@@ -38,13 +38,14 @@ function contrast(a, b) {
 }
 
 describe('THEMES: структура палитры', () => {
-  test('шесть тем: «Классика» + пять ярких с макета, «Классика» бесплатная', () => {
+  test('семь тем: «Классика» + пять ярких с макета + «Приглушённая», «Классика» бесплатная', () => {
     expect(THEME_ORDER).toEqual([
       'classic',
       'neonLime',
       'neonBlue',
       'neonPurple',
       'neonCyan',
+      'muted',
       'cream',
     ])
     expect(THEMES.classic.premium).toBe(false)
@@ -55,8 +56,8 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.forest).toBeUndefined()
     expect(THEMES.ocean).toBeUndefined()
     expect(THEMES.plum).toBeUndefined()
-    // Новые темы с макета — премиум
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+    // Новые темы — премиум
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(THEMES[id].premium).toBe(true)
     }
   })
@@ -66,6 +67,7 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.neonBlue.title).toBe('Неон-синий')
     expect(THEMES.neonPurple.title).toBe('Неон-фиолетовый')
     expect(THEMES.neonCyan.title).toBe('Неон-циан')
+    expect(THEMES.muted.title).toBe('Приглушённая')
     expect(THEMES.cream.title).toBe('Кремовая')
   })
 
@@ -192,6 +194,7 @@ describe('THEMES: структура палитры', () => {
       neonBlue: '#2E9EFF',
       neonPurple: '#C44BF8',
       neonCyan: '#23E5C8',
+      muted: '#A3C2A0',
     }
     for (const [id, accent] of Object.entries(accents)) {
       const c = THEMES[id].colors
@@ -211,6 +214,7 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.neonLime.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
     expect(luminance(THEMES.neonLime.colors.accentOn)).toBeLessThan(0.1)
     expect(luminance(THEMES.neonCyan.colors.accentOn)).toBeLessThan(0.1)
+    expect(luminance(THEMES.muted.colors.accentOn)).toBeLessThan(0.1)
     expect(THEMES.cream.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
     expect(luminance(THEMES.cream.colors.accentOn)).toBeLessThan(0.1)
     expect(THEMES.neonBlue.colors.accentOn).toBe('#FFFFFF')
@@ -231,7 +235,7 @@ describe('THEMES: структура палитры', () => {
   })
 
   test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
       const c = THEMES[id].colors
       // Фон реально тёмный
       expect(luminance(c.bg)).toBeLessThan(0.03)
@@ -245,13 +249,13 @@ describe('THEMES: структура палитры', () => {
 
 describe('resolveThemeId: гейтинг по подписке и переезд старых выборов', () => {
   test('премиум-тема без подписки → «Классика»', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(resolveThemeId(id, false)).toBe('classic')
     }
   })
 
   test('премиум-тема с подпиской → сама тема', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(resolveThemeId(id, true)).toBe(id)
     }
   })
