@@ -18,6 +18,7 @@ import { usePlanPalette } from './planPalette'
 
 export function SwapDishModal({ item, onClose, onReplace }) {
   const colors = usePlanPalette().C
+  const styles = makeStyles(colors)
   // Похожие по ккал из базы — считаем, пока окно открыто
   const list = useMemo(() => swapCandidates(item), [item])
 
@@ -89,7 +90,8 @@ export function SwapDishModal({ item, onClose, onReplace }) {
   )
 }
 
-const styles = {
+// Стили зависят от темы (colors) — собираем функцией (см. ShoppingListScreen)
+const makeStyles = (colors) => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   sheet: {
     backgroundColor: colors.surface2, borderColor: colors.line, borderWidth: 1,
@@ -120,4 +122,4 @@ const styles = {
     fontVariant: ['tabular-nums'], flexShrink: 0,
   },
   hint: { ...type.caption, color: colors.text3, textAlign: 'center', marginTop: -spacing.xs },
-}
+})

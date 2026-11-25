@@ -31,6 +31,7 @@ const parseNum = (v) => Number(String(v).trim().replace(',', '.')) || 0
 
 export function AddDishModal({ open, onClose, onPick }) {
   const colors = usePlanPalette().C
+  const styles = makeStyles(colors)
   const [query, setQuery] = useState('')
   const [customName, setCustomName] = useState('')
   const [customKcal, setCustomKcal] = useState('')
@@ -322,7 +323,8 @@ export function AddDishModal({ open, onClose, onPick }) {
   )
 }
 
-const styles = {
+// Стили зависят от темы (colors) — собираем функцией (см. ShoppingListScreen)
+const makeStyles = (colors) => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface2,
@@ -425,4 +427,4 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-}
+})

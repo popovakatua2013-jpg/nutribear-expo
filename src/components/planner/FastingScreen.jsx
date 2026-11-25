@@ -85,6 +85,7 @@ const fmtStamp = (ts) => {
 
 export function FastingScreen() {
   const colors = usePlanPalette().C
+  const styles = makeStyles(colors)
   const { toast } = useToast()
   const windowStart = useFastingStore((s) => s.windowStart)
   const windowHours = useFastingStore((s) => s.windowHours)
@@ -403,7 +404,8 @@ export function FastingScreen() {
   )
 }
 
-const styles = {
+// Стили зависят от темы (colors) — собираем функцией (см. ShoppingListScreen)
+const makeStyles = (colors) => ({
   title: { ...type.display, fontSize: 26, color: colors.text, letterSpacing: -0.3, marginTop: spacing.l },
   subtitle: { ...type.body, color: colors.text2, marginTop: 4, marginBottom: spacing.l },
   mainCard: {
@@ -503,4 +505,4 @@ const styles = {
   lapWhen: { ...type.body, fontSize: 12.5, color: colors.text2, flex: 1, fontVariant: ['tabular-nums'] },
   lapDur: { fontSize: 13, fontWeight: '700', fontFamily: F[700], color: colors.text },
   historyMore: { ...type.caption, color: colors.text3, marginTop: spacing.s },
-}
+})

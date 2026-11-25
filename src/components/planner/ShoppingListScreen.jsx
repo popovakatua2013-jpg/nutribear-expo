@@ -26,6 +26,7 @@ import { usePlanPalette } from './planPalette'
 
 export function ShoppingListScreen() {
   const colors = usePlanPalette().C
+  const styles = makeStyles(colors)
   const { toast } = useToast()
   const items = useShoppingStore((s) => s.items)
   const planWeek = useMealPlanStore((s) => s.plans[weekKeyOf(new Date())])
@@ -226,7 +227,12 @@ export function ShoppingListScreen() {
   )
 }
 
-const styles = {
+// Стили зависят от темы (colors) — собираем функцией и пересобираем
+// при смене темы. Раньше это был модульный объект со ссылкой на
+// статичный импорт палитры; после перевода палитры на хук модуль не
+// имел доступа к colors и падал «Property 'colors' doesn't exist»
+// (экран «Покупки» не открывался)
+const makeStyles = (colors) => ({
   title: { ...type.display, fontSize: 26, color: colors.text, letterSpacing: -0.3, marginTop: spacing.l },
   subtitle: { ...type.body, color: colors.text2, marginTop: 4, marginBottom: spacing.l },
   progressCard: {
@@ -306,4 +312,4 @@ const styles = {
   emptyEmoji: { fontSize: 38 },
   emptyTitle: { ...type.title, color: colors.text, marginTop: spacing.s },
   emptyText: { ...type.caption, color: colors.text2, textAlign: 'center', marginTop: 6, lineHeight: 17 },
-}
+})

@@ -23,6 +23,7 @@ const clamp = (v) => Math.max(MIN, Math.min(MAX, Math.round(Number(v)) || MIN))
 
 export function GramsModal({ item, onClose, onSave }) {
   const colors = usePlanPalette().C
+  const styles = makeStyles(colors)
   const [grams, setGrams] = useState(100)
   const [draft, setDraft] = useState('')
 
@@ -123,7 +124,8 @@ export function GramsModal({ item, onClose, onSave }) {
   )
 }
 
-const styles = {
+// Стили зависят от темы (colors) — собираем функцией (см. ShoppingListScreen)
+const makeStyles = (colors) => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   sheet: {
     backgroundColor: colors.surface2, borderColor: colors.line, borderWidth: 1,
@@ -166,4 +168,4 @@ const styles = {
     alignItems: 'center', justifyContent: 'center',
   },
   saveText: { fontSize: 14.5, fontWeight: '800', fontFamily: F[800], color: colors.accentInk },
-}
+})
