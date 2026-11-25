@@ -8,7 +8,7 @@ import { smoothPath } from './SvgAreaChart'
 import { useThemeColors } from '@/lib/use-theme'
 
 
-const GRID = 'rgba(255,255,255,0.06)'
+
 
 export function SvgLineChart({
   data,
@@ -58,7 +58,7 @@ export function SvgLineChart({
             y1={PAD_T + (ih * i) / 3}
             x2={w - PAD_R}
             y2={PAD_T + (ih * i) / 3}
-            stroke={GRID}
+            stroke={themeColors.line}
             strokeWidth={1}
           />
         ))}

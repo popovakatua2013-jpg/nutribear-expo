@@ -97,9 +97,9 @@ export function MeasurementHistoryModal({ open, onClose, items = [] }) {
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         {open && (
-          <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="overflow-hidden rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center gap-2.5">
-              <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
+              <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-line bg-bear-card2">
                 <History size={19} color={themeColors.link} />
               </View>
               <View className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export function MeasurementHistoryModal({ open, onClose, items = [] }) {
                     {g.rows.map((r) => (
                       <View
                         key={`${r.key}-${r.id}`}
-                        className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.04] px-2.5 py-2"
+                        className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-bear-line bg-bear-card2 px-2.5 py-2"
                       >
                         <View
                           className="items-center justify-center"

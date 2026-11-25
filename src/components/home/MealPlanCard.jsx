@@ -103,7 +103,7 @@ function MenuRow({ icon, tile, title, sub, onPress }) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${sub}`}
-      className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2.5 py-2.5 active:bg-white/10"
+      className="flex-row items-center gap-2.5 rounded-xl bg-bear-card2 px-2.5 py-2.5 active:bg-bear-accentFaint"
     >
       <View
         className="h-9 w-9 shrink-0 items-center justify-center rounded-xl"
@@ -201,7 +201,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
   const over = pct > 100 // перебор нормы — полоска янтарная
 
   return (
-    <View className="rounded-2xl border border-white/[0.06] bg-white/[0.04]">
+    <View className="rounded-2xl border border-bear-line bg-bear-card2">
       {/* заголовок секции */}
       <Pressable
         onPress={onToggle}
@@ -287,14 +287,14 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
           accessibilityRole="button"
           accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
           hitSlop={4}
-          className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+          className="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bear-card2 active:opacity-70"
         >
           <Plus size={15} color={themeColors.link} />
         </Pressable>
       </Pressable>
 
       {/* полоска заполнения приёма: доля от рекомендованных ккал */}
-      <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+      <View className="mx-3 mb-2 h-1 overflow-hidden rounded-full bg-bear-card2">
         <View
           className="h-1 rounded-full"
           style={{ width: `${barPct}%`, backgroundColor: over ? '#F59E0B' : themeColors.accent }}
@@ -499,7 +499,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
 
       {menuOpen && (
         <View
-          className="mt-2 gap-1 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] p-1.5"
+          className="mt-2 gap-1 overflow-hidden rounded-2xl border border-bear-line bg-bear-card2 p-1.5"
           accessibilityLabel="Способы добавления еды"
         >
           {/* 1. Только калории — первым (отзыв Кати): перекус в один тап,
@@ -539,7 +539,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 items-center justify-center bg-black/60 px-8"
         >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <View
@@ -580,7 +580,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
                 accessibilityLabel="Калории за порцию"
                 autoFocus
                 maxFontSizeMultiplier={1.3}
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-bear-card2 py-2.5 text-center text-[19px] text-bear-text"
               />
               <Text maxFontSizeMultiplier={1.3} className="shrink-0 font-sans text-[19px] text-bear-sub">
                 ккал
@@ -598,7 +598,7 @@ export function MealPlanCard({ onAdd, onViewAll }) {
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название быстрой записи"
               maxFontSizeMultiplier={1.3}
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-bear-card2 px-4 py-2.5 text-[19px] text-bear-text"
             />
 
             <Pressable

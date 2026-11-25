@@ -161,6 +161,28 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
+  test('«Кремовая» — тёплая семья и разведённые слои (правка Кати 25.11: «должен быть кремовый в кремовой теме», «не видно поля — сплошной белый фон»)', () => {
+    const c = THEMES.cream.colors
+    // Семья ТЁПЛАЯ: никакого чужого зелёного good, синих нутриентов и
+    // чисто-голубой воды — оттенки янтаря/терракоты/оливы/какао
+    expect(c.good).not.toBe('#166534')
+    expect(c.nutC).not.toBe('#0369A1')
+    expect(c.mWater).not.toBe('#38bdf8')
+    expect(c.mWeight).not.toBe('#4F46E5')
+    // Слои РАЗВЕДЕНЫ по светлоте: фон темнее карточек, поля (card2)
+    // темнее карточек, pop — самая светлая поверхность. Раньше bg/card/
+    // card2 почти совпадали — экран выглядел «сплошным белым полотном»
+    const L = (hex) => luminance(hex)
+    expect(L(c.bg)).toBeLessThan(L(c.card))
+    expect(L(c.card2)).toBeLessThan(L(c.card))
+    expect(L(c.deep)).toBeLessThan(L(c.card2))
+    expect(L(c.pop)).toBeGreaterThan(L(c.card))
+    // Поля заметны на карточке не только светлотой, но и рамкой:
+    // линия плотнее, чем была (альфа ≥ 0.2)
+    const lm = c.line.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/)
+    expect(Number(lm[4])).toBeGreaterThanOrEqual(0.2)
+  })
+
   test('неоновые тёмные темы: свой яркий акцент у каждой, «свечение» рамок', () => {
     const accents = {
       neonLime: '#C9F31D',

@@ -108,7 +108,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть сводку дня"
-              className="items-center rounded-2xl bg-white/10 py-3 active:opacity-70"
+              className="items-center rounded-2xl bg-bear-card2 py-3 active:opacity-70"
             >
               <Text className="font-bold text-[17.5px] text-bear-text">Закрыть</Text>
             </Pressable>

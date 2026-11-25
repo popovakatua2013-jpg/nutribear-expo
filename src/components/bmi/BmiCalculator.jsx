@@ -180,19 +180,19 @@ export function BmiCalculator() {
       >
         <View
           className="h-9 w-9 items-center justify-center rounded-xl border"
-          style={{ backgroundColor: 'rgba(139,92,246,0.22)', borderColor: 'rgba(139,92,246,0.35)' }}
+          style={{ backgroundColor: themeColors.accentFaint, borderColor: themeColors.accentBorder }}
         >
           <Calculator size={19} color={themeColors.accentSoft} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="font-bold text-[20.5px] tracking-tight text-white">
+          <Text className="font-bold text-[20.5px] tracking-tight text-bear-text">
             Калькулятор ИМТ
           </Text>
           <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-dim">
             Узнай свой индекс массы тела
           </Text>
         </View>
-        <View className="shrink-0 rounded-full bg-white/[0.06] p-1.5">
+        <View className="shrink-0 rounded-full p-1.5" style={{ backgroundColor: themeColors.accentFaint }}>
           {open ? (
             <ChevronUp size={18} color={themeColors.accentSoft} />
           ) : (
@@ -217,17 +217,17 @@ export function BmiCalculator() {
                   accessibilityState={{ selected: active }}
                   accessibilityLabel={label}
                   className="min-w-0 flex-1 overflow-hidden rounded-full border"
-                  style={{ borderColor: active ? 'rgba(255,255,255,0)' : 'rgba(255,255,255,0.10)' }}
+                  style={{ borderColor: active ? 'rgba(255,255,255,0)' : themeColors.line }}
                 >
                   {active ? (
                     <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
                       <View className="flex-row items-center justify-center gap-1.5 py-2.5">
-                        <Text className="text-[17.5px]">{glyph}</Text>
-                        <Text className="font-bold text-[17px] text-white">{label}</Text>
+                        <Text className="text-[17.5px]" style={{ color: themeColors.accentOn }}>{glyph}</Text>
+                        <Text className="font-bold text-[17px]" style={{ color: themeColors.accentOn }}>{label}</Text>
                       </View>
                     </LinearGradient>
                   ) : (
-                    <View className="flex-row items-center justify-center gap-1.5 bg-white/[0.05] py-2.5">
+                    <View className="flex-row items-center justify-center gap-1.5 bg-bear-card2 py-2.5">
                       <Text className="text-[17.5px] text-bear-sub">{glyph}</Text>
                       <Text className="font-medium text-[17px] text-bear-sub">{label}</Text>
                     </View>
@@ -252,8 +252,8 @@ export function BmiCalculator() {
           >
             <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
               <View className="flex-row items-center justify-center gap-2 py-3.5">
-                <Calculator size={18} color="#FFFFFF" />
-                <Text className="font-bold text-[19px] text-white">Рассчитать</Text>
+                <Calculator size={18} color={themeColors.accentOn} />
+                <Text className="font-bold text-[19px]" style={{ color: themeColors.accentOn }}>Рассчитать</Text>
               </View>
             </LinearGradient>
           </Pressable>
@@ -269,14 +269,14 @@ export function BmiCalculator() {
           паддинга. Теперь секция отделена линией и по ширине совпадает
           с остальными блоками вкладки */}
       {open && showResult && valid && (
-        <View className="-mx-4 mt-3 border-t border-white/10 px-4 pt-3">
+        <View className="-mx-4 mt-3 border-t border-bear-line px-4 pt-3">
           <View className="flex-row items-center justify-between gap-2">
             <Text className="font-medium text-[16px] text-bear-sub">Ваш ИМТ</Text>
             <Text className="font-semibold text-[16px]" style={{ color: cat.color }}>
               {cat.label} · {cat.range}
             </Text>
           </View>
-          <Text maxFontSizeMultiplier={1.15} className="mt-1 font-extrabold text-[32px] leading-tight tracking-tight text-white">
+          <Text maxFontSizeMultiplier={1.15} className="mt-1 font-extrabold text-[32px] leading-tight tracking-tight text-bear-text">
             {fmtDecimal(bmi)}
           </Text>
 
@@ -293,7 +293,7 @@ export function BmiCalculator() {
 
           {/* Жир в организме: строка и цифры в цвете уровня жира —
               норма зелёным, предожирение оранжевым, ожирение красным */}
-          <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/[0.03] px-3 py-2.5">
+          <View className="mt-2 flex-row items-center justify-between rounded-xl px-3 py-2.5" style={{ backgroundColor: themeColors.accentFaint }}>
             <Text className="font-medium text-[16.5px]" style={{ color: fatLevel.color }}>
               Жир в организме (оценка)
             </Text>
@@ -315,12 +315,13 @@ export function BmiCalculator() {
                 ? `Уровень активности: ${currentLevel.label}. Открыть список`
                 : 'Уровень активности — выбрать'
             }
-            className="mt-1.5 flex-row items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2.5 active:opacity-80"
+            className="mt-1.5 flex-row items-center justify-between gap-2 rounded-xl border px-3 py-2.5 active:opacity-80"
+            style={{ borderColor: themeColors.line, backgroundColor: themeColors.accentFaint }}
           >
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.15}
-              className="min-w-0 flex-1 font-semibold text-[16px] text-white"
+              className="min-w-0 flex-1 font-semibold text-[16px] text-bear-text"
             >
               {currentLevel ? currentLevel.label : 'Выберите…'}
             </Text>
@@ -342,9 +343,10 @@ export function BmiCalculator() {
                 ? 'Свернуть подсказку: как считается суточная норма'
                 : 'Развернуть подсказку: как считается суточная норма'
             }
-            className="mt-2.5 flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5 active:opacity-80"
+            className="mt-2.5 flex-row items-center gap-2 rounded-xl px-3 py-2.5 active:opacity-80"
+            style={{ backgroundColor: themeColors.accentFaint }}
           >
-            <Lightbulb size={16} color="#FBBF24" />
+            <Lightbulb size={16} color={themeColors.warn} />
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={1.15}
@@ -388,7 +390,7 @@ export function BmiCalculator() {
           >
             {/* Ручка-полоска */}
             <View className="items-center pt-2.5">
-              <View className="h-1 w-10 rounded-full bg-white/15" />
+              <View className="h-1 w-10 rounded-full" style={{ backgroundColor: themeColors.accentBorder }} />
             </View>
             <View className="flex-row items-center gap-2 px-3 pb-1 pt-2">
               <View className="min-w-0 flex-1">
@@ -403,7 +405,8 @@ export function BmiCalculator() {
                 onPress={() => setActOpen(false)}
                 accessibilityRole="button"
                 accessibilityLabel="Закрыть"
-                className="shrink-0 rounded-full bg-white/[0.06] p-1.5 active:opacity-70"
+                className="shrink-0 rounded-full p-1.5 active:opacity-70"
+                style={{ backgroundColor: themeColors.accentFaint }}
               >
                 <X size={18} color={themeColors.accentSoft} />
               </Pressable>
@@ -428,10 +431,10 @@ export function BmiCalculator() {
                         : { borderColor: themeColors.line }
                     }
                   >
-                    {active && <Check size={15} color="#FFFFFF" />}
+                    {active && <Check size={15} color={themeColors.accentOn} />}
                   </View>
                   <View className="min-w-0 flex-1">
-                    <Text numberOfLines={1} maxFontSizeMultiplier={1.15} className="font-semibold text-[16px] text-white">
+                    <Text numberOfLines={1} maxFontSizeMultiplier={1.15} className="font-semibold text-[16px] text-bear-text">
                       {l.label}
                     </Text>
                     {l.hint ? (
@@ -478,7 +481,8 @@ function NumField({ label, value, onChange, decimal }) {
         placeholder="—"
         placeholderTextColor={themeColors.dim}
         accessibilityLabel={label}
-        className="mt-1 rounded-xl border border-white/10 bg-white/[0.06] px-1 py-2.5 font-semibold text-[19px] text-white"
+        className="mt-1 rounded-xl border bg-bear-card2 px-1 py-2.5 font-semibold text-[19px] text-bear-text"
+        style={{ borderColor: themeColors.line }}
       />
     </View>
   )
@@ -487,7 +491,7 @@ function NumField({ label, value, onChange, decimal }) {
 function Stat({ label, value, accent }) {
   const themeColors = useThemeColors()
   return (
-    <View className="min-w-0 flex-1 rounded-xl bg-white/[0.03] px-3 py-2.5">
+    <View className="min-w-0 flex-1 rounded-xl px-3 py-2.5" style={{ backgroundColor: themeColors.accentFaint }}>
       <Text className="font-medium text-[15px] text-bear-sub2">{label}</Text>
       <Text
         maxFontSizeMultiplier={1.2}

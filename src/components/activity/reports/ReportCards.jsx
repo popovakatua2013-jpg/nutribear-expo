@@ -147,7 +147,7 @@ function CalFooter({ children, color, line = true, big = false }) {
     // mt-auto — футер прижат к нижнему краю карточки даже когда сосед
     // в ряду выше (растянутая карточка не оставляет футер в середине)
     <View className="mt-auto">
-      {line && <View className="mt-1.5 h-px bg-white/[0.07]" />}
+      {line && <View className="mt-1.5 h-px bg-bear-line" />}
       <View className="mt-1 flex-row items-center gap-1">
         <Calendar size={big ? 13 : 11} color={tone} />
         <Text

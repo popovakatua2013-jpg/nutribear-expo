@@ -82,7 +82,7 @@ export function VesselCard({ vessel, onDrink }) {
         onPress={() => setEdit(true)}
         accessibilityRole="button"
         accessibilityLabel={`Редактировать «${vessel.label}»`}
-        className="absolute right-1 top-1 rounded-full bg-white/10 p-1"
+        className="absolute right-1 top-1 rounded-full bg-bear-card2 p-1"
       >
         <Pencil size={13} color={themeColors.soft} />
       </Pressable>

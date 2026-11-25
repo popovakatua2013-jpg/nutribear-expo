@@ -39,7 +39,7 @@ export function TipOfDay() {
       className="overflow-hidden rounded-2xl p-4"
       style={cardSurface(themeColors)}
     >
-      <SoftGlow id="glowTipR" w={120} h={70} peak={0.22} color="#7C5CFC" style={{ top: -20, right: -30 }} />
+      <SoftGlow id="glowTipR" w={120} h={70} peak={0.22} color={themeColors.accent} style={{ top: -20, right: -30 }} />
       {/* Крестик — правый верхний угол; прячет совет до конца дня */}
       <Pressable
         onPress={() => dismissTipOfDay(dayKeyOf())}
@@ -53,7 +53,7 @@ export function TipOfDay() {
       <View className="flex-row items-center gap-3">
         <View
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: 'rgba(77,124,254,0.16)' }}
+          style={{ backgroundColor: themeColors.accentFaint }}
         >
           <Lightbulb size={18} color={themeColors.link} />
         </View>

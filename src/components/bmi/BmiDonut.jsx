@@ -1,7 +1,10 @@
 // Кольцевой датчик ИМТ — главный акцент вкладки: крупное градиентное
-// кольцо (голубой → синий → фиолетовый → маджента), при открытии белая
-// дуга плавно «заливается» до текущего ИМТ, число в центре отсчитывается
-// вверх, после заливки дуга мягко «дышит» (пульсация яркости).
+// кольцо ЦВЕТА АКТИВНОЙ ТЕМЫ (правка Кати 25.11: «вкладка тело не
+// соответствует темам» — раньше шкала была всегда сине-фиолетовой
+// #53E3F2→#6366F1→#A855F7→#EA5CF5, а число в центре — белым и на светлой
+// «Кремовой» пропадало), при открытии дуга темы плавно «заливается» до
+// текущего ИМТ, число в центре отсчитывается вверх, после заливки дуга
+// мягко «дышит» (пульсация яркости).
 // Анимация — обычный Animated из react-native (JS-драйвер) поверх
 // strokeDashoffset и strokeOpacity БЕЗ Reanimated: Reanimated поверх
 // SVG-экранов ронял приложение, не возвращать. Шкала: ИМТ 15 → 40,
@@ -12,6 +15,7 @@ import { Animated, Easing, Text, View } from 'react-native'
 import Svg, { Defs, LinearGradient as SvgGradient, Stop, Circle, Path } from 'react-native-svg'
 import { Check } from 'lucide-react-native'
 import { bmiCategory, fmtDecimal } from '@/lib/data/bmi'
+import { useThemeColors } from '@/lib/use-theme'
 
 const SIZE = 136
 const C = SIZE / 2
@@ -51,6 +55,7 @@ const FULL_ARC = `M ${SX.toFixed(2)} ${SY.toFixed(2)} A ${R} ${R} 0 1 1 ${EX.toF
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 export function BmiDonut({ bmi }) {
+  const themeColors = useThemeColors()
   const cat = bmiCategory(bmi)
   const target = Math.min(BMI_MAX, Math.max(BMI_MIN, bmi || BMI_MIN))
   const targetFrac = (target - BMI_MIN) / (BMI_MAX - BMI_MIN)
@@ -126,10 +131,12 @@ export function BmiDonut({ bmi }) {
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRing" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#53E3F2" />
-            <Stop offset="0.42" stopColor="#6366F1" />
-            <Stop offset="0.72" stopColor="#A855F7" />
-            <Stop offset="1" stopColor="#EA5CF5" />
+            {/* Кольцо — оттенки активной темы (монохромное свечение,
+                как у всех колец приложения): у неонов — неон,
+                у «Кремовой» — янтарь */}
+            <Stop offset="0" stopColor={themeColors.accentBright} />
+            <Stop offset="0.5" stopColor={themeColors.accent} />
+            <Stop offset="1" stopColor={themeColors.accentSoft} />
           </SvgGradient>
         </Defs>
 
@@ -152,11 +159,13 @@ export function BmiDonut({ bmi }) {
           strokeWidth={STROKE}
           fill="none"
         />
-        {/* Заливающаяся белая дуга: лёгкое свечение + яркая линия.
-            При открытии плавно дорастает до текущего ИМТ */}
+        {/* Заливающаяся дуга ЦВЕТА ТЕКСТА темы (на тёмных — светлая,
+            на «Кремовой» — тёмно-коричневая, видна на янтарном кольце):
+            лёгкое свечение + яркая линия. При открытии плавно дорастает
+            до текущего ИМТ */}
         <AnimatedPath
           d={FULL_ARC}
-          stroke="#FFFFFF"
+          stroke={themeColors.text}
           strokeOpacity={glowOpacity}
           strokeWidth={STROKE + 4}
           strokeLinecap="round"
@@ -166,7 +175,7 @@ export function BmiDonut({ bmi }) {
         />
         <AnimatedPath
           d={FULL_ARC}
-          stroke="#FFFFFF"
+          stroke={themeColors.text}
           strokeOpacity={brightOpacity}
           strokeWidth={STROKE}
           strokeLinecap="round"
@@ -178,7 +187,7 @@ export function BmiDonut({ bmi }) {
 
       <Text
         maxFontSizeMultiplier={1.1}
-        className="font-extrabold text-[36px] leading-none tracking-tight text-white"
+        className="font-extrabold text-[36px] leading-none tracking-tight text-bear-text"
       >
         {fmtDecimal(num)}
       </Text>

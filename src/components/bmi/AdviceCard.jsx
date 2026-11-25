@@ -36,10 +36,11 @@ const MINI_SHORT = {
   obese2: 'Ожирение',
 }
 
-// Мини-копия кольца ИМТ: тот же градиент и углы, без анимаций —
+// Мини-копия кольца ИМТ: тот же градиент темы и углы, без анимаций —
 // статичный снимок текущего значения (id градиента свой — nbsRingMini,
 // чтобы не пересекаться с большим кольцом на вкладке)
 function MiniRing({ bmi, catColor, shortLabel }) {
+  const themeColors = useThemeColors()
   const SIZE = 66
   const C = 33
   const R = 25
@@ -63,10 +64,11 @@ function MiniRing({ bmi, catColor, shortLabel }) {
       <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
         <Defs>
           <SvgGradient id="nbsRingMini" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#53E3F2" />
-            <Stop offset="0.42" stopColor="#6366F1" />
-            <Stop offset="0.72" stopColor="#A855F7" />
-            <Stop offset="1" stopColor="#EA5CF5" />
+            {/* Оттенки активной темы — как у большого кольца (было всегда
+                сине-фиолетовым #53E3F2→…→#EA5CF5) */}
+            <Stop offset="0" stopColor={themeColors.accentBright} />
+            <Stop offset="0.5" stopColor={themeColors.accent} />
+            <Stop offset="1" stopColor={themeColors.accentSoft} />
           </SvgGradient>
         </Defs>
         <Circle
@@ -81,16 +83,16 @@ function MiniRing({ bmi, catColor, shortLabel }) {
         <Circle cx={C} cy={C} r={R} stroke="url(#nbsRingMini)" strokeWidth={STROKE} fill="none" />
         <Path
           d={arc}
-          stroke="#FFFFFF"
+          stroke={themeColors.text}
           strokeOpacity={0.2}
           strokeWidth={STROKE + 3}
           strokeLinecap="round"
           fill="none"
         />
-        <Path d={arc} stroke="#FFFFFF" strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+        <Path d={arc} stroke={themeColors.text} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
       </Svg>
       <View className="items-center">
-        <Text className="font-extrabold text-[19px] leading-none text-white">
+        <Text className="font-extrabold text-[19px] leading-none text-bear-text">
           {fmtDecimal(bmi)}
         </Text>
         <Text
@@ -120,7 +122,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           <View className="flex-row items-start px-5 pb-1 pt-5">
             <View className="min-w-0 flex-1">
               <Text className="font-bold text-[20px] text-bear-text">
@@ -163,16 +165,14 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
             {nextKg && (
               <View
                 className="mt-2 flex-row items-center gap-1.5 self-start rounded-full px-3 py-1.5"
-                style={{
-                  backgroundColor: nextKg.tone === 'ok' ? 'rgba(74,222,128,0.12)' : 'rgba(141,171,255,0.12)',
-                }}
+                style={{ backgroundColor: themeColors.accentFaint }}
               >
-                <Target size={14} color={nextKg.tone === 'ok' ? '#4ADE80' : themeColors.link} />
+                <Target size={14} color={nextKg.tone === 'ok' ? themeColors.good : themeColors.link} />
                 <Text
                   numberOfLines={2}
                   maxFontSizeMultiplier={1.1}
                   className="min-w-0 flex-1 font-semibold text-[16px]"
-                  style={{ color: nextKg.tone === 'ok' ? '#4ADE80' : themeColors.link }}
+                  style={{ color: nextKg.tone === 'ok' ? themeColors.good : themeColors.link }}
                 >
                   {nextKg.text}
                 </Text>
@@ -182,7 +182,8 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
               {rec.tips.map((tip) => (
                 <View
                   key={tip}
-                  className="flex-row items-start gap-2.5 rounded-xl bg-white/[0.04] px-3.5 py-2.5"
+                  className="flex-row items-start gap-2.5 rounded-xl px-3.5 py-2.5"
+                  style={{ backgroundColor: themeColors.accentFaint }}
                 >
                   <View
                     className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"

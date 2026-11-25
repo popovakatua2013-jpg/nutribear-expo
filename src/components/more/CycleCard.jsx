@@ -72,11 +72,15 @@ function CycleRing({ value, caption, progress }) {
       <Svg width={SIZE} height={SIZE} viewBox="0 0 96 96">
         <Defs>
           <SvgGradient id="cycleRing" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#F472B6" />
-            <Stop offset="1" stopColor={themeColors.accentBright} />
+            {/* Градиент темы (accentBright → accent): раньше половина дуги
+                была розовым #F472B6 — на «Кремовой» и неонах выглядело
+                чужим цветом (отзыв Кати 25.11: «кольца и графики — по темам») */}
+            <Stop offset="0" stopColor={themeColors.accentBright} />
+            <Stop offset="1" stopColor={themeColors.accent} />
           </SvgGradient>
         </Defs>
-        <Circle cx="48" cy="48" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="7" />
+        {/* Трек — рамка темы: белый rgba был невидим на светлой теме */}
+        <Circle cx="48" cy="48" r={R} fill="none" stroke={themeColors.line} strokeWidth="7" />
         {arc > 0 && (
           <Circle
             cx="48"
@@ -198,7 +202,7 @@ export function CycleCard({ embedded = false }) {
   // в одной строке (раньше тумблер висел один, без названия)
   const settingsBlock = (
     <View>
-      <View className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3">
+      <View className="flex-row items-center justify-between rounded-2xl border border-bear-line bg-bear-card2 px-4 py-3">
         <Text className="font-bold text-[16px] text-bear-text">Трекер цикла</Text>
         <Switch
           value={enabled}
@@ -210,7 +214,7 @@ export function CycleCard({ embedded = false }) {
       </View>
 
       {enabled && (
-        <View className="mt-2 gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+        <View className="mt-2 gap-1 rounded-2xl border border-bear-line bg-bear-card2 p-3">
           <Stepper
             label="Начало последних месячных"
             value={lastStart ? formatDateRu(lastStart) : 'не отмечено'}
@@ -369,7 +373,7 @@ export function CycleCard({ embedded = false }) {
           accessibilityRole="button"
           accessibilityState={{ expanded: settingsOpen }}
           accessibilityLabel={settingsOpen ? 'Свернуть настройки цикла' : 'Настройки цикла'}
-          className="mt-2.5 flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-2.5 active:opacity-80"
+          className="mt-2.5 flex-row items-center justify-between rounded-2xl border border-bear-line bg-bear-card2 px-4 py-2.5 active:opacity-80"
         >
           <Text className="font-bold text-[15px] text-bear-text">Настройки цикла</Text>
           <ChevronDown

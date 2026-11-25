@@ -52,7 +52,6 @@ import { useToast } from '../ui/Toast'
 import { useThemeColors } from '@/lib/use-theme'
 
 
-const CUSTOM_COLOR = '#4ADE80'
 const MIN_CM = 20
 const MAX_CM = 300
 
@@ -74,11 +73,12 @@ const MEAS_ICONS = {
   hips: Waves, // бёдра
 }
 
-// Полный список пунктов: встроенные + свои замеры
-function allItems(customs) {
+// Полный список пунктов: встроенные + свои замеры (цвет своих —
+// good темы, приходит параметром — раньше был жёсткий зелёный #4ADE80)
+function allItems(customs, customColor) {
   return [
     ...BASE_MEASUREMENTS.map((m) => ({ ...m, custom: false })),
-    ...customs.map((m) => ({ key: m.id, label: m.name, color: CUSTOM_COLOR, custom: true })),
+    ...customs.map((m) => ({ key: m.id, label: m.name, color: customColor, custom: true })),
   ]
 }
 
@@ -89,11 +89,13 @@ const parseNum = (v) => Number(String(v).trim().replace(',', '.'))
 const shortDay = (iso) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })
 
-// Тон дельты: талия/живот — минус это прогресс (зелёный), плюс — красный;
-// остальные замеры и «нет изменений» — нейтральный серый
-function deltaTone(m, d) {
-  if (d == null || d === 0 || !m.slimGood) return '#8B96B8'
-  return d < 0 ? '#34D399' : '#FB7185'
+// Тон дельты: талия/живот — минус это прогресс (good темы), плюс — bad;
+// остальные замеры и «нет изменений» — нейтральный dim темы
+// (правка Кати 25.11 «вкладка тело не соответствует темам»: раньше
+// были жёсткие зелёный/красный/серый из старой тёмной палитры)
+function deltaTone(m, d, themeColors) {
+  if (d == null || d === 0 || !m.slimGood) return themeColors.dim
+  return d < 0 ? themeColors.good : themeColors.bad
 }
 
 export function MeasurementsCard() {
@@ -110,8 +112,8 @@ export function MeasurementsCard() {
   // состояние локальное, свернуть можно тапом по шапке или крестиком в ней
   const [secOpen, setSecOpen] = useState(true)
   const items = useMemo(
-    () => allItems(customs).filter((m) => !hiddenKeys.includes(m.key)),
-    [customs, hiddenKeys]
+    () => allItems(customs, themeColors.good).filter((m) => !hiddenKeys.includes(m.key)),
+    [customs, hiddenKeys, themeColors.good]
   )
   // Есть ли хоть один замер: пока нет — вместо таблицы прочерков «—»
   // показываем чистое пустое состояние: после регистрации «Измерение
@@ -132,7 +134,7 @@ export function MeasurementsCard() {
         const last = list[0] || null
         const prev = list[1] || null
         const d = last && prev ? Math.round((last.cm - prev.cm) * 10) / 10 : null
-        const tone = deltaTone(m, d)
+        const tone = deltaTone(m, d, themeColors)
         return {
           key: m.key,
           label: m.label,
@@ -186,7 +188,7 @@ export function MeasurementsCard() {
         accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
-        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-line bg-bear-card2">
           <Ruler size={20} color={themeColors.accentBright} />
         </View>
         <View className="min-w-0 flex-1">
@@ -205,7 +207,7 @@ export function MeasurementsCard() {
           onPress={() => setOpen(true)}
           accessibilityRole="button"
           accessibilityLabel="Записать замеры"
-          className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3 py-[7px] active:opacity-70"
+          className="shrink-0 rounded-full border border-bear-line bg-bear-card2 px-3 py-[7px] active:opacity-70"
         >
           <Text className="font-bold text-[15px] text-bear-link">+ Добавить</Text>
         </Pressable>
@@ -217,7 +219,7 @@ export function MeasurementsCard() {
           accessibilityRole="button"
           accessibilityLabel={secOpen ? 'Свернуть измерения тела' : 'Развернуть измерения тела'}
           hitSlop={6}
-          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] active:opacity-70"
+          className="h-9 w-9 shrink-0 items-center justify-center rounded-full border border-bear-line bg-bear-card2 active:opacity-70"
         >
           {secOpen ? (
             <X size={16} color={themeColors.sub} />
@@ -238,7 +240,7 @@ export function MeasurementsCard() {
       <View className="rounded-2xl p-3" style={cardSurface(themeColors)}>
         {/* Шапка колонок: короткие подписи мелким шрифтом — длинная
             «Текущее значение» наезжала на соседние колонки на 361dp */}
-        <View className="flex-row items-end border-b border-white/[0.08] pb-2">
+        <View className="flex-row items-end border-b border-bear-line pb-2">
           <Text
             numberOfLines={1}
             maxFontSizeMultiplier={1.05}
@@ -276,7 +278,7 @@ export function MeasurementsCard() {
             accessibilityRole="button"
             accessibilityLabel={`${r.label}: ${r.value}. Тап — записать замеры`}
             className={`flex-row items-center py-2.5 active:opacity-70 ${
-              i < tableRows.length - 1 ? 'border-b border-white/[0.05]' : ''
+              i < tableRows.length - 1 ? 'border-b border-bear-line' : ''
             }`}
           >
             <View className="min-w-0 flex-1 flex-row items-center gap-2">
@@ -356,7 +358,7 @@ export function MeasurementsCard() {
         {/* Футер: когда что-то измерялось последний раз + кнопка
             «История» — журнал всех записей по дням (вопрос Кати:
             «где хранится история?» — смотреть её было негде) */}
-        <View className="mt-1.5 flex-row items-center gap-1.5 border-t border-white/[0.07] pt-2">
+        <View className="mt-1.5 flex-row items-center gap-1.5 border-t border-bear-line pt-2">
           <Info size={13} color={themeColors.dim} />
           <Text
             numberOfLines={1}
@@ -372,7 +374,8 @@ export function MeasurementsCard() {
             accessibilityRole="button"
             accessibilityLabel="Открыть историю замеров"
             hitSlop={6}
-            className="shrink-0 flex-row items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 active:opacity-70"
+            className="shrink-0 flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-70"
+            style={{ backgroundColor: themeColors.accentFaint }}
           >
             <History size={12} color={themeColors.link} />
             <Text
@@ -426,7 +429,7 @@ function MeasurementsModal({ open, onClose }) {
   const addCustomMeasurement = useProfileStore((s) => s.addCustomMeasurement)
   const removeCustomMeasurement = useProfileStore((s) => s.removeCustomMeasurement)
 
-  const items = useMemo(() => allItems(customs), [customs])
+  const items = useMemo(() => allItems(customs, themeColors.good), [customs, themeColors.good])
   // Значения полей { [key]: string }; собираем при каждом открытии
   const [vals, setVals] = useState({})
   // Отметки «какие замеры делали» { [key]: bool }: нет в карте — включён
@@ -559,7 +562,7 @@ function MeasurementsModal({ open, onClose }) {
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
       >
         {open && (
-          <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="overflow-hidden rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <View className="min-w-0 flex-1">
                 <Text className="font-bold text-[20px] text-bear-text">Записать замеры</Text>
@@ -599,12 +602,12 @@ function MeasurementsModal({ open, onClose }) {
                         hitSlop={4}
                         className={`h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md border active:opacity-70 ${
                           picked[m.key] === false
-                            ? 'border-white/20 bg-transparent'
+                            ? 'border-bear-line bg-transparent'
                             : 'border-bear-accent bg-bear-accent'
                         }`}
                       >
                         {picked[m.key] !== false && (
-                          <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                          <Check size={14} color={themeColors.accentOn} strokeWidth={3} />
                         )}
                       </Pressable>
                       <View
@@ -645,8 +648,8 @@ function MeasurementsModal({ open, onClose }) {
                         placeholderTextColor={themeColors.dim}
                         textAlign="center"
                         accessibilityLabel={`${m.label} в сантиметрах`}
-                        className={`w-[96px] shrink-0 rounded-2xl border bg-white/5 px-3 py-2.5 font-semibold text-[17.5px] text-white ${
-                          bad ? 'border-rose-400/60' : 'border-white/10'
+                        className={`w-[96px] shrink-0 rounded-2xl border bg-bear-card2 px-3 py-2.5 font-semibold text-[17.5px] text-bear-text ${
+                          bad ? 'border-rose-400/60' : 'border-bear-line'
                         }`}
                       />
                     </View>
@@ -661,7 +664,7 @@ function MeasurementsModal({ open, onClose }) {
 
               {/* Свой замер: имя → появляется в списке и в плитках карточки */}
               <View
-                className="mt-4 rounded-2xl border border-dashed border-white/15 p-3"
+                className="mt-4 rounded-2xl border border-dashed border-bear-line p-3"
                 accessibilityLabel="Добавить свой замер"
               >
                 <Text className="font-semibold text-[16px] text-bear-soft">
@@ -677,13 +680,13 @@ function MeasurementsModal({ open, onClose }) {
                     returnKeyType="done"
                     onSubmitEditing={handleAddCustom}
                     accessibilityLabel="Название своего замера"
-                    className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-[17.5px] text-white"
+                    className="min-w-0 flex-1 rounded-xl border border-bear-line bg-bear-card2 px-3 py-2 font-medium text-[17.5px] text-bear-text"
                   />
                   <Pressable
                     onPress={handleAddCustom}
                     accessibilityRole="button"
                     accessibilityLabel="Добавить свой замер в список"
-                    className="shrink-0 justify-center rounded-xl bg-white/10 px-3 active:opacity-70"
+                    className="shrink-0 justify-center rounded-xl bg-bear-card2 px-3 active:opacity-70"
                   >
                     <Text className="font-bold text-[16.5px] text-bear-link">Добавить</Text>
                   </Pressable>
@@ -703,7 +706,10 @@ function MeasurementsModal({ open, onClose }) {
                 end={{ x: 1, y: 1 }}
                 colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}
               >
-                <Text className="py-3.5 text-center font-bold text-[19px] text-white">
+                <Text
+                  className="py-3.5 text-center font-bold text-[19px]"
+                  style={{ color: themeColors.accentOn }}
+                >
                   Сохранить
                 </Text>
               </LinearGradient>

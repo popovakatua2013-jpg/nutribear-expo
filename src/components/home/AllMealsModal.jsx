@@ -224,7 +224,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         onPress={() => onAddToMeal(meal.id)}
                         accessibilityRole="button"
                         accessibilityLabel={`Добавить блюдо в «${meal.name}»`}
-                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+                        className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-card2 active:opacity-70"
                       >
                         <Plus size={16} color={themeColors.link} />
                       </Pressable>

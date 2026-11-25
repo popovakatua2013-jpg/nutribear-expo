@@ -84,7 +84,7 @@ export function NormCongrats({ open, onClose, bmi }) {
       <View className="flex-1 items-center justify-center bg-black/60 px-6">
         <Animated.View
           accessibilityLabel="Поздравление: ИМТ вернулся в норму"
-          className="w-full items-center overflow-hidden rounded-3xl border border-white/10 bg-bear-pop px-5 pb-5 pt-6"
+          className="w-full items-center overflow-hidden rounded-3xl border border-bear-line bg-bear-pop px-5 pb-5 pt-6"
           style={{
             opacity: pop.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
             transform: [
@@ -155,7 +155,7 @@ export function NormCongrats({ open, onClose, bmi }) {
               onPress={shareResult}
               accessibilityRole="button"
               accessibilityLabel="Поделиться результатом"
-              className="w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 active:opacity-70"
+              className="w-12 shrink-0 items-center justify-center rounded-2xl border border-bear-line bg-bear-card2 active:opacity-70"
             >
               <Share2 size={18} color={themeColors.soft} />
             </Pressable>

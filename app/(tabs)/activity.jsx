@@ -63,8 +63,8 @@ export default function ActivityScreen() {
   return (
     <View className="flex-1 bg-bear-bg">
       {/* Неоновая дымка в шапке — единый стиль страниц (как на «Теле») */}
-      <SoftGlow id="glowDiaryTR" w={190} h={160} peak={0.3} color={themeColors.accent} style={{ top: -26, right: -46 }} />
-      <SoftGlow id="glowDiaryL" w={120} h={150} peak={0.14} color={themeColors.link} style={{ top: 60, left: -40 }} />
+      <SoftGlow id="glowDiaryTR" w={260} h={210} peak={0.44} color={themeColors.accent} style={{ top: -30, right: -60 }} />
+      <SoftGlow id="glowDiaryL" w={190} h={210} peak={0.2} color={themeColors.link} style={{ top: 80, left: -56 }} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 16,

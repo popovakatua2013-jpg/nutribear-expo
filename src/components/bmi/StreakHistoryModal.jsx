@@ -41,7 +41,7 @@ function WeeksSparkline({ rows }) {
 
   if (!valid.length) {
     return (
-      <View className="rounded-2xl bg-white/[0.04] px-3 py-3">
+      <View className="rounded-2xl px-3 py-3" style={{ backgroundColor: themeColors.accentFaint }}>
         <Text className="font-sans text-[15px] text-bear-sub">
           Запишите вес — и здесь появится динамика ИМТ по неделям 🐻
         </Text>
@@ -82,7 +82,7 @@ function WeeksSparkline({ rows }) {
   const lines = runs.filter((run) => run.length >= 2)
 
   return (
-    <View className="rounded-2xl bg-white/[0.04] px-2 pb-1 pt-2">
+    <View className="rounded-2xl px-2 pb-1 pt-2" style={{ backgroundColor: themeColors.accentFaint }}>
       <View
         onLayout={(e) => setW(e.nativeEvent.layout.width)}
         style={{ height: H }}
@@ -121,7 +121,7 @@ function WeeksSparkline({ rows }) {
                     cy={p.y}
                     r={i === lastIdx ? 3.8 : 3}
                     fill={p.color}
-                    stroke={i === lastIdx ? '#FFFFFF' : 'none'}
+                    stroke={i === lastIdx ? themeColors.text : 'none'}
                     strokeWidth={i === lastIdx ? 1.6 : 0}
                   />
                 )
@@ -188,7 +188,7 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Шапка */}
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
@@ -203,7 +203,8 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               onPress={shareHistory}
               accessibilityRole="button"
               accessibilityLabel="Поделиться историей ИМТ по неделям"
-              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: themeColors.accentFaint }}
             >
               <Share2 size={17} color={themeColors.soft} />
             </Pressable>
@@ -211,7 +212,8 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть историю ИМТ"
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full active:opacity-70"
+              style={{ backgroundColor: themeColors.accentFaint }}
             >
               <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
@@ -225,7 +227,8 @@ export function StreakHistoryModal({ open, onClose, weightKg, weights, heightCm 
               {rows.map((row) => (
                 <View
                   key={row.label}
-                  className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2.5"
+                  className="flex-row items-center gap-2.5 rounded-xl px-3 py-2.5"
+                  style={{ backgroundColor: themeColors.accentFaint }}
                 >
                   <Text className="w-[42px] shrink-0 font-sans text-[15px] text-bear-dim">
                     {row.label}

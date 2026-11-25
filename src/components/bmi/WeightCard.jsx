@@ -369,8 +369,8 @@ export function WeightCard() {
         accessibilityLabel={secOpen ? 'Свернуть динамику веса' : 'Развернуть динамику веса'}
         className="flex-row items-center gap-2.5 active:opacity-80"
       >
-        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06]">
-          <ChartLine size={20} color="#7DD3FC" />
+        <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-bear-line bg-bear-card2">
+          <ChartLine size={20} color={themeColors.accentSoft} />
         </View>
         <Text className="min-w-0 flex-1 font-bold text-[22px] tracking-tight text-bear-text">
           Динамика веса
@@ -390,7 +390,7 @@ export function WeightCard() {
             onPress={() => setMenuOpen((v) => !v)}
             accessibilityRole="button"
             accessibilityLabel={`Период графика: ${PERIODS.find((p) => p.id === period)?.label}. Нажмите, чтобы изменить`}
-            className="flex-row items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-[7px] active:opacity-70"
+            className="flex-row items-center gap-1 rounded-full border border-bear-line bg-bear-card2 px-2.5 py-[7px] active:opacity-70"
           >
             <Calendar size={15} color={themeColors.accentBright} />
             <Text className="font-semibold text-[15px] text-bear-bright">
@@ -405,7 +405,7 @@ export function WeightCard() {
 
           {menuOpen && (
             <View
-              className="absolute right-0 top-9 z-10 w-[124px] overflow-hidden rounded-2xl border border-white/10 bg-bear-pop py-1.5"
+              className="absolute right-0 top-9 z-10 w-[124px] overflow-hidden rounded-2xl border border-bear-line bg-bear-pop py-1.5"
               style={{ elevation: 16 }}
             >
               {PERIODS.map((p) => {
@@ -422,7 +422,7 @@ export function WeightCard() {
                     className="flex-row items-center justify-between px-3 py-2 active:opacity-60"
                   >
                     <Text
-                      className={`font-semibold text-[16.5px] ${active ? 'text-white' : 'text-bear-sub'}`}
+                      className={`font-semibold text-[16.5px] ${active ? 'text-bear-text' : 'text-bear-sub'}`}
                     >
                       {p.label}
                     </Text>
@@ -520,7 +520,7 @@ export function WeightCard() {
           </View>
 
           <View>
-            <View className="mb-2 h-px bg-white/[0.06]" />
+            <View className="mb-2 h-px bg-bear-card2" />
             <Text maxFontSizeMultiplier={1.2} className="font-sans text-[15px] text-bear-sub">
               Цель
             </Text>
@@ -560,7 +560,7 @@ export function WeightCard() {
                   >
                     Цель достигнута!
                   </Text>
-                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-bear-card2">
                     <View
                       className="h-full rounded-full"
                       style={{ width: '100%', backgroundColor: themeColors.good }}
@@ -580,7 +580,7 @@ export function WeightCard() {
                   >
                     До цели {fmtDecimal(Math.abs(goalDiff))} кг
                   </Text>
-                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <View className="mt-1 h-1.5 overflow-hidden rounded-full bg-bear-card2">
                     <View
                       className="h-full rounded-full"
                       style={{ width: `${Math.max(goalPct * 100, 4)}%`, backgroundColor: lineColor }}
@@ -622,7 +622,7 @@ export function WeightCard() {
               «—»: сравнивать не с чем (аудит: «0 кг» при одном взвешивании
               читалось как «вес стоит», хотя пары точек просто нет) */}
           <View
-            className="self-start rounded-full bg-white/[0.06] px-2.5 py-1.5"
+            className="self-start rounded-full bg-bear-card2 px-2.5 py-1.5"
             accessibilityLabel={
               fewData
                 ? 'Изменение веса: пока нет данных — нужно ещё взвешивание'
@@ -683,15 +683,13 @@ export function WeightCard() {
               недостигнутой цели и стоячем весе — янтарный тон без похвалы */}
           <View
             accessibilityLabel={`${strip.title}. ${strip.text}`}
-            className="mt-0.5 flex-row items-center gap-2 rounded-xl bg-white/[0.04] p-2.5"
+            className="mt-0.5 flex-row items-center gap-2 rounded-xl p-2.5"
+            style={{ backgroundColor: themeColors.card2 }}
           >
             <View
               className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
               style={{
-                backgroundColor:
-                  strip.tone === 'bad' || strip.tone === 'push'
-                    ? 'rgba(251,191,36,0.14)'
-                    : 'rgba(56,189,248,0.14)',
+                backgroundColor: themeColors.accentFaint,
               }}
             >
               <Activity
@@ -727,9 +725,9 @@ export function WeightCard() {
             {/* Правая иконка-тонус. «Палец вниз» удалён по отзыву Кати
                 от 10.11 («удалить палец вниз») — при тоне bad иконки нет */}
             {strip.tone === 'push' ? (
-              <ThumbsUp size={22} color="#FBBF24" />
+              <ThumbsUp size={22} color={themeColors.warn} />
             ) : strip.tone === 'info' ? null : strip.tone === 'bad' ? null : (
-              <ThumbsUp size={22} color="#4ADE80" />
+              <ThumbsUp size={22} color={themeColors.good} />
             )}
           </View>
         </View>
@@ -759,7 +757,7 @@ export function WeightCard() {
         onRequestClose={() => setJournalOpen(false)}
       >
         <View className="flex-1 items-center justify-center bg-black/60 px-6">
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Журнал веса</Text>
               <Pressable
@@ -823,7 +821,7 @@ export function WeightCard() {
                           style={{
                             backgroundColor: isToday
                               ? themeColors.accentFaint
-                              : 'rgba(255,255,255,0.04)',
+                              : themeColors.card2,
                           }}
                         >
                           <Text
@@ -865,7 +863,7 @@ export function WeightCard() {
                         ? 'Свернуть журнал веса'
                         : `Показать все записи журнала: ${weights.length}`
                     }
-                    className="mt-2.5 items-center rounded-xl bg-white/[0.06] py-2.5 active:opacity-70"
+                    className="mt-2.5 items-center rounded-xl bg-bear-card2 py-2.5 active:opacity-70"
                   >
                     <Text className="font-semibold text-[15px] text-bear-link">
                       {showAllRecs ? 'Свернуть' : `Показать все записи (${weights.length})`}
@@ -884,7 +882,7 @@ export function WeightCard() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1 items-center justify-center bg-black/60 px-6"
         >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Изменить вес</Text>
               <Pressable onPress={() => setEditing(null)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
@@ -903,7 +901,7 @@ export function WeightCard() {
               maxLength={6}
               textAlign="center"
               accessibilityLabel="Новый вес измерения в килограммах"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-bear-card2 px-4 py-3 font-semibold text-[19px] text-bear-text"
             />
 
             {/* Кнопки: крестик закрытия — в шапке, здесь только «Сохранить» */}
@@ -929,7 +927,7 @@ export function WeightCard() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1 items-center justify-center bg-black/60 px-6"
         >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Изменить рост</Text>
               <Pressable onPress={() => setHeightOpen(false)} accessibilityRole="button" accessibilityLabel="Закрыть" className="p-1">
@@ -948,7 +946,7 @@ export function WeightCard() {
               maxLength={3}
               textAlign="center"
               accessibilityLabel="Рост в сантиметрах"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-bear-card2 px-4 py-3 font-semibold text-[19px] text-bear-text"
             />
 
             <View className="mt-5 flex-row">

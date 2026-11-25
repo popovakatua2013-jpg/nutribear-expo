@@ -70,12 +70,14 @@ function GoalRing({ pct }) {
       className="h-[84px] w-[84px] shrink-0"
     >
       <Svg width={84} height={84} viewBox="0 0 84 84">
+        {/* Трек — рамка темы (белый rgba был невидим на «Кремовой» —
+            кольцо воды «не отрисовывалось», отзыв Кати 25.11) */}
         <Circle
           cx="42"
           cy="42"
           r={R}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke={themeColors.line}
           strokeWidth="8.5"
         />
         {pct > 0 && (
@@ -87,6 +89,7 @@ function GoalRing({ pct }) {
             stroke={themeColors.accentSoft}
             strokeWidth="8.5"
             strokeLinecap="round"
+            strokeOpacity={0.9}
             strokeDasharray={`${len} ${CIRC}`}
             transform="rotate(-90 42 42)"
           />
@@ -219,7 +222,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
         onPress={onClose}
         accessibilityLabel="Закрыть окно"
       >
-        <Pressable onPress={() => {}} className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10">
+        <Pressable onPress={() => {}} className="max-h-[92%] overflow-hidden rounded-3xl border border-bear-line">
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
@@ -303,7 +306,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                     </Text>
                     {waterLog.length > 0 && (
                       <View
-                        className="rounded-full bg-white/10 px-1.5 py-0.5"
+                        className="rounded-full bg-bear-card2 px-1.5 py-0.5"
                         accessibilityLabel={`Всего записей: ${waterLog.length}`}
                       >
                         <Text className="font-semibold text-[14.5px] text-bear-sub">
@@ -347,7 +350,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                                 maxLength={4}
                                 autoFocus
                                 accessibilityLabel="Объём в миллилитрах"
-                                className="min-w-0 flex-1 rounded-lg bg-white/5 px-2 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
+                                className="min-w-0 flex-1 rounded-lg bg-bear-card2 px-2 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
                               />
                               <Text
                                 maxFontSizeMultiplier={1.1}
@@ -361,7 +364,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                                 keyboardType="numbers-and-punctuation"
                                 maxLength={5}
                                 accessibilityLabel="Время в формате часы:минуты"
-                                className="w-[58px] shrink-0 rounded-lg bg-white/5 px-1 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
+                                className="w-[58px] shrink-0 rounded-lg bg-bear-card2 px-1 py-1.5 text-center font-semibold text-[17.5px] text-bear-text"
                               />
                             </View>
                             {/* «Сохранить» — явная кнопка на всю ширину
@@ -382,7 +385,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                                 onPress={cancelEdit}
                                 accessibilityRole="button"
                                 accessibilityLabel="Отменить изменение"
-                                className="min-w-0 flex-1 items-center justify-center rounded-lg bg-white/10 py-2 active:opacity-80"
+                                className="min-w-0 flex-1 items-center justify-center rounded-lg bg-bear-card2 py-2 active:opacity-80"
                               >
                                 <Text className="font-bold text-[15px] text-bear-sub">Отмена</Text>
                               </Pressable>
@@ -396,7 +399,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           onPress={() => startEdit(w)}
                           accessibilityRole="button"
                           accessibilityLabel={`Изменить запись ${w.ml} мл`}
-                          className="flex-row items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-2 active:opacity-80"
+                          className="flex-row items-center gap-2.5 rounded-2xl border border-bear-line bg-bear-card2 px-3.5 py-2 active:opacity-80"
                         >
                           <Droplets size={16} color={themeColors.accentSoft} />
                           <Text className="min-w-0 flex-1 font-semibold text-[17.5px] text-bear-text">

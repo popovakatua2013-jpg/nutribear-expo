@@ -138,7 +138,7 @@ function NutrientCell({ label, value, target, color, Icon }) {
 // Тонкий разделитель между ячейками нутриентов (узкие поля —
 // экономим строке место ради полных слов «Углеводы» и «Клетчатка»)
 function VDivider() {
-  return <View className="mx-0.5 h-9 w-px shrink-0 bg-white/[0.08]" />
+  return <View className="mx-0.5 h-9 w-px shrink-0 bg-bear-line" />
 }
 
 // Кольцо прогресса с числом внутри — съедено от цели калориями и
@@ -228,7 +228,11 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
               </LinearGradient>
             </Defs>
           )}
-          <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.07)" strokeWidth={sw} fill="none" />
+          {/* Трек кольца — рамка темы: раньше был белый rgba(255,255,255,0.07) —
+              на тёмных темах едва заметная подложка, на «Кремовой» НЕВИДИМ
+              (белое на светлом) — кольцо выглядело «не отрисованным»
+              (отзыв Кати 25.11) */}
+          <Circle cx={size / 2} cy={size / 2} r={r} stroke={themeColors.line} strokeWidth={sw} fill="none" />
           {pct > 0 && (
             <AnimatedCircle
               cx={size / 2}
@@ -243,6 +247,24 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
             />
           )}
+          {/* Свечение: за дугой — та же дуга шире и полупрозрачная —
+              мягкий ореол цвета темы (просьба Кати: «не хватает свечения,
+              градиента») */}
+          {pct > 0 && (
+            <AnimatedCircle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              stroke={color || 'url(#ringGrad)'}
+              strokeWidth={sw + 7}
+              fill="none"
+              strokeLinecap="round"
+              strokeOpacity={0.25}
+              strokeDasharray={`${c} ${c}`}
+              strokeDashoffset={dashOffset}
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            />
+          )}
         </Svg>
         <View className="absolute inset-0 items-center justify-center">
           <Text
@@ -250,7 +272,15 @@ function KcalRing({ value, goal, caption, pct, color, gradient, accessibilityLab
             numberOfLines={1}
             maxFontSizeMultiplier={MAX}
             className="text-center font-extrabold leading-tight text-bear-text"
-            style={{ width: size - 16, fontSize: numSize }}
+            style={{
+              width: size - 16,
+              fontSize: numSize,
+              // Свечение цифры цветом темы (просьба Кати: «не хватает
+              // свечения») — мягкое гало вокруг числа в кольце
+              textShadowColor: themeColors.accent,
+              textShadowRadius: 12,
+              textShadowOffset: { width: 0, height: 0 },
+            }}
           >
             {formatNum(Math.round(num))}
           </Text>
@@ -593,7 +623,14 @@ export function DailySummary({
                 minimumFontScale={0.7}
                 maxFontSizeMultiplier={MAX}
                 className="mt-0.5 font-extrabold leading-tight"
-                style={{ color: remTone.text, fontSize: 27 }}
+                style={{
+                  color: remTone.text,
+                  fontSize: 27,
+                  // Свечение крупной цифры цветом темы («не хватает свечения»)
+                  textShadowColor: remTone.text,
+                  textShadowRadius: 10,
+                  textShadowOffset: { width: 0, height: 0 },
+                }}
               >
                 {rem == null ? '—' : rem >= 0 ? formatNum(rem) : `−${formatNum(Math.abs(rem))}`}
                 <Text className="font-bold" style={{ fontSize: 13, color: themeColors.dim }}>

@@ -23,7 +23,7 @@ function IconButton({ onPress, label, Icon }) {
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={4}
-      className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+      className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-bear-card2"
     >
       <Icon size={17} color={themeColors.soft} />
     </Pressable>

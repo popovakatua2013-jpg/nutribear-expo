@@ -16,7 +16,7 @@ import { useThemeColors } from '@/lib/use-theme'
 
 
 
-const GRID = 'rgba(255,255,255,0.06)'
+
 
 // Круглый шаг делений оси: ближайшее «красивое» число (1/2/2.5/5 × 10^k)
 // к range/target — подписи вроде «54,3» больше не появляются
@@ -162,7 +162,7 @@ export function SvgAreaChart({
                 y1={ty}
                 x2={w - PAD_R}
                 y2={ty}
-                stroke={GRID}
+                stroke={themeColors.line}
                 strokeWidth={1}
               />
             )
@@ -191,11 +191,11 @@ export function SvgAreaChart({
               y1={goalY}
               x2={w - PAD_R}
               y2={goalY}
-              stroke="#fbbf24"
+              stroke={themeColors.warn}
               strokeWidth={1.5}
               strokeDasharray="5 4"
             />
-            <SvgText x={w - PAD_R} y={goalLabelY} fill="#fbbf24" fontSize={9} textAnchor="end">
+            <SvgText x={w - PAD_R} y={goalLabelY} fill={themeColors.warn} fontSize={9} textAnchor="end">
               {goalText}
             </SvgText>
           </>
@@ -211,7 +211,7 @@ export function SvgAreaChart({
               y1={PAD_T}
               x2={x(activeIndex)}
               y2={PAD_T + ih}
-              stroke="rgba(255,255,255,0.16)"
+              stroke={themeColors.line}
               strokeWidth={1}
               strokeDasharray="4 4"
             />
@@ -238,7 +238,7 @@ export function SvgAreaChart({
                 <SvgText
                   x={bx + bw / 2}
                   y={by + 12.5}
-                  fill="#FFFFFF"
+                  fill={themeColors.accentOn}
                   fontSize={10.5}
                   fontWeight="bold"
                   textAnchor="middle"

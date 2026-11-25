@@ -206,7 +206,7 @@ export function ProgressPhotos() {
           onPress={() => setExpanded(true)}
           accessibilityRole="button"
           accessibilityLabel="Показать фото прогресса"
-          className="mt-3 flex-row items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.03] px-3 py-2 active:opacity-70"
+          className="mt-3 flex-row items-center gap-2.5 rounded-2xl border border-bear-line bg-bear-card2 px-3 py-2 active:opacity-70"
         >
           {/* Крошечный превью-квадратик последнего снимка (34 px) */}
           <Image

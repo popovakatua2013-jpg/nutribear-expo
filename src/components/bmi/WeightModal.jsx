@@ -131,7 +131,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
   }
 
   return (
-    <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+    <View className="max-h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop p-5">
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
           <Text className="font-bold text-[20px] text-bear-text">Записать вес</Text>
@@ -153,7 +153,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           keyboardType="decimal-pad"
           textAlign="center"
           accessibilityLabel="Вес в килограммах"
-          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
+          className="mt-1.5 rounded-2xl border border-bear-line bg-bear-card2 px-4 py-3 font-semibold text-[19px] text-bear-text"
         />
 
         <View className="mt-3 flex-row items-center justify-between">
@@ -170,12 +170,12 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
           placeholder="—"
           placeholderTextColor={themeColors.dim}
           accessibilityLabel="Целевой вес в килограммах"
-          className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white"
+          className="mt-1.5 rounded-2xl border border-bear-line bg-bear-card2 px-4 py-3 font-semibold text-[19px] text-bear-text"
         />
 
         {/* Подсказка: здоровый диапазон для роста и цель в один тап */}
         {suggestRange && goal.trim() === '' && (
-          <View className="mt-2 mb-2 flex-row items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2">
+          <View className="mt-2 mb-2 flex-row items-center justify-between rounded-xl bg-bear-card2 px-3 py-2">
             <Text className="min-w-0 flex-1 font-sans text-[15px] leading-snug text-bear-sub2">
               Норма при росте {Math.round(hRaw)} см: {suggestRange.min}–{suggestRange.max} кг
             </Text>
@@ -183,7 +183,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
               onPress={() => setGoal(String(suggestKg))}
               accessibilityRole="button"
               accessibilityLabel={`Подставить цель около ${suggestKg} килограммов`}
-              className="ml-2 rounded-full bg-white/10 px-2.5 py-1.5 active:opacity-70"
+              className="ml-2 rounded-full bg-bear-accentFaint px-2.5 py-1.5 active:opacity-70"
             >
               <Text className="font-semibold text-[15px] text-bear-link">≈ {suggestKg} кг</Text>
             </Pressable>
@@ -199,7 +199,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
         className={`mt-3 overflow-hidden rounded-2xl ${!valid || !goalValid ? 'opacity-50' : ''}`}
       >
         <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} colors={[themeColors.accentBright, themeColors.accent, themeColors.accentBright]}>
-          <Text className="py-3.5 text-center font-bold text-[19px] text-white">Сохранить</Text>
+          <Text className="py-3.5 text-center font-bold text-[19px]" style={{ color: themeColors.accentOn }}>Сохранить</Text>
         </LinearGradient>
       </Pressable>
     </View>

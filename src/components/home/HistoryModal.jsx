@@ -146,7 +146,7 @@ export function HistoryModal({ visible, onClose }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         <View
-          className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           {/* Шапка */}
@@ -166,7 +166,7 @@ export function HistoryModal({ visible, onClose }) {
               onPress={exportCsv}
               accessibilityRole="button"
               accessibilityLabel="Экспорт дневника в файл"
-              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="mr-1 h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-card2 active:opacity-70"
             >
               <Download size={17} color={themeColors.soft} />
             </Pressable>
@@ -174,7 +174,7 @@ export function HistoryModal({ visible, onClose }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-card2 active:opacity-70"
             >
               <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
@@ -196,7 +196,7 @@ export function HistoryModal({ visible, onClose }) {
                     onPress={() => setMealFilter(f.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Фильтр: ${f.label}`}
-                    className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-white/5'}`}
+                    className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-bear-card2'}`}
                   >
                     <Text
                       className={`font-semibold text-[15px] ${active ? 'text-bear-link' : 'text-bear-sub'}`}
@@ -208,7 +208,7 @@ export function HistoryModal({ visible, onClose }) {
               })}
             </View>
 
-            <View className="mt-2 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+            <View className="mt-2 flex-row items-center gap-2 rounded-2xl border border-bear-line bg-bear-card2 px-3 py-2">
               <Search size={17} color={themeColors.dim} />
               <TextInput
                 value={query}
@@ -225,7 +225,7 @@ export function HistoryModal({ visible, onClose }) {
                   accessibilityRole="button"
                   accessibilityLabel="Очистить поиск"
                   hitSlop={8}
-                  className="shrink-0 rounded-full bg-white/10 p-1 active:opacity-70"
+                  className="shrink-0 rounded-full bg-bear-card2 p-1 active:opacity-70"
                 >
                   <X hitSlop={10} size={14} color={themeColors.soft} />
                 </Pressable>
@@ -266,7 +266,7 @@ export function HistoryModal({ visible, onClose }) {
                     </Text>
                     {rows.map((r) => (
                       <View key={r.id}>
-                        <View className="flex-row items-center gap-2 rounded-xl bg-white/[0.04] px-3 py-2">
+                        <View className="flex-row items-center gap-2 rounded-xl bg-bear-card2 px-3 py-2">
                           <View className="min-w-0 flex-1">
                             <Text numberOfLines={1} className="font-medium text-[16.5px] text-bear-bright">
                               {r.name}

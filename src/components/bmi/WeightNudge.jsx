@@ -73,7 +73,7 @@ export function WeightNudge() {
         accessibilityRole="button"
         accessibilityLabel="Закрыть напоминание о весе"
         className="shrink-0 rounded-full p-1"
-        style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+        style={{ backgroundColor: themeColors.accentFaint }}
       >
         <X size={16} color={themeColors.sub} strokeWidth={2.5} />
       </Pressable>

@@ -39,15 +39,17 @@ import { useThemeColors } from '@/lib/use-theme'
 // в ui/SoftGlow.jsx: ту же дымку получают шапки всех страниц
 
 // Неактивная пилюля переключателя (лежит в горизонтальном скролле —
-// flex-shrink больше не нужен: текст всегда целиком)
+// flex-shrink больше не нужен: текст всегда целиком). Подложки —
+// токены темы (белые rgba на «Кремовой» были невидимы)
 function NavPill({ label, icon, chevron, onPress, accessibilityLabel }) {
+  const themeColors = useThemeColors()
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || label}
       className="flex-row items-center gap-1 rounded-full border px-2 py-[7px] active:opacity-70"
-      style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.10)' }}
+      style={{ backgroundColor: themeColors.accentFaint, borderColor: themeColors.line }}
     >
       {icon}
       <Text numberOfLines={1} maxFontSizeMultiplier={1.2} className="font-semibold text-[15px] text-bear-bright">
@@ -211,8 +213,8 @@ export default function BmiScreen() {
             парят на тёмном фоне; ниже — тёмные карточки «Вес» и «Рост» */}
         <View accessibilityLabel="ИМТ и состав тела">
           {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
-          <SoftGlow id="nbsGlowTR" w={185} h={150} peak={0.34} style={{ top: -24, right: -42 }} />
-          <SoftGlow id="nbsGlowR" w={130} h={215} peak={0.2} color={themeColors.accent} style={{ top: 64, right: -30 }} />
+          <SoftGlow id="nbsGlowTR" w={250} h={200} peak={0.5} style={{ top: -28, right: -55 }} />
+          <SoftGlow id="nbsGlowR" w={180} h={260} peak={0.3} color={themeColors.accent} style={{ top: 90, right: -44 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">
               {/* Кольцо + бейдж стрика «в норме N недель» + легенда.
@@ -237,16 +239,17 @@ export default function BmiScreen() {
                     accessibilityLabel={`В норме ${normWeeks} недель — открыть историю ИМТ по неделям`}
                     className="flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-70"
                     style={{
-                      backgroundColor: 'rgba(56,189,248,0.13)',
-                      borderColor: 'rgba(56,189,248,0.30)',
+                      backgroundColor: themeColors.accentFaint,
+                      borderColor: themeColors.accentBorder,
                       borderWidth: 1,
                     }}
                   >
-                    <ShieldCheck size={15} color="#38BDF8" />
+                    <ShieldCheck size={15} color={themeColors.accentBright} />
                     <Text
                       maxFontSizeMultiplier={1.1}
                       numberOfLines={1}
-                      className="font-bold text-[15px] text-[#7DD3FC]"
+                      className="font-bold text-[15px]"
+                      style={{ color: themeColors.accentBright }}
                     >
                       {`В норме ${normWeeks} нед.`}
                     </Text>

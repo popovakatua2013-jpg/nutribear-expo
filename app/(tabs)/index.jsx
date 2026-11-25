@@ -273,8 +273,8 @@ export default function HomeScreen() {
       {/* Неоновая дымка в шапке — цветом активной темы: у ярких тем
           с макета вся страница светится своим неоном (единый стиль
           страниц, как на «Теле») */}
-      <SoftGlow id="glowHomeTR" w={190} h={160} peak={0.34} color={themeColors.accent} style={{ top: -26, right: -46 }} />
-      <SoftGlow id="glowHomeL" w={120} h={150} peak={0.16} color={themeColors.accentBright} style={{ top: 60, left: -40 }} />
+      <SoftGlow id="glowHomeTR" w={260} h={210} peak={0.5} color={themeColors.accent} style={{ top: -30, right: -60 }} />
+      <SoftGlow id="glowHomeL" w={190} h={210} peak={0.24} color={themeColors.accentBright} style={{ top: 80, left: -56 }} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
