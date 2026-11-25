@@ -139,7 +139,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
         onPress={close}
         accessibilityLabel="Закрыть окно"
       >
-        <Pressable onPress={() => {}} className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <Pressable onPress={() => {}} className="h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Заголовок */}
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">
@@ -174,7 +174,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                 <View
                   key={meal.id}
                   accessibilityLabel={`Приём пищи ${meal.name}`}
-                  className="rounded-2xl border border-white/5 bg-white/[0.03] p-3"
+                  className="rounded-2xl border border-bear-line bg-white/[0.03] p-3"
                 >
                   {/* Заголовок: тап сворачивает/разворачивает секцию */}
                   <View className="flex-row items-center justify-between gap-2">
@@ -215,7 +215,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                         accessibilityRole="button"
                         className="rounded p-1 active:opacity-60"
                       >
-                        <Trash2 size={16} color="#f87171" />
+                        <Trash2 size={16} color={themeColors.bad} />
                       </Pressable>
                     )}
                     {/* Быстрое добавление прямо из свёрнутой секции */}
@@ -255,7 +255,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                       <Pressable
                         onPress={() => onAddToMeal(meal.id)}
                         accessibilityRole="button"
-                        className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-2 active:bg-[#5B7FFF]/20"
+                        className="mt-2.5 flex-row items-center justify-center gap-1.5 rounded-xl border border-bear-accentBorder bg-bear-accentFaint py-2 active:bg-bear-accentFaint2"
                       >
                         <Plus size={16} color={themeColors.link} />
                         <Text className="font-semibold text-[16px] text-bear-link">
@@ -274,7 +274,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
               onPress={addSnack}
               accessibilityRole="button"
               accessibilityLabel="Добавить свой перекус — ещё одну секцию дневника"
-              className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-white/15 py-2.5 active:border-[#5B7FFF]/50"
+              className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-dashed border-bear-line py-2.5 active:border-bear-accentStrong"
             >
               <Plus size={16} color={themeColors.sub} />
               <Text className="font-semibold text-[15px] text-bear-sub">

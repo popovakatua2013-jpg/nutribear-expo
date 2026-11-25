@@ -185,7 +185,7 @@ export function SyncCard({ embedded = false }) {
         <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center gap-1.5">
-              <HeartPulse size={18} color="#F0ABFC" />
+              <HeartPulse size={18} color={themeColors.accentSoft} />
               <Text className="font-bold text-[17.5px] text-bear-text">Health Connect</Text>
             </View>
             <Text className="font-sans text-[15px] text-bear-sub2">
@@ -244,7 +244,7 @@ export function SyncCard({ embedded = false }) {
     <CollapsibleCard
       storageKey="sync"
       accessibilityLabel="Шаги и здоровье"
-      icon={<Watch size={20} color="#38bdf8" />}
+      icon={<Watch size={20} color={themeColors.accentSoft} />}
       title="Шаги и здоровье"
       summary={
         pedometerEnabled

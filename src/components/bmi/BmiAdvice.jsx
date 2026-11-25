@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Flower2, Heart, Star, X } from 'lucide-react-native'
 import { bmiCategory, RECOMMENDATIONS } from '@/lib/data/bmi'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { NeonCard } from '../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
 // Цвета шкалы «Идеальный диапазон ИМТ» — семантика категорий ИМТ
@@ -20,14 +21,6 @@ import { useThemeColors } from '@/lib/use-theme'
 // #A855F7) — чужой палитрой, не совпадающей с бейджем и легендой
 const SCALE_COLORS = ['#facc15', '#4ade80', '#fb923c', '#f87171']
 
-
-// Та же поверхность, что у всех карточек вкладки (bodyCard + bodyLine)
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
 
 const BMI_MIN = 15
 const BMI_MAX = 35
@@ -42,7 +35,11 @@ export function BmiAdvice({ bmi, onDetails }) {
   const pos = Math.min(1, Math.max(0, ((bmi || BMI_MIN) - BMI_MIN) / (BMI_MAX - BMI_MIN)))
 
   return (
-    <View accessibilityLabel="Рекомендации по индексу массы тела" className="rounded-[24px] p-4" style={cardSurface(themeColors)}>
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): блоки вкладки «Тело»
+    // переведены на NeonCard — градиентная кайма, градиентная поверхность
+    // и ореолы свечения, как у блоков «Главной»
+    <NeonCard accessibilityLabel="Рекомендации по индексу массы тела" className="p-4">
       {/* Шапка: звезда-контур + заголовок + кнопка-лотос (подробные советы) */}
       <View className="flex-row items-center gap-2">
         <Star size={23} color={themeColors.accentSoft} fill={themeColors.accentFaint} strokeWidth={2} />
@@ -135,6 +132,6 @@ export function BmiAdvice({ bmi, onDetails }) {
           18.5 – 24.9
         </Text>
       </View>
-    </View>
+    </NeonCard>
   )
 }

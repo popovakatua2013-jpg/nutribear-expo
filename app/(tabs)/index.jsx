@@ -430,7 +430,7 @@ export default function HomeScreen() {
             onPress={() => setStepsOpen(false)}
           >
             <Pressable
-              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5"
               onPress={() => {}}
               accessibilityLabel="Записать шаги вручную"
             >
@@ -458,7 +458,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Количество шагов"
                   autoFocus
                   onSubmitEditing={saveSteps}
-                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                  className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
                 />
                 <Text className="shrink-0 font-sans text-[19px] text-bear-sub">шагов</Text>
               </View>
@@ -491,7 +491,7 @@ export default function HomeScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1 items-center justify-center bg-black/60 px-8"
         >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">
                 {goalEdit?.title}
@@ -517,7 +517,7 @@ export default function HomeScreen() {
                 placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Новое значение цели"
                 autoFocus
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">{goalEdit?.unit}</Text>
             </View>

@@ -20,8 +20,10 @@ import { collectAll, shareBackupFile } from '@/lib/data/gdpr-export'
 import { applyBackup } from '@/lib/backup'
 import { CollapsibleCard } from '../ui/CollapsibleCard'
 import { useToast } from '../ui/Toast'
+import { useThemeColors } from '@/lib/use-theme'
 
 export function DataPortability({ embedded = false }) {
+  const themeColors = useThemeColors()
   const { toast } = useToast()
 
   // Предупреждение перед выгрузкой (аудит 12.11, блокер 3): копия —
@@ -125,9 +127,9 @@ export function DataPortability({ embedded = false }) {
         onPress={confirmExport}
         accessibilityRole="button"
         accessibilityLabel="Сохранить резервную копию данных"
-        className="mt-3 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="mt-3 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
-        <FileDown size={20} color="#38bdf8" />
+        <FileDown size={20} color={themeColors.accentSoft} />
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[17.5px] text-bear-text">
             Сохранить копию в файл
@@ -142,9 +144,9 @@ export function DataPortability({ embedded = false }) {
         onPress={importBackup}
         accessibilityRole="button"
         accessibilityLabel="Восстановить данные из резервной копии"
-        className="mt-2 flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="mt-2 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
-        <FileUp size={20} color="#a78bfa" />
+        <FileUp size={20} color={themeColors.accentSoft} />
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[17.5px] text-bear-text">
             Восстановить из копии
@@ -166,7 +168,7 @@ export function DataPortability({ embedded = false }) {
     <CollapsibleCard
       storageKey="data-portability"
       accessibilityLabel="Резервная копия"
-      icon={<ShieldCheck size={20} color="#4ade80" />}
+      icon={<ShieldCheck size={20} />}
       title="Резервная копия"
       summary="сохранить · восстановить"
     >

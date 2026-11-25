@@ -13,10 +13,10 @@
 // Правка Кати 25.11 («сахар, белки и кнопка свернуть — не перекрашены»):
 // полосы метрик и значения — цвета темы; правка Кати 25.11, второй круг
 // («должен быть кремовый в кремовой теме и т д»): полосы красятся
-// УРОВНЕМ САМОЙ ТЕМЫ (монохром), а не семантикой good/warn/bad — чужие
-// оттенки из полос исчезли: сильный уровень — ярчайший акцент темы,
-// средний — акцент, слабый — приглушённый тон. В кремовой все полосы
-// янтарные, в неонах — светятся неоном
+// УРОВНЕМ САМОЙ ТЕМЫ (монохром), а не семантикой good/warn/bad. Правка
+// 25.11, четвёртый круг («золотые везде, ярче — если выполнено»):
+// полоса всегда акцент темы, прозрачность растёт вместе с заполнением,
+// у выполненной (100) — ярчайший accentBright; серого dim больше нет
 
 import { useRef, useState } from 'react'
 import { DeviceEventEmitter, findNodeHandle, Pressable, Text, View } from 'react-native'
@@ -35,6 +35,7 @@ import {
   monthRows,
   monthNutrition,
 } from '@/lib/data/nutrition'
+import { withAlpha } from '@/lib/themes'
 import { useFoodStore } from '@/store/useFoodStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useThemeColors } from '@/lib/use-theme'
@@ -48,13 +49,19 @@ const MONTHS = [
 
 function MetricRow({ label, value, norm, score }) {
   const themeColors = useThemeColors()
-  // Цвет полосы и значения — УРОВЕНЬ ТЕМЫ (правка Кати 25.11: «должен
-  // быть кремовый в кремовой теме и т д»): сильный уровень — ярчайший
-  // акцент темы (accentBright), средний — акцент, слабый — приглушённый
-  // dim. Раньше: good/warn/bad — на кремовой это были чужие зелёный/
-  // янтарный/красный, в неонах — жёлтый/розовый поверх неона
-  const tone =
-    score >= 70 ? themeColors.accentBright : score >= 45 ? themeColors.accent : themeColors.dim
+  // ЗОЛОТЫЕ ВЕЗДЕ (правка Кати 25.11, четвёртый круг: «рейтинг питания —
+  // где-то серые, где-то золотые полоски — сделать золотые везде; менее
+  // золотая, если полоска не до конца; ярче, если выполнено»):
+  // полоса всегда золотится акцентом темы — серый dim больше не участвует.
+  // Выполнено (100) — ярчайший accentBright; не до конца — тот же акцент,
+  // но прозрачнее: чем меньше заполнение, тем бледнее золото
+  const done = score >= 100
+  const bar = done
+    ? themeColors.accentBright
+    : withAlpha(themeColors.accent, 0.4 + 0.6 * (Math.min(100, Math.max(0, score)) / 100))
+  // Значение рядом с полосой — тем же золотом, но без прозрачности:
+  // цифра должна читаться на любом уровне заполнения
+  const tone = done ? themeColors.accentBright : themeColors.accent
   return (
     <View>
       <View className="flex-row items-baseline justify-between gap-2">
@@ -67,7 +74,7 @@ function MetricRow({ label, value, norm, score }) {
       </View>
       <View className="mt-1 flex-row items-center gap-2">
         <View className="flex-1">
-          <ProgressBar pct={score} h={6} color={tone} />
+          <ProgressBar pct={score} h={6} color={bar} />
         </View>
         <Text
           maxFontSizeMultiplier={MAX}

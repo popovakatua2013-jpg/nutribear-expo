@@ -100,7 +100,7 @@ export function UserFoodForm({ open, onClose, initial }) {
     doSave(kcalN)
   }
 
-  const field = 'min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text'
+  const field = 'min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text'
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -108,7 +108,7 @@ export function UserFoodForm({ open, onClose, initial }) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
       >
-        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-row items-center gap-2">
@@ -142,7 +142,7 @@ export function UserFoodForm({ open, onClose, initial }) {
               placeholder="Например: Сырники бабушки"
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название своего продукта"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
 
             {/* Эмодзи-картинки продуктов убраны (отзыв Кати 21.11:

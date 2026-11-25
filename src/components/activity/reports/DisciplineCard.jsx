@@ -9,8 +9,13 @@
 // всех блоков приложения — правка Кати 25.11 «блоки белые не перекрашены
 // в градиент, всё одинаково на всех вкладках»), шапка — BodyChip.
 // Правка Кати 25.11 («проверь замечания по всем темам»): тон чипа и
-// полосы — цвета ТЕМЫ (хорошо/предупреждение/плохо), а не фиксированные
-// зелёный/жёлтый/красный
+// полосы — цвета ТЕМЫ. Правка 25.11, четвёртый круг: «дисциплина —
+// чёрный фон (сделать одинаково) и полоска оранжевая (сделать по
+// темам)»: янтарный warn (#FBBF24 — читался оранжевым) больше не
+// участвует — полоса и счётчик красятся АКЦЕНТОМ темы (выполнено —
+// ярчайший accentBright, заполнено больше половины — акцент, мало —
+// полупрозрачный акцент); «чёрный фон» — поверхность теперь градиентная
+// card→deep с тинтом акцента, как у всех NeonCard (см. ui/NeonCard.jsx)
 
 import { Text, View } from 'react-native'
 import { CalendarCheck } from 'lucide-react-native'
@@ -18,6 +23,7 @@ import { discipline } from '@/lib/data/reports'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { BodyChip } from '../../ui/BodyChip'
 import { NeonCard } from '../../ui/NeonCard'
+import { withAlpha } from '@/lib/themes'
 import { useThemeColors } from '@/lib/use-theme'
 
 export function DisciplineCard({ rows }) {
@@ -26,10 +32,16 @@ export function DisciplineCard({ rows }) {
   const { days, recorded } = discipline(rows, goals)
   const pct = days > 0 ? Math.round((recorded / days) * 100) : 0
 
-  // Тон полосы и чипа — по заполненности периода, цвет — из темы:
-  // «хорошо» в неонах светится оттенком того же неона
+  // Тон полосы и чипа — АКЦЕНТ ТЕМЫ (правка Кати 25.11: «полоска
+  // оранжевая — сделать по темам»): выполнено — ярчайший акцент,
+  // больше половины — акцент, мало — полупрозрачный акцент
   const tone =
-    pct >= 67 ? themeColors.good : pct >= 34 ? themeColors.warn : themeColors.bad
+    pct >= 100
+      ? themeColors.accentBright
+      : pct >= 34
+        ? themeColors.accent
+        : withAlpha(themeColors.accent, 0.55)
+  const textTone = pct >= 100 ? themeColors.accentBright : themeColors.accent
 
   return (
     <NeonCard
@@ -46,7 +58,7 @@ export function DisciplineCard({ rows }) {
         <View className="shrink-0 rounded-full bg-bear-accentFaint px-2.5 py-1.5">
           {/* Кратко «2/7 дн»: полная форма «2 из 7 дней» обрезалась
               на узких экранах (отзыв Кати) */}
-          <Text className="font-semibold text-[15px]" style={{ color: tone }}>
+          <Text className="font-semibold text-[15px]" style={{ color: textTone }}>
             дней с записями {recorded}/{days}
           </Text>
         </View>

@@ -137,7 +137,7 @@ export function LabelMode({ onPick }) {
             onPress={() => pickPhoto(true)}
             accessibilityRole="button"
             accessibilityLabel="Снять этикетку камерой"
-            className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 active:bg-white/10"
+            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-4 active:bg-white/10"
           >
             <View
               className="h-9 w-9 items-center justify-center rounded-xl"
@@ -154,7 +154,7 @@ export function LabelMode({ onPick }) {
             onPress={() => pickPhoto(false)}
             accessibilityRole="button"
             accessibilityLabel="Выбрать фото этикетки из галереи"
-            className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 active:bg-white/10"
+            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-4 active:bg-white/10"
           >
             <View
               className="h-9 w-9 items-center justify-center rounded-xl"
@@ -188,13 +188,13 @@ export function LabelMode({ onPick }) {
 
       {busy && (
         <View className="mt-4 flex-row items-center justify-center gap-2">
-          <ActivityIndicator color="#38BDF8" />
+          <ActivityIndicator color={themeColors.accent} />
           <Text className="font-sans text-[17px] text-bear-sub">Читаем этикетку…</Text>
         </View>
       )}
 
       {error ? (
-        <View className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+        <View className="mt-4 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-3">
           <Text className="font-sans text-[16.5px] leading-[19px] text-bear-text">{error}</Text>
           <Pressable
             onPress={() => recognize(photo)}

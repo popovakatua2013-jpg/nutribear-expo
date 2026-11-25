@@ -139,7 +139,7 @@ function SleepBody({ onClose }) {
   }
 
   return (
-    <View className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+    <View className="overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
       {/* Шапка */}
       <View className="flex-row items-center gap-2.5 border-b border-bear-line px-5 pb-3 pt-4">
         <View

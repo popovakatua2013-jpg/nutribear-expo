@@ -213,7 +213,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                 <Text className="font-semibold text-[17.5px] text-[#D8B4FE]">
                   К рекомендациям
                 </Text>
-                <ArrowDown size={16} color="#D8B4FE" />
+                <ArrowDown size={16} color={themeColors.accentSoft} />
               </Pressable>
             )}
           </ScrollView>

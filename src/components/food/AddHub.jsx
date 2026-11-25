@@ -338,7 +338,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
           py-2.5 не работала: нативная высота TextInput на Android
           раздувала поле выше кнопки (отзыв Кати: «по прежнему
           габаритная»). py-0 и textAlignVertical — текст по центру */}
-      <View className="h-[42px] flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5">
+      <View className="h-[42px] flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5">
         <Search size={16} color={themeColors.dim} />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
@@ -413,7 +413,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               «ккал · N блюд», кнопка «Добавить»; тап — добавить набор,
               долгий тап — удалить комбо. Карточку прячем, когда комбо нет */}
           {combos.length > 0 && (
-            <View className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04]">
+            <View className="overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04]">
               <Pressable
                 onPress={() => setCombosOpen((s) => !s)}
                 accessibilityRole="button"
@@ -506,7 +506,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               продукт» над списком или «+» в «Базе продуктов» */}
           {mineRows.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
                 combos.length > 0 || mealEntries.length > 0 ? 'mt-2.5' : ''
               }`}
             >
@@ -516,7 +516,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                 accessibilityLabel={mineOpen ? 'Свернуть мои продукты' : 'Развернуть мои продукты'}
                 className="flex-row items-center gap-2 px-3.5 py-3 active:opacity-80"
               >
-                <Star size={17} color="#FBBF24" />
+                <Star size={17} color={themeColors.warn} />
                 <Text className="min-w-0 flex-1 font-bold text-[16px] text-bear-text">
                   {`Мои продукты · ${mineRows.length}`}
                 </Text>
@@ -531,7 +531,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                   {mineRows.map((f) => (
                     <View
                       key={f.id}
-                      className="flex-row items-center gap-2 rounded-xl bg-[#FBBF24]/[0.06] px-2 py-2"
+                      className="flex-row items-center gap-2 rounded-xl bg-bear-accentFaint px-2 py-2"
                     >
                       <Pressable
                         onPress={() => pick(f)}
@@ -590,7 +590,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               как на референс-скриншоте */}
           {recent.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
                 combos.length > 0 || mealEntries.length > 0 || mineRows.length > 0 ? 'mt-2.5' : ''
               }`}
             >
@@ -656,7 +656,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               приёмов» */}
           {histGroups.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
                 combos.length > 0 ||
                 mealEntries.length > 0 ||
                 mineRows.length > 0 ||
@@ -788,7 +788,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               onPress={repeatLast}
               accessibilityRole="button"
               accessibilityLabel={`Повторить прошлый приём: ${lastMeal.list.length} блюд(а)`}
-              className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 active:bg-white/10"
+              className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-white/[0.04] px-3 py-3 active:bg-white/10"
             >
               <RefreshCcw size={17} color={themeColors.soft} />
               <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
@@ -828,7 +828,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 justify-end bg-black/60 px-3 pb-3"
         >
-          <View className="h-[88%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+          <View className="h-[88%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
             <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
               <View className="flex-row items-center gap-2">
                 <View
@@ -866,7 +866,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 items-center justify-center bg-black/60 px-8"
         >
-          <View className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5">
+          <View className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5">
             <View className="flex-row items-center justify-between">
               <Text className="font-bold text-[20px] text-bear-text">Сохранить как комбо</Text>
               <Pressable
@@ -891,7 +891,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название комбо"
               autoFocus
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
             <Pressable
               onPress={saveCombo}

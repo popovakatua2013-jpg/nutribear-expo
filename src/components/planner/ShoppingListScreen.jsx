@@ -268,7 +268,7 @@ const makeStyles = (colors) => ({
   },
   planBtn: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
-    backgroundColor: colors.cyanSoft, borderColor: 'rgba(61,220,242,0.25)', borderWidth: 1,
+    backgroundColor: colors.cyanSoft, borderColor: colors.line, borderWidth: 1,
     borderRadius: 999, paddingHorizontal: 14, height: 36, marginTop: spacing.s,
   },
   planBtnText: { fontSize: 13, fontWeight: '700', fontFamily: F[700] },

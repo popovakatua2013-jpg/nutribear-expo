@@ -76,6 +76,7 @@ import {
 import { WeightChart } from './WeightChart'
 import { WeightModal } from './WeightModal'
 import { useToast } from '../ui/Toast'
+import { NeonCard } from '../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -359,7 +360,12 @@ export function WeightCard() {
   }
 
   return (
-    <View accessibilityLabel="Динамика веса" className="gap-2.5">
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): секция целиком на
+    // NeonCard — градиентная кайма + градиентная поверхность + свечение,
+    // как у блоков «Главной»; внутренние подложки (вес/график) сохранены
+    <NeonCard accessibilityLabel="Динамика веса" className="p-4">
+      <View className="gap-2.5">
       {/* Шапка-секция: тап по ней разворачивает/сворачивает блок;
           иконка + заголовок + круглый «+» записи веса + пилюля периода */}
       <Pressable
@@ -964,6 +970,7 @@ export function WeightCard() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+      </View>
+    </NeonCard>
   )
 }

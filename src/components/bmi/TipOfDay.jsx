@@ -12,17 +12,9 @@ import { tipOfDay } from '@/lib/data/bmi'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { dayKeyOf } from '@/store/useHistoryStore'
 import { SoftGlow } from '../ui/SoftGlow'
+import { NeonCard } from '../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
-
-// Поверхность — та же фиолетовая (bodyCard + bodyLine), что у остальных
-// блоков «Тела»: совет больше не выбивается navy-карточкой
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
 
 export function TipOfDay() {
   const themeColors = useThemeColors()
@@ -34,11 +26,10 @@ export function TipOfDay() {
   if (tipHiddenDay === dayKeyOf()) return null
 
   return (
-    <View
-      accessibilityLabel="Совет дня"
-      className="overflow-hidden rounded-2xl p-4"
-      style={cardSurface(themeColors)}
-    >
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): NeonCard вместо
+    // плоской bodyCard
+    <NeonCard accessibilityLabel="Совет дня" className="p-4 overflow-hidden">
       <SoftGlow id="glowTipR" w={120} h={70} peak={0.22} color={themeColors.accent} style={{ top: -20, right: -30 }} />
       {/* Крестик — правый верхний угол; прячет совет до конца дня */}
       <Pressable
@@ -67,6 +58,6 @@ export function TipOfDay() {
           </Text>
         </View>
       </View>
-    </View>
+    </NeonCard>
   )
 }

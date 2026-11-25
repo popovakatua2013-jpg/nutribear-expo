@@ -150,7 +150,10 @@ function CardBg() {
           borderRadius: 29,
         }}
       />
-      {/* Градиентная кайма + непрозрачная поверхность с тинтом */}
+      {/* Градиентная кайма + ГРАДИЕНТНАЯ поверхность — тот же язык, что
+          у NeonCard (правка Кати 25.11, четвёртый круг: «толстые рамки —
+          тоньше» — кайма 1 px; «белые блоки — градиентными» — поверхность
+          card→deep с тинтом акцента у верхнего края) */}
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -162,24 +165,19 @@ function CardBg() {
           right: 0,
           bottom: 0,
           borderRadius: 16,
-          padding: 1.5,
+          padding: 1,
         }}
       >
-        <View
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={[withAlpha(c.accent, 0.07), c.card, c.deep]}
           style={{
             flex: 1,
-            borderRadius: 14.5,
-            backgroundColor: c.card,
+            borderRadius: 15,
             overflow: 'hidden',
           }}
-        >
-          <LinearGradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.7, y: 1 }}
-            colors={[c.accentFaint2, 'transparent']}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-        </View>
+        />
       </LinearGradient>
     </>
   )

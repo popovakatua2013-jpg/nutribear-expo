@@ -137,7 +137,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
         )}
 
         {eff.desc ? (
-          <Text className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[16.5px] leading-[19px] text-bear-sub">
+          <Text className="mt-2 rounded-2xl border border-bear-line bg-white/5 px-3 py-2 text-[16.5px] leading-[19px] text-bear-sub">
             📝 {eff.desc}
           </Text>
         ) : null}
@@ -149,7 +149,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
           <Text className="font-sans text-[15px] font-semibold uppercase text-bear-sub">
             Комментарий (необязательно)
           </Text>
-          <View className="mt-1.5 h-[42px] flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5">
+          <View className="mt-1.5 h-[42px] flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5">
             <MessageSquare size={15} color={themeColors.dim} />
             <TextInput
               value={note}
@@ -178,7 +178,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
           <GramsPicker grams={grams} onChange={setGrams} />
         </View>
 
-        <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">
+        <View className="mt-4 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-4 py-3">
           <View className="flex-row items-center justify-between">
             <Text className="font-sans text-[16px] text-bear-soft">Итого калорий</Text>
             <Text className="font-extrabold text-[22px] text-white">

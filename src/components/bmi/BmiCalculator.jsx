@@ -29,6 +29,7 @@ import { useProfileStore } from '@/store/useProfileStore'
 import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { useToast } from '../ui/Toast'
+import { NeonCard } from '../ui/NeonCard'
 import {
   calcBmi,
   bmiCategory,
@@ -168,7 +169,11 @@ export function BmiCalculator() {
   }
 
   return (
-    <View accessibilityLabel="Калькулятор ИМТ" className="rounded-3xl border p-4" style={cardSurface(themeColors)}>
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): NeonCard вместо
+    // плоской bodyCard — градиентная кайма и градиентная поверхность,
+    // как у блоков «Главной»
+    <NeonCard accessibilityLabel="Калькулятор ИМТ" className="p-4">
       {/* Шапка: чип-иконка + заголовок + подзаголовок + шеврон.
           По умолчанию свёрнут — тап по шапке раскрывает/скрывает поля */}
       <Pressable
@@ -454,17 +459,9 @@ export function BmiCalculator() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </NeonCard>
   )
 }
-
-// Та же поверхность, что у остальных карточек вкладки (bodyCard +
-// bodyLine) — калькулятор больше не выбивается из единого стиля
-// Поверхность карточки — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-})
 
 function NumField({ label, value, onChange, decimal }) {
   const themeColors = useThemeColors()

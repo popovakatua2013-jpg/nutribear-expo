@@ -16,7 +16,7 @@ export function PortionsModal({ visible, onClose }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         <View
-          className="overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
@@ -47,7 +47,7 @@ export function PortionsModal({ visible, onClose }) {
               {PORTIONS.map((p) => (
                 <View
                   key={p.title}
-                  className="flex-row items-start gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5"
+                  className="flex-row items-start gap-3 rounded-2xl border border-bear-line bg-white/[0.03] p-3.5"
                 >
                   <View className="min-w-0 flex-1">
                     <Text className="font-bold text-[17.5px] text-bear-text">{p.title}</Text>

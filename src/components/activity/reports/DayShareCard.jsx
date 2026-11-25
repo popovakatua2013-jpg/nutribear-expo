@@ -21,6 +21,7 @@ import { useExerciseStore, totalBurned } from '@/store/useExerciseStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useHistoryStore, dayKeyOf } from '@/store/useHistoryStore'
 import { streakOf } from '@/lib/streak'
+import { withAlpha } from '@/lib/themes'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -99,13 +100,13 @@ export function DayShareCard({ open, onClose }) {
           ref={cardRef}
           collapsable={false}
           accessibilityLabel="Карточка итогов дня для поделиться"
-          className="w-full overflow-hidden rounded-3xl border border-white/10"
+          className="w-full overflow-hidden rounded-3xl border border-bear-line"
           style={{ backgroundColor: themeColors.card }}
         >
-          <LinearGradient colors={['rgba(77,124,254,0.16)', 'rgba(139,92,246,0.05)', 'rgba(16,24,49,0)']} style={{ padding: 20 }}>
+          <LinearGradient colors={[withAlpha(themeColors.accentBright, 0.18), withAlpha(themeColors.accent, 0.06), 'rgba(0,0,0,0)']} style={{ padding: 20 }}>
             {/* Шапка: мишка + бренд */}
             <View className="flex-row items-center gap-2.5">
-              <View className="h-9 w-9 overflow-hidden rounded-full border border-white/15 bg-white/5">
+              <View className="h-9 w-9 overflow-hidden rounded-full border border-bear-line bg-white/5">
                 <Image source={BEAR} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               </View>
               <View className="min-w-0 flex-1">
@@ -126,12 +127,12 @@ export function DayShareCard({ open, onClose }) {
 
             {/* Сетка показателей 2×2 */}
             <View className="mt-3.5 flex-row gap-2.5">
-              <Stat Icon={Utensils} color="#a78bfa" value={`${formatNum(consumed)} / ${formatNum(goals.kcal)}`} label="ккал съедено из нормы" />
-              <Stat Icon={Footprints} color="#4ade80" value={formatNum(steps)} label="шагов" />
+              <Stat Icon={Utensils} color={themeColors.mKcal} value={`${formatNum(consumed)} / ${formatNum(goals.kcal)}`} label="ккал съедено из нормы" />
+              <Stat Icon={Footprints} color={themeColors.mSteps} value={formatNum(steps)} label="шагов" />
             </View>
             <View className="mt-2.5 flex-row gap-2.5">
-              <Stat Icon={Droplets} color="#38bdf8" value={formatLiters(waterMl)} label="воды выпито" />
-              <Stat Icon={Sparkles} color="#fb923c" value={formatNum(burned)} label="ккал сожжено" />
+              <Stat Icon={Droplets} color={themeColors.mWater} value={formatLiters(waterMl)} label="воды выпито" />
+              <Stat Icon={Sparkles} color={themeColors.mBurned} value={formatNum(burned)} label="ккал сожжено" />
             </View>
 
             {/* БЖУ и клетчатка дня */}
@@ -140,13 +141,13 @@ export function DayShareCard({ open, onClose }) {
                 Пищевая ценность
               </Text>
               <View className="mt-1.5 flex-row flex-wrap gap-x-3 gap-y-1">
-                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-[#34D399]">
+                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-bear-good">
                   {`белки ${formatNum(bju.p)} г`}
                 </Text>
                 <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-[#FB923C]">
                   {`жиры ${formatNum(bju.f)} г`}
                 </Text>
-                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-[#38BDF8]">
+                <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-bear-mWater">
                   {`углеводы ${formatNum(bju.c)} г`}
                 </Text>
                 <Text maxFontSizeMultiplier={MAX} className="font-semibold text-[12.5px] text-[#2DD4BF]">
@@ -157,8 +158,8 @@ export function DayShareCard({ open, onClose }) {
 
             {/* Стрик */}
             {streak > 0 ? (
-              <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
-                <Flame size={15} color="#fb923c" />
+              <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-bear-accentFaint2 px-3 py-1.5">
+                <Flame size={15} color={themeColors.warn} />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#fdba74]">
                   {`${streak} дн. с записями подряд 🔥`}
                 </Text>

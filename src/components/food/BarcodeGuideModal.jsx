@@ -40,7 +40,7 @@ function BarcodeMock() {
   return (
     <View
       accessibilityLabel="Пример: штрихкод на упаковке"
-      className="flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white px-2 py-4"
+      className="flex-1 items-center justify-center rounded-2xl border border-bear-line bg-white px-2 py-4"
     >
       <View className="h-[52px] flex-row items-stretch">
         {BARS.map((w, i) => (
@@ -81,7 +81,7 @@ function SquareCodeMock() {
   return (
     <View
       accessibilityLabel="Пример: квадратный код «Честный знак»"
-      className="flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white p-3"
+      className="flex-1 items-center justify-center rounded-2xl border border-bear-line bg-white p-3"
     >
       <View>
         {QR_ROWS.map((row, y) => (
@@ -116,12 +116,12 @@ export function BarcodeGuideModal({ visible, onClose }) {
           onPress={(e) => e.stopPropagation()}
           accessibilityRole="alert"
           accessibilityLabel="Подсказка: как сканировать штрихкод"
-          className="w-full max-w-[420px] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="w-full max-w-[420px] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
         >
           <ScrollView bounces={false} contentContainerStyle={{ padding: 20 }}>
             {/* Шапка: иконка сканера, заголовок, крестик */}
             <View className="flex-row items-center gap-2">
-              <Scan size={20} color="#7DD3FC" />
+              <Scan size={20} color={themeColors.accentSoft} />
               <Text className="min-w-0 flex-1 font-bold text-[20px] text-bear-text">
                 Как сканировать штрихкод
               </Text>
@@ -144,10 +144,10 @@ export function BarcodeGuideModal({ visible, onClose }) {
               {TIPS.map((tip) => (
                 <View
                   key={tip.title}
-                  className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5"
+                  className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3 py-2.5"
                 >
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#7DD3FC]/15">
-                    <tip.icon size={19} color="#7DD3FC" />
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-bear-accentFaint2">
+                    <tip.icon size={19} color={themeColors.accentSoft} />
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text className="font-semibold text-[15.5px] text-bear-text">

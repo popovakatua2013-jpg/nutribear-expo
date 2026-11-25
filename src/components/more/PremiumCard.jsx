@@ -110,7 +110,7 @@ export function PremiumCard({ embedded = false }) {
             onPress={drop}
             accessibilityRole="button"
             accessibilityLabel="Отключить Premium"
-            className="items-center rounded-2xl border border-white/10 bg-white/5 py-3 active:bg-white/10"
+            className="items-center rounded-2xl border border-bear-line bg-white/5 py-3 active:bg-white/10"
           >
             <Text className="font-semibold text-[15.5px] text-bear-sub">
               Отключить Premium
@@ -132,7 +132,7 @@ export function PremiumCard({ embedded = false }) {
                     {p.sub}
                   </Text>
                 </View>
-                <Check size={15} color="#34D399" strokeWidth={2.5} style={{ marginTop: 2 }} />
+                <Check size={15} color={themeColors.good} strokeWidth={2.5} style={{ marginTop: 2 }} />
               </View>
             ))}
           </View>
@@ -152,7 +152,7 @@ export function PremiumCard({ embedded = false }) {
                 className={`flex-row items-center justify-between rounded-2xl border px-3.5 py-3 active:opacity-80 ${
                   p.best
                     ? 'border-amber-400/40 bg-amber-400/10'
-                    : 'border-white/10 bg-white/[0.04]'
+                    : 'border-bear-line bg-white/[0.04]'
                 }`}
               >
                 <View className="min-w-0 flex-1">
@@ -176,7 +176,7 @@ export function PremiumCard({ embedded = false }) {
               autoCapitalize="characters"
               autoCorrect={false}
               accessibilityLabel="Ввод кода активации Premium"
-              className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 text-[15px] text-bear-text"
+              className="rounded-2xl border border-bear-line bg-white/5 px-3.5 py-3 text-[15px] text-bear-text"
             />
             <Pressable
               onPress={redeemCode}

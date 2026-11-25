@@ -8,6 +8,7 @@
 import { Image, Text, View } from 'react-native'
 import { WifiOff } from 'lucide-react-native'
 import { useIsOnline } from '@/lib/useIsOnline'
+import { useThemeColors } from '@/lib/use-theme'
 
 const BEAR = require('../../../assets/images/bear.webp')
 
@@ -22,6 +23,7 @@ function greetingByHour(h) {
 }
 
 export function Greeting() {
+  const themeColors = useThemeColors()
   const now = new Date()
   const online = useIsOnline()
   const dateLabel = `${WEEKDAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`
@@ -31,7 +33,7 @@ export function Greeting() {
       accessibilityLabel="Приветствие"
       className="flex-row items-center gap-3"
     >
-      <View className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5">
+      <View className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-bear-line bg-white/5">
         <Image
           source={BEAR}
           accessibilityLabel="Медвежонок — маскот дневника"
@@ -53,12 +55,18 @@ export function Greeting() {
       {/* Чипы справа: «Офлайн» (когда нет сети) над чипом с датой */}
       <View className="shrink-0 items-end gap-1">
         {!online && (
+          // Чип «Офлайн» — «предупреждение» активной темы (четвёртый круг:
+          // «все значки — согласно темам»), вместо чужого янтаря #F59E0B
           <View
             accessibilityLabel="Нет подключения к интернету"
-            className="flex-row items-center gap-1 rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-2 py-1.5"
+            className="flex-row items-center gap-1 rounded-full border px-2 py-1.5"
+            style={{
+              borderColor: themeColors.warn,
+              backgroundColor: themeColors.accentFaint,
+            }}
           >
-            <WifiOff size={15} color="#FBBF24" strokeWidth={2.5} />
-            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[15px] text-[#FBBF24]">
+            <WifiOff size={15} color={themeColors.warn} strokeWidth={2.5} />
+            <Text maxFontSizeMultiplier={1.2} className="font-bold text-[15px]" style={{ color: themeColors.warn }}>
               Офлайн
             </Text>
           </View>

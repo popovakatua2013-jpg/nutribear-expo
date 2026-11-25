@@ -51,12 +51,12 @@ export function PhotoGuideModal({ visible, onClose }) {
           onPress={(e) => e.stopPropagation()}
           accessibilityRole="alert"
           accessibilityLabel="Подсказка: как фотографировать еду"
-          className="w-full max-w-[420px] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="w-full max-w-[420px] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
         >
           <ScrollView bounces={false} contentContainerStyle={{ padding: 20 }}>
             {/* Шапка: иконка камеры, заголовок, крестик */}
             <View className="flex-row items-center gap-2">
-              <Camera size={20} color="#7DD3FC" />
+              <Camera size={20} color={themeColors.accentSoft} />
               <Text className="min-w-0 flex-1 font-bold text-[20px] text-bear-text">
                 Как фотографировать еду
               </Text>
@@ -79,10 +79,10 @@ export function PhotoGuideModal({ visible, onClose }) {
               {TIPS.map((tip) => (
                 <View
                   key={tip.title}
-                  className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5"
+                  className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3 py-2.5"
                 >
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#7DD3FC]/15">
-                    <tip.icon size={19} color="#7DD3FC" />
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-bear-accentFaint2">
+                    <tip.icon size={19} color={themeColors.accentSoft} />
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text className="font-semibold text-[15.5px] text-bear-text">
@@ -99,7 +99,7 @@ export function PhotoGuideModal({ visible, onClose }) {
             {/* Пример хорошего фото — как у конкурента реальный снимок блюда */}
             <Image
               source={EXAMPLE}
-              className="mt-4 h-[190px] w-full rounded-2xl border border-white/10"
+              className="mt-4 h-[190px] w-full rounded-2xl border border-bear-line"
               resizeMode="cover"
             />
             <Text className="mt-1.5 text-center text-[13.5px] leading-[17px] text-bear-sub">

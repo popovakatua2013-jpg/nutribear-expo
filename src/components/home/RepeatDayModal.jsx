@@ -184,7 +184,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
         <View
-          className="max-h-[80%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="max-h-[80%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           {/* Шапка */}
@@ -232,13 +232,13 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
                       // (отзыв Кати: «выбрать вчерашний день нет возможности»)
                       className={`flex-row items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
                         isPicked
-                          ? 'border-[#8DABFF]/60 bg-[#5B7FFF]/15'
+                          ? 'border-bear-accentSoft bg-bear-accentFaint2'
                           : 'border-transparent bg-white/[0.04]'
                       }`}
                     >
                       <View
                         className={`h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                          isPicked ? 'border-[#8DABFF] bg-[#5B7FFF]/30' : 'border-white/15'
+                          isPicked ? 'border-bear-accentSoft bg-bear-accentFaint3' : 'border-bear-line'
                         }`}
                       >
                         {isPicked && <Check size={14} color={themeColors.link} strokeWidth={3} />}
@@ -271,7 +271,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
               accessibilityLabel="Скопировать выбранный день в сегодняшние приёмы пищи"
               accessibilityState={{ disabled: !picked }}
               className={`flex-row items-center justify-center gap-2 rounded-2xl py-3 ${
-                picked ? 'bg-[#5B7FFF] active:opacity-80' : 'bg-white/5'
+                picked ? 'bg-bear-accent active:opacity-80' : 'bg-white/5'
               }`}
             >
               <Copy size={17} color={picked ? '#FFFFFF' : themeColors.dim} />

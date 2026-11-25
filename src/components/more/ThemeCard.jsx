@@ -88,7 +88,7 @@ export function ThemeCard({ embedded = false }) {
             }
             accessibilityState={{ selected }}
             className={`flex-row items-center gap-3 rounded-2xl border px-3 py-2.5 active:opacity-80 ${
-              selected ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-white/10 bg-white/[0.04]'
+              selected ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-bear-line bg-white/[0.04]'
             }`}
           >
             <ThemeSwatch colors={theme.colors} />

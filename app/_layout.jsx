@@ -227,7 +227,7 @@ export function ErrorBoundary({ error, retry }) {
           onPress={wipeAndRetry}
           accessibilityRole="button"
           accessibilityLabel="Сбросить данные приложения"
-          className="mt-2 items-center rounded-2xl border border-white/10 px-4 py-3 active:opacity-80"
+          className="mt-2 items-center rounded-2xl border border-bear-line px-4 py-3 active:opacity-80"
         >
           <Text className="font-bold text-[17px] text-bear-sub2">
             Сбросить данные и перезапустить
@@ -237,7 +237,7 @@ export function ErrorBoundary({ error, retry }) {
           </Text>
         </Pressable>
 
-        <View className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3.5">
+        <View className="mt-4 rounded-2xl border border-bear-line bg-black/30 p-3.5">
           <Text selectable className="font-sans text-[15px] leading-snug text-bear-dim">
             {message}
           </Text>
@@ -256,7 +256,7 @@ export function ErrorBoundary({ error, retry }) {
           }
           accessibilityRole="button"
           accessibilityLabel="Написать в поддержку"
-          className="mt-3 items-center rounded-2xl border border-white/10 px-4 py-3 active:opacity-80"
+          className="mt-3 items-center rounded-2xl border border-bear-line px-4 py-3 active:opacity-80"
         >
           <Text className="font-bold text-[17px] text-bear-sub2">
             Написать в поддержку

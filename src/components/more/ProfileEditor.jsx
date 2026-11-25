@@ -26,7 +26,7 @@ import { useThemeColors } from '@/lib/use-theme'
 
 
 const FIELD =
-  'mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-[19px] text-white'
+  'mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-3 font-semibold text-[19px] text-white'
 
 export function ProfileEditor() {
   const themeColors = useThemeColors()
@@ -161,7 +161,7 @@ function ProfileBody({ onClose }) {
   }
 
   return (
-    <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5">
+    <View className="max-h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop p-5">
       <View className="flex-row items-center justify-between">
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[20px] text-bear-text">Редактировать профиль</Text>

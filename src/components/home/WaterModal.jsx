@@ -274,7 +274,7 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
 
                 {/* Быстро добавить: ёмкости по 2 в ряд, карандашик — правка */}
                 <View className="mt-3 flex-row items-center gap-1.5">
-                  <CirclePlus size={16} color="#7DD3FC" />
+                  <CirclePlus size={16} color={themeColors.mWater} />
                   <Text className="min-w-0 flex-1 font-semibold text-[16.5px] text-bear-text">
                     Быстро добавить
                   </Text>

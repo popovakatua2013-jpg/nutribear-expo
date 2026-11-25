@@ -14,6 +14,7 @@ import { ArrowDownRight, ArrowUpRight, BookOpen, Droplets, Flame, Footprints, Sh
 import { formatNum, pluralDays } from '@/lib/format'
 import { formatLiters, changePct, deltaTone } from '@/lib/data/reports'
 import { METRICS } from '@/lib/data/metrics'
+import { withAlpha } from '@/lib/themes'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -74,13 +75,13 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
           ref={cardRef}
           collapsable={false}
           accessibilityLabel="Карточка итогов для поделиться"
-          className="w-full overflow-hidden rounded-3xl border border-white/10"
+          className="w-full overflow-hidden rounded-3xl border border-bear-line"
           style={{ backgroundColor: themeColors.card }}
         >
-          <LinearGradient colors={['rgba(77,124,254,0.16)', 'rgba(139,92,246,0.05)', 'rgba(16,24,49,0)']} style={{ padding: 20 }}>
+          <LinearGradient colors={[withAlpha(themeColors.accentBright, 0.18), withAlpha(themeColors.accent, 0.06), 'rgba(0,0,0,0)']} style={{ padding: 20 }}>
             {/* Шапка: мишка + бренд */}
             <View className="flex-row items-center gap-2.5">
-              <View className="h-9 w-9 overflow-hidden rounded-full border border-white/15 bg-white/5">
+              <View className="h-9 w-9 overflow-hidden rounded-full border border-bear-line bg-white/5">
                 <Image source={BEAR} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               </View>
               <View className="min-w-0 flex-1">
@@ -101,12 +102,12 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
 
             {/* Сетка показателей 2×2 */}
             <View className="mt-3.5 flex-row gap-2.5">
-              <Stat Icon={Timer} color="#a78bfa" value={formatNum(avgKcal)} label="ккал в день, в среднем" />
-              <Stat Icon={Footprints} color="#4ade80" value={formatNum(totals?.steps || 0)} label="шагов за период" />
+              <Stat Icon={Timer} color={themeColors.mKcal} value={formatNum(avgKcal)} label="ккал в день, в среднем" />
+              <Stat Icon={Footprints} color={themeColors.mSteps} value={formatNum(totals?.steps || 0)} label="шагов за период" />
             </View>
             <View className="mt-2.5 flex-row gap-2.5">
-              <Stat Icon={Droplets} color="#38bdf8" value={formatLiters(totals?.waterMl || 0)} label="воды выпито" />
-              <Stat Icon={Sparkles} color="#fb923c" value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
+              <Stat Icon={Droplets} color={themeColors.mWater} value={formatLiters(totals?.waterMl || 0)} label="воды выпито" />
+              <Stat Icon={Sparkles} color={themeColors.mBurned} value={formatNum(totals?.burned || 0)} label="ккал сожжено" />
             </View>
 
             {/* Сравнение с прошлым периодом: только показатели, по которым
@@ -139,9 +140,9 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
 
             {/* Стрик */}
             {streak > 0 ? (
-              <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-[#fb923c]/15 px-3 py-1.5">
-                <Flame size={15} color="#fb923c" />
-                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-[#fdba74]">
+              <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-bear-accentFaint2 px-3 py-1.5">
+                <Flame size={15} color={themeColors.warn} />
+                <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px]" style={{ color: themeColors.warn }}>
                   {`${streak} ${pluralDays(streak)} подряд 🔥`}
                 </Text>
               </View>
@@ -149,7 +150,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
 
             {/* Дисциплина: сколько дней периода велся дневник */}
             {recorded != null ? (
-              <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-[#4D7CFE]/15 px-3 py-1.5">
+              <View className="mt-2 flex-row items-center gap-1.5 self-start rounded-full bg-bear-accentFaint2 px-3 py-1.5">
                 <BookOpen size={15} color={themeColors.link} />
                 <Text maxFontSizeMultiplier={MAX} className="font-bold text-[14px] text-bear-link">
                   {`дней с записями: ${recorded} из ${days}`}

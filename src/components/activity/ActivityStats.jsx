@@ -176,23 +176,28 @@ export function ActivityStats({
     <Foot>цель не задана</Foot>
   )
 
-  // у «Активности» итоговая пилюля: процент дневной цели по минутам
+  // у «Активности» итоговая пилюля: процент дневной цели по минутам.
+  // Правка Кати 25.11 (четвёртый круг: «на вкладке активность сегодня
+  // % от цели не перекрашен»): фиксированные фиолетово/изумрудные классы
+  // (violet-400/emerald-300) заменены токенами темы — цель достигнута —
+  // «хорошо» темы, в процессе — акцент темы
+  const minutesDone = minutesGoal > 0 && minutes >= minutesGoal
   const minutesFoot = (
     <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-white/[0.05] px-1 py-1">
       <View
-        className={`h-3 w-3 shrink-0 items-center justify-center rounded-full ${
-          minutesGoal > 0 && minutes >= minutesGoal ? 'bg-emerald-400/90' : 'bg-violet-400/90'
-        }`}
+        className="h-3 w-3 shrink-0 items-center justify-center rounded-full"
+        style={{ backgroundColor: minutesDone ? themeColors.good : themeColors.accent }}
       >
-        <Check size={8} color="#FFFFFF" strokeWidth={3.5} />
+        <Check size={8} color={themeColors.bg} strokeWidth={3.5} />
       </View>
       <FitLine
         maxFontSizeMultiplier={1.15}
-        className={`min-w-0 flex-1 font-bold text-[11px] ${
-          minutesGoal > 0
-            ? minutes >= minutesGoal ? 'text-emerald-300' : 'text-violet-300'
-            : 'text-bear-sub2'
-        }`}
+        className="min-w-0 flex-1 font-bold text-[11px]"
+        style={{
+          color: minutesGoal > 0
+            ? minutesDone ? themeColors.good : themeColors.accent
+            : themeColors.sub2,
+        }}
       >
         {minutesGoal > 0 ? `${minutesPct}% от цели` : 'цель не задана'}
       </FitLine>
@@ -246,7 +251,10 @@ export function ActivityStats({
     },
     {
       colors: {
-        border: 'border-violet-400/25',
+        // Рамка — accentBorder темы (правка Кати 25.11, четвёртый круг:
+        // «все рамки согласно темам» — у «Активности» оставался чужой
+        // фиолетовый border-violet-400/25)
+        border: 'border-bear-accentBorder',
         // Плитка «Активность» — градиентом активной темы (правка Кати
         // «сделай в точности как на скрине»: плитки светятся неоном темы)
         icon: [themeColors.accentBright, themeColors.accent],

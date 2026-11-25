@@ -203,7 +203,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
         {/* flexShrink: шторка сжимается, если под клавиатуру осталось
             мало места, — скролл внутри, шапка всегда на экране */}
         <View
-          className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+          className="max-h-[92%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
           style={{ flexShrink: 1 }}
         >
           {/* Шапка: левый блок flex-1 — длинный подзаголовок сжимается,
@@ -245,7 +245,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Название блюда"
               placeholder="Название блюда"
               placeholderTextColor={themeColors.dim}
-              className="mt-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] text-bear-text"
+              className="mt-1 rounded-2xl border border-bear-line bg-white/5 px-4 py-2 text-[20px] text-bear-text"
             />
 
             {/* Описание — своими словами (попадёт в дневник) */}
@@ -260,7 +260,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Описание блюда"
               placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
               placeholderTextColor={themeColors.dim}
-              className="mt-1 min-h-[60px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
+              className="mt-1 min-h-[60px] rounded-2xl border border-bear-line bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
             />
 
             {/* Пересчёт — сразу под составом (отзыв Кати 19.11: кнопку
@@ -270,10 +270,10 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               disabled={looking}
               accessibilityRole="button"
               accessibilityLabel="Пересчитать КБЖУ по составу или названию"
-              className="mt-2 flex-row items-center gap-1.5 self-start rounded-full border border-[#7DD3FC]/40 bg-[#7DD3FC]/10 px-3.5 py-2 active:opacity-80"
+              className="mt-2 flex-row items-center gap-1.5 self-start rounded-full border border-bear-accentBorder bg-bear-accentFaint px-3.5 py-2 active:opacity-80"
             >
-              <Wand2 size={15} color="#7DD3FC" />
-              <Text className="text-[16px] font-semibold text-[#7DD3FC]">
+              <Wand2 size={15} color={themeColors.accentSoft} />
+              <Text className="text-[16px] font-semibold text-bear-accentSoft">
                 {looking ? 'Считаем…' : 'Пересчитать КБЖУ'}
               </Text>
             </Pressable>
@@ -284,7 +284,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
             {/* Расшифровка расчёта: что и сколько вошло в калории.
                 Показывается сразу, как только в описании появился состав */}
             {recipe ? (
-              <View className="mt-2.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 py-2.5">
+              <View className="mt-2.5 rounded-2xl border border-bear-line bg-white/5 px-3.5 py-2.5">
                 <Text className="font-sans text-[12px] font-semibold uppercase text-bear-sub">
                   Как посчитано
                 </Text>
@@ -302,12 +302,12 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 {recipe.missed.map((m) => (
                   <View key={`${m.name}-${m.grams}`} className="mt-1 flex-row items-center justify-between">
                     <View className="min-w-0 flex-1 flex-row items-center pr-2">
-                      <TriangleAlert size={13} color="#FBBF24" />
+                      <TriangleAlert size={13} color={themeColors.warn} />
                       <Text numberOfLines={1} className="ml-1 min-w-0 flex-1 font-sans text-[15px] text-bear-soft">
                         {`${m.name} · ${m.grams} г`}
                       </Text>
                     </View>
-                    <Text className="shrink-0 font-sans text-[13px] text-[#FBBF24]">
+                    <Text className="shrink-0 font-sans text-[13px] text-bear-warn">
                       нет в базе
                     </Text>
                   </View>
@@ -326,7 +326,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 keyboardType="number-pad"
                 maxLength={5}
                 accessibilityLabel="Калории на 100 грамм"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
             </View>
@@ -348,7 +348,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     accessibilityLabel={`${fld.label} на 100 грамм`}
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                    className="rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}
@@ -375,7 +375,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     placeholder="0"
                     placeholderTextColor={themeColors.dim}
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                    className="rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}
@@ -389,7 +389,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
 
             {/* Живой предпросмотр: выход по составу и порция — разные вещи
                 (отзыв Кати 19.11: «выход блюда один, а порция другая») */}
-            <View className="mt-4 rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/10 px-4 py-3">
+            <View className="mt-4 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-4 py-3">
               {recipe ? (
                 <View className="mb-1.5 flex-row items-center justify-between">
                   <Text className="font-sans text-[16px] text-bear-soft">

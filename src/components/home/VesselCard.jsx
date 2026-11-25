@@ -70,7 +70,7 @@ export function VesselCard({ vessel, onDrink }) {
         accessibilityLabel={`Добавить ${vessel.label}, ${vessel.ml} мл`}
         className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:border-sky-400/40 active:bg-[#122544]"
       >
-        <Icon size={22} color="#7DD3FC" />
+        <Icon size={22} color={themeColors.mWater} />
         <View className="min-w-0 flex-1 pr-4">
           <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
             {vessel.label}

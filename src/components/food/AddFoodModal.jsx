@@ -39,7 +39,7 @@ function DayPill({ active, icon: Icon, label, onPress }) {
       accessibilityState={{ selected: active }}
       accessibilityLabel={`Записать за: ${label}`}
       className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 active:opacity-80 ${
-        active ? 'border-bear-accentBorder bg-bear-accentFaint3' : 'border-white/10 bg-white/[0.04]'
+        active ? 'border-bear-accentBorder bg-bear-accentFaint3' : 'border-bear-line bg-white/[0.04]'
       }`}
     >
       <Icon size={15} color={tint} />
@@ -112,7 +112,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
         style={{ paddingBottom: 12 + insets.bottom }}
       >
         <View
-          className={`overflow-hidden rounded-3xl border border-white/10 bg-bear-pop ${
+          className={`overflow-hidden rounded-3xl border border-bear-line bg-bear-pop ${
             searching ? 'h-full' : 'h-[85%]'
           }`}
         >

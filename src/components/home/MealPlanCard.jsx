@@ -271,7 +271,7 @@ function MealSection({ meal, target, totals, open, onToggle, onAdd, onEdit, onDe
             hitSlop={4}
             className="shrink-0 rounded p-1 active:opacity-60"
           >
-            <Trash2 size={14} color="#f87171" />
+            <Trash2 size={14} color={themeColors.bad} />
           </Pressable>
         )}
 
@@ -505,8 +505,8 @@ export function MealPlanCard({ onAdd, onViewAll }) {
           {/* 1. Только калории — первым (отзыв Кати): перекус в один тап,
               когда некогда искать блюдо */}
           <MenuRow
-            icon={<Zap size={17} color="#FBBF24" />}
-            tile="#FBBF2422"
+            icon={<Zap size={17} color={themeColors.warn} />}
+            tile={themeColors.accentFaint2}
             title="Только калории"
             sub="Быстрая запись, без поиска блюд"
             onPress={() => {

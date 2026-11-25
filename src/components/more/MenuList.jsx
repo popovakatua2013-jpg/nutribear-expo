@@ -162,7 +162,7 @@ export function MenuRow({
     !toggle && value != null && String(value).length > 0 && title.length + String(value).length <= 26
 
   return (
-    <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-white/[0.06]' : ''}>
+    <View accessibilityLabel={accessibilityLabel || title} className={bordered ? 'border-t border-bear-line' : ''}>
       <Pressable
         onPress={handlePress}
         accessibilityRole={toggle ? 'switch' : 'button'}

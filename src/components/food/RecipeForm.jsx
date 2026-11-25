@@ -24,7 +24,7 @@ import { useThemeColors } from '@/lib/use-theme'
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
 
 const field =
-  'rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 font-sans text-[19px] text-bear-text'
+  'rounded-2xl border border-bear-line bg-white/5 px-3 py-2.5 font-sans text-[19px] text-bear-text'
 
 export function RecipeForm({ onDone, initial, onCancel }) {
   const themeColors = useThemeColors()
@@ -180,7 +180,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
   }
 
   return (
-    <View className="rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/5 p-4">
+    <View className="rounded-2xl border border-bear-accentBorder bg-bear-accentFaint p-4">
       {/* Шапка: что делаем + крестик закрытия (только в режиме изменения) */}
       <View className="mb-2 flex-row items-center justify-between">
         <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-link">
@@ -214,7 +214,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           accessibilityRole="button"
           accessibilityLabel="Прикрепить фото блюда"
           className="h-[42px] w-[42px] shrink-0 items-center justify-center rounded-2xl active:opacity-80"
-          style={{ backgroundColor: '#5B7FFF' }}
+          style={{ backgroundColor: themeColors.accent }}
         >
           {photo ? (
             <Image source={{ uri: photo }} className="h-full w-full rounded-2xl" />
@@ -256,8 +256,8 @@ export function RecipeForm({ onDone, initial, onCancel }) {
           accessibilityLabel="Посчитать калории и БЖУ по составу"
           className="mt-1.5 flex-row items-center gap-1.5 self-start px-1 py-0.5 active:opacity-70"
         >
-          <Wand2 size={16} color="#7DD3FC" />
-          <Text className="font-semibold text-[16.5px] text-[#7DD3FC]">
+          <Wand2 size={16} color={themeColors.accentSoft} />
+          <Text className="font-semibold text-[16.5px] text-bear-accentSoft">
             {estBusy ? 'Считаем…' : 'Посчитать КБЖУ по составу'}
           </Text>
         </Pressable>

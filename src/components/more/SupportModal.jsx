@@ -363,7 +363,7 @@ export function SupportModal({ open = false, onClose }) {
         >
           <View
             accessibilityLabel="Окно письма в поддержку"
-            className="w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop"
+            className="w-full overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
           >
           {/* Шапка: лампочка в градиентном чипе + заголовок с подзаголовком
               + круглая кнопка закрытия (по скрину Кати от 10.11) */}
@@ -377,7 +377,7 @@ export function SupportModal({ open = false, onClose }) {
               {/* раскладку ведёт обычный View — LinearGradient на Android
                   не удерживает выравнивание детей */}
               <View className="h-[52px] w-[52px] items-center justify-center">
-                <Lightbulb size={26} color="#FFD66B" />
+                <Lightbulb size={26} color={themeColors.warn} />
               </View>
             </LinearGradient>
             <View className="min-w-0 flex-1">
@@ -477,7 +477,7 @@ export function SupportModal({ open = false, onClose }) {
               placeholder="Расскажите, что вы думаете…"
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Текст обращения в поддержку"
-              className="mt-2 min-h-[120px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
+              className="mt-2 min-h-[120px] rounded-2xl border border-bear-line bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
               style={{ textAlignVertical: 'top' }}
             />
 
@@ -508,7 +508,7 @@ export function SupportModal({ open = false, onClose }) {
               keyboardType="email-address"
               textContentType="emailAddress"
               accessibilityLabel="Контакт для ответа — почта или ник в Telegram, обязательно для отправки"
-              className="mt-2 h-[48px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 font-sans text-[16px] text-bear-text"
+              className="mt-2 h-[48px] rounded-2xl border border-bear-line bg-white/[0.06] px-4 font-sans text-[16px] text-bear-text"
             />
 
             {/* Вложения — кнопка со скрепкой открывает выбор файлов,

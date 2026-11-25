@@ -120,7 +120,7 @@ export function BarcodeMode({ onPick }) {
   }
 
   return (
-    <View className="flex-1 overflow-hidden rounded-2xl border border-white/10">
+    <View className="flex-1 overflow-hidden rounded-2xl border border-bear-line">
       <CameraView
         style={{ flex: 1 }}
         enableTorch={torch}
@@ -145,7 +145,7 @@ export function BarcodeMode({ onPick }) {
       {/* Подпись и ошибки */}
       <View className="absolute inset-x-4 bottom-4">
         {error ? (
-          <View className="mb-2 rounded-2xl border border-white/10 bg-bear-pop px-4 py-3">
+          <View className="mb-2 rounded-2xl border border-bear-line bg-bear-pop px-4 py-3">
             <Text className="font-sans text-[16.5px] leading-[19px] text-bear-text">{error}</Text>
           </View>
         ) : null}
@@ -156,7 +156,7 @@ export function BarcodeMode({ onPick }) {
               штрих-код упаковки» в одну строку 17px не влезало и обрезалось
               до «Наведите на штрих-код уп…»; 2 строки разрешены как страховка
               на случай увеличенного системного шрифта — текст не режется никогда */}
-          <View className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-3">
+          <View className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-black/50 px-4 py-3">
             <Text
               numberOfLines={2}
               className="font-semibold text-[13px] leading-[17px] text-bear-text"
@@ -168,16 +168,16 @@ export function BarcodeMode({ onPick }) {
             onPress={() => setTorch((v) => !v)}
             accessibilityRole="button"
             accessibilityLabel={torch ? 'Выключить фонарик' : 'Включить фонарик'}
-            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
+            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-bear-line bg-black/50 active:opacity-70"
           >
-            {torch ? <Flashlight size={20} color="#FBBF24" /> : <FlashlightOff size={20} color={themeColors.soft} />}
+            {torch ? <Flashlight size={20} color={themeColors.warn} /> : <FlashlightOff size={20} color={themeColors.soft} />}
           </Pressable>
           {/* Подсказка «как сканировать» — вернуть окно вручную */}
           <Pressable
             onPress={() => setGuideOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Как сканировать штрихкод"
-            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/50 active:opacity-70"
+            className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-bear-line bg-black/50 active:opacity-70"
           >
             <Info size={20} color={themeColors.link} />
           </Pressable>

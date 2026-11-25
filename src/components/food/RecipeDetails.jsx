@@ -23,7 +23,7 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <View className="rounded-2xl border border-[#5B7FFF]/25 bg-[#5B7FFF]/5 p-4">
+      <View className="rounded-2xl border border-bear-accentBorder bg-bear-accentFaint p-4">
         {/* Шапка: что смотрим + крестик закрытия */}
         <View className="mb-2 flex-row items-center justify-between gap-2">
           <Text className="min-w-0 flex-1 font-semibold text-[15px] uppercase tracking-wide text-bear-link">
@@ -85,7 +85,7 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
             onPress={onEdit}
             accessibilityRole="button"
             accessibilityLabel={`Изменить рецепт «${recipe.name}»`}
-            className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 py-2.5 active:bg-white/10"
+            className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-white/5 py-2.5 active:bg-white/10"
           >
             <Pencil size={15} color={themeColors.soft} />
             <Text className="font-semibold text-[15px] text-bear-soft">Изменить рецепт</Text>

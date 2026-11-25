@@ -27,7 +27,7 @@ export function RecipesModal({ onClose = () => {}, onLogRecipe = () => {} }) {
         className="flex-1 justify-end bg-black/60 px-3"
         style={{ paddingBottom: 12 + insets.bottom }}
       >
-        <View className="h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Шапка окна — в стиле «Базы продуктов» */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             {/* flex-1: длинный подзаголовок распирал строку и выталкивал

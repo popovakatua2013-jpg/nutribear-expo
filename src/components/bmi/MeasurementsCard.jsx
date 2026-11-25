@@ -47,6 +47,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { BASE_MEASUREMENTS, useProfileStore } from '@/store/useProfileStore'
 import { fmtDecimal } from '@/lib/data/bmi'
 import { SvgAreaChart } from '../ui/SvgAreaChart'
+import { NeonCard } from '../ui/NeonCard'
 import { MeasurementHistoryModal } from './MeasurementHistoryModal'
 import { useToast } from '../ui/Toast'
 import { useThemeColors } from '@/lib/use-theme'
@@ -178,7 +179,11 @@ export function MeasurementsCard() {
   )
 
   return (
-    <View accessibilityLabel="Замеры тела" className="gap-2.5">
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): секция на NeonCard —
+    // тот же градиентный язык, что у «Главной»
+    <NeonCard accessibilityLabel="Замеры тела" className="p-4">
+      <View className="gap-2.5">
       {/* Шапка-секция: тап разворачивает/сворачивает блок; иконка +
           заголовок с подзаголовком + «+ Добавить» */}
       <Pressable
@@ -405,7 +410,8 @@ export function MeasurementsCard() {
         onClose={() => setHistOpen(false)}
         items={histItems}
       />
-    </View>
+      </View>
+    </NeonCard>
   )
 }
 

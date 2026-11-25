@@ -769,7 +769,7 @@ export function DailySummary({
             onPress={() => setNormsOpen(false)}
           >
             <Pressable
-              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5"
               onPress={() => {}}
               accessibilityLabel="Нормы нутриентов"
             >
@@ -849,7 +849,7 @@ export function DailySummary({
           onPress={() => setMarkOpen(false)}
         >
           <Pressable
-            className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+            className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5"
             onPress={() => {}}
             accessibilityLabel="Особый день"
           >
@@ -1039,7 +1039,7 @@ export function DailySummary({
             onPress={() => setDeltaEdit(null)}
           >
             <Pressable
-              className="w-full rounded-3xl border border-white/10 bg-bear-pop p-5"
+              className="w-full rounded-3xl border border-bear-line bg-bear-pop p-5"
               onPress={() => {}}
               accessibilityLabel="Прибавка особого дня"
             >

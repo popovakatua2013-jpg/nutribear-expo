@@ -32,7 +32,7 @@ export function MealTabs({ meals, mealId, onChange }) {
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             className={`min-w-0 flex-1 items-center rounded-xl ${dense ? 'px-0.5 py-2' : 'px-1 py-2.5'} ${
-              active ? '' : 'border border-white/[0.06] bg-white/[0.05]'
+              active ? '' : 'border border-bear-line bg-white/[0.05]'
             }`}
             style={active ? { backgroundColor: themeColors.accent, color: themeColors.accentOn } : null}
           >

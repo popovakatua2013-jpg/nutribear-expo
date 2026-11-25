@@ -30,7 +30,7 @@ function LockedContent() {
   return (
     <View className="gap-2" accessibilityLabel="Экспорт отчёта в файл — Premium">
       <View className="flex-row items-center gap-2">
-        <Crown size={17} color="#FBBF24" />
+        <Crown size={17} color={themeColors.warn} />
         <Text className="font-bold text-[16px] text-amber-300">
           Экспорт отчёта в файл — Premium
         </Text>
@@ -119,7 +119,7 @@ export function ReportExportCard({ days, rows, today, rangeId = '7d' }) {
               : 'Готовить файл отчёта — в Premium'}
           </Text>
         </View>
-        {!pro && <Crown size={15} color="#FBBF24" />}
+        {!pro && <Crown size={15} color={themeColors.warn} />}
         <ChevronDown
           size={20}
           color={themeColors.sub}

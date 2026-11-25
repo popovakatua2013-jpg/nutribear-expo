@@ -135,7 +135,7 @@ export function DataActions({ embedded = false, variant = null }) {
           onPress={newDay}
           className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.03] px-3.5 py-2.5 active:opacity-80"
         >
-          <Sunrise size={16} color="#fbbf24" />
+          <Sunrise size={16} color={themeColors.warn} />
           <Text
             maxFontSizeMultiplier={1.1}
             className="min-w-0 flex-1 font-sans text-[14px] text-bear-sub2"
@@ -159,7 +159,7 @@ export function DataActions({ embedded = false, variant = null }) {
           onPress={confirmWipe}
           className="flex-row items-center gap-2 rounded-2xl bg-rose-400/[0.06] px-3.5 py-2.5 active:opacity-80"
         >
-          <Trash2 size={16} color="#fb7185" />
+          <Trash2 size={16} color={themeColors.bad} />
           <Text
             maxFontSizeMultiplier={1.1}
             className="min-w-0 flex-1 font-semibold text-[15px] text-rose-300"
@@ -175,9 +175,9 @@ export function DataActions({ embedded = false, variant = null }) {
     <View className="mt-1 gap-2">
       <Pressable
         onPress={newDay}
-        className="flex-row items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
       >
-        <Sunrise size={20} color="#fbbf24" />
+        <Sunrise size={20} color={themeColors.warn} />
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[17.5px] text-bear-text">Начать новый день</Text>
           <Text className="font-sans text-[15px] text-bear-sub2">
@@ -192,7 +192,7 @@ export function DataActions({ embedded = false, variant = null }) {
         onPress={confirmWipe}
         className="flex-row items-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-400/[0.05] px-4 py-3.5 active:opacity-80"
       >
-        <Trash2 size={20} color="#fb7185" />
+        <Trash2 size={20} color={themeColors.bad} />
         <View className="min-w-0 flex-1">
           <Text className="font-bold text-[17.5px] text-rose-300">Стереть все данные</Text>
           <Text className="font-sans text-[15px] text-bear-sub2">

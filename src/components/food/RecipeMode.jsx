@@ -118,7 +118,7 @@ export function RecipeMode({ onPick }) {
       />
 
       {items.length > 0 && (
-        <View className="mt-3 gap-1 border-t border-white/5 pt-3">
+        <View className="mt-3 gap-1 border-t border-bear-line pt-3">
           {items.map((r) => (
             <View
               key={r.id}

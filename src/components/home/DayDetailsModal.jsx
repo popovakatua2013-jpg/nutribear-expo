@@ -21,7 +21,7 @@ const WD = ['воскресенье', 'понедельник', 'вторник'
 
 function Row({ icon, label, value, tone }) {
   return (
-    <View className="flex-row items-center justify-between border-b border-white/5 py-2.5">
+    <View className="flex-row items-center justify-between border-b border-bear-line py-2.5">
       <Text className="font-medium text-[17.5px] text-bear-sub">
         {icon} {label}
       </Text>
@@ -49,7 +49,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/60 px-3 pb-3">
-        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="max-h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="flex-1">

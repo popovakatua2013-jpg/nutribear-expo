@@ -141,7 +141,7 @@ function CapLabel({ children, style, lines = 1 }) {
 // Стеклянная карточка макета: тёмное стекло с тонкой светлой обводкой
 function Glass({ children, className = '', style }) {
   return (
-    <View className={`rounded-2xl border border-white/10 bg-white/[0.05] ${className}`} style={style}>
+    <View className={`rounded-2xl border border-bear-line bg-white/[0.05] ${className}`} style={style}>
       {children}
     </View>
   )
@@ -795,7 +795,7 @@ export function MetricHistoryModal({
                                         borderRadius: 7,
                                         backgroundColor: color,
                                         borderWidth: i === todayWd ? 1 : 0,
-                                        borderColor: 'rgba(255,255,255,0.35)',
+                                        borderColor: themeColors.text,
                                       }}
                                     />
                                   </View>

@@ -947,7 +947,7 @@ function WorkoutForm({ editing = null, onDone, className = '' }) {
             {previewMet && (
               <Text className="mt-1.5 font-sans text-[13px] leading-snug text-bear-sub2">
                 Пример: 30 минут — ≈{' '}
-                <Text className="font-bold text-[#f87171]">
+                <Text className="font-bold text-bear-bad">
                   {formatNum(kcalBurned(previewMet, weightKg, 30))} ккал
                 </Text>{' '}
                 при весе {weightKg} кг

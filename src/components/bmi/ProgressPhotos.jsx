@@ -20,20 +20,13 @@ import { Camera, ChevronDown, ChevronRight, Trash2, X } from 'lucide-react-nativ
 import { useProgressPhotosStore } from '@/store/useProgressPhotosStore'
 import { deletePhotoFile, savePhoto } from '@/lib/photos'
 import { useToast } from '../ui/Toast'
+import { NeonCard } from '../ui/NeonCard'
 import { toastAndOpenSettings } from '@/lib/appSettings'
+import { withAlpha } from '@/lib/themes'
 import { useThemeColors } from '@/lib/use-theme'
 
 
 const MAX = 1.25
-
-// Поверхность — та же фиолетовая (bodyCard + bodyLine), что у остальных
-// блоков «Тела»: карточка больше не выбивается navy-фоном
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
 
 // Сколько секунд кнопка удаления ждёт второй тап, прежде чем сброситься
 const DELETE_CONFIRM_MS = 2600
@@ -145,11 +138,10 @@ export function ProgressPhotos() {
   }
 
   return (
-    <View
-      accessibilityLabel="Фото прогресса"
-      className="rounded-3xl p-5"
-      style={cardSurface(themeColors)}
-    >
+    // Правка Кати 25.11 (четвёртый круг: «тело ИМТ — блоки по оформлению
+    // не такие, сделать одинаково как на главной»): NeonCard вместо
+    // плоской bodyCard
+    <NeonCard accessibilityLabel="Фото прогресса" className="p-5 overflow-hidden">
       <View className="flex-row items-center justify-between gap-2">
         {/* Заголовок — тап разворачивает/сворачивает ленту (когда есть фото) */}
         <Pressable
@@ -307,19 +299,22 @@ export function ProgressPhotos() {
               confirmDel ? 'Нажмите ещё раз, чтобы удалить фото' : 'Удалить фото'
             }
             accessibilityRole="button"
-            className={`mt-4 flex-row items-center justify-center gap-2 rounded-2xl py-3 active:opacity-80 ${
-              confirmDel
-                ? 'border border-rose-400 bg-rose-400/25'
-                : 'border border-rose-400/30 bg-rose-400/10'
-            }`}
+            // Тон кнопки удаления — «плохо» активной темы (четвёртый круг:
+            // «все значки/рамки — согласно темам»), вместо чужой розы
+            className="mt-4 flex-row items-center justify-center gap-2 rounded-2xl py-3 active:opacity-80"
+            style={{
+              borderWidth: 1,
+              borderColor: confirmDel ? themeColors.bad : withAlpha(themeColors.bad, 0.35),
+              backgroundColor: confirmDel ? withAlpha(themeColors.bad, 0.28) : withAlpha(themeColors.bad, 0.1),
+            }}
           >
-            <Trash2 size={19} color="#fb7185" />
-            <Text className="font-bold text-[17.5px] text-rose-300">
+            <Trash2 size={19} color={themeColors.bad} />
+            <Text className="font-bold text-[17.5px]" style={{ color: themeColors.bad }}>
               {confirmDel ? 'Точно удалить? Нажмите ещё раз' : 'Удалить фото'}
             </Text>
           </Pressable>
         </View>
       </Modal>
-    </View>
+    </NeonCard>
   )
 }

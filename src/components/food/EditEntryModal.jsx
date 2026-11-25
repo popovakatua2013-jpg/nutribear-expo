@@ -118,7 +118,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1 justify-end bg-black/60 px-3 pb-3"
       >
-        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-white/10 bg-bear-pop">
+        <View className="max-h-[92%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
           {/* Шапка */}
           <View className="flex-row items-center justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-row items-center gap-2 pr-2">
@@ -148,7 +148,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               onChangeText={setName}
               maxLength={60}
               accessibilityLabel="Название блюда"
-              className="mt-1.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
             />
 
             {/* Описание — своими словами */}
@@ -163,7 +163,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               accessibilityLabel="Описание блюда"
               placeholder="Например: борщ на свином бульоне, со сметаной"
               placeholderTextColor={themeColors.dim}
-              className="mt-1.5 min-h-[70px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
+              className="mt-1.5 min-h-[70px] rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
             {/* Комментарий — как у конкурента (отзыв Кати 20.11: «с
@@ -180,7 +180,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
               accessibilityLabel="Комментарий к записи"
               placeholder="Например: без масла, с солью"
               placeholderTextColor={themeColors.dim}
-              className="mt-1.5 min-h-[52px] rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
+              className="mt-1.5 min-h-[52px] rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] leading-[21px] text-bear-text"
             />
 
             {/* Вес порции */}
@@ -194,7 +194,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                 keyboardType="number-pad"
                 maxLength={4}
                 accessibilityLabel="Вес порции в граммах"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">г</Text>
             </View>
@@ -231,7 +231,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                 keyboardType="number-pad"
                 maxLength={5}
                 accessibilityLabel="Калории за порцию"
-                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
             </View>
@@ -253,7 +253,7 @@ export function EditEntryModal({ open, onClose, mealId, entry, mealName }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     accessibilityLabel={`${fld.label} за порцию`}
-                    className="rounded-2xl border border-white/10 bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                    className="rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[15px] text-bear-sub">
                     {fld.label}

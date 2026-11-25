@@ -196,7 +196,7 @@ export function HistoryModal({ visible, onClose }) {
                     onPress={() => setMealFilter(f.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Фильтр: ${f.label}`}
-                    className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-[#5B7FFF]/25' : 'bg-bear-card2'}`}
+                    className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? 'bg-bear-accentFaint3' : 'bg-bear-card2'}`}
                   >
                     <Text
                       className={`font-semibold text-[15px] ${active ? 'text-bear-link' : 'text-bear-sub'}`}
@@ -281,7 +281,7 @@ export function HistoryModal({ visible, onClose }) {
                             onPress={() => setReAddId((v) => (v === r.id ? null : r.id))}
                             accessibilityRole="button"
                             accessibilityLabel={`Записать «${r.name}» снова`}
-                            className="shrink-0 rounded-full bg-[#5B7FFF]/15 p-1.5 active:bg-[#5B7FFF]/30"
+                            className="shrink-0 rounded-full bg-bear-accentFaint2 p-1.5 active:bg-bear-accentFaint3"
                           >
                             <Plus size={16} color={themeColors.link} />
                           </Pressable>
@@ -296,7 +296,7 @@ export function HistoryModal({ visible, onClose }) {
                                 onPress={() => reAdd(r, m)}
                                 accessibilityRole="button"
                                 accessibilityLabel={`Добавить «${r.name}» в «${m.name}»`}
-                                className="flex-1 items-center rounded-lg border border-[#5B7FFF]/30 bg-[#5B7FFF]/10 py-1.5 active:bg-[#5B7FFF]/25"
+                                className="flex-1 items-center rounded-lg border border-bear-accentBorder bg-bear-accentFaint py-1.5 active:bg-bear-accentFaint3"
                               >
                                 <Text numberOfLines={1} className="font-semibold text-[15px] text-bear-link">
                                   {m.id === 'snack' ? 'Перекус' : m.name}

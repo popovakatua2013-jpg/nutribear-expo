@@ -49,7 +49,7 @@ function TimeChip({ text, open, onPress }) {
       accessibilityState={{ expanded: open }}
       accessibilityLabel={`Окно времени: ${text}`}
       hitSlop={4}
-      className="max-w-[180px] shrink-0 flex-row items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 active:opacity-70"
+      className="max-w-[180px] shrink-0 flex-row items-center gap-1 rounded-full border border-bear-line bg-white/[0.06] px-2.5 py-1 active:opacity-70"
     >
       <Text
         numberOfLines={1}

@@ -35,7 +35,7 @@ export function ActivityBreakdownModal({
       >
         <Pressable
           onPress={() => {}}
-          className="max-h-[80%] w-full overflow-hidden rounded-3xl border border-white/10 bg-bear-pop p-5"
+          className="max-h-[80%] w-full overflow-hidden rounded-3xl border border-bear-line bg-bear-pop p-5"
           accessibilityLabel="Активность за сегодня"
         >
           {/* Шапка */}
@@ -76,7 +76,7 @@ export function ActivityBreakdownModal({
                 {logs.map((e) => (
                   <View
                     key={e.id}
-                    className="flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2"
+                    className="flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.05] px-3 py-2"
                   >
                     <Text className="text-[18px]">{e.emoji || '🏃'}</Text>
                     <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
@@ -93,7 +93,7 @@ export function ActivityBreakdownModal({
 
             {/* Шаги */}
             <Text className="mt-3 font-semibold text-[15px] text-bear-text">🚶 Шаги</Text>
-            <View className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2">
+            <View className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.05] px-3 py-2">
               <Footprints size={18} color={themeColors.accentBright} />
               <Text className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
                 {formatNum(steps)} шагов

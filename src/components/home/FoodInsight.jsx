@@ -17,15 +17,9 @@ import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
 import { useActivityStore } from '@/store/useActivityStore'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { NeonCard } from '../ui/NeonCard'
 import { useThemeColors } from '@/lib/use-theme'
 
-
-// Поверхность карточек — bodyCard + bodyLine активной темы (Premium 23.11)
-const cardSurface = (C) => ({
-  backgroundColor: C.bodyCard,
-  borderColor: C.bodyLine,
-  borderWidth: 1,
-})
 
 export function FoodInsight() {
   const themeColors = useThemeColors()
@@ -65,11 +59,11 @@ export function FoodInsight() {
   if (!insight || insightHiddenDay === dayKeyOf()) return null
 
   return (
-    <View
-      accessibilityLabel={`Персональная подсказка: ${insight.title}`}
-      className="overflow-hidden rounded-3xl p-3.5"
-      style={cardSurface(themeColors)}
-    >
+    // Правка Кати 25.11, четвёртый круг: «уведомление „мало белка“ и
+    // другие — перекрасить согласно теме»: подсказка теперь на NeonCard —
+    // градиентная поверхность и кайма темы вместо плоской bodyCard, чип
+    // лампочки — акцент темы (чужой синий rgba(77,124,254) убран)
+    <NeonCard accessibilityLabel={`Персональная подсказка: ${insight.title}`} className="p-3.5">
       {/* Крестик — прячет подсказку до конца дня (отзыв Кати) */}
       <Pressable
         onPress={() => dismissInsight(dayKeyOf())}
@@ -83,9 +77,9 @@ export function FoodInsight() {
       <View className="flex-row items-center gap-2.5">
         <View
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: 'rgba(77,124,254,0.16)' }}
+          style={{ backgroundColor: themeColors.accentFaint }}
         >
-          <Lightbulb size={18} color={themeColors.link} />
+          <Lightbulb size={18} color={themeColors.accentBright} />
         </View>
         <View className="min-w-0 flex-1 pr-5">
           <Text maxFontSizeMultiplier={1.2} className="font-bold text-[16.5px] text-bear-text">
@@ -99,6 +93,6 @@ export function FoodInsight() {
           </Text>
         </View>
       </View>
-    </View>
+    </NeonCard>
   )
 }

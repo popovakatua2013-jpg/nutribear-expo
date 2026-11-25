@@ -118,7 +118,7 @@ export function BaseMode({ mealId, onPick }) {
     <View style={{ flex: 1 }}>
       {/* Поиск «тетрадная строка» + кнопка «свой продукт» */}
       <View className="flex-row items-end gap-2">
-        <View className="min-w-0 flex-1 flex-row items-center gap-2 border-b border-white/15 px-1 pb-1.5">
+        <View className="min-w-0 flex-1 flex-row items-center gap-2 border-b border-bear-line px-1 pb-1.5">
           <Search size={18} color={themeColors.dim} />
           <TextInput
             accessibilityLabel="Поиск блюда"
@@ -145,7 +145,7 @@ export function BaseMode({ mealId, onPick }) {
       {mine.length > 0 && (
         <View className="mt-3">
           <View className="flex-row items-center gap-1.5 px-1">
-            <Star size={14} color="#FBBF24" />
+            <Star size={14} color={themeColors.warn} />
             <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-sub">
               {`Мои продукты · ${mine.length}`}
             </Text>
@@ -154,7 +154,7 @@ export function BaseMode({ mealId, onPick }) {
             {mine.map((f) => (
               <View
                 key={f.id}
-                className="flex-row items-center gap-2 rounded-2xl bg-[#FBBF24]/[0.06] px-3 py-1.5"
+                className="flex-row items-center gap-2 rounded-2xl bg-bear-accentFaint px-3 py-1.5"
               >
                 <Pressable
                   onPress={() => onPick(f)}
@@ -211,14 +211,14 @@ export function BaseMode({ mealId, onPick }) {
           disabled={offLoading}
           accessibilityRole="button"
           accessibilityLabel={`Искать «${q}» в Open Food Facts`}
-          className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl border border-[#38BDF8]/30 bg-[#38BDF8]/8 px-4 py-3 active:opacity-80"
+          className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-4 py-3 active:opacity-80"
         >
           {offLoading ? (
-            <ActivityIndicator size="small" color="#38BDF8" />
+            <ActivityIndicator size="small" color={themeColors.accent} />
           ) : (
-            <Cloud size={18} color="#38BDF8" />
+            <Cloud size={18} color={themeColors.accentSoft} />
           )}
-          <Text className="font-semibold text-[15.5px] text-[#7DD3FC]">
+          <Text className="font-semibold text-[15.5px] text-bear-accentSoft">
             {offLoading ? 'Ищем в Open Food Facts…' : `Искать «${q}» в Open Food Facts`}
           </Text>
         </Pressable>
@@ -228,7 +228,7 @@ export function BaseMode({ mealId, onPick }) {
       {showOFFResults && (
         <View className="mt-3">
           <View className="flex-row items-center gap-1.5 px-1">
-            <Cloud size={14} color="#38BDF8" />
+            <Cloud size={14} color={themeColors.accentSoft} />
             <Text className="font-semibold text-[15px] uppercase tracking-wide text-bear-sub">
               {`Open Food Facts · ${offResults.length}`}
             </Text>

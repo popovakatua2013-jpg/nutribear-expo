@@ -256,7 +256,7 @@ export function CycleCard({ embedded = false }) {
             accessibilityLabel="Удалить все данные цикла"
             className="mt-1 flex-row items-center gap-1.5 self-start rounded-full px-2 py-1 active:opacity-60"
           >
-            <Trash2 size={13} color="#F87171" />
+            <Trash2 size={13} color={themeColors.bad} />
             <Text className="font-sans text-[12.5px] text-[#F87171]">Удалить данные цикла</Text>
           </Pressable>
         </View>

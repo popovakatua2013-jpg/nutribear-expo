@@ -333,7 +333,7 @@ export default function AiChatScreen() {
       }}
     >
       {/* Шапка: назад, заголовок, очистить */}
-      <View className="flex-row items-center justify-between border-b border-white/5 px-3 pb-3.5 pt-2">
+      <View className="flex-row items-center justify-between border-b border-bear-line px-3 pb-3.5 pt-2">
         <Pressable
           onPress={() => router.back()}
           accessibilityLabel="Закрыть чат"
@@ -520,7 +520,7 @@ export default function AiChatScreen() {
       ) : null}
 
       {/* Ввод */}
-      <View className="flex-row items-center gap-2 border-t border-white/5 p-4">
+      <View className="flex-row items-center gap-2 border-t border-bear-line p-4">
         <TextInput
           value={text}
           onChangeText={setText}
@@ -530,7 +530,7 @@ export default function AiChatScreen() {
           placeholderTextColor={themeColors.dim}
           accessibilityLabel="Сообщение ИИ-помощнику"
           multiline
-          className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+          className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
         />
         <Pressable
           onPress={send}

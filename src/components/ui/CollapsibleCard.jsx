@@ -11,6 +11,7 @@
 
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { ChevronDown } from 'lucide-react-native'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { BodyChip } from './BodyChip'
@@ -46,10 +47,24 @@ export function CollapsibleCard({
     return <View accessibilityLabel={accessibilityLabel}>{children}</View>
   }
 
+  // ГРАДИЕНТНАЯ ПОВЕРХНОСТЬ (правка Кати 25.11, четвёртый круг: «сделать
+  // все белые блоки градиентными — сейчас они белые, касается всех тем»):
+  // плоская bodyCard читалась белым листом на «Кремовой» и чёрным
+  // пластом на неонах — теперь диагональный градиент card→deep (тот же
+  // язык, что у NeonCard), кайма — accentBorder темы (чужие серые рамки
+  // больше не участвуют)
   return (
-    <View
+    <LinearGradient
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      colors={[themeColors.card, themeColors.deep]}
+      style={{
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: themeColors.accentBorder,
+        overflow: 'hidden',
+      }}
       accessibilityLabel={accessibilityLabel}
-      className="overflow-hidden rounded-3xl border border-bear-bodyLine bg-bear-bodyCard"
     >
       <View className="flex-row items-center">
         <Pressable
@@ -90,6 +105,6 @@ export function CollapsibleCard({
       </View>
 
       {open && <View className="px-4 pb-4">{children}</View>}
-    </View>
+    </LinearGradient>
   )
 }
