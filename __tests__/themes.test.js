@@ -1,12 +1,12 @@
 // Темы оформления (Premium-фича 23.11 «усилить Premium»; неоны с макета
-// 24.11; «Приглушённая» 25.11; правка Кати 26.11: «одну бесплатную
-// черно-белую без каких либо эффектов», «фон белый, а надписи и цифры
-// черные», «сделать значки цветные»; правка Кати 27.11: «Классика будет
-// бело-черная тема» — прежняя navy-«Классика» удалена, «Классика» —
-// бесплатная чёрно-белая тема, остальные шесть — Premium): структура
+// 24.11; «Приглушённая» 25.11; правка Кати 28.11: «мне не нравится как
+// выглядит бело-черная тема. Давай бесплатную тему сделаем которая была
+// до премиум темы — однотонная без эффектов и свечения» — «Классика»
+// снова прежняя navy-палитра (дословно из истории), чёрно-белая
+// (26–27.11, id mono) удалена, остальные шесть тем — Premium): структура
 // палитры (включая подложки overlay/overlay2 вместо жёстких bg-white/*),
 // гейтинг по подписке (resolveThemeId) с переездом старых выборов
-// (THEME_ROLL_FORWARD: classic → mono), карта CSS-переменных
+// (THEME_ROLL_FORWARD: graphite/mono → classic), карта CSS-переменных
 // (themeToCssVars) и СТРАХОВКА соответствия fallback-значений
 // tailwind.config.js палитре «Классики» — если они разъедутся,
 // поддеревья без переменных (окно ошибки, оверлеи) потеряют цвета.
@@ -41,9 +41,9 @@ function contrast(a, b) {
 }
 
 describe('THEMES: структура палитры', () => {
-  test('семь тем: бесплатная «Классика» (чёрно-белая) + шесть Premium', () => {
+  test('семь тем: бесплатная navy-«Классика» + шесть Premium (правка Кати 28.11)', () => {
     expect(THEME_ORDER).toEqual([
-      'mono',
+      'classic',
       'neonLime',
       'neonBlue',
       'neonPurple',
@@ -51,8 +51,10 @@ describe('THEMES: структура палитры', () => {
       'muted',
       'cream',
     ])
-    expect(THEMES.classic).toBeUndefined()
-    expect(DEFAULT_THEME_ID).toBe('mono')
+    expect(THEMES.classic).toBeDefined()
+    // Чёрно-белая (26–27.11) удалена — её выборы переезжают на «Классику»
+    expect(THEMES.mono).toBeUndefined()
+    expect(DEFAULT_THEME_ID).toBe('classic')
     // Блеклые темы сняты с макета — их больше нет
     expect(THEMES.lemon).toBeUndefined()
     expect(THEMES.graphite).toBeUndefined()
@@ -65,53 +67,46 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
-  test('«Классика» — чёрно-белая, светлая, без эффектов, значки цветные (правки Кати 26–27.11)', () => {
-    const mono = THEMES.mono
-    expect(mono.title).toBe('Классика')
-    expect(mono.premium).toBe(false)
-    // Флаг plain: только у монохромной темы — компоненты эффектов
-    // рисуют плоские поверхности
-    expect(mono.plain).toBe(true)
-    for (const id of THEME_ORDER.filter((x) => x !== 'mono')) {
+  test('«Классика» — прежняя navy, ОДНОТОННАЯ: plain без эффектов и свечения (правка Кати 28.11)', () => {
+    const classic = THEMES.classic
+    expect(classic.title).toBe('Классика')
+    expect(classic.premium).toBe(false)
+    // Флаг plain: только у «Классики» — компоненты эффектов
+    // рисуют плоские поверхности, SoftGlow не рисуется
+    expect(classic.plain).toBe(true)
+    for (const id of THEME_ORDER.filter((x) => x !== 'classic')) {
       expect(THEMES[id].plain).toBeFalsy()
     }
     // accent == accentBright — все прочие градиенты приложения
-    // становятся плоской заливкой
-    expect(mono.colors.accent).toBe(mono.colors.accentBright)
+    // становятся плоской фирменной заливкой
+    expect(classic.colors.accent).toBe(classic.colors.accentBright)
     const lum = (hex) => luminance(hex)
-    // «НАОБОРОТ: фон белый, а надписи и цифры черные»: белый фон,
-    // чёрный текст, чёрная кнопка с белым текстом
-    expect(lum(mono.colors.bg)).toBeGreaterThan(0.9)
-    expect(lum(mono.colors.text)).toBeLessThan(0.1)
-    expect(lum(mono.colors.accent)).toBeLessThan(0.1)
-    expect(lum(mono.colors.accentOn)).toBeGreaterThan(0.9)
-    // Слои разведены по светлоте (урок «Кремовой» — «не видно поля»):
-    // фон самый светлый, карточки чуть темнее, поля темнее карточек
-    expect(lum(mono.colors.bg)).toBeGreaterThan(lum(mono.colors.card))
-    expect(lum(mono.colors.card)).toBeGreaterThan(lum(mono.colors.card2))
-    expect(lum(mono.colors.card2)).toBeGreaterThan(lum(mono.colors.deep))
-    // База — строго чёрно-белая: небазовые/несемейные токены — оттенки
-    // серого (R == G == B)
-    const gray = (v) => {
-      const hx = /^#([0-9A-Fa-f]{6})$/.exec(v)
-      if (hx) {
-        const r = parseInt(hx[1].slice(0, 2), 16)
-        const g = parseInt(hx[1].slice(2, 4), 16)
-        const b = parseInt(hx[1].slice(4, 6), 16)
-        return r === g && g === b
-      }
-      const m = /rgba?\((\d+),(\d+),(\d+)/.exec(v.replace(/\s/g, ''))
-      return !!m && m[1] === m[2] && m[2] === m[3]
+    // Прежняя navy-палитра дословно (как до премиум-тем):
+    // тёмно-синий фон, карточки, фиолетовый акцент #7B6CF6
+    expect(classic.colors.bg).toBe('#0A1020')
+    expect(classic.colors.card).toBe('#121B33')
+    expect(classic.colors.accent).toBe('#7B6CF6')
+    expect(classic.colors.text).toBe('#EEF2FB')
+    expect(lum(classic.colors.bg)).toBeLessThan(0.03)
+    // Слои читаются: фон самый тёмный, deep темнее карточки,
+    // pop — самый светлый из поверхностей
+    expect(lum(classic.colors.bg)).toBeLessThan(lum(classic.colors.deep))
+    expect(lum(classic.colors.deep)).toBeLessThan(lum(classic.colors.card))
+    expect(lum(classic.colors.card)).toBeLessThan(lum(classic.colors.pop))
+    // Значки — прежние ФИРМЕННЫЕ цвета (семья не серая)
+    const CLASSIC_FAMILY = {
+      good: '#4ade80', warn: '#FBBF24', bad: '#FB7185',
+      nutP: '#A78BFA', nutF: '#FB923C', nutC: '#38BDF8',
+      nutFib: '#34D399', nutSug: '#F472B6',
+      mSteps: '#4ade80', mKcal: '#f87171', mWater: '#38bdf8',
+      mBurned: '#fb923c', mSleep: '#c084fc', mWeight: '#a78bfa',
     }
-    for (const token of ['bg', 'card', 'card2', 'deep', 'pop', 'line', 'bodyCard', 'bodyLine', 'text', 'sub', 'sub2', 'dim', 'soft', 'bright', 'link', 'accent', 'accentBright', 'accentSoft', 'accentOn', 'accentFaint', 'accentFaint2', 'accentFaint3', 'accentStrong', 'accentBorder', 'overlay', 'overlay2']) {
-      expect(gray(mono.colors[token])).toBe(true)
+    for (const [token, color] of Object.entries(CLASSIC_FAMILY)) {
+      expect(classic.colors[token]).toBe(color)
     }
-    // «СДЕЛАТЬ ЗНАЧКИ ЦВЕТНЫЕ»: семейство значков — ЦВЕТНОЕ на ч/б фоне
-    for (const token of ['good', 'warn', 'bad', 'nutP', 'nutF', 'nutC', 'nutFib', 'nutSug', 'mSteps', 'mKcal', 'mWater', 'mBurned', 'mSleep', 'mWeight']) {
-      expect(gray(mono.colors[token])).toBe(false)
-    }
-    // Подложки: у светлой темы — тёмные тинты (белые были невидимы)
-    expect(gray(mono.colors.overlay)).toBe(true)
+    // Подложки: у тёмной темы — белые тинты (как были bg-white/*)
+    expect(classic.colors.overlay).toContain('255,255,255')
+    expect(classic.colors.overlay2).toContain('255,255,255')
   })
 
   test('подложки overlay/overlay2 у всех тем, у светлых — тёмные тинты (аудит 27.11)', () => {
@@ -121,24 +116,23 @@ describe('THEMES: структура палитры', () => {
       expect(typeof c.overlay2).toBe('string')
     }
     // Тёмные темы: белые тинты (сохраняют прежний вид bg-white/*)
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
+    for (const id of ['classic', 'neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
       expect(THEMES[id].colors.overlay).toContain('255,255,255')
       expect(THEMES[id].colors.overlay2).toContain('255,255,255')
     }
     // Светлые темы: тёмные тинты — поля видны
-    expect(THEMES.mono.colors.overlay).toContain('0,0,0')
     expect(THEMES.cream.colors.overlay).not.toContain('255,255,255')
   })
 
-  test('семья «Классики» читается на светлой card по WCAG AA', () => {
-    const c = THEMES.mono.colors
+  test('семья «Классики» — прежние фирменные цвета — читаются на тёмной card по WCAG AA', () => {
+    const c = THEMES.classic.colors
     for (const token of ['good', 'warn', 'bad', 'nutP', 'nutF', 'nutC', 'nutFib', 'nutSug', 'mSteps', 'mKcal', 'mWater', 'mBurned', 'mSleep', 'mWeight']) {
       expect(contrast(c.card, c[token])).toBeGreaterThanOrEqual(4.5)
     }
   })
 
   test('названия тем', () => {
-    expect(THEMES.mono.title).toBe('Классика')
+    expect(THEMES.classic.title).toBe('Классика')
     expect(THEMES.neonLime.title).toBe('Неон-лайм')
     expect(THEMES.neonBlue.title).toBe('Неон-синий')
     expect(THEMES.neonPurple.title).toBe('Неон-фиолетовый')
@@ -148,7 +142,7 @@ describe('THEMES: структура палитры', () => {
   })
 
   test('шесть Premium-тем помечены premium, бесплатная одна — «Классика»', () => {
-    expect(THEMES.mono.premium).toBe(false)
+    expect(THEMES.classic.premium).toBe(false)
     for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
       expect(THEMES[id].premium).toBe(true)
     }
@@ -252,15 +246,16 @@ describe('THEMES: структура палитры', () => {
     expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
   })
 
-  test('«Классика» — светлая тема: вторичные тексты читаются по WCAG AA', () => {
-    const c = THEMES.mono.colors
-    expect(contrast(c.bg, '#000000')).toBeGreaterThan(6)
+  test('«Классика» — тёмная navy: тексты читаются по WCAG AA', () => {
+    const c = THEMES.classic.colors
+    expect(contrast(c.bg, c.text)).toBeGreaterThan(12)
     expect(contrast(c.card, c.text)).toBeGreaterThan(9)
     expect(contrast(c.card, c.sub)).toBeGreaterThanOrEqual(4.5)
     expect(contrast(c.card, c.sub2)).toBeGreaterThanOrEqual(4.5)
     expect(contrast(c.card, c.dim)).toBeGreaterThanOrEqual(4.5)
     expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
-    expect(contrast(c.accent, c.accentOn)).toBeGreaterThan(12)
+    // Белый текст НА фирменном фиолетовом — как было до премиум-тем
+    expect(contrast(c.accent, c.accentOn)).toBeGreaterThan(3)
   })
 
   test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
@@ -276,13 +271,13 @@ describe('THEMES: структура палитры', () => {
 })
 
 describe('resolveThemeId: гейтинг по подписке и переезд старых выборов', () => {
-  test('премиум-тема без подписки → «Классика»; бесплатные доступны всем', () => {
+  test('премиум-тема без подписки → «Классика»; бесплатная доступна всем', () => {
     for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
-      expect(resolveThemeId(id, false)).toBe('mono')
+      expect(resolveThemeId(id, false)).toBe('classic')
     }
     // «Классика» — бесплатная: работает и без подписки, и с ней
-    expect(resolveThemeId('mono', false)).toBe('mono')
-    expect(resolveThemeId('mono', true)).toBe('mono')
+    expect(resolveThemeId('classic', false)).toBe('classic')
+    expect(resolveThemeId('classic', true)).toBe('classic')
   })
 
   test('премиум-тема с подпиской → сама тема', () => {
@@ -291,31 +286,31 @@ describe('resolveThemeId: гейтинг по подписке и переезд
     }
   })
 
-  test('старые выборы переезжают: navy-«Классика» и «графит» → новая «Классика» (правка Кати 27.11)', () => {
+  test('старые выборы переезжают: чёрно-белая (mono) и «графит» → «Классика» (правка Кати 28.11)', () => {
     expect(THEME_ROLL_FORWARD).toEqual({
       lemon: 'neonLime',
       ocean: 'neonBlue',
       plum: 'neonPurple',
       forest: 'neonCyan',
-      graphite: 'mono',
-      classic: 'mono',
+      graphite: 'classic',
+      mono: 'classic',
     })
     expect(resolveThemeId('lemon', true)).toBe('neonLime')
     expect(resolveThemeId('ocean', true)).toBe('neonBlue')
     expect(resolveThemeId('plum', true)).toBe('neonPurple')
     expect(resolveThemeId('forest', true)).toBe('neonCyan')
-    // Прежняя navy-«Классика» удалена — её выбор переезжает на новую
-    expect(resolveThemeId('classic', true)).toBe('mono')
-    expect(resolveThemeId('classic', false)).toBe('mono')
-    expect(resolveThemeId('graphite', true)).toBe('mono')
+    // Чёрно-белая удалена — её выбор переезжает на «Классику»
+    expect(resolveThemeId('mono', true)).toBe('classic')
+    expect(resolveThemeId('mono', false)).toBe('classic')
+    expect(resolveThemeId('graphite', true)).toBe('classic')
     // без подписки переезд неонов сначала уводит в «Классику» (гейтинг)
-    expect(resolveThemeId('lemon', false)).toBe('mono')
+    expect(resolveThemeId('lemon', false)).toBe('classic')
   })
 
   test('неизвестный/битый id → «Классика» (безопасный дефолт)', () => {
-    expect(resolveThemeId('nope', true)).toBe('mono')
-    expect(resolveThemeId(null, true)).toBe('mono')
-    expect(resolveThemeId(undefined, false)).toBe('mono')
+    expect(resolveThemeId('nope', true)).toBe('classic')
+    expect(resolveThemeId(null, true)).toBe('classic')
+    expect(resolveThemeId(undefined, false)).toBe('classic')
   })
 })
 
@@ -387,12 +382,12 @@ describe('помощники цвета: withAlpha / blendHex / bmiTones (пра
   })
 
   test('bmiTones: тона привязаны к семантике темы (норма — good, ожирение — bad)', () => {
-    const mono = THEMES.mono.colors
-    const tMono = bmiTones(mono)
-    expect(tMono.norm).toBe(mono.good)
-    expect(tMono.obese1).toBe(mono.bad)
-    expect(tMono.low).toBe(mono.warn)
-    expect(tMono.over).toBe(blendHex(mono.warn, mono.bad, 0.5))
+    const classic = THEMES.classic.colors
+    const tClassic = bmiTones(classic)
+    expect(tClassic.norm).toBe(classic.good)
+    expect(tClassic.obese1).toBe(classic.bad)
+    expect(tClassic.low).toBe(classic.warn)
+    expect(tClassic.over).toBe(blendHex(classic.warn, classic.bad, 0.5))
     // В кремовой тема остаётся тёплой: норма — янтарь, не зелёный
     const cream = THEMES.cream.colors
     expect(bmiTones(cream).norm).toBe(cream.good)
