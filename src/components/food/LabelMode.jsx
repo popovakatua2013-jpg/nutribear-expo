@@ -137,7 +137,7 @@ export function LabelMode({ onPick }) {
             onPress={() => pickPhoto(true)}
             accessibilityRole="button"
             accessibilityLabel="Снять этикетку камерой"
-            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-4 active:bg-white/10"
+            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-4 active:bg-bear-overlay2"
           >
             <View
               className="h-9 w-9 items-center justify-center rounded-xl"
@@ -154,7 +154,7 @@ export function LabelMode({ onPick }) {
             onPress={() => pickPhoto(false)}
             accessibilityRole="button"
             accessibilityLabel="Выбрать фото этикетки из галереи"
-            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-4 active:bg-white/10"
+            className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-4 active:bg-bear-overlay2"
           >
             <View
               className="h-9 w-9 items-center justify-center rounded-xl"
@@ -194,13 +194,13 @@ export function LabelMode({ onPick }) {
       )}
 
       {error ? (
-        <View className="mt-4 rounded-2xl border border-bear-line bg-white/[0.04] px-4 py-3">
+        <View className="mt-4 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3">
           <Text className="font-sans text-[16.5px] leading-[19px] text-bear-text">{error}</Text>
           <Pressable
             onPress={() => recognize(photo)}
             accessibilityRole="button"
             accessibilityLabel="Повторить распознавание"
-            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
+            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-bear-overlay py-2 active:bg-bear-overlay2"
           >
             <RefreshCcw size={15} color={themeColors.soft} />
             <Text className="font-semibold text-[16.5px] text-bear-soft">Попробовать ещё раз</Text>

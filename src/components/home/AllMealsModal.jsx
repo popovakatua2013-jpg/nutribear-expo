@@ -174,7 +174,7 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
                 <View
                   key={meal.id}
                   accessibilityLabel={`Приём пищи ${meal.name}`}
-                  className="rounded-2xl border border-bear-line bg-white/[0.03] p-3"
+                  className="rounded-2xl border border-bear-line bg-bear-overlay p-3"
                 >
                   {/* Заголовок: тап сворачивает/разворачивает секцию */}
                   <View className="flex-row items-center justify-between gap-2">

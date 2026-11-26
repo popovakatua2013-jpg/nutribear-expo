@@ -223,7 +223,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
             <Pressable
               onPress={onClose}
               accessibilityLabel="Закрыть"
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-overlay active:bg-bear-overlay2"
             >
               <X hitSlop={10} size={20} color={themeColors.sub} />
             </Pressable>
@@ -245,7 +245,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Название блюда"
               placeholder="Название блюда"
               placeholderTextColor={themeColors.dim}
-              className="mt-1 rounded-2xl border border-bear-line bg-white/5 px-4 py-2 text-[20px] text-bear-text"
+              className="mt-1 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2 text-[20px] text-bear-text"
             />
 
             {/* Описание — своими словами (попадёт в дневник) */}
@@ -260,7 +260,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
               accessibilityLabel="Описание блюда"
               placeholder="Например: свинина 300 грамм, картошка 500 грамм, свёкла 200 грамм"
               placeholderTextColor={themeColors.dim}
-              className="mt-1 min-h-[60px] rounded-2xl border border-bear-line bg-white/5 px-4 py-2 text-[20px] leading-[23px] text-bear-text"
+              className="mt-1 min-h-[60px] rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2 text-[20px] leading-[23px] text-bear-text"
             />
 
             {/* Пересчёт — сразу под составом (отзыв Кати 19.11: кнопку
@@ -284,7 +284,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
             {/* Расшифровка расчёта: что и сколько вошло в калории.
                 Показывается сразу, как только в описании появился состав */}
             {recipe ? (
-              <View className="mt-2.5 rounded-2xl border border-bear-line bg-white/5 px-3.5 py-2.5">
+              <View className="mt-2.5 rounded-2xl border border-bear-line bg-bear-overlay px-3.5 py-2.5">
                 <Text className="font-sans text-[12px] font-semibold uppercase text-bear-sub">
                   Как посчитано
                 </Text>
@@ -326,7 +326,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                 keyboardType="number-pad"
                 maxLength={5}
                 accessibilityLabel="Калории на 100 грамм"
-                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-bear-overlay py-2 text-center text-[20px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">ккал</Text>
             </View>
@@ -348,7 +348,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     keyboardType="number-pad"
                     maxLength={5}
                     accessibilityLabel={`${fld.label} на 100 грамм`}
-                    className="rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                    className="rounded-2xl border border-bear-line bg-bear-overlay py-2 text-center text-[20px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}
@@ -375,7 +375,7 @@ export function EditAiFoodModal({ open, onClose, item, grams, onApply }) {
                     accessibilityLabel={`${fld.label} на 100 грамм`}
                     placeholder="0"
                     placeholderTextColor={themeColors.dim}
-                    className="rounded-2xl border border-bear-line bg-white/5 py-2 text-center text-[20px] text-bear-text"
+                    className="rounded-2xl border border-bear-line bg-bear-overlay py-2 text-center text-[20px] text-bear-text"
                   />
                   <Text className="mt-1 text-center font-sans text-[16px] text-bear-sub">
                     {fld.label}

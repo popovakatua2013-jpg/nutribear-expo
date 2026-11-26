@@ -23,6 +23,7 @@ import {
 } from '@/lib/data/bmi'
 import { recommendedKcal } from '@/lib/goal'
 import { useProfileStore } from '@/store/useProfileStore'
+import { useOnboardingStore } from '@/store/useOnboardingStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useThemeColors } from '@/lib/use-theme'
 
@@ -82,11 +83,15 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
     Number.isFinite(hRaw) && hRaw >= 80 && hRaw <= 250 ? healthyRange(hRaw) : null
   const suggestKg = suggestRange ? Math.round((suggestRange.min + suggestRange.max) / 2) : 0
 
-  // Пересчёт дневной нормы под цель: дефицит ≈ 500 ккал (≈ −0,5 кг/нед),
-  // профицит ≈ +300; ниже безопасного пола не опускаемся (lib/goal.js).
+  // Пересчёт дневной нормы под цель: дефицит/профицит — от ТЕМПА из
+  // анкеты (answers.pace) — дословно та же формула, что считала план при
+  // регистрации (аудит Кати 27.11: «неверно рассчитывается норма бжу» —
+  // раньше здесь был фиксированный −500 ккал, и норма «сами менялась»
+  // после пересчёта); ниже безопасного пола не опускаемся (lib/goal.js).
   // Спрашиваем только когда считаем заметно иначе, чем в целях сейчас
   function maybeRecalcKcal(goal, weight, height) {
     const prof = useProfileStore.getState()
+    const pace = Number(useOnboardingStore.getState().answers?.pace) || 0.5
     const target = recommendedKcal({
       sex: prof.sex,
       age: prof.age,
@@ -94,6 +99,7 @@ function WeightBody({ height, weight, goalWeight, onSave, onClose }) {
       weightKg: weight,
       activityId: prof.activityId,
       goalId: goal < weight ? 'lose' : goal > weight ? 'gain' : 'keep',
+      paceKgPerWeek: pace,
     })
     const current = useGoalsStore.getState().goals.kcal
     if (Math.abs(current - target) < 10) return

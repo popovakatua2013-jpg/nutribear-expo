@@ -458,7 +458,7 @@ export default function HomeScreen() {
                   accessibilityLabel="Количество шагов"
                   autoFocus
                   onSubmitEditing={saveSteps}
-                  className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                  className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-bear-overlay py-2.5 text-center text-[19px] text-bear-text"
                 />
                 <Text className="shrink-0 font-sans text-[19px] text-bear-sub">шагов</Text>
               </View>
@@ -517,7 +517,7 @@ export default function HomeScreen() {
                 placeholderTextColor={themeColors.dim}
                 accessibilityLabel="Новое значение цели"
                 autoFocus
-                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text"
+                className="min-w-0 flex-1 rounded-2xl border border-bear-line bg-bear-overlay py-2.5 text-center text-[19px] text-bear-text"
               />
               <Text className="shrink-0 font-sans text-[19px] text-bear-sub">{goalEdit?.unit}</Text>
             </View>

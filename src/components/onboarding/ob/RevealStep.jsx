@@ -86,11 +86,11 @@ export function RevealStep({ onNext, onBack }) {
       </View>
 
       {/* Три главные цифры плана */}
-      <View className="mt-5 flex-row items-stretch rounded-3xl border border-white/5 bg-bear-card p-4">
+      <View className="mt-5 flex-row items-stretch rounded-3xl border border-bear-line bg-bear-card p-4">
         <Stat emoji="🔥" value={formatNum(plan.targetKcal)} caption="ккал/день" />
-        <View className="w-px self-stretch bg-white/5" />
+        <View className="w-px self-stretch bg-bear-overlay" />
         <Stat emoji="🏋️" value={workoutsShort} caption="тренировки в неделю" />
-        <View className="w-px self-stretch bg-white/5" />
+        <View className="w-px self-stretch bg-bear-overlay" />
         <Stat emoji="💧" value={String(glasses)} caption="стаканы воды" />
       </View>
 
@@ -102,7 +102,7 @@ export function RevealStep({ onNext, onBack }) {
       <Pressable
         onPress={() => setOpen((v) => !v)}
         accessibilityLabel={open ? 'Скрыть план' : 'Показать план'}
-        className="mt-3 flex-row items-center justify-between rounded-2xl border border-white/5 bg-bear-card/60 px-4 py-3"
+        className="mt-3 flex-row items-center justify-between rounded-2xl border border-bear-line bg-bear-card/60 px-4 py-3"
       >
         <Text className="font-bold text-[17.5px] text-bear-text">
           {open ? 'Скрыть подробности' : 'Показать план'}
@@ -116,7 +116,7 @@ export function RevealStep({ onNext, onBack }) {
 
       {open ? (
         <View className="mt-2.5 gap-3">
-          <View className="rounded-2xl border border-white/5 bg-bear-card p-4">
+          <View className="rounded-2xl border border-bear-line bg-bear-card p-4">
             <Text className="font-semibold text-[16.5px] text-bear-sub2">
               Целевые БЖУ на день
             </Text>
@@ -133,7 +133,7 @@ export function RevealStep({ onNext, onBack }) {
           </View>
 
           {plan.projection ? (
-            <View className="rounded-2xl border border-white/5 bg-bear-card p-4">
+            <View className="rounded-2xl border border-bear-line bg-bear-card p-4">
               <Text className="font-semibold text-[16.5px] text-bear-sub2">Прогноз веса</Text>
               <View className="mt-2">
                 <SvgLineChart

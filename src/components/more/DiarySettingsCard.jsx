@@ -55,7 +55,7 @@ export function DiarySettingsCard({ embedded = false }) {
       accessibilityLabel="Учитывать сожжённые калории в остатке"
       value={countBurned}
       onValueChange={(v) => setGoals({ countBurned: v })}
-      trackColor={{ true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }}
+      trackColor={{ true: themeColors.accent, false: themeColors.overlay2 }}
       thumbColor={themeColors.accentOn}
     />
   )
@@ -90,7 +90,7 @@ export function DiarySettingsCard({ embedded = false }) {
           )}
         </Pressable>
         {moreOpen && (
-          <View className="gap-2 rounded-2xl bg-white/[0.03] p-3">
+          <View className="gap-2 rounded-2xl bg-bear-overlay p-3">
             <Text className="font-sans text-[13px] leading-snug text-bear-sub">
               {countBurned
                 ? 'Так же считают MyFitnessPal и Samsung Health: потраченное возвращается в дневной баланс. Учтите: приложения часто преувеличивают сожжённое — если цифры сомнительны, выключите возврат.'
@@ -103,7 +103,7 @@ export function DiarySettingsCard({ embedded = false }) {
         )}
 
         {/* ── Особые дни: прибавка ккал к норме ─────────────────────── */}
-        <View className="gap-2 rounded-2xl bg-white/[0.03] p-3">
+        <View className="gap-2 rounded-2xl bg-bear-overlay p-3">
           <Text className="font-bold text-[15px] text-bear-text">🗓 Особые дни</Text>
           <Text className="font-sans text-[13px] leading-snug text-bear-sub">
             В такой день норма вырастает на прибавку. Повышенный колораж для менструации работает только по трекеру цикла (Ещё → Здоровье → Цикл) — он отмечает дни месячных сам. Командировку (на сколько дней — спросит само) и праздник отметьте чипом «Особый день» на Главной.
@@ -117,7 +117,7 @@ export function DiarySettingsCard({ embedded = false }) {
             return (
               <View
                 key={t}
-                className="flex-row items-center gap-2 rounded-xl bg-white/[0.03] px-2.5 py-2"
+                className="flex-row items-center gap-2 rounded-xl bg-bear-overlay px-2.5 py-2"
               >
                 <Text className="w-7 text-center text-[17px]">{meta.emoji}</Text>
                 <Text
@@ -135,7 +135,7 @@ export function DiarySettingsCard({ embedded = false }) {
                   accessibilityRole="button"
                   accessibilityLabel={`Уменьшить прибавку для «${meta.label}»`}
                   hitSlop={6}
-                  className={`${btn} bg-white/5 ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
+                  className={`${btn} bg-bear-overlay ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
                 >
                   <Minus size={15} color={themeColors.soft} />
                 </Pressable>
@@ -151,7 +151,7 @@ export function DiarySettingsCard({ embedded = false }) {
                   accessibilityRole="button"
                   accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
                   hitSlop={6}
-                  className={`${btn} ${val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''}`}
+                  className={`${btn} ${val >= DELTA_MAX ? 'bg-bear-overlay opacity-30' : ''}`}
                   style={val >= DELTA_MAX ? null : { backgroundColor: themeColors.accentFaint2 }}
                 >
                   <Plus size={15} color={themeColors.accentBright} />
@@ -199,7 +199,7 @@ export function DiarySettingsCard({ embedded = false }) {
         )}
       </Pressable>
       {moreOpen && (
-        <View className="mt-2 gap-2 rounded-2xl bg-white/[0.03] p-3">
+        <View className="mt-2 gap-2 rounded-2xl bg-bear-overlay p-3">
           <Text className="font-sans text-[13px] leading-snug text-bear-sub">
             {countBurned
               ? 'Так же считают MyFitnessPal и Samsung Health: потраченное возвращается в дневной баланс. Учтите: приложения часто преувеличивают сожжённое — если цифры сомнительны, выключите возврат.'
@@ -212,7 +212,7 @@ export function DiarySettingsCard({ embedded = false }) {
       )}
 
       {/* ── Особые дни: прибавка ккал к норме ─────────────────────────── */}
-      <View className="mt-3 gap-2 rounded-2xl bg-white/[0.03] p-3">
+      <View className="mt-3 gap-2 rounded-2xl bg-bear-overlay p-3">
         <Text className="font-bold text-[15px] text-bear-text">🗓 Особые дни</Text>
         <Text className="font-sans text-[13px] leading-snug text-bear-sub">
           В такой день норма вырастает на прибавку. Повышенный колораж для менструации работает только по трекеру цикла (Ещё → Здоровье → Цикл) — он отмечает дни месячных сам. Командировку (на сколько дней — спросит само) и праздник отметьте чипом «Особый день» на Главной.
@@ -226,7 +226,7 @@ export function DiarySettingsCard({ embedded = false }) {
           return (
             <View
               key={t}
-              className="flex-row items-center gap-2 rounded-xl bg-white/[0.03] px-2.5 py-2"
+              className="flex-row items-center gap-2 rounded-xl bg-bear-overlay px-2.5 py-2"
             >
               <Text className="w-7 text-center text-[17px]">{meta.emoji}</Text>
               <Text
@@ -244,7 +244,7 @@ export function DiarySettingsCard({ embedded = false }) {
                 accessibilityRole="button"
                 accessibilityLabel={`Уменьшить прибавку для «${meta.label}»`}
                 hitSlop={6}
-                className={`${btn} bg-white/5 ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
+                className={`${btn} bg-bear-overlay ${val <= DELTA_MIN ? 'opacity-30' : ''}`}
               >
                 <Minus size={15} color={themeColors.soft} />
               </Pressable>
@@ -260,7 +260,7 @@ export function DiarySettingsCard({ embedded = false }) {
                 accessibilityRole="button"
                 accessibilityLabel={`Увеличить прибавку для «${meta.label}»`}
                 hitSlop={6}
-                className={`${btn} ${val >= DELTA_MAX ? 'bg-white/5 opacity-30' : ''}`}
+                className={`${btn} ${val >= DELTA_MAX ? 'bg-bear-overlay opacity-30' : ''}`}
                 style={val >= DELTA_MAX ? null : { backgroundColor: themeColors.accentFaint2 }}
               >
                 <Plus size={15} color={themeColors.accentBright} />

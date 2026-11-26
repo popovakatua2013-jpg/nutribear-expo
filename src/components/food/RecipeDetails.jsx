@@ -85,7 +85,7 @@ export function RecipeDetails({ recipe, onClose, onLog, onEdit }) {
             onPress={onEdit}
             accessibilityRole="button"
             accessibilityLabel={`Изменить рецепт «${recipe.name}»`}
-            className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-white/5 py-2.5 active:bg-white/10"
+            className="flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-bear-overlay py-2.5 active:bg-bear-overlay2"
           >
             <Pencil size={15} color={themeColors.soft} />
             <Text className="font-semibold text-[15px] text-bear-soft">Изменить рецепт</Text>

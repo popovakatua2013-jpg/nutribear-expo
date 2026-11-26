@@ -127,7 +127,7 @@ export function DataPortability({ embedded = false }) {
         onPress={confirmExport}
         accessibilityRole="button"
         accessibilityLabel="Сохранить резервную копию данных"
-        className="mt-3 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="mt-3 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3.5 active:opacity-80"
       >
         <FileDown size={20} color={themeColors.accentSoft} />
         <View className="min-w-0 flex-1">
@@ -144,7 +144,7 @@ export function DataPortability({ embedded = false }) {
         onPress={importBackup}
         accessibilityRole="button"
         accessibilityLabel="Восстановить данные из резервной копии"
-        className="mt-2 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="mt-2 flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3.5 active:opacity-80"
       >
         <FileUp size={20} color={themeColors.accentSoft} />
         <View className="min-w-0 flex-1">

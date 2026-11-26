@@ -123,7 +123,7 @@ export function PremiumCard({ embedded = false }) {
             onPress={drop}
             accessibilityRole="button"
             accessibilityLabel="Отключить Premium"
-            className="items-center rounded-2xl border border-bear-line bg-white/5 py-3 active:bg-white/10"
+            className="items-center rounded-2xl border border-bear-line bg-bear-overlay py-3 active:bg-bear-overlay2"
           >
             <Text className="font-semibold text-[15.5px] text-bear-sub">
               Отключить Premium
@@ -167,12 +167,12 @@ export function PremiumCard({ embedded = false }) {
                   }
                   className={`flex-row items-center justify-between rounded-2xl border px-3.5 py-3 active:opacity-80 ${
                     p.id === 'trial'
-                      ? 'border-bear-line bg-white/[0.04]'
+                      ? 'border-bear-line bg-bear-overlay'
                       : selected
                         ? 'border-bear-accentBorder bg-bear-accentFaint'
                         : p.best
                           ? 'border-amber-400/40 bg-amber-400/10'
-                          : 'border-bear-line bg-white/[0.04]'
+                          : 'border-bear-line bg-bear-overlay'
                   }`}
                 >
                   <View className="min-w-0 flex-1">
@@ -216,7 +216,7 @@ export function PremiumCard({ embedded = false }) {
               autoCapitalize="characters"
               autoCorrect={false}
               accessibilityLabel="Ввод кода активации Premium"
-              className="rounded-2xl border border-bear-line bg-white/5 px-3.5 py-3 text-[15px] text-bear-text"
+              className="rounded-2xl border border-bear-line bg-bear-overlay px-3.5 py-3 text-[15px] text-bear-text"
             />
             <Pressable
               onPress={redeemCode}

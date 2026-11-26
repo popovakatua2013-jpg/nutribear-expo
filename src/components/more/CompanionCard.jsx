@@ -66,8 +66,8 @@ export function CompanionCard({ embedded = false }) {
                 active
                   ? 'border-bear-accent bg-bear-accentFaint3'
                   : locked
-                    ? 'border-bear-line bg-white/[0.02]'
-                    : 'border-bear-line bg-white/[0.03]'
+                    ? 'border-bear-line bg-bear-overlay'
+                    : 'border-bear-line bg-bear-overlay'
               }`}
             >
               {/* Аватар */}
@@ -121,7 +121,7 @@ export function CompanionCard({ embedded = false }) {
                   <Check size={15} color={themeColors.accentOn} strokeWidth={3} />
                 </View>
               ) : locked ? (
-                <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5">
+                <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bear-overlay">
                   <Lock size={14} color={themeColors.dim} />
                 </View>
               ) : null}

@@ -49,7 +49,7 @@ function TimeChip({ text, open, onPress }) {
       accessibilityState={{ expanded: open }}
       accessibilityLabel={`Окно времени: ${text}`}
       hitSlop={4}
-      className="max-w-[180px] shrink-0 flex-row items-center gap-1 rounded-full border border-bear-line bg-white/[0.06] px-2.5 py-1 active:opacity-70"
+      className="max-w-[180px] shrink-0 flex-row items-center gap-1 rounded-full border border-bear-line bg-bear-overlay px-2.5 py-1 active:opacity-70"
     >
       <Text
         numberOfLines={1}
@@ -72,7 +72,7 @@ function TimeChip({ text, open, onPress }) {
 // expand — что показать под строкой после тапа по чипу.
 function ReminderRow({ icon, title, enabled, onToggle, timeEl, expanded, expand }) {
   return (
-    <View className="rounded-2xl bg-white/[0.04]">
+    <View className="rounded-2xl bg-bear-overlay">
       <View className="flex-row items-center gap-2 px-3 py-2">
         <Text className="w-[24px] shrink-0 text-center text-[17px]">{icon}</Text>
         <Text
@@ -153,7 +153,7 @@ export function NotificationsSection() {
             {MEALS.map((m) => (
               <View
                 key={m.key}
-                className="flex-row items-center justify-between gap-2 rounded-xl bg-white/[0.03] px-2.5 py-1.5"
+                className="flex-row items-center justify-between gap-2 rounded-xl bg-bear-overlay px-2.5 py-1.5"
               >
                 <Text
                   maxFontSizeMultiplier={1.1}

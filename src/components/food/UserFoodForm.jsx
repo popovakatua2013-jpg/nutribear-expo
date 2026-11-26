@@ -100,7 +100,7 @@ export function UserFoodForm({ open, onClose, initial }) {
     doSave(kcalN)
   }
 
-  const field = 'min-w-0 flex-1 rounded-2xl border border-bear-line bg-white/5 py-2.5 text-center text-[19px] text-bear-text'
+  const field = 'min-w-0 flex-1 rounded-2xl border border-bear-line bg-bear-overlay py-2.5 text-center text-[19px] text-bear-text'
 
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -142,7 +142,7 @@ export function UserFoodForm({ open, onClose, initial }) {
               placeholder="Например: Сырники бабушки"
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название своего продукта"
-              className="mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2.5 text-[19px] text-bear-text"
             />
 
             {/* Эмодзи-картинки продуктов убраны (отзыв Кати 21.11:

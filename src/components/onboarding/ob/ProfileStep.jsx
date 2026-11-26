@@ -247,7 +247,7 @@ export function ProfileStep({ onNext, onBack }) {
         </Row>
 
         {isGainLose ? (
-          <View className="rounded-2xl border border-white/5 bg-bear-card/60 p-3.5">
+          <View className="rounded-2xl border border-bear-line bg-bear-card/60 p-3.5">
             <PillRow
               label="Темп (влияет на норму калорий)"
               options={PACE_OPTIONS}
@@ -272,14 +272,14 @@ export function ProfileStep({ onNext, onBack }) {
 function Row({ icon: Icon, tint, label, value, open, onToggle, children }) {
   const themeColors = useThemeColors()
   return (
-    <View className="rounded-2xl border border-white/5 bg-bear-card">
+    <View className="rounded-2xl border border-bear-line bg-bear-card">
       <Pressable
         onPress={onToggle}
         accessibilityLabel={label}
         accessibilityState={{ expanded: open }}
         className="flex-row items-center gap-3 p-3.5"
       >
-        <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/5">
+        <View className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bear-overlay">
           <Icon size={19} color={tint} />
         </View>
         <Text className="min-w-0 flex-1 font-bold text-[19px] text-bear-text" numberOfLines={1}>
@@ -310,7 +310,7 @@ function NumInput({ value, onChange, suffix, placeholder, keyboardType = 'decima
         keyboardType={keyboardType}
         placeholder={placeholder}
         placeholderTextColor={themeColors.dim}
-        className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-4 pr-14 font-sans text-[20px] text-white"
+        className="rounded-xl border border-bear-line bg-bear-overlay py-2.5 pl-4 pr-14 font-sans text-[20px] text-white"
       />
       {suffix ? (
         <Text

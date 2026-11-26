@@ -22,7 +22,7 @@ export function FoodList({ items, emptyText, onPick, scroll = true }) {
     <Pressable
       onPress={() => onPick(item)}
       accessibilityRole="button"
-      className="flex-row items-center overflow-hidden rounded-2xl bg-white/[0.04] px-3 py-2.5 active:bg-bear-pop"
+      className="flex-row items-center overflow-hidden rounded-2xl bg-bear-overlay px-3 py-2.5 active:bg-bear-pop"
     >
       <View className="min-w-0 flex-1 gap-0.5">
         <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">

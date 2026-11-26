@@ -22,7 +22,7 @@ import { useThemeColors } from '@/lib/use-theme'
 
 
 const SWITCH_COLORS = { true: '#4D7CFE', false: 'rgba(255,255,255,0.15)' }
-const row = 'flex-row items-center gap-3 rounded-2xl border border-white/5 bg-bear-card p-4'
+const row = 'flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-card p-4'
 const IS_ANDROID = Platform.OS === 'android'
 const IS_IOS = Platform.OS === 'ios'
 const IS_WEB = Platform.OS === 'web'
@@ -137,7 +137,7 @@ export function PermissionsStep({ onBack }) {
         </View>
 
         {!IS_WEB && (
-          <View className="gap-2.5 rounded-2xl border border-white/5 bg-bear-card/60 p-4">
+          <View className="gap-2.5 rounded-2xl border border-bear-line bg-bear-card/60 p-4">
             {/* iOS — Apple Health (локальный тумблер); на Android Health
                 Connect подключается после запуска (окно разрешения и
                 импорт истории — в «Ещё → Шаги и здоровье»), Google Fit

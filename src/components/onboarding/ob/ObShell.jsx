@@ -37,7 +37,7 @@ export function ObShell({
           <Pressable
             onPress={onBack}
             accessibilityLabel="Назад"
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
           >
             <ChevronLeft size={22} color={themeColors.soft} />
           </Pressable>

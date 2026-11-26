@@ -1,6 +1,7 @@
-// Карточка «Оформление» (Premium-фича, задача Кати 23.11): выбор темы
-// приложения. «Классика» — бесплатно, остальные темы — Premium (без
-// подписки премиум-тема не применяется: тап показывает подсказку).
+// Карточка «Оформление»: выбор темы приложения. «Классика» —
+// бесплатная ЧЁРНО-БЕЛОЯ тема (правка Кати 27.11: «Классика будет
+// бело-черная тема» — прежняя navy удалена); остальные шесть — Premium
+// (без подписки премиум-тема не применяется: тап показывает подсказку).
 // Выбор живёт в useUiPrefsStore.themeId и переживает перезапуск;
 // переменные темы прокидываются в корневом макете (use-theme.js).
 // Режим embedded: содержимое встраивается в строку меню «Оформление»
@@ -66,7 +67,7 @@ export function ThemeCard({ embedded = false }) {
     setTheme(theme.id)
     toast({
       title: `🎨 Тема «${theme.title}» включена`,
-      description: theme.premium ? 'Спасибо, что вы с нами 👑' : 'Классическая палитра NutriBear',
+      description: theme.premium ? 'Спасибо, что вы с нами 👑' : 'Строгая чёрно-белая палитра без эффектов',
     })
   }
 
@@ -88,7 +89,7 @@ export function ThemeCard({ embedded = false }) {
             }
             accessibilityState={{ selected }}
             className={`flex-row items-center gap-3 rounded-2xl border px-3 py-2.5 active:opacity-80 ${
-              selected ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-bear-line bg-white/[0.04]'
+              selected ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-bear-line bg-bear-overlay'
             }`}
           >
             <ThemeSwatch colors={theme.colors} />
@@ -106,12 +107,21 @@ export function ThemeCard({ embedded = false }) {
           </Pressable>
         )
       })}
-      <Text className="mt-1 px-1 font-sans text-[12.5px] leading-snug text-bear-dim">
-        Восемь тем: шесть Premium — четыре неона с макета, спокойная
-        «Приглушённая» и тёплая «Кремовая» — рамки, кнопки, тумблеры и
-        пилюли светятся цветом темы. Бесплатные — нейтральная «Классика»
-        и строгая «Чёрно-белая»: монохром без свечения и градиентов.
-      </Text>
+      {/* Подпись — в рамке темы, как строки списка (правка Кати 27.11:
+          «в блоке оформления много цвета сверху и совсем нет ничего
+          снизу» — низ блока оформлен так же, как верх) */}
+      <View
+        accessibilityLabel="О темах"
+        className="rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2.5"
+      >
+        <Text className="font-sans text-[12.5px] leading-snug text-bear-dim">
+          Семь тем. Бесплатная — «Классика»: строгая чёрно-белая,
+          белый фон, чёрные надписи и цифры, цветные значки, без
+          свечения и градиентов. Остальные шесть — в Premium: четыре
+          неона с макета, спокойная «Приглушённая» и тёплая «Кремовая»
+          — рамки, кнопки и пилюли светятся цветом темы.
+        </Text>
+      </View>
     </View>
   )
 

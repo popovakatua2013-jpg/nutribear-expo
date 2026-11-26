@@ -30,13 +30,13 @@ export function VesselCard({ vessel, onDrink }) {
 
   if (edit) {
     return (
-      <View className="flex-1 rounded-2xl border border-sky-400/40 bg-[#122544] p-2">
+      <View className="flex-1 rounded-2xl border border-bear-accentBorder bg-bear-card2 p-2">
         <TextInput
           accessibilityLabel="Название ёмкости"
           value={label}
           onChangeText={setLabel}
           maxLength={14}
-          className="rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
+          className="rounded-lg bg-bear-overlay px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
         />
         <View className="mt-1 flex-row items-center gap-1">
           <TextInput
@@ -45,7 +45,7 @@ export function VesselCard({ vessel, onDrink }) {
             onChangeText={setMl}
             keyboardType="number-pad"
             maxLength={4}
-            className="min-w-0 flex-1 rounded-lg bg-white/5 px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
+            className="min-w-0 flex-1 rounded-lg bg-bear-overlay px-1.5 py-1.5 font-semibold text-[15px] text-bear-text"
           />
           <Text className="font-sans text-[14.5px] text-bear-sub">мл</Text>
         </View>
@@ -68,7 +68,7 @@ export function VesselCard({ vessel, onDrink }) {
         onPress={() => onDrink(vessel)}
         accessibilityRole="button"
         accessibilityLabel={`Добавить ${vessel.label}, ${vessel.ml} мл`}
-        className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:border-sky-400/40 active:bg-[#122544]"
+        className="flex-row items-center gap-2.5 rounded-2xl border border-bear-bodyLine bg-bear-bodyCard px-3 py-2.5 active:border-bear-accentBorder active:bg-bear-card2"
       >
         <Icon size={22} color={themeColors.mWater} />
         <View className="min-w-0 flex-1 pr-4">

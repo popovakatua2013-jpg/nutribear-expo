@@ -79,7 +79,7 @@ export function PhotoGuideModal({ visible, onClose }) {
               {TIPS.map((tip) => (
                 <View
                   key={tip.title}
-                  className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.04] px-3 py-2.5"
+                  className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2.5"
                 >
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-bear-accentFaint2">
                     <tip.icon size={19} color={themeColors.accentSoft} />

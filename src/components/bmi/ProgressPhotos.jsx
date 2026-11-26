@@ -281,7 +281,7 @@ export function ProgressPhotos() {
             <Pressable
               onPress={() => setPreview(null)}
               accessibilityLabel="Закрыть фото"
-              className="rounded-full bg-white/10 p-2"
+              className="rounded-full bg-bear-overlay2 p-2"
             >
               <X hitSlop={10} size={22} color="#FFFFFF" />
             </Pressable>

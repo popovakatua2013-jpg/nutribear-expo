@@ -50,7 +50,7 @@ export function SyncCard({ embedded = false }) {
   const themeColors = useThemeColors()
   // Единый акцент всех переключателей (унификация цвета по отзыву
   // Кати от 11.11) — теперь акцент активной темы
-  const switchColors = { true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }
+  const switchColors = { true: themeColors.accent, false: themeColors.overlay2 }
   const sync = useOnboardingStore((s) => s.sync)
   const toggleSync = useOnboardingStore((s) => s.toggleSync)
   const pedometerEnabled = useActivityStore((s) => s.pedometerEnabled)
@@ -165,7 +165,7 @@ export function SyncCard({ embedded = false }) {
       {ROWS.map((r) => (
         <View
           key={r.key}
-          className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3"
+          className="flex-row items-center justify-between rounded-2xl bg-bear-overlay px-4 py-3"
         >
           <View className="min-w-0 flex-1">
             <Text className="font-bold text-[17.5px] text-bear-text">{r.label}</Text>
@@ -182,7 +182,7 @@ export function SyncCard({ embedded = false }) {
       ))}
 
       {Platform.OS === 'android' && (
-        <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+        <View className="flex-row items-center justify-between rounded-2xl bg-bear-overlay px-4 py-3">
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center gap-1.5">
               <HeartPulse size={18} color={themeColors.accentSoft} />
@@ -206,7 +206,7 @@ export function SyncCard({ embedded = false }) {
 
       {/* Встроенный шагомер — только на телефоне (на web датчика нет) */}
       {!IS_WEB && (
-        <View className="flex-row items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-3">
+        <View className="flex-row items-center justify-between rounded-2xl bg-bear-overlay px-4 py-3">
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center gap-1.5">
               <Footprints size={18} color={themeColors.text} />

@@ -210,7 +210,7 @@ export function AdviceModal({ bmi, open, onClose, onRecommendations, catId = nul
                   borderWidth: 1,
                 }}
               >
-                <Text className="font-semibold text-[17.5px] text-[#D8B4FE]">
+                <Text className="font-semibold text-[17.5px] text-bear-text">
                   К рекомендациям
                 </Text>
                 <ArrowDown size={16} color={themeColors.accentSoft} />

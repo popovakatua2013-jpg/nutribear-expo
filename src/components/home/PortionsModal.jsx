@@ -32,7 +32,7 @@ export function PortionsModal({ visible, onClose }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
             >
               <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
@@ -47,7 +47,7 @@ export function PortionsModal({ visible, onClose }) {
               {PORTIONS.map((p) => (
                 <View
                   key={p.title}
-                  className="flex-row items-start gap-3 rounded-2xl border border-bear-line bg-white/[0.03] p-3.5"
+                  className="flex-row items-start gap-3 rounded-2xl border border-bear-line bg-bear-overlay p-3.5"
                 >
                   <View className="min-w-0 flex-1">
                     <Text className="font-bold text-[17.5px] text-bear-text">{p.title}</Text>

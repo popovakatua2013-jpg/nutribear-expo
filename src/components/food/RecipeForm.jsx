@@ -24,7 +24,7 @@ import { useThemeColors } from '@/lib/use-theme'
 const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) || 0))
 
 const field =
-  'rounded-2xl border border-bear-line bg-white/5 px-3 py-2.5 font-sans text-[19px] text-bear-text'
+  'rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2.5 font-sans text-[19px] text-bear-text'
 
 export function RecipeForm({ onDone, initial, onCancel }) {
   const themeColors = useThemeColors()

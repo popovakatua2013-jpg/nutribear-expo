@@ -123,7 +123,7 @@ function CycleRing({ value, caption, progress }) {
 // Степпер: подпись слева, значение + кнопки −/+ справа
 function Stepper({ label, value, onMinus, onPlus, disabled }) {
   const btn =
-    'h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10'
+    'h-8 w-8 items-center justify-center rounded-full bg-bear-overlay active:bg-bear-overlay2'
   return (
     <View className="flex-row items-center justify-between gap-2 py-1.5">
       <Text className="min-w-0 flex-1 font-sans text-[15px] text-bear-sub">{label}</Text>
@@ -158,7 +158,7 @@ export function CycleCard({ embedded = false }) {
   const themeColors = useThemeColors()
   // Единый акцент всех переключателей (унификация цвета по отзыву
   // Кати от 11.11) — теперь акцент активной темы
-  const switchColors = { true: themeColors.accent, false: 'rgba(255,255,255,0.15)' }
+  const switchColors = { true: themeColors.accent, false: themeColors.overlay2 }
   const enabled = useCycleStore((s) => s.enabled)
   const lastStart = useCycleStore((s) => s.lastStart)
   const length = useCycleStore((s) => s.length)
@@ -325,7 +325,7 @@ export function CycleCard({ embedded = false }) {
             accessibilityLabel={`Длина цикла ${v} дней`}
             hitSlop={4}
             className="rounded-full px-2.5 py-1.5 active:opacity-80"
-            style={{ backgroundColor: active ? themeColors.accent : 'rgba(255,255,255,0.06)' }}
+            style={{ backgroundColor: active ? themeColors.accent : themeColors.overlay }}
           >
             <Text
               maxFontSizeMultiplier={1.05}

@@ -146,7 +146,7 @@ export function VoiceMode({ onPick }) {
         <Text className="font-bold text-[20px] text-bear-text">Голосовой ввод</Text>
       </View>
 
-      <View className="items-center rounded-2xl border border-bear-line bg-white/[0.03] py-6">
+      <View className="items-center rounded-2xl border border-bear-line bg-bear-overlay py-6">
         <Pressable
           onPress={recording ? stopAndRecognize : startRecording}
           disabled={busy}
@@ -200,7 +200,7 @@ export function VoiceMode({ onPick }) {
                 key={`r${i}`}
                 onPress={() => onPick(it)}
                 accessibilityRole="button"
-                className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.05] px-4 py-3 active:bg-white/10"
+                className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3 active:bg-bear-overlay2"
               >
                 <View className="min-w-0 flex-1">
                   <Text numberOfLines={1} className="font-semibold text-[18px] text-bear-text">
@@ -259,12 +259,12 @@ export function VoiceMode({ onPick }) {
         onChangeText={setPhrase}
         placeholder="Или введите фразу текстом…"
         placeholderTextColor={themeColors.dim}
-        className="mt-2 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[17.5px] text-bear-text"
+        className="mt-2 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2.5 text-[17.5px] text-bear-text"
       />
       <Pressable
         onPress={recognizeTyped}
         disabled={busy || !phrase.trim()}
-        className={`mt-2 items-center rounded-2xl border border-bear-line bg-white/5 py-3 active:bg-white/10 ${busy || !phrase.trim() ? 'opacity-50' : ''}`}
+        className={`mt-2 items-center rounded-2xl border border-bear-line bg-bear-overlay py-3 active:bg-bear-overlay2 ${busy || !phrase.trim() ? 'opacity-50' : ''}`}
       >
         <Text className="font-semibold text-[17.5px] text-bear-text">
           Распознать текстом ↓

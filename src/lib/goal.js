@@ -64,24 +64,39 @@ export function goalRewardAfterSave({
   return { reachedAt: undefined, celebrate: false }
 }
 
-// Личная норма калорий под цель (Миффлин — Сан Жеор): дефицит ≈ 500 ккал
-// (≈ −0,5 кг/нед), «сушка» — умеренный дефицит ≈ 400 ккал (белок выше —
-// см. macroSplit в onboarding.js), профицит ≈ +300, поддержка — TDEE как есть.
-// Ниже безопасного пола (1200/1500 ккал) и выше 4000 не выходим.
-// goalId: 'lose' | 'cut' | 'gain' | любой другой — поддержка.
-export function recommendedKcal({ sex, age, heightCm, weightKg, activityId, goalId }) {
+// Личная норма калорий под цель (Миффлин — Сан Жеор). ДЕФИЦИТ/ПРОФИЦИТ —
+// от темпа пользователя (аудит Кати 27.11: «по-моему неверно
+// рассчитывается норма бжу» — раньше здесь был ФИКСИРОВАННЫЙ дефицит
+// ≈ 500 ккал, а план онбординга считается от выбранного темпа
+// (pace × 7700 ккал на кг жира ÷ 7 дней): при темпе 0,25 или 1 кг/нед
+// пересчёт в «Записать вес» предлагал норму, не совпадающую с планом
+// регистрации — норма и БЖУ «сами менялись»). Теперь формулы совпадают
+// дословно с calcPlan (lib/data/onboarding.js): lose/cut — TDEE − дефицит
+// от темпа, gain — TDEE + профицит от темпа, поддержка — TDEE как есть.
+// Ниже безопасного пола (1200/1500 ккал) не опускаемся.
+// goalId: 'lose' | 'cut' | 'gain' | 'maintain'/'keep'/пусто — поддержка;
+// paceKgPerWeek — темп из анкеты (answers.pace), по умолчанию 0,5 кг/нед
+export function recommendedKcal({
+  sex,
+  age,
+  heightCm,
+  weightKg,
+  activityId,
+  goalId,
+  paceKgPerWeek = 0.5,
+}) {
   const bmr = bmrMifflin(sex, age, heightCm, weightKg)
   const tdee = tdeeKcal(bmr, tdeeMult(activityId))
   const floor = sex === 'male' ? 1500 : 1200
+  const pace = Math.max(0.1, Math.min(1.5, Number(paceKgPerWeek) || 0.5))
+  const delta = Math.round((pace * 7700) / 7) // ≈ 1100 ккал на каждый 1 кг/нед
   const raw =
-    goalId === 'lose'
-      ? tdee - 500
-      : goalId === 'gain'
-        ? tdee + 300
-        : goalId === 'cut'
-          ? tdee - 400
-          : tdee
-  return Math.round(Math.max(floor, Math.min(4000, raw)) / 10) * 10
+    goalId === 'gain'
+      ? tdee + delta
+      : goalId === 'lose' || goalId === 'cut'
+        ? tdee - delta
+        : tdee
+  return Math.max(Math.round(raw), floor)
 }
 
 // План перехода «на поддержку» после достижения цели по весу: норма

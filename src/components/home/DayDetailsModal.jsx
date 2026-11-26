@@ -59,7 +59,7 @@ export function DayDetailsModal({ open, onClose, dayKey, history, goals, weights
               onPress={onClose}
               accessibilityLabel="Закрыть сводку дня"
               accessibilityRole="button"
-              className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
             >
               <X hitSlop={10} size={20} color={themeColors.sub} />
             </Pressable>

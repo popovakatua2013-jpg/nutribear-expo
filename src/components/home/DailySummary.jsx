@@ -923,8 +923,8 @@ export function DailySummary({
                     accessibilityLabel={`Отметить день: ${meta.label}`}
                     className="flex-row items-center gap-2.5 rounded-2xl border px-3 py-2.5 active:opacity-75"
                     style={{
-                      borderColor: active ? `${meta.color}66` : 'rgba(255,255,255,0.09)',
-                      backgroundColor: active ? `${meta.color}1A` : 'rgba(255,255,255,0.03)',
+                      borderColor: active ? `${meta.color}66` : themeColors.overlay2,
+                      backgroundColor: active ? `${meta.color}1A` : themeColors.overlay,
                     }}
                   >
                     <Text className="text-[21px]">{meta.emoji}</Text>

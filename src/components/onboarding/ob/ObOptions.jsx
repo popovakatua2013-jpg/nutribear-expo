@@ -39,7 +39,7 @@ export function OptionGrid({ options, value, onChange, columns = 1 }) {
                 onPress={() => onChange(o.id)}
                 accessibilityLabel={o.label}
                 className={`min-w-0 flex-1 overflow-hidden rounded-2xl border ${
-                  active ? 'border-bear-accentBorder' : 'border-white/5'
+                  active ? 'border-bear-accentBorder' : 'border-bear-line'
                 }`}
               >
                 {active ? (
@@ -47,7 +47,7 @@ export function OptionGrid({ options, value, onChange, columns = 1 }) {
                     <View className="flex-row items-center gap-3 p-3.5">{body}</View>
                   </LinearGradient>
                 ) : (
-                  <View className="flex-row items-center gap-3 border-white/5 bg-white/[0.03] p-3.5">
+                  <View className="flex-row items-center gap-3 border-bear-line bg-bear-overlay p-3.5">
                     {body}
                   </View>
                 )}
@@ -79,7 +79,7 @@ export function PillRow({ options, value, onChange, label }) {
                   <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-white">{text}</Text>
                 </LinearGradient>
               ) : (
-                <View className="bg-white/5">
+                <View className="bg-bear-overlay">
                   <Text className="px-3.5 py-2 font-semibold text-[16.5px] text-bear-soft">{text}</Text>
                 </View>
               )}
@@ -102,7 +102,7 @@ export function ChipMulti({ options, values, onToggle }) {
             key={o.id}
             onPress={() => onToggle(o.id)}
             className={`flex-row items-center gap-1.5 rounded-full border px-3.5 py-2 ${
-              on ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-white/5 bg-white/[0.03]'
+              on ? 'border-bear-accentBorder bg-bear-accentFaint' : 'border-bear-line bg-bear-overlay'
             }`}
           >
             {o.emoji ? <Text className="text-[17.5px]">{o.emoji}</Text> : null}

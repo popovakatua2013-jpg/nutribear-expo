@@ -64,7 +64,11 @@ const DOT = 12 // размер точки «по дням недели»
 const WD_COL = 20 // ширина колонки точки — блок точек уже, «Лучшим дням» просторнее
 const CHART_H = 84 // высота графика по дням (компактно: окно не растёт на 30/90)
 const BUBBLE_H = 18 // запас сверху под подпись максимума
-const STUB = 'rgba(255,255,255,0.09)' // пустой день: плоская площадка у нуля
+// Пустой день: плоская площадка у нуля — токен темы overlay2 (аудит
+// Кати 27.11 «история — фон согласно теме»: белый тинт был невидим
+// на светлых темах)
+const STUB_FALLBACK = 'rgba(255,255,255,0.09)'
+const stubOf = (themeColors) => (themeColors && themeColors.overlay2) || STUB_FALLBACK
 
 // «Сб, 7.11» — подпись дня для строк «Лучших дней» и accessibility:
 // коротко и всегда помещается (row.label «7 ноя» терялся в узкой строке)
@@ -83,7 +87,7 @@ function levelColor(metric, level, themeColors) {
   if (level === 'mid') return `${mc}99`
   if (level === 'low') return `${mc}40`
   if (level === 'over') return themeColors ? themeColors.bad : '#f87171'
-  return STUB
+  return stubOf(themeColors)
 }
 
 // Легенда: у калорий «больше» не значит «лучше» — своя шкала;
@@ -141,7 +145,7 @@ function CapLabel({ children, style, lines = 1 }) {
 // Стеклянная карточка макета: тёмное стекло с тонкой светлой обводкой
 function Glass({ children, className = '', style }) {
   return (
-    <View className={`rounded-2xl border border-bear-line bg-white/[0.05] ${className}`} style={style}>
+    <View className={`rounded-2xl border border-bear-line bg-bear-overlay ${className}`} style={style}>
       {children}
     </View>
   )
@@ -636,7 +640,7 @@ export function MetricHistoryModal({
 
                             {/* Вертикальная черта между средним и графиком —
                                 во всех периодах, как на макете */}
-                            <View className="w-px self-stretch bg-white/10" />
+                            <View className="w-px self-stretch bg-bear-overlay2" />
 
                             {/* График по дням */}
                             <View className="min-w-0 flex-1">
@@ -670,7 +674,7 @@ export function MetricHistoryModal({
                                           width: '100%',
                                           height: h,
                                           borderRadius: 3,
-                                          backgroundColor: v > 0 ? mc : STUB,
+                                          backgroundColor: v > 0 ? mc : stubOf(themeColors),
                                           opacity: v > 0 ? (isToday ? 0.9 : 0.6) : 1,
                                         }}
                                       />
@@ -820,7 +824,7 @@ export function MetricHistoryModal({
                                 const color = isWeight
                                   ? b.recorded
                                     ? mc
-                                    : STUB
+                                    : stubOf(themeColors)
                                   : levelColor(metric, dayLevel(metric.key, b.avg, goals[GOAL_KEY[metric.key]] || 0), themeColors)
                                 return (
                                   <View key={w} style={{ width: WD_COL, alignItems: 'center' }}>

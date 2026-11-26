@@ -18,7 +18,7 @@ export function GramsPicker({ grams, onChange }) {
           maxLength={4}
           value={String(grams)}
           onChangeText={onChange}
-          className="flex-1 rounded-2xl border border-bear-line bg-white/5 px-3 py-2.5 text-center font-bold text-[24px] text-bear-text"
+          className="flex-1 rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2.5 text-center font-bold text-[24px] text-bear-text"
         />
         <Text className="font-sans text-[22px] text-bear-sub">г</Text>
       </View>
@@ -38,7 +38,7 @@ function PressPill({ g, active, onChange }) {
       onPress={() => onChange(String(g))}
       accessibilityRole="button"
       className={`rounded-full px-3 py-1.5 font-semibold text-[16px] ${
-        active ? '' : 'bg-white/5 text-bear-sub'
+        active ? '' : 'bg-bear-overlay text-bear-sub'
       }`}
       style={active ? { backgroundColor: themeColors.accent, color: themeColors.accentOn } : null}
     >

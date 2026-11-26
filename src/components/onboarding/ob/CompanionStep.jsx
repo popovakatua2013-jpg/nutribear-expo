@@ -74,8 +74,8 @@ export function CompanionStep({ onBack, onNext }) {
                   active
                     ? 'border-[#A45BFF] bg-[#A45BFF]/10'
                     : locked
-                      ? 'border-white/5 bg-white/[0.02]'
-                      : 'border-white/10 bg-white/[0.03]'
+                      ? 'border-bear-line bg-bear-overlay'
+                      : 'border-bear-line bg-bear-overlay'
                 }`}
               >
                 {/* Аватар медведя */}
@@ -138,7 +138,7 @@ export function CompanionStep({ onBack, onNext }) {
                     <Check size={18} color="#FFFFFF" strokeWidth={3} />
                   </View>
                 ) : locked ? (
-                  <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5">
+                  <View className="h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bear-overlay">
                     <Lock size={16} color={themeColors.dim} />
                   </View>
                 ) : null}

@@ -27,7 +27,7 @@ import { useThemeColors } from '@/lib/use-theme'
 
 
 const FIELD =
-  'mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-3 font-semibold text-[19px] text-white'
+  'mt-1.5 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3 font-semibold text-[19px] text-white'
 
 export function ProfileEditor() {
   const themeColors = useThemeColors()

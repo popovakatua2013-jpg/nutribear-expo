@@ -33,7 +33,7 @@ export function Greeting() {
       accessibilityLabel="Приветствие"
       className="flex-row items-center gap-3"
     >
-      <View className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-bear-line bg-white/5">
+      <View className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-bear-line bg-bear-overlay">
         <Image
           source={BEAR}
           accessibilityLabel="Медвежонок — маскот дневника"

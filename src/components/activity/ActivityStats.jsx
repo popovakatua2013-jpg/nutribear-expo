@@ -150,7 +150,7 @@ function Foot({ tone = 'muted', children }) {
   }
   const t = map[tone] || map.muted
   return (
-    <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-white/[0.05] px-1 py-1">
+    <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-bear-overlay px-1 py-1">
       <View className="h-3 w-3 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: t.dot }}>
         <Check size={8} color={themeColors.bg} strokeWidth={3.5} />
       </View>
@@ -190,7 +190,7 @@ export function ActivityStats({
   // «хорошо» темы, в процессе — акцент темы
   const minutesDone = minutesGoal > 0 && minutes >= minutesGoal
   const minutesFoot = (
-    <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-white/[0.05] px-1 py-1">
+    <View className="mt-2 w-full flex-row items-center gap-1 rounded-full bg-bear-overlay px-1 py-1">
       <View
         className="h-3 w-3 shrink-0 items-center justify-center rounded-full"
         style={{ backgroundColor: minutesDone ? themeColors.good : themeColors.accent }}

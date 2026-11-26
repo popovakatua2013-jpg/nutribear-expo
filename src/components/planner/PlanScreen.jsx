@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { formatNum, pluralDays } from '@/lib/format'
+import { withAlpha } from '@/lib/themes'
 import { requestOpenReminders } from '@/lib/navEvents'
 import { applyGoalChoice } from '@/lib/data/goals-apply'
 import { GOALS } from '@/lib/data/goals'
@@ -150,10 +151,9 @@ function forecastTexts(f) {
 // sub — подпись под числом («от цели», как в макете).
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
-function Ring({ pct, runId, size = 64, stroke = 7, color, sub, centerText }) {
+function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText }) {
   const { P } = usePlanPalette()
   const styles = makeStyles(P)
-  const ringColor = color || P.accent
   const over = pct > 1.05
   // Дуга рисуется до 100% максимум; число в центре — реальное
   const frac = Math.max(0, Math.min(1, pct))
@@ -199,17 +199,46 @@ function Ring({ pct, runId, size = 64, stroke = 7, color, sub, centerText }) {
 
   const dashOffset = arcVal.interpolate({ inputRange: [0, 1], outputRange: [cc, 0] })
   const centerFs = Math.round(size * (centerText ? 0.21 : 0.25))
+  // Идентификатор градиента — по размеру: на вкладке два кольца (56 и 88),
+  // id в одном SVG-дереве должны быть уникальны
+  const gradId = `planRingGrad${size}`
 
   return (
     <View style={styles.ringWrap}>
       <Svg width={size} height={size}>
+        {/* Градиент дуги — цвет темы (bright → accent): кольцо светится
+            цветом темы, как кольца «Главной» (просьба Кати 27.11:
+            «интервальное питание круг — градиент и свечение добавить») */}
+        <Defs>
+          <LinearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={P.accentBright} />
+            <Stop offset="1" stopColor={P.accent} />
+          </LinearGradient>
+        </Defs>
         <Circle cx={size / 2} cy={size / 2} r={rc} stroke={P.tile} strokeWidth={stroke} fill="none" />
+        {/* Свечение — мягкий ореол под дугой: та же анимация, шире штрих,
+            полупрозрачный bright (работает на обеих платформах — тени
+            Android не красятся) */}
         {pct > 0 && (
           <AnimatedCircle
             cx={size / 2}
             cy={size / 2}
             r={rc}
-            stroke={over ? P.orange : ringColor}
+            stroke={over ? withAlpha(P.orange, 0.28) : withAlpha(P.accentBright, 0.3)}
+            strokeWidth={stroke + 6}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${cc} ${cc}`}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        )}
+        {pct > 0 && (
+          <AnimatedCircle
+            cx={size / 2}
+            cy={size / 2}
+            r={rc}
+            stroke={over ? P.orange : `url(#${gradId})`}
             strokeWidth={stroke}
             fill="none"
             strokeLinecap="round"

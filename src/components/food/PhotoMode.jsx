@@ -226,7 +226,7 @@ export function PhotoMode({ source, onPick }) {
           </Text>
         </View>
       ) : (
-        <View className="h-[200px] w-full items-center justify-center rounded-2xl border border-dashed border-bear-line bg-white/[0.03]">
+        <View className="h-[200px] w-full items-center justify-center rounded-2xl border border-dashed border-bear-line bg-bear-overlay">
           <ScanSearch size={36} color={themeColors.dim} />
           <Text className="mt-2 px-6 text-center text-[16.5px] text-bear-sub">
             Сфотографируйте блюдо — ИИ определит продукт и калорийность
@@ -237,7 +237,7 @@ export function PhotoMode({ source, onPick }) {
             onPress={() => setGuideOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Как фотографировать еду: открыть подсказку"
-            className="mt-2.5 flex-row items-center gap-1.5 rounded-full border border-bear-line bg-white/[0.05] px-3.5 py-2 active:bg-white/10"
+            className="mt-2.5 flex-row items-center gap-1.5 rounded-full border border-bear-line bg-bear-overlay px-3.5 py-2 active:bg-bear-overlay2"
           >
             <Info size={14} color={themeColors.accentSoft} />
             <Text className="font-semibold text-[14.5px] text-bear-sub">
@@ -282,7 +282,7 @@ export function PhotoMode({ source, onPick }) {
       <View className="mt-4 flex-row gap-2">
         <Pressable
           onPress={pickPhoto}
-          className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-bear-line bg-white/5 py-3.5 active:bg-white/10"
+          className="flex-1 flex-row items-center justify-center gap-2 rounded-2xl border border-bear-line bg-bear-overlay py-3.5 active:bg-bear-overlay2"
         >
           <RefreshCcw size={18} color={themeColors.soft} />
           <Text className="font-semibold text-[17.5px] text-bear-text">

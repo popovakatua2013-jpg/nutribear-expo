@@ -76,7 +76,7 @@ export function ActivityBreakdownModal({
                 {logs.map((e) => (
                   <View
                     key={e.id}
-                    className="flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.05] px-3 py-2"
+                    className="flex-row items-center gap-2 rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2"
                   >
                     <Text className="text-[18px]">{e.emoji || '🏃'}</Text>
                     <Text numberOfLines={1} className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
@@ -93,7 +93,7 @@ export function ActivityBreakdownModal({
 
             {/* Шаги */}
             <Text className="mt-3 font-semibold text-[15px] text-bear-text">🚶 Шаги</Text>
-            <View className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.05] px-3 py-2">
+            <View className="mt-1.5 flex-row items-center gap-2 rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2">
               <Footprints size={18} color={themeColors.accentBright} />
               <Text className="min-w-0 flex-1 font-semibold text-[15px] text-bear-text">
                 {formatNum(steps)} шагов
@@ -106,7 +106,7 @@ export function ActivityBreakdownModal({
           </ScrollView>
 
           {/* Итоговая строка */}
-          <View className="mt-3 flex-row items-center justify-between rounded-2xl bg-white/[0.06] px-3.5 py-2.5">
+          <View className="mt-3 flex-row items-center justify-between rounded-2xl bg-bear-overlay px-3.5 py-2.5">
             <Text className="font-bold text-[15.5px] text-bear-text">Итого сожжено</Text>
             <Text className="font-extrabold text-[17px] text-bear-text">
               {formatNum(burned)} ккал

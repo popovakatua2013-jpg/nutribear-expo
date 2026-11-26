@@ -39,7 +39,7 @@ export function TimeField({ value, onChange }) {
       maxLength={5}
       textAlign="center"
       accessibilityLabel="Время напоминания, часы и минуты"
-      className="w-[64px] shrink-0 rounded-xl border border-bear-line bg-white/5 py-1.5 font-semibold text-[17.5px] text-bear-text"
+      className="w-[64px] shrink-0 rounded-xl border border-bear-line bg-bear-overlay py-1.5 font-semibold text-[17.5px] text-bear-text"
     />
   )
 }

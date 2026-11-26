@@ -23,7 +23,7 @@ const MAX = 1.25
 
 function Stat({ Icon, color, value, label }) {
   return (
-    <View className="min-w-0 flex-1 rounded-2xl bg-white/[0.06] px-3 py-2.5">
+    <View className="min-w-0 flex-1 rounded-2xl bg-white/5 px-3 py-2.5">
       <View className="flex-row items-center gap-1.5">
         <Icon size={15} color={color} />
         <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px] text-white/60">
@@ -116,7 +116,7 @@ export function WeeklyShareCard({ open, onClose, totals, prev, recorded, streak 
                 (шаги, калории, вода, сожжено), а суммарные часы сна за период
                 в паре «+N%» читаются плохо — сон виден в истории и в окне сна */}
             {METRICS.some((m) => m.key !== 'sleepMin' && (prev?.[m.key] || 0) > 0) ? (
-              <View className="mt-2.5 rounded-2xl bg-white/[0.05] px-3 py-2.5">
+              <View className="mt-2.5 rounded-2xl bg-white/5 px-3 py-2.5">
                 <Text maxFontSizeMultiplier={MAX} className="font-sans text-[12px] text-white/50">
                   К прошлому периоду
                 </Text>

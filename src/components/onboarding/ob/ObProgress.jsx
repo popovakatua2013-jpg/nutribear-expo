@@ -7,7 +7,7 @@ export function ObProgress({ current, total }) {
   const pct = Math.round(((current + 1) / total) * 100)
   return (
     <View className="pt-3" accessibilityLabel={`Шаг ${current + 1} из ${total}`}>
-      <View className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+      <View className="h-1.5 w-full overflow-hidden rounded-full bg-bear-overlay">
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}

@@ -71,7 +71,7 @@ export function WelcomeStep({ onNext }) {
             className="absolute h-14 w-32 rounded-full"
             style={{ backgroundColor: 'rgba(139,108,255,0.26)' }}
           />
-          <View className="h-24 w-24 overflow-hidden rounded-3xl bg-white/5">
+          <View className="h-24 w-24 overflow-hidden rounded-3xl bg-bear-overlay">
             <Image
               source={BEAR}
               accessibilityLabel="Медвежонок NutriBear"
@@ -88,7 +88,7 @@ export function WelcomeStep({ onNext }) {
         </Text>
 
         {/* Карточка «Твоя цель» с четырьмя чипами (сетка 2×2) */}
-        <View className="mt-4 w-full rounded-3xl border border-white/5 bg-bear-card p-4">
+        <View className="mt-4 w-full rounded-3xl border border-bear-line bg-bear-card p-4">
           <Text className="font-bold text-[17.5px] text-bear-sub2">Твоя цель</Text>
           <View className="mt-3 gap-2.5">
             {CHIP_ROWS.map((row, ri) => (
@@ -143,7 +143,7 @@ function GoalChip({ chip, active, onPress }) {
     >
       <View
         className={`items-center rounded-2xl border px-1 pb-3 pt-3.5 ${
-          active ? 'border-[#A45BFF] bg-[#A45BFF]/10' : 'border-white/10 bg-white/[0.03]'
+          active ? 'border-[#A45BFF] bg-[#A45BFF]/10' : 'border-bear-line bg-bear-overlay'
         }`}
       >
         {active ? (

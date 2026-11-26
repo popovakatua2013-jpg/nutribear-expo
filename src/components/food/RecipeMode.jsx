@@ -100,7 +100,7 @@ export function RecipeMode({ onPick }) {
         <Pressable
           onPress={() => setCreating(true)}
           accessibilityRole="button"
-          className="flex-row items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 active:bg-white/10"
+          className="flex-row items-center gap-1 rounded-full bg-bear-overlay px-3 py-1.5 active:bg-bear-overlay2"
         >
           <Plus size={16} color={themeColors.soft} />
           <Text className="font-semibold text-[15px] text-bear-soft">Новый</Text>

@@ -70,7 +70,7 @@ export function MiniToggle({ value, onChange, label }) {
       hitSlop={6}
       className="h-[22px] w-[40px] shrink-0 justify-center rounded-full"
       style={{
-        backgroundColor: value ? themeColors.accent : 'rgba(255,255,255,0.15)',
+        backgroundColor: value ? themeColors.accent : themeColors.overlay2,
         alignItems: value ? 'flex-end' : 'flex-start',
         paddingHorizontal: 2,
       }}
@@ -100,7 +100,7 @@ export function PillPicker({ options, value, onChange, accessibilityLabel }) {
             accessibilityRole="button"
             accessibilityLabel={o.a11y || o.label}
             accessibilityState={{ selected: active }}
-            className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? '' : 'bg-white/5'}`}
+            className={`rounded-full px-3 py-1.5 active:opacity-70 ${active ? '' : 'bg-bear-overlay'}`}
             style={active ? { backgroundColor: themeColors.accent } : null}
           >
             <Text
@@ -188,7 +188,7 @@ export function MenuRow({
         {/* Цветной квадрат-иконка (как плитки на референсе Кати) */}
         <View
           className="h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[13px]"
-          style={{ backgroundColor: iconBg || 'rgba(255,255,255,0.07)' }}
+          style={{ backgroundColor: iconBg || themeColors.overlay }}
         >
           <Text className="text-[18px]">{icon}</Text>
         </View>

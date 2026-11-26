@@ -202,7 +202,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Закрыть"
-              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+              className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
             >
               <X hitSlop={10} size={18} color={themeColors.soft} />
             </Pressable>
@@ -233,7 +233,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
                       className={`flex-row items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
                         isPicked
                           ? 'border-bear-accentSoft bg-bear-accentFaint2'
-                          : 'border-transparent bg-white/[0.04]'
+                          : 'border-transparent bg-bear-overlay'
                       }`}
                     >
                       <View
@@ -271,7 +271,7 @@ export function RepeatDayModal({ visible, onClose, onCopied }) {
               accessibilityLabel="Скопировать выбранный день в сегодняшние приёмы пищи"
               accessibilityState={{ disabled: !picked }}
               className={`flex-row items-center justify-center gap-2 rounded-2xl py-3 ${
-                picked ? 'bg-bear-accent active:opacity-80' : 'bg-white/5'
+                picked ? 'bg-bear-accent active:opacity-80' : 'bg-bear-overlay'
               }`}
             >
               <Copy size={17} color={picked ? '#FFFFFF' : themeColors.dim} />

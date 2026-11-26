@@ -133,7 +133,7 @@ export function DataActions({ embedded = false, variant = null }) {
       <View accessibilityLabel="Начать новый день" className="mt-1">
         <Pressable
           onPress={newDay}
-          className="flex-row items-center gap-2.5 rounded-2xl bg-white/[0.03] px-3.5 py-2.5 active:opacity-80"
+          className="flex-row items-center gap-2.5 rounded-2xl bg-bear-overlay px-3.5 py-2.5 active:opacity-80"
         >
           <Sunrise size={16} color={themeColors.warn} />
           <Text
@@ -175,7 +175,7 @@ export function DataActions({ embedded = false, variant = null }) {
     <View className="mt-1 gap-2">
       <Pressable
         onPress={newDay}
-        className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-white/[0.03] px-4 py-3.5 active:opacity-80"
+        className="flex-row items-center gap-3 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3.5 active:opacity-80"
       >
         <Sunrise size={20} color={themeColors.warn} />
         <View className="min-w-0 flex-1">

@@ -96,7 +96,7 @@ function TypingDots() {
         <Animated.View
           key={i}
           style={{ opacity: d }}
-          className="h-1.5 w-1.5 rounded-full bg-[#8a94b3]"
+          className="h-1.5 w-1.5 rounded-full bg-bear-dim"
         />
       ))}
     </View>
@@ -322,7 +322,7 @@ export default function AiChatScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       onLayout={Platform.OS === 'android' ? onRootLayout : undefined}
-      className="flex-1 bg-[#131e3a]"
+      className="flex-1 bg-bear-bg"
       style={{
         paddingTop: insets.top,
         // Окно ужалось само — системе больше ничего не нужно; иначе
@@ -339,7 +339,7 @@ export default function AiChatScreen() {
           accessibilityLabel="Закрыть чат"
           accessibilityRole="button"
           hitSlop={6}
-          className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="h-9 w-9 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
         >
           <ArrowLeft size={20} color={themeColors.soft} />
         </Pressable>
@@ -368,7 +368,7 @@ export default function AiChatScreen() {
           accessibilityLabel="Очистить чат — начать диалог заново"
           accessibilityRole="button"
           hitSlop={6}
-          className="ml-1 h-9 w-9 items-center justify-center rounded-full bg-white/5 active:opacity-70"
+          className="ml-1 h-9 w-9 items-center justify-center rounded-full bg-bear-overlay active:opacity-70"
         >
           <Trash2 size={19} color={themeColors.soft} />
         </Pressable>
@@ -378,7 +378,7 @@ export default function AiChatScreen() {
       {offline && (
         <View
           accessibilityLabel="Нет сети"
-          className="mx-4 mt-3 flex-row items-center gap-2 rounded-2xl bg-white/[0.05] px-3.5 py-2"
+          className="mx-4 mt-3 flex-row items-center gap-2 rounded-2xl bg-bear-overlay px-3.5 py-2"
         >
           <WifiOff size={16} color={themeColors.dim} />
           <Text className="flex-1 font-sans text-[16px] text-bear-dim">
@@ -449,7 +449,7 @@ export default function AiChatScreen() {
                   accessibilityLabel={`${companion.name} — аватар ответа`}
                 />
                 <View className="min-w-0" style={{ flexShrink: 1 }}>
-                  <View className="min-w-[110px] rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-2.5">
+                  <View className="min-w-[110px] rounded-[18px] rounded-bl-[5px] bg-bear-overlay px-3.5 py-2.5">
                     <MessageText
                       content={item.content}
                       className="text-[19px] leading-[22px] text-bear-bright"
@@ -489,7 +489,7 @@ export default function AiChatScreen() {
                 }}
                 accessibilityLabel={`${companion.name} — аватар`}
               />
-              <View className="rounded-[18px] rounded-bl-[5px] bg-white/[0.06] px-3.5 py-3">
+              <View className="rounded-[18px] rounded-bl-[5px] bg-bear-overlay px-3.5 py-3">
                 <View className="flex-row items-center">
                   <Text className="text-[15px] text-bear-dim">
                     {companion.name} печатает
@@ -530,7 +530,7 @@ export default function AiChatScreen() {
           placeholderTextColor={themeColors.dim}
           accessibilityLabel="Сообщение ИИ-помощнику"
           multiline
-          className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+          className="max-h-[96px] min-h-[42px] flex-1 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2.5 text-[19px] text-bear-text"
         />
         <Pressable
           onPress={send}

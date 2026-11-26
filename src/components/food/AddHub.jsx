@@ -338,7 +338,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
           py-2.5 не работала: нативная высота TextInput на Android
           раздувала поле выше кнопки (отзыв Кати: «по прежнему
           габаритная»). py-0 и textAlignVertical — текст по центру */}
-      <View className="h-[42px] flex-row items-center gap-2 rounded-2xl border border-bear-line bg-white/[0.04] px-3.5">
+      <View className="h-[42px] flex-row items-center gap-2 rounded-2xl border border-bear-line bg-bear-overlay px-3.5">
         <Search size={16} color={themeColors.dim} />
         <TextInput
           accessibilityLabel="Поиск продукта или рецепта"
@@ -393,7 +393,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
             onPress={() => setBaseOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Ручной поиск по всей базе продуктов"
-            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2.5 active:bg-white/10"
+            className="mt-2 flex-row items-center justify-center gap-1.5 rounded-xl bg-bear-overlay py-2.5 active:bg-bear-overlay2"
           >
             <LayoutGrid size={16} color={themeColors.accentBright} />
             <Text className="font-semibold text-[15px] text-bear-soft">
@@ -413,7 +413,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               «ккал · N блюд», кнопка «Добавить»; тап — добавить набор,
               долгий тап — удалить комбо. Карточку прячем, когда комбо нет */}
           {combos.length > 0 && (
-            <View className="overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04]">
+            <View className="overflow-hidden rounded-2xl border border-bear-line bg-bear-overlay">
               <Pressable
                 onPress={() => setCombosOpen((s) => !s)}
                 accessibilityRole="button"
@@ -442,7 +442,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                         delayLongPress={400}
                         accessibilityRole="button"
                         accessibilityLabel={`Добавить комбо ${c.name} (${c.items.length} блюд). Долгий тап — удалить`}
-                        className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
+                        className="flex-row items-center gap-2.5 rounded-xl bg-bear-overlay px-2 py-2 active:bg-bear-overlay2"
                       >
                         <View className="min-w-0 flex-1">
                           <Text
@@ -506,7 +506,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               продукт» над списком или «+» в «Базе продуктов» */}
           {mineRows.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-bear-overlay ${
                 combos.length > 0 || mealEntries.length > 0 ? 'mt-2.5' : ''
               }`}
             >
@@ -590,7 +590,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               как на референс-скриншоте */}
           {recent.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-bear-overlay ${
                 combos.length > 0 || mealEntries.length > 0 || mineRows.length > 0 ? 'mt-2.5' : ''
               }`}
             >
@@ -618,7 +618,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                       onPress={() => addFromRow(row)}
                       accessibilityRole="button"
                       accessibilityLabel={`Добавить ${row.name} как в прошлый раз`}
-                      className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
+                      className="flex-row items-center gap-2.5 rounded-xl bg-bear-overlay px-2 py-2 active:bg-bear-overlay2"
                     >
                       <View className="min-w-0 flex-1">
                         <Text
@@ -656,7 +656,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               приёмов» */}
           {histGroups.length > 0 && (
             <View
-              className={`overflow-hidden rounded-2xl border border-bear-line bg-white/[0.04] ${
+              className={`overflow-hidden rounded-2xl border border-bear-line bg-bear-overlay ${
                 combos.length > 0 ||
                 mealEntries.length > 0 ||
                 mineRows.length > 0 ||
@@ -697,7 +697,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                           onPress={() => addFromRow(row)}
                           accessibilityRole="button"
                           accessibilityLabel={`Добавить ${row.name} из истории (${g.label})`}
-                          className="flex-row items-center gap-2.5 rounded-xl bg-white/[0.03] px-2 py-2 active:bg-white/10"
+                          className="flex-row items-center gap-2.5 rounded-xl bg-bear-overlay px-2 py-2 active:bg-bear-overlay2"
                         >
                           <View className="min-w-0 flex-1">
                             <Text
@@ -739,7 +739,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
                     onPress={() => setHistModalOpen(true)}
                     accessibilityRole="button"
                     accessibilityLabel="Открыть всю историю приёмов"
-                    className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-white/5 py-2 active:bg-white/10"
+                    className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-bear-overlay py-2 active:bg-bear-overlay2"
                   >
                     <History size={14} color={themeColors.accentSoft} />
                     <Text className="font-semibold text-[14px] text-bear-accentSoft">
@@ -788,7 +788,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               onPress={repeatLast}
               accessibilityRole="button"
               accessibilityLabel={`Повторить прошлый приём: ${lastMeal.list.length} блюд(а)`}
-              className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-white/[0.04] px-3 py-3 active:bg-white/10"
+              className="mt-2 flex-row items-center justify-center gap-1.5 rounded-2xl border border-bear-line bg-bear-overlay px-3 py-3 active:bg-bear-overlay2"
             >
               <RefreshCcw size={17} color={themeColors.soft} />
               <Text numberOfLines={1} className="font-semibold text-[16.5px] text-bear-text">
@@ -891,7 +891,7 @@ export function AddHub({ mealId, dayOff = 0, onPick, onSelect, onSearchActiveCha
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Название комбо"
               autoFocus
-              className="mt-1.5 rounded-2xl border border-bear-line bg-white/5 px-4 py-2.5 text-[19px] text-bear-text"
+              className="mt-1.5 rounded-2xl border border-bear-line bg-bear-overlay px-4 py-2.5 text-[19px] text-bear-text"
             />
             <Pressable
               onPress={saveCombo}

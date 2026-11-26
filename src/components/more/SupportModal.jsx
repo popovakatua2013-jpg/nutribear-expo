@@ -395,7 +395,7 @@ export function SupportModal({ open = false, onClose }) {
               onPress={() => onClose?.()}
               accessibilityLabel="Закрыть письмо"
               accessibilityRole="button"
-              className="h-[34px] w-[34px] items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-[34px] w-[34px] items-center justify-center rounded-full bg-bear-overlay2 active:bg-bear-overlay2"
             >
               <X size={18} color={themeColors.sub} />
             </Pressable>
@@ -446,7 +446,7 @@ export function SupportModal({ open = false, onClose }) {
                             </View>
                           </LinearGradient>
                         ) : (
-                          <View className="flex-row items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-2 py-3">
+                          <View className="flex-row items-center justify-center gap-2 rounded-full border border-bear-line bg-bear-overlay px-2 py-3">
                             <Icon size={17} color={themeColors.dim} />
                             <Text
                               numberOfLines={1}
@@ -477,7 +477,7 @@ export function SupportModal({ open = false, onClose }) {
               placeholder="Расскажите, что вы думаете…"
               placeholderTextColor={themeColors.dim}
               accessibilityLabel="Текст обращения в поддержку"
-              className="mt-2 min-h-[120px] rounded-2xl border border-bear-line bg-white/[0.06] px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
+              className="mt-2 min-h-[120px] rounded-2xl border border-bear-line bg-bear-overlay px-4 py-3.5 font-sans text-[16px] leading-snug text-bear-text"
               style={{ textAlignVertical: 'top' }}
             />
 
@@ -508,7 +508,7 @@ export function SupportModal({ open = false, onClose }) {
               keyboardType="email-address"
               textContentType="emailAddress"
               accessibilityLabel="Контакт для ответа — почта или ник в Telegram, обязательно для отправки"
-              className="mt-2 h-[48px] rounded-2xl border border-bear-line bg-white/[0.06] px-4 font-sans text-[16px] text-bear-text"
+              className="mt-2 h-[48px] rounded-2xl border border-bear-line bg-bear-overlay px-4 font-sans text-[16px] text-bear-text"
             />
 
             {/* Вложения — кнопка со скрепкой открывает выбор файлов,
@@ -519,7 +519,7 @@ export function SupportModal({ open = false, onClose }) {
                 onPress={pickFiles}
                 accessibilityRole="button"
                 accessibilityLabel="Прикрепить файл"
-                className="flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-2 active:opacity-80"
+                className="flex-row items-center gap-1.5 rounded-full border border-bear-line bg-bear-overlay px-3 py-2 active:opacity-80"
               >
                 <Paperclip size={14} color={themeColors.dim} />
                 <Text
@@ -532,7 +532,7 @@ export function SupportModal({ open = false, onClose }) {
               {files.map((f) => (
                 <View
                   key={f.uri}
-                  className="max-w-[210px] flex-row items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.06] px-3 py-2"
+                  className="max-w-[210px] flex-row items-center gap-1.5 rounded-full border border-bear-line bg-bear-overlay px-3 py-2"
                 >
                   <Paperclip size={13} color={themeColors.dim} />
                   <Text
