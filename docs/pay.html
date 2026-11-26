@@ -58,8 +58,17 @@
       border-radius: 16px;
       padding: 14px;
       text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
     }
     .plan.best { border-color: var(--amber-border); background: rgba(251, 191, 36, 0.10); }
+    /* Выбранный тариф: тап по карточке переключает его (правка Кати
+       26.11: «при оформлении премиума не дает переключать тариф»);
+       приложение открывает страницу с #plan=month|year — тариф
+       подсвечивается сразу */
+    .plan.selected { border-color: var(--link); background: rgba(108, 140, 255, 0.12); }
+    .plan .selmark { display: none; color: var(--link); font-size: 12.5px; font-weight: 700; margin-top: 6px; }
+    .plan.selected .selmark { display: block; }
     .plan .badge {
       display: inline-block; background: rgba(251, 191, 36, 0.15); color: var(--amber);
       border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 700; margin-bottom: 6px;
@@ -136,19 +145,23 @@
 
   <section class="card">
     <h2>Сколько стоит</h2>
+    <p class="note" style="margin:0 0 10px">Тап по карточке — выбрать тариф (можно переключить в любой момент).</p>
     <div class="plans">
-      <div class="plan">
+      <div class="plan" id="plan-month" data-plan="month">
         <div class="title">Месяц</div>
         <div class="price">299 ₽</div>
         <div class="per">в месяц</div>
+        <div class="selmark">✓ выбран</div>
       </div>
-      <div class="plan best">
+      <div class="plan best" id="plan-year" data-plan="year">
         <div class="badge">Выгодно</div>
         <div class="title">Год</div>
         <div class="price">1 490 ₽</div>
         <div class="per">в год · скидка 50%</div>
+        <div class="selmark">✓ выбран</div>
       </div>
     </div>
+    <p class="note" id="planNote">Выбранный тариф: год — 1 490 ₽.</p>
     <p class="note">Первые 3 дня — бесплатный триал: включается прямо в приложении, без оплаты (Ещё → Премиум).</p>
   </section>
 
@@ -158,7 +171,7 @@
       <li>
         <div>
           <b>Напишите на почту</b>
-          <p>Укажите план — «Месяц 299 ₽» или «Год 1 490 ₽» и почту для чека.</p>
+          <p>Выбранный тариф уже подставлен в письмо — добавьте почту для чека и отправьте.</p>
         </div>
       </li>
       <li>
@@ -200,6 +213,53 @@
       }
       var btn = document.getElementById('mailBtn');
       if (btn) { btn.textContent = PAY_LABEL; btn.href = PAY_URL; }
+    })();
+  </script>
+
+  <script>
+    // ─── ВЫБОР ТАРИФА (правка Кати 26.11: «при оформлении премиума
+    // не дает переключать тариф») ────────────────────────────────────
+    // Тап по карточке «Месяц»/«Год» переключает тариф, приложение
+    // открывает страницу с #plan=month|year — выбранный тариф
+    // подсвечивается сразу, и в письмо подставляется ОДИН план.
+    (function () {
+      var PLANS = {
+        month: { title: 'Месяц — 299 ₽', note: 'Выбранный тариф: месяц — 299 ₽.', body: 'Здравствуйте! Хочу Premium NutriBear. План: месяц (299 ₽). Почта для чека: ' },
+        year: { title: 'Год — 1 490 ₽', note: 'Выбранный тариф: год — 1 490 ₽ (скидка 50%).', body: 'Здравствуйте! Хочу Premium NutriBear. План: год (1 490 ₽). Почта для чека: ' },
+      };
+      var current = 'year';
+      var cards = {
+        month: document.getElementById('plan-month'),
+        year: document.getElementById('plan-year'),
+      };
+      var note = document.getElementById('planNote');
+      var btn = document.getElementById('mailBtn');
+
+      function apply(id) {
+        current = PLANS[id] ? id : 'year';
+        Object.keys(cards).forEach(function (key) {
+          if (!cards[key]) return;
+          if (key === current) cards[key].classList.add('selected');
+          else cards[key].classList.remove('selected');
+        });
+        if (note) note.textContent = PLANS[current].note;
+        // Письмо — только в режиме оплаты письмом (без PAY_URL):
+        // в письме теперь ОДИН выбранный план, а не «месяц / год»
+        if (btn && !PAY_URL) {
+          btn.href =
+            'mailto:whitelinepay@yandex.ru?subject=Premium%20NutriBear&body=' +
+            encodeURIComponent(PLANS[current].body);
+        }
+      }
+
+      Object.keys(cards).forEach(function (id) {
+        if (!cards[id]) return;
+        cards[id].addEventListener('click', function () { apply(id); });
+      });
+
+      // Из хеша: #plan=month / #plan=year — тариф выбран в приложении
+      var m = /plan=(month|year)/.exec(window.location.hash || '');
+      apply(m ? m[1] : 'year');
     })();
   </script>
 </body>

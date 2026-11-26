@@ -206,7 +206,7 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                     onSearchActiveChange={setSearching}
                   />
                 )}
-                {mode === 'barcode' && <BarcodeMode onPick={setPicked} />}
+                {mode === 'barcode' && <BarcodeMode onPick={setPicked} onSwitchLabel={() => setMode('label')} />}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}
                 {mode === 'voice' && <VoiceMode onPick={setPicked} />}
                 {mode === 'gallery' && <PhotoMode source="library" onPick={setPicked} />}

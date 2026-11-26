@@ -351,7 +351,10 @@ describe('штрихкод: безымянная заглушка OFF — не �
     global.fetch = jest.fn(OFF_STUB_RESPONSE)
     await getBarcodeCached('4690217001234')
     await getBarcodeCached('4690217001234')
-    expect(global.fetch).toHaveBeenCalledTimes(2)
+    // Правка 26.11: сканер после промаха v0 пробует поиск v2 по коду
+    // (резерв для российской молочки) — один проход сканирования это
+    // ДВА запроса (v0 + v2), два прохода — четыре
+    expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
   test('молоко с названием и ккал → в приложение приходит настоящий продукт', async () => {
@@ -381,6 +384,79 @@ describe('штрихкод: безымянная заглушка OFF — не �
     expect(f.name).toBe('Молоко 2.5%')
     expect(f.kcal).toBe(52)
     expect(f.p).toBe(2.8)
+  })
+
+  // Правка Кати 26.11 («штрихкоды российской молочки»): у записей,
+  // введённых добровольцами по фото, энергия часто только в кДж —
+  // раньше «0 ккал» проходил как валид, продукт показывался с нулевой
+  // калорийностью; теперь кДж переводятся в ккал
+  test('молочница: энергия только в кДж → ккал пересчитываются (1 ккал = 4,184 кДж)', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 1,
+            product: {
+              code: '4690217009012',
+              product_name: 'Кефир 1%',
+              nutriments: {
+                'energy-kcal_100g': 0,
+                energy_100g: 167, // ≈ 40 ккал
+                proteins_100g: 3,
+                fat_100g: 1,
+                carbohydrates_100g: 4,
+              },
+            },
+          }),
+      })
+    )
+    const f = await getBarcodeCached('4690217009012')
+    expect(f).not.toBeNull()
+    expect(f.kcal).toBe(40)
+  })
+
+  test('резерв v2: v0 говорит «нет», поиск v2 по коду находит российскую молочку', async () => {
+    const MILK = {
+      code: '4690217003456',
+      product_name: 'Молоко «Простоквашино» 3,2%',
+      brands: 'Простоквашино',
+      nutriments: { 'energy-kcal_100g': 58, proteins_100g: 2.9, fat_100g: 3.2, carbohydrates_100g: 4.7 },
+    }
+    global.fetch = jest.fn((url) => {
+      const v2 = String(url).includes('/api/v2/search')
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve(
+            v2 ? { products: [MILK] } : { status: 0, product: null }
+          ),
+      })
+    })
+    const f = await getBarcodeCached('4690217003456')
+    expect(f).not.toBeNull()
+    expect(f.name).toBe('Молоко «Простоквашино» 3,2%')
+    expect(f.kcal).toBe(58)
+    expect(f.brand).toBe('Простоквашино')
+    // v0 был спрошен первым, v2 — резервом
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+  })
+
+  test('резерв v2 не выдумывает продукт: без названия и ккал → null', async () => {
+    global.fetch = jest.fn((url) => {
+      const v2 = String(url).includes('/api/v2/search')
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve(
+            v2
+              ? { products: [{ code: '4690217007890', product_name: '', nutriments: {} }] }
+              : { status: 0, product: null }
+          ),
+      })
+    })
+    const f = await getBarcodeCached('4690217007890')
+    expect(f).toBeNull()
   })
 })
 

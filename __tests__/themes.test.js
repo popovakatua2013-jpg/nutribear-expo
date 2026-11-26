@@ -63,7 +63,7 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
-  test('«Чёрно-белая» — бесплатная и без эффектов (правка Кати 26.11)', () => {
+  test('«Чёрно-белая» — бесплатная, светлая (белый фон/чёрный текст), без эффектов, значки цветные (правка Кати 26.11)', () => {
     const mono = THEMES.mono
     expect(mono.title).toBe('Чёрно-белая')
     expect(mono.premium).toBe(false)
@@ -76,8 +76,25 @@ describe('THEMES: структура палитры', () => {
     // accent == accentBright — все прочие градиенты приложения
     // становятся плоской заливкой
     expect(mono.colors.accent).toBe(mono.colors.accentBright)
-    // Строгий монохром: все hex-токены — серые (R == G == B),
-    // rgba-токены — серые каналы
+    const lum = (hex) => {
+      const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    }
+    // «НАОБОРОТ: фон белый, а надписи и цифры черные» (второй круг
+    // Кати 26.11): белый фон, чёрный текст, чёрная кнопка с белым текстом
+    expect(lum(mono.colors.bg)).toBeGreaterThan(0.9)
+    expect(lum(mono.colors.text)).toBeLessThan(0.1)
+    expect(lum(mono.colors.accent)).toBeLessThan(0.1)
+    expect(lum(mono.colors.accentOn)).toBeGreaterThan(0.9)
+    // Слои разведены по светлоте (урок «Кремовой» — «не видно поля»):
+    // фон самый светлый, карточки чуть темнее, поля темнее карточек
+    expect(lum(mono.colors.bg)).toBeGreaterThan(lum(mono.colors.card))
+    expect(lum(mono.colors.card)).toBeGreaterThan(lum(mono.colors.card2))
+    expect(lum(mono.colors.card2)).toBeGreaterThan(lum(mono.colors.deep))
+    // База — строго чёрно-белая: все небазовые/несемейные токены —
+    // оттенки серого (R == G == B)
     const gray = (v) => {
       const hx = /^#([0-9A-Fa-f]{6})$/.exec(v)
       if (hx) {
@@ -89,25 +106,16 @@ describe('THEMES: структура палитры', () => {
       const m = /rgba?\((\d+),(\d+),(\d+)/.exec(v.replace(/\s/g, ''))
       return !!m && m[1] === m[2] && m[2] === m[3]
     }
-    for (const token of THEME_TOKENS) {
+    for (const token of ['bg', 'card', 'card2', 'deep', 'pop', 'line', 'bodyCard', 'bodyLine', 'text', 'sub', 'sub2', 'dim', 'soft', 'bright', 'link', 'accent', 'accentBright', 'accentSoft', 'accentOn', 'accentFaint', 'accentFaint2', 'accentFaint3', 'accentStrong', 'accentBorder']) {
       expect(gray(mono.colors[token])).toBe(true)
     }
-    // База — тёмная, текст — белый, семьи различаются светлотой
-    const lum = (hex) => {
-      const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
-      const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255)
-      const lin = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
-      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    // «СДЕЛАТЬ ЗНАЧКИ ЦВЕТНЫЕ»: семейство значков — ЦВЕТНОЕ на ч/б фоне
+    for (const token of ['good', 'warn', 'bad', 'nutP', 'nutF', 'nutC', 'nutFib', 'nutSug', 'mSteps', 'mKcal', 'mWater', 'mBurned', 'mSleep', 'mWeight']) {
+      expect(gray(mono.colors[token])).toBe(false)
     }
-    expect(lum(mono.colors.bg)).toBeLessThan(0.03)
-    expect(lum(mono.colors.text)).toBeGreaterThan(0.8)
-    // «хорошо» светлее «предупреждения» светлее «плохо» — смысл
-    // сохранён светлотой
-    expect(lum(mono.colors.good)).toBeGreaterThan(lum(mono.colors.warn))
-    expect(lum(mono.colors.warn)).toBeGreaterThan(lum(mono.colors.bad))
   })
 
-  test('семья «Чёрно-белой» читается на card по WCAG AA', () => {
+  test('семья «Чёрно-белой» читается на светлой card по WCAG AA', () => {
     const c = THEMES.mono.colors
     const lum = (hex) => {
       const m = hex.match(/^#([0-9A-Fa-f]{6})$/)
@@ -299,8 +307,8 @@ describe('THEMES: структура палитры', () => {
     expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
   })
 
-  test('тёмные неоновые темы и «Чёрно-белая»: вторичные тексты читаются по WCAG AA', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'mono']) {
+  test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
       const c = THEMES[id].colors
       // Фон реально тёмный
       expect(luminance(c.bg)).toBeLessThan(0.03)
@@ -309,6 +317,21 @@ describe('THEMES: структура палитры', () => {
       expect(contrast(c.card, c.sub2)).toBeGreaterThanOrEqual(4.5)
       expect(contrast(c.card, c.dim)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+
+  test('«Чёрно-белая» — светлая тема: вторичные тексты читаются по WCAG AA', () => {
+    const c = THEMES.mono.colors
+    // Белый фон и чёрные тексты
+    expect(contrast(c.bg, '#000000')).toBeGreaterThan(6)
+    expect(contrast(c.card, c.text)).toBeGreaterThan(9)
+    // Вторичные тексты — не хуже 4.5:1
+    expect(contrast(c.card, c.sub)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(c.card, c.sub2)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(c.card, c.dim)).toBeGreaterThanOrEqual(4.5)
+    // Ссылка — читаемая
+    expect(contrast(c.card, c.link)).toBeGreaterThanOrEqual(4.5)
+    // Белый текст на чёрной кнопке
+    expect(contrast(c.accent, c.accentOn)).toBeGreaterThan(12)
   })
 })
 

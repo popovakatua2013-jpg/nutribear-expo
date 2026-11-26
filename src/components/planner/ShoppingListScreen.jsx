@@ -79,8 +79,19 @@ export function ShoppingListScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Покупки</Text>
-      <Text style={styles.subtitle}>По отделам магазина — отмечай, что уже в корзине</Text>
+      {/* Шапка: заголовок слева, крупная картинка «пакет с продуктами»
+          справа — в свободном пространстве шапки, заметно больше
+          прежней (просьба Кати 26.11: «картинку пакет с продуктами
+          выровнять по правому свободному пространству и сделать больше») */}
+      <View style={styles.headerRow}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.title}>Покупки</Text>
+          <Text style={styles.subtitle}>По отделам магазина — отмечай, что уже в корзине</Text>
+        </View>
+        <View style={styles.bagTile} pointerEvents="none">
+          <ShoppingBasket size={40} color={colors.accentText} strokeWidth={1.8} />
+        </View>
+      </View>
 
       {/* Прогресс: куплено X из Y */}
       <View style={styles.progressCard}>
@@ -233,8 +244,27 @@ export function ShoppingListScreen() {
 // имел доступа к colors и падал «Property 'colors' doesn't exist»
 // (экран «Покупки» не открывался)
 const makeStyles = (colors) => ({
-  title: { ...type.display, fontSize: 26, color: colors.text, letterSpacing: -0.3, marginTop: spacing.l },
-  subtitle: { ...type.body, color: colors.text2, marginTop: 4, marginBottom: spacing.l },
+  title: { ...type.display, fontSize: 26, color: colors.text, letterSpacing: -0.3 },
+  subtitle: { ...type.body, color: colors.text2, marginTop: 4 },
+  // Шапка «Покупок»: слева заголовок и подзаголовок, справа — крупный
+  // пакет с продуктами (иконка ShoppingBasket в плитке темы)
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.m,
+    marginTop: spacing.l,
+    marginBottom: spacing.l,
+  },
+  bagTile: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+  },
   progressCard: {
     backgroundColor: colors.card, borderColor: colors.line, borderWidth: 1,
     borderRadius: radius.screen, padding: spacing.l,

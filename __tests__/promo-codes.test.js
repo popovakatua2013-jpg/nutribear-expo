@@ -129,8 +129,12 @@ describe('страховка исходника PremiumCard', () => {
     expect(src).not.toContain('активировать без оплаты')
   })
 
-  test('месяц/год открывают страницу оплаты, триал активируется сразу', () => {
-    expect(src).toContain('Linking.openURL(PAY_PAGE_URL)')
+  test('месяц/год — выбор тарифа, оформление через страницу оплаты, триал сразу', () => {
+    // Правка Кати 26.11 («при оформлении премиума не дает переключать
+    // тариф»): тап по плану выбирает его, «Оформить» открывает страницу
+    // оплаты с выбранным тарифом (#plan=month|year)
+    expect(src).toContain('Linking.openURL(`${PAY_PAGE_URL}#plan=${selPlan}`)')
+    expect(src).toContain("setSelPlan(id)")
     expect(src).toContain("activate('trial')")
     expect(src).toContain("activate('promo')")
   })
@@ -141,7 +145,7 @@ describe('страховка исходника PremiumCard', () => {
     expect(src).toContain('placeholder="Код активации"')
   })
 
-  test('в подписи под планами указан порядок: оплата → код на почту', () => {
+  test('в подписи под планами указан порядок: выбор тарифа → оплата → код на почту', () => {
     expect(src).toContain('страницу оплаты')
     expect(src).toContain('код активации придёт на почту')
   })

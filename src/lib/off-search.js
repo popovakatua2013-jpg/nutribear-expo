@@ -23,6 +23,7 @@ import Constants from 'expo-constants'
 
 const OFF_SEARCH_URL = 'https://world.openfoodfacts.org/cgi/search.pl'
 const OFF_BARCODE_URL = 'https://world.openfoodfacts.org/api/v0/product'
+const OFF_V2_SEARCH_URL = 'https://world.openfoodfacts.org/api/v2/search'
 const PAGE_SIZE = 20
 
 // User-Agent: OFF просит указывать приложение + версия (для статистики
@@ -83,16 +84,28 @@ export function parseOFFProduct(p) {
   const name = p.product_name || p.product_name_ru || p.generic_name || ''
   if (!name || name.length < 2) return null
   const nm = p.nutriments || {}
-  const kcal = nm['energy-kcal_100g'] ?? nm.energy_100g ?? null
-  // kcal может быть в кДж (energy_100g) — переводим 1 ккал = 4.184 кДж
+  // ККАЛ (правка Кати 26.11: «штрихкоды российской молочки»): у многих
+  // записей энергия живёт только в кДж (energy_100g), а поле
+  // energy-kcal_100g равно 0 или отсутствует — раньше «0 ккал» проходил
+  // как валидный и продукт показывался с нулевой калорийностью.
+  // Теперь: положительные energy-kcal_100g берём как есть, иначе
+  // переводим кДж в ккал; нулевая/отсутствующая энергия по обоим полям
+  // — запись неполная, для дневника не годится (не показываем)
   let kcalVal = null
-  if (nm['energy-kcal_100g'] != null) kcalVal = Number(nm['energy-kcal_100g'])
-  else if (nm.energy_100g != null) {
-    // Если значение > 1500 — это кДж (масло 900 ккал = ~3700 кДж)
+  const kcalDirect = Number(nm['energy-kcal_100g'])
+  if (Number.isFinite(kcalDirect) && kcalDirect > 0) {
+    kcalVal = kcalDirect
+  } else if (nm.energy_100g != null) {
     const e = Number(nm.energy_100g)
-    kcalVal = e > 1500 ? Math.round(e / 4.184) : e
+    if (Number.isFinite(e) && e > 0) {
+      // По спеке OFF energy_100g хранится в кДж (молоко 60 ккал =
+      // 250 кДж, масло 900 ккал = 3700 кДж) — переводим ВСЕГДА:
+      // эвристика «> 1500 — кДж» ошибалась на средней калорийности
+      // (кефир 167 кДж = 40 ккал раньше проходил как «167 ккал»)
+      kcalVal = Math.round(e / 4.184)
+    }
   }
-  if (kcalVal == null || !Number.isFinite(kcalVal) || kcalVal < 0) return null
+  if (kcalVal == null || !Number.isFinite(kcalVal) || kcalVal <= 0) return null
 
   const num = (v) => {
     if (v == null) return 0
@@ -158,6 +171,35 @@ export async function searchOpenFoodFacts(query, opts = {}) {
 
 // Поиск по штрих-коду (EAN-13). Для сканера камерой — пользователь
 // навёл на штрих-код, мы получили 13 цифр, ищем в OFF.
+// Резервный источник — поиск v2 по коду (правка Кати 26.11: «штрихкоды
+// российской молочки»): записи российской молочки часто есть в базе,
+// но одиночный эндпойнт v0 возвращает status=0 (запись не «завершена»);
+// поиск v2 по точному коду находит и незавершённые записи — если у них
+// есть название и калорийность, продукт распознаётся
+async function barcodeV2Fallback(code, timeoutMs) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const url =
+      `${OFF_V2_SEARCH_URL}?code=${code}` +
+      '&fields=code,product_name,product_name_ru,generic_name,brands,serving_size,nutriments'
+    const res = await fetch(url, { headers: { 'User-Agent': ua() }, signal: ctrl.signal })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    const products = data?.products || []
+    for (const p of products) {
+      // Строгий парс: запись должна иметь настоящее название и ккал
+      const parsed = parseOFFProduct(p)
+      if (parsed) return parsed
+    }
+    return null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function getFoodByBarcode(code, opts = {}) {
   const c = String(code || '').replace(/\D/g, '')
   if (c.length < 8) return null // EAN-8/EAN-13/UPC-A — минимум 8 цифр
@@ -170,10 +212,16 @@ export async function getFoodByBarcode(code, opts = {}) {
       headers: { 'User-Agent': ua() },
       signal: ctrl.signal,
     })
-    if (!res.ok) return null
-    const data = await res.json().catch(() => null)
-    if (data?.status !== 1) return null // OFF вернул status=0 — нет такого кода
-    return parseOFFProduct(data.product)
+    if (res.ok) {
+      const data = await res.json().catch(() => null)
+      if (data?.status === 1) {
+        const parsed = parseOFFProduct(data.product)
+        if (parsed) return parsed
+      }
+    }
+    // v0 не нашёл завершённую запись или она без названия/ккал —
+    // пробуем поиск v2 по точному коду (незавершённые записи)
+    return await barcodeV2Fallback(c, timeoutMs)
   } catch {
     return null
   } finally {

@@ -47,7 +47,7 @@ import { kcalWithDayMark } from '@/lib/data/dayContext'
 import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { history } from '@/lib/data/activity'
 import { SvgAreaChart } from '../../ui/SvgAreaChart'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 
 // Порядок карточек 3×2 — как на референсе: компактный ряд и крупный ряд
@@ -119,8 +119,32 @@ function CardBand({ data, color, height = 22, children }) {
 // Абсолютное позиционирование сохранено: растянутый рядом карточек
 // Pressable не должен давать градиенту height:'100%' от вьюпорта
 // (скрин «ужаса» из прошлых отзывов)
+//
+// РЕЖИМ БЕЗ ЭФФЕКТОВ (правка Кати 26.11: «в черно-белой теме осталось
+// оформление премиум темы на вкладке отчеты» — виновник был именно
+// здесь: CardBg рисовал свои ореолы/кайму напрямую, минуя NeonCard):
+// в plain-теме — плоская поверхность card с тонкой рамкой accentBorder
+// (радиус карточек «Отчётов» 16), без ореолов и градиентов
 function CardBg() {
   const c = useThemeColors()
+  const plain = useThemePlain()
+  if (plain) {
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: c.accentBorder,
+          backgroundColor: c.card,
+        }}
+      />
+    )
+  }
   return (
     <>
       {/* Ореолы свечения — как у NeonCard (радиус карточки 16) */}

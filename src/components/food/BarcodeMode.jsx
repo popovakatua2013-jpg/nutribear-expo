@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
-import { Flashlight, FlashlightOff, Info } from 'lucide-react-native'
+import { Flashlight, FlashlightOff, Info, ScanLine } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useUiPrefsStore } from '@/store/useUiPrefsStore'
 import { getBarcodeCached } from '@/store/useOffCacheStore'
@@ -40,11 +40,15 @@ function offToItem(code, off) {
   }
 }
 
-export function BarcodeMode({ onPick }) {
+export function BarcodeMode({ onPick, onSwitchLabel = null }) {
   const themeColors = useThemeColors()
   const [permission, requestPermission] = useCameraPermissions()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // Штрихкод не нашёлся — предлагаем фото этикетки (правка Кати
+  // 26.11: «штрихкоды российской молочки» + «доделать AI-скан
+  // этикеток»): кнопка переключает окно добавления в режим «Этикетка»
+  const [labelHint, setLabelHint] = useState(false)
   const [torch, setTorch] = useState(false)
   const lastCode = useRef(null)
 
@@ -80,9 +84,11 @@ export function BarcodeMode({ onPick }) {
       const off = await getBarcodeCached(code)
       if (!off) {
         setError(
-          `Штрихкод ${code} не нашёлся в открытой базе — добавьте продукт ` +
-            'вручную, введите название голосом или сфотографируйте этикетку'
+          `Штрихкод ${code} не нашёлся в открытой базе. Для российской
+молочки часто выручает фото этикетки: нейросеть прочитает КБЖУ
+с упаковки`
         )
+        setLabelHint(true)
         return
       }
       onPick(offToItem(code, off))
@@ -147,6 +153,25 @@ export function BarcodeMode({ onPick }) {
         {error ? (
           <View className="mb-2 rounded-2xl border border-bear-line bg-bear-pop px-4 py-3">
             <Text className="font-sans text-[16.5px] leading-[19px] text-bear-text">{error}</Text>
+            {/* Штрихкод не нашёлся — переход в режим «Этикетка» одним
+                тапом (AI читает КБЖУ с упаковки) */}
+            {labelHint && onSwitchLabel ? (
+              <Pressable
+                onPress={() => {
+                  setError('')
+                  setLabelHint(false)
+                  onSwitchLabel()
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Сфотографировать этикетку — ИИ прочитает КБЖУ"
+                className="mt-2.5 flex-row items-center justify-center gap-1.5 self-stretch rounded-xl border border-bear-accentBorder bg-bear-accentFaint py-2.5 active:opacity-80"
+              >
+                <ScanLine size={17} color={themeColors.accentBright} />
+                <Text className="font-bold text-[14.5px] text-bear-text">
+                  Сфотографировать этикетку
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
         <View className="flex-row items-center gap-2">

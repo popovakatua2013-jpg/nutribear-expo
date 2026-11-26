@@ -54,7 +54,7 @@ import { fmtDecimal, healthyRange } from '@/lib/data/bmi'
 import { METRIC_TOKENS } from '@/lib/themes'
 import { Pills } from '../../ui/Pills'
 import { DayDetailsModal } from '../../home/DayDetailsModal'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 
 // Ключ цели в useGoalsStore для каждого показателя реестра
@@ -147,50 +147,91 @@ function Glass({ children, className = '', style }) {
   )
 }
 
-// Градиентная плитка показателя в шапке (в макете — фиолетовый квадрат
+// Плитка показателя в шапке (в макете — фиолетовый квадрат
 // с белой иконкой; здесь — цвет показателя ТЕМЫ, переходящий в акцент
-// темы; правка Кати 25.11: «всё в одном стиле как и главная страница»)
+// темы; правка Кати 25.11: «всё в одном стиле как и главная страница»).
+// В plain-теме («Чёрно-белая», правка Кати 26.11: «на вкладке отчеты
+// осталось оформление премиум темы») — плоская плитка ЦВЕТА ПОКАЗАТЕЛЯ:
+// значки остаются цветными, градиент не рисуется
 function MetricTile({ metric }) {
   const themeColors = useThemeColors()
+  const plain = useThemePlain()
   const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
+  const box = { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }
+  if (plain) {
+    return (
+      <View style={[box, { backgroundColor: mc }]}>
+        <metric.Icon size={22} color={themeColors.accentOn} />
+      </View>
+    )
+  }
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={[mc, themeColors.accent]}
-      style={{ width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}
+      style={box}
     >
       <metric.Icon size={22} color={themeColors.accentOn} />
     </LinearGradient>
   )
 }
 
-// Кружок с иконкой рядом с большой цифрой среднего
+// Кружок с иконкой рядом с большой цифрой среднего (в plain-теме —
+// плоский кружок цвета показателя, без градиента)
 function AvgBubble({ metric }) {
   const themeColors = useThemeColors()
+  const plain = useThemePlain()
   const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
+  const box = { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }
+  if (plain) {
+    return (
+      <View style={[box, { backgroundColor: mc }]}>
+        <metric.Icon size={19} color={themeColors.accentOn} />
+      </View>
+    )
+  }
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={[mc, `${mc}77`]}
-      style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}
+      style={box}
     >
       <metric.Icon size={19} color={themeColors.accentOn} />
     </LinearGradient>
   )
 }
 
-// Чип значения в градиенте показателя — «1725» у лучших дней
+// Чип значения в цвете показателя — «1725» у лучших дней (в plain-теме —
+// плоский чип без градиента)
 function ValueChip({ metric, value }) {
   const themeColors = useThemeColors()
+  const plain = useThemePlain()
   const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
+  const box = { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 100 }
+  if (plain) {
+    return (
+      <View style={[box, { backgroundColor: mc }]}>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          maxFontSizeMultiplier={1.1}
+          className="font-bold text-[15.5px]"
+          style={{ color: themeColors.accentOn }}
+        >
+          {value}
+        </Text>
+      </View>
+    )
+  }
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={[mc, `${mc}B3`]}
-      style={{ borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 100 }}
+      style={box}
     >
       <Text
         numberOfLines={1}
@@ -206,16 +247,26 @@ function ValueChip({ metric, value }) {
   )
 }
 
-// Кружок места в «Лучших днях» — градиент в цвет показателя
+// Кружок места в «Лучших днях» — в цвет показателя (в plain-теме —
+// плоский кружок без градиента)
 function RankBubble({ metric, n }) {
   const themeColors = useThemeColors()
+  const plain = useThemePlain()
   const mc = themeColors[METRIC_TOKENS[metric.key]] || metric.color
+  const box = { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }
+  if (plain) {
+    return (
+      <View style={[box, { backgroundColor: mc }]}>
+        <Text className="font-bold text-[13.5px]" style={{ color: themeColors.accentOn }}>{n}</Text>
+      </View>
+    )
+  }
   return (
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={[mc, `${mc}66`]}
-      style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+      style={box}
     >
       <Text className="font-bold text-[13.5px]" style={{ color: themeColors.accentOn }}>{n}</Text>
     </LinearGradient>

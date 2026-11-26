@@ -10,28 +10,47 @@
 // <Dumbbell />, без настроек. Если вместо иконки передан текст
 // (например, эмодзи 🐻) — текст не трогаем: у Text нет пропсов
 // color/size, лишние пропсы RN игнорирует.
+//
+// РЕЖИМ БЕЗ ЭФФЕКТОВ (тема «Чёрно-белая»): плоский чип — и ЦВЕТНОЙ
+// (правка Кати 26.11: «сделать значки цветные»): фон — фиолетовый
+// nutP темы (фирменный цвет иконок приложения), иконка белая.
 
 import { cloneElement } from 'react'
 import { View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 export function BodyChip({ icon, size = 28 }) {
   const c = useThemeColors()
+  const plain = useThemePlain()
   const glyph = cloneElement(icon, {
     color: c.accentOn,
     size: Math.round(size * 0.55),
   })
+  const box = {
+    width: size,
+    height: size,
+    borderRadius: Math.round(size * 0.36),
+    overflow: 'hidden',
+  }
+  // Без эффектов — плоский чип цвета значков темы (в «Чёрно-белой»
+  // это фирменный фиолетовый: единственный цветной элемент на ч/б фоне)
+  if (plain) {
+    return (
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[box, { backgroundColor: c.nutP, alignItems: 'center', justifyContent: 'center' }]}
+      >
+        {glyph}
+      </View>
+    )
+  }
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: Math.round(size * 0.36),
-        overflow: 'hidden',
-      }}
+      style={box}
     >
       <LinearGradient
         start={{ x: 0, y: 0 }}
