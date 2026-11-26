@@ -229,14 +229,13 @@ export function FastingScreen() {
               <Text style={styles.runLabel}>Идёт окно без еды</Text>
               <Text style={styles.runGoal}>цель {fastHours} ч</Text>
             </View>
-            <Text style={[styles.bigTimer, overGoal && { color: colors.orange }]}>{fmtHMS(elapsed)}</Text>
+            {/* Сверх цели таймер и полоса остаются цветом темы
+                (просьба Кати: «заполненное кольцо интервального
+                голодания оранжевое — сделай по теме»); что цель
+                взята и перевыполнена — говорит текст под таймером */}
+            <Text style={styles.bigTimer}>{fmtHMS(elapsed)}</Text>
             <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  { width: `${pct * 100}%`, backgroundColor: overGoal ? colors.orange : colors.accent },
-                ]}
-              />
+              <View style={[styles.barFill, { width: `${pct * 100}%`, backgroundColor: colors.accent }]} />
             </View>
             <Text style={styles.progressHint}>
               {overGoal

@@ -52,7 +52,7 @@ import { RecipesModal } from '../food/RecipesModal'
 import { AddFoodModal } from '../food/AddFoodModal'
 import { usePlanPalette, goodsWord } from './planPalette'
 import { spacing, radius, F, type } from '@/features/workouts/theme'
-import { useThemeColors } from '@/lib/use-theme'
+import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 const BEAR = require('../../../assets/images/bear.webp')
 const SHOP_BAG = require('../../../assets/images/shop-bag.webp')
@@ -151,8 +151,15 @@ function forecastTexts(f) {
 // sub — подпись под числом («от цели», как в макете).
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
-function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText }) {
+// toneOver — красить ли дугу «сверх нормы» оранжевым. Оставлен для
+// кольца «Прогресса» (перебор калорий — сигнал «Жиры/перебор нормы»);
+// кольцу голодания передаём false (просьба Кати: «заполненное кольцо
+// интервальное голодание оранжевое — сделай по теме»): и до, и сверх
+// цели дуга — акцент активной темы. ОДНОТОННОСТЬ бесплатной «Классики»
+// (plain): свечение под дугой не рисуется вовсе
+function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText, toneOver = true }) {
   const { P } = usePlanPalette()
+  const plain = useThemePlain()
   const styles = makeStyles(P)
   const over = pct > 1.05
   // Дуга рисуется до 100% максимум; число в центре — реальное
@@ -218,13 +225,14 @@ function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText }) {
         <Circle cx={size / 2} cy={size / 2} r={rc} stroke={P.tile} strokeWidth={stroke} fill="none" />
         {/* Свечение — мягкий ореол под дугой: та же анимация, шире штрих,
             полупрозрачный bright (работает на обеих платформах — тени
-            Android не красятся) */}
-        {pct > 0 && (
+            Android не красятся). plain-темы («Классика») — без ореола:
+            «однотонная без эффектов и свечения» */}
+        {pct > 0 && !plain && (
           <AnimatedCircle
             cx={size / 2}
             cy={size / 2}
             r={rc}
-            stroke={over ? withAlpha(P.orange, 0.28) : withAlpha(P.accentBright, 0.3)}
+            stroke={over && toneOver ? withAlpha(P.orange, 0.28) : withAlpha(P.accentBright, 0.3)}
             strokeWidth={stroke + 6}
             fill="none"
             strokeLinecap="round"
@@ -238,7 +246,7 @@ function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText }) {
             cx={size / 2}
             cy={size / 2}
             r={rc}
-            stroke={over ? P.orange : `url(#${gradId})`}
+            stroke={over && toneOver ? P.orange : `url(#${gradId})`}
             strokeWidth={stroke}
             fill="none"
             strokeLinecap="round"
@@ -249,7 +257,7 @@ function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText }) {
         )}
       </Svg>
       <View style={styles.ringCenter}>
-        <Text style={[styles.ringPct, { fontSize: centerFs }, over && !centerText && { color: P.orange }]}>
+        <Text style={[styles.ringPct, { fontSize: centerFs }, over && toneOver && !centerText && { color: P.orange }]}>
           {centerText || `${Math.round(num)}%`}
         </Text>
         {sub ? <Text style={styles.ringSub}>{sub}</Text> : null}
@@ -502,8 +510,10 @@ export function PlanScreen({ onOpenFasting }) {
   // интервальное питание всегда отображается полузаполненный круг» —
   // раньше была застывшая доля плана fastGoal/24 ≈ 2/3, её читали как
   // прогресс). Теперь: идёт таймер — кольцо заполняется реальным
-  // прогрессом до цели, сверх цели — оранжевое; таймер не идёт —
-  // кольцо пустое, в центре режим плана
+  // прогрессом до цели и СВЕРХ цели остаётся цветом темы (просьба
+  // Кати: «заполненное кольцо интервальное голодание оранжевое —
+  // сделай по теме»); таймер не идёт — кольцо пустое, в центре
+  // режим плана
   const fastGoalH = 24 - fastWindow
   const fastPlan = `${fastGoalH}/${fastWindow}`
   const fastGoalMs = (fastHours || fastGoalH) * 3600000
@@ -659,6 +669,9 @@ export function PlanScreen({ onOpenFasting }) {
               Интервальное питание
             </Text>
             <View style={styles.fastRingWrap}>
+              {/* toneOver={false} — просьба Кати: заполненное кольцо
+                  голодания больше не красится оранжевым сверх цели,
+                  всегда цвет темы */}
               <Ring
                 pct={fastPct}
                 runId={runId}
@@ -666,6 +679,7 @@ export function PlanScreen({ onOpenFasting }) {
                 stroke={6}
                 centerText={fastStartedAt ? undefined : fastPlan}
                 sub={fastStartedAt ? fastPlan : 'Режим'}
+                toneOver={false}
               />
             </View>
             <View style={styles.fastLegend}>
