@@ -33,9 +33,10 @@ const menuSrc = fs.readFileSync(
 )
 
 describe('карусель «меню ↔ интервальное питание» на «Плане»', () => {
-  test('горизонтальная прокрутка со снапом: меню ↔ голодание, ширины от окна', () => {
-    // Горизонтальный ScrollView со снапом к двум позициям (меню, голодание)
-    expect(src.match(/<ScrollView\n\s*horizontal\n\s*showsHorizontalScrollIndicator=\{false\}\n\s*decelerationRate="fast"\n\s*snapToOffsets=\{\[0, menuCardW \+ CAR_GAP\]\}/)).not.toBeNull()
+  test('горизонтальная прокрутка со снапом: меню ↔ голодание ↔ прогресс, ширины от окна', () => {
+    // Горизонтальный ScrollView со снапом к ТРЁМ позициям (правка Кати
+    // 27.11: «прогресс тоже сделай в карусель»)
+    expect(src.match(/<ScrollView\n\s*horizontal\n\s*showsHorizontalScrollIndicator=\{false\}\n\s*decelerationRate="fast"\n\s*snapToOffsets=\{\[0, menuCardW \+ CAR_GAP, menuCardW \+ CAR_GAP \+ fastCardW \+ CAR_GAP\]\}/)).not.toBeNull()
     // Ширины — от окна и боковых отступов вкладки (spacing.xl)
     expect(src.match(/const menuCardW = winW - spacing\.xl \* 2 - CAR_PEEK/)).not.toBeNull()
     expect(src.match(/const fastCardW = winW - spacing\.xl \* 2/)).not.toBeNull()
@@ -43,12 +44,15 @@ describe('карусель «меню ↔ интервальное питани�
   })
 
   test('первая карточка карусели — «Меню на неделю», вторая — голодание', () => {
-    const carousel = src.slice(src.indexOf('snapToOffsets={[0, menuCardW + CAR_GAP]}'))
+    const carousel = src.slice(src.indexOf('snapToOffsets={[0, menuCardW + CAR_GAP'))
     expect(carousel.indexOf('<MealPlanScreen compact />')).toBeGreaterThan(-1)
     expect(carousel.indexOf('Интервальное питание — открыть подробнее')).toBeGreaterThan(-1)
-    // Порядок: меню стоит в карусели ДО карточки голодания
+    // Порядок: меню стоит в карусели ДО карточки голодания и «Прогресса»
     expect(carousel.indexOf('<MealPlanScreen compact />'))
       .toBeLessThan(carousel.indexOf('Интервальное питание — открыть подробнее'))
+    // «Прогресс» — третья карточка той же карусели (правка Кати 27.11)
+    const atProgress = carousel.indexOf('>Прогресс</Text>')
+    expect(atProgress).toBeGreaterThan(carousel.indexOf('Интервальное питание — открыть подробнее'))
   })
 
   test('карточка голодания тянется на высоту меню, содержимое распределено по высоте', () => {
@@ -79,13 +83,26 @@ describe('карусель «меню ↔ интервальное питани�
   test('«все поменьше» (правка Кати 27.11): компактные элементы ужаты', () => {
     // Меню: внутренний паддинг 12 вместо 16, день 30, строка приёма 32,
     // «Все приёмы пищи» 30
-    expect(menuSrc).toContain('cardInnerC: { padding: spacing.m }')
+    expect(menuSrc).toContain('cardInnerC: { padding: spacing.m, justifyContent: \'space-between\' }')
     expect(menuSrc).toContain('dayBoxC: { height: 30 }')
     expect(menuSrc.match(/mealRowC: \{ gap: 5, minHeight: 32 \}/)).not.toBeNull()
     expect(menuSrc).toContain('showAllC: { height: 30, marginTop: 6 }')
-    // Голодание: кольцо 48, кнопка «Подробнее» 28
-    expect(src).toContain('size={48}')
+    // Голодание: кольцо 64 (увеличено по правке Кати 27.11 «кольцо очень
+    // маленькое по отношению к блоку», было 48 после ужатия 56→48),
+    // кнопка «Подробнее» 28
+    expect(src).toContain('size={64}')
     expect(src.match(/height: 28,\n    marginTop: 6,/)).not.toBeNull()
+  })
+
+  test('«Прогресс» в карусели: той же ширины и высоты, без своего marginTop', () => {
+    // Обёртка третьей карточки — fastCardW (во всю ширину при снапе),
+    // NeonCard — cardC (flex: 1, marginTop: 0) + компактные стили C
+    const carousel = src.slice(src.indexOf('snapToOffsets={[0, menuCardW + CAR_GAP'))
+    expect(carousel).toContain('<View style={{ width: fastCardW }}>')
+    expect(carousel).toContain('style={[styles.card, styles.cardC]}')
+    expect(carousel).toContain('innerStyle={[styles.cardInner, styles.cardInnerC]}')
+    // У карточки прогресса в карусели НЕТ собственного marginTop от вёрстки
+    expect(src.match(/cardC: \{ flex: 1, marginTop: 0 \}/)).not.toBeNull()
   })
 
   test('кольцо голодания сохранило toneOver={false} — цвет темы сверх цели', () => {
@@ -97,7 +114,9 @@ describe('карусель «меню ↔ интервальное питани�
   test('«Добавить рецепт» — компактная строка-кнопка под каруселью', () => {
     const recipeCard = src.match(/recipeCard: \{\n([^\n]*\n)+?\s*\},/)[0]
     expect(recipeCard).not.toContain('flex: 1')
-    expect(recipeCard).toContain('marginTop: 10')
+    // marginTop 16 — единый отступ между блоками (правка Кати 27.11:
+    // «между блоками нет отступов — сделать отступ»; было 10)
+    expect(recipeCard).toContain('marginTop: 16')
     // Строка-кнопка: иконка слева, тексты в столбик, шеврон справа
     const recipeInner = src.match(/recipeInner: \{\n([^\n]*\n)+?\s*\},/)[0]
     expect(recipeInner).toContain("flexDirection: 'row'")

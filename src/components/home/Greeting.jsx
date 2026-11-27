@@ -1,14 +1,21 @@
 // Компактная приветственная шапка главной: круглый аватар с мишкой,
-// приветствие по времени суток («Доброе утро») и чип с сегодняшней
-// датой. Строку статуса под приветствием («До нормы осталось N ккал»)
-// убрали по отзыву Кати — она дублировала блок «Осталось N ккал»
-// в сводке «Съедено за сегодня». Намеренно маленькая (~44 px) —
-// мишка встречает, но не съедает экран.
+// приветствие по времени суток («Доброе утро»), чип с сегодняшней
+// датой и чип ТЕКУЩЕГО ВЕСА (правка Кати 27.11: «шапку не видно
+// текущий вес» — вес теперь виден в шапке главной, цифра — акцентом
+// активной темы). Строку статуса под приветствием («До нормы осталось
+// N ккал») убрали по отзыву Кати — она дублировала блок «Осталось
+// N ккал» в сводке «Съедено за сегодня».
 
-import { Image, Text, View } from 'react-native'
-import { WifiOff } from 'lucide-react-native'
+import { Image, Pressable, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
+import { Scale, WifiOff } from 'lucide-react-native'
 import { useIsOnline } from '@/lib/useIsOnline'
 import { useThemeColors } from '@/lib/use-theme'
+import { useProfileStore } from '@/store/useProfileStore'
+import { useUiPrefsStore } from '@/store/useUiPrefsStore'
+import { formatNum } from '@/lib/format'
+import { hapticFeedback } from '@/lib/haptics'
+import { requestScrollToWeight } from '@/lib/navEvents'
 
 const BEAR = require('../../../assets/images/bear.webp')
 
@@ -27,6 +34,20 @@ export function Greeting() {
   const now = new Date()
   const online = useIsOnline()
   const dateLabel = `${WEEKDAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]}`
+  // Текущий вес в шапке (правка Кати 27.11: «шапку не видно текущий вес»):
+  // тап по чипу — вкладка «Тело» (динамика веса). Цифра — АКЦЕНТом темы
+  // («цифра веса не соответствует темам» — больше никаких фикс-цветов)
+  const weightKg = useProfileStore((s) => s.weightKg)
+  const haptics = useUiPrefsStore((s) => s.haptics)
+  const router = useRouter()
+
+  // Тап по чипу веса — на вкладку «Тело» и скролл к «Динамике веса»
+  // (тот же механизм, что у карточки «Вес» в отчётах)
+  const openBody = () => {
+    hapticFeedback('selection')
+    router.navigate('/bmi')
+    requestScrollToWeight()
+  }
 
   return (
     <View
@@ -78,6 +99,32 @@ export function Greeting() {
             {dateLabel}
           </Text>
         </View>
+        {/* Чип текущего веса: цифра акцентом темы, тап — к динамике веса
+            (правка Кати 27.11: «шапку не видно текущий вес») */}
+        <Pressable
+          onPress={openBody}
+          accessibilityRole="button"
+          accessibilityLabel={
+            weightKg != null
+              ? `Текущий вес ${formatNum(weightKg)} килограммов — открыть динамику веса`
+              : 'Вес не записан — открыть динамику веса'
+          }
+          className="flex-row items-center gap-1 rounded-full border px-2.5 py-1 active:opacity-70"
+          style={{
+            borderColor: themeColors.accentBorder,
+            backgroundColor: themeColors.accentFaint,
+          }}
+        >
+          <Scale size={13} color={themeColors.accentBright} strokeWidth={2.5} />
+          <Text
+            maxFontSizeMultiplier={1.2}
+            numberOfLines={1}
+            className="font-bold text-[14px]"
+            style={{ color: themeColors.accentBright }}
+          >
+            {weightKg != null ? `${formatNum(weightKg)} кг` : 'записать вес'}
+          </Text>
+        </Pressable>
       </View>
     </View>
   )

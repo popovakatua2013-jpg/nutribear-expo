@@ -2,7 +2,7 @@
   "expo": {
     "name": "NutriBear",
     "slug": "nutribear",
-    "version": "1.1.12",
+    "version": "1.1.13",
     "orientation": "portrait",
     "scheme": "nutribear",
     "userInterfaceStyle": "automatic",
@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.nutribear.app",
-      "versionCode": 26,
+      "versionCode": 27,
       "userInterfaceStyle": "dark",
       "allowBackup": false,
       "adaptiveIcon": {

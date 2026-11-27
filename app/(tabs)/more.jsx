@@ -164,7 +164,7 @@ export default function MoreScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
-          gap: 16,
+          gap: 20,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}

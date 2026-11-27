@@ -1,9 +1,11 @@
 // Темы оформления (Premium-фича 23.11 «усилить Premium»; неоны с макета
-// 24.11; «Приглушённая» 25.11; правка Кати 28.11: «мне не нравится как
+// 24.11; правка Кати 28.11: «мне не нравится как
 // выглядит бело-черная тема. Давай бесплатную тему сделаем которая была
 // до премиум темы — однотонная без эффектов и свечения» — «Классика»
 // снова прежняя navy-палитра (дословно из истории), чёрно-белая
-// (26–27.11, id mono) удалена, остальные шесть тем — Premium): структура
+// (26–27.11, id mono) удалена; ПРАВКА 27.11 (вечер): «Приглушённая»
+// удалена по просьбе Кати («удалить тему приглушенная») — остальные
+// пять тем — Premium): структура
 // палитры (включая подложки overlay/overlay2 вместо жёстких bg-white/*),
 // гейтинг по подписке (resolveThemeId) с переездом старых выборов
 // (THEME_ROLL_FORWARD: graphite/mono → classic), карта CSS-переменных
@@ -41,19 +43,20 @@ function contrast(a, b) {
 }
 
 describe('THEMES: структура палитры', () => {
-  test('семь тем: бесплатная navy-«Классика» + шесть Premium (правка Кати 28.11)', () => {
+  test('шесть тем: бесплатная navy-«Классика» + пять Premium (правка 27.11: «Приглушённая» удалена)', () => {
     expect(THEME_ORDER).toEqual([
       'classic',
       'neonLime',
       'neonBlue',
       'neonPurple',
       'neonCyan',
-      'muted',
       'cream',
     ])
     expect(THEMES.classic).toBeDefined()
     // Чёрно-белая (26–27.11) удалена — её выборы переезжают на «Классику»
     expect(THEMES.mono).toBeUndefined()
+    // «Приглушённая» удалена (27.11, просьба Кати) — выбор переезжает на дефолт
+    expect(THEMES.muted).toBeUndefined()
     expect(DEFAULT_THEME_ID).toBe('classic')
     // Блеклые темы сняты с макета — их больше нет
     expect(THEMES.lemon).toBeUndefined()
@@ -62,7 +65,7 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.ocean).toBeUndefined()
     expect(THEMES.plum).toBeUndefined()
     // Новые темы — премиум
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
       expect(THEMES[id].premium).toBe(true)
     }
   })
@@ -116,7 +119,7 @@ describe('THEMES: структура палитры', () => {
       expect(typeof c.overlay2).toBe('string')
     }
     // Тёмные темы: белые тинты (сохраняют прежний вид bg-white/*)
-    for (const id of ['classic', 'neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
+    for (const id of ['classic', 'neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
       expect(THEMES[id].colors.overlay).toContain('255,255,255')
       expect(THEMES[id].colors.overlay2).toContain('255,255,255')
     }
@@ -137,13 +140,14 @@ describe('THEMES: структура палитры', () => {
     expect(THEMES.neonBlue.title).toBe('Лазурь')
     expect(THEMES.neonPurple.title).toBe('Орхидея')
     expect(THEMES.neonCyan.title).toBe('Бирюза')
-    expect(THEMES.muted.title).toBe('Приглушённая')
+    // «Приглушённая» удалена (27.11) — названия оставшихся тем без неё
+    expect(THEMES.muted).toBeUndefined()
     expect(THEMES.cream.title).toBe('Кремовая')
   })
 
-  test('шесть Premium-тем помечены premium, бесплатная одна — «Классика»', () => {
+  test('пять Premium-тем помечены premium, бесплатная одна — «Классика» (правка 27.11)', () => {
     expect(THEMES.classic.premium).toBe(false)
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
       expect(THEMES[id].premium).toBe(true)
     }
   })
@@ -216,7 +220,6 @@ describe('THEMES: структура палитры', () => {
       neonBlue: '#2E9EFF',
       neonPurple: '#C44BF8',
       neonCyan: '#23E5C8',
-      muted: '#A3C2A0', // единственная спокойная — осталась как была
     }
     for (const [id, accent] of Object.entries(accents)) {
       const c = THEMES[id].colors
@@ -266,15 +269,15 @@ describe('THEMES: структура палитры', () => {
       // и это ТОТ ЖЕ оттенок, что у приглушённой версии (тема «своего цвета»)
       expect(hueOf(accent)).toBe(hueOf(neon))
     }
-    // «Приглушённая» осталась спокойной — яркой её правка не касалась
-    expect(sat(THEMES.muted.colors.accent)).toBeLessThan(0.4)
+    // «Приглушённая» удалена (27.11) — её спокойный акцент больше не в списке
+    expect(THEMES.muted).toBeUndefined()
   })
 
   test('текст НА акценте: тёмный у ярких «Лайма»/«Бирюзы» и приглушённых тем, белый у «Лазури»/«Орхидеи»/«Классики» (правка 27.11: приглушение отклонено — как было до него)', () => {
     // Яркий лайм/бирюза светлые — на них читается только тёмный текст;
     // у лазури/орхидеи акценты насыщенно-средние — белый текст, как
     // было до правки «менее кричащими» и осталось после её отклонения
-    const darkInk = ['neonLime', 'neonCyan', 'muted', 'cream']
+    const darkInk = ['neonLime', 'neonCyan', 'cream']
     for (const id of darkInk) {
       const on = THEMES[id].colors.accentOn
       expect(on).toMatch(/^#[0-9A-Fa-f]{6}$/)
@@ -317,7 +320,7 @@ describe('THEMES: структура палитры', () => {
   })
 
   test('тёмные неоновые темы: вторичные тексты читаются по WCAG AA', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
       const c = THEMES[id].colors
       expect(luminance(c.bg)).toBeLessThan(0.03)
       expect(contrast(c.card, c.text)).toBeGreaterThan(9)
@@ -329,17 +332,20 @@ describe('THEMES: структура палитры', () => {
 })
 
 describe('resolveThemeId: гейтинг по подписке и переезд старых выборов', () => {
-  test('премиум-тема без подписки → «Классика»; бесплатная доступна всем', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
+  test('премиум-тема без подписки → «Классика»; бесплатная доступна всем (удалённая «Приглушённая» — тоже дефолт)', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
       expect(resolveThemeId(id, false)).toBe('classic')
     }
     // «Классика» — бесплатная: работает и без подписки, и с ней
     expect(resolveThemeId('classic', false)).toBe('classic')
     expect(resolveThemeId('classic', true)).toBe('classic')
+    // Удалённая «Приглушённая»: id неизвестен → безопасный дефолт
+    expect(resolveThemeId('muted', true)).toBe('classic')
+    expect(resolveThemeId('muted', false)).toBe('classic')
   })
 
   test('премиум-тема с подпиской → сама тема', () => {
-    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']) {
       expect(resolveThemeId(id, true)).toBe(id)
     }
   })
@@ -439,17 +445,23 @@ describe('помощники цвета: withAlpha / blendHex / bmiTones (пра
     }
   })
 
-  test('bmiTones: тона привязаны к семантике темы (норма — good, ожирение — bad)', () => {
+  test('bmiTones: тона привязаны к теме (правка Кати 27.11: «кольцо по цветам темы»)', () => {
     const classic = THEMES.classic.colors
     const tClassic = bmiTones(classic)
     expect(tClassic.norm).toBe(classic.good)
     expect(tClassic.obese1).toBe(classic.bad)
-    expect(tClassic.low).toBe(classic.warn)
-    expect(tClassic.over).toBe(blendHex(classic.warn, classic.bad, 0.5))
+    expect(tClassic.low).toBe(classic.dim)
+    expect(tClassic.over).toBe(classic.sub)
     // В кремовой тема остаётся тёплой: норма — янтарь, не зелёный
     const cream = THEMES.cream.colors
     expect(bmiTones(cream).norm).toBe(cream.good)
     expect(bmiTones(cream).norm).toBe('#A16207')
-    expect(bmiTones(cream).over).toBe('#9a431d')
+    // В неонах норма — сам акцент темы (good == accent), ожирение — bad семьи
+    const lime = THEMES.neonLime.colors
+    expect(bmiTones(lime).norm).toBe(lime.accent)
+    expect(bmiTones(lime).obese1).toBe(lime.bad)
+    // Чужого янтаря warn в шкале больше нет (был «не в теме»)
+    const azure = THEMES.neonBlue.colors
+    expect(bmiTones(azure).low).not.toBe(azure.warn)
   })
 })

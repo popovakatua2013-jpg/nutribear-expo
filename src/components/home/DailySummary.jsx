@@ -626,10 +626,9 @@ export function DailySummary({
                 style={{
                   color: remTone.text,
                   fontSize: 27,
-                  // Свечение крупной цифры цветом темы («не хватает свечения»)
-                  textShadowColor: remTone.text,
-                  textShadowRadius: 10,
-                  textShadowOffset: { width: 0, height: 0 },
+                  // Свечение убрано (правка Кати 27.11: «цифра по середине
+                  // сколько ккал осталось в каком-то размытом нечетком
+                  // стиле») — тень radius 10 мылила цифру, теперь чёткая
                 }}
               >
                 {rem == null ? '—' : rem >= 0 ? formatNum(rem) : `−${formatNum(Math.abs(rem))}`}

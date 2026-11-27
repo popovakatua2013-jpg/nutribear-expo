@@ -153,7 +153,7 @@ export default function BmiScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 16,
           paddingHorizontal: 16,
-          gap: 16,
+          gap: 20,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
@@ -212,8 +212,11 @@ export default function BmiScreen() {
         {/* Главный блок: БЕЗ карточки — кольцо и легенда свободно
             парят на тёмном фоне; ниже — тёмные карточки «Вес» и «Рост» */}
         <View accessibilityLabel="ИМТ и состав тела">
-          {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете */}
-          <SoftGlow id="nbsGlowTR" w={250} h={200} peak={0.32} style={{ top: -28, right: -55 }} />
+          {/* Мягкая неоновая дымка справа сверху и по правому краю — как на макете.
+              color — ОБЯЗАТЕЛЬНО у обеих дымок (правка Кати 27.11: «в лазури
+              фон фиолетовый а нужно по теме» — у верхней дымки был дефолт
+              #7C3AED фиолетовым во ВСЕХ темах, теперь — акцент темы) */}
+          <SoftGlow id="nbsGlowTR" w={250} h={200} peak={0.32} color={themeColors.accent} style={{ top: -28, right: -55 }} />
           <SoftGlow id="nbsGlowR" w={180} h={260} peak={0.18} color={themeColors.accent} style={{ top: 90, right: -44 }} />
           <View className="gap-2.5">
             <View className="flex-row items-center gap-2">

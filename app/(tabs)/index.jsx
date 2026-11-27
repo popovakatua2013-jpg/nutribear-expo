@@ -277,7 +277,7 @@ export default function HomeScreen() {
       <SoftGlow id="glowHomeL" w={190} h={210} peak={0.15} color={themeColors.accentBright} style={{ top: 80, left: -56 }} />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 16, gap: 20, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Приветствие: мишка, время суток и дата. Строку статуса

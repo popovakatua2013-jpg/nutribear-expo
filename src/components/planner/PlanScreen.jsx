@@ -270,16 +270,18 @@ function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText, toneOver = t
 // Линия тренда недели — как в макете: плавная кривая с точками и
 // мягкой заливкой; пунктир нормы; сегодняшний день — крупная точка и
 // акцентная подпись; дни без данных — серые точки. Тап по дню — значение.
-// Высота снижена со 148 — блок «Прогресс» компактнее (отзыв Кати 10.11:
-// «очень громоздкие блоки»)
-const CHART_H = 116
+// Высота снижена до 92 (карточка «Прогресс» теперь третья в карусели —
+// просьба Кати 27.11 — и должна помещаться в высоту ряда), а нижний
+// отступ ужат 26 → 16 — «очень большой отступ между пунктирной линией
+// и календарём» (дни Пн–Вс придвинуты к графику)
+const CHART_H = 92
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
   const { P } = usePlanPalette()
   const styles = makeStyles(P)
   const [w, setW] = useState(0)
-  const PAD_T = 16
-  const PAD_B = 26
+  const PAD_T = 14
+  const PAD_B = 16
   const PAD_X = 11
   const ih = CHART_H - PAD_T - PAD_B
   const iw = Math.max(0, w - PAD_X * 2)
@@ -379,6 +381,9 @@ export function PlanScreen({ onOpenFasting }) {
   const CAR_PEEK = 56
   const menuCardW = winW - spacing.xl * 2 - CAR_PEEK
   const fastCardW = winW - spacing.xl * 2
+  // Три позиции снапа: «Меню на неделю» → «Интервальное питание» →
+  // «Прогресс» (просьба Кати 27.11: «прогресс тоже сделай в карусель —
+  // одинаково по размеру с остальными блоками в карусели»)
 
   // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
@@ -663,13 +668,15 @@ export function PlanScreen({ onOpenFasting }) {
           свайп влево — и она встаёт во всю ширину (snapToOffsets, без
           точек-индикаторов — как в Сбере). paddingVertical — место для
           ореолов свечения NeonCard, иначе горизонт ScrollView их обрежет */}
+      {/* Карусель: marginTop 8 — отступ от чипов целей (просьба Кати 27.11:
+          «между блоками по всему приложению нет отступов» — раньше было 2) */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
-        snapToOffsets={[0, menuCardW + CAR_GAP]}
+        snapToOffsets={[0, menuCardW + CAR_GAP, menuCardW + CAR_GAP + fastCardW + CAR_GAP]}
         contentContainerStyle={{ alignItems: 'stretch', gap: CAR_GAP, paddingVertical: 14 }}
-        style={{ marginTop: 2 }}
+        style={{ marginTop: 8 }}
       >
         <View style={{ width: menuCardW }}>
           <MealPlanScreen compact />
@@ -700,8 +707,8 @@ export function PlanScreen({ onOpenFasting }) {
             <Ring
               pct={fastPct}
               runId={runId}
-              size={48}
-              stroke={6}
+              size={64}
+              stroke={7}
               centerText={fastStartedAt ? undefined : fastPlan}
               sub={fastStartedAt ? fastPlan : 'Режим'}
               toneOver={false}
@@ -735,6 +742,107 @@ export function PlanScreen({ onOpenFasting }) {
           </View>
           </NeonCard>
         </Pressable>
+
+        {/* Третья карточка карусели — «Прогресс» (просьба Кати 27.11:
+            «прогресс тоже сделай в карусель — одинаково по размеру
+            с остальными блоками»): та же ширина (fastCardW — во всю
+            ширину при снапе), та же высота ряда (stretch + flex:1),
+            контент ужат (compact-варианты стилей с суффиксом C) */}
+        <View style={{ width: fastCardW }}>
+          <NeonCard style={[styles.card, styles.cardC]} innerStyle={[styles.cardInner, styles.cardInnerC]}>
+            <View style={[styles.cardHead, styles.cardHeadC]}>
+              <View style={[styles.iconTile, styles.iconTileC]}>
+                <BarChart3 size={15} color={P.accentText} />
+              </View>
+              <Text style={[styles.cardTitle, styles.cardTitleC]}>Прогресс</Text>
+              <View style={styles.headRight}>
+                <Text style={styles.headLink}>За 7 дней</Text>
+                <ChevronRight size={14} color={P.text3} />
+              </View>
+            </View>
+
+            <View style={[styles.progressRow, styles.progressRowC]}>
+              <Ring
+                pct={kcalGoal > 0 ? todaySum.kcal / kcalGoal : 0}
+                runId={runId}
+                size={60}
+                stroke={8}
+                sub="от цели"
+              />
+              <View style={styles.legend}>
+                {legend.map((r) => (
+                  <View key={r.key} style={styles.legendRow}>
+                    <View style={[styles.legendDot, { backgroundColor: r.color }]} />
+                    <Text numberOfLines={1} style={styles.legendLabel}>{r.label}</Text>
+                    <Text numberOfLines={1} style={styles.legendVal}>
+                      {r.value} / {r.norm} {r.unit}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Переключатель показателя графика: калории / клетчатка / сахар */}
+            <View style={[styles.segRow, styles.segRowC]}>
+              {METRICS.map(([id, label]) => {
+                const active = metric === id
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => setMetric(id)}
+                    style={[styles.segBtn, active && styles.segBtnActive]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`График недели: ${label}`}
+                  >
+                    <Text style={[styles.segText, active && styles.segTextActive]}>{label}</Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+            <TrendChart
+              values={weekValues}
+              norm={weekNorm}
+              max={chartMax}
+              color={metricColor}
+              todayIdx={todayIdx}
+              onPickDay={pickDay}
+            />
+
+            {/* Прогноз цели по весу — дефицит считается по дневнику (просьба
+                Кати 10.11): «при твоём текущем дефиците −0,5 кг/нед, к цели
+                по весу придёшь ~20 декабря» */}
+            <View style={[styles.forecast, styles.forecastC]}>
+              <View style={[styles.forecastIcon, styles.forecastIconC]}>
+                <Target size={14} color={P.accentText} />
+              </View>
+              <View style={styles.forecastTexts}>
+                <Text numberOfLines={1} style={styles.forecastTitle}>{forecastText.title}</Text>
+                <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
+              </View>
+            </View>
+
+            {/* Разбор недели от напарника — Premium (этап 2 монетизации):
+                строка в стиле прогноза, тап открывает окно разбора */}
+            <Pressable
+              style={[styles.reviewRow, styles.reviewRowC, { backgroundColor: themeColors.accentFaint, borderColor: themeColors.accentBorder }]}
+              onPress={() => setReviewOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Разбор недели от напарника — Premium"
+            >
+              <View style={[styles.forecastIcon, styles.forecastIconC]}>
+                <Sparkles size={14} color={P.accentText} />
+              </View>
+              <View style={styles.forecastTexts}>
+                <Text numberOfLines={1} style={styles.forecastTitle}>Разбор недели от напарника</Text>
+                <Text numberOfLines={1} style={styles.forecastSub}>
+                  итоги и советы по дневнику · 👑 Premium
+                </Text>
+              </View>
+              <ChevronRight size={14} color={P.text3} />
+            </Pressable>
+          </NeonCard>
+        </View>
       </ScrollView>
 
       {/* «Добавить рецепт» — компактный блок под каруселью: окно своих
@@ -763,104 +871,6 @@ export function PlanScreen({ onOpenFasting }) {
           <ChevronRight size={15} color={P.text3} />
         </NeonCard>
       </Pressable>
-
-      {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда.
-          Оформление — NeonCard (пятый круг Кати: «вкладка план — ни
-          рамок ни свечения ни градиента»): кайма + градиент + свечение,
-          как у блоков «Главной» */}
-      <NeonCard style={styles.card} innerStyle={styles.cardInner}>
-        <View style={styles.cardHead}>
-          <View style={styles.iconTile}>
-            <BarChart3 size={18} color={P.accentText} />
-          </View>
-          <Text style={styles.cardTitle}>Прогресс</Text>
-          <View style={styles.headRight}>
-            <Text style={styles.headLink}>За 7 дней</Text>
-            <ChevronRight size={15} color={P.text3} />
-          </View>
-        </View>
-
-        <View style={styles.progressRow}>
-          <Ring
-            pct={kcalGoal > 0 ? todaySum.kcal / kcalGoal : 0}
-            runId={runId}
-            size={88}
-            stroke={9}
-            sub="от цели"
-          />
-          <View style={styles.legend}>
-            {legend.map((r) => (
-              <View key={r.key} style={styles.legendRow}>
-                <View style={[styles.legendDot, { backgroundColor: r.color }]} />
-                <Text numberOfLines={1} style={styles.legendLabel}>{r.label}</Text>
-                <Text numberOfLines={1} style={styles.legendVal}>
-                  {r.value} / {r.norm} {r.unit}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Переключатель показателя графика: калории / клетчатка / сахар */}
-        <View style={styles.segRow}>
-          {METRICS.map(([id, label]) => {
-            const active = metric === id
-            return (
-              <Pressable
-                key={id}
-                onPress={() => setMetric(id)}
-                style={[styles.segBtn, active && styles.segBtnActive]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={`График недели: ${label}`}
-              >
-                <Text style={[styles.segText, active && styles.segTextActive]}>{label}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
-        <TrendChart
-          values={weekValues}
-          norm={weekNorm}
-          max={chartMax}
-          color={metricColor}
-          todayIdx={todayIdx}
-          onPickDay={pickDay}
-        />
-
-        {/* Прогноз цели по весу — дефицит считается по дневнику (просьба
-            Кати 10.11): «при твоём текущем дефиците −0,5 кг/нед, к цели
-            по весу придёшь ~20 декабря» */}
-        <View style={styles.forecast}>
-          <View style={styles.forecastIcon}>
-            <Target size={15} color={P.accentText} />
-          </View>
-          <View style={styles.forecastTexts}>
-            <Text numberOfLines={1} style={styles.forecastTitle}>{forecastText.title}</Text>
-            <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
-          </View>
-        </View>
-
-        {/* Разбор недели от напарника — Premium (этап 2 монетизации):
-            строка в стиле прогноза, тап открывает окно разбора */}
-        <Pressable
-          style={[styles.reviewRow, { backgroundColor: themeColors.accentFaint, borderColor: themeColors.accentBorder }]}
-          onPress={() => setReviewOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Разбор недели от напарника — Premium"
-        >
-          <View style={styles.forecastIcon}>
-            <Sparkles size={15} color={P.accentText} />
-          </View>
-          <View style={styles.forecastTexts}>
-            <Text numberOfLines={1} style={styles.forecastTitle}>Разбор недели от напарника</Text>
-            <Text numberOfLines={1} style={styles.forecastSub}>
-              итоги и советы по дневнику · 👑 Premium
-            </Text>
-          </View>
-          <ChevronRight size={15} color={P.text3} />
-        </Pressable>
-      </NeonCard>
 
       {/* 4. Список покупок — чек-лист слева, иллюстрация и лаймовая кнопка
           справа (как в макете); тап открывает экран «Покупки».
@@ -1048,10 +1058,17 @@ const makeStyles = (P) => ({
   card: {
     marginTop: spacing.l,
   },
+  // Карточка в КАРУСЕЛИ («Прогресс», правка Кати 27.11): без marginTop
+  // (он сдвигал бы карточку вниз — карточки вставали разной высоты) и
+  // с flex: 1 — тянется на высоту ряда, как карточки меню/гололания
+  cardC: { flex: 1, marginTop: 0 },
   cardInner: {
     padding: spacing.l,
   },
+  // «Прогресс» в карусели: внутренний паддинг уже — как у меню
+  cardInnerC: { padding: spacing.m },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardHeadC: { gap: 8 },
   iconTile: {
     width: 34,
     height: 34,
@@ -1060,14 +1077,18 @@ const makeStyles = (P) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconTileC: { width: 24, height: 24, borderRadius: 8 },
   cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
+  cardTitleC: { fontSize: 14 },
   headRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   headLink: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
 
   // Прогресс: кольцо + легенда (строки в одну линию — компактнее,
-  // отзыв Кати 10.11)
+  // отзыв Кати 10.11); progressRowC — компакт карусели: кольцо 60,
+  // зазоры уже — карточка помещается в высоту ряда карусели
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: spacing.m },
-  legend: { flex: 1, minWidth: 0, gap: 7 },
+  progressRowC: { gap: 12, marginTop: 8 },
+  legend: { flex: 1, minWidth: 0, gap: 5 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendLabel: {
@@ -1109,6 +1130,7 @@ const makeStyles = (P) => ({
     paddingVertical: 10,
     marginTop: spacing.m,
   },
+  forecastC: { marginTop: 8, paddingVertical: 8 },
   forecastIcon: {
     width: 30,
     height: 30,
@@ -1117,6 +1139,7 @@ const makeStyles = (P) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  forecastIconC: { width: 26, height: 26, borderRadius: 9 },
   forecastTexts: { flex: 1, minWidth: 0 },
   forecastTitle: { fontSize: 13.5, fontWeight: '700', fontFamily: F[700], color: P.text },
   forecastSub: { fontSize: 11.5, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
@@ -1134,6 +1157,7 @@ const makeStyles = (P) => ({
     paddingVertical: 10,
     marginTop: 8,
   },
+  reviewRowC: { paddingVertical: 8, gap: 10 },
 
   // Переключатель показателя графика
   segRow: {
@@ -1145,6 +1169,7 @@ const makeStyles = (P) => ({
     marginTop: spacing.m,
     marginBottom: spacing.s,
   },
+  segRowC: { marginTop: 8, marginBottom: 4 },
   segBtn: {
     paddingHorizontal: 12,
     height: 26,
@@ -1248,9 +1273,11 @@ const makeStyles = (P) => ({
 
   // «Добавить рецепт» — компактная строка-кнопка под каруселью:
   // иконка слева, тексты в столбик, шеврон справа; высота по контенту
-  // (просьба Кати 26.11: «добавить рецепт сжато» — растягивать нельзя)
+  // (просьба Кати 26.11: «добавить рецепт сжато» — растягивать нельзя).
+  // marginTop 16 — единый отступ между блоками (правка Кати 27.11:
+  // «между блоками нет отступов — сделать отступ»; было 10)
   recipeCard: {
-    marginTop: 10,
+    marginTop: 16,
   },
   recipeInner: {
     flexDirection: 'row',

@@ -34,9 +34,11 @@ describe('кольцо голодания — по теме, без оранже
     expect(plan.match(/function Ring\(\{[^}]*toneOver = true/)).not.toBeNull()
     // Оранжевый «сверх нормы» в Ring теперь только под toneOver
     expect(plan.match(/stroke=\{over && toneOver \? P\.orange/)).not.toBeNull()
-    // Кольцо «Прогресса» (size={88}) не передаёт toneOver — сигнал перебора калорий остаётся
-    const progressRing = ringBlock(plan, '<Ring\n            pct={kcalGoal')
-    expect(progressRing).toContain('size={88}')
+    // Кольцо «Прогресса» (size={60} в карусели) не передаёт toneOver —
+    // сигнал перебора калорий остаётся; анкор без привязки к отступам —
+    // карточка «Прогресса» переехала в карусель (правка Кати 27.11)
+    const progressRing = ringBlock(plan, plan.match(/<Ring\n\s+pct=\{kcalGoal/)[0])
+    expect(progressRing).toContain('size={60}')
     expect(progressRing).not.toContain('toneOver')
   })
 
@@ -44,8 +46,9 @@ describe('кольцо голодания — по теме, без оранже
     // Анкор без привязки к отступам — карусель «меню ↔ голодание»
     // (правка Кати 27.11) сменила вложенность блока
     const fastingRing = ringBlock(plan, plan.match(/<Ring\n\s+pct=\{fastPct\}/)[0])
-    // «все поменьше» (правка Кати 27.11): кольцо карточки голодания ужато 56 → 48
-    expect(fastingRing).toContain('size={48}')
+    // Правка Кати 27.11 (вечер): «кольцо в интервальном питании очень
+    // маленькое по отношению к блоку» — 48 → 64
+    expect(fastingRing).toContain('size={64}')
     expect(fastingRing).toContain('toneOver={false}')
   })
 
