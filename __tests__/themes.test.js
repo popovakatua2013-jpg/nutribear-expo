@@ -131,12 +131,12 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
-  test('названия тем', () => {
+  test('названия тем (правка 27.11: «менее кричащими» — без «Неон-» в названиях)', () => {
     expect(THEMES.classic.title).toBe('Классика')
-    expect(THEMES.neonLime.title).toBe('Неон-лайм')
-    expect(THEMES.neonBlue.title).toBe('Неон-синий')
-    expect(THEMES.neonPurple.title).toBe('Неон-фиолетовый')
-    expect(THEMES.neonCyan.title).toBe('Неон-циан')
+    expect(THEMES.neonLime.title).toBe('Лайм')
+    expect(THEMES.neonBlue.title).toBe('Лазурь')
+    expect(THEMES.neonPurple.title).toBe('Орхидея')
+    expect(THEMES.neonCyan.title).toBe('Бирюза')
     expect(THEMES.muted.title).toBe('Приглушённая')
     expect(THEMES.cream.title).toBe('Кремовая')
   })
@@ -152,7 +152,7 @@ describe('THEMES: структура палитры', () => {
     for (const id of THEME_ORDER) {
       const theme = THEMES[id]
       expect(theme.id).toBe(id)
-      // названия с дефисом («Неон-фиолетовый») тоже валидны
+      // названия с дефисом тоже валидны (раньше были «Неон-…»)
       expect(theme.title).toMatch(/^[А-ЯЁ][а-яёА-ЯЁ-]+$/)
       for (const token of THEME_TOKENS) {
         expect(typeof theme.colors[token]).toBe('string')
@@ -206,13 +206,21 @@ describe('THEMES: структура палитры', () => {
     expect(Number(lm[4])).toBeGreaterThanOrEqual(0.2)
   })
 
-  test('неоновые тёмные темы: свой яркий акцент у каждой, «свечение» рамок', () => {
+  test('тёмные цветные темы: свой спокойный акцент у каждой, мягкая кайма (правка Кати 27.11: «менее кричащими»)', () => {
+    // Кислотные акценты макета 24.11 (#C9F31D/#2E9EFF/#C44BF8/#23E5C8)
+    // заменены приглушёнными того же тона — уровень «Приглушённой»
     const accents = {
-      neonLime: '#C9F31D',
-      neonBlue: '#2E9EFF',
-      neonPurple: '#C44BF8',
-      neonCyan: '#23E5C8',
+      neonLime: '#B3C48C',
+      neonBlue: '#8AA9C4',
+      neonPurple: '#AE9CC5',
+      neonCyan: '#8FC2B8',
       muted: '#A3C2A0',
+    }
+    // старые кислотные hex больше нигде не живут
+    for (const old of ['#C9F31D', '#2E9EFF', '#C44BF8', '#23E5C8']) {
+      for (const id of THEME_ORDER) {
+        expect(Object.values(THEMES[id].colors)).not.toContain(old)
+      }
     }
     for (const [id, accent] of Object.entries(accents)) {
       const c = THEMES[id].colors
@@ -225,15 +233,53 @@ describe('THEMES: структура палитры', () => {
     }
   })
 
-  test('текст НА акценте: тёмный у ярких лайма/циана/шалфея/янтаря, белый у остальных', () => {
-    expect(THEMES.neonLime.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
-    expect(luminance(THEMES.neonLime.colors.accentOn)).toBeLessThan(0.1)
-    expect(luminance(THEMES.neonCyan.colors.accentOn)).toBeLessThan(0.1)
-    expect(luminance(THEMES.muted.colors.accentOn)).toBeLessThan(0.1)
-    expect(THEMES.cream.colors.accentOn).toMatch(/^#[0-9A-Fa-f]{6}$/)
-    expect(luminance(THEMES.cream.colors.accentOn)).toBeLessThan(0.1)
-    expect(THEMES.neonBlue.colors.accentOn).toBe('#FFFFFF')
-    expect(THEMES.neonPurple.colors.accentOn).toBe('#FFFFFF')
+  test('правка Кати 27.11 «менее кричащими»: акценты десатурированы до уровня «Приглушённой»', () => {
+    // HSL-насыщенность акцента: была 79–100% у неонов макета, стала
+    // 26–33% — рядом с «Приглушённой» (s=22%). Оттенок (H) сохранён:
+    // темы остались «своего цвета», ушла только кислотность
+    const sat = (hex) => {
+      const h = hex.replace('#', '')
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+      const max = Math.max(r, g, b)
+      const min = Math.min(r, g, b)
+      return (max - min) / (1 - Math.abs(2 * (max + min) / 2 - 1) || 1) / 1
+    }
+    const hueOf = (hex) => {
+      const h = hex.replace('#', '')
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+      const max = Math.max(r, g, b)
+      const min = Math.min(r, g, b)
+      const d = max - min
+      if (d === 0) return 0
+      if (max === r) return ((60 * (g - b)) / d + 360) % 360
+      if (max === g) return (60 * (b - r)) / d + 120
+      return (60 * (r - g)) / d + 240
+    }
+    const oldHues = {
+      neonLime: hueOf('#C9F31D'),
+      neonBlue: hueOf('#2E9EFF'),
+      neonPurple: hueOf('#C44BF8'),
+      neonCyan: hueOf('#23E5C8'),
+    }
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan']) {
+      const accent = THEMES[id].colors.accent
+      expect(sat(accent)).toBeLessThan(0.4)
+      // оттенок сохранился (±20° — тот же цвет, без кислоты)
+      const diff = Math.abs(hueOf(accent) - oldHues[id])
+      expect(Math.min(diff, 360 - diff)).toBeLessThan(20)
+    }
+    expect(sat(THEMES.muted.colors.accent)).toBeLessThan(0.4)
+  })
+
+  test('текст НА акценте: тёмный у всех тёмных и у «Кремовой» (правка 27.11: акценты тёмных тем стали светлыми и приглушёнными), у «Классики» — белый', () => {
+    for (const id of ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'muted', 'cream']) {
+      const on = THEMES[id].colors.accentOn
+      expect(on).toMatch(/^#[0-9A-Fa-f]{6}$/)
+      expect(luminance(on)).toBeLessThan(0.1)
+      // и читается на приглушённом акценте (минимум для крупного UI-текста)
+      expect(contrast(THEMES[id].colors.accent, on)).toBeGreaterThanOrEqual(3)
+    }
+    expect(THEMES.classic.colors.accentOn).toBe('#FFFFFF')
   })
 
   test('«Кремовая» — светлая тема: тёмные тексты читаются по WCAG AA', () => {

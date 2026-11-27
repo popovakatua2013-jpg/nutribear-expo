@@ -31,7 +31,7 @@ describe('FREE_LIMITS после усиления Premium', () => {
     expect(byText['Вся история приёмов пищи']).toContain('14 дней')
     expect(byText['Комбо без ограничений']).toContain('2')
     expect(byText['Шесть Premium-тем оформления']).toBeTruthy()
-    expect(byText['Шесть Premium-тем оформления']).toContain('Неон-лайм')
+    expect(byText['Шесть Premium-тем оформления']).toContain('Лайм')
     expect(byText['Шесть Premium-тем оформления']).toContain('Приглушённая')
     expect(byText['Шесть Premium-тем оформления']).toContain('Кремовая')
     // Бесплатная тема в перке помечена честно (правка Кати 27.11:
