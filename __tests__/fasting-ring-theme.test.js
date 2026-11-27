@@ -41,7 +41,9 @@ describe('кольцо голодания — по теме, без оранже
   })
 
   test('кольцу голодания передан toneOver={false} — сверх цели цвет темы', () => {
-    const fastingRing = ringBlock(plan, '<Ring\n                pct={fastPct}')
+    // Анкор без привязки к отступам — карусель «меню ↔ голодание»
+    // (правка Кати 27.11) сменила вложенность блока
+    const fastingRing = ringBlock(plan, plan.match(/<Ring\n\s+pct=\{fastPct\}/)[0])
     expect(fastingRing).toContain('size={56}')
     expect(fastingRing).toContain('toneOver={false}')
   })

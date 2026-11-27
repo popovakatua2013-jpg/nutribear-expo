@@ -7,11 +7,15 @@
 // градиентом BRAND, в неоновых темах выбивалась), неактивная —
 // приглушённая подложка темы.
 //
-// Пункт с disabled: true — «заблокирован»: серый, приглушён, с замком
+// Пункт с disabled: true — «заблокирован»: приглушённые цвета и замок
 // (отзыв Кати: динамика за 30/90 дней открывается, только когда
 // пользователь дойдёт до 30-го/90-го дня ведения дневника — зачем
 // 90 дней тому, кто на 7-м). Тап по заблокированной пилюле ничего
 // не выбирает — подсказку показывает вызывающий экран.
+// Правка Кати 27.11 («не видно под замком надпись 30 дн 90 дн»):
+// общий opacity 0.5 топил и подпись, и замок на тёмных темах до
+// полной невидимости — вместо него рамка accentBorder: пилюля читается
+// как заблокированная, но подпись остаётся разборчивой (dim)
 
 import { Pressable, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -39,7 +43,7 @@ export function Pills({ items, value, onChange, size = 'sm', accessibilityLabel,
         const pill = (
           <View
             className={`flex-row items-center gap-1 ${pad.box}`}
-            style={locked ? { opacity: 0.5 } : null}
+            style={locked ? { borderWidth: 1, borderColor: themeColors.accentBorder } : null}
           >
             {locked && <Lock size={11} color={active ? ink : themeColors.dim} />}
             <Text

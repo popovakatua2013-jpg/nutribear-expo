@@ -142,6 +142,11 @@ export function WeightTrendCard() {
           {WEIGHT_RANGES.map((r) => {
             const active = days === r.id
             const locked = periodLocked(r.days, diaryAge)
+            // Замок больше не приглушает чип до невидимости (отзыв
+            // Кати 27.11: «не видно под замком надпись 30 дн 90 дн» —
+            // opacity 0.5 топил и рамку, и текст на тёмных темах).
+            // Вместо него — читаемая рамка accentBorder; иконка и
+            // подпись остаются своими цветами (dim/sub)
             return (
               <Pressable
                 key={r.id}
@@ -150,7 +155,10 @@ export function WeightTrendCard() {
                 accessibilityState={{ selected: active, disabled: locked }}
                 accessibilityLabel={`График за ${r.id} дней${locked ? ' — пока недоступно' : ''}`}
                 className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 active:opacity-80 ${active ? '' : 'bg-bear-accentFaint'}`}
-                style={[active ? { backgroundColor: themeColors.accent } : null, locked ? { opacity: 0.5 } : null]}
+                style={[
+                  active ? { backgroundColor: themeColors.accent } : null,
+                  locked && !active ? { borderWidth: 1, borderColor: themeColors.accentBorder } : null,
+                ]}
               >
                 {locked && (
                   <Lock size={11} color={active ? themeColors.accentOn : themeColors.dim} />

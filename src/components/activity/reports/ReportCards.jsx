@@ -309,7 +309,11 @@ function ReportCard({ m, rows, prevRows, days, goalMet = null, onPress = () => {
           считал 100% от высоты вьюпорта, и карточки растягивались
           на весь экран (скрин «ужаса» из отзыва) */}
       <CardBg />
-      <View style={{ padding: s.pad }} className="flex-1">
+      {/* flexGrow (basis auto) вместо flex-1 (basis 0%): basis 0% в
+          колонке с авто-высотой на устройстве схлопывал ряд карточек
+          в полоску — «График веса» наезжал на мини-блоки (скрин Кати
+          27.11). Растягивание в ряду выше работает как прежде */}
+      <View style={{ padding: s.pad, flexGrow: 1 }}>
         <CardHead m={m} s={s} iconColor={mc} />
         <Text
           numberOfLines={1}
@@ -406,7 +410,8 @@ function SleepCard({ days, rows, goalMin = 420, onPress = () => {}, onQuickAdd =
       {/* фон — абсолютный градиент (см. комментарий в ReportCard:
           height:'100%' растягивал карточку до высоты вьюпорта) */}
       <CardBg />
-      <View style={{ padding: s.pad }} className="flex-1">
+      {/* flexGrow вместо flex-1 — страховка от схлопывания ряда (см. ReportCard) */}
+      <View style={{ padding: s.pad, flexGrow: 1 }}>
         <CardHead m={{ label: 'Сон', Icon: MoonStar, color: sc }} s={s} />
         {nights ? (
           <>
@@ -511,7 +516,8 @@ function WeightReportCard({ days, onPress = () => {} }) {
       style={{ borderRadius: 16 }}
     >
       <CardBg />
-      <View style={{ padding: s.pad }} className="flex-1">
+      {/* flexGrow вместо flex-1 — страховка от схлопывания ряда (см. ReportCard) */}
+      <View style={{ padding: s.pad, flexGrow: 1 }}>
         <CardHead m={{ label: 'Вес', Icon: Scale, color: wc }} s={s} />
         <Text
           numberOfLines={1}

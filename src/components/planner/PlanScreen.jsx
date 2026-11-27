@@ -2,9 +2,10 @@
 //   шапка        — аватар, «План», колокольчик с красной точкой, шестерёнка
 //   цели         — крупные чипы «эмодзи + название + подпись», активный —
 //                  лаймовый с галочкой (у нас 4 цели — сеткой 2×2)
-//   меню         — MealPlanScreen (слева) + карточка «Интервальное
-//                  питание» (справа) РЯДОМ, под ней — блок «Добавить
-//                  рецепт» (макет Кати от 09.11 + отзыв 09.11)
+//   меню         — КАРУСЕЛЬ как в Сбербанке (просьба Кати 27.11):
+//                  «Меню на неделю» (MealPlanScreen) → свайп влево →
+//                  карточка «Интервальное питание»; под каруселью —
+//                  «Добавить рецепт»
 //   прогресс     — кольцо % + легенда Калории/Белки/Жиры/Углеводы +
 //                  линия тренда за неделю (клетчатка/сахар — переключателем)
 //                  + прогноз цели по весу (просьба Кати 10.11): дефицит
@@ -15,7 +16,7 @@
 // (макет), типографика и сетка — общая дизайн-система (theme.js).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Easing, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { Animated, Easing, Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import Svg, {
   Circle, Defs, Line, LinearGradient, Path, Stop,
   // В react-native-svg v15 алиас SvgText удалён — элемент называется
@@ -368,6 +369,17 @@ export function PlanScreen({ onOpenFasting }) {
   // Цвета активной темы (Premium 23.11) — поверхности карточек целей и разбора недели
   const themeColors = useThemeColors()
 
+  // Карусель «меню ↔ интервальное питание» — как в Сбербанке (просьба
+  // Кати 27.11: «меню на неделю и листать/смахнуть влево — там будет
+  // интервальное питание»): большая карточка меню, справа выглядывает
+  // край карточки голодания; свайп влево — и голодание встаёт во всю
+  // ширину. Ширины — от окна и боковых отступов вкладки (spacing.xl)
+  const { width: winW } = useWindowDimensions()
+  const CAR_GAP = 12
+  const CAR_PEEK = 56
+  const menuCardW = winW - spacing.xl * 2 - CAR_PEEK
+  const fastCardW = winW - spacing.xl * 2
+
   // Счётчик возвратов на вкладку — перезапускает заливку кольца
   const [runId, setRunId] = useState(0)
   // Текущее время для живого кольца голодания: без тика кольцо
@@ -644,90 +656,100 @@ export function PlanScreen({ onOpenFasting }) {
         })}
       </View>
 
-      {/* 2. Меню на неделю + Интервальное питание — РЯДОМ (макет Кати от
-          09.11); справа под карточкой голодания — блок «Добавить рецепт»
-          (просьба Кати 09.11: вынести его из карточки меню в пустое
-          место в правой колонке) */}
-      <View style={styles.menuRow}>
-        <View style={styles.menuLeft}>
+      {/* 2. «Меню на неделю» и «Интервальное питание» — КАРУСЕЛЬ, как в
+          Сбербанке (просьба Кати 27.11: «меню на неделю и листать/
+          смахнуть влево — там будет интервальное питание»): слева большая
+          карточка меню, справа из-за края выглядывает карточка голодания;
+          свайп влево — и она встаёт во всю ширину (snapToOffsets, без
+          точек-индикаторов — как в Сбере). paddingVertical — место для
+          ореолов свечения NeonCard, иначе горизонт ScrollView их обрежет */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToOffsets={[0, menuCardW + CAR_GAP]}
+        contentContainerStyle={{ alignItems: 'stretch', gap: CAR_GAP, paddingVertical: 14 }}
+        style={{ marginTop: 2 }}
+      >
+        <View style={{ width: menuCardW }}>
           <MealPlanScreen compact />
         </View>
 
-        <View style={styles.fastCol}>
-          {/* flex:1 — тап-обёртка растягивается вместе с карточкой: карточка
-              голодания занимает всё свободное место колонки (просьба Кати:
-              «много пустого пространства между интервальным и добавить
-              рецепт»), «Добавить рецепт» остаётся внизу */}
-          <Pressable
-            onPress={onOpenFasting}
-            style={styles.fastPress}
-            accessibilityRole="button"
-            accessibilityLabel="Интервальное питание — открыть подробнее"
+        {/* Высота тап-обёртки — от карусели (alignItems: 'stretch'):
+            карточка голодания тянется на высоту карточки меню, контент
+            распределён по высоте (fastInner space-between) */}
+        <Pressable
+          onPress={onOpenFasting}
+          style={{ width: fastCardW }}
+          accessibilityRole="button"
+          accessibilityLabel="Интервальное питание — открыть подробнее"
+        >
+          <NeonCard radius={20} style={styles.fastCard} innerStyle={styles.fastInner}>
+          <Text
+            style={styles.fastTitle}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
-            <NeonCard radius={20} style={styles.fastCard} innerStyle={styles.fastInner}>
-            <Text
-              style={styles.fastTitle}
-              numberOfLines={2}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
-              Интервальное питание
-            </Text>
-            <View style={styles.fastRingWrap}>
-              {/* toneOver={false} — просьба Кати: заполненное кольцо
-                  голодания больше не красится оранжевым сверх цели,
-                  всегда цвет темы */}
-              <Ring
-                pct={fastPct}
-                runId={runId}
-                size={56}
-                stroke={6}
-                centerText={fastStartedAt ? undefined : fastPlan}
-                sub={fastStartedAt ? fastPlan : 'Режим'}
-                toneOver={false}
-              />
-            </View>
-            <View style={styles.fastLegend}>
-              <View style={styles.fastLegendRow}>
-                <View style={[styles.fastDot, { backgroundColor: P.accentText }]} />
-                <View style={styles.fastLegendTexts}>
-                  <Text style={styles.fastLegendLabel}>Окно питания</Text>
-                  <Text style={styles.fastLegendVal}>{fastEatFrom} – {fastEatTo}</Text>
-                </View>
-              </View>
-              <View style={styles.fastLegendRow}>
-                <View style={[styles.fastDot, { backgroundColor: P.text3 }]} />
-                <View style={styles.fastLegendTexts}>
-                  <Text style={styles.fastLegendLabel}>Голодание</Text>
-                  <Text style={styles.fastLegendVal}>{fastEatTo} – {fastEatFrom}</Text>
-                </View>
+            Интервальное питание
+          </Text>
+          <View style={styles.fastRingWrap}>
+            {/* toneOver={false} — просьба Кати: заполненное кольцо
+                голодания больше не красится оранжевым сверх цели,
+                всегда цвет темы */}
+            <Ring
+              pct={fastPct}
+              runId={runId}
+              size={56}
+              stroke={6}
+              centerText={fastStartedAt ? undefined : fastPlan}
+              sub={fastStartedAt ? fastPlan : 'Режим'}
+              toneOver={false}
+            />
+          </View>
+          <View style={styles.fastLegend}>
+            <View style={styles.fastLegendRow}>
+              <View style={[styles.fastDot, { backgroundColor: P.accentText }]} />
+              <View style={styles.fastLegendTexts}>
+                <Text style={styles.fastLegendLabel}>Окно питания</Text>
+                <Text style={styles.fastLegendVal}>{fastEatFrom} – {fastEatTo}</Text>
               </View>
             </View>
-            {/* Живая подпись: что показывает кольцо прямо сейчас */}
-            <Text style={styles.fastLive} numberOfLines={2}>
-              {fastStartedAt
-                ? `Идёт таймер: ${fmtDurShort(fastElapsed)} из ${Math.round(fastGoalMs / 3600000)} ч`
-                : 'Кольцо заполнится по ходу таймера без еды'}
-            </Text>
-            <View style={styles.fastMore} pointerEvents="none">
-              <Text style={styles.fastMoreText}>Подробнее</Text>
-              <ChevronRight size={13} color={P.accentInk} />
+            <View style={styles.fastLegendRow}>
+              <View style={[styles.fastDot, { backgroundColor: P.text3 }]} />
+              <View style={styles.fastLegendTexts}>
+                <Text style={styles.fastLegendLabel}>Голодание</Text>
+                <Text style={styles.fastLegendVal}>{fastEatTo} – {fastEatFrom}</Text>
+              </View>
             </View>
-            </NeonCard>
-          </Pressable>
+          </View>
+          {/* Живая подпись: что показывает кольцо прямо сейчас */}
+          <Text style={styles.fastLive} numberOfLines={2}>
+            {fastStartedAt
+              ? `Идёт таймер: ${fmtDurShort(fastElapsed)} из ${Math.round(fastGoalMs / 3600000)} ч`
+              : 'Кольцо заполнится по ходу таймера без еды'}
+          </Text>
+          <View style={styles.fastMore} pointerEvents="none">
+            <Text style={styles.fastMoreText}>Подробнее</Text>
+            <ChevronRight size={13} color={P.accentInk} />
+          </View>
+          </NeonCard>
+        </Pressable>
+      </ScrollView>
 
-          {/* «Добавить рецепт» — отдельный блок в правой колонке: окно
-              своих рецептов — создание, список, правка; «Записать»
-              рецепта открывает окно добавления еды (экран порции) */}
-          <Pressable
-            onPress={() => setRecipesOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
-          >
-            <NeonCard radius={20} style={styles.recipeCard} innerStyle={styles.recipeInner}>
-            <View style={styles.recipeTile}>
-              <ChefHat size={17} color={P.accentText} />
-            </View>
+      {/* «Добавить рецепт» — компактный блок под каруселью: окно своих
+          рецептов — создание, список, правка; «Записать» рецепта
+          открывает окно добавления еды (экран порции) */}
+      <Pressable
+        onPress={() => setRecipesOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Добавить рецепт — свои рецепты: создать, посмотреть или записать"
+      >
+        <NeonCard radius={20} style={styles.recipeCard} innerStyle={styles.recipeInner}>
+          <View style={styles.recipeTile}>
+            <ChefHat size={17} color={P.accentText} />
+          </View>
+          <View style={styles.recipeTexts}>
             <Text
               style={styles.recipeName}
               numberOfLines={1}
@@ -737,10 +759,10 @@ export function PlanScreen({ onOpenFasting }) {
               Добавить рецепт
             </Text>
             <Text style={styles.recipeSub} numberOfLines={1}>Свой рецепт · мои рецепты</Text>
-            </NeonCard>
-          </Pressable>
-        </View>
-      </View>
+          </View>
+          <ChevronRight size={15} color={P.text3} />
+        </NeonCard>
+      </Pressable>
 
       {/* 3. Прогресс — как в макете: кольцо % + легенда БЖУ + линия тренда.
           Оформление — NeonCard (пятый круг Кати: «вкладка план — ни
@@ -1176,22 +1198,14 @@ const makeStyles = (P) => ({
   },
   shopBtnText: { fontSize: 11, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 
-  // Меню + интервальное питание — РЯДОМ (макет Кати от 09.11);
-  // «Добавить рецепт» — под голоданием, в правой колонке (fastCol)
-  menuRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  menuLeft: { width: '60%' },
-  fastCard: {
-    // flex:1 — карточка голодания забирает пустое место колонки (просьба
-    // Кати: «много пустого пространства между интервальным и добавить
-    // рецепт» — раньше карточка стояла своей высоты, и между ней и
-    // «Добавить рецепт» висела дыра); «Добавить рецепт» по-прежнему
-    // заканчивается на одной линии с «Меню на неделю». Распределение
-    // содержимого — fastInner (space-between). фон/кайма/градиент —
-    // NeonCard, паддинг — fastInner
-    flex: 1,
-    marginTop: spacing.l,
-  },
-  fastPress: { flex: 1 },
+  // Карусель «меню ↔ интервальное питание» (как в Сбербанке, отзыв
+  // Кати 27.11): ширины карточек считаются в компоненте от окна
+  // (menuCardW/fastCardW), здесь — только высота и распределение.
+  // flex:1 у fastCard — карточка голодания тянется на высоту карточки
+  // меню (alignItems: 'stretch' у contentContainer карусели), контент
+  // распределён по высоте (fastInner space-between). фон/кайма/градиент —
+  // NeonCard, паддинг — fastInner
+  fastCard: { flex: 1 },
   fastInner: { padding: 10, flex: 1, justifyContent: 'space-between' },
   fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
   fastRingWrap: { alignItems: 'center', marginTop: 8 },
@@ -1229,31 +1243,19 @@ const makeStyles = (P) => ({
     marginTop: 2,
   },
 
-  // Правая колонка: «Интервальное питание» + под ним «Добавить рецепт».
-  // alignSelf: 'stretch' растягивает колонку на высоту ряда (как у
-  // карточки меню). Пустого места между блоками больше нет: карточка
-  // голодания растягивается на всё свободное место (flex:1 у fastCard —
-  // просьба Кати: «много пустого пространства между интервальным и
-  // добавить рецепт»), «Добавить рецепт» — сжатый, своей высоты
-  // (просьба Кати 26.11: «добавить рецепт сжато»; растягивать его НЕЛЬЗЯ —
-  // прошлый вариант читался огромной пустой плиткой) — и колонка
-  // по-прежнему ЗАКАНЧИВАЕТСЯ НА ОДНОЙ ЛИНИИ с «Меню на неделю»
-  // (правка Кати 26.11)
-  fastCol: { flex: 1, alignSelf: 'stretch' },
-
-  // «Добавить рецепт» — компактный блок в правой колонке: высота по
-  // контенту, контент по центру — блок читается как кнопка; низ колонки
-  // совпадает с низом «Меню на неделю» (растянутая карточка голодания
-  // прижимает блок к низу колонки)
+  // «Добавить рецепт» — компактная строка-кнопка под каруселью:
+  // иконка слева, тексты в столбик, шеврон справа; высота по контенту
+  // (просьба Кати 26.11: «добавить рецепт сжато» — растягивать нельзя)
   recipeCard: {
     marginTop: 10,
   },
   recipeInner: {
-    padding: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    gap: 10,
+    padding: 12,
   },
+  recipeTexts: { flex: 1, minWidth: 0 },
   recipeTile: {
     width: 36,
     height: 36,
@@ -1263,5 +1265,5 @@ const makeStyles = (P) => ({
     justifyContent: 'center',
   },
   recipeName: { fontSize: 13.5, fontWeight: '800', fontFamily: F[800], color: P.text },
-  recipeSub: { fontSize: 11, fontWeight: '400', fontFamily: F[400], color: P.text3, textAlign: 'center' },
+  recipeSub: { fontSize: 11, fontWeight: '400', fontFamily: F[400], color: P.text3, marginTop: 1 },
 })

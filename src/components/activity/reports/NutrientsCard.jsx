@@ -44,7 +44,12 @@ function Stat({ label, color, value, sub, pct }) {
   return (
     <GradientTile
       radius={16}
-      className="min-w-0 flex-1 px-3 py-2.5"
+      // БЕЗ flex-1 на внутреннем View (правка Кати 27.11: «блок нутриенты
+      // схлопнулся» — basis 0% в колонке с авто-высотой схлопывал плитку
+      // на устройстве в двухпиксельную линию с точками). Высоту плитке
+      // даёт контент, ширину — flex:1 на внешнем контейнере (как у
+      // секций MealPlanCard); растяжение по ряду — items-stretch по умолчанию
+      className="px-3 py-2.5"
       style={{ flex: 1, minWidth: 0 }}
     >
       <View className="flex-row items-center gap-1.5">
