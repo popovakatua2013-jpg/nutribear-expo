@@ -12,6 +12,11 @@
 // на высоту карточки меню (alignItems: 'stretch' + flex:1 у fastCard),
 // содержимое распределено по высоте (space-between у fastInner).
 //
+// Правка Кати 27.11 («разной высоты — сделать одинаково и все
+// поменьше»): карточка меню в карусели тоже тянется на высоту ряда
+// (cardC: flex: 1 без marginTop — он сдвигал меню вниз), компактные
+// элементы ужаты (паддинг 12, день 30, строка приёма 32, кольцо 48).
+//
 // Тест — статический аудит исходников (как module-colors.test.js).
 
 const fs = require('fs')
@@ -19,6 +24,11 @@ const path = require('path')
 
 const src = fs.readFileSync(
   path.join(__dirname, '..', 'src/components/planner/PlanScreen.jsx'),
+  'utf8',
+)
+
+const menuSrc = fs.readFileSync(
+  path.join(__dirname, '..', 'src/components/planner/MealPlanScreen.jsx'),
   'utf8',
 )
 
@@ -49,6 +59,33 @@ describe('карусель «меню ↔ интервальное питани�
     expect(src).toContain('style={{ width: fastCardW }}')
     // Растяжение по высоте — alignItems: 'stretch' у contentContainer карусели
     expect(src).toContain("contentContainerStyle={{ alignItems: 'stretch', gap: CAR_GAP, paddingVertical: 14 }}")
+  })
+
+  test('обе карточки карусели ОДИНАКОВОЙ высоты (правка Кати 27.11: «сделать одинаково»)', () => {
+    // Карточка меню в карусели: без marginTop от вертикальной вёрстки
+    // (он сдвигал меню ВНИЗ относительно карточки голодания) и с flex: 1 —
+    // тянется на высоту ряда карусели, как fastCard
+    expect(menuSrc.match(/cardC: \{ flex: 1, marginTop: 0 \}/)).not.toBeNull()
+    expect(menuSrc).toContain('style={[styles.card, compact && styles.cardC]}')
+    // Обе карточки стоят в одном ряду карусели — высоту ряда задаёт
+    // самая высокая, stretch + flex: 1 дотягивают обе до одного края
+    const atStretch = src.indexOf("alignItems: 'stretch', gap: CAR_GAP")
+    const atMenuCard = src.indexOf('<MealPlanScreen compact />')
+    const atFast = src.indexOf('style={{ width: fastCardW }}')
+    expect(atMenuCard).toBeGreaterThan(atStretch)
+    expect(atFast).toBeGreaterThan(atMenuCard)
+  })
+
+  test('«все поменьше» (правка Кати 27.11): компактные элементы ужаты', () => {
+    // Меню: внутренний паддинг 12 вместо 16, день 30, строка приёма 32,
+    // «Все приёмы пищи» 30
+    expect(menuSrc).toContain('cardInnerC: { padding: spacing.m }')
+    expect(menuSrc).toContain('dayBoxC: { height: 30 }')
+    expect(menuSrc.match(/mealRowC: \{ gap: 5, minHeight: 32 \}/)).not.toBeNull()
+    expect(menuSrc).toContain('showAllC: { height: 30, marginTop: 6 }')
+    // Голодание: кольцо 48, кнопка «Подробнее» 28
+    expect(src).toContain('size={48}')
+    expect(src.match(/height: 28,\n    marginTop: 6,/)).not.toBeNull()
   })
 
   test('кольцо голодания сохранило toneOver={false} — цвет темы сверх цели', () => {

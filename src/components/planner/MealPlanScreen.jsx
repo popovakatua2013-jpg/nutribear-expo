@@ -291,12 +291,15 @@ export function MealPlanScreen({ compact = false }) {
     // Правка Кати 25.11, пятый круг («вкладка план — вообще не оформлена!
     // Ни рамок ни свечения ни градиента»): карточка на NeonCard — кайма,
     // градиент и свечение те же, что у блоков «Главной» и «Отчётов»
-    <NeonCard style={styles.card} innerStyle={styles.cardInner}>
+    <NeonCard
+      style={[styles.card, compact && styles.cardC]}
+      innerStyle={[styles.cardInner, compact && styles.cardInnerC]}
+    >
       {/* Шапка карточки: плитка + заголовок + навигация недели.
           В компактном режиме навигация недели переносится на строку
           под заголовком (flexWrap: заголовку хватает ширины) */}
-      <View style={styles.cardHead}>
-        <View style={styles.iconTile}>
+      <View style={[styles.cardHead, compact && styles.cardHeadC]}>
+        <View style={[styles.iconTile, compact && styles.iconTileC]}>
           <CalendarDays size={compact ? 14 : 16} color={P.accentText} />
         </View>
         <Text
@@ -310,7 +313,7 @@ export function MealPlanScreen({ compact = false }) {
         <View style={styles.weekNav}>
           <Pressable
             onPress={() => setWeekKey(weekKeyShift(weekKey, -1))}
-            style={styles.weekArrow}
+            style={[styles.weekArrow, compact && styles.weekArrowC]}
             accessibilityLabel="Прошлая неделя"
           >
             <ChevronLeft size={16} color={P.text2} />
@@ -318,7 +321,7 @@ export function MealPlanScreen({ compact = false }) {
           <Text style={styles.weekLabel} numberOfLines={1}>{weekLabel}</Text>
           <Pressable
             onPress={() => setWeekKey(weekKeyShift(weekKey, 1))}
-            style={styles.weekArrow}
+            style={[styles.weekArrow, compact && styles.weekArrowC]}
             accessibilityLabel="Следующая неделя"
           >
             <ChevronRight size={16} color={P.text2} />
@@ -367,7 +370,7 @@ export function MealPlanScreen({ compact = false }) {
 
       {/* Полоса дней Пн–Вс с датами — как в макете: выбранный день в
           лаймовой рамке с точкой, заполненные дни — с точкой */}
-      <View style={styles.daysStrip}>
+      <View style={[styles.daysStrip, compact && styles.daysStripC]}>
         {WEEKDAYS.map((label, idx) => {
           const active = idx === sel
           const filled = countDay(idx) > 0
@@ -412,8 +415,8 @@ export function MealPlanScreen({ compact = false }) {
       )}
       <>
           {/* Шапка выбранного дня: название + план дня в ккал */}
-          <View style={styles.dayHead}>
-            <Text style={styles.dayName2} numberOfLines={1}>
+          <View style={[styles.dayHead, compact && styles.dayHeadC]}>
+            <Text style={[styles.dayName2, compact && styles.dayName2C]} numberOfLines={1}>
               {WEEKDAYS_FULL[sel]}
               {isSelToday ? ' · сегодня' : ''}
             </Text>
@@ -437,7 +440,7 @@ export function MealPlanScreen({ compact = false }) {
                 : `${items[0].name} и ещё ${items.length - 1}`
               : 'пусто'
             return (
-              <View key={mealId} style={styles.mealBlock}>
+              <View key={mealId} style={[styles.mealBlock, compact && styles.mealBlockC]}>
                 <Pressable
                   onPress={() => setOpenMeals((s) => ({ ...s, [mealId]: !s[mealId] }))}
                   style={[styles.mealRow, compact && styles.mealRowC]}
@@ -518,7 +521,7 @@ export function MealPlanScreen({ compact = false }) {
               без сжатия шрифта — на узкой карточке подпись короче
               («Все приёмы пищи»), чтобы влезала целиком и не съезжала */}
           <Pressable
-            style={styles.showAll}
+            style={[styles.showAll, compact && styles.showAllC]}
             onPress={() => setShowAll((v) => !v)}
             accessibilityRole="button"
             accessibilityState={{ expanded: showAll }}
@@ -658,10 +661,22 @@ const makeStyles = (P) => ({
   card: {
     marginTop: spacing.l,
   },
+  // Карусель (compact): marginTop от вертикальной вёрстки сдвигал меню
+  // ВНИЗ относительно карточки голодания (у той отступа нет) — верхние
+  // края расходились, карточки стояли разной высоты. Теперь в карусели
+  // отступа нет, а flex: 1 тянет карточку на высоту ряда карусели
+  // (alignItems: 'stretch') ровно как fastCard — правка Кати 27.11:
+  // «разной высоты — сделать одинаково»
+  cardC: { flex: 1, marginTop: 0 },
   cardInner: {
     padding: spacing.l,
   },
+  // «и все поменьше» (тот же отзыв): в карусели внутренний паддинг уже
+  cardInnerC: { padding: spacing.m },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  // компактно: зазор 8 — шапка (плитка + заголовок + навигация недели)
+  // помещается в ОДНУ строку, вторая строка навигации не набирается
+  cardHeadC: { gap: 8 },
   iconTile: {
     width: 30,
     height: 30,
@@ -670,16 +685,20 @@ const makeStyles = (P) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconTileC: { width: 24, height: 24, borderRadius: 8 },
   cardTitle: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
-  // компактный режим: заголовок ужается сам, навигация недели
-  // переносится под него (minWidth выталкивает её на новую строку)
-  cardTitleC: { fontSize: 13.5, minWidth: 100 },
+  // компактный режим: заголовок ужается сам, навигация недели стоит на
+  // той же строке (flexShrink — строка не переносится даже на узких
+  // экранах, заголовок сжимается adjustsFontSizeToFit)
+  cardTitleC: { fontSize: 13.5, minWidth: 96, flexShrink: 1 },
   weekNav: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   weekArrow: { width: 24, height: 28, alignItems: 'center', justifyContent: 'center' },
+  weekArrowC: { width: 22, height: 24 },
   weekLabel: { fontSize: 12, fontWeight: '600', fontFamily: F[600], color: P.text2, minWidth: 52, textAlign: 'center' },
 
   // Полоса дней: имя + дата в рамке у выбранного, точка у заполненных
   daysStrip: { flexDirection: 'row', gap: 4, marginTop: 10 },
+  daysStripC: { marginTop: 8 },
   dayCol: { flex: 1, alignItems: 'center', gap: 3 },
   dayBox: {
     width: '100%',
@@ -692,7 +711,7 @@ const makeStyles = (P) => ({
     gap: 1,
   },
   dayBoxOn: { borderColor: P.accentText, backgroundColor: P.accentFaint },
-  dayBoxC: { height: 34 },
+  dayBoxC: { height: 30 },
   dayBoxToday: { borderColor: P.line },
   dayName: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
   dayNameOn: { color: P.accentText },
@@ -714,7 +733,9 @@ const makeStyles = (P) => ({
     gap: spacing.s,
     marginTop: spacing.m,
   },
+  dayHeadC: { marginTop: 8 },
   dayName2: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
+  dayName2C: { fontSize: 13.5 },
   kcalPill: {
     backgroundColor: P.accentSoft,
     borderColor: P.accentBorder,
@@ -727,9 +748,10 @@ const makeStyles = (P) => ({
 
   // Строки приёмов: плитка-эмодзи + название + блюда + ккал + «+»
   mealBlock: { marginTop: 8 },
+  mealBlockC: { marginTop: 6 },
   mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 42 },
   // компактный режим: ужаться, чтобы строка поместилась в узкую колонку
-  mealRowC: { gap: 5, minHeight: 36 },
+  mealRowC: { gap: 5, minHeight: 32 },
   mealTile: {
     width: 34,
     height: 34,
@@ -801,6 +823,8 @@ const makeStyles = (P) => ({
     height: 34,
     marginTop: 8,
   },
+  // «все поменьше»: в карусели строка ниже и ближе к приёмам
+  showAllC: { height: 30, marginTop: 6 },
   showAllText: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text2 },
 
   // Действия дня/недели — серые значки без подписей под шапкой

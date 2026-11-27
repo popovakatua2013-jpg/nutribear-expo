@@ -44,7 +44,8 @@ describe('кольцо голодания — по теме, без оранже
     // Анкор без привязки к отступам — карусель «меню ↔ голодание»
     // (правка Кати 27.11) сменила вложенность блока
     const fastingRing = ringBlock(plan, plan.match(/<Ring\n\s+pct=\{fastPct\}/)[0])
-    expect(fastingRing).toContain('size={56}')
+    // «все поменьше» (правка Кати 27.11): кольцо карточки голодания ужато 56 → 48
+    expect(fastingRing).toContain('size={48}')
     expect(fastingRing).toContain('toneOver={false}')
   })
 

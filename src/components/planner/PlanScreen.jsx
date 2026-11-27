@@ -700,7 +700,7 @@ export function PlanScreen({ onOpenFasting }) {
             <Ring
               pct={fastPct}
               runId={runId}
-              size={56}
+              size={48}
               stroke={6}
               centerText={fastStartedAt ? undefined : fastPlan}
               sub={fastStartedAt ? fastPlan : 'Режим'}
@@ -1208,8 +1208,11 @@ const makeStyles = (P) => ({
   fastCard: { flex: 1 },
   fastInner: { padding: 10, flex: 1, justifyContent: 'space-between' },
   fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
-  fastRingWrap: { alignItems: 'center', marginTop: 8 },
-  fastLegend: { gap: 7, marginTop: 8, alignSelf: 'stretch' },
+  // «все поменьше» (правка Кати 27.11): кольцо ниже и зазоры уже —
+  // контент карточки голодания распределён по высоте ряда карусели
+  // (ряд теперь задаёт карточка меню), крупные зазоры не нужны
+  fastRingWrap: { alignItems: 'center', marginTop: 6 },
+  fastLegend: { gap: 6, marginTop: 6, alignSelf: 'stretch' },
   fastLegendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
   fastDot: { width: 7, height: 7, borderRadius: 4, marginTop: 4 },
   fastLegendTexts: { flex: 1, minWidth: 0 },
@@ -1229,8 +1232,8 @@ const makeStyles = (P) => ({
     gap: 4,
     backgroundColor: P.accent,
     borderRadius: 999,
-    height: 30,
-    marginTop: 8,
+    height: 28,
+    marginTop: 6,
     alignSelf: 'stretch',
   },
   fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
