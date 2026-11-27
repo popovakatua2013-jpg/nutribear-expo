@@ -25,7 +25,7 @@
 
 import { View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { withAlpha } from '@/lib/themes'
+import { blendHex } from '@/lib/themes'
 import { useThemeColors, useThemePlain } from '@/lib/use-theme'
 
 export function GradientTile({
@@ -83,7 +83,15 @@ export function GradientTile({
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          colors={[withAlpha(c.accent, 0.1), c.card, c.deep]}
+          // Первый цвет НЕПОЗРАЧНЫЙ (правка Кати 27.11: «шапку не видно
+          // текущий вес» — на «Неон-лайм» угол плитки был ярко-лаймовым:
+          // полупрозрачный акцент 10% ложился на яркую кайму accentBright,
+          // и текст «Текущий вес» на нём исчезал). Теперь угол — подложка
+          // card с лёгким тином акцента темы: тексты sub/text читаются
+          // на всех темах, кайма и градиент остаются яркими. blendHex
+          // безопасен и для светлой «Кремовой» — угол теплеет, а тёмный
+          // текст темы сохраняет контраст
+          colors={[blendHex(c.card, c.accentBright, 0.2), c.card, c.deep]}
           style={{ borderRadius: Math.max(0, radius - border), flex: 1 }}
         >
           <View className={className} style={innerStyle}>

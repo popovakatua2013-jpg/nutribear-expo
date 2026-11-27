@@ -208,7 +208,13 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
                 )}
                 {mode === 'barcode' && <BarcodeMode onPick={setPicked} onSwitchLabel={() => setMode('label')} />}
                 {mode === 'scan' && <PhotoMode source="camera" onPick={setPicked} />}
-                {mode === 'voice' && <VoiceMode onPick={setPicked} />}
+                {mode === 'voice' && (
+                  /* dayOff/mealName/onClose — для закреплённой кнопки
+                     «Добавить всё» (отзыв Кати 27.11: «текст распознает,
+                     но отсутствует кнопка добавить»): весь распознанный
+                     список записывается одним тапом, окно закрывается */
+                  <VoiceMode onPick={setPicked} mealId={mealId} mealName={meal?.name || ''} dayOff={dayOff} onClose={close} />
+                )}
                 {mode === 'gallery' && <PhotoMode source="library" onPick={setPicked} />}
                 {mode === 'label' && <LabelMode onPick={setPicked} />}
               </View>
