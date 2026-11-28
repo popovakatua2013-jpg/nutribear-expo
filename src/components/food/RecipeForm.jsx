@@ -7,6 +7,10 @@
 // при добавлении в приём пищи равна выходу, делённому на число порций.
 // Серые подсказки в форме убраны (отзыв Кати от 10.11: «убрать все
 // подсказки») — остались только поля, расчёт «≈ ккал / 100 г» и кнопки.
+// 28.11: над КАЖДЫМ полем — маленькая подпись («Подписать все строки
+// над верхом»). Причина: плейсхолдер виден только пока поле пустое, и
+// после авторасчёта по составу в форме оставались голые числа (выход,
+// порции, ккал, белки, жиры, углеводы) — непонятно, где что.
 
 import { useState } from 'react'
 import { Image, Pressable, Text, TextInput, View } from 'react-native'
@@ -25,6 +29,22 @@ const num = (v) => Math.max(1, Math.round(Number(String(v).replace(',', '.')) ||
 
 const field =
   'rounded-2xl border border-bear-line bg-bear-overlay px-3 py-2.5 font-sans text-[19px] text-bear-text'
+
+// Подпись НАД полем: маленькая, приглушённая, в одну строку — остаётся
+// видной и после заполнения, когда плейсхолдер внутри уже исчез.
+// Не uppercase — «Углеводы, г» в узкой трети ряда без шринка не влезает.
+function FieldLabel({ children }) {
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.7}
+      className="mb-1 px-1 font-sans text-[12.5px] text-bear-sub"
+    >
+      {children}
+    </Text>
+  )
+}
 
 export function RecipeForm({ onDone, initial, onCancel }) {
   const themeColors = useThemeColors()
@@ -199,11 +219,12 @@ export function RecipeForm({ onDone, initial, onCancel }) {
       </View>
 
       {/* Название + фото блюда */}
+      <FieldLabel>Название</FieldLabel>
       <View className="flex-row gap-2">
         <TextInput
           value={name}
           onChangeText={setName}
-          placeholder="Название рецепта"
+          placeholder="Например, борщ"
           placeholderTextColor={themeColors.dim}
           accessibilityLabel="Название рецепта"
           className={`${field} min-w-0 flex-1`}
@@ -239,6 +260,7 @@ export function RecipeForm({ onDone, initial, onCancel }) {
 
       {/* Состав продуктов с граммовками — по нему считаем КБЖУ */}
       <View className="mt-2">
+        <FieldLabel>Состав — продукты с граммовками</FieldLabel>
         <TextInput
           value={desc}
           onChangeText={setDesc}
@@ -265,65 +287,64 @@ export function RecipeForm({ onDone, initial, onCancel }) {
 
       {/* Общий выход + число порций */}
       <View className="mt-2 flex-row gap-2">
-        <TextInput
-          value={grams}
-          onChangeText={setGrams}
-          placeholder="Общий выход, г"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="decimal-pad"
-          accessibilityLabel="Общий выход, граммы"
-          className={`${field} flex-[2]`}
-        />
-        <TextInput
-          value={servings}
-          onChangeText={setServings}
-          placeholder="Порций"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="number-pad"
-          maxLength={2}
-          accessibilityLabel="Число порций"
-          className={`${field} flex-1`}
-        />
+        <View className="min-w-0 flex-[2]">
+          <FieldLabel>Общий выход, г</FieldLabel>
+          <TextInput
+            value={grams}
+            onChangeText={setGrams}
+            placeholder="весь вес блюда"
+            placeholderTextColor={themeColors.dim}
+            keyboardType="decimal-pad"
+            accessibilityLabel="Общий выход, граммы"
+            className={`${field} w-full`}
+          />
+        </View>
+        <View className="min-w-0 flex-1">
+          <FieldLabel>Порций</FieldLabel>
+          <TextInput
+            value={servings}
+            onChangeText={setServings}
+            placeholder="1"
+            placeholderTextColor={themeColors.dim}
+            keyboardType="number-pad"
+            maxLength={2}
+            accessibilityLabel="Число порций"
+            className={`${field} w-full`}
+          />
+        </View>
       </View>
       <View className="mt-2 flex-row gap-2">
-        <TextInput
-          value={kcal}
-          onChangeText={setKcal}
-          placeholder="Ккал на весь выход"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="decimal-pad"
-          accessibilityLabel="Калорийность всего"
-          className={`${field} flex-1`}
-        />
+        <View className="min-w-0 flex-1">
+          <FieldLabel>Ккал на весь выход</FieldLabel>
+          <TextInput
+            value={kcal}
+            onChangeText={setKcal}
+            placeholder="всё блюдо целиком"
+            placeholderTextColor={themeColors.dim}
+            keyboardType="decimal-pad"
+            accessibilityLabel="Калорийность всего"
+            className={`${field} w-full`}
+          />
+        </View>
       </View>
       <View className="mt-2 flex-row gap-2">
-        <TextInput
-          value={p}
-          onChangeText={setP}
-          placeholder="Белки, г"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="decimal-pad"
-          accessibilityLabel="Белки, граммы"
-          className={`${field} flex-1`}
-        />
-        <TextInput
-          value={f}
-          onChangeText={setF}
-          placeholder="Жиры, г"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="decimal-pad"
-          accessibilityLabel="Жиры, граммы"
-          className={`${field} flex-1`}
-        />
-        <TextInput
-          value={c}
-          onChangeText={setC}
-          placeholder="Углеводы, г"
-          placeholderTextColor={themeColors.dim}
-          keyboardType="decimal-pad"
-          accessibilityLabel="Углеводы, граммы"
-          className={`${field} flex-1`}
-        />
+        {[
+          { label: 'Белки, г', value: p, set: setP, a11y: 'Белки, граммы' },
+          { label: 'Жиры, г', value: f, set: setF, a11y: 'Жиры, граммы' },
+          { label: 'Углеводы, г', value: c, set: setC, a11y: 'Углеводы, граммы' },
+        ].map((fld) => (
+          <View key={fld.label} className="min-w-0 flex-1">
+            <FieldLabel>{fld.label}</FieldLabel>
+            <TextInput
+              value={fld.value}
+              onChangeText={fld.set}
+              placeholderTextColor={themeColors.dim}
+              keyboardType="decimal-pad"
+              accessibilityLabel={fld.a11y}
+              className={`${field} w-full`}
+            />
+          </View>
+        ))}
       </View>
       <View className="mt-3 flex-row items-center justify-between gap-2">
         <View className="min-w-0 flex-1">
