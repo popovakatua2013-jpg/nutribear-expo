@@ -71,17 +71,22 @@ export const useActivityStore = create(
       setPedometerEnabled: (v) => set({ pedometerEnabled: Boolean(v) }),
       setHealthConnectEnabled: (v) => set({ healthConnectEnabled: Boolean(v) }),
 
-      // Выпить воду: time можно передать вручную («ЧЧ:ММ»), иначе — сейчас
+      // Выпить воду: time можно передать вручную («ЧЧ:ММ»), иначе — сейчас.
+      // Возвращает id новой записи журнала — тосты используют его для
+      // кнопки «Отменить» (защита от случайного добавления, отзыв Кати 28.11)
       addWater: (ml, time) => {
         const safeMl = Math.max(1, Math.round(Number(ml) || 0))
+        const id = makeId()
+        const at = Date.now()
         set((s) => ({
           waterMl: Math.min(6000, s.waterMl + safeMl),
-          lastWaterAt: Date.now(),
+          lastWaterAt: at,
           waterLog: [
-            { id: makeId(), ml: safeMl, time: time || nowTime(), at: Date.now() },
+            { id, ml: safeMl, time: time || nowTime(), at },
             ...s.waterLog,
           ].slice(0, 60),
         }))
+        return id
       },
 
       // Удалить запись из журнала воды (минус её объём из дневной суммы)
@@ -116,6 +121,14 @@ export const useActivityStore = create(
         const v = Number(n)
         const add = Number.isFinite(v) ? Math.max(0, Math.round(v)) : 0
         set((s) => ({ extraSteps: Math.min(50000, s.extraSteps + add) }))
+      },
+
+      // Откат случайного добавления (кнопка «Отменить» в тосте):
+      // убирает не больше, чем есть — в минус шаги не уходят
+      subtractSteps: (n) => {
+        const v = Number(n)
+        const sub = Number.isFinite(v) ? Math.max(0, Math.round(v)) : 0
+        set((s) => ({ extraSteps: Math.max(0, s.extraSteps - sub) }))
       },
 
       resetToday: () =>

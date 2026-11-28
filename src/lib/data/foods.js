@@ -18,8 +18,12 @@ import { BRAND7_FOODS } from './foods-brands-7'
 import { BRAND8_FOODS } from './foods-brands-8'
 import { BRAND9_FOODS } from './foods-brands-9'
 import { BRAND10_FOODS } from './foods-brands-10'
+import { BRAND11_FOODS } from './foods-brands-11'
+import { BRAND12_FOODS } from './foods-brands-12'
+import { BRAND13_FOODS } from './foods-brands-13'
 import { FASTFOOD_FOODS } from './foods-fastfood'
 import { MICROS } from './micros'
+import { spoonsFor } from './spoons'
 
 const BASE_FOODS = [
   // ---------- Завтрак ----------
@@ -85,6 +89,10 @@ const BASE_FOODS = [
 // foods-brands.js (~29) + foods-brands-2 (молочка, сыры, мясо — 85) +
 // foods-brands-3 (крупы, хлеб, соусы, снеки, напитки, консервы,
 // заморозка, ВкусВилл — 146) + foods-fastfood.js (сети — 72).
+// Большое расширение по просьбе Кати 20.11 («желательно 2-3 тыс
+// позиций») и 28.11 (молоко/йогурты/соки/сыры/колбасы, лапша и пюре
+// быстрого, сухие завтраки, детское питание, соусы, лаваш, маринады):
+// части 4–13 доводят базу суммарно до ~2440 позиций.
 // Витамины/минералы (fe/ca/k/mg/vitc/vita) подмешиваются из micros.js —
 // их использует рейтинг питания.
 export const FOODS = [
@@ -116,10 +124,25 @@ export const FOODS = [
   ...BRAND8_FOODS,
   ...BRAND9_FOODS,
   ...BRAND10_FOODS,
+  // Расширение по списку Кати 28.11 («молоко, йогурты, соки, вермишель
+  // и пюре быстрого приготовления, сухие завтраки, сыры, колбасы,
+  // детское питание, соусы, кетчупы, лаваш, маринованные продукты»):
+  // молочка/кисломолочка/йогурты/сыры/колбасы/соки (11), лапша и пюре
+  // быстрого, сухие завтраки, детское питание, соусы/кетчупы, лаваш,
+  // маринады (12), заморозка/снеки/чай-кофе/приправы/десерты (13)
+  ...BRAND11_FOODS,
+  ...BRAND12_FOODS,
+  ...BRAND13_FOODS,
   // Фастфуд сетей: Вкусно и точка, Ростикс (КФС), Бургер Кинг, Додо,
   // Теремок, Крошка Картошка, Шоколадница, Cofix, Coffee Like
   ...FASTFOOD_FOODS,
-].map((f) => (MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f))
+].map((f) => {
+  // Микроэлементы из micros.js, затем ложки для сыпучих (просьба Кати
+  // 28.11: «в 1 ч.л. сахара ?кал» — spoons.js: сахар 8/25 г с горкой)
+  const base = MICROS[f.id] ? { ...f, ...MICROS[f.id] } : f
+  const sp = spoonsFor(base)
+  return sp ? { ...base, tsp: sp.tsp, tbsp: sp.tbsp } : base
+})
 
 // Быстрый выбор граммовки в модалке добавления
 export const QUICK_GRAMS = [50, 100, 150, 200, 250]

@@ -112,6 +112,110 @@ export function parseTime(t) {
   return { hour, minute }
 }
 
+// ── Диагностика «уведомления не приходят» (отзыв Кати 28.11) ───────────
+// Три частые причины, что пушки не доходят:
+//  1) нет разрешения POST_NOTIFICATIONS (Android 13+);
+//  2) нет права «Будильники и напоминания» SCHEDULE_EXACT_ALARM
+//     (Android 12+, по умолчанию ВЫКЛЮЧЕНО на Android 14+) — тогда
+//     пушки планируются «неточно» и тонут в дремоте устройства;
+//  3) батарейная оптимизация глушит будильники (Huawei/Xiaomi/OPPO).
+// Ниже — состояние, запросы и тестовое уведомление для проверки
+
+// Состояние права на точные будильники: 'granted' | 'denied' | 'unknown'
+export async function getAlarmPermissionState() {
+  if (Platform.OS === 'web' || !Notifications?.getExactAlarmPermissionsAsync) {
+    return 'unknown'
+  }
+  try {
+    const st = await Notifications.getExactAlarmPermissionsAsync()
+    return st?.granted ? 'granted' : 'denied'
+  } catch {
+    return 'unknown' // до сборки с правом в манифесте модуль бросает исключение
+  }
+}
+
+// Запрос точных будильников — ОТКРЫВАЕТ системный экран «Будильники и
+// напоминания». Звать только из действий пользователя (диагностика
+// напоминаний), не на старте приложения
+export async function requestAlarmPermission() {
+  if (Platform.OS === 'web' || !Notifications?.requestExactAlarmPermissionsAsync) {
+    return false
+  }
+  try {
+    const st = await Notifications.requestExactAlarmPermissionsAsync()
+    return Boolean(st?.granted)
+  } catch {
+    return false
+  }
+}
+
+// Сводная диагностика для раздела «Напоминания»: поддерживаются ли
+// уведомления вообще, выдано ли разрешение, включены ли точные будильники
+export async function notifDiagnostics() {
+  if (Platform.OS === 'web' || !Notifications) {
+    return { supported: false, permission: 'unknown', alarms: 'unknown' }
+  }
+  let permission = 'unknown'
+  try {
+    const st = await Notifications.getPermissionsAsync()
+    permission = st?.granted ? 'granted' : st?.status === 'denied' ? 'denied' : 'unknown'
+  } catch {}
+  const alarms = await getAlarmPermissionState()
+  return { supported: true, permission, alarms }
+}
+
+// Батарейная оптимизация: системный диалог «разрешить работу в фоне»
+// (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS). Пакет берём из expo-application,
+// с запасным «com.nutribear.app» (android.package из app.json).
+// false — модуль не в сборке / система отказалась показать диалог:
+// вызывающий код переводит пользователя в настройки приложения
+export async function requestIgnoreBatteryOptimizations() {
+  if (Platform.OS === 'web') return false
+  try {
+    const IntentLauncher = require('expo-intent-launcher')
+    let pkg = 'com.nutribear.app'
+    try {
+      pkg = require('expo-application').applicationId || pkg
+    } catch {}
+    await IntentLauncher.startActivityAsync(
+      IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+      { data: `package:${pkg}` }
+    )
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Тестовое уведомление через 4 секунды — проверка «приходит ли пуш»,
+// не отходя от раздела «Напоминания». false — нет разрешения/ошибка
+export async function scheduleTestNotification() {
+  if (Platform.OS === 'web' || !Notifications) return false
+  try {
+    const granted = await requestNotifPermission()
+    if (!granted) return false
+    await ensureChannels()
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'nb-test-notif',
+      content: {
+        title: '🔔 Проверка уведомлений',
+        body: 'Разрешение есть, пуш дошёл — напоминания работают. Медведь на связи! 🐻',
+        sound: 'default',
+        data: { kind: 'test' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(Date.now() + 4000),
+        channelId: 'day',
+      },
+    })
+    return true
+  } catch (e) {
+    console.warn('Тестовое уведомление не запланировано:', e)
+    return false
+  }
+}
+
 // Часовой пояс устройства для ежедневных/еженедельных триггеров:
 // без явного пояса после перевода часов (DST) или перелёта время
 // срабатывания может уплыть на час

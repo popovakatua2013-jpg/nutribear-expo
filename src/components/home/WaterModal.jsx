@@ -1,8 +1,12 @@
 // Окно «Вода»: hero-карточка «Выпито сегодня» (крупная цифра, цель,
 // полоса прогресса + кольцо «% цели»), «Быстро добавить» — плитки
-// ёмкостей 2×2, записи за сегодня (свернуты по умолчанию — отзыв
-// Кати от 10.11 «записи за сегодня всегда сворачивать»; тап по
-// записи — правка мл/времени прямо в строке, корзина — удаление).
+// ёмкостей 2×2, записи за сегодня (раскрываются сами, если записи
+// есть — отзыв Кати 28.11: «не видно историю, нет возможности
+// удалить»; тап по записи — правка мл/времени прямо в строке,
+// корзина — удаление). Защита от случайных нажатий (отзыв Кати):
+//  1) двойной тап по ёмкости быстрее 700 мс — игнорируется;
+//  2) после добавления в тосте есть кнопка «Отменить» — вода
+//     убирается одним тапом (медведь вернул полный стакан).
 // По отзыву Кати от 10.11 убрано: колокольчик и пилюли интервала
 // напоминаний (настройки уже есть в «Ещё → Уведомления») и блок
 // «Последние 7 дней» (дубль графика воды в «Отчётах» дневника).
@@ -13,9 +17,12 @@
 // кнопки «Сохранить»/«Отмена» снизу (отзыв Кати: галочка уезжала
 // за край, кнопку «Сохранить» было не видно); при старте правки
 // журнал докручивается к строке, клавиатура её не перекрывает.
+// Шторка не доходит до «шторы» телефона: зазор сверху — высота
+// статус-бара (notch не накрывает шапку окна, отзыв Кати 28.11).
 
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Text as SvgText } from 'react-native-svg'
 import {
   Check,
@@ -122,6 +129,7 @@ function GoalRing({ pct }) {
 
 export function WaterModal({ open, onClose, goalMl, ml }) {
   const themeColors = useThemeColors()
+  const insets = useSafeAreaInsets()
   const vessels = useActivityStore((s) => s.vessels)
   const addWater = useActivityStore((s) => s.addWater)
   const editWaterLog = useActivityStore((s) => s.editWaterLog)
@@ -133,14 +141,20 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   const [editingId, setEditingId] = useState(null) // запись журнала на изменении
   const [editMl, setEditMl] = useState('')
   const [editTime, setEditTime] = useState('')
-  const [logOpen, setLogOpen] = useState(false) // записи за сегодня свёрнуты (отзыв Кати: «всегда сворачивать»)
+  // Записи за сегодня: раскрыты сами, если записи есть (отзыв Кати
+  // 28.11: «не видно историю»), пустые — скрыты
+  const [logOpen, setLogOpen] = useState(false)
   const scrollRef = useRef(null)
   const editRowY = useRef(0) // Y строки правки в содержимом журнала
+  // Защита от случайного добавления: последний тап по ёмкости
+  const lastAddAt = useRef(0)
 
-  // Окно закрыто — черновик правки записи сбрасывается, записи за
-  // сегодня сворачиваются: окно ВСЕГДА открывается свёрнутым
+  // Окно открыто — журнал сразу раскрыт, если есть записи; окно
+  // закрыто — черновик правки сбрасывается, журнал сворачивается
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setLogOpen(useActivityStore.getState().waterLog.length > 0)
+    } else {
       setEditingId(null)
       setEditMl('')
       setEditTime('')
@@ -168,10 +182,30 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
   }, [])
 
   function drink(v) {
-    addWater(v.ml)
+    // Защита от случайного нажатия: двойной тап быстрее 700 мс —
+    // второй тап игнорируется (отзыв Кати 28.11: «добавила воду
+    // несколько раз нечаянно»)
+    const now = Date.now()
+    if (now - lastAddAt.current < 700) {
+      toast({
+        title: '💧 Уже записали',
+        description: `${v.label} — только что. Лишние тапы не считаются`,
+      })
+      return
+    }
+    lastAddAt.current = now
+    const id = addWater(v.ml)
     toast({
       title: `💧 ${v.label} — ${v.ml} мл · ${nowTime()}`,
       description: `${pct}% → ${Math.min(100, Math.round(((ml + v.ml) / Math.max(1, goals.waterMl)) * 100))}% нормы`,
+      // Кнопка «Отменить»: убирает случайно добавленную воду одним тапом
+      action: {
+        label: 'Отменить',
+        onPress: () => {
+          removeWaterLog(id)
+          toast({ title: '↩️ Отменено', description: `Минус ${formatNum(v.ml)} мл — случайный тап убран` })
+        },
+      },
     })
   }
 
@@ -222,7 +256,13 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
         onPress={onClose}
         accessibilityLabel="Закрыть окно"
       >
-        <Pressable onPress={() => {}} className="max-h-[92%] overflow-hidden rounded-3xl border border-bear-line">
+        <Pressable
+          onPress={() => {}}
+          className="max-h-[88%] overflow-hidden rounded-3xl border border-bear-line"
+          // Шторка не уходит под «штору» телефона: зазор сверху —
+          // высота статус-бара (notch/вырез не накрывает шапку окна)
+          style={{ marginTop: insets.top }}
+        >
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
@@ -408,17 +448,18 @@ export function WaterModal({ open, onClose, goalMl, ml }) {
                           <Text className="shrink-0 font-sans text-[16.5px] text-bear-sub">
                             {w.time}
                           </Text>
-                          <View className="shrink-0 flex-row items-center gap-0.5">
-                            <View className="p-1">
-                              <Pencil size={15} color={themeColors.dim} />
+                          <View className="shrink-0 flex-row items-center gap-1">
+                            <View className="p-1.5">
+                              <Pencil size={16} color={themeColors.dim} />
                             </View>
                             <Pressable
                               onPress={() => removeEntry(w)}
                               accessibilityRole="button"
                               accessibilityLabel={`Удалить запись ${w.ml} мл`}
-                              className="p-1"
+                              hitSlop={8}
+                              className="rounded-full bg-bear-card2 p-1.5"
                             >
-                              <Trash2 size={16} color={themeColors.dim} />
+                              <Trash2 size={17} color={themeColors.sub} />
                             </Pressable>
                           </View>
                         </Pressable>

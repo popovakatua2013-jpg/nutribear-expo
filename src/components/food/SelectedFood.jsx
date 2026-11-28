@@ -175,7 +175,7 @@ export function SelectedFood({ mealId, meal, item, dayOff = 0, onDayOffChange, o
         </View>
 
         <View className="mt-4">
-          <GramsPicker grams={grams} onChange={setGrams} />
+          <GramsPicker grams={grams} onChange={setGrams} food={food} />
         </View>
 
         <View className="mt-4 rounded-2xl border border-bear-accentBorder bg-bear-accentFaint px-4 py-3">

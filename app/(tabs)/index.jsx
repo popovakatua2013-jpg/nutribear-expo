@@ -108,6 +108,7 @@ export default function HomeScreen() {
   const waterMl = useActivityStore((s) => s.waterMl)
   const extraSteps = useActivityStore(selectTotalSteps) // датчик + ручные
   const addWater = useActivityStore((s) => s.addWater)
+  const removeWaterLog = useActivityStore((s) => s.removeWaterLog)
   const addSteps = useActivityStore((s) => s.addSteps)
   const exLogs = useExerciseStore((s) => s.logs)
   const recordToday = useHistoryStore((s) => s.record)
@@ -171,13 +172,22 @@ export default function HomeScreen() {
   }, [consumed, waterMl, extraSteps, burned, xp, recordToday])
 
   function handleAddWater() {
-    addWater(WATER_GLASS)
+    const id = addWater(WATER_GLASS)
     toast({
       title: '💧 Стакан воды выпит!',
       description: `+${WATER_GLASS} мл · ${Math.min(
         100,
         Math.round(((waterMl + WATER_GLASS) / Math.max(1, goals.waterMl)) * 100)
       )}% нормы`,
+      // Защита от случайного нажатия (отзыв Кати 28.11): вода
+      // добавилась мимо — убираем одним тапом
+      action: {
+        label: 'Отменить',
+        onPress: () => {
+          removeWaterLog(id)
+          toast({ title: '↩️ Отменено', description: `Минус ${formatNum(WATER_GLASS)} мл` })
+        },
+      },
     })
   }
 

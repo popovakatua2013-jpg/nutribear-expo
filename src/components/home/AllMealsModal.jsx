@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react'
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react-native'
 import { MEALS, customMealCard } from '@/lib/data/meals'
 import { dishesWord, formatNum } from '@/lib/format'
@@ -68,6 +69,7 @@ function EntryRow({ mealId, mealName, entry, onEdit }) {
 
 export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
   const themeColors = useThemeColors()
+  const insets = useSafeAreaInsets()
   const entries = useFoodStore((s) => s.entries)
   const customMeals = useFoodStore((s) => s.customMeals)
   const addCustomMeal = useFoodStore((s) => s.addCustomMeal)
@@ -139,7 +141,13 @@ export function AllMealsModal({ open, onClose, kcal, onAddToMeal }) {
         onPress={close}
         accessibilityLabel="Закрыть окно"
       >
-        <Pressable onPress={() => {}} className="h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop">
+        <Pressable
+          onPress={() => {}}
+          className="h-[85%] overflow-hidden rounded-3xl border border-bear-line bg-bear-pop"
+          // Шторка не уходит под «штору» телефона: зазор сверху — высота
+          // статус-бара (notch не накрывает шапку, отзыв Кати 28.11)
+          style={{ marginTop: insets.top }}
+        >
           {/* Заголовок */}
           <View className="flex-row items-start justify-between border-b border-bear-line px-5 pb-3 pt-4">
             <View className="min-w-0 flex-1 pr-2">

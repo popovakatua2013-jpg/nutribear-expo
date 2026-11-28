@@ -115,6 +115,10 @@ export function AddFoodModal({ open, onClose, mealId, onMealIdChange, initialPic
           className={`overflow-hidden rounded-3xl border border-bear-line bg-bear-pop ${
             searching ? 'h-full' : 'h-[85%]'
           }`}
+          // Полноэкранный режим (поиск) начинается ниже «шторы» телефона:
+          // без отступа шапка с крестиком уходила под вырез/статус-бар
+          // (отзыв Кати 28.11: «штора телефона мешает»)
+          style={searching ? { paddingTop: insets.top } : undefined}
         >
           {picked ? (
             <SelectedFood
