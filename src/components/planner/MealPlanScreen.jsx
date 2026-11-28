@@ -29,7 +29,7 @@
 // Палитра — planPalette.js (цвета приложения), сетка и шрифты — theme.js.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native'
+import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Bookmark, BookmarkPlus, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ClipboardCheck, Copy, Eraser, History, Plus, Sparkles, Trash2, X } from 'lucide-react-native'
 import { formatNum } from '@/lib/format'
 import { tapGuard } from '@/lib/tap-guard'
@@ -370,6 +370,18 @@ export function MealPlanScreen({ compact = false }) {
 
       {/* Полоса дней Пн–Вс с датами — как в макете: выбранный день в
           лаймовой рамке с точкой, заполненные дни — с точкой */}
+      {/* В компактном режиме карусели (правка Кати 28.11: «блоки карусели
+          в два раза меньше по высоте») ряд карусели имеет фиксированную
+          высоту ~половину прежней — содержимое под шапкой листается
+          вертикально внутри карточки. В полном режиме ScrollView просто
+          равен контенту (scrollEnabled false) — вид как раньше */}
+      <ScrollView
+        style={compact ? { flex: 1 } : undefined}
+        scrollEnabled={compact}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+        alwaysBounceVertical={false}
+      >
       <View style={[styles.daysStrip, compact && styles.daysStripC]}>
         {WEEKDAYS.map((label, idx) => {
           const active = idx === sel
@@ -535,6 +547,7 @@ export function MealPlanScreen({ compact = false }) {
               : <ChevronDown size={13} color={P.text2} />}
           </Pressable>
       </>
+      </ScrollView>
 
       {/* Окно добавления блюда */}
       <AddDishModal open={!!picker} onClose={() => setPicker(null)} onPick={onPick} />
@@ -701,7 +714,7 @@ const makeStyles = (P) => ({
 
   // Полоса дней: имя + дата в рамке у выбранного, точка у заполненных
   daysStrip: { flexDirection: 'row', gap: 4, marginTop: 10 },
-  daysStripC: { marginTop: 8 },
+  daysStripC: { marginTop: 6 },
   dayCol: { flex: 1, alignItems: 'center', gap: 3 },
   dayBox: {
     width: '100%',
@@ -714,7 +727,7 @@ const makeStyles = (P) => ({
     gap: 1,
   },
   dayBoxOn: { borderColor: P.accentText, backgroundColor: P.accentFaint },
-  dayBoxC: { height: 30 },
+  dayBoxC: { height: 26 },
   dayBoxToday: { borderColor: P.line },
   dayName: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: P.text2 },
   dayNameOn: { color: P.accentText },
@@ -736,7 +749,7 @@ const makeStyles = (P) => ({
     gap: spacing.s,
     marginTop: spacing.m,
   },
-  dayHeadC: { marginTop: 8 },
+  dayHeadC: { marginTop: 4 },
   dayName2: { ...type.title, fontSize: 15.5, color: P.text, flex: 1 },
   dayName2C: { fontSize: 13.5 },
   kcalPill: {
@@ -751,10 +764,10 @@ const makeStyles = (P) => ({
 
   // Строки приёмов: плитка-эмодзи + название + блюда + ккал + «+»
   mealBlock: { marginTop: 8 },
-  mealBlockC: { marginTop: 6 },
+  mealBlockC: { marginTop: 4 },
   mealRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 42 },
   // компактный режим: ужаться, чтобы строка поместилась в узкую колонку
-  mealRowC: { gap: 5, minHeight: 32 },
+  mealRowC: { gap: 5, minHeight: 26 },
   mealTile: {
     width: 34,
     height: 34,
@@ -763,7 +776,7 @@ const makeStyles = (P) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mealTileC: { width: 24, height: 24, borderRadius: 8 },
+  mealTileC: { width: 22, height: 22, borderRadius: 8 },
   mealTexts: { flex: 1, minWidth: 0 },
   mealName: { fontSize: 14.5, fontWeight: '700', fontFamily: F[700], color: P.text },
   mealNameC: { fontSize: 13 },
@@ -827,7 +840,7 @@ const makeStyles = (P) => ({
     marginTop: 8,
   },
   // «все поменьше»: в карусели строка ниже и ближе к приёмам
-  showAllC: { height: 30, marginTop: 6 },
+  showAllC: { height: 26, marginTop: 4 },
   showAllText: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text2 },
 
   // Действия дня/недели — серые значки без подписей под шапкой

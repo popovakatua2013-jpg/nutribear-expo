@@ -270,11 +270,10 @@ function Ring({ pct, runId, size = 64, stroke = 7, sub, centerText, toneOver = t
 // Линия тренда недели — как в макете: плавная кривая с точками и
 // мягкой заливкой; пунктир нормы; сегодняшний день — крупная точка и
 // акцентная подпись; дни без данных — серые точки. Тап по дню — значение.
-// Высота снижена до 92 (карточка «Прогресс» теперь третья в карусели —
-// просьба Кати 27.11 — и должна помещаться в высоту ряда), а нижний
-// отступ ужат 26 → 16 — «очень большой отступ между пунктирной линией
-// и календарём» (дни Пн–Вс придвинуты к графику)
-const CHART_H = 92
+// Высота 58 (правка Кати 28.11: «блоки карусели в два раза меньше по
+// высоте» — карточка «Прогресс» с прогнозом 92 не влезала в половинный
+// ряд; нижний отступ ужат 26 → 16 ещё 27.11)
+const CHART_H = 58
 
 function TrendChart({ values, norm, max, color, todayIdx, onPickDay }) {
   const { P } = usePlanPalette()
@@ -381,6 +380,14 @@ export function PlanScreen({ onOpenFasting }) {
   const CAR_PEEK = 56
   const menuCardW = winW - spacing.xl * 2 - CAR_PEEK
   const fastCardW = winW - spacing.xl * 2
+  // Правка Кати 28.11 («блоки карусели в два раза меньше по высоте»):
+  // фиксированная высота ряда карусели — примерно ПОЛОВИНА прежней
+  // (ряд задавался самой высокой карточкой меню и был ~380–400px).
+  // «Меню на неделю» листается вертикально внутри карточки, у
+  // «Интервального питания» кольцо 52 вместо 64 (было «несуразно»),
+  // из «Прогресса» вынесены прогноз и «Разбор недели» — они встали
+  // на всю ширину под каруселью
+  const CAR_H = 196
   // Три позиции снапа: «Меню на неделю» → «Интервальное питание» →
   // «Прогресс» (просьба Кати 27.11: «прогресс тоже сделай в карусель —
   // одинаково по размеру с остальными блоками в карусели»)
@@ -675,7 +682,12 @@ export function PlanScreen({ onOpenFasting }) {
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
         snapToOffsets={[0, menuCardW + CAR_GAP, menuCardW + CAR_GAP + fastCardW + CAR_GAP]}
-        contentContainerStyle={{ alignItems: 'stretch', gap: CAR_GAP, paddingVertical: 14 }}
+        contentContainerStyle={{
+          alignItems: 'stretch',
+          gap: CAR_GAP,
+          paddingVertical: 14,
+          height: CAR_H + 28,
+        }}
         style={{ marginTop: 8 }}
       >
         <View style={{ width: menuCardW }}>
@@ -703,12 +715,14 @@ export function PlanScreen({ onOpenFasting }) {
           <View style={styles.fastRingWrap}>
             {/* toneOver={false} — просьба Кати: заполненное кольцо
                 голодания больше не красится оранжевым сверх цели,
-                всегда цвет темы */}
+                всегда цвет темы. 52/5 вместо 64/7 — правка Кати 28.11:
+                «кольцо в интервальном питании выглядит несуразно» —
+                тоньше и соразмерно карточке */}
             <Ring
               pct={fastPct}
               runId={runId}
-              size={64}
-              stroke={7}
+              size={52}
+              stroke={5}
               centerText={fastStartedAt ? undefined : fastPlan}
               sub={fastStartedAt ? fastPlan : 'Режим'}
               toneOver={false}
@@ -730,12 +744,9 @@ export function PlanScreen({ onOpenFasting }) {
               </View>
             </View>
           </View>
-          {/* Живая подпись: что показывает кольцо прямо сейчас */}
-          <Text style={styles.fastLive} numberOfLines={2}>
-            {fastStartedAt
-              ? `Идёт таймер: ${fmtDurShort(fastElapsed)} из ${Math.round(fastGoalMs / 3600000)} ч`
-              : 'Кольцо заполнится по ходу таймера без еды'}
-          </Text>
+          {/* Живая подпись «Идёт таймер…» убрана (правка Кати 28.11:
+              карточка вдвое ниже — подпись съедала место; ход таймера
+              и так виден по кольцу и на экране голодания) */}
           <View style={styles.fastMore} pointerEvents="none">
             <Text style={styles.fastMoreText}>Подробнее</Text>
             <ChevronRight size={13} color={P.accentInk} />
@@ -765,8 +776,8 @@ export function PlanScreen({ onOpenFasting }) {
               <Ring
                 pct={kcalGoal > 0 ? todaySum.kcal / kcalGoal : 0}
                 runId={runId}
-                size={60}
-                stroke={8}
+                size={44}
+                stroke={6}
                 sub="от цели"
               />
               <View style={styles.legend}>
@@ -808,42 +819,47 @@ export function PlanScreen({ onOpenFasting }) {
               todayIdx={todayIdx}
               onPickDay={pickDay}
             />
-
-            {/* Прогноз цели по весу — дефицит считается по дневнику (просьба
-                Кати 10.11): «при твоём текущем дефиците −0,5 кг/нед, к цели
-                по весу придёшь ~20 декабря» */}
-            <View style={[styles.forecast, styles.forecastC]}>
-              <View style={[styles.forecastIcon, styles.forecastIconC]}>
-                <Target size={14} color={P.accentText} />
-              </View>
-              <View style={styles.forecastTexts}>
-                <Text numberOfLines={1} style={styles.forecastTitle}>{forecastText.title}</Text>
-                <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
-              </View>
-            </View>
-
-            {/* Разбор недели от напарника — Premium (этап 2 монетизации):
-                строка в стиле прогноза, тап открывает окно разбора */}
-            <Pressable
-              style={[styles.reviewRow, styles.reviewRowC, { backgroundColor: themeColors.accentFaint, borderColor: themeColors.accentBorder }]}
-              onPress={() => setReviewOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Разбор недели от напарника — Premium"
-            >
-              <View style={[styles.forecastIcon, styles.forecastIconC]}>
-                <Sparkles size={14} color={P.accentText} />
-              </View>
-              <View style={styles.forecastTexts}>
-                <Text numberOfLines={1} style={styles.forecastTitle}>Разбор недели от напарника</Text>
-                <Text numberOfLines={1} style={styles.forecastSub}>
-                  итоги и советы по дневнику · 👑 Premium
-                </Text>
-              </View>
-              <ChevronRight size={14} color={P.text3} />
-            </Pressable>
+            {/* Прогноз цели по весу и «Разбор недели» ПЕРЕЕХАЛИ из
+                карточки на всю ширину под карусель (правка Кати 28.11:
+                «блоки карусели в два раза меньше по высоте» — в узкой
+                карточке они не помещались; на всю ширину текст читается
+                без numberOfLines-обрезок) */}
           </NeonCard>
         </View>
       </ScrollView>
+
+      {/* Прогноз цели по весу — дефицит считается по дневнику (просьба
+          Кати 10.11): «при твоём текущем дефиците −0,5 кг/нед, к цели
+          по весу придёшь ~20 декабря» */}
+      <View style={styles.forecast}>
+        <View style={styles.forecastIcon}>
+          <Target size={14} color={P.accentText} />
+        </View>
+        <View style={styles.forecastTexts}>
+          <Text numberOfLines={2} style={styles.forecastTitle}>{forecastText.title}</Text>
+          <Text numberOfLines={2} style={styles.forecastSub}>{forecastText.sub}</Text>
+        </View>
+      </View>
+
+      {/* Разбор недели от напарника — Premium (этап 2 монетизации):
+          строка в стиле прогноза, тап открывает окно разбора */}
+      <Pressable
+        style={styles.reviewRow}
+        onPress={() => setReviewOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Разбор недели от напарника — Premium"
+      >
+        <View style={styles.forecastIcon}>
+          <Sparkles size={14} color={P.accentText} />
+        </View>
+        <View style={styles.forecastTexts}>
+          <Text numberOfLines={1} style={styles.forecastTitle}>Разбор недели от напарника</Text>
+          <Text numberOfLines={1} style={styles.forecastSub}>
+            итоги и советы по дневнику · 👑 Premium
+          </Text>
+        </View>
+        <ChevronRight size={14} color={P.text3} />
+      </Pressable>
 
       {/* «Добавить рецепт» — компактный блок под каруселью: окно своих
           рецептов — создание, список, правка; «Записать» рецепта
@@ -1065,8 +1081,9 @@ const makeStyles = (P) => ({
   cardInner: {
     padding: spacing.l,
   },
-  // «Прогресс» в карусели: внутренний паддинг уже — как у меню
-  cardInnerC: { padding: spacing.m },
+  // «Прогресс» в карусели: кольцо 44/6, легенда 12/11, сегменты 22 —
+  // всё умещается в половинную высоту ряда (правка Кати 28.11)
+  cardInnerC: { paddingHorizontal: spacing.m, paddingVertical: 10 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cardHeadC: { gap: 8 },
   iconTile: {
@@ -1079,28 +1096,28 @@ const makeStyles = (P) => ({
   },
   iconTileC: { width: 24, height: 24, borderRadius: 8 },
   cardTitle: { ...type.title, fontSize: 16.5, color: P.text, flex: 1 },
-  cardTitleC: { fontSize: 14 },
+  cardTitleC: { fontSize: 13.5 },
   headRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   headLink: { fontSize: 12.5, fontWeight: '600', fontFamily: F[600], color: P.text3 },
 
   // Прогресс: кольцо + легенда (строки в одну линию — компактнее,
-  // отзыв Кати 10.11); progressRowC — компакт карусели: кольцо 60,
-  // зазоры уже — карточка помещается в высоту ряда карусели
+  // отзыв Кати 10.11); progressRowC — компакт карусели 28.11: кольцо 44,
+  // легенда ужата — карточка помещается в половинную высоту ряда
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: spacing.m },
-  progressRowC: { gap: 12, marginTop: 8 },
-  legend: { flex: 1, minWidth: 0, gap: 5 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  progressRowC: { gap: 10, marginTop: 6 },
+  legend: { flex: 1, minWidth: 0, gap: 3 },
+  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 7, height: 7, borderRadius: 4 },
   legendLabel: {
     flexShrink: 1,
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '700',
     fontFamily: F[700],
     color: P.text,
   },
   legendVal: {
     marginLeft: 'auto',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     fontFamily: F[600],
     color: P.text3,
@@ -1169,16 +1186,16 @@ const makeStyles = (P) => ({
     marginTop: spacing.m,
     marginBottom: spacing.s,
   },
-  segRowC: { marginTop: 8, marginBottom: 4 },
+  segRowC: { marginTop: 6, marginBottom: 2 },
   segBtn: {
-    paddingHorizontal: 12,
-    height: 26,
+    paddingHorizontal: 10,
+    height: 22,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segBtnActive: { backgroundColor: P.accent },
-  segText: { fontSize: 12, fontWeight: '700', fontFamily: F[700], color: P.text2 },
+  segText: { fontSize: 11, fontWeight: '700', fontFamily: F[700], color: P.text2 },
   segTextActive: { color: P.accentInk },
   chartTouch: {
     position: 'absolute',
@@ -1231,19 +1248,19 @@ const makeStyles = (P) => ({
   // распределён по высоте (fastInner space-between). фон/кайма/градиент —
   // NeonCard, паддинг — fastInner
   fastCard: { flex: 1 },
-  fastInner: { padding: 10, flex: 1, justifyContent: 'space-between' },
-  fastTitle: { ...type.title, fontSize: 12, color: P.text, lineHeight: 14.5 },
-  // «все поменьше» (правка Кати 27.11): кольцо ниже и зазоры уже —
-  // контент карточки голодания распределён по высоте ряда карусели
-  // (ряд теперь задаёт карточка меню), крупные зазоры не нужны
-  fastRingWrap: { alignItems: 'center', marginTop: 6 },
-  fastLegend: { gap: 6, marginTop: 6, alignSelf: 'stretch' },
-  fastLegendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
-  fastDot: { width: 7, height: 7, borderRadius: 4, marginTop: 4 },
+  // паддинг 8 и мелкие зазоры — правка Кати 28.11: карточка вдвое ниже,
+  // контент распределён по высоте (space-between)
+  fastInner: { padding: 8, flex: 1, justifyContent: 'space-between' },
+  fastTitle: { ...type.title, fontSize: 11.5, color: P.text, lineHeight: 14 },
+  // кольцо 52/5 (было 64/7 — «несуразно», правка Кати 28.11)
+  fastRingWrap: { alignItems: 'center', marginTop: 2 },
+  fastLegend: { gap: 4, marginTop: 4, alignSelf: 'stretch' },
+  fastLegendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  fastDot: { width: 6, height: 6, borderRadius: 3, marginTop: 3 },
   fastLegendTexts: { flex: 1, minWidth: 0 },
-  fastLegendLabel: { fontSize: 11.5, fontWeight: '700', fontFamily: F[700], color: P.text },
+  fastLegendLabel: { fontSize: 10.5, fontWeight: '700', fontFamily: F[700], color: P.text },
   fastLegendVal: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '600',
     fontFamily: F[600],
     color: P.text3,
@@ -1257,19 +1274,11 @@ const makeStyles = (P) => ({
     gap: 4,
     backgroundColor: P.accent,
     borderRadius: 999,
-    height: 28,
-    marginTop: 6,
+    height: 24,
+    marginTop: 4,
     alignSelf: 'stretch',
   },
-  fastMoreText: { fontSize: 12, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
-  fastLive: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    fontFamily: F[600],
-    color: P.text3,
-    lineHeight: 14,
-    marginTop: 2,
-  },
+  fastMoreText: { fontSize: 11, fontWeight: '800', fontFamily: F[800], color: P.accentInk },
 
   // «Добавить рецепт» — компактная строка-кнопка под каруселью:
   // иконка слева, тексты в столбик, шеврон справа; высота по контенту

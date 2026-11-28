@@ -210,16 +210,17 @@ describe('THEMES: структура палитры', () => {
     expect(Number(lm[4])).toBeGreaterThanOrEqual(0.2)
   })
 
-  test('тёмные цветные темы: яркий акцент макета у каждой (правка Кати 27.11: «цвет не лайм» — яркие возвращены)', () => {
-    // Приглушённые акценты (#B3C48C/#8AA9C4/#AE9CC5/#8FC2B8) Катя
-    // отклонила («цвет не лайм и отличается от того что я скидывала»)
-    // — яркие акценты макета 24.11 вернулись дословно; у каждой темы
-    // СВОЙ тон, линк и рамки того же цвета, кайма читается (alpha ≥ 0.4)
+  test('тёмные цветные темы: мягкий акцент референса 28.11 у каждой (правка 28.11: «глазам больно» — фон приглушён, акцент смягчён)', () => {
+    // Правка 28.11: чёрные фоны и кислотные акценты (#C9F31D/#2E9EFF/
+    // #C44BF8/#23E5C8) заменены по референсу Кати (тёмно-оливковый фон,
+    // мягкий лайм #D0F071) — фон с оттенком темы, акцент s=62% с тем же
+    // hue; у каждой темы СВОЙ тон, линк и рамки того же цвета, кайма
+    // читается (alpha ≥ 0.4)
     const accents = {
-      neonLime: '#C9F31D',
-      neonBlue: '#2E9EFF',
-      neonPurple: '#C44BF8',
-      neonCyan: '#23E5C8',
+      neonLime: '#BEDA62',
+      neonBlue: '#62A2DA',
+      neonPurple: '#BC62DA',
+      neonCyan: '#62DACA',
     }
     for (const [id, accent] of Object.entries(accents)) {
       const c = THEMES[id].colors
@@ -229,14 +230,17 @@ describe('THEMES: структура палитры', () => {
       expect(m).not.toBeNull()
       expect(Number(m[4])).toBeGreaterThanOrEqual(0.4)
       expect(c.accentFaint).toContain(m.slice(1, 4).join(','))
+      // фон НЕ чёрный: светлее старых почти чёрных поверхностей
+      expect(luminance(c.bg)).toBeGreaterThan(luminance('#040602'))
     }
   })
 
-  test('правка Кати 27.11: приглушение отклонено («цвет не лайм») — акценты снова яркие, оттенок тот же', () => {
-    // История правки: сначала акценты были десатурированы до s≈26–33%,
-    // но Катя отклонила («цвет не лайм и отличается от того что
-    // я скидывала») — четыре неона вернулись к s≈79–100% макета 24.11.
-    // Оттенок (H) сохранялся всегда: темы остались «своего цвета»
+  test('правка 28.11 «глазам больно»: акценты смягчены до s≈62%, оттенок сохранён (урок 27.11: hue не трогаем)', () => {
+    // История: 27.11 приглушение до бледных #B3C48C было отклонено
+    // («цвет не лайм»), яркие неоны вернулись; 28.11 Катя снова просит
+    // мягкости («аж глазам больно») и даёт РЕФЕРЕНС с мягким лаймом —
+    // теперь смягчаем насыщенность (s≈62%), но НЕ трогаем оттенок:
+    // лайм остаётся лаймом, лазурь — лазурью
     const sat = (hex) => {
       const h = hex.replace('#', '')
       const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
@@ -255,29 +259,28 @@ describe('THEMES: структура палитры', () => {
       if (max === g) return (60 * (b - r)) / d + 120
       return (60 * (r - g)) / d + 240
     }
-    const neonAccents = {
-      neonLime: '#C9F31D',
-      neonBlue: '#2E9EFF',
-      neonPurple: '#C44BF8',
-      neonCyan: '#23E5C8',
+    const macroHue = {
+      neonLime: 72,
+      neonBlue: 208,
+      neonPurple: 282,
+      neonCyan: 171,
     }
-    for (const [id, neon] of Object.entries(neonAccents)) {
+    for (const [id, oldHue] of Object.entries(macroHue)) {
       const accent = THEMES[id].colors.accent
-      // вернулись ровно яркие акценты макета
-      expect(accent).toBe(neon)
-      expect(sat(accent)).toBeGreaterThan(0.7)
-      // и это ТОТ ЖЕ оттенок, что у приглушённой версии (тема «своего цвета»)
-      expect(hueOf(accent)).toBe(hueOf(neon))
+      // мягкий, но ЦВЕТНОЙ: не блеклый (27.11), не кислотный (до 28.11)
+      expect(sat(accent)).toBeGreaterThanOrEqual(0.5)
+      expect(sat(accent)).toBeLessThanOrEqual(0.72)
+      // и это ТОТ ЖЕ оттенок, что у исходного неона (тема «своего цвета»)
+      expect(Math.abs(hueOf(accent) - oldHue)).toBeLessThanOrEqual(3)
     }
-    // «Приглушённая» удалена (27.11) — её спокойный акцент больше не в списке
     expect(THEMES.muted).toBeUndefined()
   })
 
-  test('текст НА акценте: тёмный у ярких «Лайма»/«Бирюзы» и приглушённых тем, белый у «Лазури»/«Орхидеи»/«Классики» (правка 27.11: приглушение отклонено — как было до него)', () => {
-    // Яркий лайм/бирюза светлые — на них читается только тёмный текст;
-    // у лазури/орхидеи акценты насыщенно-средние — белый текст, как
-    // было до правки «менее кричащими» и осталось после её отклонения
-    const darkInk = ['neonLime', 'neonCyan', 'cream']
+  test('текст НА акценте: тёмный у всех неонов (акценты смягчены 28.11 — стали светлыми) и «Кремовой», белый у «Классики»', () => {
+    // Правка 28.11: акценты всех четырёх неонов смягчены до светлых
+    // (#BEDA62/#62A2DA/#BC62DA/#62DACA) — белый текст на них больше не
+    // читается, на кнопках тёмная «чернила» цвета фона темы
+    const darkInk = ['neonLime', 'neonBlue', 'neonPurple', 'neonCyan', 'cream']
     for (const id of darkInk) {
       const on = THEMES[id].colors.accentOn
       expect(on).toMatch(/^#[0-9A-Fa-f]{6}$/)
@@ -285,16 +288,10 @@ describe('THEMES: структура палитры', () => {
       // читается на акценте (минимум для крупного UI-текста)
       expect(contrast(THEMES[id].colors.accent, on)).toBeGreaterThanOrEqual(3)
     }
-    const whiteInk = ['neonBlue', 'neonPurple']
-    for (const id of whiteInk) {
-      expect(THEMES[id].colors.accentOn).toBe('#FFFFFF')
-      // белый на насыщенно-среднем акценте: крупный UI-текст ≥ 3
-      // у орхидеи; у лазури 2.8 — исторический вид кнопок приложения,
-      // осознанно сохранён при возврате ярких акцентов
-      expect(contrast(THEMES[id].colors.accent, '#FFFFFF')).toBeGreaterThanOrEqual(2.6)
-    }
-    expect(contrast(THEMES.neonPurple.colors.accent, '#FFFFFF')).toBeGreaterThanOrEqual(3)
+    // «Классика» — фирменный фиолетовый #7B6CF6 остался средне-тёмным:
+    // белый текст, как было до премиум-тем
     expect(THEMES.classic.colors.accentOn).toBe('#FFFFFF')
+    expect(contrast(THEMES.classic.colors.accent, '#FFFFFF')).toBeGreaterThan(3)
   })
 
   test('«Кремовая» — светлая тема: тёмные тексты читаются по WCAG AA', () => {

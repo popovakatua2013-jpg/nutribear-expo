@@ -55,14 +55,17 @@ describe('карусель «меню ↔ интервальное питани�
     expect(atProgress).toBeGreaterThan(carousel.indexOf('Интервальное питание — открыть подробнее'))
   })
 
-  test('карточка голодания тянется на высоту меню, содержимое распределено по высоте', () => {
+  test('карточка голодания тянется на высоту ряда карусели, содержимое распределено по высоте', () => {
     const fastCard = src.match(/fastCard: \{ flex: 1 \}/)
     expect(fastCard).not.toBeNull()
-    expect(src.match(/fastInner: \{ padding: 10, flex: 1, justifyContent: 'space-between' \}/)).not.toBeNull()
+    // Правка Кати 28.11: карточка вдвое ниже — паддинг 8 вместо 10
+    expect(src.match(/fastInner: \{ padding: 8, flex: 1, justifyContent: 'space-between' \}/)).not.toBeNull()
     // Ширина тап-обёртки — fastCardW, высота — от карусели (stretch)
     expect(src).toContain('style={{ width: fastCardW }}')
-    // Растяжение по высоте — alignItems: 'stretch' у contentContainer карусели
-    expect(src).toContain("contentContainerStyle={{ alignItems: 'stretch', gap: CAR_GAP, paddingVertical: 14 }}")
+    // Растяжение по высоте — alignItems: 'stretch' у contentContainer карусели;
+    // 28.11: у ряда ФИКСИРОВАННАЯ высота CAR_H (~половина прежней)
+    expect(src).toContain("alignItems: 'stretch',")
+    expect(src).toContain('height: CAR_H + 28')
   })
 
   test('обе карточки карусели ОДИНАКОВОЙ высоты (правка Кати 27.11: «сделать одинаково»)', () => {
@@ -73,25 +76,24 @@ describe('карусель «меню ↔ интервальное питани�
     expect(menuSrc).toContain('style={[styles.card, compact && styles.cardC]}')
     // Обе карточки стоят в одном ряду карусели — высоту ряда задаёт
     // самая высокая, stretch + flex: 1 дотягивают обе до одного края
-    const atStretch = src.indexOf("alignItems: 'stretch', gap: CAR_GAP")
+    const atStretch = src.indexOf("alignItems: 'stretch',")
     const atMenuCard = src.indexOf('<MealPlanScreen compact />')
     const atFast = src.indexOf('style={{ width: fastCardW }}')
     expect(atMenuCard).toBeGreaterThan(atStretch)
     expect(atFast).toBeGreaterThan(atMenuCard)
   })
 
-  test('«все поменьше» (правка Кати 27.11): компактные элементы ужаты', () => {
-    // Меню: внутренний паддинг 12 вместо 16, день 30, строка приёма 32,
-    // «Все приёмы пищи» 30
+  test('«в два раза меньше по высоте» (правка Кати 28.11): компактные элементы ужаты ещё сильнее', () => {
+    // Меню: день 26, строка приёма 26, «Все приёмы пищи» 26 (было 30/32/30)
     expect(menuSrc).toContain('cardInnerC: { padding: spacing.m, justifyContent: \'space-between\' }')
-    expect(menuSrc).toContain('dayBoxC: { height: 30 }')
-    expect(menuSrc.match(/mealRowC: \{ gap: 5, minHeight: 32 \}/)).not.toBeNull()
-    expect(menuSrc).toContain('showAllC: { height: 30, marginTop: 6 }')
-    // Голодание: кольцо 64 (увеличено по правке Кати 27.11 «кольцо очень
-    // маленькое по отношению к блоку», было 48 после ужатия 56→48),
-    // кнопка «Подробнее» 28
-    expect(src).toContain('size={64}')
-    expect(src.match(/height: 28,\n    marginTop: 6,/)).not.toBeNull()
+    expect(menuSrc).toContain('dayBoxC: { height: 26 }')
+    expect(menuSrc.match(/mealRowC: \{ gap: 5, minHeight: 26 \}/)).not.toBeNull()
+    expect(menuSrc).toContain('showAllC: { height: 26, marginTop: 4 }')
+    // Голодание: кольцо 52/5 (правка Кати 28.11: «кольцо выглядит
+    // несуразно» — тоньше и соразмернее; было 48 → 64 по 27.11),
+    // кнопка «Подробнее» 24
+    expect(src).toContain('size={52}')
+    expect(src.match(/height: 24,\n    marginTop: 4,/)).not.toBeNull()
   })
 
   test('«Прогресс» в карусели: той же ширины и высоты, без своего marginTop', () => {
@@ -122,7 +124,7 @@ describe('карусель «меню ↔ интервальное питани�
     expect(recipeInner).toContain("flexDirection: 'row'")
     expect(src.match(/recipeTexts: \{ flex: 1, minWidth: 0 \}/)).not.toBeNull()
     // Рецепт стоит ПОСЛЕ карусели (под ней), не внутри
-    const atCarousel = src.indexOf('snapToOffsets={[0, menuCardW + CAR_GAP]}')
+    const atCarousel = src.indexOf('snapToOffsets={[0, menuCardW + CAR_GAP,')
     const atRecipe = src.indexOf('Добавить рецепт — свои рецепты')
     expect(atRecipe).toBeGreaterThan(atCarousel)
   })

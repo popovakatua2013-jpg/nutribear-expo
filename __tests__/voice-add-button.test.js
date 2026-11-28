@@ -12,6 +12,9 @@
 //      темах;
 //   3) «цифра веса не соответствует темам» — weightTone в норме красится
 //      акцентом темы (accentBright), янтарный «сушка»-тон удалён;
+//      правка Кати 28.11 «Вес красные цифры»: красной цифры больше нет
+//      и при переборе ИМТ — приглушённый sub (кольцо ИМТ и шкала рядом
+//      сигнализируют как раньше);
 //   4) «рейтинг питания убрать подсказку у блюд этого периода» — длинная
 //      подсказка про витамины удалена из NutritionRating;
 //   5) промпт распознавания — «НЕ выдумывай и не добавляй блюда, которых
@@ -86,8 +89,11 @@ describe('плитка «Текущий вес» (отзыв Кати 27.11)', (
     expect(weightCard).not.toMatch(/foodGoal === 'lose'\s*\n\s*\? themeColors\.warn/)
     expect(weightCard).not.toMatch(/foodGoal === 'maintain'/)
     expect(weightCard).not.toMatch(/foodGoal === 'gain'/)
-    // реальные отклонения ИМТ по-прежнему подсвечиваются семантикой
-    expect(weightCard).toMatch(/bmiNow >= 25\s*\n\s*\? themeColors\.bad/)
+    // отклонения ИМТ больше НЕ красят цифру в красный (правка Кати
+    // 28.11 «Вес красные цифры» — агрессивно и не по темам): перебор —
+    // приглушённый sub темы, недостаток — жёлтый warn
+    expect(weightCard).not.toMatch(/bmiNow >= 25\s*\n\s*\? themeColors\.bad/)
+    expect(weightCard).toMatch(/bmiNow >= 25\s*\n\s*\? themeColors\.sub/)
     expect(weightCard).toMatch(/bmiNow > 0 && bmiNow < 18\.5\s*\n\s*\? themeColors\.warn/)
     // в норме — акцент активной темы
     expect(weightCard).toMatch(/: themeColors\.accentBright\s*\n/)
