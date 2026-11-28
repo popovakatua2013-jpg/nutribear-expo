@@ -98,4 +98,72 @@ describe('buildCompanionSystem: характер медведя + личный �
     expect(sys).not.toContain('ИМТ')
     expect(sys).not.toContain('Вес 0')
   })
+
+  // ── Правило по выполненным нормам (правка Кати 28.11: «Норма по жирам
+  // выполнена, при этом медведь советует ещё масло») ───────────────────
+  test('нутриенты дня попадают в промпт, выполненные нормы — в правило', () => {
+    const sys = buildCompanionSystem({
+      ...CTX,
+      bju: { p: 79, f: 59, c: 129, fib: 5 },
+      norms: { p: 113, f: 50, c: 151, fib: 25 },
+    })
+    // строки нутриентов с нормами
+    expect(sys).toContain('Белки: 79 из 113 г.')
+    expect(sys).toContain('Жиры: 59 из 50 г.')
+    expect(sys).toContain('Углеводы: 129 из 151 г.')
+    expect(sys).toContain('Клетчатка: 5 из 25 г.')
+    // правило на месте, жиры (59 ≥ 50) в списке выполненных
+    expect(sys).toContain('ПРАВИЛО ПО НУТРИЕНТАМ')
+    expect(sys).toMatch(/выполнены по: [^.]*жиры/)
+    // масла и другой жирной еды в такой день не предлагать
+    expect(sys).toContain('никакого масла')
+    // белки/углеводы/клетчатка не выполнены — их в списке быть не должно
+    expect(sys).not.toMatch(/выполнены по: [^.]*белки/)
+    expect(sys).not.toMatch(/выполнены по: [^.]*углеводы/)
+    // калории не выполнены (1200 < 1800)
+    expect(sys).not.toMatch(/выполнены по: [^.]*калории/)
+  })
+
+  test('калории закрыты — попадают в список выполненных', () => {
+    const sys = buildCompanionSystem({
+      ...CTX,
+      eaten: 1850,
+      goal: 1800,
+      bju: { p: 120, f: 55, c: 160, fib: 26 },
+      norms: { p: 113, f: 50, c: 151, fib: 25 },
+    })
+    // всё закрыто — и приёмы пищи в такой день не предлагаются вовсе
+    expect(sys).toMatch(/выполнены по: [^.]*белки[^.]*жиры[^.]*углеводы[^.]*клетчатка[^.]*калории/)
+    expect(sys).toContain('дневные нормы закрыты')
+  })
+
+  test('нормы не закрыты — список выполненных пуст, правило всё равно на месте', () => {
+    const sys = buildCompanionSystem({
+      ...CTX,
+      bju: { p: 10, f: 5, c: 20, fib: 1 },
+      norms: { p: 113, f: 50, c: 151, fib: 25 },
+    })
+    expect(sys).toContain('ПРАВИЛО ПО НУТРИЕНТАМ')
+    expect(sys).not.toContain('выполнены по:')
+    // строки нутриентов с нормами всё равно переданы — ИИ видит остатки
+    expect(sys).toContain('Белки: 10 из 113 г.')
+    expect(sys).toContain('Жиры: 5 из 50 г.')
+  })
+
+  test('без bju/norms в контексте — ни строк нутриентов, ни правила (без мусора)', () => {
+    const sys = buildCompanionSystem(CTX)
+    expect(sys).not.toContain('ПРАВИЛО ПО НУТРИЕНТАМ')
+    expect(sys).not.toContain('Белки:')
+    expect(sys).not.toContain('NaN')
+    expect(sys).not.toContain('undefined')
+  })
+
+  test('лимит 2000 символов соблюдается и с макросами + правилом', () => {
+    const sys = buildCompanionSystem({
+      ...CTX,
+      bju: { p: 79, f: 59, c: 129, fib: 5 },
+      norms: { p: 113, f: 50, c: 151, fib: 25 },
+    })
+    expect(sys.length).toBeLessThanOrEqual(2000)
+  })
 })

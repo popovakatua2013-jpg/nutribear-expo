@@ -46,7 +46,8 @@ import { useFoodStore } from '@/store/useFoodStore'
 import { useActivityStore, selectTotalSteps } from '@/store/useActivityStore'
 import { useGoalsStore } from '@/store/useGoalsStore'
 import { useProfileStore } from '@/store/useProfileStore'
-import { totalConsumed } from '@/lib/data/diary'
+import { totalConsumed, dayBju } from '@/lib/data/diary'
+import { macroNormsFor } from '@/lib/data/bju'
 import { useThemeColors } from '@/lib/use-theme'
 
 
@@ -131,6 +132,8 @@ export default function AiChatScreen() {
   // и правильно склоняет («Катя, куда пропала?» вместо «Куда пропал?»)
   const name = useProfileStore((s) => s.name)
   const sex = useProfileStore((s) => s.sex)
+  // Цель питания («Похудение»/«Сушка»/…) — от неё зависят авто-нормы БЖУ
+  const foodGoal = useFoodStore((s) => s.goal)
 
   // Выбранный медведь (Фит/Топаз/Бусинка/Кедр/Кира): аватар и имя в шапке,
   // аватар у каждого ответа, приветствие его характера
@@ -223,12 +226,28 @@ export default function AiChatScreen() {
 
   function buildContext() {
     const bmiH = heightCm > 0 ? heightCm / 100 : 0
+    // Нутриенты дня + их нормы (правка Кати 28.11: «норма по жирам
+    // выполнена, а медведь советует ещё масло»): ИИ получает Б/Ж/У/
+    // клетчатку с нормами и правило не предлагать продукты, богатые
+    // выполненным нутриентом (см. buildCompanionSystem в lib/chat).
+    // Нормы — ровно как на главной в сводке «Съедено»: свои macroNorms
+    // > 0, иначе авто от цели по калориям (30/30/40, «Сушка» 35/25/40)
+    const bju = dayBju(entries)
+    const macroNorms = goals.macroNorms || { p: 0, f: 0, c: 0, fib: 0 }
+    const autoNorms = macroNormsFor(goals.kcal, foodGoal)
     return {
       name, // имя — медведь обращается по нему (buildCompanionSystem
       // берёт только первое слово, без фамилии — приватность)
       sex, // male/female — «мужчина»/«женщина» в системный промпт
       eaten: totalConsumed(entries),
       goal: goals.kcal,
+      bju: { p: bju.p || 0, f: bju.f || 0, c: bju.c || 0, fib: bju.fib || 0 },
+      norms: {
+        p: macroNorms.p > 0 ? macroNorms.p : autoNorms.p,
+        f: macroNorms.f > 0 ? macroNorms.f : autoNorms.f,
+        c: macroNorms.c > 0 ? macroNorms.c : autoNorms.c,
+        fib: macroNorms.fib > 0 ? macroNorms.fib : autoNorms.fib,
+      },
       waterMl,
       waterGoal: goals.waterMl,
       steps: extraSteps,
@@ -427,7 +446,7 @@ export default function AiChatScreen() {
               >
                 <MessageText
                   content={item.content}
-                  className="text-[19px] leading-[22px] text-white"
+                  className="text-[19px] leading-[22px] text-bear-accentOn"
                 />
               </LinearGradient>
             ) : (
